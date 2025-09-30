@@ -1,0 +1,113 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "10/10/2024, 11:36:32 AM",
+        "saved": "9/16/2025, 11:52:46 AM",
+        "utc": "2025-09-16T09:52:46.984Z",
+        "style": "#b663a4",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "simple test chart",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "SimpleTestChart"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -368 y -2 w 150 h 41"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "planetary distance",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "PlanetaryDistance"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "setup",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "user change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "position",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "sx": {
+                    "planets": [],
+                    "size": 0
+                },
+                "editor": {
+                    "rect": "x -367 y 71 w 200 h 86"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 100 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1894 h 1152",
+                "transform": "sx 1.000 sy 1.000 dx 659.000 dy 115.000"
+            }
+        }
+    }
+}

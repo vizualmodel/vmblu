@@ -1,0 +1,383 @@
+{
+    "header": {
+        "version": "0.7.0",
+        "created": "2025-09-16T19:20:00Z",
+        "saved": "9/23/2025, 8:57:30 AM",
+        "utc": "2025-09-23T06:57:30.905Z",
+        "style": "#00aaff",
+        "runtime": "../runtime/runtime-bundle.js"
+    },
+    "factories": [
+        "../client/src/lib/nodes/chat-page.js",
+        "../client/src/lib/nodes/message-composer.js",
+        "../client/src/lib/nodes/message-list.js",
+        "../client/src/lib/nodes/message-store.js",
+        "../client/src/lib/nodes/server-sync.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "ChatClient",
+        "label": "Svelte Chat Client",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "ChatPage",
+                "factory": {
+                    "path": "../client/src/lib/nodes/chat-page.js",
+                    "function": "createChatPage"
+                },
+                "label": "Render chat layout",
+                "prompt": "Layout shell that hosts the composer and list components. Receives their DOM roots via pins and attaches them to the page structure, without handling chat logic.",
+                "interfaces": [
+                    {
+                        "name": "layout",
+                        "pins": [
+                            {
+                                "name": "ComposerDiv",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "ListDiv",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -22 y -44 w 150 h 71"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageComposer",
+                "factory": {
+                    "path": "../client/src/lib/nodes/message-composer.js",
+                    "function": "createMessageComposer"
+                },
+                "label": "Handle outgoing drafts",
+                "prompt": "Svelte composer widget that lets the user draft messages, emits submissions, and exposes its root DOM node for layout embedding.",
+                "interfaces": [
+                    {
+                        "name": "composer",
+                        "pins": [
+                            {
+                                "name": "submitMessage",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 318 y -44 w 200 h 71"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageList",
+                "factory": {
+                    "path": "../client/src/lib/nodes/message-list.js",
+                    "function": "createMessageList"
+                },
+                "label": "Present conversation history",
+                "prompt": "Presentation component that renders the message timeline provided by the store and shares its DOM container for layout placement.",
+                "interfaces": [
+                    {
+                        "name": "list",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "showMessages",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 687 y -44 w 150 h 71"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageStore",
+                "factory": {
+                    "path": "../client/src/lib/nodes/message-store.js",
+                    "function": "createMessageStore"
+                },
+                "label": "In-memory message history",
+                "prompt": "Stateful cache of the conversation. Persists local submissions and server events, publishes derived updates, and requests history hydration on startup.",
+                "interfaces": [
+                    {
+                        "name": "store",
+                        "pins": [
+                            {
+                                "name": "messagesChanged",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "saveMessage",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "hydrate",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "loadHistory",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -31 y 140 w 150 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "ServerSync",
+                "factory": {
+                    "path": "../client/src/lib/nodes/server-sync.js",
+                    "function": "createServerSync"
+                },
+                "label": "Bridge to chat server",
+                "prompt": "HTTP bridge to the chat server. Forwards outbound messages, resolves history requests, and streams incoming messages or snapshots to the store.",
+                "interfaces": [
+                    {
+                        "name": "sync",
+                        "pins": [
+                            {
+                                "name": "publishMessage",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "incomingMessage",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "historySnapshot",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "historyLoaded",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 702 y 140 w 150 h 101"
+                }
+            }
+        ],
+        "connections": [
+            {
+                "src": {
+                    "pin": "submitMessage",
+                    "node": "MessageComposer"
+                },
+                "dst": {
+                    "pin": "saveMessage",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "submitMessage",
+                    "node": "MessageComposer"
+                },
+                "dst": {
+                    "pin": "publishMessage",
+                    "node": "ServerSync"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "MessageComposer"
+                },
+                "dst": {
+                    "pin": "ComposerDiv",
+                    "node": "ChatPage"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "MessageList"
+                },
+                "dst": {
+                    "pin": "ListDiv",
+                    "node": "ChatPage"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messagesChanged",
+                    "node": "MessageStore"
+                },
+                "dst": {
+                    "pin": "showMessages",
+                    "node": "MessageList"
+                }
+            },
+            {
+                "src": {
+                    "pin": "loadHistory",
+                    "node": "MessageStore"
+                },
+                "dst": {
+                    "pin": "historyLoaded",
+                    "node": "ServerSync"
+                }
+            },
+            {
+                "src": {
+                    "pin": "incomingMessage",
+                    "node": "ServerSync"
+                },
+                "dst": {
+                    "pin": "saveMessage",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "historySnapshot",
+                    "node": "ServerSync"
+                },
+                "dst": {
+                    "pin": "hydrate",
+                    "node": "MessageStore"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 30 y 45 w 150 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1479 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx 272.000 dy 186.000"
+            },
+            "routes": [
+                {
+                    "from": "(pin 0) submitMessage @ MessageComposer",
+                    "to": "(pin 0) saveMessage @ MessageStore",
+                    "wire": "x -59.3 y 199.0 x -139.7"
+                },
+                {
+                    "from": "(pin 0) submitMessage @ MessageComposer",
+                    "to": "(pin 0) publishMessage @ ServerSync",
+                    "wire": "x -32.8 y 184.0 x 416.8"
+                },
+                {
+                    "from": "(pin 0) div @ MessageComposer",
+                    "to": "(pin 0) ComposerDiv @ ChatPage",
+                    "wire": "x -97.9 y -15.0 x -92.1"
+                },
+                {
+                    "from": "(pin 0) div @ MessageList",
+                    "to": "(pin 0) ListDiv @ ChatPage",
+                    "wire": "x -125.0 y 59.5 x -353.0 y -44.5 x -81.0"
+                },
+                {
+                    "from": "(pin 0) messagesChanged @ MessageStore",
+                    "to": "(pin 0) showMessages @ MessageList",
+                    "wire": "x 460.6 y -169.0 x 107.4"
+                },
+                {
+                    "from": "(pin 0) loadHistory @ MessageStore",
+                    "to": "(pin 0) historyLoaded @ ServerSync",
+                    "wire": "x 490.2 y 0.0 x 92.8"
+                },
+                {
+                    "from": "(pin 0) incomingMessage @ ServerSync",
+                    "to": "(pin 0) saveMessage @ MessageStore",
+                    "wire": "x -142.3 y 0.0 x -440.7"
+                },
+                {
+                    "from": "(pin 0) historySnapshot @ ServerSync",
+                    "to": "(pin 0) hydrate @ MessageStore",
+                    "wire": "x -91.9 y 0.0 x -491.1"
+                }
+            ]
+        }
+    }
+}

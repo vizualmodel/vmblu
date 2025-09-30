@@ -1,0 +1,31 @@
+# Node.js dependencies
+node_modules/
+vscodex/node_modules/
+server/node_modules/
+
+# secret
+core/ai/.vault.txt
+
+# Runtime data
+*.log
+
+# Build output
+browser/out/
+ui/out/
+runtime/out/
+vscodex/out/
+
+# Not relevant for the project
+prompts.txt
+llm-prompts/
+docs/old-versions
+**/z-*
+**/zz-*
+**/zzz-*
+
+# System files
+.vscode/
+vscodex/.vscode
+vmblu-0.0.1.vsix
+.github/
+*.code-workspace

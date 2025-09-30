@@ -1,0 +1,210 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "4/15/2024, 9:13:13 AM",
+        "saved": "9/16/2025, 11:45:20 AM",
+        "utc": "2025-09-16T09:45:20.952Z",
+        "style": "#00aaff",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "kind": "source",
+        "name": "workspace",
+        "factory": {
+            "path": "./index.js",
+            "function": "WorkspaceFactory"
+        },
+        "interfaces": [
+            {
+                "name": "dom",
+                "pins": [
+                    {
+                        "name": "dom add modal div",
+                        "kind": "input",
+                        "editor": {
+                            "id": 2,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "dom workspace div",
+                        "kind": "output",
+                        "editor": {
+                            "id": 3,
+                            "align": "right"
+                        }
+                    }
+                ],
+                "editor": {
+                    "id": 36
+                }
+            },
+            {
+                "name": "file",
+                "pins": [
+                    {
+                        "name": "file selected",
+                        "kind": "output",
+                        "editor": {
+                            "id": 5,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file new",
+                        "kind": "output",
+                        "editor": {
+                            "id": 21,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file renamed",
+                        "kind": "output",
+                        "editor": {
+                            "id": 27,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file deleted",
+                        "kind": "output",
+                        "editor": {
+                            "id": 28,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file get name",
+                        "kind": "output",
+                        "editor": {
+                            "id": 7,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file context menu",
+                        "kind": "output",
+                        "editor": {
+                            "id": 8,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file savedAs",
+                        "kind": "input",
+                        "editor": {
+                            "id": 29,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file active",
+                        "kind": "input",
+                        "editor": {
+                            "id": 30,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "file closed",
+                        "kind": "input",
+                        "editor": {
+                            "id": 31,
+                            "align": "right"
+                        }
+                    }
+                ],
+                "editor": {
+                    "id": 37
+                }
+            },
+            {
+                "name": "files",
+                "pins": [
+                    {
+                        "name": "files selected",
+                        "kind": "output",
+                        "editor": {
+                            "id": 32,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "files deleted",
+                        "kind": "output",
+                        "editor": {
+                            "id": 33,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "files get list",
+                        "kind": "request",
+                        "editor": {
+                            "id": 11,
+                            "align": "right"
+                        }
+                    }
+                ],
+                "editor": {
+                    "id": 38
+                }
+            },
+            {
+                "name": "directory",
+                "pins": [
+                    {
+                        "name": "directory renamed",
+                        "kind": "output",
+                        "editor": {
+                            "id": 34,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "directory deleted",
+                        "kind": "output",
+                        "editor": {
+                            "id": 35,
+                            "align": "right"
+                        }
+                    },
+                    {
+                        "name": "directory context menu",
+                        "kind": "output",
+                        "editor": {
+                            "id": 14,
+                            "align": "right"
+                        }
+                    }
+                ],
+                "editor": {
+                    "id": 39
+                }
+            },
+            {
+                "name": "drawer",
+                "pins": [
+                    {
+                        "name": "drawer get location",
+                        "kind": "output",
+                        "editor": {
+                            "id": 15,
+                            "align": "right"
+                        }
+                    }
+                ],
+                "editor": {
+                    "id": 40
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 228 y 75 w 150 h 371"
+        }
+    }
+}

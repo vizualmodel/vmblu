@@ -1,0 +1,50 @@
+{
+    "name": "vmblu",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "lint": "eslint .",
+        "format": "prettier --check .",
+        "dev": "cd ./browser && npm run dev",
+        "blu": "cd ./browser && npm run srvr && cd .. && npm run go",
+        "srvr": "cd ./browser && npm run srvr",
+        "vx": "cd ./vscodex && npm run vx",
+        "rt": "cd ./runtime && npm run build",
+        "ui": "cd ./ui && npm run ui",
+        "cm": "cd ./browser && npm run cm",
+        "all": "npm run rt && npm run ui && npm run srvr && npm run vx",
+        "go": "node ../fastsrvr/fastify/server.js",
+        "doc": "node ./srcdoc/vmblu-srcdoc ./browser/vmblu.vmblu",
+        "srcdoc": "cd ./srcdoc && rollup -c && cp vmblu-srcdoc.cjs vmblu-srcdoc.cjs.map ../vscodex/out/srcdoc/"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.36.0",
+        "@rollup/plugin-commonjs": "^25.0.7",
+        "@rollup/plugin-json": "^6.0.1",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-terser": "^0.4.4",
+        "eslint": "^9.36.0",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^16.4.0",
+        "prettier": "^3.6.2",
+        "rollup": "^4.6.1",
+        "rollup-plugin-css-only": "^4.5.2",
+        "rollup-plugin-string": "^3.0.0",
+        "rollup-plugin-svelte": "^7.1.6",
+        "tsup": "^8.5.0",
+        "vite": "^4.0.0",
+        "vite-plugin-string": "^1.2.3"
+    },
+    "dependencies": {
+        "@codemirror/lang-html": "^6.4.7",
+        "@codemirror/lang-javascript": "^6.2.2",
+        "@sveltejs/vite-plugin-svelte": "^2.5.3",
+        "@vizualmodel/vmblu": "^0.1.1",
+        "@vscode/vsce": "^3.2.1",
+        "codemirror": "^6.0.1",
+        "svelte": "^4.2.19",
+        "ts-morph": "^26.0.0",
+        "typescript": "^5.8.3"
+    }
+}

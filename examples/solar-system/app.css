@@ -1,0 +1,18 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Hide any overflow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* Other custom styles */
+:root {
+
+    /* fonts */
+    --fFamily: Tahoma, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --fFixed: 'Courier New', Courier, monospace;
+    --fBig:1.2rem;
+    --fNormal: 0.9rem;
+    --fSmall: 0.7rem;
+}

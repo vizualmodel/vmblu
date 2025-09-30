@@ -1,0 +1,36 @@
+{
+  "name": "@vizualmodel/vmblu",
+  "version": "0.1.1",
+  "description": "vmblu runtime and tools for building node-based apps",
+  "license": "Apache-2.0",
+  "author": "Vizual Model",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.txt"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs --out-dir dist --sourcemap --splitting false --keep-names",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

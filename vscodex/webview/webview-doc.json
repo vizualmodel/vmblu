@@ -1,0 +1,581 @@
+{
+  "version": "0.2",
+  "generatedAt": "2025-09-25T06:45:13.212Z",
+  "entries": [
+    {
+      "node": "message broker",
+      "handles": [
+        {
+          "pin": "message",
+          "handler": "onMessage",
+          "file": "message-broker-vscode.js",
+          "line": 16,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "event",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "set document",
+          "file": "message-broker-vscode.js",
+          "line": 40
+        },
+        {
+          "pin": "set document",
+          "file": "message-broker-vscode.js",
+          "line": 75
+        },
+        {
+          "pin": "set document",
+          "file": "message-broker-vscode.js",
+          "line": 117
+        },
+        {
+          "pin": "sync model",
+          "file": "message-broker-vscode.js",
+          "line": 150
+        },
+        {
+          "pin": "clipboard switched",
+          "file": "message-broker-vscode.js",
+          "line": 163
+        }
+      ]
+    },
+    {
+      "node": "message broker",
+      "handles": [
+        {
+          "pin": "open document",
+          "handler": "-> open document",
+          "file": "message-broker-webview.js",
+          "line": 12,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "canvas",
+          "handler": "-> canvas",
+          "file": "message-broker-webview.js",
+          "line": 19,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "canvas",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "modal div",
+          "handler": "-> modal div",
+          "file": "message-broker-webview.js",
+          "line": 45,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "modalDiv",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "floating menu",
+          "handler": "-> floating menu",
+          "file": "message-broker-webview.js",
+          "line": 51,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "menuDiv",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "clipboard switch",
+          "handler": "-> clipboard switch",
+          "file": "message-broker-webview.js",
+          "line": 58,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "clipboard local",
+          "handler": "-> clipboard local",
+          "file": "message-broker-webview.js",
+          "line": 65,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "json",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "clipboard remote",
+          "handler": "-> clipboard remote",
+          "file": "message-broker-webview.js",
+          "line": 71,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "new edit",
+          "handler": "-> new edit",
+          "file": "message-broker-webview.js",
+          "line": 77,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "edit",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "open js file",
+          "handler": "-> open js file",
+          "file": "message-broker-webview.js",
+          "line": 83,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "line",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "canvas resize",
+          "file": "message-broker-webview.js",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "node": "document manager",
+      "handles": [
+        {
+          "pin": "doc selected",
+          "handler": "onDocSelected",
+          "file": "../../core/document/document-manager.js",
+          "line": 86,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "ARL",
+              "description": "- The ARL of the selected document."
+            }
+          ]
+        },
+        {
+          "pin": "doc new",
+          "handler": "onDocNew",
+          "file": "../../core/document/document-manager.js",
+          "line": 106,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "ARL",
+              "description": "- ARL for the new document to be created."
+            }
+          ]
+        },
+        {
+          "pin": "doc renamed",
+          "handler": "onDocRenamed",
+          "file": "../../core/document/document-manager.js",
+          "line": 133,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "oldName",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "newName",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "save as",
+          "handler": "onSaveAs",
+          "file": "../../core/document/document-manager.js",
+          "line": 146,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "object",
+              "description": "- the event"
+            }
+          ]
+        },
+        {
+          "pin": "save",
+          "handler": "onSave",
+          "file": "../../core/document/document-manager.js",
+          "line": 176,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "save all",
+          "handler": "onSaveAll",
+          "file": "../../core/document/document-manager.js",
+          "line": 183,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "get open models",
+          "handler": "onGetOpenModels",
+          "file": "../../core/document/document-manager.js",
+          "line": 190,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "tab request to close",
+          "handler": "onTabRequestToClose",
+          "file": "../../core/document/document-manager.js",
+          "line": 208,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "name",
+              "type": "string",
+              "description": "- Name of the tab to close."
+            }
+          ]
+        }
+      ],
+      "transmits": []
+    },
+    {
+      "node": "editor",
+      "handles": [
+        {
+          "pin": "set document",
+          "handler": "onSetDocument",
+          "file": "../../core/editor/editor-message.js",
+          "line": 12,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "get document",
+          "handler": "onGetDocument",
+          "file": "../../core/editor/editor-message.js",
+          "line": 39,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "show settings",
+          "handler": "onShowSettings",
+          "file": "../../core/editor/editor-message.js",
+          "line": 45,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sync model",
+          "handler": "onSyncModel",
+          "file": "../../core/editor/editor-message.js",
+          "line": 76,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "recalibrate",
+          "handler": "onRecalibrate",
+          "file": "../../core/editor/editor-message.js",
+          "line": 85,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "grid on off",
+          "handler": "onGridOnOff",
+          "file": "../../core/editor/editor-message.js",
+          "line": 94,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "accept changes",
+          "handler": "onAcceptChanges",
+          "file": "../../core/editor/editor-message.js",
+          "line": 105,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "size change",
+          "handler": "onSizeChange",
+          "file": "../../core/editor/editor-message.js",
+          "line": 117,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "rect",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "make lib",
+          "handler": "onMakeLib",
+          "file": "../../core/editor/editor-message.js",
+          "line": 150,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "make app",
+          "handler": "onMakeApp",
+          "file": "../../core/editor/editor-message.js",
+          "line": 173,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "run app",
+          "handler": "onRunApp",
+          "file": "../../core/editor/editor-message.js",
+          "line": 199,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "run app in iframe",
+          "handler": "onRunAppInIframe",
+          "file": "../../core/editor/editor-message.js",
+          "line": 208,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "pin profile",
+          "handler": "onPinProfile",
+          "file": "../../core/editor/editor-message.js",
+          "line": 226,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "selected node",
+          "handler": "onSelectedNode",
+          "file": "../../core/editor/editor-message.js",
+          "line": 230,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "model",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "nodePath",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "xyLocal",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "save point set",
+          "handler": "onSavePointSet",
+          "file": "../../core/editor/editor-message.js",
+          "line": 245,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "save point back",
+          "handler": "onSavePointBack",
+          "file": "../../core/editor/editor-message.js",
+          "line": 277,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "change library",
+          "file": "../../core/editor/editor-message.js",
+          "line": 29
+        },
+        {
+          "pin": "reply document",
+          "file": "../../core/editor/editor-message.js",
+          "line": 42
+        },
+        {
+          "pin": "document settings",
+          "file": "../../core/editor/editor-message.js",
+          "line": 57
+        },
+        {
+          "pin": "show lib path",
+          "file": "../../core/editor/editor-message.js",
+          "line": 165
+        },
+        {
+          "pin": "show app path",
+          "file": "../../core/editor/editor-message.js",
+          "line": 191
+        },
+        {
+          "pin": "run",
+          "file": "../../core/editor/editor-message.js",
+          "line": 205
+        },
+        {
+          "pin": "run",
+          "file": "../../core/editor/editor-message.js",
+          "line": 213
+        },
+        {
+          "pin": "iframe",
+          "file": "../../core/editor/editor-message.js",
+          "line": 219
+        },
+        {
+          "pin": "save point.confirm",
+          "file": "../../core/editor/editor-message.js",
+          "line": 251
+        },
+        {
+          "pin": "save point confirm",
+          "file": "../../core/editor/editor-message.js",
+          "line": 284
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "4/15/2024, 9:04:25 AM",
+        "saved": "7/16/2025, 11:24:41 AM",
+        "utc": "2025-07-16T09:24:41.448Z",
+        "style": "#00aaff",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "group": "code mirror",
+        "rect": "x 561 y 102 w 150 h 131",
+        "pins": [
+            {
+                "input": "size change",
+                "hints": "#1"
+            },
+            {
+                "input": "show",
+                "hints": "#2"
+            },
+            {
+                "input": "new file",
+                "hints": "#3"
+            },
+            {
+                "input": "open file",
+                "hints": "#4"
+            },
+            {
+                "output": "file list",
+                "hints": "#5"
+            },
+            {
+                "output": "div",
+                "hints": "#6,left"
+            },
+            {
+                "input": "get open files",
+                "hints": "#7,left"
+            }
+        ],
+        "view": {
+            "state": "open",
+            "rect": "x 0 y 0 w 1448 h 1326",
+            "transform": "sx 1.000 sy 1.000 dx 0.000 dy 0.000"
+        },
+        "nodes": [
+            {
+                "source": "code mirror editor",
+                "factory": {
+                    "path": "./index.js"
+                },
+                "rect": "x 1122 y 267 w 200 h 161",
+                "pins": [
+                    {
+                        "input": "get open files",
+                        "hints": "#1,left"
+                    },
+                    {
+                        "output": "file list",
+                        "hints": "#2,left"
+                    },
+                    {
+                        "output": "save to file",
+                        "hints": "#3"
+                    },
+                    {
+                        "input": "new doc",
+                        "hints": "#4"
+                    },
+                    {
+                        "input": "save doc",
+                        "hints": "#5"
+                    },
+                    {
+                        "input": "close doc",
+                        "hints": "#6"
+                    },
+                    {
+                        "input": "show doc",
+                        "hints": "#7"
+                    },
+                    {
+                        "output": "new tab",
+                        "hints": "#8"
+                    },
+                    {
+                        "output": "div",
+                        "hints": "#9,left"
+                    }
+                ]
+            },
+            {
+                "source": "code mirror window",
+                "factory": {
+                    "path": "./index.js"
+                },
+                "rect": "x 707 y 372 w 200 h 116",
+                "pins": [
+                    {
+                        "input": "menu div",
+                        "hints": "#1"
+                    },
+                    {
+                        "input": "content div",
+                        "hints": "#2"
+                    },
+                    {
+                        "input": "tabs div",
+                        "hints": "#3"
+                    },
+                    {
+                        "output": "div",
+                        "hints": "#4,left"
+                    },
+                    {
+                        "input": "size change",
+                        "hints": "#5"
+                    },
+                    {
+                        "input": "show",
+                        "hints": "#6"
+                    }
+                ]
+            },
+            {
+                "source": "file handler",
+                "factory": {
+                    "path": "./index.js"
+                },
+                "rect": "x 1536 y 419 w 200 h 71",
+                "pins": [
+                    {
+                        "input": "open file",
+                        "hints": "#1"
+                    },
+                    {
+                        "input": "save to file",
+                        "hints": "#2,left"
+                    },
+                    {
+                        "output": "content",
+                        "hints": "#3,left"
+                    }
+                ]
+            },
+            {
+                "source": "tab ribbon",
+                "factory": {
+                    "path": "./index.js"
+                },
+                "rect": "x 1121 y 522 w 200 h 131",
+                "pins": [
+                    {
+                        "output": "div",
+                        "hints": "#1,left"
+                    },
+                    {
+                        "input": "new tab",
+                        "hints": "#2"
+                    },
+                    {
+                        "output": "show doc",
+                        "hints": "#3"
+                    },
+                    {
+                        "output": "close doc",
+                        "hints": "#4"
+                    },
+                    {
+                        "input": "rename tab",
+                        "hints": "#5"
+                    },
+                    {
+                        "output": "save doc",
+                        "hints": "#6"
+                    },
+                    {
+                        "input": "save",
+                        "hints": "#7,left"
+                    }
+                ]
+            },
+            {
+                "source": "top menu",
+                "factory": {
+                    "path": "./index.js"
+                },
+                "rect": "x 1122 y 67 w 200 h 71",
+                "pins": [
+                    {
+                        "output": "div",
+                        "hints": "#1,left"
+                    },
+                    {
+                        "output": "save",
+                        "hints": "#2,left"
+                    },
+                    {
+                        "output": "new doc",
+                        "hints": "#3"
+                    }
+                ]
+            }
+        ],
+        "pads": [
+            {
+                "input": "size change",
+                "hints": "x 262 y 525 w 94 h 15,left"
+            },
+            {
+                "input": "show",
+                "hints": "x 264 y 499 w 58 h 15,left"
+            },
+            {
+                "input": "new file",
+                "hints": "x 1797 y 332 w 71 h 15,right"
+            },
+            {
+                "input": "open file",
+                "hints": "x 1796 y 439 w 75 h 15,right"
+            },
+            {
+                "output": "div",
+                "hints": "x 595 y 437 w 45 h 15,left"
+            },
+            {
+                "output": "file list",
+                "hints": "x 261 y 302 w 63 h 15,left"
+            },
+            {
+                "input": "get open files",
+                "hints": "x 261 y 287 w 101 h 15,left"
+            }
+        ],
+        "routes": [
+            {
+                "pin_": "save to file @ code mirror editor",
+                "_pin": "save to file @ file handler",
+                "wire": "x 127.0 y 137.0 x 87.0"
+            },
+            {
+                "pin_": "new tab @ code mirror editor",
+                "_pin": "new tab @ tab ribbon",
+                "wire": "x 46.0 y 165.0 x -47.0"
+            },
+            {
+                "pin_": "div @ code mirror editor",
+                "_pin": "content div @ code mirror window",
+                "wire": "x -108.0 y 0.0 x -107.0"
+            },
+            {
+                "pin_": "content @ file handler",
+                "_pin": "new doc @ code mirror editor",
+                "wire": "x -104.0 y -137.0 x -110.0"
+            },
+            {
+                "pin_": "div @ tab ribbon",
+                "_pin": "tabs div @ code mirror window",
+                "wire": "x -110.0 y -120.0 x -104.0"
+            },
+            {
+                "pin_": "show doc @ tab ribbon",
+                "_pin": "show doc @ code mirror editor",
+                "wire": "x 64.0 y -195.0 x -63.0"
+            },
+            {
+                "pin_": "close doc @ tab ribbon",
+                "_pin": "close doc @ code mirror editor",
+                "wire": "x 78.0 y -225.0 x -77.0"
+            },
+            {
+                "pin_": "save doc @ tab ribbon",
+                "_pin": "save doc @ code mirror editor",
+                "wire": "x 89.0 y -270.0 x -88.0"
+            },
+            {
+                "pin_": "div @ top menu",
+                "_pin": "menu div @ code mirror window",
+                "wire": "x -110.0 y 305.0 x -105.0"
+            },
+            {
+                "pin_": "save @ top menu",
+                "_pin": "save @ tab ribbon",
+                "wire": "x -71.0 y 530.0 x 70.0"
+            },
+            {
+                "pin_": "new doc @ top menu",
+                "_pin": "new doc @ code mirror editor",
+                "wire": "x 55.0 y 215.0 x -55.0"
+            },
+            {
+                "pad_": "size change",
+                "_pin": "size change @ code mirror window",
+                "wire": "x 614.0 y -73.0 x -63.0"
+            },
+            {
+                "pad_": "show",
+                "_pin": "show @ code mirror window",
+                "wire": "x 623.0 y -32.0 x -38.0"
+            },
+            {
+                "pad_": "new file",
+                "_pin": "new doc @ code mirror editor",
+                "wire": "x -475.0"
+            },
+            {
+                "pad_": "open file",
+                "_pin": "open file @ file handler",
+                "wire": "x -60.0"
+            },
+            {
+                "pin_": "div @ code mirror window",
+                "_pad": "div",
+                "wire": "x -67.0"
+            },
+            {
+                "pin_": "file list @ code mirror editor",
+                "_pad": "file list",
+                "wire": "x -798.0"
+            },
+            {
+                "pad_": "get open files",
+                "_pin": "get open files @ code mirror editor",
+                "wire": "x 380.0 y 0.0 x 380.0"
+            }
+        ]
+    }
+}

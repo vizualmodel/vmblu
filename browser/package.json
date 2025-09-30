@@ -1,0 +1,36 @@
+{
+  "name": "browser",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "force": "vite --force",
+    "build": "vite build",
+    "srvr": "vite build && cp ./out/vmblu-bundle.* ../../fastsrvr/website/page/vmblu/",
+    "preview": "vite preview --outDir ../out",
+    "cm": "cd ./codemirror && rollup -c",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "vite": "^4.4.5",
+    "vite-plugin-string": "^1.0.0"
+  },
+  "dependencies": {
+    "@codemirror/lang-html": "^6.4.7",
+    "@codemirror/lang-javascript": "^6.2.1",
+    "codemirror": "^6.0.1",
+    "svelte": "^5.0.0",
+    "vitest": "^2.0.0",
+    "@vitest/ui": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "@playwright/test": "^1.47.0"
+  }
+}
+  
+

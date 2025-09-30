@@ -1,0 +1,18 @@
+# 0) are you logged in?
+npm whoami || npm login
+
+# 1) bump semver (pick ONE)
+npm version patch   # fixes only
+# npm version minor # new features, no breaking changes
+# npm version major # breaking changes
+
+# 2) build (your prepublishOnly runs this anyway, but good to check)
+npm run build
+
+# 3) sanity check what will ship
+npm pack --dry-run
+node --input-type=module -e "import('./dist/index.js').then(m=>console.log(Object.keys(m)))"
+node -e "console.log(Object.keys(require('./dist/index.cjs')))"
+
+# 4) publish (no --access needed after the first public publish)
+npm publish

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/schema/srcdoc/0.2/srcdoc.schema.json",
+  "title": "vmblu Source Documentation (grouped by node)",
+  "type": "object",
+  "required": ["version", "generatedAt", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    }
+  },
+  "$defs": {
+    "Param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "Handle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pin", "handler", "file", "line", "summary", "returns", "examples", "params"],
+      "properties": {
+        "pin": { "type": "string" },
+        "handler": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "summary": { "type": "string" },
+        "returns": { "type": "string" },
+        "examples": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "params": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Param" }
+        }
+      }
+    },
+    "Transmit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pin", "file", "line"],
+      "properties": {
+        "pin": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "handles", "transmits"],
+      "properties": {
+        "node": { "type": "string" },
+        "handles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Handle" }
+        },
+        "transmits": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Transmit" }
+        }
+      }
+    }
+  }
+}

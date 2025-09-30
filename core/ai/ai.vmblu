@@ -1,0 +1,168 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "6/17/2025, 10:54:52 AM",
+        "saved": "9/16/2025, 11:43:29 AM",
+        "utc": "2025-09-16T09:43:29.001Z",
+        "style": "#243170",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./mcp-client-in-browser.js",
+        "./mcp-server-in-browser.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "ai",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "MCP Client in browser",
+                "factory": {
+                    "path": "./mcp-client-in-browser.js",
+                    "function": "McpClientOpenAI"
+                },
+                "prompt": "An MCP client communicates with the server and uses just two messages to implement the transport layer for an mcp client from a model implementation.\n\nThe client has a UI to receive prompts from the user and to show the repsonse from the LLM. The client sends the div it uses for that to the page that has to integrate it.",
+                "interfaces": [
+                    {
+                        "name": "user interface",
+                        "pins": [
+                            {
+                                "name": "update chat",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "new prompt",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "handle key",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 11
+                        }
+                    },
+                    {
+                        "name": "server interface",
+                        "pins": [
+                            {
+                                "name": "get manifest",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "get tools",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "call tool",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "tool result",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 12
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 269 y 159 w 200 h 161"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MCP Server in browser",
+                "factory": {
+                    "path": "./mcp-server-in-browser.js",
+                    "function": "McpServerInBrowser"
+                },
+                "prompt": "The MCP server is specific to the application and tells the client the services it can deliver. The server has no UI on itself and is LLM-agnostic. It just uses two messages for the transport layer used by the model implementation of the mcp server it encapsulates.",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "get manifest",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "get tools",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "call tool",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "tool result",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 576 y 164 w 200 h 86"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 150 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1894 h 1152",
+                "transform": "sx 1.000 sy 1.000 dx -3.000 dy -6.000"
+            }
+        }
+    }
+}

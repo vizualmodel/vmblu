@@ -1,0 +1,5 @@
+export { CodeMirrorEditor } from './cm-factory.js'
+export { CodeMirrorWindow } from './window-factory.js'
+export { FileHandler } from './file-handler.js'
+export { TabRibbonFactory } from './tab-ribbon-factory.js'
+export { TopMenuFactory } from './top-menu-factory.js'

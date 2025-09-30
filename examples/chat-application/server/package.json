@@ -1,0 +1,16 @@
+{
+  "name": "chat-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "chat-server-app.js",
+  "scripts": {
+    "start": "node chat-server-app.js",
+    "dev": "node --watch chat-server-app.js"
+  },
+  "dependencies": {
+    "fastify": "^4.27.0",
+    "@fastify/cors": "^8.2.1",
+    "@fastify/static": "^6.8.0"
+  }
+}

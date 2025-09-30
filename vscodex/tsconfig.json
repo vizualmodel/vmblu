@@ -1,0 +1,31 @@
+// {
+//   "compilerOptions": {
+//     "module": "nodenext",
+//     "moduleResolution": "nodenext",
+//     "target": "es2020",
+//     "lib": ["es2020"],
+//     "outDir": "out",
+//     "sourceMap": true,
+//     "strict": true,
+//     "rootDir": "src",
+//     "allowJs": true,
+//     "noImplicitAny": false,
+//     "esModuleInterop": true,
+//   },
+//   "exclude": ["node_modules", ".vscode-test", "webview", "out"]
+// }
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["es2020"],
+    "rootDir": "extension",
+    "outDir": "out/extension",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["extension/**/*"],
+  "exclude": ["node_modules", "srcmap", "webview"]
+}

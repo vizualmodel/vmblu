@@ -1,0 +1,110 @@
+{
+    "name": "vmblu",
+    "displayName": "vizual model blueprint",
+    "description": "Structured ● Visual ● AI native",
+    "version": "0.0.3",
+    "publisher": "VizualModel",
+    "private": true,
+    "license": "Apache 2.0",
+    "icon": "./assets/vmblu-logo-vscode.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vizualmodel/vmblu.git",
+        "directory": "vscodex"
+    },
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": ["Other"],
+    "main": "./out/extension/vmblu-bundle.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "vmblu.globe",
+                "title": "Globe test",
+                "when": "extension == vmblu.vmblu",
+                "icon": "$(globe)"
+            }
+        ],
+        "customEditors": [
+            {
+                "viewType": "vmblu.vmblu",
+                "displayName": "Vmblu",
+                "selector": [
+                    {
+                        "filenamePattern": "*.vmblu"
+                    }
+                ],
+                "priority": "default"
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "vmblu.globe",
+                    "group": "navigation",
+                    "when": "resourceExtname == .vmblu"
+                }
+            ]
+        },
+        "colors": [
+            {
+                "id": "vmblu.dataBadge",
+                "defaults": {
+                    "dark": "#9ebbe7",
+                    "light": "#0a1f3f",
+                    "highContrast": "#00ffff"
+                },
+                "description": "Accent used for Vmblu explorer badge."
+            }
+        ]
+    },
+    "files": [
+        "README.md",
+        "LICENSE.txt",
+        "out/extension/vmblu-bundle.js",
+        "out/extension/vmblu-bundle.js.map",
+        "out/srcdoc/vmblu-srcdoc.cjs",
+        "out/srcdoc/vmblu-srcdoc.cjs.map",
+        "out/srcdoc/node_modules/",
+        "webview/webview-bundle.js",
+        "webview/webview-bundle.js.map",
+        "webview/webview-bundle.css",
+        "webview/material-icons/iconfont/outlined.css",
+        "webview/material-icons/iconfont/material-icons-outlined.woff2",
+        "webview/material-icons/iconfont/material-icons-outlined.woff",
+        "assets/vmblu-logo-vscode.png",
+        "assets/vmblu-screenshot.png"
+    ],
+    "scripts": {
+        "vscode:prepublish": "npm run ext && npm run bundle",
+        "vx": "npm run webview && npm run ext &&  npm run bundle & npm run vsix",
+        "vsix": "vsce package",
+        "webview": "cd ./webview && rollup -c",
+        "ext": "tsc -p tsconfig.json",
+        "bundle": "cd ./out/extension && rollup -c",
+        "lint": "eslint \"extension/**/*.ts\"",
+        "watch": "tsc -w -p ./",
+        "help": "tsc -h"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^25.0.7",
+        "@rollup/plugin-json": "^6.0.1",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@types/node": "^16.18.34",
+        "@types/vscode": "^1.73.0",
+        "@typescript-eslint/eslint-plugin": "^6.7.0",
+        "@typescript-eslint/parser": "^6.7.0",
+        "eslint": "^8.26.0",
+        "rollup": "^4.6.1",
+        "rollup-plugin-css-only": "^4.5.2",
+        "rollup-plugin-svelte": "^7.1.6",
+        "svelte": "^4.2.8"
+    },
+    "dependencies": {
+        "@vscode/vsce": "^3.6.2",
+        "ts-morph": "^26.0.0",
+        "typescript": "^5.8.3"
+    }
+}

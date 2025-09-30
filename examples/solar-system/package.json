@@ -1,0 +1,38 @@
+{
+  "name": "solar",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open index.html",
+    "build": "vite build",
+    "preview": "vite preview",
+    "doc": "node /dev/vmblu/browser/docgen/vmblu-docgen ./src/solar-system.vmblu"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "svelte": "^4.2.12",
+    "vite": "^5.2.0"
+  },
+ "dependencies": {
+    "@babel/core": "^7.24.5",
+    "@babel/preset-env": "^7.24.5",
+    "@modelcontextprotocol/sdk": "^1.12.3",
+    "@observablehq/plot": "^0.6.16",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "axios": "^1.8.4",
+    "documentation": "^14.0.3",
+    "marked": "^15.0.7",
+    "openai": "^4.90.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-serve": "^1.1.1",
+    "svelte": "^4.2.12",
+    "three": "^0.164.1",
+    "vite": "^5.2.0"
+  }
+}

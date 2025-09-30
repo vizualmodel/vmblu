@@ -1,0 +1,699 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "3/25/2025, 10:11:39 AM",
+        "saved": "3/26/2025, 9:29:14 PM",
+        "utc": "2025-03-26T20:29:14.040Z",
+        "style": "#00aaff",
+        "runtime": "./runtime.js"
+    },
+    "imports": [
+        "./webview.vmblu",
+        "../../ui/out/svelte-lib-bundle.js",
+        "../../core/node-editor.vmblu"
+    ],
+    "factories": [
+        "./index.js",
+        "./message-broker.js"
+    ],
+    "root": {
+        "group": "",
+        "rect": "x 0 y 0 w 150 h 26",
+        "view": {
+            "state": "open",
+            "rect": "x 0 y 0 w 1277 h 1326",
+            "transform": "sx 1.000 sy 1.000 dx -185.641 dy -127.267"
+        },
+        "nodes": [
+            {
+                "source": "a source node",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "ASourceNode"
+                },
+                "rect": "x 413 y 112 w 150 h 101",
+                "pins": [
+                    {
+                        "input": "a (1R)"
+                    },
+                    {
+                        "input": "c (3R)"
+                    },
+                    {
+                        "input": "z (4R)"
+                    },
+                    {
+                        "input": "eee (5R)"
+                    },
+                    {
+                        "input": "b (2R)"
+                    }
+                ]
+            },
+            {
+                "source": "message broker",
+                "factory": {
+                    "path": "./message-broker.js",
+                    "function": "MessageBroker"
+                },
+                "rect": "x 353 y 324 w 200 h 311",
+                "pins": [
+                    {
+                        "cluster": "document (13)"
+                    },
+                    {
+                        "input": "open.document (20R)"
+                    },
+                    {
+                        "output": "set.document (21R)"
+                    },
+                    {
+                        "output": "get.document (22R)"
+                    },
+                    {
+                        "input": "reply.document (23R)"
+                    },
+                    {
+                        "cluster": "edit (11)"
+                    },
+                    {
+                        "output": "sync model (24R)"
+                    },
+                    {
+                        "input": "new edit (25R)"
+                    },
+                    {
+                        "input": "open js file (26R)"
+                    },
+                    {
+                        "cluster": "divs (12)"
+                    },
+                    {
+                        "input": "floating menu (27L)"
+                    },
+                    {
+                        "input": "canvas (28R)"
+                    },
+                    {
+                        "output": "canvas resize (29R)"
+                    },
+                    {
+                        "input": "modal div (30R)"
+                    },
+                    {
+                        "cluster": "clipboard (19)"
+                    },
+                    {
+                        "output": "clipboard.local (31L)",
+                        "channel": true
+                    },
+                    {
+                        "input": "clipboard.remote (32L)",
+                        "channel": true
+                    },
+                    {
+                        "output": "clipboard.switched (33L)"
+                    },
+                    {
+                        "input": "clipboard.switch (34L)"
+                    }
+                ]
+            },
+            {
+                "source": "message broker",
+                "factory": {
+                    "path": "./message-broker.js",
+                    "function": "MessageBroker"
+                },
+                "rect": "x 743 y 336 w 200 h 311",
+                "label": "The broker communicates wth vscode",
+                "pins": [
+                    {
+                        "cluster": "document (13)"
+                    },
+                    {
+                        "input": "open.document (20R)"
+                    },
+                    {
+                        "output": "set.document (21R)"
+                    },
+                    {
+                        "output": "get.document (22R)"
+                    },
+                    {
+                        "input": "reply.document (23R)"
+                    },
+                    {
+                        "cluster": "edit (11)"
+                    },
+                    {
+                        "output": "sync model (24R)"
+                    },
+                    {
+                        "input": "new edit (25R)"
+                    },
+                    {
+                        "input": "open js file (26R)"
+                    },
+                    {
+                        "cluster": "divs (12)"
+                    },
+                    {
+                        "input": "floating menu (27L)"
+                    },
+                    {
+                        "input": "canvas (28R)"
+                    },
+                    {
+                        "output": "canvas resize (29R)"
+                    },
+                    {
+                        "input": "modal div (30R)"
+                    },
+                    {
+                        "cluster": "clipboard (19)"
+                    },
+                    {
+                        "output": "clipboard.local (31L)",
+                        "channel": true
+                    },
+                    {
+                        "input": "clipboard.remote (32L)",
+                        "channel": true
+                    },
+                    {
+                        "output": "clipboard.switched (33L)"
+                    },
+                    {
+                        "input": "clipboard.switch (34L)"
+                    }
+                ]
+            },
+            {
+                "dock": "message broker",
+                "link": {
+                    "path": "./webview.vmblu",
+                    "node": "message broker"
+                },
+                "rect": "x 353 y 662 w 200 h 311",
+                "pins": [
+                    {
+                        "cluster": "document (13)"
+                    },
+                    {
+                        "input": "open.document (20R)"
+                    },
+                    {
+                        "output": "set.document (21R)"
+                    },
+                    {
+                        "output": "get.document (22R)"
+                    },
+                    {
+                        "input": "reply.document (23R)"
+                    },
+                    {
+                        "cluster": "edit (11)"
+                    },
+                    {
+                        "output": "sync model (24R)"
+                    },
+                    {
+                        "input": "new edit (25R)"
+                    },
+                    {
+                        "input": "open js file (26R)"
+                    },
+                    {
+                        "cluster": "divs (12)"
+                    },
+                    {
+                        "input": "floating menu (27L)"
+                    },
+                    {
+                        "input": "canvas (28R)"
+                    },
+                    {
+                        "output": "canvas resize (29R)"
+                    },
+                    {
+                        "input": "modal div (30R)"
+                    },
+                    {
+                        "cluster": "clipboard (19)"
+                    },
+                    {
+                        "output": "clipboard.local (31L)",
+                        "channel": true
+                    },
+                    {
+                        "input": "clipboard.remote (32L)",
+                        "channel": true
+                    },
+                    {
+                        "output": "clipboard.switched (33L)"
+                    },
+                    {
+                        "input": "clipboard.switch (34L)"
+                    }
+                ]
+            },
+            {
+                "source": "message broker",
+                "factory": {
+                    "path": "./message-broker.js",
+                    "function": "MessageBroker"
+                },
+                "rect": "x 787 y 796 w 200 h 311",
+                "label": "The broker communicates wth vscode",
+                "pins": [
+                    {
+                        "cluster": "document (13)"
+                    },
+                    {
+                        "input": "open.document (20R)"
+                    },
+                    {
+                        "output": "set.document (21R)"
+                    },
+                    {
+                        "output": "get.document (22R)"
+                    },
+                    {
+                        "input": "reply.document (23R)"
+                    },
+                    {
+                        "cluster": "edit (11)"
+                    },
+                    {
+                        "output": "sync model (24R)"
+                    },
+                    {
+                        "input": "new edit (25R)"
+                    },
+                    {
+                        "input": "open js file (26R)"
+                    },
+                    {
+                        "cluster": "divs (12)"
+                    },
+                    {
+                        "input": "floating menu (27L)"
+                    },
+                    {
+                        "input": "canvas (28R)"
+                    },
+                    {
+                        "output": "canvas resize (29R)"
+                    },
+                    {
+                        "input": "modal div (30R)"
+                    },
+                    {
+                        "cluster": "clipboard (19)"
+                    },
+                    {
+                        "output": "clipboard.local (31L)",
+                        "channel": true
+                    },
+                    {
+                        "input": "clipboard.remote (32L)",
+                        "channel": true
+                    },
+                    {
+                        "output": "clipboard.switched (33L)"
+                    },
+                    {
+                        "input": "clipboard.switch (34L)"
+                    }
+                ]
+            },
+            {
+                "group": "select node",
+                "rect": "x 635 y 717 w 150 h 86",
+                "pins": [
+                    {
+                        "input": "select node (1L)"
+                    },
+                    {
+                        "output": "node (2L)"
+                    },
+                    {
+                        "input": "switch library (3L)"
+                    },
+                    {
+                        "output": "modal div (4R)"
+                    }
+                ],
+                "view": {
+                    "state": "closed",
+                    "rect": "x 820 y 707 w 873 h 500",
+                    "transform": "sx 1.000 sy 1.000 dx 820.141 dy 707.267"
+                },
+                "nodes": [
+                    {
+                        "dock": "node selector",
+                        "link": {
+                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "node": "node selector"
+                        },
+                        "rect": "x 518 y 160 w 150 h 131",
+                        "label": "select nodes from the library",
+                        "pins": [
+                            {
+                                "output": "selected node (3L)"
+                            },
+                            {
+                                "input": "show (2L)"
+                            },
+                            {
+                                "input": "build table (1L)"
+                            },
+                            {
+                                "output": "remove file (6L)"
+                            },
+                            {
+                                "output": "add file (5L)"
+                            },
+                            {
+                                "output": "get path (4L)"
+                            },
+                            {
+                                "output": "modal div (7R)"
+                            }
+                        ]
+                    },
+                    {
+                        "dock": "library manager",
+                        "link": {
+                            "path": "../../core/node-editor.vmblu",
+                            "node": "library manager"
+                        },
+                        "rect": "x 279 y 175 w 150 h 86",
+                        "pins": [
+                            {
+                                "input": "switch library (3L)"
+                            },
+                            {
+                                "output": "build table (4R)"
+                            },
+                            {
+                                "input": "remove file (2R)"
+                            },
+                            {
+                                "input": "add file (1R)"
+                            }
+                        ]
+                    },
+                    {
+                        "dock": "path request",
+                        "link": {
+                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "node": "path request"
+                        },
+                        "rect": "x 290 y 310 w 150 h 56",
+                        "label": "add a file to the nodelib",
+                        "pins": [
+                            {
+                                "input": "path (1R)"
+                            },
+                            {
+                                "output": "modal div (2R)"
+                            }
+                        ]
+                    }
+                ],
+                "pads": [
+                    {
+                        "input": "select node",
+                        "position": "x 53 y 117 w 91 h 15,left"
+                    },
+                    {
+                        "output": "node",
+                        "position": "x 53 y 89 w 57 h 15,left"
+                    },
+                    {
+                        "input": "switch library",
+                        "position": "x 53 y 150 w 99 h 15,left"
+                    },
+                    {
+                        "output": "modal div",
+                        "position": "x 766 y 270 w 81 h 15,right"
+                    }
+                ],
+                "routes": [
+                    {
+                        "pin_": "remove file (6L) @ node selector",
+                        "_pin": "remove file (2R) @ library manager",
+                        "wire": "x -42.0 y 0.0 x -47.0"
+                    },
+                    {
+                        "pin_": "add file (5L) @ node selector",
+                        "_pin": "add file (1R) @ library manager",
+                        "wire": "x -52.0 y 0.0 x -37.0"
+                    },
+                    {
+                        "pin_": "get path (4L) @ node selector",
+                        "_pin": "path (1R) @ path request",
+                        "wire": "x -34.0 y 75.0 x -44.0"
+                    },
+                    {
+                        "pin_": "build table (4R) @ library manager",
+                        "_pin": "build table (1L) @ node selector",
+                        "wire": "x 89.0"
+                    },
+                    {
+                        "pad_": "select node",
+                        "_pin": "show (2L) @ node selector",
+                        "wire": "x 296.0 y 78.0 x 78.0"
+                    },
+                    {
+                        "pin_": "selected node (3L) @ node selector",
+                        "_pad": "node",
+                        "wire": "x -58.0 y -91.0 x -350.0"
+                    },
+                    {
+                        "pad_": "switch library",
+                        "_pin": "switch library (3L) @ library manager",
+                        "wire": "x 66.0 y 45.0 x 61.0"
+                    },
+                    {
+                        "pin_": "modal div (7R) @ node selector",
+                        "_pad": "modal div",
+                        "wire": "x 98.0"
+                    },
+                    {
+                        "pin_": "modal div (2R) @ path request",
+                        "_pad": "modal div",
+                        "wire": "x 283.0 y -75.0 x 43.0"
+                    }
+                ]
+            },
+            {
+                "dock": "select node",
+                "link": {
+                    "path": "./webview.vmblu",
+                    "node": "select node"
+                },
+                "rect": "x 500 y 1100 w 150 h 86",
+                "pins": [
+                    {
+                        "input": "select node (1L)"
+                    },
+                    {
+                        "output": "node (2L)"
+                    },
+                    {
+                        "input": "switch library (3L)"
+                    },
+                    {
+                        "output": "modal div (4R)"
+                    }
+                ]
+            },
+            {
+                "group": "select node",
+                "rect": "x 1113 y 628 w 150 h 86",
+                "pins": [
+                    {
+                        "input": "select node (1L)"
+                    },
+                    {
+                        "output": "node (2L)"
+                    },
+                    {
+                        "input": "switch library (3L)"
+                    },
+                    {
+                        "output": "modal div (4R)"
+                    }
+                ],
+                "view": {
+                    "state": "open",
+                    "rect": "x 461 y 453 w 873 h 500",
+                    "transform": "sx 1.000 sy 1.000 dx 461.141 dy 453.267"
+                },
+                "nodes": [
+                    {
+                        "dock": "node selector",
+                        "link": {
+                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "node": "node selector"
+                        },
+                        "rect": "x 518 y 160 w 150 h 131",
+                        "label": "select nodes from the library",
+                        "pins": [
+                            {
+                                "output": "selected node (3L)"
+                            },
+                            {
+                                "input": "show (2L)"
+                            },
+                            {
+                                "input": "build table (1L)"
+                            },
+                            {
+                                "output": "remove file (6L)"
+                            },
+                            {
+                                "output": "add file (5L)"
+                            },
+                            {
+                                "output": "get path (4L)"
+                            },
+                            {
+                                "output": "modal div (7R)"
+                            }
+                        ]
+                    },
+                    {
+                        "dock": "library manager",
+                        "link": {
+                            "path": "../../core/node-editor.vmblu",
+                            "node": "library manager"
+                        },
+                        "rect": "x 279 y 175 w 150 h 86",
+                        "pins": [
+                            {
+                                "input": "switch library (3L)"
+                            },
+                            {
+                                "output": "build table (4R)"
+                            },
+                            {
+                                "input": "remove file (2R)"
+                            },
+                            {
+                                "input": "add file (1R)"
+                            }
+                        ]
+                    },
+                    {
+                        "dock": "path request",
+                        "link": {
+                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "node": "path request"
+                        },
+                        "rect": "x 290 y 310 w 150 h 56",
+                        "label": "add a file to the nodelib",
+                        "pins": [
+                            {
+                                "input": "path (1R)"
+                            },
+                            {
+                                "output": "modal div (2R)"
+                            }
+                        ]
+                    }
+                ],
+                "pads": [
+                    {
+                        "input": "select node",
+                        "position": "x 53 y 123 w 91 h 15,left"
+                    },
+                    {
+                        "output": "node",
+                        "position": "x 53 y 95 w 57 h 15,left"
+                    },
+                    {
+                        "input": "switch library",
+                        "position": "x 53 y 150 w 99 h 15,left"
+                    },
+                    {
+                        "output": "modal div",
+                        "position": "x 766 y 270 w 81 h 15,right"
+                    }
+                ],
+                "routes": [
+                    {
+                        "pin_": "remove file (6L) @ node selector",
+                        "_pin": "remove file (2R) @ library manager",
+                        "wire": "x -42.0 y 0.0 x -47.0"
+                    },
+                    {
+                        "pin_": "add file (5L) @ node selector",
+                        "_pin": "add file (1R) @ library manager",
+                        "wire": "x -52.0 y 0.0 x -37.0"
+                    },
+                    {
+                        "pin_": "get path (4L) @ node selector",
+                        "_pin": "path (1R) @ path request",
+                        "wire": "x -34.0 y 75.0 x -44.0"
+                    },
+                    {
+                        "pin_": "build table (4R) @ library manager",
+                        "_pin": "build table (1L) @ node selector",
+                        "wire": "x 89.0"
+                    },
+                    {
+                        "pad_": "select node",
+                        "_pin": "show (2L) @ node selector",
+                        "wire": "x 296.0 y 72.0 x 78.0"
+                    },
+                    {
+                        "pin_": "selected node (3L) @ node selector",
+                        "_pad": "node",
+                        "wire": "x -58.0 y -85.0 x -350.0"
+                    },
+                    {
+                        "pad_": "switch library",
+                        "_pin": "switch library (3L) @ library manager",
+                        "wire": "x 66.0 y 45.0 x 61.0"
+                    },
+                    {
+                        "pin_": "modal div (7R) @ node selector",
+                        "_pad": "modal div",
+                        "wire": "x 98.0"
+                    },
+                    {
+                        "pin_": "modal div (2R) @ path request",
+                        "_pad": "modal div",
+                        "wire": "x 283.0 y -75.0 x 43.0"
+                    }
+                ]
+            },
+            {
+                "dock": "select node",
+                "link": {
+                    "path": "./webview.vmblu",
+                    "node": "select node"
+                },
+                "rect": "x 1116 y 404 w 150 h 86",
+                "pins": [
+                    {
+                        "input": "select node (1L)"
+                    },
+                    {
+                        "output": "node (2L)"
+                    },
+                    {
+                        "input": "switch library (3L)"
+                    },
+                    {
+                        "output": "modal div (4R)"
+                    }
+                ]
+            }
+        ]
+    }
+}

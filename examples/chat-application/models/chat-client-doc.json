@@ -1,0 +1,132 @@
+{
+  "version": "0.2",
+  "generatedAt": "2025-09-23T06:45:07.720Z",
+  "entries": [
+    {
+      "node": "ChatPage",
+      "handles": [
+        {
+          "pin": "ComposerDiv",
+          "handler": "onComposerDiv",
+          "file": "../client/src/lib/nodes/chat-page.js",
+          "line": 34,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "payload",
+              "type": "*",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "list div",
+          "handler": "onListDiv",
+          "file": "../client/src/lib/nodes/chat-page.js",
+          "line": 37,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "payload",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": []
+    },
+    {
+      "node": "MessageComposer",
+      "handles": [],
+      "transmits": [
+        {
+          "pin": "div",
+          "file": "../client/src/lib/nodes/message-composer.js",
+          "line": 32
+        },
+        {
+          "pin": "submitMessage",
+          "file": "../client/src/lib/nodes/message-composer.js",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "node": "MessageList",
+      "handles": [
+        {
+          "pin": "show messages",
+          "handler": "onShowMessages",
+          "file": "../client/src/lib/nodes/message-list.js",
+          "line": 52,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "payload",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "div",
+          "file": "../client/src/lib/nodes/message-list.js",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "node": "MessageStore",
+      "handles": [
+        {
+          "pin": "save message",
+          "handler": "onSaveMessage",
+          "file": "../client/src/lib/nodes/message-store.js",
+          "line": 104,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "payload",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "hydrate",
+          "handler": "onHydrate",
+          "file": "../client/src/lib/nodes/message-store.js",
+          "line": 108,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "payload",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "messagesChanged",
+          "file": "../client/src/lib/nodes/message-store.js",
+          "line": 62
+        }
+      ]
+    }
+  ]
+}
