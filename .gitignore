@@ -28,4 +28,4 @@ docs/old-versions
 vscodex/.vscode
 vmblu-0.0.1.vsix
 .github/
-*.code-workspace
+*.code-workspaceexamples/
