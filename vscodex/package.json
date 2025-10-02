@@ -15,7 +15,9 @@
     "engines": {
         "vscode": "^1.74.0"
     },
-    "categories": ["Other"],
+    "categories": [
+        "Other"
+    ],
     "main": "./out/extension/vmblu-bundle.js",
     "contributes": {
         "commands": [
@@ -106,5 +108,8 @@
         "@vscode/vsce": "^3.6.2",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
-    }
+    },
+    "activationEvents": [
+        "onStartupFinished"
+    ]
 }

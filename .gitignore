@@ -8,17 +8,22 @@ core/ai/.vault.txt
 
 # Runtime data
 *.log
+*.map
 
 # Build output
 browser/out/
 ui/out/
 runtime/out/
 vscodex/out/
+vscodex/*.vsix
+vscodex/webview/webview-bundle.js    
+vscodex/webview/webview-bundle.js.map
 
 # Not relevant for the project
 prompts.txt
 llm-prompts/
 docs/old-versions
+docs/private
 **/z-*
 **/zz-*
 **/zzz-*
@@ -26,6 +31,7 @@ docs/old-versions
 # System files
 .vscode/
 vscodex/.vscode
-vmblu-0.0.1.vsix
-.github/
-*.code-workspaceexamples/
+**/*.code-workspace
+
+#don't include the examples - they have a separate repo
+examples/
