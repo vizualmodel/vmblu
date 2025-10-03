@@ -8,6 +8,9 @@ import {GroupNode, Look} from '../node/index.js'
 import {ModelBlueprint} from './index.js'
 import {ARL} from '../arl/index.js'
 
+/**
+ * @node clipboard
+ */
 
 //Constructor for clipboard manager
 export function Clipboard(tx, sx) {

@@ -76,12 +76,14 @@
         "webview/material-icons/iconfont/material-icons-outlined.woff2",
         "webview/material-icons/iconfont/material-icons-outlined.woff",
         "assets/vmblu-logo-vscode.png",
+        "assets/vmblu-512.png",
         "assets/vmblu-screenshot.png"
     ],
     "scripts": {
         "vscode:prepublish": "npm run ext && npm run bundle",
         "vx": "npm run webview && npm run ext &&  npm run bundle & npm run vsix",
-        "vsix": "vsce package",
+        "vsix": "vsce package --no-rewrite-relative-links",
+        "vsix:publish": "vsce package",
         "webview": "cd ./webview && rollup -c",
         "ext": "tsc -p tsconfig.json",
         "bundle": "cd ./out/extension && rollup -c",

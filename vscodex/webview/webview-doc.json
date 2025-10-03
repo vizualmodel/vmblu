@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "generatedAt": "2025-09-25T06:45:13.212Z",
+  "generatedAt": "2025-10-03T09:17:25.329Z",
   "entries": [
     {
       "node": "message broker",
@@ -327,7 +327,7 @@
           "pin": "set document",
           "handler": "onSetDocument",
           "file": "../../core/editor/editor-message.js",
-          "line": 12,
+          "line": 10,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -353,7 +353,7 @@
           "pin": "show settings",
           "handler": "onShowSettings",
           "file": "../../core/editor/editor-message.js",
-          "line": 45,
+          "line": 44,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -363,7 +363,7 @@
           "pin": "sync model",
           "handler": "onSyncModel",
           "file": "../../core/editor/editor-message.js",
-          "line": 76,
+          "line": 74,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -373,7 +373,7 @@
           "pin": "recalibrate",
           "handler": "onRecalibrate",
           "file": "../../core/editor/editor-message.js",
-          "line": 85,
+          "line": 81,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -383,7 +383,7 @@
           "pin": "grid on off",
           "handler": "onGridOnOff",
           "file": "../../core/editor/editor-message.js",
-          "line": 94,
+          "line": 89,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -393,7 +393,7 @@
           "pin": "accept changes",
           "handler": "onAcceptChanges",
           "file": "../../core/editor/editor-message.js",
-          "line": 105,
+          "line": 100,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -403,7 +403,7 @@
           "pin": "size change",
           "handler": "onSizeChange",
           "file": "../../core/editor/editor-message.js",
-          "line": 117,
+          "line": 111,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -419,7 +419,7 @@
           "pin": "make lib",
           "handler": "onMakeLib",
           "file": "../../core/editor/editor-message.js",
-          "line": 150,
+          "line": 142,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -435,7 +435,7 @@
           "pin": "make app",
           "handler": "onMakeApp",
           "file": "../../core/editor/editor-message.js",
-          "line": 173,
+          "line": 167,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -451,7 +451,7 @@
           "pin": "run app",
           "handler": "onRunApp",
           "file": "../../core/editor/editor-message.js",
-          "line": 199,
+          "line": 195,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -461,7 +461,7 @@
           "pin": "run app in iframe",
           "handler": "onRunAppInIframe",
           "file": "../../core/editor/editor-message.js",
-          "line": 208,
+          "line": 207,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -471,7 +471,7 @@
           "pin": "pin profile",
           "handler": "onPinProfile",
           "file": "../../core/editor/editor-message.js",
-          "line": 226,
+          "line": 227,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -507,7 +507,7 @@
           "pin": "save point set",
           "handler": "onSavePointSet",
           "file": "../../core/editor/editor-message.js",
-          "line": 245,
+          "line": 244,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -517,7 +517,7 @@
           "pin": "save point back",
           "handler": "onSavePointBack",
           "file": "../../core/editor/editor-message.js",
-          "line": 277,
+          "line": 273,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -528,52 +528,127 @@
         {
           "pin": "change library",
           "file": "../../core/editor/editor-message.js",
-          "line": 29
+          "line": 26
         },
         {
           "pin": "reply document",
           "file": "../../core/editor/editor-message.js",
-          "line": 42
+          "line": 41
         },
         {
           "pin": "document settings",
           "file": "../../core/editor/editor-message.js",
-          "line": 57
+          "line": 54
         },
         {
           "pin": "show lib path",
           "file": "../../core/editor/editor-message.js",
-          "line": 165
+          "line": 158
         },
         {
           "pin": "show app path",
           "file": "../../core/editor/editor-message.js",
-          "line": 191
+          "line": 186
         },
         {
           "pin": "run",
           "file": "../../core/editor/editor-message.js",
-          "line": 205
+          "line": 200
         },
         {
           "pin": "run",
           "file": "../../core/editor/editor-message.js",
-          "line": 213
+          "line": 211
         },
         {
           "pin": "iframe",
           "file": "../../core/editor/editor-message.js",
-          "line": 219
+          "line": 220
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/editor/editor-message.js",
-          "line": 251
+          "line": 249
         },
         {
           "pin": "save point confirm",
           "file": "../../core/editor/editor-message.js",
-          "line": 284
+          "line": 279
+        }
+      ]
+    },
+    {
+      "node": "clipboard",
+      "handles": [
+        {
+          "pin": "set",
+          "handler": "onSet",
+          "file": "../../core/model/clipboard.js",
+          "line": 52,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "model",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "selection",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "get",
+          "handler": "onGet",
+          "file": "../../core/model/clipboard.js",
+          "line": 73,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "switched",
+          "handler": "onSwitched",
+          "file": "../../core/model/clipboard.js",
+          "line": 102,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "local",
+          "handler": "onLocal",
+          "file": "../../core/model/clipboard.js",
+          "line": 109,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "switch",
+          "file": "../../core/model/clipboard.js",
+          "line": 70
         }
       ]
     }

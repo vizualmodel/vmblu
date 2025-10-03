@@ -1,3 +1,6 @@
+
+![vmblu logo](./assets/vmblu-512.png)
+
 **vmblu** makes the architecture of your software explicit and easy to navigate — by humans and LLMs.
 
 Modern LLMs make it easy to “vibe code” — write fast with AI. But as your app grows, features break, code bloat creeps in and the big picture fades. **vmblu** fixes that by making your architecture structured, visual, and AI-native.
@@ -32,7 +35,7 @@ Clean connectivity by using
 
 The following is a screenshot from an application in vmblu:
 
-![example of a vmblu model](assets/vmblu-screenshot.png)
+![example of a vmblu model](./assets/vmblu-screenshot.png)
 
 ## 🔹  AI-native by design</b></span><br>
 

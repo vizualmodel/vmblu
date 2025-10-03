@@ -1,4 +1,4 @@
-![logo](./logo/vmblu-512.png)
+![logo](./figures/vmblu-512.png)
 
 **vmblu** is a tool that makes the architecture of your software explicit and easy to navigate — by humans *and* LLMs. 
 
