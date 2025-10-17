@@ -1390,7 +1390,7 @@ const convert = {
     // extract the names between square brackets:  'any text [selector a, selector b, ...] any text'
     extractMultis: str => {
 
-        const [pre, middle, post] = convert.getPreMiddlePost(str);
+        const [pre, middle] = convert.getPreMiddlePost(str);
 
         // split, trim an filter
         return middle.split(',')
@@ -2385,7 +2385,7 @@ function ModelHeader() {
     this.saved = today.toLocaleString();
     this.utc = today.toJSON();
     this.style = style$1;
-    this.runtime = './runtime.js';
+    this.runtime = '@vizualmodel/vmblu';
 }
 ModelHeader.prototype = {
 
@@ -2420,9 +2420,8 @@ ModelHeader.prototype = {
         this.style = style$1.create(raw.style);
 
         // get the runtime
-        this.runtime = raw.runtime?.slice() ?? './runtime.js';
+        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu';
     },
-
 };
 
 // Server error
@@ -2865,9 +2864,6 @@ async handleSourceDoc() {
     // check
     if (! rawSourceDoc) return;
 
-    // check that the source doc has the expected fields
-    if ((raw))
-
     // parse to extract the juicy bits
     this.sourceMap = this.parseSourceDoc(rawSourceDoc);        
 
@@ -2899,6 +2895,9 @@ async readSourceDoc() {
  * @returns {Map<string, Map<string, object>>} Map of nodeName -> Map of pinName -> handler metadata
  */
 parseSourceDoc(raw) {
+
+    // check
+    if (!raw.entries) return null;
 
     const nodeMap = new Map();
 
@@ -4046,27 +4045,24 @@ const mouseHandling$1 = {
 //const cursor = "\u2595"
 //const cursor = "|"
 const keyboardHandling$1 = {
-
     // keyboard press
     onKeydown(e) {
-
         // if the key is processed
-        if ( this.doc?.focus?.onKeydown(e)) {
-
+        if (this.doc?.focus?.onKeydown(e)) {
             // stop it
             e.stopPropagation();
             e.preventDefault();
 
             // and redraw
             this.redraw();
+
+            console.log('hello baby');
         }
     },
 
     onKeyup(e) {
-
         // if the key is processed
         if (this.doc?.focus?.onKeyup(e)) {
-
             // stop it
             e.stopPropagation();
             e.preventDefault();
@@ -4078,29 +4074,30 @@ const keyboardHandling$1 = {
 };
 
 const messageHandling = {
-
-/**
- * @node editor
- */
+    /**
+     * @node editor
+     */
 
     onSetDocument(doc) {
-
         // the document can be null
         if (!doc) {
-
             this.doc = null;
             this.redraw();
-            return
+            return;
         }
 
         // for a new active doucment, screen size has not yet been set
-        if (doc.view.noRect()) doc.view.setRect(0,0,this.canvas.width, this.canvas.height);
+        if (doc.view.noRect())
+            doc.view.setRect(0, 0, this.canvas.width, this.canvas.height);
 
         // set the document as the active document
         this.doc = doc;
 
         // switch the node library (it can be empty but not null)
-        this.tx.send('change library', {ref: doc.model.arl, libraries: doc.model.libraries});
+        this.tx.send('change library', {
+            ref: doc.model.arl,
+            libraries: doc.model.libraries,
+        });
 
         // set the style for the document
         this.setStyle();
@@ -4111,13 +4108,11 @@ const messageHandling = {
 
     // reply on the get request
     onGetDocument() {
-
         // reply the active document
-        this.tx.send("reply document", this.doc);
+        this.tx.send('reply document', this.doc);
     },
 
     onShowSettings() {
-
         this.canvas.getBoundingClientRect();
 
         const header = this.doc.model.header;
@@ -4126,38 +4121,35 @@ const messageHandling = {
         // save the current version of the rgb
         const oldRgb = header.style.rgb;
 
-
         // send the settings to the popup
-        this.tx.send('document settings',{  title: 'Document Settings',
-                                            path: this.doc.model.arl?.getFullPath() ?? '- unspecified -',
-                                            settings: header,
-                                            pos:{x:25, y:25},
-                                            onColor(rgb) {
-                                                header.style.adapt(rgb);
-                                                redraw();
-                                            },
-                                            ok(runtime) {
-                                                // save the value of the runtime
-                                                header.runtime = runtime;
-                                            },
-                                            cancel() {
-                                                header.style.adapt(oldRgb);
-                                                redraw();
-                                            }
-                                        });
+        this.tx.send('document settings', {
+            title: 'Document Settings',
+            path: this.doc.model.arl?.getFullPath() ?? '- unspecified -',
+            settings: header,
+            pos: { x: 25, y: 25 },
+            onColor(rgb) {
+                header.style.adapt(rgb);
+                redraw();
+            },
+            ok(runtime) {
+                // save the value of the runtime
+                header.runtime = runtime;
+            },
+            cancel() {
+                header.style.adapt(oldRgb);
+                redraw();
+            },
+        });
     },
 
     onSyncModel() {
-
-        this.doc?.update().then(()=>{
-
+        this.doc?.update().then(() => {
             // and redraw
             this.redraw();
         });
     },
 
     onRecalibrate() {
-
         // reset the transform data
         this.doc?.view.toggleTransform();
 
@@ -4170,17 +4162,16 @@ const messageHandling = {
         const state = this.doc?.view?.state;
 
         // toggle
-        if (state) state.grid = ! state.grid;
+        if (state) state.grid = !state.grid;
 
         // redraw
         this.redraw();
     },
 
     onAcceptChanges() {
-
         // check
-        if (!this.doc) return
-        
+        if (!this.doc) return;
+
         // loop through the nodes of the document
         this.doc.view.root.acceptChanges();
 
@@ -4189,16 +4180,15 @@ const messageHandling = {
     },
 
     onSizeChange(rect) {
-
         // check if the size is given
-        if (!rect) return
+        if (!rect) return;
 
         // adjust
         this.canvas.width = rect.w;
         this.canvas.height = rect.h;
 
         // don't forget to adjust the style
-        this.canvas.style.width  = rect.w + 'px';
+        this.canvas.style.width = rect.w + 'px';
         this.canvas.style.height = rect.h + 'px';
 
         // Initialize the 2D context
@@ -4206,12 +4196,11 @@ const messageHandling = {
 
         // we have to reinit the canvas context
         this.setStyle();
-        
-        // if there is a document, 
-        if (this.doc) {
 
+        // if there is a document,
+        if (this.doc) {
             // change the size of the main view
-            this.doc.view?.setRect(0,0,rect.w, rect.h);
+            this.doc.view?.setRect(0, 0, rect.w, rect.h);
 
             // and recalculate the screen filling windows
             this.doc.view?.redoBigRecursive();
@@ -4222,147 +4211,150 @@ const messageHandling = {
     },
 
     onMakeLib(e) {
-
         // notation
         const doc = this.doc;
 
         // check
-        if ( ! doc?.view?.root ) return 
+        if (!doc?.view?.root) return;
 
         // the position of the popup
-        const pos = {x:e.screenX, y:e.screenY};
+        const pos = { x: e.screenX, y: e.screenY };
 
         // propose a path for the lib
-        const libPath = doc.target.library?.userPath ?? removeExt(doc.model.arl.userPath) + '-lib.js';
+        const libPath =
+            doc.target.library?.userPath ??
+            removeExt(doc.model.arl.userPath) + '-lib.js';
 
         // request the path for the save as operation
-        this.tx.send("show lib path",{  title:  'Make library build file...' ,
-                                        entry:  libPath, 
-                                        pos:    pos,
-                                        ok: (libPath) => doc.toJavascriptLib(libPath),
-                                        cancel: ()=>{}
-                                    });
+        this.tx.send('show lib path', {
+            title: 'Make library build file...',
+            entry: libPath,
+            pos: pos,
+            ok: (libPath) => doc.toJavascriptLib(libPath),
+            cancel: () => {},
+        });
     },
 
     onMakeApp(e) {
-
         //notation
         const doc = this.doc;
 
         // check that we have a model
-        if ( ! doc?.view?.root ) return 
+        if (!doc?.view?.root) return;
 
         // CHECK ALSO FOR doc.model.arl + message !
 
         // the position of the popup
-        const pos = {x:e.screenX, y:e.screenY};
+        const pos = { x: e.screenX, y: e.screenY };
 
         // convert to a workspace path
         //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.arl.userPath, 'js')
-        const appPath = doc.target.library?.userPath ?? removeExt(doc.model.arl.userPath) + '-app.js';
+        const appPath =
+            doc.target.library?.userPath ??
+            removeExt(doc.model.arl.userPath) + '-app.js';
 
         // request the path for the save as operation
-        this.tx.send("show app path",{  title:  'Make application...' ,
-                                        path:  appPath, 
-                                        pos:    pos,
-                                        ok:     (appPath) => doc.toJavascriptApp(appPath),
-                                        cancel: ()=>{}
-                                    });
-    },        
+        this.tx.send('show app path', {
+            title: 'Make application...',
+            path: appPath,
+            pos: pos,
+            ok: (appPath) => doc.toJavascriptApp(appPath),
+            cancel: () => {},
+        });
+    },
 
     onRunApp() {
-
         // make the src and the html to run the page
         const runable = this.doc.toJavascriptApp(null);
 
-        // request to run this 
-        this.tx.send('run',{mode:'page',js: runable.srcArl, html: runable.htmlArl});
+        // request to run this
+        this.tx.send('run', {
+            mode: 'page',
+            js: runable.srcArl,
+            html: runable.htmlArl,
+        });
     },
 
     onRunAppInIframe() {
-
         const runable = this.doc.toJavascriptApp(null);
 
         // send out the run message
-        this.tx.send('run',{mode:'iframe',js: runable.srcArl, html: runable.htmlArl});
+        this.tx.send('run', {
+            mode: 'iframe',
+            js: runable.srcArl,
+            html: runable.htmlArl,
+        });
 
         // check that we have an iframe
-        if ( ! this.iframe) {
-
-            this.iframe = document.createElement("iframe");
-            this.tx.send("iframe", this.iframe);
+        if (!this.iframe) {
+            this.iframe = document.createElement('iframe');
+            this.tx.send('iframe', this.iframe);
         }
 
         // set the url of the iframe
         this.iframe.src = runable.htmlArl.url;
     },
-    
-    onPinProfile({}) {
-    },
+
+    onPinProfile({}) {},
 
     // group and node are just the names of the nodes
-    async onSelectedNode({model, nodePath, xyLocal}) {
-
-        // find the model in the 
+    async onSelectedNode({ model, nodePath, xyLocal }) {
+        // find the model in the
         const node = await this.doc.nodeFromLibrary(model, nodePath);
 
         // check
-        if (!node) return
+        if (!node) return;
 
         // move the node to the xyLocal
         node.look.moveTo(xyLocal.x, xyLocal.y);
 
         // simply add the node to the active view
-        this.doEdit('nodeFromNodeLib', {view: this.doc.focus, node});
+        this.doEdit('nodeFromNodeLib', { view: this.doc.focus, node });
     },
 
     onSavePointSet({}) {
-
         // make this accessible..
         const doc = this.doc;
 
         //title,message, pos,ok, cancel}
-        this.tx.send('save point.confirm',{
-
-            title: "Confirm to set a new save point",
-            message: "",
-            pos: {x:500, y:100},
+        this.tx.send('save point.confirm', {
+            title: 'Confirm to set a new save point',
+            message: '',
+            pos: { x: 500, y: 100 },
             ok: () => {
-
                 // check
-                if (! doc?.model) return
+                if (!doc?.model) return;
 
                 // Get the actual node to save (mostly the root...)
                 const toSave = doc.getNodeToSave();
 
                 // check
-                if (!toSave) return
+                if (!toSave) return;
 
                 // get a model compiler for collecting factories and models
-                const modcom = new ModelCompiler( doc.UID );
+                const modcom = new ModelCompiler(doc.UID);
 
                 // encode the root node as a string, but convert it back to json !
                 doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
             },
-            cancel: () => {}
+            cancel: () => {},
         });
     },
 
     onSavePointBack({}) {
-
         // make this accessible..
         const editor = this;
         const doc = this.doc;
 
         //title,message, pos,ok, cancel}
-        this.tx.send('save point confirm',{
-
-            title: "Confirm to go back to the previous save point",
-            message: "",
-            pos: {x:500, y:100},
+        this.tx.send('save point confirm', {
+            title: 'Confirm to go back to the previous save point',
+            message: '',
+            pos: { x: 500, y: 100 },
             ok: async () => {
                 // just load the model again ...
-                await doc.load();
+                // await doc.load()
+                doc.reCompile();
 
                 // reset the undo stack
                 doc.undoStack.reset();
@@ -4370,20 +4362,22 @@ const messageHandling = {
                 // and redraw
                 editor.redraw();
 
-                // save it
+                // save it - it is the new reference
                 try {
+                    // save this version
                     const text = JSON.stringify(doc.model.raw, null, 4);
 
                     // check and save
-                    if (text) doc.model.arl.save( text );
-                }
-                catch(err) {
-                    console.log(`JSON stringify error: ${err}\nin 'on save point.back'`);
+                    if (text) doc.model.arl.save(text);
+                } catch (err) {
+                    console.log(
+                        `JSON stringify error: ${err}\nin 'on save point.back'`
+                    );
                 }
             },
-            cancel: () => {}
+            cancel: () => {},
         });
-    }
+    },
 };
 
 const zap = {
@@ -8621,20 +8615,20 @@ const pinNameHandling = {
     // there is a prefix or a postfix that is not displayed
     withoutPrefix() {
 
-        const plus = '+'; 
         //const x = '\u271A '
+        const space = '+ ';
 
         if (this.pxlen == 0) return this.name
 
         else if (this.pxlen > 0) {
 
             let noPrefix = this.name.slice(this.pxlen);
-            return noPrefix[0] != ' ' ? noPrefix : plus + noPrefix.trim()
+            return noPrefix[0] != ' ' ? noPrefix : space + noPrefix.trim()
         }
         else if (this.pxlen < 0) {
 
             let noPostfix = this.name.slice(0,this.pxlen-1);
-            return noPostfix.at(-1) != ' ' ? noPostfix : plus + noPostfix.trim()
+            return noPostfix.at(-1) != ' ' ? noPostfix : space + noPostfix.trim()
         }
     },
 
@@ -12226,6 +12220,28 @@ showProfile: {
 
         // check that we have a model
         if ( ! (editor.doc?.model) ) return 
+
+        // get the pin profile (can be a single profile or an array !)
+        const profile = pin.is.input ? editor.doc.model.getInputPinProfile(pin) : editor.doc.model.getOutputPinProfile(pin);
+
+        // check
+        if (!profile) return
+
+        // show the profile
+        editor.tx.send('pin profile',{pos, pin, profile,
+            
+            // The function that is called when clicking the handler name
+            open(loc){
+                
+                //const arl = new ARL(loc.file)
+
+                // resolve the file name with the model name
+                const arl = editor.doc.model.arl.resolve(loc.file);
+
+                // request to open the source file
+                editor.tx.send('open source file',{arl, line:loc.line});
+            }
+        });
     },
 
     undo() {},
@@ -18316,14 +18332,14 @@ const conxHandling = {
     cookConx(rawConx) {
 
         //-------- helpers -----------
-        const resolvePin = (raw) => {
+        const resolvePin = (raw, input) => {
             for(const node of this.nodes) {
                 if (node.name != raw.node) continue
-                return node.look.widgets.find( widget => widget.is.pin && (widget.name === raw.pin) )
+                return node.look.widgets.find( widget => widget.is.pin && (widget.name === raw.pin) && (widget.is.input === input))
             }            
         };
 
-        const resolvePad = (raw) => this.pads.find( pad => (pad.proxy.name === raw.pin) );
+        const resolvePad = (raw, input) => this.pads.find( pad => (pad.proxy.name === raw.pin)&&(pad.proxy.is.input === input)  );
 
         const showError = (error, raw) => {
 
@@ -18368,11 +18384,11 @@ const conxHandling = {
             if (!rawsrc || !rawdst) continue
 
             // find from and to and give an error message if not found
-            src = rawsrc.node ? resolvePin(rawsrc) : resolvePad(rawsrc);
-            if (!src) showError('Connection <from> not found: ', raw);
+            src = rawsrc.node ? resolvePin(rawsrc, false) : resolvePad(rawsrc, true);
+            if (!src) showError('Connection <src> not found: ', raw);
 
-            dst = rawdst.node ? resolvePin(rawdst) : resolvePad(rawdst);
-            if (!dst) showError('Connection <to> not found: ', raw);
+            dst = rawdst.node ? resolvePin(rawdst, true) : resolvePad(rawdst, false);
+            if (!dst) showError('Connection <dst> not found: ', raw);
 
             // check
             if (!src || !dst) continue;
@@ -21523,7 +21539,7 @@ const busDrawing = {
 function Bus(name, from, uid = null) {
 
     // unique identifier for the bus
-    this.uid = uid; 
+    this.uid = uid;
 
     // save the name
     this.name = name ?? '';

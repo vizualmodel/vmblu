@@ -132,7 +132,8 @@ ResolveQueue.prototype = {
             if (start + duration <= now) {
 
                 // create an error
-                const err = new Error(`Reply timeout for ${txRef} after ${duration}ms`);
+                // const err = new Error(`Reply timeout for ${txRef} after ${duration}ms`);
+                const err = new Error('Reply timeout',  {sender: txRef, msec: duration});
 
                 // reject the promise
                 entry.handler.defs.forEach(d => d.reject(err));

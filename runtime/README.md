@@ -8,7 +8,7 @@ This package exposes a small public API (for now just the **scaffold**) and is i
 ## Install
 
 ```bash
-npm i @vizualmodel/vmblu
+npm i @vizualmodel/vmblu-runtime @vizualmodel/vmblu-cli
 ```
 
 * ESM + CJS builds (no browser UMD bundle).
@@ -21,7 +21,7 @@ If you do want to bootstrap manually:
 
 ```js
 // ESM
-import * as VMBLU from "@vizualmodel/vmblu";
+import * as VMBLU from "@vizualmodel/vmblu-runtime";
 
 // prepare all the nodes in the application - returns the runtime
 const runtime = VMBLU.scaffold(nodeList, filterList)
@@ -33,7 +33,7 @@ runtime.start();
 CommonJS usage:
 
 ```js
-const VMBLU = require("@vizualmodel/vmblu");
+const VMBLU = require("@vizualmodel/vmblu-runtime");
 const app = VMBLU.scaffold(nodeList, filterList);
 ```
 

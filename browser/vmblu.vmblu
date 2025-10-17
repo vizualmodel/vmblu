@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "9/30/2025, 11:04:42 AM",
-        "utc": "2025-09-30T09:04:42.753Z",
+        "saved": "10/15/2025, 11:31:44 AM",
+        "utc": "2025-10-15T09:31:44.485Z",
         "style": "#291f32",
         "runtime": "../runtime/scaffold.js"
     },
@@ -490,7 +490,7 @@
                 "editor": {
                     "rect": "x 343 y 709 w 211 h 116",
                     "view": {
-                        "state": "closed",
+                        "state": "open",
                         "rect": "x 755 y 389 w 1156 h 768",
                         "transform": "sx 1.000 sy 1.000 dx 668.500 dy 570.000"
                     },
@@ -600,7 +600,7 @@
                                     "id": 5,
                                     "align": "left",
                                     "pad": {
-                                        "rect": "x 111 y 424 w 58 h 15",
+                                        "rect": "x 106 y 428 w 58 h 15",
                                         "align": "left"
                                     }
                                 }
@@ -2271,7 +2271,6 @@
                         "editor": {
                             "rect": "x 1522 y 865 w 150 h 86",
                             "view": {
-                                "state": "open",
                                 "rect": "x 229 y 289 w 1154 h 510",
                                 "transform": "sx 1.000 sy 1.000 dx 255.000 dy 301.000"
                             },
@@ -3159,9 +3158,9 @@
                 "editor": {
                     "rect": "x 814 y 430 w 250 h 236",
                     "view": {
-                        "state": "closed",
+                        "state": "open",
                         "rect": "x 282 y 167 w 1996 h 1168",
-                        "transform": "sx 1.000 sy 1.000 dx -50.949 dy 155.554"
+                        "transform": "sx 1.000 sy 1.000 dx 563.051 dy 188.554"
                     },
                     "buses": [
                         {
@@ -3849,8 +3848,8 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1422 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -97.469 dy -17.669"
+                "rect": "x 0 y 0 w 1278 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -577.469 dy -47.669"
             },
             "routes": [
                 {

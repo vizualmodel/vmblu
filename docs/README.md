@@ -9,7 +9,7 @@ Modern LLMs make it easy to “vibe code” — write fast with AI. But as your 
 With **vmblu**, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞   What is vmblu?</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■   What is vmblu?</b></span><br>
 
 **vmblu** is a graphical editor and file format for building software as a **network of message-passing nodes**.
 
@@ -22,7 +22,7 @@ It’s:
 The **vmblu model** is not documentation, it is the actual system.
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ The Editor</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ The Editor</b></span><br>
 
 The **vmblu editor** lets you:
 - Create and connect nodes visually  
@@ -41,7 +41,7 @@ The following is a screenshot from an application in vmblu:
 ![example of a vmblu model](./figures/vmblu-screenshot.png)
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ AI-native by design</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ AI-native by design</b></span><br>
 
 **vmblu** was designed to let LLMs do the work, but to keep the human in the driver seat.
 
@@ -50,7 +50,7 @@ The following is a screenshot from an application in vmblu:
 - **vmblu** can generate an [MCP](https://github.com/modelcontext) tools file to call into a running system allowing to have an instant AI-based user interface at a granular level for your application.
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ AI generated code poses new challenges</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ AI generated code poses new challenges</b></span><br>
 
 When code is written or co-written by LLMs, the nature of risk changes. LLMs make far fewer syntax errors or trivial logic mistakes than human developers.  
 The bigger challenges are:
@@ -61,7 +61,7 @@ The bigger challenges are:
 **vmblu** gives you the tool you need to address these new challenges. Working from an explicit, shared architecture allows you to understand and test your system in the age of AI.
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ For developers</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ For developers</b></span><br>
 
 
 **vmblu** is a tool targeted at developers whose role is changing with the arrival of powerful AI.
@@ -79,7 +79,7 @@ Migrating an application to a **vmblu** based design is also not complicated. Th
 **vmblu** is currently at version 0.9, with version 1.0 planned before the end of the year (2025). Specification and file formats are in good shape, but expect frequent updates now that there are more eyes and hands interacting with the software.
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ Quick start</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ Quick start</b></span><br>
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/)  
 - Add the runtime with: `npm install @vizualmodel/vmblu`  
@@ -87,7 +87,7 @@ Migrating an application to a **vmblu** based design is also not complicated. Th
 - Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
 
 ---
-<span style="font-size:1.4em; color:#0066FF;"><b>▞ Open source</b></span><br>
+<span style="font-size:1.4em; color:#0066FF;"><b>■ Open source</b></span><br>
 
 **vmblu** is licensed under the [Apache License 2.0](./LICENSE.txt).
 

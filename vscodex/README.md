@@ -75,7 +75,8 @@ Migrating an application to a **vmblu** based design is also not complicated. Th
 ## 🔹  Quick start</b></span><br>
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/)  
-- Add the runtime with: `npm install @vizualmodel/vmblu`  
+- Add the runtime with: `npm install @vizualmodel/vmblu-runtime`  
+- Add the runtime with: `npm install @vizualmodel/vmblu-cli`  
 - Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
 - Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
 

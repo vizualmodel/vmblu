@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://vmblu.dev/schema/0.6/vmblu.schema.json",
-    "title": "vmblu Model (v0.6.0 draft)",
+    "$id": "@vizual_model/cli/templates/0.8.2/vmblu.schema.json",
+    "title": "vmblu Model (v0.8.2 draft)",
     "type": "object",
     "additionalProperties": false,
     "required": ["header", "root"],

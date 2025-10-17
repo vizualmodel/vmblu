@@ -6,7 +6,7 @@
 
 // import the runtime code
 import * as VMBLU from "../runtime/src/scaffold.js"
-//import * as VMBLU from "@vizualmodel/vmblu";
+//import * as VMBLU from "@vizualmodel/vmblu-runtime";
 
 console.log(VMBLU.VERSION)
 

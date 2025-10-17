@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 1:40:46 PM",
-        "saved": "10/3/2025, 11:11:05 AM",
-        "utc": "2025-10-03T09:11:05.776Z",
+        "saved": "10/10/2025, 12:53:07 PM",
+        "utc": "2025-10-10T10:53:07.024Z",
         "style": "#12679b",
         "runtime": "../../runtime/scaffold.js"
     },
@@ -896,8 +896,8 @@
                     "rect": "x 1096 y 963 w 150 h 86",
                     "view": {
                         "state": "open",
-                        "rect": "x 1345 y 718 w 811 h 432",
-                        "transform": "sx 1.000 sy 1.000 dx 1315.500 dy 718.000"
+                        "rect": "x 1344 y -50 w 811 h 432",
+                        "transform": "sx 1.000 sy 1.000 dx 1314.500 dy -50.000"
                     },
                     "routes": [
                         {
@@ -2024,7 +2024,7 @@
             "rect": "x 0 y 0 w 150 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1104 h 1326",
+                "rect": "x 0 y 0 w 2092 h 1326",
                 "transform": "sx 1.000 sy 1.000 dx -86.000 dy 83.000"
             },
             "buses": [
@@ -2033,6 +2033,12 @@
                     "name": "modal div bus",
                     "start": "x 1561 y 902",
                     "wire": "x -1300.0"
+                },
+                {
+                    "kind": "cable",
+                    "name": "",
+                    "start": "x 1692 y 653",
+                    "wire": "y 0.0"
                 }
             ],
             "routes": [

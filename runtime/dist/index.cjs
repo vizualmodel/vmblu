@@ -126,7 +126,7 @@ ResolveQueue.prototype = {
     for (const [txRef, entry] of this.queue.entries()) {
       const { start, duration } = entry.time;
       if (start + duration <= now) {
-        const err = new Error(`Reply timeout for ${txRef} after ${duration}ms`);
+        const err = new Error("Reply timeout", { sender: txRef, msec: duration });
         entry.handler.defs.forEach((d) => d.reject(err));
         this.queue.delete(txRef);
       }

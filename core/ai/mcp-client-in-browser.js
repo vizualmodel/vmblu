@@ -175,13 +175,13 @@ convertToOpenAITools(tools) {
 		// update
 		this.tx.send('update chat', this.chat)
 
-const body = JSON.stringify({
-				model: 'gpt-4o',
-				messages: this.chat,
-				tools: this.tools,
-				tool_choice: 'auto'
-			})
-console.log(body)
+// const body = JSON.stringify({
+// 				model: 'gpt-4o',
+// 				messages: this.chat,
+// 				tools: this.tools,
+// 				tool_choice: 'auto'
+// 			})
+// console.log(body)
 
 		// send the chat history to the LLM
 		const response = await fetch('https://api.openai.com/v1/chat/completions', {

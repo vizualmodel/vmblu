@@ -1,6 +1,6 @@
 # Vizual Model Blueprint
 
-![logo](./logo/logo-256.png)
+![logo](./assets/logo-256.png)
 
 # Contributing to vmblu
 

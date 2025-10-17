@@ -1,0 +1,8 @@
+{
+  "name": "@vizualmodel/vmblu-cli",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "bin": { "vmblu": "bin/vmblu.js" },
+  "files": ["bin", "commands", "templates", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" }
+}

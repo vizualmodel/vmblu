@@ -1,7 +1,7 @@
 {
-  "name": "@vizualmodel/vmblu",
+  "name": "@vizualmodel/vmblu-runtime",
   "version": "0.1.1",
-  "description": "vmblu runtime and tools for building node-based apps",
+  "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
   "type": "module",

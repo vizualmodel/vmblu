@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "generatedAt": "2025-10-02T08:48:26.736Z",
+  "generatedAt": "2025-10-17T09:48:57.297Z",
   "entries": [
     {
       "node": "document manager",
@@ -377,6 +377,81 @@
           "pin": "save point confirm",
           "file": "../core/editor/editor-message.js",
           "line": 279
+        }
+      ]
+    },
+    {
+      "node": "clipboard",
+      "handles": [
+        {
+          "pin": "set",
+          "handler": "onSet",
+          "file": "../core/model/clipboard.js",
+          "line": 52,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "model",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "selection",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "get",
+          "handler": "onGet",
+          "file": "../core/model/clipboard.js",
+          "line": 73,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "switched",
+          "handler": "onSwitched",
+          "file": "../core/model/clipboard.js",
+          "line": 102,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "local",
+          "handler": "onLocal",
+          "file": "../core/model/clipboard.js",
+          "line": 109,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "switch",
+          "file": "../core/model/clipboard.js",
+          "line": 70
         }
       ]
     }
