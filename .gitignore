@@ -22,8 +22,6 @@ vscodex/webview/webview-bundle.js.map
 # Not relevant for the project
 prompts.txt
 llm-prompts/
-docs/old-versions
-docs/private
 **/z-*
 **/zz-*
 **/zzz-*
