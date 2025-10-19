@@ -1,4 +1,4 @@
-![logo](./asssets/vmblu-512.png)
+![logo](./assets/vmblu-512.png)
 
 **vmblu** is a tool that makes the architecture of your software explicit and easy to navigate — by humans *and* LLMs. 
 
@@ -38,7 +38,7 @@ Clean connectivity by using
 
 The following is a screenshot from an application in vmblu:
 
-![example of a vmblu model](./figures/vmblu-screenshot.png)
+![example of a vmblu model](./assets/vmblu-screenshot.png)
 
 ---
 <span style="font-size:1.4em; color:#0066FF;"><b>■ AI-native by design</b></span><br>
