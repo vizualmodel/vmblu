@@ -76,7 +76,15 @@ The bigger challenges are:
 
 Migrating an application to a **vmblu** based design is also not complicated. The vmblu editor itself is now a vmblu application.
 
-**vmblu** is currently at version 0.9, with version 1.0 planned before the end of the year (2025). Specification and file formats are in good shape, but expect frequent updates now that there are more eyes and hands interacting with the software.
+### ⚠️ Heads-Up: Pre-1.0 Version
+
+vmblu is currently in version **0.9.0** — nearing its first stable release.
+
+The editor is already **fully functional**, and you can build, edit, and run models today. That said, as the project is being opened to a wider developer audience, **new bugs and edge cases may still surface**.
+
+We welcome early adopters and feedback! Expect frequent updates as we work toward a 1.0 release within the next few months.
+
+💬 Found something? Please open an issue or discussion on [GitHub](https://github.com/vizualmodel/vmblu/issues).
 
 ---
 <span style="font-size:1.4em; color:#0066FF;"><b>■ Quick start</b></span><br>

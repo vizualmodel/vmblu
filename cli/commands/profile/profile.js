@@ -1,30 +1,32 @@
-#!/usr/bin/env node
-
-const SRC_DOC_VERSION = '0.2';
+﻿#!/usr/bin/env node
 
 // Native
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import ts from 'typescript';
 
 // ts-morph
 import { Project } from 'ts-morph';
 
 // vmblu
-import { ModelBlueprint, ModelCompiler } from '../core/model/index.js';
-import { ARL } from '../core/arl/arl-node.js';
+import { ModelBlueprint, ModelCompiler } from '../../../core/model/index.js';
+import { ARL } from '../../../core/arl/arl-node.js'
 
-// srcdoc tool
+// profile tool
 import {findHandlers} from './find-handlers.js'
 import {findTransmissions} from './find-transmissions.js'
 
-// The main function for the srcdoc tool
-async function main() {
+const SRC_DOC_VERSION = '0.2';
 
-    const cli = parseCliArgs(process.argv.slice(2));
+// The main function for the profile tool
+export async function profile(argv = process.argv.slice(2)) {
+
+    const cli = parseCliArgs(argv);
 
     if (!cli.modelFile) {
-        console.error('Usage: node srcdoc <model-file> [--out <file>] [--full] [--changed <files...>] [--deleted <files...>] [--delta-file <path>] [--reason <text>]');
+        //console.error('Usage: node profile <model-file> [--out <file>] [--full] [--changed <files...>] [--deleted <files...>] [--delta-file <path>] [--reason <text>]');
+        console.error('Usage: vmblu profile <model-file> [--out <file>] [--full] [--changed <files...>] [--deleted <files...>] [--delta-file <path>] [--reason <text>]');
         process.exit(1);
     }
 
@@ -44,10 +46,10 @@ async function main() {
         })();
 
     if (cli.deltaFile) cli.deltaFile = path.resolve(cli.deltaFile);
-    if (cli.reason) console.log('[srcdoc] reason:', cli.reason);
+    if (cli.reason) console.log('[profile] reason:', cli.reason);
 
     if (!cli.full && (cli.changed.length || cli.deleted.length || cli.deltaFile)) {
-        console.log('[srcdoc] incremental updates not yet supported; performing full rescan.');
+        console.log('[profile] incremental updates not yet supported; performing full rescan.');
     }
 
     // Make an Application Resource Locator    // Make an Application Resource Locator
@@ -107,7 +109,7 @@ async function main() {
 
     // Persist the structured documentation with its header so downstream tools can validate against the schema.
     fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
-    console.log(`�o. Documentation written to ${outPath}`);
+    console.log(`Documentation written to ${outPath}`);
 }
 
 function parseCliArgs(argv) {
@@ -242,13 +244,13 @@ function setupProject(factories) {
         const filePath = factory.arl.url;
 
         // user feedback
-        console.log('📦 Adding factory entry:', filePath);
+        console.log('Adding factory entry:', filePath);
 
         // add to the project
         try {
             project.addSourceFileAtPath(factory.arl.url);
         } catch (err) {
-            console.warn(`⚠️ Could not load ${filePath}: ${err.message}`);
+            console.warn(`Could not load ${filePath}: ${err.message}`);
         }
     }
 
@@ -259,7 +261,12 @@ function setupProject(factories) {
     return project
 }
 
-main().catch(err => {
-  console.error('❌ Failed to generate source documentation:', err);
-  process.exit(1);
-});
+
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectRun) {
+  profile().catch(err => {
+    console.error('Failed to generate source documentation:', err);
+    process.exit(1);
+  });
+}

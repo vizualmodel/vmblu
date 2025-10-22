@@ -1,20 +1,23 @@
-// vmblu init [targetDir] --name <project> --schema <ver> --force --dry-run
-const path = require('path');
-const { initProject } = require('./init-project');
+﻿// vmblu init [targetDir] --name <project> --schema <ver> --force --dry-run
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { initProject } from './init-project.js';
 
-exports.command = 'init';
-exports.describe = 'Scaffold an empty vmblu project';
-exports.builder = [
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export const command = 'init <folder name>';
+export const describe = 'Scaffold an empty vmblu project';
+export const builder = [
   { flag: '--name <project>', desc: 'Project name (default: folder name)' },
   { flag: '--schema <ver>',   desc: 'Schema version (default: 0.8.2)' },
   { flag: '--force',          desc: 'Overwrite existing files' },
   { flag: '--dry-run',        desc: 'Show actions without writing' }
 ];
 
-exports.handler = async (argv) => {
+export const handler = async (argv) => {
   // tiny arg parse (no deps)
   const args = { _: [] };
-  for (let i=0;i<argv.length;i++) {
+  for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force') args.force = true;
     else if (a === '--dry-run') args.dryRun = true;
@@ -31,8 +34,8 @@ exports.handler = async (argv) => {
     targetDir,
     projectName,
     schemaVersion,
-    force: !!args.force,
-    dryRun: !!args.dryRun,
+    force: Boolean(args.force),
+    dryRun: Boolean(args.dryRun),
     templatesDir: path.join(__dirname, '..', '..', 'templates'),
     ui: {
       info: (m) => console.log(m),
@@ -41,5 +44,6 @@ exports.handler = async (argv) => {
     }
   });
 
-  console.log(`✔ vmblu project scaffolded in ${targetDir}`);
+  console.log(`vmblu project scaffolded in ${targetDir}`);
 };
+

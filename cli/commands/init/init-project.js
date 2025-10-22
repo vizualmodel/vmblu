@@ -1,10 +1,10 @@
 // core/initProject.js
 // Node 18+ (fs/promises, crypto). No external deps.
-const fs = require('fs/promises');
-const fssync = require('fs');
-const path = require('path');
-//const crypto = require('crypto');
-const pckg = require('./make-package-json');
+import * as fs from 'fs/promises';
+import * as fssync from 'fs';
+import path from 'path';
+//import crypto from 'crypto';
+import { makePackageJson } from './make-package-json.js';
 
 function rel(from, to) {
   return path.posix.join(...path.relative(from, to).split(path.sep));
@@ -251,7 +251,7 @@ async function initProject(opts) {
   }
 
   // 5) Make the package file
-  pckg.makePackageJson(  {absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^0.1.0"}, ui);
+  makePackageJson({ absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^0.1.0" }, ui);
 
   // 6) Final tree hint
   ui.info(`\nScaffold complete${dryRun ? ' (dry run)' : ''}:\n` +
@@ -285,4 +285,4 @@ async function initProject(opts) {
   };
 }
 
-module.exports = { initProject };
+export { initProject };

@@ -3,9 +3,9 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
 export default {
-  input: './vmblu-srcdoc.js',  // compiled JS file (from vmblu-srcdoc.ts)
+  input: './profile.js',
   output: {
-    file: './vmblu-srcdoc.cjs', // ⬅️ Use .cjs extension and CommonJS format
+    file: './profile.cjs', // ⬅️ Use .cjs extension and CommonJS format
     format: 'cjs',
     sourcemap: true
   },

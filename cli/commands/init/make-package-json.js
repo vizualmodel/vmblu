@@ -1,5 +1,5 @@
-const fs = require('fs/promises');
-const path = require('path');
+import * as fs from 'fs/promises';
+import path from 'path';
 
 async function readJsonIfExists(file) {
   try { return JSON.parse(await fs.readFile(file, 'utf8')); } catch { return null; }
@@ -9,7 +9,7 @@ function sortKeys(obj) {
   return Object.fromEntries(Object.entries(obj).sort(([a],[b]) => a.localeCompare(b)));
 }
 
-async function makePackageJson({
+export async function makePackageJson({
   absTarget, projectName, force, dryRun,
   addCliDep = true, cliVersion = "^0.1.0"
 }, ui) {
@@ -56,4 +56,3 @@ async function makePackageJson({
 
   return pkgPath;
 }
-module.exports = { makePackageJson };
