@@ -1,5 +1,5 @@
 # CLI for vmblu
-This folder contains the CLI commands that are available for vmblu. Currently there is only the 'init' and 'help' command, but others will follow.
+This folder contains the CLI commands that are available for vmblu.
 
 
 ## Folder layout
@@ -9,6 +9,7 @@ vmblu/
   cli/                      # your CLI source
     commands/
       init/
+      profile/
       migrate/
     templates/
       0.8.2/

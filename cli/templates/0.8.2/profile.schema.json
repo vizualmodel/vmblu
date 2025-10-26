@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vmblu.dev/schema/srcdoc/0.2/srcdoc.schema.json",
+  "$id": "https://vmblu.dev/schema/profile/0.2/profile.schema.json",
   "title": "vmblu Source Documentation (grouped by node)",
   "type": "object",
   "required": ["version", "generatedAt", "entries"],

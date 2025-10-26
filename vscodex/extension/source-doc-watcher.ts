@@ -125,7 +125,7 @@ export class SourceDocWatcher {
       // Decide: full vs incremental
       const doFullScan = !this.firstFullRunDone || (changed.length === 0 && deleted.length === 0);
 
-      await this.runSrcdoc(doFullScan ? undefined : { changed, deleted, reason });
+      await this.runProfile(doFullScan ? undefined : { changed, deleted, reason });
 
       this.firstFullRunDone = true;
       this.lastRun = Date.now();
@@ -136,7 +136,7 @@ export class SourceDocWatcher {
 
   // --- Running vmblu profile + posting results ------------------------------
 
-  private async runSrcdoc(delta?: { changed: string[]; deleted: string[]; reason?: string }) {
+  private async runProfile(delta?: { changed: string[]; deleted: string[]; reason?: string }) {
     // Build the base CLI invocation; we'll reuse arguments for retries/fallbacks.
     const modelPath = this.modelUri!.fsPath;
     const outPath = this.outUri!.fsPath;

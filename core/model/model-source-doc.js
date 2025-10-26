@@ -3,23 +3,23 @@ import {convert} from '../util/index.js'
 export const sourceMapHandling = {
 
 // reads the source doc file and parses it into documentation
-async handleSourceDoc() {
+async handleSourceMap() {
 
     // read the source doc file
-    const rawSourceDoc = await this.readSourceDoc()
+    const rawSourceMap = await this.readSourceMap()
 
     // check
-    if (! rawSourceDoc) return;
+    if (! rawSourceMap) return;
 
     // parse to extract the juicy bits
-    this.sourceMap = this.parseSourceDoc(rawSourceDoc)        
+    this.sourceMap = this.parseSourceMap(rawSourceMap)        
 
     // ok
-    // console.log('** SourceDoc **', this.sourceMap)
+    // console.log('** SourceMap **', this.sourceMap)
 },
 
 // Reads the sourceMap of the model
-async readSourceDoc() {
+async readSourceMap() {
 
     // get the full path
     const fullPath = this.arl?.getFullPath()
@@ -28,7 +28,7 @@ async readSourceDoc() {
     if (!fullPath) return null
 
     // make an arl 
-    const sourceMapArl = this.arl.resolve(Path.removeExt(fullPath) + '-doc.json')
+    const sourceMapArl = this.arl.resolve(Path.removeExt(fullPath) + '.prf.json')
 
     // get the file
     return await sourceMapArl.get('json')
@@ -41,7 +41,7 @@ async readSourceDoc() {
  * @param {Array<{node: string, handlers: Array}>} docEntries
  * @returns {Map<string, Map<string, object>>} Map of nodeName -> Map of pinName -> handler metadata
  */
-parseSourceDoc(raw) {
+parseSourceMap(raw) {
 
     // check
     if (!raw.entries) return null;
@@ -92,7 +92,7 @@ parseSourceDoc(raw) {
 /**
  * Optional helper to flatten the nested map into a plain array (useful for UI).
  */
-flattenSourceDoc(nodeMap) {
+flattenSourceMap(nodeMap) {
     const flatList = [];
     for (const [node, pins] of nodeMap.entries()) {
         for (const [pin, meta] of pins.entries()) {
@@ -195,7 +195,7 @@ makeMcpToolString(root) {
  * Generate MCP-compatible tool specs in an LLM-neutral format.
  * Only handlers with `mcp: true` will be included.
  *
- * @param {Map<string, Map<string, object>>} nodeMap - Output from parseSourceDoc
+ * @param {Map<string, Map<string, object>>} nodeMap - Output from parseSourceMap
  * @returns {Array<object>} - Abstract tool specs
  */
 generateToolSpecs() {

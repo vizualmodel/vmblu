@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "10/22/2025, 6:02:43 PM",
-        "utc": "2025-10-22T16:02:43.314Z",
+        "saved": "10/26/2025, 4:53:21 PM",
+        "utc": "2025-10-26T15:53:21.171Z",
         "style": "#291f32",
         "runtime": "../runtime/scaffold.js"
     },
@@ -491,8 +491,8 @@
                     "rect": "x 343 y 709 w 211 h 116",
                     "view": {
                         "state": "open",
-                        "rect": "x 755 y 389 w 1156 h 768",
-                        "transform": "sx 1.000 sy 1.000 dx 668.500 dy 570.000"
+                        "rect": "x 333 y 141 w 1156 h 768",
+                        "transform": "sx 1.000 sy 1.000 dx 246.500 dy 322.000"
                     },
                     "routes": [
                         {
@@ -588,7 +588,7 @@
                                     "id": 4,
                                     "align": "left",
                                     "pad": {
-                                        "rect": "x 143 y 14 w 71 h 15",
+                                        "rect": "x 122 y 14 w 71 h 15",
                                         "align": "left"
                                     }
                                 }
@@ -2271,9 +2271,8 @@
                         "editor": {
                             "rect": "x 1522 y 865 w 150 h 86",
                             "view": {
-                                "state": "closed",
-                                "rect": "x 229 y 289 w 1154 h 510",
-                                "transform": "sx 1.000 sy 1.000 dx 255.000 dy 301.000"
+                                "rect": "x 978 y 451 w 1154 h 510",
+                                "transform": "sx 1.000 sy 1.000 dx 1004.000 dy 463.000"
                             },
                             "routes": [
                                 {
@@ -3160,8 +3159,8 @@
                     "rect": "x 814 y 430 w 250 h 236",
                     "view": {
                         "state": "open",
-                        "rect": "x 313 y 107 w 1996 h 1168",
-                        "transform": "sx 1.000 sy 1.000 dx 594.051 dy 128.554"
+                        "rect": "x 158 y 137 w 1996 h 1168",
+                        "transform": "sx 1.000 sy 1.000 dx 106.051 dy 187.554"
                     },
                     "buses": [
                         {
@@ -3210,7 +3209,7 @@
                         {
                             "from": "(pin 3) save all @ top menu",
                             "to": "(pad 4) save all",
-                            "wire": "x 155.0 y -164.0 x -312.0"
+                            "wire": "x 155.0 y -164.0 x -333.0"
                         },
                         {
                             "from": "(pin 4) accept changes @ top menu",
@@ -3849,8 +3848,8 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1315 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -577.469 dy -47.669"
+                "rect": "x 0 y 0 w 1493 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -156.469 dy -22.669"
             },
             "routes": [
                 {

@@ -15,8 +15,7 @@
         "cm": "cd ./browser && npm run cm",
         "all": "npm run rt && npm run ui && npm run srvr && npm run vx",
         "go": "node ../fastsrvr/fastify/server.js",
-        "doc": "node ./srcdoc/vmblu-srcdoc ./browser/vmblu.vmblu",
-        "srcdoc": "cd ./srcdoc && rollup -c && cp vmblu-srcdoc.cjs vmblu-srcdoc.cjs.map ../vscodex/out/srcdoc/"
+        "profile": "vmblu profile"
     },
     "devDependencies": {
         "@eslint/js": "^9.36.0",
@@ -24,7 +23,7 @@
         "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
-        "@vizualmodel/vmblu-cli": "^0.2.0",
+        "@vizualmodel/vmblu-cli": "^0.3.0",
         "eslint": "^9.36.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^16.4.0",

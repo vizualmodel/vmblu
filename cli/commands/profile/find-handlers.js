@@ -1,21 +1,26 @@
 // extractHandlersFromFile.js
 
-import ts from 'typescript';
+import { SyntaxKind } from 'ts-morph';
 
 export let currentNode = null;
-export let topLevelClass = null
-let nodeMap = null
-let filePath = null
+export let topLevelClass = null;
+let nodeMap = null;
+let filePath = null;
+export let nodeAliases = new Map();
+
+let knownIdentifiers = new Set();
 
 export function findHandlers(sourceFile, _filePath, _nodeMap) {
-  
+
     // Reset any node context carried over from previous files.
     currentNode = null;
 
     // The fallback name is the top-level class
     topLevelClass = sourceFile.getClasses()[0]?.getName?.() || null;
-    nodeMap = _nodeMap
-    filePath = _filePath
+    nodeMap = _nodeMap;
+    filePath = _filePath;
+    nodeAliases = new Map();
+    knownIdentifiers = collectKnownIdentifiers(sourceFile);
 
     // Check all the functions in the sourcefile - typically generator functions
     sourceFile.getFunctions().forEach(fn => {
@@ -45,7 +50,10 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
         const name = decl.getName();
         const init = decl.getInitializer();
         const line = decl.getStartLineNumber();
-        const jsdoc = getFullJsDoc(decl);
+        const declJsdoc = getFullJsDoc(decl);
+        const statement = decl.getFirstAncestorByKind?.(SyntaxKind.VariableStatement);
+        const statementJsdoc = statement ? getFullJsDoc(statement) : null;
+        const jsdoc = hasDocMetadata(declJsdoc) ? declJsdoc : statementJsdoc ?? declJsdoc;
         updateNodeFromJsdoc(jsdoc);
 
         // check if the name is a handler and initialised with a function
@@ -57,8 +65,9 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
             collect(name, params, line, jsdoc);
         }
 
-        if (init && init.getKind() === ts.SyntaxKind.ObjectLiteralExpression) {
-            collectObjectLiteralHandlers(init);
+        const objectLiteral = resolveObjectLiteralExpression(init);
+        if (objectLiteral) {
+            collectObjectLiteralHandlers(objectLiteral);
         }
     });
 
@@ -90,16 +99,16 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
     sourceFile.getStatements().forEach(stmt => {
 
         // only binary expressions
-        if (!stmt.isKind(ts.SyntaxKind.ExpressionStatement)) return;
+        if (!stmt.isKind(SyntaxKind.ExpressionStatement)) return;
         const expr = stmt.getExpression();
-        if (!expr.isKind(ts.SyntaxKind.BinaryExpression)) return;
+        if (!expr.isKind(SyntaxKind.BinaryExpression)) return;
 
         // get the two parts of the statement
         const left = expr.getLeft().getText();
         const right = expr.getRight();
 
         // check for protype
-        if (left.includes('.prototype.') && right.isKind(ts.SyntaxKind.FunctionExpression)) {
+        if (left.includes('.prototype.') && right.isKind(SyntaxKind.FunctionExpression)) {
 
             // get the name and check
             const parts = left.split('.');
@@ -115,8 +124,9 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
             collect(name, params, line, jsdoc);
         }
 
-        if (left.endsWith('.prototype') && right.isKind(ts.SyntaxKind.ObjectLiteralExpression)) {
-            collectObjectLiteralHandlers(right);
+        const objectLiteral = resolveObjectLiteralExpression(right);
+        if (left.endsWith('.prototype') && objectLiteral) {
+            collectObjectLiteralHandlers(objectLiteral);
         }
     });
 }
@@ -125,28 +135,55 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
 function collectHandlersFromFunctionReturns(fn) {
 
     // Look for factory-style returns that expose handlers via object literals.
-    fn.getDescendantsOfKind(ts.SyntaxKind.ReturnStatement).forEach(ret => {
+    fn.getDescendantsOfKind(SyntaxKind.ReturnStatement).forEach(ret => {
         const expr = ret.getExpression();
-        if (!expr || expr.getKind() !== ts.SyntaxKind.ObjectLiteralExpression) return;
+        const objectLiteral = resolveObjectLiteralExpression(expr);
+        if (!objectLiteral) return;
 
-        collectObjectLiteralHandlers(expr);
+        collectObjectLiteralHandlers(objectLiteral);
     });
+}
+
+function resolveObjectLiteralExpression(expression) {
+    if (!expression || typeof expression.getKind !== 'function') return null;
+
+    const hasObjectLiteralShape = typeof expression.getProperties === 'function'
+        && (expression.getKindName?.() === 'ObjectLiteralExpression' || expression.getText?.().trim().startsWith('{'));
+    if (hasObjectLiteralShape) {
+        return expression;
+    }
+
+    if (expression.isKind?.(SyntaxKind.ParenthesizedExpression)) {
+        return resolveObjectLiteralExpression(expression.getExpression());
+    }
+
+    if (expression.isKind?.(SyntaxKind.AsExpression)
+        || expression.isKind?.(SyntaxKind.TypeAssertionExpression)
+        || expression.isKind?.(SyntaxKind.SatisfiesExpression)
+        || expression.isKind?.(SyntaxKind.NonNullExpression)
+    ) {
+        return resolveObjectLiteralExpression(expression.getExpression?.());
+    }
+
+    return null;
 }
 
 function collectObjectLiteralHandlers(objectLiteral) {
 
     // Reuse the same extraction logic for any handler stored on an object literal shape.
+    if (!objectLiteral || typeof objectLiteral.getProperties !== 'function') return;
+
     objectLiteral.getProperties().forEach(prop => {
 
         const propName = prop.getName?.();
         if (!isHandler(propName)) return;
 
         let params = [];
-        if (prop.getKind() === ts.SyntaxKind.MethodDeclaration) {
+        if (prop.getKind() === SyntaxKind.MethodDeclaration) {
             const docTags = getParamDocs(prop);
             params = prop.getParameters().flatMap(p => describeParam(p, docTags));
-        } else if (prop.getKind() === ts.SyntaxKind.PropertyAssignment) {
-            const fn = prop.getInitializerIfKind(ts.SyntaxKind.FunctionExpression) || prop.getInitializerIfKind(ts.SyntaxKind.ArrowFunction);
+        } else if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+            const fn = prop.getInitializerIfKind(SyntaxKind.FunctionExpression) || prop.getInitializerIfKind(SyntaxKind.ArrowFunction);
             if (fn) {
                 const docTags = getParamDocs(fn);
                 params = fn.getParameters().flatMap(p => describeParam(p, docTags));
@@ -163,25 +200,29 @@ function collectObjectLiteralHandlers(objectLiteral) {
 function updateNodeFromJsdoc(jsdoc = {}) {
 
     const nodeTag = jsdoc.tags?.find(t => t.tagName === 'node')?.comment;
-    if (nodeTag) currentNode = nodeTag.trim();
+    if (nodeTag) {
+        applyNodeTag(nodeTag);
+    }
 }
 
-function collect(rawName, params, line, jsdoc = {}) {
+function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
 
-    //if (!isHandler(rawName)) return;
     const cleanHandler = rawName.replace(/^['"]|['"]$/g, '');
 
     let pin = null;
-    let node = null;
+    let node = defaultNode || null;
 
     const pinTag = jsdoc.tags?.find(t => t.tagName === 'pin')?.comment;
     const nodeTag = jsdoc.tags?.find(t => t.tagName === 'node')?.comment;
     const mcpTag = jsdoc.tags?.find(t => t.tagName === 'mcp')?.comment ?? null;
 
-    // if there is a node tag, change the name of the current node
-    if (nodeTag) currentNode = nodeTag.trim();
+    if (nodeTag) {
+        const context = applyNodeTag(nodeTag);
+        if (context?.nodeName) {
+            node = context.nodeName;
+        }
+    }
 
-    // check the pin tag to get a pin name and node name
     if (pinTag) {
 
         if (pinTag.includes('@')) {
@@ -190,18 +231,8 @@ function collect(rawName, params, line, jsdoc = {}) {
             node = n;
         }
         else pin = pinTag.trim();
-
-        // Use the current context when the pin tag does not specify a node.
-        if (!node) node = currentNode || topLevelClass || null;
     }
-
-    // check the pin tag to get a pin name and node name
-    // if (pinTag && pinTag.includes('@')) {
-    //     const [p, n] = pinTag.split('@').map(s => s.trim());
-    //     pin = p;
-    //     node = n;
-    // } 
-    else {
+    else if (!node) {
 
         // no explicit tag - try these...
         node = currentNode || topLevelClass || null;
@@ -215,7 +246,7 @@ function collect(rawName, params, line, jsdoc = {}) {
     }
 
     // if there is no node we just don't save the data
-    if (!node) return
+    if (!node) return;
 
     // check if we have an entry for the node
     if (!nodeMap.has(node)) nodeMap.set(node, { handles: [], transmits: [] });
@@ -245,29 +276,23 @@ function collect(rawName, params, line, jsdoc = {}) {
 
     // and put it in the nodemap
     nodeMap.get(node).handles.push(handlerData);
-  };
+}
 
 // determines if a name is the name for a handler
 function isHandler(name) {
-    // must be a string
     if (typeof name !== 'string') return false;
 
-    // get rid of " and '
     const clean = name.replace(/^['"]|['"]$/g, '');
-
-    // check that it starts with the right symbols...
     return clean.startsWith('on') || clean.startsWith('->');
 }
 
 // Get the parameter description from the function or method
 function getParamDocs(fnOrMethod) {
 
-    // extract
     const docs = fnOrMethod.getJsDocs?.() ?? [];
     const tags = docs.flatMap(d => d.getTags());
     const paramDocs = {};
 
-    // check the tags
     for (const tag of tags) {
         if (tag.getTagName() === 'param') {
             const name = tag.getNameNode()?.getText?.() || tag.getName();
@@ -295,14 +320,16 @@ function getFullJsDoc(node) {
     return { summary, returns, examples, tags };
 }
 
+function hasDocMetadata(jsdoc) {
+    if (!jsdoc) return false;
+    if (jsdoc.summary && jsdoc.summary.trim()) return true;
+    return Array.isArray(jsdoc.tags) && jsdoc.tags.length > 0;
+}
+
 // make a parameter description
 function describeParam(p, docTags = {}) {
 
     const nameNode = p.getNameNode();
-
-// const func = p.getParent();
-// const funcName = func.getName?.() || '<anonymous>';
-// console.log(funcName)
 
     if (nameNode.getKindName() === 'ObjectBindingPattern') {
 
@@ -337,11 +364,6 @@ function describeParam(p, docTags = {}) {
     const doc = docTags[name] ?? {};
     const tsType = p.getType().getText();
 
-    // const isTSFallback = tsType === 'any' || tsType === 'string';
-    // if (isTSFallback && !doc.type) {
-    //   console.warn(`⚠️ No type info for param "${name}" in function "${funcName}"`);
-    // }
-
     return {
         name,
         type: doc.type || tsType || 'string',
@@ -349,3 +371,164 @@ function describeParam(p, docTags = {}) {
     };
 }
 
+function applyNodeTag(rawTag) {
+    const { nodeName, aliases } = parseNodeTag(rawTag);
+    if (!nodeName) return null;
+    registerNodeContext(nodeName, aliases);
+    return { nodeName, aliases };
+}
+
+function registerNodeContext(nodeName, aliases = []) {
+    const normalizedNode = nodeName.trim();
+    if (!normalizedNode) return;
+    currentNode = normalizedNode;
+
+    aliases.forEach(alias => registerAlias(alias, normalizedNode));
+
+    const derivedAlias = deriveIdentifierFromNodeName(normalizedNode);
+    if (derivedAlias) registerAlias(derivedAlias, normalizedNode);
+}
+
+function registerAlias(alias, nodeName) {
+    const cleaned = alias?.trim();
+    if (!cleaned) return;
+    if (!isValidIdentifier(cleaned)) return;
+    if (!nodeAliases.has(cleaned)) {
+        nodeAliases.set(cleaned, nodeName);
+    }
+}
+
+function parseNodeTag(rawTag) {
+    if (!rawTag || typeof rawTag !== 'string') return { nodeName: null, aliases: [] };
+
+    let text = rawTag.trim();
+    if (!text) return { nodeName: null, aliases: [] };
+
+    let nodeName = text;
+    let aliasChunk = '';
+
+    const explicitMatch = text.match(/^(.*?)(?:\s+(?:@|as|=>|->|\||:)\s+)(.+)$/i);
+    if (explicitMatch) {
+        nodeName = explicitMatch[1].trim();
+        aliasChunk = explicitMatch[2].trim();
+    } else {
+        const quotedMatch = text.match(/^["']([^"']+)["']\s+(.+)$/);
+        if (quotedMatch) {
+            nodeName = quotedMatch[1].trim();
+            aliasChunk = quotedMatch[2].trim();
+        }
+    }
+
+    if (!aliasChunk) {
+        const parts = text.split(/\s+/);
+        if (parts.length > 1) {
+            const candidateAlias = parts[parts.length - 1];
+            const candidateNode = parts.slice(0, -1).join(' ');
+            if (isValidIdentifier(candidateAlias) && isKnownIdentifier(candidateAlias)) {
+                aliasChunk = candidateAlias;
+                nodeName = candidateNode.trim();
+            }
+        }
+    }
+
+    const aliases = aliasChunk
+        ? aliasChunk.split(/[,\s]+/).map(a => a.trim()).filter(Boolean)
+        : [];
+
+    return { nodeName, aliases };
+}
+
+function deriveIdentifierFromNodeName(name) {
+    const chunks = name.split(/[\s\-]+/).filter(Boolean);
+    if (chunks.length === 0) return null;
+    if (chunks.length === 1) {
+        const single = chunks[0];
+        return isValidIdentifier(single) ? single : null;
+    }
+    const [first, ...rest] = chunks;
+    const camel = first.toLowerCase() + rest.map(capitalize).join('');
+    return isValidIdentifier(camel) ? camel : null;
+}
+
+function capitalize(word) {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function isValidIdentifier(value) {
+    return /^[A-Za-z_$][\w$]*$/.test(value);
+}
+
+function isKnownIdentifier(name) {
+    return knownIdentifiers.has(name);
+}
+
+function collectKnownIdentifiers(sourceFile) {
+    const identifiers = new Set();
+
+    sourceFile.getVariableDeclarations().forEach(decl => {
+        const name = decl.getName();
+        if (typeof name === 'string' && isValidIdentifier(name)) {
+            identifiers.add(name);
+        }
+    });
+
+    sourceFile.getFunctions().forEach(fn => {
+        const name = fn.getName?.();
+        if (name && isValidIdentifier(name)) identifiers.add(name);
+    });
+
+    sourceFile.getClasses().forEach(cls => {
+        const name = cls.getName?.();
+        if (name && isValidIdentifier(name)) identifiers.add(name);
+    });
+
+    if (typeof sourceFile.getInterfaces === 'function') {
+        sourceFile.getInterfaces().forEach(iface => {
+            const name = iface.getName?.();
+            if (name && isValidIdentifier(name)) identifiers.add(name);
+        });
+    }
+
+    if (typeof sourceFile.getTypeAliases === 'function') {
+        sourceFile.getTypeAliases().forEach(alias => {
+            const name = alias.getName?.();
+            if (name && isValidIdentifier(name)) identifiers.add(name);
+        });
+    }
+
+    if (typeof sourceFile.getEnums === 'function') {
+        sourceFile.getEnums().forEach(enm => {
+            const name = enm.getName?.();
+            if (name && isValidIdentifier(name)) identifiers.add(name);
+        });
+    }
+
+    sourceFile.getImportDeclarations().forEach(decl => {
+        const defaultImport = decl.getDefaultImport();
+        if (defaultImport) {
+            const name = defaultImport.getText();
+            if (isValidIdentifier(name)) identifiers.add(name);
+        }
+
+        const namespaceImport = decl.getNamespaceImport();
+        if (namespaceImport) {
+            const nsName = typeof namespaceImport.getText === 'function'
+                ? namespaceImport.getText()
+                : namespaceImport.getName?.();
+            if (nsName && isValidIdentifier(nsName)) identifiers.add(nsName);
+        }
+
+        decl.getNamedImports().forEach(spec => {
+            const alias = spec.getAliasNode()?.getText();
+            if (alias && isValidIdentifier(alias)) {
+                identifiers.add(alias);
+            } else {
+                const name = spec.getName();
+                if (isValidIdentifier(name)) identifiers.add(name);
+            }
+        });
+    });
+
+    return identifiers;
+}

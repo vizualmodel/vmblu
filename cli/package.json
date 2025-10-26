@@ -1,18 +1,29 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "type": "module",
   "bin": {
     "vmblu": "bin/vmblu.js"
   },
   "files": [
     "bin",
-    "commands",
+    "commands/init",
+    "commands/profile/index.js",
+    "commands/profile/profile.bundle.js",
     "templates",
     "README.md",
     "LICENSE"
   ],
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^5.8.3",
+    "ts-morph": "^26.0.0"
+  },
+  "scripts": {
+    "vmblu": "vmblu",
+    "local": "node ./bin/vmblu.js profile ../browser/vmblu.vmblu",
+    "build": "rollup -c ./commands/profile/rollup.config.js"
   }
 }

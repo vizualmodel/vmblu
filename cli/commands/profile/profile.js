@@ -25,7 +25,6 @@ export async function profile(argv = process.argv.slice(2)) {
     const cli = parseCliArgs(argv);
 
     if (!cli.modelFile) {
-        //console.error('Usage: node profile <model-file> [--out <file>] [--full] [--changed <files...>] [--deleted <files...>] [--delta-file <path>] [--reason <text>]');
         console.error('Usage: vmblu profile <model-file> [--out <file>] [--full] [--changed <files...>] [--deleted <files...>] [--delta-file <path>] [--reason <text>]');
         process.exit(1);
     }
@@ -42,7 +41,7 @@ export async function profile(argv = process.argv.slice(2)) {
         ? path.resolve(cli.outFile)
         : (() => {
             const { dir, name } = path.parse(absoluteModelPath);
-            return path.join(dir, `${name}-doc.json`);
+            return path.join(dir, `${name}.prf.json`);
         })();
 
     if (cli.deltaFile) cli.deltaFile = path.resolve(cli.deltaFile);
@@ -77,6 +76,9 @@ export async function profile(argv = process.argv.slice(2)) {
     const rxtx = []
     const generatedAt = new Date().toISOString()
     for (const sourceFile of sourceFiles) {
+
+        // display file scanned..
+        // console.log(sourceFile.getFilePath())
 
         // A file reference is always relative to the model file
         const filePath = path.relative(path.dirname(modelPath), sourceFile.getFilePath()).replace(/\\/g, '/');

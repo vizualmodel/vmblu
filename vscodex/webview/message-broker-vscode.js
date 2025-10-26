@@ -39,8 +39,8 @@ export const messageBrokerVscode = {
 					// set as the active document
 					this.tx.send('set document', this.activeDoc)
 
-					// write to the output file (= same name as model file but with -doc added before extension)
-					const outFilename = Path.nameOnly(arl.userPath) + '-doc.json'
+					// write to the output file (= same name as model file but with .prf added before extension)
+					const outFilename = Path.nameOnly(arl.userPath) + '.prf.json'
 
 					// Make the output file name
 					const outFile = arl.resolve(outFilename)
@@ -57,46 +57,6 @@ export const messageBrokerVscode = {
 				// done
 				return;
 			}
-
-			// a document has been opened by the user: the 'new' document can be an existing document or still have to be created
-			case 'xxxopen main': {
-
-				// make a url from the uri that we got
-				const arl = this.makeArl(message.uri)
-
-				// create the new document
-				this.activeDoc = new Document(arl)
-
-				// check if the document has to be created
-				this.activeDoc.load()
-				.then( () => {
-
-					// set as the active document
-					this.tx.send('set document', this.activeDoc)
-
-					// get the factories of the model into an array
-					const factories = []
-					for (const factory of this.activeDoc.modcom.factories.map.values()) factories.push(factory.arl)
-
-					// write to the output file (= same name as model file but with -doc added before extension)
-					const outFilename = Path.nameOnly(arl.userPath) + '-doc.json'
-
-					// Make the output file name
-					const outFile = arl.resolve(outFilename)
-
-					// also request to run run documentation.js on the factory files...
-					vscode.postMessage({verb:'watch source doc', factories, outFile})
-				})
-				.catch( error => {
-
-					// show a popup message
-					console.error(`*** Could not open main document ${message.uri} ${error}`)            
-				})
-
-				// done
-				return;
-			}
-
 
 			case 'new main' : {
 
@@ -152,7 +112,7 @@ export const messageBrokerVscode = {
 			}
 
 			case 'source doc' : {
-				this.activeDoc.model.sourceMap = this.activeDoc.model.parseSourceDoc(message.rawSourceDoc) 
+				this.activeDoc.model.sourceMap = this.activeDoc.model.parseSourceMap(message.rawSourceDoc) 
 				return
 			}
 

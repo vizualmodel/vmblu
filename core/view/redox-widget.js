@@ -1,6 +1,9 @@
 import {editor} from '../editor/index.js'
 import {ARL} from '../arl/index.js'
 
+/**
+ * @node editor editor
+ */
 export const redoxWidget = {
 
 newPin: {

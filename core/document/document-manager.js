@@ -57,7 +57,7 @@ DocumentManager.prototype = {
 
            // then read the source documentation for the model
            .then( () => {
-                doc.model.handleSourceDoc()
+                doc.model.handleSourceMap()
            })
 
            // send the stuff to the editor

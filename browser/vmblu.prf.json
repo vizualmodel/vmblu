@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "generatedAt": "2025-10-22T16:59:03.229Z",
+  "generatedAt": "2025-10-26T15:54:07.086Z",
   "entries": [
     {
       "node": "document manager",
@@ -121,13 +121,59 @@
           ]
         }
       ],
-      "transmits": []
+      "transmits": [
+        {
+          "pin": "tab new",
+          "file": "../core/document/document-manager.js",
+          "line": 118
+        },
+        {
+          "pin": "doc set active",
+          "file": "../core/document/document-manager.js",
+          "line": 121
+        },
+        {
+          "pin": "save as filename",
+          "file": "../core/document/document-manager.js",
+          "line": 158
+        },
+        {
+          "pin": "tab rename",
+          "file": "../core/document/document-manager.js",
+          "line": 167
+        },
+        {
+          "pin": "open models",
+          "file": "../core/document/document-manager.js",
+          "line": 200
+        },
+        {
+          "pin": "tab remove",
+          "file": "../core/document/document-manager.js",
+          "line": 226
+        },
+        {
+          "pin": "tab select",
+          "file": "../core/document/document-manager.js",
+          "line": 238
+        },
+        {
+          "pin": "tab select",
+          "file": "../core/document/document-manager.js",
+          "line": 247
+        },
+        {
+          "pin": "doc set active",
+          "file": "../core/document/document-manager.js",
+          "line": 254
+        }
+      ]
     },
     {
       "node": "editor",
       "handles": [
         {
-          "pin": "set document",
+          "pin": null,
           "handler": "onSetDocument",
           "file": "../core/editor/editor-message.js",
           "line": 10,
@@ -452,6 +498,22 @@
           "pin": "switch",
           "file": "../core/model/clipboard.js",
           "line": 70
+        }
+      ]
+    },
+    {
+      "node": "editor",
+      "handles": [],
+      "transmits": [
+        {
+          "pin": "pin profile",
+          "file": "../core/view/redox-widget.js",
+          "line": 224
+        },
+        {
+          "pin": "open source file",
+          "file": "../core/view/redox-widget.js",
+          "line": 235
         }
       ]
     }

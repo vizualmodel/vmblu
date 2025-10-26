@@ -73,14 +73,9 @@ function defaultModel(projectName) {
 function defaultDoc(projectName) {
   const now = new Date().toISOString();
   return JSON.stringify({
-    project: projectName,
-    generator: "vmblu-docgen",
-    generatorVersion: "0.0.0",
-    created: now,
-    files: [],
-    nodes: [],
-    pins: [],
-    handlers: []
+    version: "0.0.0",
+    generatedAt: now,
+    entries: {}
   }, null, 2);
 }
 
@@ -104,10 +99,10 @@ function fallbackSchema() {
 }`;
 }
 
-function fallbackSrcdocSchema() {
+function fallbackProfileSchema() {
   return `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "srcdoc.schema (placeholder)",
+  "title": "profile.schema (placeholder)",
   "type": "object",
   "description": "Placeholder schema. Replace with official version."
 }`;
@@ -119,16 +114,16 @@ function fallbackSeed() {
 vmblu (Vizual Model Blueprint) is a graphical editor that maintains a visual, runnable model of a software system.
 vmblu models software as interconnected nodes that pass messages via pins.  
 The model has a well defined format described by a schema. An additional annex gives semantic background information about the schema.
-The parameter profiles of messages and where in the actual source code messages are received and sent, is stored in a second file, the srcdoc file.
-The srcdoc file is generated automatically by vmblu and is only to be consulted, not written.
+The parameter profiles of messages and where in the actual source code messages are received and sent, is stored in a second file, the profile file.
+The profile file is generated automatically by vmblu and is only to be consulted, not written.
 
 You are an expert **architecture + code copilot** for **vmblu** .
-You can find the location of the model file, the model schema, the model annex, the srcdoc file and the srcdoc schema in the 'manifest.json' file of this project.
+You can find the location of the model file, the model schema, the model annex, the profile file and the profile schema in the 'manifest.json' file of this project.
 The location of all other files in the project can be found via the model file.
 
 Your job is to co-design the architecture and the software for the system.
 For modifications of the model, always follow the schema. 
-If the srcdoc does not contain profile information it could be that the code for a message has not been written yet, this should not stop you from continuing
+If the profile does not contain profile information it could be that the code for a message has not been written yet, this should not stop you from continuing
 `}
 
 /**
@@ -165,7 +160,7 @@ async function initProject(opts) {
 
   const absTarget = path.resolve(targetDir);
   const modelFile = path.join(absTarget, `${projectName}.vmblu`);
-  const docFile   = path.join(absTarget, `${projectName}-doc.json`);
+  const docFile   = path.join(absTarget, `${projectName}.prf.json`);
 
   const llmDir     = path.join(absTarget, 'llm');
   const sessionDir = path.join(llmDir, 'session');
@@ -178,7 +173,7 @@ async function initProject(opts) {
   // Template sources
   const schemaSrc = path.join(templatesDir, schemaVersion, 'vmblu.schema.json');
   const annexSrc  = path.join(templatesDir, schemaVersion, 'vmblu.annex.md');
-  const srcdocSchemaSrc = path.join(templatesDir, schemaVersion, 'srcdoc.schema.json');
+  const profileSchemaSrc = path.join(templatesDir, schemaVersion, 'profile.schema.json');
   const seedSrc = path.join(templatesDir, schemaVersion, 'seed.md');
   
   // 1) Create folders
@@ -197,7 +192,7 @@ async function initProject(opts) {
   // 3) Copy schema + annex into llm/
   const schemaDst = path.join(llmDir, 'vmblu.schema.json');
   const annexDst  = path.join(llmDir, 'vmblu.annex.md');
-  const srcdocSchemaDst = path.join(llmDir, 'srcdoc.schema.json');
+  const profileSchemaDst = path.join(llmDir, 'profile.schema.json');
   const seedDst  = path.join(llmDir, 'seed.md');
 
 
@@ -207,8 +202,8 @@ async function initProject(opts) {
   ui.info(`copy ${annexSrc} -> ${annexDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(annexSrc, annexDst, fallbackAnnex(), { force, dry: dryRun });
 
-   ui.info(`copy ${srcdocSchemaSrc} -> ${srcdocSchemaDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(srcdocSchemaSrc, srcdocSchemaDst, fallbackSrcdocSchema(), { force, dry: dryRun });
+   ui.info(`copy ${profileSchemaSrc} -> ${profileSchemaDst}${force ? ' (force)' : ''}`);
+  await copyOrWriteFallback(profileSchemaSrc, profileSchemaDst, fallbackProfileSchema(), { force, dry: dryRun });
 
   ui.info(`copy ${seedSrc} -> ${seedDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(seedSrc, seedDst, fallbackSeed(), { force, dry: dryRun });
@@ -235,9 +230,9 @@ async function initProject(opts) {
         schema: 'vmblu.schema.json',
         annex: 'vmblu.annex.md',
       },
-      srcdoc: { 
+      profile: { 
         path: rel(llmPosix, docFile), 
-        schema: 'srcdoc.schema.json',
+        schema: 'profile.schema.json',
       },
     };
 
@@ -264,7 +259,7 @@ async function initProject(opts) {
       manifest.json
       vmblu.schema.json
       vmblu.annex.md
-      srcdoc.schema.json
+      profile.schema.json
       session/
     nodes/\n`);
 
@@ -277,7 +272,7 @@ async function initProject(opts) {
       doc: docFile,
       schema: schemaDst,
       annex: annexDst,
-      srdocSchema: srcdocSchemaDst,
+      profileSchema: profileSchemaDst,
       manifest: path.join(llmDir, 'manifest.json')
     },
     dryRun,
