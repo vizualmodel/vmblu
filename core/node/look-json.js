@@ -172,7 +172,7 @@ cook( raw ) {
     for (const widget of this.widgets) if (widget.wid && (widget.wid > this.widGenerator)) this.widGenerator = widget.wid
 
     // if there are widgets with a wid of zero, correct this
-    for (const widget of this.widgets) if (widget.wid && (widget.wid == 0)) widget.wid = this.generateWid()
+    for (const widget of this.widgets) if (widget.wid == 0) widget.wid = this.generateWid()
 },
 
 cookPin(raw) {

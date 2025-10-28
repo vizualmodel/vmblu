@@ -17,7 +17,11 @@ import { ARL } from '../../../core/arl/arl-node.js'
 import {findHandlers} from './find-handlers.js'
 import {findTransmissions} from './find-transmissions.js'
 
-const SRC_DOC_VERSION = '0.2';
+// allign with package version
+import pkg from '../../package.json' assert { type: 'json' };
+const PROFILE_VERSION = pkg.version;
+
+// const PROFILE_VERSION = '0.2';
 
 // The main function for the profile tool
 export async function profile(argv = process.argv.slice(2)) {
@@ -104,7 +108,7 @@ export async function profile(argv = process.argv.slice(2)) {
 
     // and write the output to that file
     const output = {
-        version: SRC_DOC_VERSION,
+        version: PROFILE_VERSION,
         generatedAt,
         entries: rxtx
     };

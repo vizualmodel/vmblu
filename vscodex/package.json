@@ -2,7 +2,7 @@
     "name": "vmblu",
     "displayName": "vizual model blueprint",
     "description": "Structured ● Visual ● AI native",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "VizualModel",
     "private": true,
     "license": "Apache 2.0",

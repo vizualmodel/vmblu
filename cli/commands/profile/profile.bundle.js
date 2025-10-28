@@ -4222,7 +4222,7 @@ const messageHandling = {
         // propose a path for the lib
         const libPath =
             doc.target.library?.userPath ??
-            removeExt(doc.model.arl.userPath) + '-lib.js';
+            removeExt(doc.model.arl.userPath) + '.lib.js';
 
         // request the path for the save as operation
         this.tx.send('show lib path', {
@@ -4250,7 +4250,7 @@ const messageHandling = {
         //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.arl.userPath, 'js')
         const appPath =
             doc.target.library?.userPath ??
-            removeExt(doc.model.arl.userPath) + '-app.js';
+            removeExt(doc.model.arl.userPath) + '.app.js';
 
         // request the path for the save as operation
         this.tx.send('show app path', {
@@ -14037,6 +14037,10 @@ Editor.prototype = {
 };
 Object.assign(Editor.prototype, mouseHandling$1, keyboardHandling$1, messageHandling, undoRedoHandling);
 
+/**
+ * @node editor editor
+ */
+
 function placePopup(pos) {
     return {x: pos.x - 15, y:pos.y + 10}
 }
@@ -14046,7 +14050,6 @@ const nodeClickHandling = {
     showExportForm(pos) {
 
         const node = this;
-        editor.tx;
 
         // send the show link path
         editor.tx.send("show link",{   
@@ -14062,7 +14065,6 @@ const nodeClickHandling = {
     showLinkForm(pos) {
 
         const node = this;
-        const tx = editor.tx;
 
         // check what path to show - show no path if from the main model
         const linkPath = (node.link && (node.link.model != editor.doc?.model)) ? node.link.model?.arl.userPath : '';
@@ -14090,7 +14092,7 @@ const nodeClickHandling = {
                     editor.doEdit('changeLink',{node, lName: newName, userPath: newPath});
 
                 // open the file if the link is to an outside file !
-                if (node.link.model?.arl && (node.link.model != editor.doc?.model)) tx.send('open document',node.link.model.arl);
+                if (node.link.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl);
             },
             cancel:()=>{}
         });
@@ -14099,7 +14101,6 @@ const nodeClickHandling = {
     iconClick(view, icon, pos) {
 
         const node = this;
-        const tx = editor.tx;
 
         // move the popup a bit away from the icon
         const newPos = placePopup(pos);
@@ -14119,7 +14120,7 @@ const nodeClickHandling = {
                 const factoryPath = node.factory.arl ? node.factory.arl.userPath : '';
 
                 // show the factory
-                tx.send("show factory",{ title: 'Factory for ' + node.name, 
+                editor.tx.send("show factory",{ title: 'Factory for ' + node.name, 
                                         name: factoryName,
                                         path: factoryPath,
                                         pos: newPos,
@@ -14138,7 +14139,7 @@ const nodeClickHandling = {
                                             const arl = node.factory.arl ?? editor.doc.resolve('./index.js');
 
                                             // open the file
-                                            tx.send('open source file',{arl});
+                                            editor.tx.send('open source file',{arl});
                                         },
                                         cancel:()=>{}
                 });
@@ -14175,7 +14176,7 @@ const nodeClickHandling = {
 
             case 'cog':
 
-                tx.send("settings",{    title:'Settings for ' + node.name, 
+                editor.tx.send("settings",{    title:'Settings for ' + node.name, 
                                         pos: newPos,
                                         json: node.sx,
                                         ok: (sx) => editor.doEdit("changeNodeSettings",{node, sx})
@@ -14184,7 +14185,7 @@ const nodeClickHandling = {
 
             case 'pulse':
 
-                tx.send("runtime settings",{    title:'Runtime settings for ' + node.name, 
+                editor.tx.send("runtime settings",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
                                                 dx: node.dx,
                                                 ok: (dx) => editor.doEdit("changeNodeDynamics",{node, dx})
@@ -14194,7 +14195,7 @@ const nodeClickHandling = {
             case 'comment':
 
                 // save the node hit
-                tx.send("node comment", {   header: 'Comment for ' + node.name, 
+                editor.tx.send("node comment", {   header: 'Comment for ' + node.name, 
                                             pos: newPos, 
                                             uid: node.uid, 
                                             text: node.prompt ?? '', 
@@ -14208,7 +14209,6 @@ const nodeClickHandling = {
     iconCtrlClick(view,icon, pos) {
 
         const node = this;
-        const tx = editor.tx;
 
         switch (icon.type) {
     
@@ -14216,7 +14216,7 @@ const nodeClickHandling = {
             case 'lock': {
 
                 // open the file if it points to an external model
-                if (node.link?.model?.arl && (node.link.model != editor.doc?.model)) tx.send('open document',node.link.model.arl);
+                if (node.link?.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl);
             }
             break
 
@@ -14229,7 +14229,7 @@ const nodeClickHandling = {
                 const arl = node.factory.arl ?? editor.doc.resolve('./index.js');
 
                 // request to open the file
-                if (arl) tx.send("open source file", {arl});
+                if (arl) editor.tx.send("open source file", {arl});
             }
             break
     
@@ -23326,7 +23326,13 @@ function getEnclosingHandlerName(callExpression) {
     return null;
 }
 
-const SRC_DOC_VERSION = '0.2';
+var version = "0.3.2";
+var pkg = {
+	version: version};
+
+const PROFILE_VERSION = pkg.version;
+
+// const PROFILE_VERSION = '0.2';
 
 // The main function for the profile tool
 async function profile(argv = process.argv.slice(2)) {
@@ -23413,7 +23419,7 @@ async function profile(argv = process.argv.slice(2)) {
 
     // and write the output to that file
     const output = {
-        version: SRC_DOC_VERSION,
+        version: PROFILE_VERSION,
         generatedAt,
         entries: rxtx
     };

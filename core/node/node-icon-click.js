@@ -2,6 +2,10 @@
 import {convert} from '../util/index.js'
 import {editor} from '../editor/index.js'
 
+/**
+ * @node editor editor
+ */
+
 function placePopup(pos) {
     return {x: pos.x - 15, y:pos.y + 10}
 }
@@ -11,7 +15,6 @@ export const nodeClickHandling = {
     showExportForm(pos) {
 
         const node = this
-        const tx = editor.tx
 
         // send the show link path
         editor.tx.send("show link",{   
@@ -27,7 +30,6 @@ export const nodeClickHandling = {
     showLinkForm(pos) {
 
         const node = this
-        const tx = editor.tx
 
         // check what path to show - show no path if from the main model
         const linkPath = (node.link && (node.link.model != editor.doc?.model)) ? node.link.model?.arl.userPath : ''
@@ -55,7 +57,7 @@ export const nodeClickHandling = {
                     editor.doEdit('changeLink',{node, lName: newName, userPath: newPath})
 
                 // open the file if the link is to an outside file !
-                if (node.link.model?.arl && (node.link.model != editor.doc?.model)) tx.send('open document',node.link.model.arl)
+                if (node.link.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl)
             },
             cancel:()=>{}
         })
@@ -64,7 +66,6 @@ export const nodeClickHandling = {
     iconClick(view, icon, pos) {
 
         const node = this
-        const tx = editor.tx
 
         // move the popup a bit away from the icon
         const newPos = placePopup(pos)
@@ -84,7 +85,7 @@ export const nodeClickHandling = {
                 const factoryPath = node.factory.arl ? node.factory.arl.userPath : ''
 
                 // show the factory
-                tx.send("show factory",{ title: 'Factory for ' + node.name, 
+                editor.tx.send("show factory",{ title: 'Factory for ' + node.name, 
                                         name: factoryName,
                                         path: factoryPath,
                                         pos: newPos,
@@ -103,7 +104,7 @@ export const nodeClickHandling = {
                                             const arl = node.factory.arl ?? editor.doc.resolve('./index.js')
 
                                             // open the file
-                                            tx.send('open source file',{arl})
+                                            editor.tx.send('open source file',{arl})
                                         },
                                         cancel:()=>{}
                 })
@@ -140,7 +141,7 @@ export const nodeClickHandling = {
 
             case 'cog':
 
-                tx.send("settings",{    title:'Settings for ' + node.name, 
+                editor.tx.send("settings",{    title:'Settings for ' + node.name, 
                                         pos: newPos,
                                         json: node.sx,
                                         ok: (sx) => editor.doEdit("changeNodeSettings",{node, sx})
@@ -149,7 +150,7 @@ export const nodeClickHandling = {
 
             case 'pulse':
 
-                tx.send("runtime settings",{    title:'Runtime settings for ' + node.name, 
+                editor.tx.send("runtime settings",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
                                                 dx: node.dx,
                                                 ok: (dx) => editor.doEdit("changeNodeDynamics",{node, dx})
@@ -159,7 +160,7 @@ export const nodeClickHandling = {
             case 'comment':
 
                 // save the node hit
-                tx.send("node comment", {   header: 'Comment for ' + node.name, 
+                editor.tx.send("node comment", {   header: 'Comment for ' + node.name, 
                                             pos: newPos, 
                                             uid: node.uid, 
                                             text: node.prompt ?? '', 
@@ -173,7 +174,6 @@ export const nodeClickHandling = {
     iconCtrlClick(view,icon, pos) {
 
         const node = this
-        const tx = editor.tx
 
         switch (icon.type) {
     
@@ -181,7 +181,7 @@ export const nodeClickHandling = {
             case 'lock': {
 
                 // open the file if it points to an external model
-                if (node.link?.model?.arl && (node.link.model != editor.doc?.model)) tx.send('open document',node.link.model.arl)
+                if (node.link?.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl)
             }
             break
 
@@ -194,7 +194,7 @@ export const nodeClickHandling = {
                 const arl = node.factory.arl ?? editor.doc.resolve('./index.js')
 
                 // request to open the file
-                if (arl) tx.send("open source file", {arl})
+                if (arl) editor.tx.send("open source file", {arl})
             }
             break
     

@@ -2,7 +2,7 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { execFile, ExecFileOptions } from 'child_process';
-import { debounce } from './util';
+import { debounce, cout } from './util';
 import * as os from 'os';
 
 type Arl = { url: string };
@@ -22,9 +22,10 @@ export class SourceDocWatcher {
   private lastRun = 0;
   private firstFullRunDone = false;
   private vmbluExecutable: string | null = null;
-  private vmbluExecutableSource: 'local' | 'path' | 'script' = 'path'; // remembers how we resolved the CLI
-  private vmbluPreArgs: string[] = []; // optional prefix args (e.g., ['<script>']) when we fall back to node
+  private vmbluExecutableSource: 'local' | 'path' = 'path'; // remembers how we resolved the CLI
+  private vmbluPreArgs: string[] = []; // optional prefix args (unused without fallbacks)
   private vmbluMissingNotified = false; // avoids spamming the user with duplicate "install CLI" messages
+  private vmbluExecutableRootsKey: string | null = null; // cache signature for search roots used to resolve CLI
 
   // tune to taste
   private static readonly DEBOUNCE_MS = 500;
@@ -33,10 +34,12 @@ export class SourceDocWatcher {
   constructor(outUri: vscode.Uri, customerAction: someAction) {
     this.customerAction = customerAction;
     this.outUri = outUri;
+    //cout(`[SourceDocWatcher] Initialized with outUri=${outUri.toString()}`);
   }
 
   setModelFile(modelArl: Arl) {
     this.modelUri = vscode.Uri.parse(modelArl.url);
+    //cout(`[SourceDocWatcher] Model set to ${this.modelUri.toString()}`);
     // Kick a run when the model changes/loads
     this.requestScan('model-set');
   }
@@ -167,13 +170,15 @@ export class SourceDocWatcher {
       const result = await this.runVmbluSafely(args, options);
       if (!result) return;
 
-      if (result.stderr) console.warn('vmblu profile stderr:', result.stderr);
+      //if (result.stderr) console.warn('vmblu profile stderr:', result.stderr);
+      if (result.stderr) cout(`vmblu profile stderr: ${result.stderr}`);
       try {
         const jsonText = await fs.readFile(outPath, 'utf8');
         const sourceMap = JSON.parse(jsonText);
+        //cout(`[SourceDocWatcher] Loaded profile output (${sourceMap.entries?.length ?? 0} entries) from ${outPath}`);
         this.customerAction(sourceMap);
       } catch (err) {
-        console.error('Failed to read vmblu profile output:', err);
+        cout(`Failed to read vmblu profile output ${err}`);
       }
       this.vmbluMissingNotified = false; // successful run means future misses should notify again
     } finally {
@@ -188,15 +193,23 @@ export class SourceDocWatcher {
   }
 
   private async resolveVmbluExecutable(): Promise<string> {
-    // Reuse any previously resolved local shim or script-based fallback.
-    if (this.vmbluExecutable && (this.vmbluExecutableSource === 'local' || this.vmbluExecutableSource === 'script')) {
+    //const binNames = process.platform === 'win32' ? ['vmblu.cmd', 'vmblu.exe', 'vmblu'] : ['vmblu'];
+    const binNames = process.platform === 'win32' ? ['vmblu.cmd'] : ['vmblu'];
+    const searchRoots = this.collectVmbluSearchRoots(); // search close to the workspace first
+    const rootsKey = JSON.stringify(Array.from(searchRoots).sort());
+    //cout(`[SourceDocWatcher] Resolving vmblu CLI. Search roots: ${searchRoots.join(' | ')}`);
+
+    if (
+      this.vmbluExecutable &&
+      this.vmbluExecutableSource === 'local' &&
+      this.vmbluExecutableRootsKey === rootsKey &&
+      (await this.pathExists(this.vmbluExecutable))
+    ) {
       return this.vmbluExecutable;
     }
 
-    const binNames = process.platform === 'win32' ? ['vmblu.cmd', 'vmblu.exe', 'vmblu'] : ['vmblu'];
     this.vmbluExecutable = null;
     this.vmbluPreArgs = [];
-    const searchRoots = this.collectVmbluSearchRoots(); // search close to the workspace first
 
     for (const root of searchRoots) {
       const binDir = path.join(root, 'node_modules', '.bin');
@@ -207,24 +220,19 @@ export class SourceDocWatcher {
           this.vmbluExecutable = candidate;
           this.vmbluExecutableSource = 'local';
           this.vmbluMissingNotified = false;
+          this.vmbluExecutableRootsKey = rootsKey;
+          //cout(`[SourceDocWatcher] Resolved vmblu CLI at ${candidate}`);
           return candidate;
         } catch {
+          //cout(`[SourceDocWatcher] No CLI at ${candidate}`);
           // continue search
         }
       }
     }
 
-    const script = await this.findVmbluCliScript(searchRoots);
-    if (script) {
-      this.vmbluExecutable = process.execPath;
-      this.vmbluPreArgs = [script];
-      this.vmbluExecutableSource = 'script';
-      this.vmbluMissingNotified = false;
-      return this.vmbluExecutable;
-    }
-
     this.vmbluExecutable = binNames[0];
     this.vmbluExecutableSource = 'path';
+    this.vmbluExecutableRootsKey = rootsKey;
     return this.vmbluExecutable;
   }
 
@@ -234,20 +242,6 @@ export class SourceDocWatcher {
       return await this.runVmbluWithCurrentResolution(baseArgs, options);
     } catch (error) {
       const nodeErr = error as NodeJS.ErrnoException & { stderr?: string };
-      if (nodeErr?.code === 'EINVAL' && this.vmbluExecutableSource !== 'script') { 
-        
-        // Windows occasionally reports EINVAL when launching shims; fall back to running the script via node
-        const fallbackApplied = await this.applyScriptFallback();
-        if (fallbackApplied) {
-          try {
-            return await this.runVmbluWithCurrentResolution(baseArgs, options);
-          } catch (fallbackError) {
-            this.logVmbluFailure(fallbackError as NodeJS.ErrnoException & { stderr?: string });
-            return null;
-          }
-        }
-      }
-
       this.logVmbluFailure(nodeErr);
       return null;
     }
@@ -256,7 +250,11 @@ export class SourceDocWatcher {
   // execute using whatever command/preArgs resolution currently active
   private async runVmbluWithCurrentResolution(baseArgs: string[], options: ExecFileOptions): Promise<{ stderr?: string }> {
     const vmbluBin = await this.resolveVmbluExecutable();
-    const spawnArgs = this.vmbluPreArgs.length ? [...this.vmbluPreArgs, ...baseArgs] : [...baseArgs];
+    const spawnArgs = [...baseArgs];
+    if (process.platform === 'win32' && vmbluBin.toLowerCase().endsWith('.cmd')) {
+      const comspec = process.env.COMSPEC || 'cmd.exe';
+      return this.execVmblu(comspec, ['/c', vmbluBin, ...spawnArgs], options);
+    }
     return this.execVmblu(vmbluBin, spawnArgs, options);
   }
 
@@ -284,72 +282,60 @@ export class SourceDocWatcher {
       this.notifyMissingVmblu();
       return;
     }
-    if (error?.stderr) console.error('vmblu profile stderr:', error.stderr);
-    console.error('vmblu profile error:', error);
+    if (error?.stderr) cout(`vmblu profile stderr: ${error.stderr}`);
+    cout(`vmblu profile error ${error}`);
   }
 
-  private collectVmbluSearchRoots(): Set<string> { 
-    
-    // gather candidate roots near the workspace for node_modules lookups
-    const searchRoots = new Set<string>();
+  private collectVmbluSearchRoots(): string[] {
+    const seen = new Set<string>();
+    const roots: string[] = [];
     const normalize = (p: string) => path.resolve(p);
 
-    const modelFolder = this.modelUri ? vscode.workspace.getWorkspaceFolder(this.modelUri) : undefined;
-    if (modelFolder) searchRoots.add(normalize(modelFolder.uri.fsPath));
-    if (this.modelUri) searchRoots.add(normalize(path.dirname(this.modelUri.fsPath)));
+    const addRoot = (p: string | null | undefined) => {
+      if (!p) return;
+      const normalized = normalize(p);
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      roots.push(normalized);
+    };
 
-    const outFolder = vscode.workspace.getWorkspaceFolder(this.outUri);
-    if (outFolder) searchRoots.add(normalize(outFolder.uri.fsPath));
-    searchRoots.add(normalize(path.dirname(this.outUri.fsPath)));
-
-    for (const folder of vscode.workspace.workspaceFolders ?? []) {
-      searchRoots.add(normalize(folder.uri.fsPath));
-    }
-
-    searchRoots.add(normalize(path.join(__dirname, '..', '..')));
-    searchRoots.add(normalize(path.join(__dirname, '..', '..', '..')));
-
-    return searchRoots;
-  }
-
-  private async findVmbluCliScript(roots: Iterable<string>): Promise<string | null> { 
-    
-    // search upward for a checked-in CLI (e.g., in monorepo builds)
-    const candidates = new Set<string>();
-
-    for (const root of roots) {
-      let current = path.resolve(root);
-      for (let depth = 0; depth < 4; depth += 1) {
-        candidates.add(current);
+    const addChain = (start: string | null | undefined) => {
+      if (!start) return;
+      let current = normalize(start);
+      while (!seen.has(current)) {
+        addRoot(current);
         const parent = path.dirname(current);
         if (parent === current) break;
         current = parent;
       }
+    };
+
+    if (this.modelUri) {
+      const modelDir = path.dirname(this.modelUri.fsPath);
+      addChain(modelDir);
+      const modelFolder = vscode.workspace.getWorkspaceFolder(this.modelUri);
+      addChain(modelFolder?.uri.fsPath);
     }
 
-    for (const dir of candidates) {
-      const scriptPath = path.join(dir, 'cli', 'bin', 'vmblu.js');
-      try {
-        await fs.access(scriptPath);
-        return scriptPath;
-      } catch {
-        // continue
-      }
+    const outDir = path.dirname(this.outUri.fsPath);
+    addChain(outDir);
+    const outFolder = vscode.workspace.getWorkspaceFolder(this.outUri);
+    addChain(outFolder?.uri.fsPath);
+
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+      addChain(folder.uri.fsPath);
     }
 
-    return null;
+    return roots;
   }
 
-  private async applyScriptFallback(): Promise<boolean> { 
-    
-    // last-resort: invoke vmblu.js through Node when shims fail
-    const script = await this.findVmbluCliScript(this.collectVmbluSearchRoots());
-    if (!script) return false;
-    this.vmbluExecutable = process.execPath;
-    this.vmbluPreArgs = [script];
-    this.vmbluExecutableSource = 'script';
-    this.vmbluMissingNotified = false;
-    return true;
+  private async pathExists(file: string): Promise<boolean> {
+    try {
+      await fs.access(file);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private notifyMissingVmblu() {

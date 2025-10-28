@@ -11,8 +11,6 @@ export const keyboardHandling = {
 
             // and redraw
             this.redraw();
-
-            console.log('hello baby');
         }
     },
 

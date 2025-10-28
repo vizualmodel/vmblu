@@ -218,7 +218,12 @@ showProfile: {
         const profile = pin.is.input ? editor.doc.model.getInputPinProfile(pin) : editor.doc.model.getOutputPinProfile(pin)
 
         // check
-        if (!profile) return
+        if (!profile) {
+
+            console.log(`NO PROFILE ${pin.name}`)
+
+            return
+        }
 
         // show the profile
         editor.tx.send('pin profile',{pos, pin, profile,

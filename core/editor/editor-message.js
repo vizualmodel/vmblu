@@ -180,7 +180,7 @@ export const messageHandling = {
         //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.arl.userPath, 'js')
         const appPath =
             doc.target.library?.userPath ??
-            Path.removeExt(doc.model.arl.userPath) + '-app.js';
+            Path.removeExt(doc.model.arl.userPath) + '.app.js';
 
         // request the path for the save as operation
         this.tx.send('show app path', {
