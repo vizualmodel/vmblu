@@ -18,8 +18,8 @@ import {findHandlers} from './find-handlers.js'
 import {findTransmissions} from './find-transmissions.js'
 
 // allign with package version
-import pkg from '../../package.json' assert { type: 'json' };
-const PROFILE_VERSION = pkg.version;
+import pckg from '../../package.json' assert { type: 'json' };
+const PROFILE_VERSION = pckg.version;
 
 // const PROFILE_VERSION = '0.2';
 

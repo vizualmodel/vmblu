@@ -2,6 +2,8 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initProject } from './init-project.js';
+import pckg from '../../package.json' assert { type: 'json' };
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,7 +11,7 @@ export const command = 'init <folder name>';
 export const describe = 'Scaffold an empty vmblu project';
 export const builder = [
   { flag: '--name <project>', desc: 'Project name (default: folder name)' },
-  { flag: '--schema <ver>',   desc: 'Schema version (default: 0.8.2)' },
+  { flag: '--schema <ver>',   desc: 'Schema version (default: latest version)' },
   { flag: '--force',          desc: 'Overwrite existing files' },
   { flag: '--dry-run',        desc: 'Show actions without writing' }
 ];
@@ -28,7 +30,7 @@ export const handler = async (argv) => {
 
   const targetDir = path.resolve(args._[0] || '.');
   const projectName = args.name || path.basename(targetDir);
-  const schemaVersion = args.schema || '0.8.2';
+  const schemaVersion = args.schema || pckg.schemaVersion;
 
   await initProject({
     targetDir,

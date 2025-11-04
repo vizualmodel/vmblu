@@ -2875,7 +2875,7 @@ async readSourceMap() {
 
     // get the full path
     const fullPath = this.arl?.getFullPath();
-
+console.log('FULLPATH', fullPath);
     // check
     if (!fullPath) return null
 
@@ -4054,8 +4054,6 @@ const keyboardHandling$1 = {
 
             // and redraw
             this.redraw();
-
-            console.log('hello baby');
         }
     },
 
@@ -4222,7 +4220,7 @@ const messageHandling = {
         // propose a path for the lib
         const libPath =
             doc.target.library?.userPath ??
-            removeExt(doc.model.arl.userPath) + '.lib.js';
+            removeExt(doc.model.arl.userPath) + '-lib.js';
 
         // request the path for the save as operation
         this.tx.send('show lib path', {
@@ -12227,7 +12225,12 @@ showProfile: {
         const profile = pin.is.input ? editor.doc.model.getInputPinProfile(pin) : editor.doc.model.getOutputPinProfile(pin);
 
         // check
-        if (!profile) return
+        if (!profile) {
+
+            console.log(`NO PROFILE ${pin.name}`);
+
+            return
+        }
 
         // show the profile
         editor.tx.send('pin profile',{pos, pin, profile,
@@ -17071,7 +17074,7 @@ cook( raw ) {
     for (const widget of this.widgets) if (widget.wid && (widget.wid > this.widGenerator)) this.widGenerator = widget.wid;
 
     // if there are widgets with a wid of zero, correct this
-    for (const widget of this.widgets) if (widget.wid && (widget.wid == 0)) widget.wid = this.generateWid();
+    for (const widget of this.widgets) if (widget.wid == 0) widget.wid = this.generateWid();
 },
 
 cookPin(raw) {
@@ -23327,10 +23330,10 @@ function getEnclosingHandlerName(callExpression) {
 }
 
 var version = "0.3.2";
-var pkg = {
+var pckg = {
 	version: version};
 
-const PROFILE_VERSION = pkg.version;
+const PROFILE_VERSION = pckg.version;
 
 // const PROFILE_VERSION = '0.2';
 

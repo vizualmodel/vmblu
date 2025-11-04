@@ -90,11 +90,20 @@ We welcome early adopters and feedback! Expect frequent updates as we work towar
 <span style="font-size:1.4em; color:#0066FF;"><b>■ Quick start</b></span><br>
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/)  
-- Add the runtime with: `npm install @vizualmodel/vmblu`  
+- Add the runtime and cli with: `npm install @vizualmodel/vmblu-runtime @vizualmodel/vmblu-cli`  
 - Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
-- Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
 
 ---
+<span style="font-size:1.4em; color:#0066FF;"><b>■ Contribute</b></span><br>
+
+We welcome contributions from everyone! Here are the best ways to connect with us:
+
+* **Public Discussions & Questions:** If you have an idea, a general question, or need support, please start a topic in our **[Discussions Tab]** (link to your repo's Discussions tab).
+* **Actionable Work:** Found a bug or want to implement a feature? Check the **[Issues Tab]** to see what's being worked on.
+* **Private Contact/DM:** For private inquiries, professional interest, or specific questions about collaboration, you can reach me directly here: *[Sam Verstraete](mailto:your.address@gmail.com)*
+
+Read our full Contribution Guide here [Contribute](./CONTRIBUTE.md)
+
 <span style="font-size:1.4em; color:#0066FF;"><b>■ Open source</b></span><br>
 
 **vmblu** is licensed under the [Apache License 2.0](./LICENSE.txt).

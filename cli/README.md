@@ -1,7 +1,6 @@
 # CLI for vmblu
 This folder contains the CLI commands that are available for vmblu.
 
-
 ## Folder layout
 
 ```txt
@@ -12,7 +11,7 @@ vmblu/
       profile/
       migrate/
     templates/
-      0.8.2/
+      x.y.z/                # a directory per version x.y.z
         vmblu.schema.json
         vmblu.annex.md
         seed.md
@@ -25,7 +24,7 @@ vmblu/
 
 ## Add more commands
 
-Create commands/migrate/index.js with the same export shape { command, describe, builder, handler }. The router auto-discovers it, so users can run vmblu migrate ….
+Create commands/migrate/index.js with the same export shape { command, describe, builder, handler }. The router auto-discovers it.
 
 ## Dev/test workflow
 

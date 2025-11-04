@@ -6,6 +6,11 @@ import path from 'path';
 //import crypto from 'crypto';
 import { makePackageJson } from './make-package-json.js';
 
+// Get the versions
+import pckg from '../../package.json' assert { type: 'json' };
+const SCHEMA_VERSION = pckg.schemaVersion
+const CLI_VERSION = pckg.version
+
 function rel(from, to) {
   return path.posix.join(...path.relative(from, to).split(path.sep));
 }
@@ -50,7 +55,7 @@ function defaultModel(projectName) {
   const now = new Date().toISOString();
   return JSON.stringify({
     header: {
-      version: "0.8.2",
+      version: SCHEMA_VERSION,
       created: now,
       saved: now,
       utc: now,
@@ -73,7 +78,7 @@ function defaultModel(projectName) {
 function defaultDoc(projectName) {
   const now = new Date().toISOString();
   return JSON.stringify({
-    version: "0.0.0",
+    version: CLI_VERSION,
     generatedAt: now,
     entries: {}
   }, null, 2);
@@ -145,7 +150,7 @@ async function initProject(opts) {
   const {
     targetDir,
     projectName = path.basename(opts.targetDir),
-    schemaVersion = "0.8.2",
+    schemaVersion = SCHEMA_VERSION,
     force = false,
     dryRun = false,
     templatesDir = path.join(__dirname, '..', 'templates'),
@@ -246,7 +251,7 @@ async function initProject(opts) {
   }
 
   // 5) Make the package file
-  makePackageJson({ absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^0.1.0" }, ui);
+  makePackageJson({ absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^" + CLI_VERSION }, ui);
 
   // 6) Final tree hint
   ui.info(`\nScaffold complete${dryRun ? ' (dry run)' : ''}:\n` +

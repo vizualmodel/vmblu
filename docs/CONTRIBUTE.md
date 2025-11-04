@@ -1,6 +1,4 @@
-# Vizual Model Blueprint
-
-![logo](./assets/logo-256.png)
+![logo](./assets/vmblu-512.png)
 
 # Contributing to vmblu
 
@@ -15,7 +13,9 @@ There are many ways to get involved:
 - **Improve documentation** (README, schema specs, guides). Clear docs are essential for new users and for LLMs.  
 - **Contribute code**: fix bugs, add features, improve performance.  
 - **Extend standard nodes/libraries** by adding reusable building blocks.  
-- **Test** the runtime and editor and share feedback on usability and edge cases.  
+- **Test** the runtime and editor and share feedback on usability and edge cases.
+
+The best way to get started however is to build something with vmblu. The vmblu repo has a companion repo [Vmblu Examples](https://github.com/vizualmodel/vmblu-examples) that features software built with vmblu. The best examples there will be featured on the vmblu.dev site. Working with **vmblu** is also the best way to find issues and come up with ideas for improvements and features.
 
 ## 🟦 Development Setup
 
@@ -86,14 +86,12 @@ To ensure smooth collaboration and high-quality contributions, please follow the
 * **Document Your Changes**
   Update relevant documentation (README, schema, guides) when you change functionality.
 
-## 🟦 Communication
+## 🟦 Getting Started: Where to Connect
 
-* **Ask Questions**
-  Open a GitHub issue with the `question` label. This keeps discussions public and searchable.
+Before you dive into coding, please use the following channels to connect with us:
 
-* **Discuss New Features**
-  For major features or architectural changes, open an issue before coding. This avoids duplicated work and keeps everyone aligned.
-
+* **Public Ideas & Q&A:** For general questions, feature suggestions, or big-picture discussions, please start a topic in our *[Discussions](https://github.com/vizualmodel/vmblu/discussions)*. This is the best place to talk about the project openly.
+* **Private Contact/DM:** For private inquiries, professional interest, or specific collaboration proposals that should not be public, you can reach me directly here: **[Sam Verstraete](mailto:your.address@gmail.com)**
 * **Be Respectful**
   We expect constructive and respectful communication. Our goal is a positive, welcoming environment.
   *(We follow the [Contributor Covenant](https://www.contributor-covenant.org/) as our Code of Conduct.)*
