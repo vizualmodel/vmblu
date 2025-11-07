@@ -21,8 +21,6 @@ import {findTransmissions} from './find-transmissions.js'
 import pckg from '../../package.json' assert { type: 'json' };
 const PROFILE_VERSION = pckg.version;
 
-// const PROFILE_VERSION = '0.2';
-
 // The main function for the profile tool
 export async function profile(argv = process.argv.slice(2)) {
 

@@ -2375,16 +2375,23 @@ function updateDerivedSettings(original, derived) {
     return derived;
 }
 
+var version = "0.3.3";
+var schemaVersion = "0.8.3";
+var pckg = {
+	version: version,
+	schemaVersion: schemaVersion};
+
 function ModelHeader() {
 
     const today = new Date();
 
-    this.version = '0.0.1';
+    // Set the schema version in the header
+    this.version = pckg.schemaVersion;
     this.created = today.toLocaleString();
     this.saved = today.toLocaleString();
     this.utc = today.toJSON();
     this.style = style$1;
-    this.runtime = '@vizualmodel/vmblu';
+    this.runtime = '@vizualmodel/vmblu-runtime';
 }
 ModelHeader.prototype = {
 
@@ -2419,7 +2426,7 @@ ModelHeader.prototype = {
         this.style = style$1.create(raw.style);
 
         // get the runtime
-        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu';
+        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime';
     },
 };
 
@@ -23329,13 +23336,7 @@ function getEnclosingHandlerName(callExpression) {
     return null;
 }
 
-var version = "0.3.2";
-var pckg = {
-	version: version};
-
 const PROFILE_VERSION = pckg.version;
-
-// const PROFILE_VERSION = '0.2';
 
 // The main function for the profile tool
 async function profile(argv = process.argv.slice(2)) {

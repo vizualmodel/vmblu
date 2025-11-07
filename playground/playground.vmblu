@@ -2,10 +2,10 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "11/7/2025, 11:43:16 AM",
-        "utc": "2025-11-07T10:43:16.980Z",
+        "saved": "11/7/2025, 9:02:22 PM",
+        "utc": "2025-11-07T20:02:22.477Z",
         "style": "#291f32",
-        "runtime": "@vizualmodel/vmblu-runtime"
+        "runtime": "../runtime/scaffold.js"
     },
     "imports": [
         "./workspace/workspace.vmblu",

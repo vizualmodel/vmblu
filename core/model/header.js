@@ -1,17 +1,18 @@
 import {ModelStore} from './model-store.js'
 import {style} from '../util/index.js'
-
+import cliPackage from '../../cli/package.json' assert { type: 'json' };
 
 export function ModelHeader() {
 
     const today = new Date()
 
-    this.version = '0.0.1'
+    // Set the schema version in the header
+    this.version = cliPackage.schemaVersion
     this.created = today.toLocaleString()
     this.saved = today.toLocaleString()
     this.utc = today.toJSON()
     this.style = style
-    this.runtime = '@vizualmodel/vmblu'
+    this.runtime = '@vizualmodel/vmblu-runtime'
 }
 ModelHeader.prototype = {
 
@@ -46,6 +47,6 @@ ModelHeader.prototype = {
         this.style = style.create(raw.style)
 
         // get the runtime
-        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu'
+        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime'
     },
 }

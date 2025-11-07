@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 1:40:46 PM",
-        "saved": "10/28/2025, 9:54:43 AM",
-        "utc": "2025-10-28T08:54:43.835Z",
+        "saved": "11/6/2025, 9:46:25 PM",
+        "utc": "2025-11-06T20:46:25.798Z",
         "style": "#12679b",
         "runtime": "../../runtime/scaffold.js"
     },
@@ -896,8 +896,8 @@
                     "rect": "x 1096 y 963 w 150 h 86",
                     "view": {
                         "state": "open",
-                        "rect": "x 1344 y -50 w 811 h 432",
-                        "transform": "sx 1.000 sy 1.000 dx 1314.500 dy -50.000"
+                        "rect": "x 734 y 789 w 832 h 432",
+                        "transform": "sx 1.000 sy 1.000 dx 704.500 dy 789.000"
                     },
                     "routes": [
                         {
@@ -2024,21 +2024,15 @@
             "rect": "x 0 y 0 w 150 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1266 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -86.000 dy 83.000"
+                "rect": "x 0 y 0 w 1376 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -102.000 dy 74.000"
             },
             "buses": [
                 {
                     "kind": "busbar",
                     "name": "modal div bus",
-                    "start": "x 1561 y 902",
+                    "start": "x 1562 y 902",
                     "wire": "x -1300.0"
-                },
-                {
-                    "kind": "cable",
-                    "name": "",
-                    "start": "x 1692 y 653",
-                    "wire": "y 0.0"
                 }
             ],
             "routes": [
@@ -2070,12 +2064,12 @@
                 {
                     "from": "(pin 2) modal div @ context menu",
                     "to": "(bus) modal div bus",
-                    "wire": "x 33.0 y 382.5"
+                    "wire": "x 34.0 y 382.5"
                 },
                 {
                     "from": "(pin 2) modal div @ path request",
                     "to": "(bus) modal div bus",
-                    "wire": "x 51.0 y 487.5"
+                    "wire": "x 52.0 y 487.5"
                 },
                 {
                     "from": "(pin 2) div @ side menu",
@@ -2130,22 +2124,22 @@
                 {
                     "from": "(pin 2) modal div @ text block",
                     "to": "(bus) modal div bus",
-                    "wire": "x -44.0 y 217.5"
+                    "wire": "x -43.0 y 217.5"
                 },
                 {
                     "from": "(pin 2) modal div @ node settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x -51.0 y 322.5"
+                    "wire": "x -50.0 y 322.5"
                 },
                 {
                     "from": "(pin 2) modal div @ name and path",
                     "to": "(bus) modal div bus",
-                    "wire": "x 24.0 y 277.5"
+                    "wire": "x 25.0 y 277.5"
                 },
                 {
                     "from": "(pin 2) modal div @ profile settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x 19.0 y 153.5"
+                    "wire": "x 20.0 y 153.5"
                 },
                 {
                     "from": "(pin 2) node @ select node",
@@ -2155,12 +2149,12 @@
                 {
                     "from": "(pin 4) modal div @ select node",
                     "to": "(bus) modal div bus",
-                    "wire": "x 65.0 y -133.5"
+                    "wire": "x 66.0 y -133.5"
                 },
                 {
                     "from": "(pin 2) modal div @ doc settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x 74.0 y 667.5"
+                    "wire": "x 75.0 y 667.5"
                 },
                 {
                     "from": "(pin 1) switch @ clipboard",
@@ -2275,17 +2269,17 @@
                 {
                     "from": "(pin 2) modal div @ confirm box",
                     "to": "(bus) modal div bus",
-                    "wire": "x 63.0 y 577.5"
+                    "wire": "x 64.0 y 577.5"
                 },
                 {
                     "from": "(pin 1) modal div @ runtime settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x -63.0 y 419.5"
+                    "wire": "x -62.0 y 419.5"
                 },
                 {
                     "from": "(bus) modal div bus",
                     "to": "(pin 30) modal div @ message broker",
-                    "wire": "y -502.5 x -30.6"
+                    "wire": "y -502.5 x -31.6"
                 }
             ]
         }

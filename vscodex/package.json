@@ -1,9 +1,9 @@
 {
     "name": "vmblu",
-    "displayName": "vizual model blueprint",
-    "description": "Structured ● Visual ● AI native",
+    "displayName": "vizualmodel blueprint",
+    "description": "ai native ● visual ● runnable ● architecture",
     "version": "0.0.4",
-    "publisher": "VizualModel",
+    "publisher": "vizualmodel",
     "private": true,
     "license": "Apache 2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
