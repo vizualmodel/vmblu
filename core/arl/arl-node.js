@@ -162,27 +162,27 @@ async save(body) {
     return fs.writeFile(this.url, body)
 },
 
-async getFolder() {
+// async getFolder() {
 
-    // check
-    if (!this.validURL()) return null
+//     // check
+//     if (!this.validURL()) return null
 
-    // wet have to add the api and service 
-    let href = this.url.origin + '/api/folder' + this.url.pathname
+//     // wet have to add the api and service 
+//     let href = this.url.origin + '/api/folder' + this.url.pathname
 
-    const url = new URL(href)
+//     const url = new URL(href)
 
-    // request the file - return the body
-    return await HTTP.get(url)
-    .then( async response => {
+//     // request the file - return the body
+//     return await HTTP.get(url)
+//     .then( async response => {
 
-        // the size of the body could be 0 - that is ok
-        if (response.headers.get('Content-Length') == '0') return null
+//         // the size of the body could be 0 - that is ok
+//         if (response.headers.get('Content-Length') == '0') return null
         
-        // convert
-        return await response.json()
-    })
-},
+//         // convert
+//         return await response.json()
+//     })
+// },
 
 // javascript source files can be imported
 async jsImport() {
@@ -193,36 +193,36 @@ async jsImport() {
     return import(this.url)
 },
 
-async getFolderContent(){
+// async getFolderContent(){
 
-    const content = {
-        files: [],
-        folders: []
-    }
+//     const content = {
+//         files: [],
+//         folders: []
+//     }
 
-    // get the folder - return the promise
-    return this.getFolder()
-    .then( raw => {
+//     // get the folder - return the promise
+//     return this.getFolder()
+//     .then( raw => {
         
-        // convert to arls...
-        content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
-        content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name))
+//         // convert to arls...
+//         content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
+//         content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name))
         
-        // return result - that resolves the promise
-        return content
-    })
-    .catch (error => {
+//         // return result - that resolves the promise
+//         return content
+//     })
+//     .catch (error => {
 
-        // debug
-        console.error(error)
+//         // debug
+//         console.error(error)
 
-        // if the path was not found, fail silently else throw
-        if (error.options?.status != '404') throw error
+//         // if the path was not found, fail silently else throw
+//         if (error.options?.status != '404') throw error
 
-        // return result
-        return content
-    })
-}
+//         // return result
+//         return content
+//     })
+// }
 }
 
 

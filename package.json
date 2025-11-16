@@ -11,32 +11,32 @@
         "vx": "cd ./vscodex && npm run vx",
         "rt": "cd ./runtime && npm run build",
         "cli": "cd ./cli && npm run build",
-        "ui": "cd ./ui && npm run ui"
+        "ui": "cd ./ui && npm run build"
     },
     "devDependencies": {
-        "rollup": "^4.6.1",
-        "rollup-plugin-css-only": "^4.5.2",
-        "rollup-plugin-string": "^3.0.0",
-        "rollup-plugin-svelte": "^7.1.6",
+        "@eslint/js": "^9.36.0",
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
+        "@sveltejs/vite-plugin-svelte": "^2.5.3",
+        "@vscode/vsce": "^3.7.0",
         "eslint": "^9.36.0",
-        "@eslint/js": "^9.36.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^16.4.0",
         "prettier": "^3.6.2",
-        "tsup": "^8.5.0",
+        "rollup": "^4.6.1",
+        "rollup-plugin-css-only": "^4.5.2",
+        "rollup-plugin-string": "^3.0.0",
+        "rollup-plugin-svelte": "^7.1.6",
         "svelte": "^4.2.19",
-        "@sveltejs/vite-plugin-svelte": "^2.5.3",
+        "tsup": "^8.5.0",
         "vite": "^4.0.0",
-        "vite-plugin-string": "^1.2.3",
-        "@vscode/vsce": "^3.2.1"
+        "vite-plugin-string": "^1.2.3"
     },
     "dependencies": {
-        "@vizualmodel/vmblu-runtime": "^0.1.1",
         "@vizualmodel/vmblu-cli": "^0.3.0",
+        "@vizualmodel/vmblu-runtime": "^0.1.1",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     }

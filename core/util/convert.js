@@ -3,7 +3,7 @@ const I = '|'
 
 export const convert = {
 
-    rectToString : rc => `x ${Math.round(rc.x)} y ${Math.round(rc.y)} w ${Math.round(rc.w)} h ${Math.round(rc.h)}`,
+    rectToString : rc => rc ? `x ${Math.round(rc.x)} y ${Math.round(rc.y)} w ${Math.round(rc.w)} h ${Math.round(rc.h)}` : 'x 0 y 0 w 0 h 0',
 
     stringToRect : str => {
 

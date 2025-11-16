@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:51:45 PM",
-        "saved": "9/16/2025, 11:43:18 AM",
-        "utc": "2025-09-16T09:43:18.193Z",
+        "saved": "11/14/2025, 4:22:44 PM",
+        "utc": "2025-11-14T15:22:44.614Z",
         "style": "#656134",
         "runtime": "./runtime.js"
     },
@@ -507,7 +507,7 @@
                     "rect": "x 999 y 90 w 200 h 26",
                     "view": {
                         "state": "open",
-                        "rect": "x 792 y 46 w 793 h 652",
+                        "rect": "x 792 y 46 w 793 h 590",
                         "transform": "sx 1.000 sy 1.000 dx 790.500 dy 46.000"
                     }
                 }
@@ -754,6 +754,136 @@
                         "editor": {
                             "rect": "x 24 y 372 w 200 h 161"
                         }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "column-main layout",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "ColumnMainFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "left column",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "main area",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 329 y 55 w 200 h 71"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "vertical menu tabs content",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "VerticalMenuTabsContent"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "menu div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tabs div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 339 y 197 w 250 h 146"
+                        }
                     }
                 ],
                 "editor": {
@@ -761,7 +891,7 @@
                     "view": {
                         "state": "open",
                         "rect": "x 59 y 43 w 685 h 585",
-                        "transform": "sx 0.960 sy 0.960 dx 89.076 dy 55.294"
+                        "transform": "sx 0.960 sy 0.960 dx 88.076 dy 55.294"
                     }
                 }
             },
@@ -851,7 +981,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 314 y 47 w 200 h 146"
+                            "rect": "x 317 y 49 w 200 h 146"
                         }
                     },
                     {
@@ -1321,8 +1451,8 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1894 h 1152",
-                "transform": "sx 1.000 sy 1.000 dx 0.000 dy -120.000"
+                "rect": "x 0 y 0 w 1530 h 1326",
+                "transform": "sx 0.980 sy 0.980 dx 32.079 dy 36.208"
             }
         }
     }

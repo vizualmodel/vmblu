@@ -1,7 +1,7 @@
 <script>
 import {onMount} from 'svelte'
 import {Drawer} from './drawer'
-import {WSFolder} from './ws-folder'
+import {WSFolder, WSFileSystem} from './ws-folder'
 import DrawerDiv from './drawer.svelte'
 import {ARL, LARL} from '../../core/arl'
 import {SimpleServer} from './simple-server'
@@ -22,6 +22,8 @@ let expanded = false
 // This is for getting the workspace configuration from a server
 const serverUrl = window.location.origin;
 const workspaceCfg = '/admin/workspace-config.json'
+
+let localFS = null;
 
 // the drawers
 let drawers = []
@@ -78,6 +80,11 @@ const exposedFunctions = {
 async function newLocalDrawer(e) {
 
     try {
+
+        // make a new local file system
+        localFS = new WSFileSystem('local')
+
+
         // Open a directory picker so that the user can select a local directory
         const dirHandle = await window.showDirectoryPicker();
         const dirName = dirHandle.name
@@ -92,7 +99,9 @@ async function newLocalDrawer(e) {
         const arl = new LARL(dirName, dirHandle)
 
         // Create a new drawer
-        const folder = new WSFolder(arl, null)
+        const folder = new WSFolder(arl, localFS)
+
+        localFS.root = folder
 
         // set the reference - it is top level, so this is easy
         arl.setFileSystem(folder, '/')

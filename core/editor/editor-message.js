@@ -42,8 +42,14 @@ export const messageHandling = {
     },
 
     onShowSettings() {
-        const rect = this.canvas.getBoundingClientRect();
 
+        // check
+        if (!this.doc?.model) return 
+
+        // Get the 
+        // const rect = this.canvas.getBoundingClientRect();
+
+        // notation
         const header = this.doc.model.header;
         const redraw = () => this.redraw();
 
@@ -242,6 +248,10 @@ export const messageHandling = {
     },
 
     onSavePointSet({}) {
+
+        // check
+        if (!this.doc?.model) return;
+
         // make this accessible..
         const doc = this.doc;
 
@@ -251,8 +261,6 @@ export const messageHandling = {
             message: '',
             pos: { x: 500, y: 100 },
             ok: () => {
-                // check
-                if (!doc?.model) return;
 
                 // Get the actual node to save (mostly the root...)
                 const toSave = doc.getNodeToSave();
@@ -271,6 +279,10 @@ export const messageHandling = {
     },
 
     onSavePointBack({}) {
+
+        // check
+        if (! this.doc?.model) return;
+
         // make this accessible..
         const editor = this;
         const doc = this.doc;

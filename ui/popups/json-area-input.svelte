@@ -3,7 +3,7 @@ import {onMount} from 'svelte'
 import PopupBox from '../fragments/popup-box.svelte'
 import TextAreaInput from '../fragments/text-area-input.svelte'
 
-export let tx, sx
+export let tx//, sx
 
 onMount(async () => {
     tx.send("modal div", box.div)

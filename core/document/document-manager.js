@@ -3,7 +3,7 @@
 // Creation date 9/24/2023, 10:28:10 AM
 // ------------------------------------------------------------------
 
-import {Path} from '../arl/index.js'
+import {Path, ARL} from '../arl/index.js'
 import {Document} from './document.js'
 
 //Constructor for document manager
@@ -17,18 +17,72 @@ export function DocumentManager(tx, sx) {
 
     // the list of documents being handled - note that a document is a view !
     this.documents = []
+
+    // check for parameters
+    this.checkForQueryParameters()
 }
 
 DocumentManager.prototype = {
 
-	// Output pins of the node
     /**
-     * 
      * @node document manager
      */
 
+    haveDocument(arl) {
+        return this.documents.find( doc => doc.model.arl?.equals(arl))
+    },
+
+    openDocument(arl) {
+
+        // create a new document
+        const doc = new Document(arl)
+
+        // save in the list
+        this.documents.push(doc)
+
+        // get the document
+        doc.load()
+
+        // then read the source documentation for the model
+        .then( () => {
+            doc.model.handleSourceMap()
+        })
+
+        // send the stuff to the editor
+        .then( () => {
+            // set a new tab
+            this.tx.send('tab new', arl.getName())
+
+            // set as the active document
+            this.tx.send('doc set active', doc)
+
+            // save here also
+            this.active = doc
+        })
+        // .catch( error => {
+        // 	// show a popup message
+        // 	console.error(`Could not open model ${arl.userPath}, error: ${error}`)            
+        // })
+    },
+
+	// bring an existing document to the foreground
+    toForeground(doc) {
+
+        // check
+        if (!doc) return 
+       
+        // select the tab for the doc
+        this.tx.send("tab select", doc.model.arl.getName())
+
+        // set the doc as the active document
+        this.tx.send('doc set active', doc)
+
+        // set as active
+        this.active = doc
+    },
+
 	// open a document given the arl
-    toForeground(arl) {
+    xxxtoForeground(arl) {
 
        // check if the document is in the list of documents
        let doc = this.documents.find( doc => doc.model.arl?.equals(arl))
@@ -85,7 +139,8 @@ DocumentManager.prototype = {
      */
     onDocSelected(arl) {
 
-        this.toForeground(arl)
+        const doc = this.haveDocument(arl)
+        doc ? this.toForeground(doc) : this.openDocument(arl)
 	},
 
     /**
@@ -93,7 +148,9 @@ DocumentManager.prototype = {
      * @param {ARL} arl - The ARL of the document to open.
      */
     onDocOpen(arl) {
-        this.toForeground(arl)
+
+        const doc = this.haveDocument(arl)
+        doc ? this.toForeground(doc) : this.openDocument(arl)
     },
 
     onDocGet(){},
@@ -285,5 +342,28 @@ DocumentManager.prototype = {
 			this.active = doc
         }
 	},
+
+    // check for URL query parameters "https://site.com/somewhere/?model=/path/to/model.vmblu"
+    checkForQueryParameters() {
+
+        // Get the parameters and the origin 
+        const {searchParams, origin} = new URL(window.location.href)
+
+        // check
+        if (!searchParams) return
+
+        // extract the model path: note that in Vite (and most SPA setups) everything under `public/` is served from the root,
+        const modelPath = searchParams.get('model'); // e.g. "/examples/tutorial/chat-client.vmblu"
+
+        // check
+        if (!modelPath) return;
+
+        // construct the arl
+        const arl = new ARL(modelPath)
+        arl.url = new URL(modelPath, origin)
+
+        // open the document
+        this.openDocument(arl)
+    }
 
 } // document manager.prototype

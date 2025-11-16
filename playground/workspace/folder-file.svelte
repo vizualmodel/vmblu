@@ -1,6 +1,7 @@
 <script>
 import {onMount} from 'svelte'
 import FolderFileDiv from './folder-file.svelte'
+import {folderContext, fileContext} from './context-handling'
 
 export let folder
 export let tx
@@ -39,118 +40,13 @@ async function expandCollapse(e) {
     folder = folder
 }
 
-// the contextmenus
-const contextMenu = []
-function folderContext(folder) {
-
-    contextMenu.length = 0
-
-    contextMenu.push({icon:"sell", text:"change name", state: "enabled",action:folder.nameDialog})
-
-    contextMenu.push({
-        icon:"note_add",text:"new file", state: "enabled", 
-        action:(e) => tx.send(  "name request",{label:'new file', value:'', regex: Path.regex.file, pos:{x:e.clientX, y:e.clientY},
-                                ok:(newName)=>folder.newFile(newName),
-                                cancel:()=>{}})
-        })
-    contextMenu.push({
-        icon:"create_new_folder",text:"new folder",  state: "enabled", 
-        action:(e) => tx.send(  "name request",{label:'new folder', value:'', regex: Path.regex.vizPath, pos:{x:e.clientX, y:e.clientY},
-                                ok:(newName)=>folder.newFolder(newName),
-                                cancel:()=>{}})
-        })
-    contextMenu.push({
-        icon:"folder_off",text:"remove folder", state: "enabled", 
-        action: (e) => tx.send( 'message',{title:'Confirm removal',message:`Remove ${folder.getPath()} from drawer ?`,pos:{x:e.clientX, y:e.clientY},
-                                ok: () => folder.remove(),
-                                cancel:()=>{}})
-        })
-    contextMenu.push({
-        icon:"delete",text:"delete folder", state: "enabled", 
-        action: (e) => tx.send( 'message',{title:'Confirm delete', message:`Delete ${folder.getPath()} ?`,pos:{x:e.clientX, y:e.clientY},
-                                ok: () => folder.remove(),
-                                cancel:()=>{}})
-        })
-
-    return contextMenu
-}
-
-function fileContext(file) {
-
-    contextMenu.length = 0
-
-    contextMenu.push({
-        icon:"sell", text:"change name", state: "enabled", 
-        action: (e) => tx.send( 'name request',{label:"Name ", value:this.name, regex:/^[\w,-]+$/, pos:{x:e.clientX, y:e.clientY},
-                                ok:(newName)=> this.rename(newName),
-                                cancel:()=> {}})
-        })
-
-    contextMenu.push({
-        icon:"delete",text:"delete file", state: "enabled", 
-        action: (e) => tx.send( 'message',{title:'Confirm delete',message:`Delete ${this.getPath()} ?`,pos:{x:e.clientX, y:e.clientY},
-                                ok: () => this.remove(),
-                                cancel:()=>{}})
-    })
-
-    return contextMenu
-}
-
-// action for rightclicking = the same as clicking on the menu icon 
-function showFolderContext(e) {
-
-    // block the deafult context menu
-    e.preventDefault();
-
-    // no propagation
-    e.stopPropagation()
-
-    // get the index of the subfolder on which the click occurred
-    const fldrIndex = e.target.parentNode.dataset?.fldrindex
-
-    // show the context menu fo the folder clicked on
-    const clickedFolder = folder.folders[+fldrIndex]
-
-    // check
-    if (!clickedFolder) return
-
-    // get the context menu
-    const menu = folderContext(clickedFolder)
-
-    // send it out...
-    tx.send('context menu', {menu,event:e})
-}
-
-function showFileContext(e) {
-
-    // block the deafult context menu
-    e.preventDefault()
-
-    // no propagation
-    e.stopPropagation()
-
-    // get the index of the file for which the click occurred
-    const fileIndex = e.target.parentNode.dataset?.fileindex
-
-    // get the file
-    const file = folder.files[+fileIndex]
-
-    //check
-    if (!file) return
-
-    // get the context menu
-    const menu = file.getContextMenu()
-
-    // send it out...
-    tx.send('context menu', {menu,event:e})
-}
-
 // open and bring the file to the foreground
 function openFile(e) {
 
     // get the index of the subfolder on which the click occurred
     const fileIndex = e.target.parentNode.dataset?.fileindex
 
+    // get the file index of the file
     if (!fileIndex) return
 
     // get the arl of the file 
@@ -160,16 +56,57 @@ function openFile(e) {
     tx.send('file selected', arl)
 }
 
+// action for rightclicking = the same as clicking on the menu icon 
+function showFolderContext(e) {
+
+    // block the deafult context menu & propagation
+    e.preventDefault();
+    e.stopPropagation()
+
+    // get the subfolder on which the click occurred
+    const fldrIndex = e.target.parentNode.dataset?.fldrindex
+    const clickedFolder = folder.folders[+fldrIndex]
+
+    // check
+    if (!clickedFolder) return
+
+    // get the context menu
+    const menu = folderContext(clickedFolder)
+
+    // send it out...
+    tx.send('folder context menu', {menu,event:e})
+}
+
+function showFileContext(e) {
+
+    // block the deafult context menu
+    e.preventDefault()
+    e.stopPropagation()
+
+    // get the file for which the click occurred
+    const fileIndex = e.target.parentNode.dataset?.fileindex
+    const file = folder.files[+fileIndex]
+
+    //check
+    if (!file) return
+
+    // get the context menu
+    const menu = fileContext(file)
+
+    // send it out...
+    tx.send('file context menu', {menu,event:e})
+}
+
 function onKeydown(e) {}
 
 </script>
 <style>
 .file-dir-list {
 
-    --cFolder:#9cdbff;
-    --cJSONFile: #FB8604;
-    --cJSFile: #3eb2ff;
-    --cOtherFile:#1ed4cb;
+    --cFolder:#97a7bb;
+    --cJSONFile: #d6a78b;
+    --cJSFile: #bbbbbb;
+    --cOtherFile:#bbbbbb;
 	--fontBase: arial, helvetica, sans-serif;
     --sFont: 0.8rem;
     --sIcon: 16px;

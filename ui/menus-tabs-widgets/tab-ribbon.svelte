@@ -1,7 +1,7 @@
 <script>
 import {onMount} from 'svelte'
 
-export let tx, sx
+export let tx//, sx
 
 onMount(() => {
     tx.send("div", ribbon.div)
@@ -31,11 +31,13 @@ onTabRemove(name) {
     const L = tabs.length
     for (let i=0; i<L; i++) {
         if (tabs[i] == name) {
-            for (let j=i; j<L-1; j++ )  tabs[j] = tabs[j+1]
+            if (L > 1) for (let j=i; j<L-1; j++ )  tabs[j] = tabs[j+1]
             tabs.pop()
             break
         }
     }
+
+    ribbon = ribbon
 },
 
 onTabRename({oldName, newName}) {
@@ -95,10 +97,10 @@ function onKeydown(e) {
 
     /* colors */
     --bgTabRibbon:#aaa;
-	--bgTab:#444;
+	--bgTab:#333;
 	--bgTabHover:#000;
 	--bgTabSelect:#000;
-	--cFontTab:#777;
+	--cFontTab:#aaa;
 	--cFontTabSelect:#fff;
     --cCloseTab:#777;
     --cCloseTabHover:#ff1111;
@@ -111,6 +113,7 @@ function onKeydown(e) {
 }
 .tab {
 	display: inline-block;
+    align-items: center;
     height:100%;
     font-size: var(--sFontTab);
     font-family:var(--fontBase);
@@ -131,7 +134,8 @@ function onKeydown(e) {
 }
 .button{
     display: inline-block;
-    font-size: 0.5rem;
+    padding: 0;
+    line-height: 0;
     border: none;
     background-color: var(--cCloseTab);
     height: 0.5rem;

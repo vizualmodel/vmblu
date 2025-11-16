@@ -2,13 +2,13 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 1:40:46 PM",
-        "saved": "11/6/2025, 9:46:25 PM",
-        "utc": "2025-11-06T20:46:25.798Z",
+        "saved": "11/16/2025, 12:28:35 PM",
+        "utc": "2025-11-16T11:28:35.107Z",
         "style": "#12679b",
         "runtime": "../../runtime/scaffold.js"
     },
     "imports": [
-        "../../ui/out/svelte-lib-bundle.js",
+        "../../ui/svelte-lib.vmblu",
         "../../core/node-editor.vmblu"
     ],
     "factories": [
@@ -188,7 +188,7 @@
                 "kind": "dock",
                 "name": "context menu",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "context menu"
                 },
                 "label": "Uses callbacks",
@@ -220,14 +220,14 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1110 y 477 w 150 h 56"
+                    "rect": "x 1100 y 492 w 150 h 56"
                 }
             },
             {
                 "kind": "dock",
                 "name": "path request",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "path request"
                 },
                 "interfaces": [
@@ -257,14 +257,14 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1101 y 372 w 150 h 56"
+                    "rect": "x 1100 y 372 w 150 h 56"
                 }
             },
             {
                 "kind": "dock",
                 "name": "side menu",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "vscode side menu"
                 },
                 "interfaces": [
@@ -429,7 +429,7 @@
                 "kind": "dock",
                 "name": "text block",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "text block"
                 },
                 "interfaces": [
@@ -459,14 +459,14 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1403 y 642 w 150 h 56"
+                    "rect": "x 1404 y 627 w 150 h 56"
                 }
             },
             {
                 "kind": "dock",
                 "name": "node settings",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "json input"
                 },
                 "interfaces": [
@@ -503,7 +503,7 @@
                 "kind": "dock",
                 "name": "name and path",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "name and path"
                 },
                 "interfaces": [
@@ -533,14 +533,14 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1106 y 582 w 150 h 56"
+                    "rect": "x 1100 y 582 w 150 h 56"
                 }
             },
             {
                 "kind": "dock",
                 "name": "profile settings",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "pin profile"
                 },
                 "interfaces": [
@@ -570,7 +570,7 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1099 y 706 w 150 h 56"
+                    "rect": "x 1100 y 706 w 150 h 56"
                 }
             },
             {
@@ -639,7 +639,7 @@
                         "kind": "dock",
                         "name": "node selector",
                         "link": {
-                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "path": "../../ui/svelte-lib.vmblu",
                             "node": "node selector"
                         },
                         "label": "select nodes from the library",
@@ -770,7 +770,7 @@
                         "kind": "dock",
                         "name": "path request",
                         "link": {
-                            "path": "../../ui/out/svelte-lib-bundle.js",
+                            "path": "../../ui/svelte-lib.vmblu",
                             "node": "path request"
                         },
                         "label": "add a file to the nodelib",
@@ -895,7 +895,6 @@
                 "editor": {
                     "rect": "x 1096 y 963 w 150 h 86",
                     "view": {
-                        "state": "open",
                         "rect": "x 734 y 789 w 832 h 432",
                         "transform": "sx 1.000 sy 1.000 dx 704.500 dy 789.000"
                     },
@@ -952,7 +951,7 @@
                 "kind": "dock",
                 "name": "doc settings",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "document settings"
                 },
                 "interfaces": [
@@ -982,7 +981,7 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1099 y 207 w 150 h 56"
+                    "rect": "x 1100 y 207 w 150 h 56"
                 }
             },
             {
@@ -1063,7 +1062,7 @@
                     "path": "../../core/node-editor.vmblu",
                     "node": "editor"
                 },
-                "label": "Every webview tab has its own editor",
+                "label": "Every tab in vscode has its own editor",
                 "prompt": "why is the comment not saved ?",
                 "interfaces": [
                     {
@@ -1467,7 +1466,7 @@
                 "kind": "dock",
                 "name": "confirm box",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "confirm box"
                 },
                 "interfaces": [
@@ -1497,14 +1496,14 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1099 y 282 w 150 h 56"
+                    "rect": "x 1100 y 282 w 150 h 56"
                 }
             },
             {
                 "kind": "dock",
                 "name": "runtime settings",
                 "link": {
-                    "path": "../../ui/out/svelte-lib-bundle.js",
+                    "path": "../../ui/svelte-lib.vmblu",
                     "node": "runtime settings"
                 },
                 "interfaces": [
@@ -1534,7 +1533,7 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 1403 y 440 w 150 h 56"
+                    "rect": "x 1402 y 429 w 150 h 56"
                 }
             }
         ],
@@ -2024,8 +2023,8 @@
             "rect": "x 0 y 0 w 150 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1376 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -102.000 dy 74.000"
+                "rect": "x 0 y 0 w 1666 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -24.000 dy 124.000"
             },
             "buses": [
                 {
@@ -2039,7 +2038,7 @@
                 {
                     "from": "(pin 21) set document @ message broker",
                     "to": "(pin 17) set document @ editor",
-                    "wire": "x 175.0"
+                    "wire": "x 87.0 y 0.0 x 88.0"
                 },
                 {
                     "from": "(pin 24) sync model @ message broker",
@@ -2049,7 +2048,7 @@
                 {
                     "from": "(pin 29) canvas resize @ message broker",
                     "to": "(pin 48) size change @ editor",
-                    "wire": "x 41.1 y 450.0 x 133.9"
+                    "wire": "x 51.1 y 450.0 x 123.9"
                 },
                 {
                     "from": "(pin 31) clipboard local @ message broker",
@@ -2064,12 +2063,12 @@
                 {
                     "from": "(pin 2) modal div @ context menu",
                     "to": "(bus) modal div bus",
-                    "wire": "x 34.0 y 382.5"
+                    "wire": "x 44.0 y 367.5"
                 },
                 {
                     "from": "(pin 2) modal div @ path request",
                     "to": "(bus) modal div bus",
-                    "wire": "x 52.0 y 487.5"
+                    "wire": "x 53.0 y 487.5"
                 },
                 {
                     "from": "(pin 2) div @ side menu",
@@ -2124,7 +2123,7 @@
                 {
                     "from": "(pin 2) modal div @ text block",
                     "to": "(bus) modal div bus",
-                    "wire": "x -43.0 y 217.5"
+                    "wire": "x -44.0 y 232.5"
                 },
                 {
                     "from": "(pin 2) modal div @ node settings",
@@ -2134,12 +2133,12 @@
                 {
                     "from": "(pin 2) modal div @ name and path",
                     "to": "(bus) modal div bus",
-                    "wire": "x 25.0 y 277.5"
+                    "wire": "x 31.0 y 277.5"
                 },
                 {
                     "from": "(pin 2) modal div @ profile settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x 20.0 y 153.5"
+                    "wire": "x 19.0 y 153.5"
                 },
                 {
                     "from": "(pin 2) node @ select node",
@@ -2154,7 +2153,7 @@
                 {
                     "from": "(pin 2) modal div @ doc settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x 75.0 y 667.5"
+                    "wire": "x 74.0 y 667.5"
                 },
                 {
                     "from": "(pin 1) switch @ clipboard",
@@ -2174,12 +2173,12 @@
                 {
                     "from": "(pin 19) document settings @ editor",
                     "to": "(pin 1) show @ doc settings",
-                    "wire": "x 285.0"
+                    "wire": "x 143.0 y 0.0 x 143.0"
                 },
                 {
                     "from": "(pin 22) save point confirm @ editor",
                     "to": "(pin 1) show @ confirm box",
-                    "wire": "x 285.0"
+                    "wire": "x 143.0 y 0.0 x 143.0"
                 },
                 {
                     "from": "(pin 23) new edit @ editor",
@@ -2189,12 +2188,12 @@
                 {
                     "from": "(pin 28) show lib path @ editor",
                     "to": "(pin 1) path @ path request",
-                    "wire": "x 225.0 y 15.0 x 62.0"
+                    "wire": "x 225.0 y 15.0 x 61.0"
                 },
                 {
                     "from": "(pin 30) show app path @ editor",
                     "to": "(pin 1) path @ path request",
-                    "wire": "x 226.0 y -30.0 x 61.0"
+                    "wire": "x 226.0 y -30.0 x 60.0"
                 },
                 {
                     "from": "(pin 39) open source file @ editor",
@@ -2204,12 +2203,12 @@
                 {
                     "from": "(pin 36) show context menu @ editor",
                     "to": "(pin 1) context menu @ context menu",
-                    "wire": "x 167.0 y -15.0 x 129.0"
+                    "wire": "x 167.0 y 0.0 x 119.0"
                 },
                 {
                     "from": "(pin 34) runtime settings @ editor",
                     "to": "(pin 2) show @ runtime settings",
-                    "wire": "x 516.0 y -82.0 x 73.0"
+                    "wire": "x 230.0 y -93.0 x 358.0"
                 },
                 {
                     "from": "(pin 37) settings @ editor",
@@ -2219,27 +2218,27 @@
                 {
                     "from": "(pin 26) show link @ editor",
                     "to": "(pin 1) name and path @ name and path",
-                    "wire": "x 193.0 y 15.0 x 99.0"
+                    "wire": "x 193.0 y 15.0 x 93.0"
                 },
                 {
                     "from": "(pin 59) show filter @ editor",
                     "to": "(pin 1) name and path @ name and path",
-                    "wire": "x 292.0"
+                    "wire": "x 143.0 y 0.0 x 143.0"
                 },
                 {
                     "from": "(pin 38) show factory @ editor",
                     "to": "(pin 1) name and path @ name and path",
-                    "wire": "x 194.0 y -15.0 x 98.0"
+                    "wire": "x 194.0 y -15.0 x 92.0"
                 },
                 {
                     "from": "(pin 41) node comment @ editor",
                     "to": "(pin 1) text @ text block",
-                    "wire": "x 172.0 y 15.0 x 417.0"
+                    "wire": "x 172.0 y 0.0 x 418.0"
                 },
                 {
                     "from": "(pin 40) pin profile @ editor",
                     "to": "(pin 1) show @ profile settings",
-                    "wire": "x 161.0 y 64.0 x 124.0"
+                    "wire": "x 161.0 y 64.0 x 125.0"
                 },
                 {
                     "from": "(pin 24) clipboard get @ editor",
@@ -2264,22 +2263,22 @@
                 {
                     "from": "(pin 47) canvas @ editor",
                     "to": "(pin 28) canvas @ message broker",
-                    "wire": "x -124.0 y -450.0 x -51.0"
+                    "wire": "x -115.0 y -450.0 x -60.0"
                 },
                 {
                     "from": "(pin 2) modal div @ confirm box",
                     "to": "(bus) modal div bus",
-                    "wire": "x 64.0 y 577.5"
+                    "wire": "x 63.0 y 577.5"
                 },
                 {
                     "from": "(pin 1) modal div @ runtime settings",
                     "to": "(bus) modal div bus",
-                    "wire": "x -62.0 y 419.5"
+                    "wire": "x -61.0 y 430.5"
                 },
                 {
                     "from": "(bus) modal div bus",
                     "to": "(pin 30) modal div @ message broker",
-                    "wire": "y -502.5 x -31.6"
+                    "wire": "y -502.5 x -42.6"
                 }
             ]
         }

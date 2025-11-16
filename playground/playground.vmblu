@@ -2,14 +2,14 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "11/7/2025, 9:02:22 PM",
-        "utc": "2025-11-07T20:02:22.477Z",
+        "saved": "11/16/2025, 5:46:36 PM",
+        "utc": "2025-11-16T16:46:36.978Z",
         "style": "#291f32",
-        "runtime": "../runtime/scaffold.js"
+        "runtime": "../runtime/src/scaffold.js"
     },
     "imports": [
         "./workspace/workspace.vmblu",
-        "../ui/out/svelte-lib-bundle.js",
+        "../ui/svelte-lib.vmblu",
         "../core/node-editor.vmblu",
         "./launcher/app-launcher.vmblu"
     ],
@@ -20,6 +20,7 @@
             {
                 "kind": "group",
                 "name": "workspace group",
+                "label": "folders and files in the left column",
                 "interfaces": [
                     {
                         "name": "",
@@ -244,10 +245,10 @@
                                 }
                             },
                             {
-                                "name": "directory",
+                                "name": "folder",
                                 "pins": [
                                     {
-                                        "name": "directory context menu",
+                                        "name": "folder context menu",
                                         "kind": "output",
                                         "editor": {
                                             "id": 14,
@@ -255,7 +256,7 @@
                                         }
                                     },
                                     {
-                                        "name": "directory renamed",
+                                        "name": "folder renamed",
                                         "kind": "output",
                                         "editor": {
                                             "id": 34,
@@ -263,7 +264,7 @@
                                         }
                                     },
                                     {
-                                        "name": "directory deleted",
+                                        "name": "folder deleted",
                                         "kind": "output",
                                         "editor": {
                                             "id": 35,
@@ -292,6 +293,23 @@
                                 }
                             }
                         ],
+                        "sx": {
+                            "name": "examples",
+                            "files": [],
+                            "folders": [
+                                {
+                                    "name": "tutorial",
+                                    "files": [
+                                        {
+                                            "name": "chat-client.vmblu"
+                                        },
+                                        {
+                                            "name": "chat-server.vmblu"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
                         "editor": {
                             "rect": "x 453 y 6 w 200 h 371"
                         }
@@ -300,7 +318,7 @@
                         "kind": "dock",
                         "name": "single text field",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "single text field"
                         },
                         "interfaces": [
@@ -337,7 +355,7 @@
                         "kind": "dock",
                         "name": "context menu",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "context menu"
                         },
                         "label": "uses callbacks",
@@ -375,7 +393,7 @@
                         "kind": "dock",
                         "name": "message box",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "message box"
                         },
                         "label": "uses callbacks",
@@ -458,6 +476,16 @@
                     },
                     {
                         "src": {
+                            "pin": "folder context menu",
+                            "node": "workspace"
+                        },
+                        "dst": {
+                            "pin": "context menu",
+                            "node": "context menu"
+                        }
+                    },
+                    {
+                        "src": {
                             "pin": "modal div",
                             "node": "single text field"
                         },
@@ -521,6 +549,11 @@
                             "wire": "x 64.0 y 0.0 x 64.0"
                         },
                         {
+                            "from": "(pin 14) folder context menu @ workspace",
+                            "to": "(pin 1) context menu @ context menu",
+                            "wire": "x 64.0 y 153.2 x -357.0 y -145.2 x -105.0"
+                        },
+                        {
                             "from": "(pin 2) modal div @ single text field",
                             "to": "(pin 2) dom add modal div @ workspace",
                             "wire": "x 198.0"
@@ -541,6 +574,7 @@
             {
                 "kind": "group",
                 "name": "vmblu editor",
+                "label": "The group node for the vmblu editor",
                 "interfaces": [
                     {
                         "name": "",
@@ -564,7 +598,7 @@
                                     "id": 2,
                                     "align": "left",
                                     "pad": {
-                                        "rect": "x 93 y 883 w 45 h 15",
+                                        "rect": "x -4 y 902 w 45 h 15",
                                         "align": "left"
                                     }
                                 }
@@ -576,31 +610,7 @@
                                     "id": 3,
                                     "align": "left",
                                     "pad": {
-                                        "rect": "x 77 y 942 w 94 h 15",
-                                        "align": "left"
-                                    }
-                                }
-                            },
-                            {
-                                "name": "save all",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 4,
-                                    "align": "left",
-                                    "pad": {
-                                        "rect": "x 122 y 14 w 71 h 15",
-                                        "align": "left"
-                                    }
-                                }
-                            },
-                            {
-                                "name": "close",
-                                "kind": "input",
-                                "editor": {
-                                    "id": 5,
-                                    "align": "left",
-                                    "pad": {
-                                        "rect": "x 106 y 428 w 58 h 15",
+                                        "rect": "x 93 y 971 w 94 h 15",
                                         "align": "left"
                                     }
                                 }
@@ -648,7 +658,7 @@
                                     "id": 9,
                                     "align": "right",
                                     "pad": {
-                                        "rect": "x 95 y 963 w 58 h 15",
+                                        "rect": "x 95 y 997 w 58 h 15",
                                         "align": "left"
                                     }
                                 }
@@ -718,246 +728,12 @@
                 "nodes": [
                     {
                         "kind": "dock",
-                        "name": "top menu",
-                        "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
-                            "node": "top menu"
-                        },
-                        "interfaces": [
-                            {
-                                "name": "",
-                                "pins": [
-                                    {
-                                        "name": "run app in iframe",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 11,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "run app page",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 10,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "make app page",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 8,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "make build lib",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 9,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "save",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 1,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "save as",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 2,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "save all",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 3,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "accept changes",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 4,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "sync model",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 5,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "recalibrate",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 6,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "grid on-off",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 7,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "show settings",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 12,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "set save point",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 13,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "back to save point",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 14,
-                                            "align": "right"
-                                        }
-                                    },
-                                    {
-                                        "name": "div",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 15,
-                                            "align": "right"
-                                        }
-                                    }
-                                ],
-                                "editor": {
-                                    "id": 0
-                                }
-                            }
-                        ],
-                        "sx": [
-                            {
-                                "name": "save",
-                                "message": "save",
-                                "help": "save"
-                            },
-                            {
-                                "name": "save_as",
-                                "message": "save as",
-                                "help": "save as"
-                            },
-                            {
-                                "name": "save_alt",
-                                "message": "save all",
-                                "help": "save all"
-                            },
-                            {
-                                "name": "flare",
-                                "message": "recalibrate",
-                                "help": "toggle zoom"
-                            },
-                            {
-                                "name": "grid_view",
-                                "message": "grid on-off",
-                                "help": "grid on-off"
-                            },
-                            {
-                                "name": "check_box",
-                                "message": "accept changes",
-                                "help": "accept changes"
-                            },
-                            {
-                                "name": "sync",
-                                "message": "sync model",
-                                "help": "sync model"
-                            },
-                            {
-                                "name": "settings",
-                                "message": "show settings",
-                                "help": "settings"
-                            },
-                            {
-                                "name": "build",
-                                "message": "make build lib",
-                                "help": "make lib"
-                            },
-                            {
-                                "name": "handyman",
-                                "message": "make app page",
-                                "help": "make app"
-                            },
-                            {
-                                "name": "push_pin",
-                                "message": "set save point",
-                                "help": "set save point"
-                            },
-                            {
-                                "name": "reply",
-                                "message": "back to save point",
-                                "help": "back to save point"
-                            },
-                            {
-                                "name": "rocket_launch",
-                                "message": "run app page",
-                                "help": "run in separate page"
-                            },
-                            {
-                                "name": "preview",
-                                "message": "run app in iframe",
-                                "help": "run in iframe"
-                            },
-                            {
-                                "name": "login",
-                                "message": "login",
-                                "help": "login"
-                            }
-                        ],
-                        "editor": {
-                            "rect": "x 171 y 68 w 200 h 251"
-                        }
-                    },
-                    {
-                        "kind": "dock",
                         "name": "tab ribbon",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "tab ribbon"
                         },
                         "interfaces": [
-                            {
-                                "name": "",
-                                "pins": [
-                                    {
-                                        "name": "div",
-                                        "kind": "output",
-                                        "editor": {
-                                            "id": 4,
-                                            "align": "right"
-                                        }
-                                    }
-                                ],
-                                "editor": {
-                                    "id": 0
-                                }
-                            },
                             {
                                 "name": "tab",
                                 "pins": [
@@ -1008,6 +784,14 @@
                                             "id": 15,
                                             "align": "right"
                                         }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
                                     }
                                 ],
                                 "editor": {
@@ -1025,7 +809,7 @@
                             }
                         },
                         "editor": {
-                            "rect": "x 204 y 533 w 200 h 146"
+                            "rect": "x 204 y 548 w 200 h 146"
                         }
                     },
                     {
@@ -1041,14 +825,6 @@
                                 "name": "menu",
                                 "pins": [
                                     {
-                                        "name": "accept changes",
-                                        "kind": "input",
-                                        "editor": {
-                                            "id": 12,
-                                            "align": "left"
-                                        }
-                                    },
-                                    {
                                         "name": "sync model",
                                         "kind": "input",
                                         "editor": {
@@ -1057,18 +833,26 @@
                                         }
                                     },
                                     {
-                                        "name": "recalibrate",
-                                        "kind": "input",
-                                        "editor": {
-                                            "id": 14,
-                                            "align": "left"
-                                        }
-                                    },
-                                    {
                                         "name": "grid on-off",
                                         "kind": "input",
                                         "editor": {
                                             "id": 15,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "accept changes",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 12,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "recalibrate",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 14,
                                             "align": "left"
                                         }
                                     },
@@ -1093,7 +877,7 @@
                                         "kind": "input",
                                         "editor": {
                                             "id": 27,
-                                            "align": "right"
+                                            "align": "left"
                                         }
                                     },
                                     {
@@ -1117,7 +901,7 @@
                                         "kind": "input",
                                         "editor": {
                                             "id": 29,
-                                            "align": "right"
+                                            "align": "left"
                                         }
                                     },
                                     {
@@ -1443,7 +1227,7 @@
                         "kind": "dock",
                         "name": "context menu",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "context menu"
                         },
                         "label": "right click context menus",
@@ -1482,7 +1266,7 @@
                         "kind": "dock",
                         "name": "path request",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "path request"
                         },
                         "label": "ask for filename to save",
@@ -1521,7 +1305,7 @@
                         "kind": "dock",
                         "name": "node settings",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "json input"
                         },
                         "label": "node settings in json format",
@@ -1559,7 +1343,7 @@
                         "kind": "dock",
                         "name": "name and path",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "name and path"
                         },
                         "interfaces": [
@@ -1596,7 +1380,7 @@
                         "kind": "dock",
                         "name": "pin profile",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "pin profile"
                         },
                         "label": " the message parameters and prompt",
@@ -1634,7 +1418,7 @@
                         "kind": "dock",
                         "name": "text block",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "text block"
                         },
                         "label": "comment  about the node",
@@ -1670,11 +1454,12 @@
                     },
                     {
                         "kind": "dock",
-                        "name": "menu tabs window",
+                        "name": "vertical menu tabs content",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
-                            "node": "menu tabs window"
+                            "path": "../ui/svelte-lib.vmblu",
+                            "node": "vertical menu tabs content"
                         },
+                        "label": "Editor page layout",
                         "interfaces": [
                             {
                                 "name": "",
@@ -1684,7 +1469,7 @@
                                         "kind": "input",
                                         "editor": {
                                             "id": 1,
-                                            "align": "right"
+                                            "align": "left"
                                         }
                                     },
                                     {
@@ -1750,7 +1535,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 213 y 758 w 200 h 146"
+                            "rect": "x 143 y 777 w 250 h 146"
                         }
                     },
                     {
@@ -1946,7 +1731,7 @@
                             }
                         },
                         "editor": {
-                            "rect": "x 618 y 323 w 250 h 356"
+                            "rect": "x 566 y 323 w 250 h 356"
                         }
                     },
                     {
@@ -2015,7 +1800,7 @@
                                 "kind": "dock",
                                 "name": "node selector",
                                 "link": {
-                                    "path": "../ui/out/svelte-lib-bundle.js",
+                                    "path": "../ui/svelte-lib.vmblu",
                                     "node": "node selector"
                                 },
                                 "label": "select nodes from the library",
@@ -2146,7 +1931,7 @@
                                 "kind": "dock",
                                 "name": "path request",
                                 "link": {
-                                    "path": "../ui/out/svelte-lib-bundle.js",
+                                    "path": "../ui/svelte-lib.vmblu",
                                     "node": "path request"
                                 },
                                 "label": "add a file to the nodelib",
@@ -2328,7 +2113,7 @@
                         "kind": "dock",
                         "name": "doc settings",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "document settings"
                         },
                         "interfaces": [
@@ -2435,7 +2220,7 @@
                         "kind": "dock",
                         "name": "confirm box",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "confirm box"
                         },
                         "interfaces": [
@@ -2472,7 +2257,7 @@
                         "kind": "dock",
                         "name": "runtime settings",
                         "link": {
-                            "path": "../ui/out/svelte-lib-bundle.js",
+                            "path": "../ui/svelte-lib.vmblu",
                             "node": "runtime settings"
                         },
                         "interfaces": [
@@ -2504,166 +2289,192 @@
                         "editor": {
                             "rect": "x 1521 y 338 w 150 h 56"
                         }
+                    },
+                    {
+                        "kind": "dock",
+                        "name": "side menu",
+                        "link": {
+                            "path": "../ui/svelte-lib.vmblu",
+                            "node": "vscode side menu"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            },
+                            {
+                                "name": "menu items",
+                                "pins": [
+                                    {
+                                        "name": "sync",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "grid on-off",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "accept changes",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "recalibrate",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show settings",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make lib",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make app",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 11,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "set save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "back to save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 12
+                                }
+                            }
+                        ],
+                        "sx": [
+                            {
+                                "icon": "flare",
+                                "color": "#0fb2e4",
+                                "message": "recalibrate",
+                                "help": "Recalibrate"
+                            },
+                            {
+                                "icon": "grid_view",
+                                "color": "#0fb2e4",
+                                "message": "grid on-off",
+                                "help": "Grid on/off"
+                            },
+                            {
+                                "icon": "check_box",
+                                "color": "#0fb2e4",
+                                "message": "accept changes",
+                                "help": "Accept changes"
+                            },
+                            {
+                                "icon": "bolt",
+                                "color": "#0fb2e4",
+                                "message": "sync",
+                                "help": "sync model"
+                            },
+                            {
+                                "icon": "push_pin",
+                                "color": "#0fb2e4",
+                                "message": "set save point",
+                                "help": "set save point"
+                            },
+                            {
+                                "icon": "reply",
+                                "color": "#0fb2e4",
+                                "message": "back to save point",
+                                "help": "back to save point"
+                            },
+                            {
+                                "icon": "build",
+                                "color": "#0fb2e4",
+                                "message": "make lib",
+                                "help": "Make lib"
+                            },
+                            {
+                                "icon": "handyman",
+                                "color": "#0fb2e4",
+                                "message": "make app",
+                                "help": "Make app"
+                            },
+                            {
+                                "icon": "settings",
+                                "color": "#0fb2e4",
+                                "message": "show settings",
+                                "help": "Settings"
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x -92 y 67 w 150 h 191"
+                        }
                     }
                 ],
                 "connections": [
                     {
                         "src": {
-                            "pin": "run app in iframe",
-                            "node": "top menu"
+                            "pin": "tab request to close",
+                            "node": "tab ribbon"
                         },
                         "dst": {
-                            "pin": "run app in iframe",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "run app page",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "run app",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "make app page",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "make app",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "make build lib",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "make lib",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "save",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "save",
+                            "pin": "tab request to close",
                             "node": "document manager"
                         }
                     },
                     {
                         "src": {
-                            "pin": "save as",
-                            "node": "top menu"
+                            "pin": "tab request to select",
+                            "node": "tab ribbon"
                         },
                         "dst": {
-                            "pin": "save as",
+                            "pin": "tab request to select",
                             "node": "document manager"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "save all",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "save all",
-                            "node": "document manager"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "save all",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "save all"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "accept changes",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "accept changes",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "sync model",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "sync model",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "recalibrate",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "recalibrate",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "grid on-off",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "grid on-off",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "show settings",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "show settings",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "set save point",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "save point set",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "back to save point",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "save point back",
-                            "node": "editor"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "div",
-                            "node": "top menu"
-                        },
-                        "dst": {
-                            "pin": "menu div",
-                            "node": "menu tabs window"
                         }
                     },
                     {
@@ -2673,27 +2484,7 @@
                         },
                         "dst": {
                             "pin": "tabs div",
-                            "node": "menu tabs window"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "tab request to close",
-                            "node": "tab ribbon"
-                        },
-                        "dst": {
-                            "pin": "tab request to close",
-                            "node": "document manager"
-                        }
-                    },
-                    {
-                        "src": {
-                            "pin": "tab request to select",
-                            "node": "tab ribbon"
-                        },
-                        "dst": {
-                            "pin": "tab request to select",
-                            "node": "document manager"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2871,7 +2662,7 @@
                         },
                         "dst": {
                             "pin": "content div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2901,7 +2692,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2911,7 +2702,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2921,7 +2712,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2931,7 +2722,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2941,7 +2732,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -2951,13 +2742,13 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
                         "src": {
                             "pin": "content size change",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         },
                         "dst": {
                             "pin": "size change",
@@ -2967,7 +2758,7 @@
                     {
                         "src": {
                             "pin": "div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         },
                         "dst": {
                             "pin": "div"
@@ -3059,7 +2850,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -3069,7 +2860,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -3079,7 +2870,7 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -3089,7 +2880,107 @@
                         },
                         "dst": {
                             "pin": "modal div",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "div",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "menu div",
+                            "node": "vertical menu tabs content"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "sync",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "sync model",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "grid on-off",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "grid on-off",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "accept changes",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "accept changes",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "recalibrate",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "recalibrate",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "show settings",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "show settings",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "make lib",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "make lib",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "make app",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "make app",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "set save point",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "save point set",
+                            "node": "editor"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "back to save point",
+                            "node": "side menu"
+                        },
+                        "dst": {
+                            "pin": "save point back",
+                            "node": "editor"
                         }
                     },
                     {
@@ -3098,7 +2989,7 @@
                         },
                         "dst": {
                             "pin": "size change",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -3116,7 +3007,7 @@
                         },
                         "dst": {
                             "pin": "show",
-                            "node": "menu tabs window"
+                            "node": "vertical menu tabs content"
                         }
                     },
                     {
@@ -3157,115 +3048,35 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 814 y 430 w 250 h 236",
+                    "rect": "x 817 y 432 w 250 h 206",
                     "view": {
                         "state": "closed",
-                        "rect": "x 226 y 78 w 1996 h 1168",
-                        "transform": "sx 1.000 sy 1.000 dx 188.051 dy 94.554"
+                        "rect": "x 183 y 78 w 2444 h 1168",
+                        "transform": "sx 1.000 sy 1.000 dx 309.051 dy 83.554"
                     },
                     "buses": [
                         {
                             "kind": "busbar",
                             "name": "modal div bus",
-                            "start": "x 207 y 1020",
-                            "wire": "x 1569.0 y -957.0"
+                            "start": "x 207 y 1067",
+                            "wire": "x 1569.0 y -1004.0"
                         }
                     ],
                     "routes": [
                         {
-                            "from": "(pin 11) run app in iframe @ top menu",
-                            "to": "(pin 32) run app in iframe @ editor",
-                            "wire": "x 928.0 y 270.0 x -75.0"
-                        },
-                        {
-                            "from": "(pin 10) run app page @ top menu",
-                            "to": "(pin 31) run app @ editor",
-                            "wire": "x 912.0 y 240.0 x -59.0"
-                        },
-                        {
-                            "from": "(pin 8) make app page @ top menu",
-                            "to": "(pin 29) make app @ editor",
-                            "wire": "x 898.0 y 210.0 x -45.0"
-                        },
-                        {
-                            "from": "(pin 9) make build lib @ top menu",
-                            "to": "(pin 27) make lib @ editor",
-                            "wire": "x 879.0 y 150.0 x -26.0"
-                        },
-                        {
-                            "from": "(pin 1) save @ top menu",
-                            "to": "(pin 7) save @ document manager",
-                            "wire": "x 186.0 y 345.0 x 61.0"
-                        },
-                        {
-                            "from": "(pin 2) save as @ top menu",
-                            "to": "(pin 8) save as @ document manager",
-                            "wire": "x 172.0 y 345.0 x 75.0"
-                        },
-                        {
-                            "from": "(pin 3) save all @ top menu",
-                            "to": "(pin 10) save all @ document manager",
-                            "wire": "x 156.0 y 345.0 x 91.0"
-                        },
-                        {
-                            "from": "(pin 3) save all @ top menu",
-                            "to": "(pad 4) save all",
-                            "wire": "x 155.0 y -164.0 x -333.0"
-                        },
-                        {
-                            "from": "(pin 4) accept changes @ top menu",
-                            "to": "(pin 12) accept changes @ editor",
-                            "wire": "x 104.0 y 0.0 x 549.0"
-                        },
-                        {
-                            "from": "(pin 5) sync model @ top menu",
-                            "to": "(pin 13) sync model @ editor",
-                            "wire": "x 104.0 y 0.0 x 549.0"
-                        },
-                        {
-                            "from": "(pin 6) recalibrate @ top menu",
-                            "to": "(pin 14) recalibrate @ editor",
-                            "wire": "x 653.0"
-                        },
-                        {
-                            "from": "(pin 7) grid on-off @ top menu",
-                            "to": "(pin 15) grid on-off @ editor",
-                            "wire": "x 104.0 y 0.0 x 549.0"
-                        },
-                        {
-                            "from": "(pin 12) show settings @ top menu",
-                            "to": "(pin 16) show settings @ editor",
-                            "wire": "x 104.0 y 0.0 x 549.0"
-                        },
-                        {
-                            "from": "(pin 13) set save point @ top menu",
-                            "to": "(pin 20) save point set @ editor",
-                            "wire": "x 584.8 y 225.0 x 68.2"
-                        },
-                        {
-                            "from": "(pin 14) back to save point @ top menu",
-                            "to": "(pin 61) save point back @ editor",
-                            "wire": "x 567.3 y 225.0 x 85.7"
-                        },
-                        {
-                            "from": "(pin 15) div @ top menu",
-                            "to": "(pin 1) menu div @ menu tabs window",
-                            "wire": "x 129.0 y 480.0 x -87.0"
-                        },
-                        {
-                            "from": "(pin 4) div @ tab ribbon",
-                            "to": "(pin 2) tabs div @ menu tabs window",
-                            "wire": "x 58.9 y 240.0 x -49.9"
-                        },
-                        {
                             "from": "(pin 14) tab request to close @ tab ribbon",
                             "to": "(pin 25) tab request to close @ document manager",
-                            "wire": "x 131.8 y 0.0 x 82.2"
+                            "wire": "x 131.8 y 0.0 x 30.2"
                         },
                         {
                             "from": "(pin 15) tab request to select @ tab ribbon",
                             "to": "(pin 26) tab request to select @ document manager",
-                            "wire": "x 158.9 y 0.0 x 55.1"
+                            "wire": "x 140.0 y 0.0 x 22.0"
+                        },
+                        {
+                            "from": "(pin 4) div @ tab ribbon",
+                            "to": "(pin 2) tabs div @ vertical menu tabs content",
+                            "wire": "x 42.0 y 139.0 x -53.0"
                         },
                         {
                             "from": "(pin 28) show lib path @ editor",
@@ -3290,7 +3101,7 @@
                         {
                             "from": "(pin 18) open document @ editor",
                             "to": "(pin 5) doc open @ document manager",
-                            "wire": "x -77.0 y 0.0 x -79.0"
+                            "wire": "x -77.0 y 0.0 x -131.0"
                         },
                         {
                             "from": "(pin 19) document settings @ editor",
@@ -3354,8 +3165,8 @@
                         },
                         {
                             "from": "(pin 47) canvas @ editor",
-                            "to": "(pin 3) content div @ menu tabs window",
-                            "wire": "x -181.0 y 0.0 x -430.0"
+                            "to": "(pin 3) content div @ vertical menu tabs content",
+                            "wire": "x -181.0 y 19.0 x -450.0"
                         },
                         {
                             "from": "(pin 24) clipboard get @ editor",
@@ -3398,49 +3209,49 @@
                             "wire": "x 104.0"
                         },
                         {
-                            "from": "(pin 4) content size change @ menu tabs window",
+                            "from": "(pin 4) content size change @ vertical menu tabs content",
                             "to": "(pin 48) size change @ editor",
-                            "wire": "x 447.1 y 0.0 x 163.9"
+                            "wire": "x 467.1 y -19.0 x 163.9"
                         },
                         {
-                            "from": "(pin 8) div @ menu tabs window",
+                            "from": "(pin 8) div @ vertical menu tabs content",
                             "to": "(pad 2) div",
-                            "wire": "x -75.0"
+                            "wire": "x -102.0"
                         },
                         {
                             "from": "(pin 4) doc set active @ document manager",
                             "to": "(pin 17) set document @ editor",
-                            "wire": "x 79.0 y 0.0 x 77.0"
+                            "wire": "x 131.0 y 0.0 x 77.0"
                         },
                         {
                             "from": "(pin 9) save as filename @ document manager",
                             "to": "(pin 1) path @ path request",
-                            "wire": "x -44.0 y -413.0 x 758.0 y 1.0 x 182.0"
+                            "wire": "x -56.0 y -413.0 x 822.0 y 1.0 x 182.0"
                         },
                         {
                             "from": "(pin 12) open models @ document manager",
                             "to": "(pad 7) open models",
-                            "wire": "x -159.0 y -49.0 x -182.0"
+                            "wire": "x -107.0 y -49.0 x -182.0"
                         },
                         {
                             "from": "(pin 29) tab new @ document manager",
                             "to": "(pin 10) tab new @ tab ribbon",
-                            "wire": "x -106.0 y 0.0 x -108.0"
+                            "wire": "x -54.0 y 0.0 x -108.0"
                         },
                         {
                             "from": "(pin 30) tab rename @ document manager",
                             "to": "(pin 11) tab rename @ tab ribbon",
-                            "wire": "x -106.0 y 0.0 x -108.0"
+                            "wire": "x -54.0 y 0.0 x -108.0"
                         },
                         {
                             "from": "(pin 27) tab select @ document manager",
                             "to": "(pin 12) tab select @ tab ribbon",
-                            "wire": "x -106.0 y 0.0 x -108.0"
+                            "wire": "x -54.0 y 0.0 x -108.0"
                         },
                         {
                             "from": "(pin 28) tab remove @ document manager",
                             "to": "(pin 13) tab remove @ tab ribbon",
-                            "wire": "x -106.0 y 0.0 x -108.0"
+                            "wire": "x -54.0 y 0.0 x -108.0"
                         },
                         {
                             "from": "(pin 2) node @ select node",
@@ -3468,44 +3279,94 @@
                             "wire": "x 105.0"
                         },
                         {
+                            "from": "(pin 2) div @ side menu",
+                            "to": "(pin 1) menu div @ vertical menu tabs content",
+                            "wire": "x -41.6 y 710.0 x 276.6"
+                        },
+                        {
+                            "from": "(pin 5) sync @ side menu",
+                            "to": "(pin 13) sync model @ editor",
+                            "wire": "x 933.5 y 76.0 x 32.5"
+                        },
+                        {
+                            "from": "(pin 6) grid on-off @ side menu",
+                            "to": "(pin 15) grid on-off @ editor",
+                            "wire": "x 912.4 y 76.0 x 53.6"
+                        },
+                        {
+                            "from": "(pin 3) accept changes @ side menu",
+                            "to": "(pin 12) accept changes @ editor",
+                            "wire": "x 901.0 y 76.0 x 65.0"
+                        },
+                        {
+                            "from": "(pin 4) recalibrate @ side menu",
+                            "to": "(pin 14) recalibrate @ editor",
+                            "wire": "x 882.0 y 76.0 x 84.0"
+                        },
+                        {
+                            "from": "(pin 7) show settings @ side menu",
+                            "to": "(pin 16) show settings @ editor",
+                            "wire": "x 865.5 y 76.0 x 100.5"
+                        },
+                        {
+                            "from": "(pin 10) make lib @ side menu",
+                            "to": "(pin 27) make lib @ editor",
+                            "wire": "x 849.0 y 91.0 x 117.0"
+                        },
+                        {
+                            "from": "(pin 11) make app @ side menu",
+                            "to": "(pin 29) make app @ editor",
+                            "wire": "x 833.4 y 121.0 x 132.6"
+                        },
+                        {
+                            "from": "(pin 8) set save point @ side menu",
+                            "to": "(pin 20) save point set @ editor",
+                            "wire": "x 817.4 y 271.0 x 148.6"
+                        },
+                        {
+                            "from": "(pin 9) back to save point @ side menu",
+                            "to": "(pin 61) save point back @ editor",
+                            "wire": "x 807.4 y 271.0 x 158.6"
+                        },
+                        {
                             "from": "(pad 3) size change",
-                            "to": "(pin 7) size change @ menu tabs window",
-                            "wire": "x 264.9 y -74.0 x -22.9"
+                            "to": "(pin 7) size change @ vertical menu tabs content",
+                            "wire": "x 245.0 y -84.0 x -39.0"
                         },
                         {
                             "from": "(pad 6) get open models",
                             "to": "(pin 11) get open models @ document manager",
-                            "wire": "x 183.4 y 56.0 x 137.6"
+                            "wire": "x 183.4 y 56.0 x 85.6"
                         },
                         {
                             "from": "(pad 9) show",
-                            "to": "(pin 6) show @ menu tabs window",
-                            "wire": "x 297.0 y -110.0 x -37.0"
+                            "to": "(pin 6) show @ vertical menu tabs content",
+                            "wire": "x 295.0 y -125.0 x -55.0"
                         },
                         {
                             "from": "(pad 21) doc selected",
                             "to": "(pin 35) doc selected @ document manager",
-                            "wire": "x 209.5 y 0.0 x 209.5"
+                            "wire": "x 209.5 y 0.0 x 157.5"
                         },
                         {
                             "from": "(pad 22) doc new",
                             "to": "(pin 36) doc new @ document manager",
-                            "wire": "x 221.0 y 0.0 x 221.0"
+                            "wire": "x 221.0 y 0.0 x 169.0"
                         },
                         {
                             "from": "(pad 23) doc renamed",
                             "to": "(pin 37) doc renamed @ document manager",
-                            "wire": "x 419.0"
+                            "wire": "x 209.0 y 0.0 x 158.0"
                         },
                         {
                             "from": "(pad 24) doc deleted",
                             "to": "(pin 38) doc deleted @ document manager",
-                            "wire": "x 213.0 y 0.0 x 213.0"
+                            "wire": "x 213.0 y 0.0 x 161.0"
                         },
                         {
                             "from": "(bus) modal div bus",
-                            "to": "(pin 5) modal div @ menu tabs window",
-                            "wire": "y -174.5 x -71.1"
+                            "to": "(pin 5) modal div @ vertical menu tabs content",
+                            "wire": "y -202.5 x -91.1"
                         }
                     ]
                 }
@@ -3561,19 +3422,20 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 344 y 204 w 200 h 86"
+                    "rect": "x 343 y 208 w 200 h 86"
                 }
             },
             {
                 "kind": "dock",
-                "name": "left menu layout",
+                "name": "column-main layout",
                 "link": {
-                    "path": "../ui/out/svelte-lib-bundle.js",
-                    "node": "left menu layout"
+                    "path": "../ui/svelte-lib.vmblu",
+                    "node": "column-main layout"
                 },
+                "label": "main page layout",
                 "interfaces": [
                     {
-                        "name": "screen areas",
+                        "name": "",
                         "pins": [
                             {
                                 "name": "left column",
@@ -3584,51 +3446,11 @@
                                 }
                             },
                             {
-                                "name": "left menu",
-                                "kind": "input",
-                                "editor": {
-                                    "id": 2,
-                                    "align": "right"
-                                }
-                            },
-                            {
-                                "name": "area one",
+                                "name": "main area",
                                 "kind": "input",
                                 "editor": {
                                     "id": 4,
                                     "align": "right"
-                                }
-                            },
-                            {
-                                "name": "area two",
-                                "kind": "input",
-                                "editor": {
-                                    "id": 5,
-                                    "align": "right"
-                                }
-                            }
-                        ],
-                        "editor": {
-                            "id": 10
-                        }
-                    },
-                    {
-                        "name": "messages",
-                        "pins": [
-                            {
-                                "name": "horizontal",
-                                "kind": "input",
-                                "editor": {
-                                    "id": 8,
-                                    "align": "left"
-                                }
-                            },
-                            {
-                                "name": "vertical",
-                                "kind": "input",
-                                "editor": {
-                                    "id": 7,
-                                    "align": "left"
                                 }
                             },
                             {
@@ -3641,95 +3463,12 @@
                             }
                         ],
                         "editor": {
-                            "id": 11
-                        }
-                    }
-                ],
-                "editor": {
-                    "rect": "x 343 y 340 w 200 h 161"
-                }
-            },
-            {
-                "kind": "dock",
-                "name": "side menu",
-                "link": {
-                    "path": "../ui/out/svelte-lib-bundle.js",
-                    "node": "side menu"
-                },
-                "interfaces": [
-                    {
-                        "name": "",
-                        "pins": [
-                            {
-                                "name": "div",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 5,
-                                    "align": "right"
-                                }
-                            },
-                            {
-                                "name": "vertical",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 1,
-                                    "align": "left"
-                                }
-                            },
-                            {
-                                "name": "horizontal",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 2,
-                                    "align": "left"
-                                }
-                            },
-                            {
-                                "name": "show app",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 4,
-                                    "align": "left"
-                                }
-                            },
-                            {
-                                "name": "show code editor",
-                                "kind": "output",
-                                "editor": {
-                                    "id": 3,
-                                    "align": "right"
-                                }
-                            }
-                        ],
-                        "editor": {
                             "id": 0
                         }
                     }
                 ],
-                "sx": [
-                    {
-                        "name": "vertical_split",
-                        "message": "vertical",
-                        "help": "toggle vertical split"
-                    },
-                    {
-                        "name": "horizontal_split",
-                        "message": "horizontal",
-                        "help": "toggle horizontal split"
-                    },
-                    {
-                        "name": "edit_note",
-                        "message": "show code editor",
-                        "help": "show code editor"
-                    },
-                    {
-                        "name": "login",
-                        "message": "login",
-                        "help": "login"
-                    }
-                ],
                 "editor": {
-                    "rect": "x 347 y 545 w 200 h 101"
+                    "rect": "x 339 y 432 w 200 h 71"
                 }
             }
         ],
@@ -3741,7 +3480,7 @@
                 },
                 "dst": {
                     "pin": "left column",
-                    "node": "left menu layout"
+                    "node": "column-main layout"
                 }
             },
             {
@@ -3790,58 +3529,18 @@
                     "node": "vmblu editor"
                 },
                 "dst": {
-                    "pin": "area one",
-                    "node": "left menu layout"
+                    "pin": "main area",
+                    "node": "column-main layout"
                 }
             },
             {
                 "src": {
                     "pin": "size change",
-                    "node": "left menu layout"
+                    "node": "column-main layout"
                 },
                 "dst": {
                     "pin": "size change",
                     "node": "vmblu editor"
-                }
-            },
-            {
-                "src": {
-                    "pin": "div",
-                    "node": "side menu"
-                },
-                "dst": {
-                    "pin": "left menu",
-                    "node": "left menu layout"
-                }
-            },
-            {
-                "src": {
-                    "pin": "vertical",
-                    "node": "side menu"
-                },
-                "dst": {
-                    "pin": "vertical",
-                    "node": "left menu layout"
-                }
-            },
-            {
-                "src": {
-                    "pin": "horizontal",
-                    "node": "side menu"
-                },
-                "dst": {
-                    "pin": "horizontal",
-                    "node": "left menu layout"
-                }
-            },
-            {
-                "src": {
-                    "pin": "show app",
-                    "node": "side menu"
-                },
-                "dst": {
-                    "pin": "show",
-                    "node": "application launcher"
                 }
             }
         ],
@@ -3849,64 +3548,44 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1376 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -156.469 dy -22.669"
+                "rect": "x 0 y 0 w 1666 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -49.469 dy 32.331"
             },
             "routes": [
                 {
                     "from": "(pin 1) dom workspace div @ workspace group",
-                    "to": "(pin 3) left column @ left menu layout",
-                    "wire": "x 78.6 y -354.0 x -89.6"
+                    "to": "(pin 3) left column @ column-main layout",
+                    "wire": "x 80.5 y -277.0 x -95.5"
                 },
                 {
                     "from": "(pin 4) file selected @ workspace group",
                     "to": "(pin 21) doc selected @ vmblu editor",
-                    "wire": "x 159.0 y -159.0 x 101.0"
+                    "wire": "x 159.0 y -187.0 x 104.0"
                 },
                 {
                     "from": "(pin 5) file new @ workspace group",
                     "to": "(pin 22) doc new @ vmblu editor",
-                    "wire": "x 169.4 y -159.0 x 90.6"
+                    "wire": "x 169.4 y -187.0 x 93.6"
                 },
                 {
                     "from": "(pin 6) file renamed @ workspace group",
                     "to": "(pin 23) doc renamed @ vmblu editor",
-                    "wire": "x 180.9 y -159.0 x 79.1"
+                    "wire": "x 180.9 y -187.0 x 82.1"
                 },
                 {
                     "from": "(pin 7) file deleted @ workspace group",
                     "to": "(pin 24) doc deleted @ vmblu editor",
-                    "wire": "x 191.3 y -159.0 x 68.7"
+                    "wire": "x 191.3 y -187.0 x 71.7"
                 },
                 {
                     "from": "(pin 2) div @ vmblu editor",
-                    "to": "(pin 4) area one @ left menu layout",
-                    "wire": "x -89.0 y -60.0 x -182.0"
+                    "to": "(pin 4) main area @ column-main layout",
+                    "wire": "x -134.0 y 0.0 x -144.0"
                 },
                 {
-                    "from": "(pin 9) size change @ left menu layout",
+                    "from": "(pin 9) size change @ column-main layout",
                     "to": "(pin 3) size change @ vmblu editor",
-                    "wire": "x 165.0 y 0.0 x 106.0"
-                },
-                {
-                    "from": "(pin 5) div @ side menu",
-                    "to": "(pin 2) left menu @ left menu layout",
-                    "wire": "x 58.0 y -175.0 x -62.0"
-                },
-                {
-                    "from": "(pin 1) vertical @ side menu",
-                    "to": "(pin 7) vertical @ left menu layout",
-                    "wire": "x -27.0 y -115.0 x 23.0"
-                },
-                {
-                    "from": "(pin 2) horizontal @ side menu",
-                    "to": "(pin 8) horizontal @ left menu layout",
-                    "wire": "x -39.0 y -145.0 x 35.0"
-                },
-                {
-                    "from": "(pin 4) show app @ side menu",
-                    "to": "(pin 4) show @ application launcher",
-                    "wire": "x -52.5 y -341.0 x 49.5"
+                    "wire": "x 144.0 y 0.0 x 134.0"
                 }
             ]
         }

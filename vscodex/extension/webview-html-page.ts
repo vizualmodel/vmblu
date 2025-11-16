@@ -22,4 +22,4 @@ export function makeHtmlPage(csp:string, app:vscode.Uri, css:vscode.Uri, icons:v
 	</body>
 	</html>`;
 	
-	}
+}

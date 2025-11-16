@@ -3,7 +3,7 @@ import {onMount} from 'svelte'
 import PopupBox from '../fragments/popup-box.svelte'
 
 // popup = {box, text}
-export let tx, sx
+export let tx//, sx
 
 onMount(async () => {
 

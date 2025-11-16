@@ -2,8 +2,8 @@
     "header": {
         "version": "0.0.1",
         "created": "4/15/2024, 9:13:13 AM",
-        "saved": "9/16/2025, 11:45:20 AM",
-        "utc": "2025-09-16T09:45:20.952Z",
+        "saved": "11/13/2025, 2:51:57 PM",
+        "utc": "2025-11-13T13:51:57.884Z",
         "style": "#00aaff",
         "runtime": "./runtime.js"
     },
@@ -155,10 +155,10 @@
                 }
             },
             {
-                "name": "directory",
+                "name": "folder",
                 "pins": [
                     {
-                        "name": "directory renamed",
+                        "name": "folder renamed",
                         "kind": "output",
                         "editor": {
                             "id": 34,
@@ -166,7 +166,7 @@
                         }
                     },
                     {
-                        "name": "directory deleted",
+                        "name": "folder deleted",
                         "kind": "output",
                         "editor": {
                             "id": 35,
@@ -174,7 +174,7 @@
                         }
                     },
                     {
-                        "name": "directory context menu",
+                        "name": "folder context menu",
                         "kind": "output",
                         "editor": {
                             "id": 14,

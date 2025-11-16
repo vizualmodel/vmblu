@@ -4,7 +4,7 @@
     import InputProfile from '../fragments/profile-input-pin.svelte'
     import OutputProfile from '../fragments/profile-output-pin.svelte'
 
-    export let tx, sx;
+    export let tx//, sx;
 
     let box = {
         div: null,

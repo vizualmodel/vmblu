@@ -101,10 +101,10 @@
         "rollup": "^4.6.1",
         "rollup-plugin-css-only": "^4.5.2",
         "rollup-plugin-svelte": "^7.1.6",
-        "svelte": "^4.2.8"
+        "svelte": "^5.0.0"
     },
     "dependencies": {
-        "@vscode/vsce": "^3.6.2",
+        "@vscode/vsce": "^3.7.0",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     },

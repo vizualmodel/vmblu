@@ -1,14 +1,31 @@
-// Returns a factory function for the svelte component
-function getFactory( svelteDef, htmlTarget=null) {
+import {mount} from 'svelte'
+
+// // Returns a factory function for the svelte component
+// function xxgetFactory( svelteDef, htmlTarget=null) {
+// 	return function (tx, sx) {
+
+// 		const component = new svelteDef({
+// 			target: htmlTarget ?? document.createElement('div'),
+// 			props: {
+// 				tx, sx, handlers:null
+// 			}
+// 		})
+// 		return component.handlers
+// 	}
+// }
+
+// returns a factory function for teh sveltecomponent
+function getFactory( svelteComponent, htmlTarget=null) {
+
 	return function (tx, sx) {
 
-		const component = new svelteDef({
-			target: htmlTarget ?? document.createElement('div'),
-			props: {
-				tx, sx, handlers:null
-			}
-		})
-		return component.handlers
+		const node = mount(svelteComponent, {
+			target: htmlTarget ?? document.createElement("div"),
+			props: { tx, sx }
+		});
+
+		// return the handlers of the cell
+		return node.handlers
 	}
 }
 
@@ -20,13 +37,21 @@ function getFactory( svelteDef, htmlTarget=null) {
 import WindowLayout from './layouts/menu-tabs-window.svelte'
 export const MenuTabsWindow = getFactory(WindowLayout)
 
+// The menu tabs window node
+import VerticalMenuTabsContentSvelte from './layouts/vertical-menu-tabs-content.svelte'
+export const VerticalMenuTabsContent = getFactory(VerticalMenuTabsContentSvelte)
+
 // The canvas layout factory
 import CanvasLayout from './layouts/canvas-layout.svelte'
 export const CanvasLayoutFactory = getFactory(CanvasLayout, document.body)
 
-// a simple layout with a menu on the left
+// a layout with a left menu, a workspace and a window
 import LeftMenuLayout from './layouts/left-menu-layout.svelte'
 export const LeftMenuLayoutFactory = getFactory(LeftMenuLayout, document.body)
+
+// a simple layout with a menu on the left
+import ColumnMainSvelte from './layouts/column-main.svelte'
+export const ColumnMainFactory = getFactory(ColumnMainSvelte, document.body)
 
 /* 
  * MENUS, TABS

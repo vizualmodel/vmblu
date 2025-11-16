@@ -1,7 +1,7 @@
 <script>
 import {onMount} from 'svelte'
 
-export let tx, sx
+export let tx//, sx
 
 let context = {
 	div: null,

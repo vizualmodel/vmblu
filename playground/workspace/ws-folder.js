@@ -7,6 +7,26 @@ function showMessage(title, message) {}
 
 const contextMenu = []
 
+export function WSFileSystem(kind) {
+
+    // The type of file system: none, local, api, fixed
+    this.kind = kind;
+
+    // the root
+    this.root = null;
+}
+WSFileSystem.prototype = {
+    collapse() {
+        for (const folder of this.root.folders ) folder.is.expanded = false;
+        this.root.is.expanded = false;
+    },
+
+    expand() {
+        for (const folder of this.root.folders ) folder.is.expanded = true;
+        this.root.is.expanded = true;
+    }
+}
+
 export function WSFolder(arl, parent) {
 
     this.name = arl?.getName()
@@ -81,6 +101,15 @@ WSFolder.prototype = {
         return this.name
     },
 
+    getFileSystem() {
+
+        let parent = this.parent
+        while (parent?.parent) parent = parent.parent
+
+        // the top level parent is the file system
+        return parent
+    },
+
     checkName(name) {
         if (name.length < 1) {
             return false
@@ -100,79 +129,6 @@ WSFolder.prototype = {
         else return true
     },
 
-    xgetDrawer() {
-        // at the top level sits the drawer
-        let search = this
-        while( search.parent ) search = search.parent
-        return search
-    },
-
-    // change the name of the folder
-    xrename(newName){
-
-        // no change..
-        if (newName === this.name) return
-
-        // check the name 
-        if (!this.parent.checkName(newName)) return
-
-        // get the arl
-        // const arl = this.getArl()
-
-        // update folder at the server
-        this.arl.rename(newName)
-        .then( () => {
-            // change the name and ..
-            this.name = newName
-
-            // !!! all the arl in this folder also have to be changde to the new name !!!!
-            
-            // ..update the drawer
-            this.getDrawer().update()
-        })
-        .catch( error => {
-            console.error(error)
-        })
-    },
-
-    xnewFolder(folderName){
-
-        // check the filename first
-        if ( ! this.checkName(folderName)) return
-
-        // make a new file at the server side
-        this.arl.subFolder(folderName)
-        .then( (arl) => {
-
-            // create a new file
-            let wsFolder = new WSFolder(arl, this)
-
-            // add to the the folder
-            this.folders.push(wsFolder)
-
-            // update the drawer
-            this.getDrawer().update()
-        })
-        .catch( error => 
-            console.error(error)
-        )
-    },
-
-    xremove(){
-        this.arl?.remove()
-        .then( () => {
-
-            //remove the folder from the parent list
-            this.parent.ejectFolder(this)
-
-            // update the drawer
-            this.getDrawer().update()
-        })
-        .catch( error => 
-            console.error(error)
-        )
-    },
-
     getFileTreeAndPath(){
 
         // get filetree root and the folder path
@@ -189,42 +145,50 @@ WSFolder.prototype = {
 
     async update() {
 
-        // Get the files and folders in the folder
-        const content = await this.arl.getFolderContent()
+        // get the type of filesystem
+        const fileSystem = this.getFileSystem()
 
-        // get filetree root and the folder path
-        const [fileTree, path] = this.getFileTreeAndPath()
+        // update depends on the type of file system
+        switch (fileSystem?.kind) {
 
-        // reset the files and folders arrays
-        this.files = content.files.map( arl => {
-            const wsFile = new WSFile(arl, this)
-            return wsFile
-        })
-        this.folders = content.folders.map( arl => {
-            const wsFolder = new WSFolder(arl, this)
-            return wsFolder
-        })
-    },
 
-    async xnewFile(fileName){
+            case 'local' : 
 
-            // check the filename first
-            if ( ! this.checkName(fileName)) return
-    
-            // get the extension of the file
-            const ext = Path.getExt(fileName)
+                // reset
+                this.folders = [];
+                this.files = [];
 
-            // no extension is considered a model file
-            if (ext == '') fileName = Path.changeExt(fileName, "vmblu")
+                console.log(this.arl)
 
-            // make a ref arl - the pathname here is a folder pathname, so we add a ficticious filename
-            const ref = this.arl.resolve(this.arl.url.pathname + '/x')
+                // Get the folders and files of the directory
+                for await (const entry of this.arl.handle.values()) {
 
-            // use the fictitious file above as the reference for the new file...
-            const fileArl = ref.resolve(fileName)
+                    // resolve the arl wrt this directory
+                    const arl = this.arl.resolve(entry.name)
+                    arl.handle = entry
 
-            // a json file is considered a new model
-            ext == 'vmblu' || ext == '' ? tx.send('new model', fileArl) : tx.send('new file', fileArl)
+                    if (entry.kind == 'directory') {
+                        const wsFolder = new WSFolder(arl, this)
+                        wsFolder.fsType = this.fsType
+                        this.folders.push(wsFolder)
+                    }
+                    else if (entry.kind == 'file') {
+                        const wsFile = new WSFile(arl, this)
+                        this.files.push(wsFile)
+                    }
+                }
+                return;
+
+            case 'api':
+                return;
+
+            case 'fixed':
+                return;
+
+            case 'none': 
+                return;
+
+        }
     },
 
     ejectFolder(folder) {

@@ -5,6 +5,6 @@
   "main": "svelte-lib.js",
   "type" : "module",
   "scripts": {
-    "ui": "rollup -c && cp ./out/svelte-lib-bundle.css ../../fastsrvr/website/page/vmblu"
+    "build": "rollup -c"
   }
 }

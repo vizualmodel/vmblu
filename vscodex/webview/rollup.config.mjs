@@ -37,7 +37,7 @@ const plugins =  [
 export default [
 
 {
-	input: 'webview.js',
+	input: 'webview.app.js',
 	output: {
 		sourcemap: true,
 		format: 'es', 

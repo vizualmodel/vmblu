@@ -6,7 +6,7 @@ import Label from '../fragments/label.svelte'
 import TextField from '../fragments/text-field.svelte'
 import CheckBox from '../fragments/checkbox.svelte'
 
-export let tx, sx
+export let tx//, sx
 
 onMount( () => {
 

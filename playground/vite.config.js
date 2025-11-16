@@ -22,7 +22,7 @@ export default defineConfig({
     emptyOutDir: false, // Clean output directory before building
     outDir: './out', // Set the output directory
     rollupOptions: {
-      input: 'vmblu.js',
+      input: 'playground.js',
       output: {
         format: 'es',
         entryFileNames: '[name]-bundle.js', // Remove hash

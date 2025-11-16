@@ -1,30 +1,31 @@
 <script>
+import FolderFileDiv from './folder-file.svelte'
 import {onMount} from 'svelte'
-import {Drawer} from './drawer'
-import {WSFolder} from './ws-folder'
-import DrawerDiv from './drawer.svelte'
+import {WSFolder, WSFileSystem} from './ws-folder'
+import {WSFile} from './ws-file'
 import {ARL, LARL} from '../../core/arl'
-import {SimpleServer} from './simple-server'
 
 // The props for the workspace
 // tx is an object that allows the workspace to send messages to other components
 // sx is an object that allows to pass specific settings to the component - for the moment we do not use this
-export let tx, sx
+export let tx//, sx
 
 //the main div
 let mainDiv
 
-// The div with the drawers
-let drawerListDiv
+// The div with the file systems
+let remoteDiv
+let localDiv
 
-let expanded = false
-
-// This is for getting the workspace configuration from a server
+// This is for getting the simulated file system from a server
 const serverUrl = window.location.origin;
-const workspaceCfg = '/admin/workspace-config.json'
+const remoteFolder = '/examples/file-system.json'
 
-// the drawers
-let drawers = []
+let remoteFS = null
+let localFS = null
+
+// allow or forbid a local file system
+const allowLocalFS = false
 
 onMount(async () => {
 
@@ -33,6 +34,9 @@ onMount(async () => {
 
     // maybe we have to do something when the visibility of this component changes
     setVisibilityHandler()
+
+    // get the remote file system
+    getRemoteFS()
 })
 
 function setVisibilityHandler() {
@@ -50,101 +54,133 @@ export const handlers = {
      * @node workspace
      */
 
-    "-> dom add modal div"(modalDiv) {
+     onDomAddModalDiv(modalDiv) {
 
         mainDiv.append(modalDiv)
     },
 
-    "-> file savedAs"(arl) {
-    },
+    onFileSavedAs(arl) {},
 
-    "-> file active"(arl) {
-    },
+    onFileActive(arl) {},
 
-    "-> file closed"(arl) {
-    }
-}
-
-// The functions that can be called from the outside
-const exposedFunctions = {
-
-    remove(drawer) {
-        drawers = drawers.filter( d => d !== drawer)
-    }
+    onFileClosed(arl) {}
 }
 
 // Create a new local drawer.
 // This function uses the File System Access API to allow the user to pick a local directory.
-async function newLocalDrawer(e) {
+async function newLocalFS(e) {
 
     try {
+        // make a new local file system
+        localFS = new WSFileSystem('local')
+
         // Open a directory picker so that the user can select a local directory
         const dirHandle = await window.showDirectoryPicker();
         const dirName = dirHandle.name
 
-        // Check if a drawer with this name already exists.
-        if (drawers.find(drawer => drawer.reference === dirName)) {
-            console.error(`Drawer "${dirName}" already exists.`);
-            return;
-        }
-
         // The arl for the directory
         const arl = new LARL(dirName, dirHandle)
 
-        // Create a new drawer
-        const folder = new WSFolder(arl, null)
+        // Create the fs
+        localFS.root = new WSFolder(arl, localFS)
 
         // set the reference - it is top level, so this is easy
-        arl.setFileSystem(folder, '/')
-
-        // The new drawer
-        drawers.push(new Drawer(dirName,folder))
+        arl.setFileSystem(localFS.root, '/')
 
         // set as expanded
-        folder.expanded = true
+        localFS.root.is.expanded = true
 
         // get the content of the drawer
-        await folder.update()
+        await localFS.root.update()
 
-        // update the component
-        drawers = drawers
+        // update
+        localFS = localFS
 
     } catch (error) {
         // If the user cancels the selection or an error occurs, log it.
-        console.error("Local drawer selection cancelled or failed:", error);
+        console.error("Local file system selection cancelled or failed:", error);
+
+        // for good measure
+        localFS = null;
     }
 }
 
 // Get the folders/files from a simpleServer server
-async function getRemoteDrawers(e) {
+async function getRemoteFS() {
 
-    // the initial default path to a configuartion file...
-    const arl = new ARL(workspaceCfg)
-    arl.url = new URL(workspaceCfg,serverUrl)
+    // create the remote file system
+    remoteFS = new WSFileSystem('fixed')
 
-    // create the new simple server
-    const simpleServer = new SimpleServer(arl)
+    // The path to the simulated folder...
+    const arl = new ARL(remoteFolder)
+    arl.url = new URL(remoteFolder,serverUrl)
 
-    try {
-        // get the drawers 
-        const remoteDrawers = await simpleServer.getDrawers()
+    // get the simulated folder
+    const rawFolder = await arl.get('json');
 
-        for (const rd of remoteDrawers) drawers.push(rd)
+    // check
+    if (!rawFolder) return
 
-        drawers = drawers
+    // The server arl
+    const serverArl = new ARL('')
+    serverArl.url = new URL(serverUrl)
 
-    }catch(error) {
-        console.error('Could not get simpleServer workspace', error)
+    // The arl of the remote file system
+    const fsArl = serverArl.resolve('/' + rawFolder.name)
+
+    // set the root of the file system
+    remoteFS.root = new WSFolder(fsArl, remoteFS)
+    remoteFS.root.is.expanded = true;
+
+    // now get the folder/file 
+    expandRemoteFS(rawFolder, remoteFS.root)
+}
+
+function expandRemoteFS(rawFolder, owner) {
+
+    // add the sub folders
+    if (rawFolder.folders) {
+        for( const raw of rawFolder.folders) {
+
+            // make th arl for th enew folder
+            const path = owner.arl.getPath() + '/' + raw.name
+            const arl = owner.arl.resolve(path)
+
+            // make and save the folder
+            const folder = new WSFolder(arl, owner)
+            owner.folders.push(folder)
+
+            // expand the folder 
+            expandRemoteFS(raw, folder)
+        }
+    }
+
+    // and the files
+    if (rawFolder.files) {
+        for( const raw of rawFolder.files) {
+
+            // get the arl of the file
+            const arl = owner.arl.resolve(owner.arl.getPath() + '/' + raw)
+
+            // make and save the file
+            const file = new WSFile(arl, owner)
+            owner.files.push(file)
+        }
     }
 }
 
-function collapseAll(e) {
+function toggleRemoteFS() {
 
-    expanded = !expanded
+    if (!remoteFS) return;
+    remoteFS.root.is.expanded ? remoteFS.collapse() : remoteFS.expand();
 
-    drawers.forEach( d => d.root.is.expanded = expanded)
+    remoteFS = remoteFS
+}
+function toggleLocalFS() {
+    if (!localFS) return;
+    localFS.root.is.expanded ? localFS.collapse() : localFS.expand();
 
-    drawers = drawers
+    remoteFS = remoteFS
 }
 
 </script>
@@ -162,42 +198,39 @@ function collapseAll(e) {
     height: 10%;
 }
 
-.tree {
-
+.workspace {
     /* workspace colors */
-    --bg:#1b1b1b;
-    --cHeader:#fff;
-    --cIcon: #2085a3;
-	--fontBase: arial, helvetica, sans-serif;
-    --sFont: 1rem;
-    --bgTooltip:rgb(30, 29, 100);
-    --cTooltip:rgb(132, 197, 250);
+    --bg:#202020;
+    --cHeader:#aaa;
+    --cIcon: black;
+	--fontBase: courier new,arial, helvetica, sans-serif;
+    --bgTooltip:black;
+    --cTooltip:white;
 
     cursor:pointer;
     background:inherit;    
 
     width: 100%;
-	padding: 0.1rem 0.0rem 0.0rem 1.0rem;
+	padding: 0.1rem 0.0rem 0.0rem 0rem;
     user-select:none;
-    background:var(--bg);
 }
 .heading {
     display: flex;
-    margin-bottom: 0.2rem;
-    background:inherit;
-    color: var(--cHeader);
+    padding-top: 0.3rem;
+    background:#9b9b9b;
+    color: black;
 }
-.drawer-list {
+.file-system {
     overflow-x: hidden;
     overflow-y: scroll;
     height:100%;
-    margin-top:1rem;
+    margin:1rem 0rem 1rem 0rem;
     background:inherit;
 }
 h1 {
 	font-family: var(--fontBase);
-    font-size: var(--sFont);
-    margin: 0.1rem 1rem 0rem 0.2rem;
+    font-size: 0.9rem;
+    margin: 0.1rem 1rem 0rem 1rem;
 }
 i {
     font-size: 24px;
@@ -211,7 +244,9 @@ i:active {
     transform: translateY(2px);
 }
 p.no-selection {
-    font-size: 24px;
+	font-family: var(--fontBase);
+    font-size: 0.9rem;
+    margin-left: 1rem;
     color: grey;
 }
 
@@ -224,15 +259,15 @@ p.no-selection {
 .menu-item .tooltip {
     visibility: hidden;
     font-family: var(--fontBase);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     background-color: var(--bgTooltip);
     color: var(--cTooltip);
     text-align: left;
-    border-radius: 10px;
-    border: 2px solid var(--cTooltip);
+    border-radius: 3px;
+    /* border: 2px solid var(--cTooltip); */
     padding: 0rem 1rem 0.1rem 1rem;
-        /* Prevent text wrapping */
-        white-space: nowrap;
+    /* Prevent text wrapping */
+    white-space: nowrap;
     position: absolute;
     z-index: 1;
     top: 120%;
@@ -244,35 +279,46 @@ p.no-selection {
 
 </style>
 <!-- svelte-ignore a11y-no-static-element-interactions a11y-click-events-have-key-events-->
-<div class="tree" bind:this={mainDiv}>
+<div class="workspace" bind:this={mainDiv}>
 
     <div class="heading">
-        <h1>Workspace</h1>
+        <h1>Examples</h1>
 
         <div class="menu-item">
-            <i class="material-icons-outlined" on:click={newLocalDrawer} >folder</i>
-            <div class="tooltip" >new local drawer</div>
+            <i class="material-icons-outlined" on:click={toggleRemoteFS} >{remoteFS?.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
+            <div class="tooltip">{remoteFS?.root?.is.expanded ? "collapse all" : "expand all"}</div>
         </div>
-
-        <div class="menu-item">
-            <i class="material-icons-outlined" on:click={getRemoteDrawers} >cloud_download</i>
-            <div class="tooltip">new simpleServer drawer</div>
-        </div>
-
-        <div class="menu-item">
-            <i class="material-icons-outlined" on:click={collapseAll} >{expanded ? "unfold_less" : "unfold_more"}</i>
-            <div class="tooltip">{expanded ? "collapse all" : "expand all"}</div>
-        </div>
-
     </div>
 
-    <div class="drawer-list" bind:this={drawerListDiv}>
-        {#if drawers.length > 0}
-            {#each drawers as drawer}
-                <DrawerDiv tx={tx} drawer={drawer} workspace={exposedFunctions}/>
-            {/each}            
+    <div class="file-system" bind:this={remoteDiv}>
+        {#if remoteFS?.root}
+            <FolderFileDiv folder={remoteFS.root} tx={tx}/>           
         {:else}
-            <p class="no-selection">- nothing here yet -</p>
+            <p class="no-selection">Examples could not be mounted.</p>
         {/if}
     </div>
+
+    {#if allowLocalFS}
+        <div class="heading">
+            <h1>Local File System</h1>
+
+            <div class="menu-item">
+                <i class="material-icons-outlined" on:click={newLocalFS} >folder</i>
+                <div class="tooltip" >Open folder</div>
+            </div>
+
+            <div class="menu-item">
+                <i class="material-icons-outlined" on:click={toggleLocalFS} >{localFS.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
+                <div class="tooltip">{localFS?.root?.is.expanded ? "collapse all" : "expand all"}</div>
+            </div>
+        </div>
+
+        <div class="file-system" bind:this={localDiv}>
+            {#if localFS.root}
+                <FolderFileDiv folder={localFS.root} tx={tx}/>           
+            {:else}
+                <p class="no-selection">You can mount a local folder here to open/edit/save local files if you want.</p>
+            {/if}
+        </div>
+    {/if}
 </div>

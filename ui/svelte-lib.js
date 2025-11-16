@@ -2,7 +2,7 @@
 // Lib: SvelteLib
 // Model File: svelte-lib.vmblu
 // Lib   File: svelte-lib.js
-// Creation date 7/1/2025, 10:31:14 PM
+// Creation date 11/9/2025, 12:40:05 PM
 // ------------------------------------------------------------------
 
 //Export
@@ -21,6 +21,7 @@ export { ContextMenuFactory,
 		 CanvasLayoutFactory,
 		 MenuTabsWindow,
 		 LeftMenuLayoutFactory,
+		 ColumnMainFactory,
 		 TabRibbonFactory,
 		 TopMenuFactory,
 		 SideMenuFactory,

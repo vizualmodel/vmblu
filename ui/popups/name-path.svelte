@@ -6,7 +6,7 @@ import LabelInputField from '../fragments/label-input-field.svelte'
 // import Label from '../fragments/label.svelte'
 // import TextField from '../fragments/text-field.svelte'
 
-export let tx, sx
+export let tx//, sx
 
 // the popup box data
 let box = {

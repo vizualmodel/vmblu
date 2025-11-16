@@ -8,7 +8,7 @@ import PopupBox from '../fragments/popup-box.svelte'
 import {NodeList, alfa} from './node-list.js'
 
 // tx and sx
-export let tx, sx
+export let tx //, sx
 
 let nodeList = new NodeList(tx)
 

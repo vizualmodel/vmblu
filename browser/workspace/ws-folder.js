@@ -1,6 +1,14 @@
-//import {showMessage} from '../../page/editor/user-message.js'
 import {WSFile} from './index.js'
 import {LARL, Path} from '../../core/arl/index.js'
+
+export function WSFileSystem(kind) {
+
+    // The type of file system: none, local, api, fixed
+    this.kind = kind;
+
+    // the root
+    this.root = null;
+}
 
 // place holder
 function showMessage(title, message) {}
@@ -79,6 +87,15 @@ WSFolder.prototype = {
 
     getName() {
         return this.name
+    },
+
+    getFileSystem() {
+
+        let parent = this.parent
+        while (parent?.parent) parent = parent.parent
+
+        // the top level parent is the file system
+        return parent
     },
 
     checkName(name) {
@@ -187,7 +204,7 @@ WSFolder.prototype = {
         return [fileTree, path]
     },
 
-    async update() {
+    async xupdate() {
 
         // Get the files and folders in the folder
         const content = await this.arl.getFolderContent()
@@ -204,6 +221,54 @@ WSFolder.prototype = {
             const wsFolder = new WSFolder(arl, this)
             return wsFolder
         })
+    },
+
+    async update() {
+
+        // get the type of filesystem
+        const fileSystem = this.getFileSystem()
+
+        // update depends on the type of file system
+        switch (fileSystem?.kind) {
+
+
+            case 'local' : 
+
+                // reset
+                this.folders = [];
+                this.files = [];
+
+                console.log(this.arl)
+
+                // Get the folders and files of the directory
+                for await (const entry of this.arl.handle.values()) {
+
+                    // resolve the arl wrt this directory
+                    const arl = this.arl.resolve(entry.name)
+                    arl.handle = entry
+
+                    if (entry.kind == 'directory') {
+                        const wsFolder = new WSFolder(arl, this)
+                        wsFolder.fsType = this.fsType
+                        this.folders.push(wsFolder)
+                    }
+                    else if (entry.kind == 'file') {
+                        const wsFile = new WSFile(arl, this)
+                        this.files.push(wsFile)
+                    }
+                }
+                return;
+
+            case 'api':
+                return;
+
+            case 'fixed':
+                return;
+
+            case 'none': 
+                return;
+
+        }
     },
 
     async xnewFile(fileName){

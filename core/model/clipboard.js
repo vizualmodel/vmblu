@@ -89,7 +89,7 @@ Clipboard.prototype = {
 
             // check
             if (!raw) return
-            
+
             //cook the clipboard - reuse the save compiler
             await this.cook(raw, doc.savecom)
 
@@ -127,7 +127,7 @@ Clipboard.prototype = {
             widgets: null
         }
 
-        switch(this.what) {
+        switch(this.selection.what) {
 
             case selex.pinArea:{
                 target.widgets = this.selection.widgets
@@ -160,6 +160,10 @@ Clipboard.prototype = {
                 target.imports = modcom.models
             }
             break
+
+            default:
+                console.log(`unrecognized ${this.what} in clipboard.js`)
+                break;
         }
 
         // stringify the target

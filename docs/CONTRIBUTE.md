@@ -5,7 +5,7 @@
 Thank you for your interest in contributing to **vmblu** 🎉  
 We welcome contributions from developers, designers, testers, and anyone excited about making **architecture explicit, visual, and AI-native** — the future of software development.
 
-## 🟦 How to Contribute
+## ■  How to Contribute
 
 There are many ways to get involved:
 
@@ -17,7 +17,7 @@ There are many ways to get involved:
 
 The best way to get started however is to build something with vmblu. The vmblu repo has a companion repo [Vmblu Examples](https://github.com/vizualmodel/vmblu-examples) that features software built with vmblu. The best examples there will be featured on the vmblu.dev site. Working with **vmblu** is also the best way to find issues and come up with ideas for improvements and features.
 
-## 🟦 Development Setup
+## ■  Development Setup
 
 1. **Clone the repository**
 
@@ -63,7 +63,7 @@ Since both share the same codebase, starting with the browser build is recommend
 
    Tests are grouped into **unit**, **integration**, and **e2e** under `/browser/tests`.
 
-## 🟦 Guidelines
+## ■  Guidelines
 
 To ensure smooth collaboration and high-quality contributions, please follow these guidelines:
 
@@ -86,7 +86,7 @@ To ensure smooth collaboration and high-quality contributions, please follow the
 * **Document Your Changes**
   Update relevant documentation (README, schema, guides) when you change functionality.
 
-## 🟦 Getting Started: Where to Connect
+## ■  Getting Started: Where to Connect
 
 Before you dive into coding, please use the following channels to connect with us:
 
@@ -96,7 +96,7 @@ Before you dive into coding, please use the following channels to connect with u
   We expect constructive and respectful communication. Our goal is a positive, welcoming environment.
   *(We follow the [Contributor Covenant](https://www.contributor-covenant.org/) as our Code of Conduct.)*
 
-## 🟦 Contribution Process
+## ■  Contribution Process
 
 1. **Fork & clone** the repository.
 2. **Create a branch** for your feature or fix (e.g. `fix/runtime-queue-bug`).
@@ -111,7 +111,7 @@ Before you dive into coding, please use the following channels to connect with u
    * PRs may be rebased or squashed for a clean history.
    * Merging does **not** mean an immediate release. Releases are published separately.
 
-## 🟦 License
+## ■  License
 
 All contributions are licensed under the [Apache License 2.0](./LICENSE).
 By submitting code, you agree to this license.

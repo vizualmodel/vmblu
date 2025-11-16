@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "11/7/2025, 11:43:16 AM",
-        "utc": "2025-11-07T10:43:16.980Z",
+        "saved": "11/14/2025, 11:41:44 AM",
+        "utc": "2025-11-14T10:41:44.102Z",
         "style": "#291f32",
         "runtime": "@vizualmodel/vmblu-runtime"
     },
@@ -490,7 +490,7 @@
                 "editor": {
                     "rect": "x 343 y 709 w 211 h 116",
                     "view": {
-                        "state": "closed",
+                        "state": "open",
                         "rect": "x 333 y 141 w 1156 h 768",
                         "transform": "sx 1.000 sy 1.000 dx 246.500 dy 322.000"
                     },
@@ -3159,9 +3159,9 @@
                 "editor": {
                     "rect": "x 814 y 430 w 250 h 236",
                     "view": {
-                        "state": "closed",
-                        "rect": "x 226 y 78 w 1996 h 1168",
-                        "transform": "sx 1.000 sy 1.000 dx 188.051 dy 94.554"
+                        "state": "open",
+                        "rect": "x 1025 y 93 w 1996 h 1168",
+                        "transform": "sx 1.000 sy 1.000 dx 987.051 dy 109.554"
                     },
                     "buses": [
                         {
@@ -3849,7 +3849,7 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1376 h 1326",
+                "rect": "x 0 y 0 w 1568 h 1326",
                 "transform": "sx 1.000 sy 1.000 dx -156.469 dy -22.669"
             },
             "routes": [

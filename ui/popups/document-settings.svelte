@@ -5,7 +5,7 @@ import LabelInfoField from '../fragments/label-info-field.svelte'
 import LabelInputField from '../fragments/label-input-field.svelte'
 import ColorPicker from '../fragments/color-picker.svelte'
 
-export let tx, sx
+export let tx //, sx
 
 // the popup box
 let box = {

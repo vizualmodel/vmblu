@@ -157,52 +157,6 @@ async get(as = 'text') {
     return as === 'json' ? JSON.parse(content) : content;        
 },
 
-async xsave(body) {
-    // First, ensure the file is still accessible
-    try {
-
-        // if the handle for this file is null, we have to find it first
-        if (!this.handle) {
-
-            // find the file
-            const wsFile = await this.fileTree.findFile(this.fullPath)
-
-            // check
-            if (!wsFile) {
-                console.warn(`LALR.get(${this.fullPath}: file not found)`)
-                return null
-            }
-
-            // set the handle
-            this.handle = wsFile.arl.handle
-        }
-        
-        // This will throw an error if the file has been deleted or is otherwise inaccessible
-        await this.handle.getFile();
-    } catch (error) {
-        console.error("Local file is no longer accessible:", error);
-        return null;
-    }
-    
-    // Now, proceed with writing the content to the file
-    try {
-        // Create a writable stream using the File System Access API
-        const writable = await this.handle.createWritable();
-        
-        // Write the content (body) to the file. The 'body' may be a string or Blob as needed.
-        await writable.write(body);
-        
-        // Closing the writable stream commits the changes to disk
-        await writable.close();
-        
-        // Optionally, return a success indicator (e.g., true)
-        return true;
-    } catch (error) {
-        console.error("Error saving local file:", error);
-        return null;
-    }
-},
-
 async save(body) {
 
     // ---- small helpers ----
@@ -301,26 +255,26 @@ async jsImport() {
     return null
 },
 
-async getFolderContent(){
+// async getFolderContent(){
 
-    // reset the files and folders arrays
-    const content = {
-        folders: [],
-        files: []
-    }
+//     // reset the files and folders arrays
+//     const content = {
+//         folders: [],
+//         files: []
+//     }
 
-    // Get the folders and files of the directory
-    for await (const entry of this.handle.values()) {
+//     // Get the folders and files of the directory
+//     for await (const entry of this.handle.values()) {
 
-        // resolve the arl wrt this directory
-        const arl = this.resolve(entry.name)
-        arl.handle = entry
-        entry.kind === 'directory' ? content.folders.push(arl) : 
-        entry.kind === 'file' ? content.files.push(arl) : null
-    }
+//         // resolve the arl wrt this directory
+//         const arl = this.resolve(entry.name)
+//         arl.handle = entry
+//         entry.kind === 'directory' ? content.folders.push(arl) : 
+//         entry.kind === 'file' ? content.files.push(arl) : null
+//     }
 
-    return content
-},
+//     return content
+// },
 
 }
 

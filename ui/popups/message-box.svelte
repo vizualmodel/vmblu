@@ -2,7 +2,7 @@
 import {onMount} from 'svelte'
 import PopupBox from '../fragments/popup-box.svelte'
 
-export let tx, sx
+export let tx//, sx
 
 // the popup box data
 let box = {

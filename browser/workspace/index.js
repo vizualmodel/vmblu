@@ -14,16 +14,6 @@ export function WorkspaceFactory(tx, sx) {
         props: { tx, sx }
     });
 
-    // create the workspace div
-    // const workspace = new Workspace(
-    //     {
-    //         target: div,
-    //         props: {
-    //             tx, sx
-    //         }
-    //     }
-    // )
-
     // return the handlers of the cell
     return workspace.handlers
 }

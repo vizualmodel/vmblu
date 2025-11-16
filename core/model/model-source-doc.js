@@ -23,7 +23,7 @@ async readSourceMap() {
 
     // get the full path
     const fullPath = this.arl?.getFullPath()
-console.log('FULLPATH', fullPath)
+    
     // check
     if (!fullPath) return null
 
