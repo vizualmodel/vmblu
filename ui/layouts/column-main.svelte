@@ -183,9 +183,9 @@ export const handlers = {
 }
 
 .separator:hover,
-.separator.dragging {
+/* .separator.dragging {
 	background-color: #4aa3d5;
-}
+} */
 
 .main-area {
 	flex: 1 1 auto;

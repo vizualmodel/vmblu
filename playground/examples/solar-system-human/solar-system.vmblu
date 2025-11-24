@@ -1,0 +1,2644 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "5/15/2024, 9:36:44 AM",
+        "saved": "11/14/2025, 4:09:30 PM",
+        "utc": "2025-11-14T15:09:30.123Z",
+        "style": "#3e7467",
+        "runtime": "c:/dev/vmblu/runtime"
+    },
+    "imports": [
+        "./ui.vmblu",
+        "./3d.vmblu",
+        "./sky.vmblu",
+        "./chart.vmblu",
+        "./ai.vmblu"
+    ],
+    "factories": [
+        "./mcp-server.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "",
+        "nodes": [
+            {
+                "kind": "dock",
+                "name": "screen layout",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "screen layout"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "menu",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "timeline",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "visible [start,stop]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "canvas",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "left side",
+                        "pins": [
+                            {
+                                "name": "left side chart",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "left side canvas",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "left side toggle",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 13
+                        }
+                    },
+                    {
+                        "name": "right side",
+                        "pins": [
+                            {
+                                "name": "right side toggle",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "right side add div",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 11,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 14
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 264 y 250 w 150 h 206"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "helper tools",
+                "link": {
+                    "path": "./3d.vmblu",
+                    "node": "helper tools"
+                },
+                "interfaces": [
+                    {
+                        "name": "grid",
+                        "pins": [
+                            {
+                                "name": "grid show",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "grid change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    },
+                    {
+                        "name": "axes",
+                        "pins": [
+                            {
+                                "name": "axes show",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "axes change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 10
+                        }
+                    },
+                    {
+                        "name": "scene",
+                        "pins": [
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 11
+                        }
+                    }
+                ],
+                "sx": {
+                    "grid": {
+                        "x": {
+                            "on": false,
+                            "color": "0x773333"
+                        },
+                        "y": {
+                            "on": false,
+                            "color": "0x337733"
+                        },
+                        "z": {
+                            "on": true,
+                            "color": "0x333377"
+                        },
+                        "size": 50,
+                        "divisions": 50
+                    },
+                    "axes": {
+                        "on": false,
+                        "size": "50"
+                    }
+                },
+                "editor": {
+                    "rect": "x 575 y 708 w 150 h 146"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "helper settings",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "helper settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "other",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 10
+                        }
+                    },
+                    {
+                        "name": "grid",
+                        "pins": [
+                            {
+                                "name": "grid set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "grid change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 8
+                        }
+                    },
+                    {
+                        "name": "axes",
+                        "pins": [
+                            {
+                                "name": "axes set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "axes change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 264 y 678 w 150 h 146"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "renderer",
+                "link": {
+                    "path": "./3d.vmblu",
+                    "node": "renderer"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "camera",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "canvas",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "scene",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "actors",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "update [start,stop,step]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 575 y 102 w 150 h 101"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "scene manager",
+                "link": {
+                    "path": "./3d.vmblu",
+                    "node": "scene manager"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "actors",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "scene",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "actor [add,remove]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 571 y 229 w 165 h 86"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "solar system",
+                "link": {
+                    "path": "./sky.vmblu",
+                    "node": "solar system"
+                },
+                "label": "The sun, the planets and their moons",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 664 y -80 w 170 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "actor [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 665 y -52 w 125 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "presentation",
+                        "pins": [
+                            {
+                                "name": "presentation get user settings",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 664 y -193 w 187 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "presentation user change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 1101 y -145 w 165 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "presentation chart and output settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 664 y -165 w 231 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 18
+                        }
+                    },
+                    {
+                        "name": "simulation",
+                        "pins": [
+                            {
+                                "name": "simulation get user settings",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 11,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 664 y -136 w 175 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "simulation user change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 1101 y -78 w 153 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "current date",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 13,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 314 y -32 w 94 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "place local camera",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 17,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 1101 y -10 w 128 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "orbit position",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 14,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 664 y -108 w 98 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 19
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1037 y 282 w 201 h 206"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "camera manager",
+                "link": {
+                    "path": "./3d.vmblu",
+                    "node": "camera manager"
+                },
+                "prompt": "The camera manager maintains a list of cameras that can be selected by the user.\n\nWhen the user has selected a camera, the camera manager informs the renderer of the camera change.\n\nThe camera is also added to the scene then the user can see the available cameras in the scene, and it is alos added to the actors because a camera can be animated.",
+                "interfaces": [
+                    {
+                        "name": "canvas",
+                        "pins": [
+                            {
+                                "name": "canvas add",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "canvas set",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 16
+                        }
+                    },
+                    {
+                        "name": "camera",
+                        "pins": [
+                            {
+                                "name": "active camera",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "camera list",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "camera settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "get camera",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 15,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "helpers [show,hide]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "camera [select,add,delete,update]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "actor [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 13,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "scene [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 17
+                        }
+                    },
+                    {
+                        "name": "other",
+                        "pins": [],
+                        "editor": {
+                            "id": 18
+                        }
+                    }
+                ],
+                "sx": [
+                    {
+                        "definition": {
+                            "name": "space camera",
+                            "type": "perspective",
+                            "near": 0.0001,
+                            "far": 500,
+                            "fov": 50,
+                            "zoom": 1,
+                            "aspect": "canvas"
+                        },
+                        "location": {
+                            "space": true,
+                            "position": {
+                                "x": 0,
+                                "y": -1,
+                                "z": 0.5
+                            },
+                            "lookAt": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 0
+                            }
+                        },
+                        "controls": "orbit"
+                    },
+                    {
+                        "definition": {
+                            "name": "spaceship camera",
+                            "type": "perspective",
+                            "near": 0.000001,
+                            "far": 500,
+                            "fov": 50,
+                            "zoom": 1,
+                            "aspect": "canvas"
+                        },
+                        "controls": "spaceship",
+                        "location": {
+                            "space": true,
+                            "position": {
+                                "x": 0,
+                                "y": 2,
+                                "z": 0
+                            },
+                            "lookAt": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 0
+                            }
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 579 y 421 w 162 h 221"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "solar system settings",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "solar system settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "presentation",
+                        "pins": [
+                            {
+                                "name": "presentation get",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "presentation user change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "presentation override",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "sx": {
+                    "labels": {
+                        "on": true,
+                        "size": {
+                            "min": 1,
+                            "max": 50,
+                            "current": 24
+                        }
+                    },
+                    "magnify": {
+                        "sun": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 100,
+                                "current": 10
+                            }
+                        },
+                        "planet": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 1000,
+                                "current": 200
+                            }
+                        },
+                        "moon": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 1000,
+                                "current": 500
+                            },
+                            "orbit": {
+                                "on": true,
+                                "size": {
+                                    "min": 1,
+                                    "max": 100,
+                                    "current": 20
+                                }
+                            }
+                        }
+                    },
+                    "stars": {
+                        "on": true
+                    },
+                    "constellations": {
+                        "on": false
+                    }
+                },
+                "editor": {
+                    "rect": "x 1368 y 136 w 221 h 101"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "simulation settings",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "simulation settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "current date",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "simulation",
+                        "pins": [
+                            {
+                                "name": "orbit [show,hide]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "update [start,stop,step]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "simulation override",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "simulation get",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "simulation user change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    }
+                ],
+                "sx": {
+                    "running": true,
+                    "speed": {
+                        "min": 0.001,
+                        "max": 100,
+                        "current": 1,
+                        "select": {
+                            "on": true,
+                            "selected": "sec = day",
+                            "choices": [
+                                "sec = sec",
+                                "sec = min",
+                                "sec = hour",
+                                "sec = day",
+                                "sec = week",
+                                "sec = month",
+                                "sec = year"
+                            ]
+                        }
+                    },
+                    "start": "1/1/2024",
+                    "orbit": {
+                        "on": false
+                    }
+                },
+                "editor": {
+                    "rect": "x 1371 y 272 w 221 h 146"
+                }
+            },
+            {
+                "kind": "group",
+                "name": "charts and curves",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 885 y 466 w 45 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "position",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 1396 y 496 w 71 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "setup",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 1408 y 481 w 59 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "user change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 1372 y 511 w 95 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "curve [show,hide]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 769 y 641 w 120 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 771 y 671 w 170 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "nodes": [
+                    {
+                        "kind": "dock",
+                        "name": "planetary distance",
+                        "link": {
+                            "path": "./chart.vmblu",
+                            "node": "planetary distance"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "setup",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "position",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "user change",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "sx": {
+                            "planets": [
+                                "Mercury",
+                                "Venus",
+                                "Mars"
+                            ],
+                            "size": 512
+                        },
+                        "editor": {
+                            "rect": "x 1059 y 446 w 200 h 86"
+                        }
+                    },
+                    {
+                        "kind": "dock",
+                        "name": "space curve manager",
+                        "link": {
+                            "path": "./3d.vmblu",
+                            "node": "space curve manager"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "setup",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "position",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "curve [show,hide]",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            },
+                            {
+                                "name": "scene",
+                                "pins": [
+                                    {
+                                        "name": "scene [add,remove,dispose]",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 6
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 1062 y 591 w 200 h 101"
+                        }
+                    }
+                ],
+                "connections": [
+                    {
+                        "src": {
+                            "pin": "div",
+                            "node": "planetary distance"
+                        },
+                        "dst": {
+                            "pin": "div"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "scene [add,remove,dispose]",
+                            "node": "space curve manager"
+                        },
+                        "dst": {
+                            "pin": "scene [add,remove,dispose]"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "position"
+                        },
+                        "dst": {
+                            "pin": "position",
+                            "node": "planetary distance"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "position"
+                        },
+                        "dst": {
+                            "pin": "position",
+                            "node": "space curve manager"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "setup"
+                        },
+                        "dst": {
+                            "pin": "setup",
+                            "node": "planetary distance"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "setup"
+                        },
+                        "dst": {
+                            "pin": "setup",
+                            "node": "space curve manager"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "user change"
+                        },
+                        "dst": {
+                            "pin": "user change",
+                            "node": "planetary distance"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "curve [show,hide]"
+                        },
+                        "dst": {
+                            "pin": "curve [show,hide]",
+                            "node": "space curve manager"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1037 y 576 w 200 h 116",
+                    "view": {
+                        "rect": "x 624 y 627 w 797 h 472",
+                        "transform": "sx 1.000 sy 1.000 dx -128.487 dy 282.816"
+                    },
+                    "routes": [
+                        {
+                            "from": "(pin 1) div @ planetary distance",
+                            "to": "(pad 1) div",
+                            "wire": "x -129.0"
+                        },
+                        {
+                            "from": "(pin 5) scene [add,remove,dispose] @ space curve manager",
+                            "to": "(pad 7) scene [add,remove,dispose]",
+                            "wire": "x -121.0"
+                        },
+                        {
+                            "from": "(pad 2) position",
+                            "to": "(pin 4) position @ planetary distance",
+                            "wire": "x -68.5 y 0.0 x -68.5"
+                        },
+                        {
+                            "from": "(pad 2) position",
+                            "to": "(pin 2) position @ space curve manager",
+                            "wire": "x -78.0 y 130.0 x -56.0"
+                        },
+                        {
+                            "from": "(pad 3) setup",
+                            "to": "(pin 2) setup @ planetary distance",
+                            "wire": "x -149.0"
+                        },
+                        {
+                            "from": "(pad 3) setup",
+                            "to": "(pin 1) setup @ space curve manager",
+                            "wire": "x -99.0 y 130.0 x -47.0"
+                        },
+                        {
+                            "from": "(pad 4) user change",
+                            "to": "(pin 3) user change @ planetary distance",
+                            "wire": "x -56.3 y 0.0 x -56.7"
+                        },
+                        {
+                            "from": "(pad 5) curve [show,hide]",
+                            "to": "(pin 3) curve [show,hide] @ space curve manager",
+                            "wire": "x 173.0"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "camera settings",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "camera settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "list",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "settings",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "pins": [
+                            {
+                                "name": "[show,hide] helpers",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "user [add,delete,update,select]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 7
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 263 y 481 w 165 h 116"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "star sphere",
+                "link": {
+                    "path": "./sky.vmblu",
+                    "node": "star sphere"
+                },
+                "label": "Projects the stars and the constellations",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "scene add",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "presentation",
+                        "pins": [
+                            {
+                                "name": "presentation get user settings",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "presentation user change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 5
+                        }
+                    }
+                ],
+                "sx": {
+                    "starFile": "/assets/starmap_2020_8k.jpg",
+                    "constellationFile": "/assets/constellations.png",
+                    "radius": 200
+                },
+                "editor": {
+                    "rect": "x 1037 y 136 w 200 h 86"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "select on earth",
+                "link": {
+                    "path": "./sky.vmblu",
+                    "node": "select on earth"
+                },
+                "label": "Allows to position the 'earth' camera",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "place camera",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "add canvas",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "get camera",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "sx": {
+                    "earth": {
+                        "color": "0x007fff",
+                        "textureFile": "/assets/2k_earth_specular_map.jpg"
+                    },
+                    "camera": {
+                        "fov": 50,
+                        "near": 0.001,
+                        "far": 10
+                    },
+                    "planetCameras": [
+                        {
+                            "definition": {
+                                "name": "earth camera",
+                                "type": "perspective",
+                                "near": 1e-9,
+                                "far": 200,
+                                "fov": 50,
+                                "zoom": 1,
+                                "aspect": "canvas"
+                            },
+                            "controls": "telescope",
+                            "location": {
+                                "planet": "Earth",
+                                "coordinates": "50°53'10.7\"N 3°45'57.9\"E",
+                                "inclination": 90
+                            }
+                        }
+                    ]
+                },
+                "editor": {
+                    "rect": "x 1037 y 802 w 200 h 71"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "top menu",
+                "link": {
+                    "path": "./ui.vmblu",
+                    "node": "top menu"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "panels toggle",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "sx": [
+                    {
+                        "name": "width_full",
+                        "help": "show/hide panels",
+                        "message": "panels toggle"
+                    }
+                ],
+                "editor": {
+                    "rect": "x 264 y 148 w 150 h 56"
+                }
+            },
+            {
+                "kind": "group",
+                "name": "LLM Group",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 100 y 904 w 45 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "nodes": [
+                    {
+                        "kind": "dock",
+                        "name": "MCP Client",
+                        "link": {
+                            "path": "./ai.vmblu",
+                            "node": "MCP Client in browser"
+                        },
+                        "prompt": "An MCP client communicates with the server and uses just two messages to implement the transport layer for an mcp client from a model implementation.\n\nThe client has a UI to receive prompts from the user and to show the repsonse from the LLM. The client sends the div it uses for that to the page that has to integrate it.",
+                        "interfaces": [
+                            {
+                                "name": "user interface",
+                                "pins": [
+                                    {
+                                        "name": "update chat",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "new prompt",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "handle key",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 11
+                                }
+                            },
+                            {
+                                "name": "server interface",
+                                "pins": [
+                                    {
+                                        "name": "get manifest",
+                                        "kind": "request",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "get tools",
+                                        "kind": "request",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "call tool",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tool result",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 12
+                                }
+                            }
+                        ],
+                        "dx": {
+                            "logMessages": false,
+                            "worker": {
+                                "on": false,
+                                "path": ""
+                            }
+                        },
+                        "editor": {
+                            "rect": "x 576 y 884 w 150 h 161"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "MCP Server",
+                        "factory": {
+                            "path": "./mcp-server.js",
+                            "function": "McpServerInBrowser"
+                        },
+                        "prompt": "The MCP server is specific to the application and tells the client the services it can deliver. The server has no UI on itself and is LLM-agnostic. It just uses two messages for the transport layer used by the model implementation of the mcp server it encapsulates.",
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "tool result",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "call tool",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "get tools",
+                                        "kind": "reply",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "get manifest",
+                                        "kind": "reply",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "dx": {
+                            "logMessages": false,
+                            "worker": {
+                                "on": false,
+                                "path": ""
+                            }
+                        },
+                        "editor": {
+                            "rect": "x 574 y 1077 w 150 h 86"
+                        }
+                    },
+                    {
+                        "kind": "dock",
+                        "name": "LLM Chat Window",
+                        "link": {
+                            "path": "./ui.vmblu",
+                            "node": "LLM Chat Window"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "update chat",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "new prompt",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "handle key",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 261 y 884 w 200 h 86"
+                        }
+                    }
+                ],
+                "connections": [
+                    {
+                        "src": {
+                            "pin": "update chat",
+                            "node": "MCP Client"
+                        },
+                        "dst": {
+                            "pin": "update chat",
+                            "node": "LLM Chat Window"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "get manifest",
+                            "node": "MCP Client"
+                        },
+                        "dst": {
+                            "pin": "get manifest",
+                            "node": "MCP Server"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "get tools",
+                            "node": "MCP Client"
+                        },
+                        "dst": {
+                            "pin": "get tools",
+                            "node": "MCP Server"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "call tool",
+                            "node": "MCP Client"
+                        },
+                        "dst": {
+                            "pin": "call tool",
+                            "node": "MCP Server"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "tool result",
+                            "node": "MCP Server"
+                        },
+                        "dst": {
+                            "pin": "tool result",
+                            "node": "MCP Client"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "div",
+                            "node": "LLM Chat Window"
+                        },
+                        "dst": {
+                            "pin": "div"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "new prompt",
+                            "node": "LLM Chat Window"
+                        },
+                        "dst": {
+                            "pin": "new prompt",
+                            "node": "MCP Client"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "handle key",
+                            "node": "LLM Chat Window"
+                        },
+                        "dst": {
+                            "pin": "handle key",
+                            "node": "MCP Client"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 264 y 912 w 150 h 41",
+                    "view": {
+                        "state": "open",
+                        "rect": "x 640 y 284 w 1011 h 826",
+                        "transform": "sx 1.000 sy 1.000 dx 640.000 dy -291.000"
+                    },
+                    "routes": [
+                        {
+                            "from": "(pin 8) update chat @ MCP Client",
+                            "to": "(pin 2) update chat @ LLM Chat Window",
+                            "wire": "x -82.5 y 0.0 x -32.5"
+                        },
+                        {
+                            "from": "(pin 1) get manifest @ MCP Client",
+                            "to": "(pin 1) get manifest @ MCP Server",
+                            "wire": "x 62.1 y 163.0 x -64.1"
+                        },
+                        {
+                            "from": "(pin 2) get tools @ MCP Client",
+                            "to": "(pin 2) get tools @ MCP Server",
+                            "wire": "x 52.6 y 133.0 x -54.6"
+                        },
+                        {
+                            "from": "(pin 4) call tool @ MCP Client",
+                            "to": "(pin 3) call tool @ MCP Server",
+                            "wire": "x 43.1 y 103.0 x -45.1"
+                        },
+                        {
+                            "from": "(pin 4) tool result @ MCP Server",
+                            "to": "(pin 5) tool result @ MCP Client",
+                            "wire": "x 36.9 y -73.0 x -34.9"
+                        },
+                        {
+                            "from": "(pin 1) div @ LLM Chat Window",
+                            "to": "(pad 1) div",
+                            "wire": "x -38.2 y 0.0 x -77.8"
+                        },
+                        {
+                            "from": "(pin 3) new prompt @ LLM Chat Window",
+                            "to": "(pin 9) new prompt @ MCP Client",
+                            "wire": "x 32.5 y 0.0 x 82.5"
+                        },
+                        {
+                            "from": "(pin 4) handle key @ LLM Chat Window",
+                            "to": "(pin 10) handle key @ MCP Client",
+                            "wire": "x 32.5 y 0.0 x 82.5"
+                        }
+                    ]
+                }
+            }
+        ],
+        "connections": [
+            {
+                "src": {
+                    "pin": "visible [start,stop]",
+                    "node": "screen layout"
+                },
+                "dst": {
+                    "pin": "update [start,stop,step]",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "canvas",
+                    "node": "screen layout"
+                },
+                "dst": {
+                    "pin": "canvas add",
+                    "node": "camera manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "grid show",
+                    "node": "helper tools"
+                },
+                "dst": {
+                    "pin": "grid set",
+                    "node": "helper settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "axes show",
+                    "node": "helper tools"
+                },
+                "dst": {
+                    "pin": "axes set",
+                    "node": "helper settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "helper tools"
+                },
+                "dst": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "helper settings"
+                },
+                "dst": {
+                    "pin": "right side add div",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "grid change",
+                    "node": "helper settings"
+                },
+                "dst": {
+                    "pin": "grid change",
+                    "node": "helper tools"
+                }
+            },
+            {
+                "src": {
+                    "pin": "axes change",
+                    "node": "helper settings"
+                },
+                "dst": {
+                    "pin": "axes change",
+                    "node": "helper tools"
+                }
+            },
+            {
+                "src": {
+                    "pin": "actors",
+                    "node": "scene manager"
+                },
+                "dst": {
+                    "pin": "actors",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene",
+                    "node": "scene manager"
+                },
+                "dst": {
+                    "pin": "scene",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "actor [add,remove]",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "actor [add,remove]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "presentation get user settings",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "presentation get",
+                    "node": "solar system settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "presentation chart and output settings",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "setup",
+                    "node": "charts and curves"
+                }
+            },
+            {
+                "src": {
+                    "pin": "simulation get user settings",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "simulation get",
+                    "node": "simulation settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "current date",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "current date",
+                    "node": "simulation settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "orbit position",
+                    "node": "solar system"
+                },
+                "dst": {
+                    "pin": "position",
+                    "node": "charts and curves"
+                }
+            },
+            {
+                "src": {
+                    "pin": "canvas set",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "canvas",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "active camera",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "camera",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "camera list",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "list",
+                    "node": "camera settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "camera settings",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "settings",
+                    "node": "camera settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "actor [add,remove]",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "actor [add,remove]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene [add,remove]",
+                    "node": "camera manager"
+                },
+                "dst": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "solar system settings"
+                },
+                "dst": {
+                    "pin": "right side add div",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "presentation user change",
+                    "node": "solar system settings"
+                },
+                "dst": {
+                    "pin": "presentation user change",
+                    "node": "solar system"
+                }
+            },
+            {
+                "src": {
+                    "pin": "presentation user change",
+                    "node": "solar system settings"
+                },
+                "dst": {
+                    "pin": "presentation user change",
+                    "node": "star sphere"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "simulation settings"
+                },
+                "dst": {
+                    "pin": "right side add div",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "orbit [show,hide]",
+                    "node": "simulation settings"
+                },
+                "dst": {
+                    "pin": "curve [show,hide]",
+                    "node": "charts and curves"
+                }
+            },
+            {
+                "src": {
+                    "pin": "update [start,stop,step]",
+                    "node": "simulation settings"
+                },
+                "dst": {
+                    "pin": "update [start,stop,step]",
+                    "node": "renderer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "simulation user change",
+                    "node": "simulation settings"
+                },
+                "dst": {
+                    "pin": "simulation user change",
+                    "node": "solar system"
+                }
+            },
+            {
+                "src": {
+                    "pin": "simulation user change",
+                    "node": "simulation settings"
+                },
+                "dst": {
+                    "pin": "user change",
+                    "node": "charts and curves"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "charts and curves"
+                },
+                "dst": {
+                    "pin": "left side chart",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "charts and curves"
+                },
+                "dst": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "camera settings"
+                },
+                "dst": {
+                    "pin": "right side add div",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "[show,hide] helpers",
+                    "node": "camera settings"
+                },
+                "dst": {
+                    "pin": "helpers [show,hide]",
+                    "node": "camera manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "user [add,delete,update,select]",
+                    "node": "camera settings"
+                },
+                "dst": {
+                    "pin": "camera [select,add,delete,update]",
+                    "node": "camera manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "scene add",
+                    "node": "star sphere"
+                },
+                "dst": {
+                    "pin": "scene [add,remove,dispose]",
+                    "node": "scene manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "presentation get user settings",
+                    "node": "star sphere"
+                },
+                "dst": {
+                    "pin": "presentation get",
+                    "node": "solar system settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "place camera",
+                    "node": "select on earth"
+                },
+                "dst": {
+                    "pin": "place local camera",
+                    "node": "solar system"
+                }
+            },
+            {
+                "src": {
+                    "pin": "add canvas",
+                    "node": "select on earth"
+                },
+                "dst": {
+                    "pin": "left side canvas",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "get camera",
+                    "node": "select on earth"
+                },
+                "dst": {
+                    "pin": "get camera",
+                    "node": "camera manager"
+                }
+            },
+            {
+                "src": {
+                    "pin": "panels toggle",
+                    "node": "top menu"
+                },
+                "dst": {
+                    "pin": "right side toggle",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "panels toggle",
+                    "node": "top menu"
+                },
+                "dst": {
+                    "pin": "left side toggle",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "top menu"
+                },
+                "dst": {
+                    "pin": "menu",
+                    "node": "screen layout"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "LLM Group"
+                },
+                "dst": {
+                    "pin": "right side add div",
+                    "node": "screen layout"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 100 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1530 h 1326",
+                "transform": "sx 0.969 sy 0.969 dx -102.100 dy 154.327"
+            },
+            "buses": [
+                {
+                    "kind": "cable",
+                    "name": "scene bus",
+                    "start": "x 884.8623625774395 y 1064.0722394220845",
+                    "wire": "y -1106.2"
+                },
+                {
+                    "kind": "busbar",
+                    "name": "right side div",
+                    "start": "x 511.65457413249203 y 1045.3",
+                    "wire": "y -1072.6"
+                }
+            ],
+            "routes": [
+                {
+                    "from": "(pin 6) visible [start,stop] @ screen layout",
+                    "to": "(pin 5) update [start,stop,step] @ renderer",
+                    "wire": "x 347.5 y -133.0 x -36.5"
+                },
+                {
+                    "from": "(pin 2) canvas @ screen layout",
+                    "to": "(pin 3) canvas add @ camera manager",
+                    "wire": "x 122.3 y 126.0 x 42.7"
+                },
+                {
+                    "from": "(pin 4) grid show @ helper tools",
+                    "to": "(pin 3) grid set @ helper settings",
+                    "wire": "x -104.4 y 0.0 x -56.6"
+                },
+                {
+                    "from": "(pin 7) axes show @ helper tools",
+                    "to": "(pin 5) axes set @ helper settings",
+                    "wire": "x -84.6 y 0.0 x -76.4"
+                },
+                {
+                    "from": "(pin 8) scene [add,remove,dispose] @ helper tools",
+                    "to": "(bus) scene bus",
+                    "wire": "x 159.9"
+                },
+                {
+                    "from": "(pin 7) div @ helper settings",
+                    "to": "(bus) right side div",
+                    "wire": "x 58.3 y 0.0 x 39.4"
+                },
+                {
+                    "from": "(pin 4) grid change @ helper settings",
+                    "to": "(pin 3) grid change @ helper tools",
+                    "wire": "x 128.6 y 0.0 x 32.4"
+                },
+                {
+                    "from": "(pin 6) axes change @ helper settings",
+                    "to": "(pin 6) axes change @ helper tools",
+                    "wire": "x 134.6 y 0.0 x 26.4"
+                },
+                {
+                    "from": "(pin 2) actors @ scene manager",
+                    "to": "(pin 4) actors @ renderer",
+                    "wire": "x 41.4 y -82.0 x -52.4"
+                },
+                {
+                    "from": "(pin 1) scene @ scene manager",
+                    "to": "(pin 3) scene @ renderer",
+                    "wire": "x 52.7 y -112.0 x -63.7"
+                },
+                {
+                    "from": "(pin 4) scene [add,remove,dispose] @ solar system",
+                    "to": "(bus) scene bus",
+                    "wire": "x -152.1"
+                },
+                {
+                    "from": "(pin 6) actor [add,remove] @ solar system",
+                    "to": "(bus) scene bus",
+                    "wire": "x -152.1"
+                },
+                {
+                    "from": "(pin 7) presentation get user settings @ solar system",
+                    "to": "(pin 4) presentation get @ solar system settings",
+                    "wire": "x 50.6 y -161.0 x 79.4"
+                },
+                {
+                    "from": "(pin 9) presentation chart and output settings @ solar system",
+                    "to": "(pin 3) setup @ charts and curves",
+                    "wire": "x 69.6 y 249.0 x -70.6"
+                },
+                {
+                    "from": "(pin 11) simulation get user settings @ solar system",
+                    "to": "(pin 6) simulation get @ simulation settings",
+                    "wire": "x 82.3 y -25.0 x 50.7"
+                },
+                {
+                    "from": "(pin 13) current date @ solar system",
+                    "to": "(pin 3) current date @ simulation settings",
+                    "wire": "x 383.4 y -130.0 x -29.4"
+                },
+                {
+                    "from": "(pin 14) orbit position @ solar system",
+                    "to": "(pin 2) position @ charts and curves",
+                    "wire": "x 59.1 y 144.0 x -60.1"
+                },
+                {
+                    "from": "(pin 4) canvas set @ camera manager",
+                    "to": "(pin 1) canvas @ renderer",
+                    "wire": "x 58.3 y -334.0 x -74.3"
+                },
+                {
+                    "from": "(pin 8) active camera @ camera manager",
+                    "to": "(pin 2) camera @ renderer",
+                    "wire": "x 71.9 y -379.0 x -87.9"
+                },
+                {
+                    "from": "(pin 5) camera list @ camera manager",
+                    "to": "(pin 3) list @ camera settings",
+                    "wire": "x -99.8 y 0.0 x -51.2"
+                },
+                {
+                    "from": "(pin 6) camera settings @ camera manager",
+                    "to": "(pin 4) settings @ camera settings",
+                    "wire": "x -107.3 y 0.0 x -43.7"
+                },
+                {
+                    "from": "(pin 13) actor [add,remove] @ camera manager",
+                    "to": "(bus) scene bus",
+                    "wire": "x 143.9"
+                },
+                {
+                    "from": "(pin 12) scene [add,remove] @ camera manager",
+                    "to": "(bus) scene bus",
+                    "wire": "x 143.9"
+                },
+                {
+                    "from": "(pin 2) div @ solar system settings",
+                    "to": "(bus) right side div",
+                    "wire": "x 20.0 y -98.9 x -1097.3"
+                },
+                {
+                    "from": "(pin 3) presentation user change @ solar system settings",
+                    "to": "(pin 8) presentation user change @ solar system",
+                    "wire": "x -63.7 y 161.0 x -66.3"
+                },
+                {
+                    "from": "(pin 3) presentation user change @ solar system settings",
+                    "to": "(pin 4) presentation user change @ star sphere",
+                    "wire": "x -53.0 y 0.0 x -78.0"
+                },
+                {
+                    "from": "(pin 2) div @ simulation settings",
+                    "to": "(bus) right side div",
+                    "wire": "x 32.1 y -248.8 x -1112.4"
+                },
+                {
+                    "from": "(pin 5) orbit [show,hide] @ simulation settings",
+                    "to": "(pin 5) curve [show,hide] @ charts and curves",
+                    "wire": "x 91.3 y 319.0 x -446.3"
+                },
+                {
+                    "from": "(pin 8) update [start,stop,step] @ simulation settings",
+                    "to": "(pin 5) update [start,stop,step] @ renderer",
+                    "wire": "x 70.4 y 178.7 x -654.5 y -348.7 x -282.9"
+                },
+                {
+                    "from": "(pin 4) simulation user change @ simulation settings",
+                    "to": "(pin 12) simulation user change @ solar system",
+                    "wire": "x -37.4 y 25.0 x -95.6"
+                },
+                {
+                    "from": "(pin 4) simulation user change @ simulation settings",
+                    "to": "(pin 4) user change @ charts and curves",
+                    "wire": "x -27.6 y 244.0 x -106.4"
+                },
+                {
+                    "from": "(pin 1) div @ charts and curves",
+                    "to": "(pin 7) left side chart @ screen layout",
+                    "wire": "x -42.0 y -236.0 x -581.0"
+                },
+                {
+                    "from": "(pin 7) scene [add,remove,dispose] @ charts and curves",
+                    "to": "(bus) scene bus",
+                    "wire": "x -152.1"
+                },
+                {
+                    "from": "(pin 2) div @ camera settings",
+                    "to": "(bus) right side div",
+                    "wire": "x 83.7"
+                },
+                {
+                    "from": "(pin 6) [show,hide] helpers @ camera settings",
+                    "to": "(pin 10) helpers [show,hide] @ camera manager",
+                    "wire": "x 127.0 y 0.0 x 24.0"
+                },
+                {
+                    "from": "(pin 5) user [add,delete,update,select] @ camera settings",
+                    "to": "(pin 7) camera [select,add,delete,update] @ camera manager",
+                    "wire": "x 127.0 y 0.0 x 24.0"
+                },
+                {
+                    "from": "(pin 1) scene add @ star sphere",
+                    "to": "(bus) scene bus",
+                    "wire": "x -152.1"
+                },
+                {
+                    "from": "(pin 3) presentation get user settings @ star sphere",
+                    "to": "(pin 4) presentation get @ solar system settings",
+                    "wire": "x 59.0 y 0.0 x 72.0"
+                },
+                {
+                    "from": "(pin 5) place camera @ select on earth",
+                    "to": "(pin 17) place local camera @ solar system",
+                    "wire": "x -84.1 y -370.0 x 84.1"
+                },
+                {
+                    "from": "(pin 1) add canvas @ select on earth",
+                    "to": "(pin 8) left side canvas @ screen layout",
+                    "wire": "x -96.6 y -462.0 x -526.4"
+                },
+                {
+                    "from": "(pin 7) get camera @ select on earth",
+                    "to": "(pin 15) get camera @ camera manager",
+                    "wire": "x -109.5 y -306.0 x -186.5"
+                },
+                {
+                    "from": "(pin 1) panels toggle @ top menu",
+                    "to": "(pin 12) right side toggle @ screen layout",
+                    "wire": "x -75.2 y 252.0 x 75.2"
+                },
+                {
+                    "from": "(pin 1) panels toggle @ top menu",
+                    "to": "(pin 9) left side toggle @ screen layout",
+                    "wire": "x -55.2 y 222.0 x 55.2"
+                },
+                {
+                    "from": "(pin 2) div @ top menu",
+                    "to": "(pin 5) menu @ screen layout",
+                    "wire": "x 38.0 y 87.0 x -38.0"
+                },
+                {
+                    "from": "(pin 1) div @ LLM Group",
+                    "to": "(bus) right side div",
+                    "wire": "x 48.8 y 0.0 x 48.9"
+                },
+                {
+                    "from": "(bus) scene bus",
+                    "to": "(pin 4) scene [add,remove,dispose] @ scene manager",
+                    "wire": "x -148.9"
+                },
+                {
+                    "from": "(bus) scene bus",
+                    "to": "(pin 6) actor [add,remove] @ scene manager",
+                    "wire": "x -148.9"
+                },
+                {
+                    "from": "(bus) right side div",
+                    "to": "(pin 11) right side add div @ screen layout",
+                    "wire": "x -97.7"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,645 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "6/4/2024, 8:54:51 AM",
+        "saved": "11/14/2025, 3:45:08 PM",
+        "utc": "2025-11-14T14:45:08.194Z",
+        "style": "#afb069",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "screen layout",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "ScreenLayout"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "canvas",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "timeline",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "menu",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "visible [start,stop]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "left side",
+                        "pins": [
+                            {
+                                "name": "left side chart",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "left side canvas",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "left side toggle",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 13
+                        }
+                    },
+                    {
+                        "name": "right side",
+                        "pins": [
+                            {
+                                "name": "right side add div",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 11,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "right side toggle",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 14
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -580 y 73 w 150 h 206"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "top menu",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "IconMenuHorizontal"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "panels toggle",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "sx": [
+                    {
+                        "name": "width_full",
+                        "help": "show/hide panels",
+                        "message": "panels.toggle"
+                    }
+                ],
+                "editor": {
+                    "rect": "x -580 y -22 w 150 h 56"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "light settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "LightSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "list",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -256 y -26 w 150 h 56"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "camera settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "CamerasSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "list",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "settings",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "pins": [
+                            {
+                                "name": "user [add,delete,update,select]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "[show,hide] helpers",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 7
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -256 y 63 w 165 h 116"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "helper settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "HelpersSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "grid",
+                        "pins": [
+                            {
+                                "name": "grid set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "grid change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 8
+                        }
+                    },
+                    {
+                        "name": "axes",
+                        "pins": [
+                            {
+                                "name": "axes set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "axes change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    },
+                    {
+                        "name": "other",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 10
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -256 y 207 w 150 h 146"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "solar system settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "SolarSystemSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "presentation",
+                        "pins": [
+                            {
+                                "name": "presentation user change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "presentation get",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "presentation override",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "sx": {
+                    "labels": {
+                        "on": true,
+                        "size": {
+                            "min": 1,
+                            "max": 50,
+                            "current": 24
+                        }
+                    },
+                    "magnify": {
+                        "sun": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 100,
+                                "current": 50
+                            }
+                        },
+                        "planet": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 1000,
+                                "current": 500
+                            }
+                        },
+                        "moon": {
+                            "on": true,
+                            "size": {
+                                "min": 1,
+                                "max": 1000,
+                                "current": 500
+                            },
+                            "orbit": {
+                                "on": true,
+                                "size": {
+                                    "min": 1,
+                                    "max": 100,
+                                    "current": 20
+                                }
+                            }
+                        }
+                    },
+                    "stars": {
+                        "on": true
+                    },
+                    "constellations": {
+                        "on": true
+                    }
+                },
+                "editor": {
+                    "rect": "x -256 y 383 w 171 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "simulation settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "SimulationSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "current date",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "simulation",
+                        "pins": [
+                            {
+                                "name": "simulation user change",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "orbit [show,hide]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "simulation get",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "simulation override",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "update [start,stop,step]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    }
+                ],
+                "sx": {
+                    "running": true,
+                    "speed": {
+                        "min": 1,
+                        "max": 1000,
+                        "current": 7,
+                        "select": {
+                            "on": false,
+                            "selected": "1 sec = 1 week",
+                            "choices": [
+                                "sec = sec",
+                                "sec = min",
+                                "sec = hour",
+                                "sec = day",
+                                "sec = week",
+                                "sec = month",
+                                "sec = year"
+                            ]
+                        }
+                    },
+                    "start": "1/1/2024",
+                    "orbit": {
+                        "on": false
+                    }
+                },
+                "editor": {
+                    "rect": "x -256 y 511 w 171 h 146"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "LLM Chat Window",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "LLMChatWindow"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "update chat",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "new prompt",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "handle key",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -580 y 332 w 200 h 86"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 100 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1530 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx 773.000 dy 149.000"
+            }
+        }
+    }
+}

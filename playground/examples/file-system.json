@@ -1,0 +1,31 @@
+{
+    "name": "examples", 
+    "folders":[{
+        "name": "tutorial", 
+        "files": [
+            "chat-client.vmblu",
+            "chat-server.vmblu"
+        ]},{
+        "name": "solar-system-human", 
+        "files": [
+            "3d.vmblu",
+            "ai.vmblu",
+            "chart.vmblu",
+            "sky.vmblu",
+            "solar-system.vmblu",
+            "ui.vmblu"
+        ]},{      
+        "name": "solar-system-LLM", 
+        "files": [
+        ]},{
+        "name": "vscode-extension", 
+        "files": [
+            "app-launcher.vmblu",
+            "node-editor.vmblu",
+            "playground.vmblu",
+            "svelte-lib.vmblu",
+            "webview.vmblu",
+            "workspace.vmblu"
+        ]}
+    ]
+}

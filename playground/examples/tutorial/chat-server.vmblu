@@ -1,0 +1,318 @@
+{
+    "header": {
+        "version": "0.8.2",
+        "created": "2025-10-23T13:55:31.586Z",
+        "saved": "10/28/2025, 10:17:09 AM",
+        "utc": "2025-10-28T09:17:09.096Z",
+        "style": "#2c7be5",
+        "runtime": "@vizualmodel/vmblu/runtime"
+    },
+    "factories": [
+        "./nodes/transport-hub.ts",
+        "./nodes/session-service.ts",
+        "./nodes/message-service.ts",
+        "./nodes/message-store.ts"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "ChatServerApp",
+        "prompt": "Root group coordinating the Node.js chat server runtime.",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "TransportHub",
+                "factory": {
+                    "path": "./nodes/transport-hub.ts",
+                    "function": "createTransportHub"
+                },
+                "prompt": "Bootstraps the HTTP and WebSocket server, forwarding incoming events into the model.",
+                "interfaces": [
+                    {
+                        "name": "http",
+                        "pins": [
+                            {
+                                "name": "authenticateUser",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "messages",
+                        "pins": [
+                            {
+                                "name": "messageReceived",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "broadcastMessage",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 30 y 30 w 150 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "SessionService",
+                "factory": {
+                    "path": "./nodes/session-service.ts",
+                    "function": "createSessionService"
+                },
+                "prompt": "Validates login attempts and enriches them with message history.",
+                "interfaces": [
+                    {
+                        "name": "auth",
+                        "pins": [
+                            {
+                                "name": "authenticateUser",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "store",
+                        "pins": [
+                            {
+                                "name": "loadHistory",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 294 y -16 w 200 h 86"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageService",
+                "factory": {
+                    "path": "./nodes/message-service.ts",
+                    "function": "createMessageService"
+                },
+                "prompt": "Persists incoming chat messages and notifies connected clients.",
+                "interfaces": [
+                    {
+                        "name": "inbound",
+                        "pins": [
+                            {
+                                "name": "messageReceived",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "store",
+                        "pins": [
+                            {
+                                "name": "persistMessage",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "broadcast",
+                        "pins": [
+                            {
+                                "name": "broadcastMessage",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 293 y 96 w 200 h 116"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageStore",
+                "factory": {
+                    "path": "./nodes/message-store.ts",
+                    "function": "createMessageStore"
+                },
+                "prompt": "In-memory repository providing history lookups and persistence for chat messages.",
+                "interfaces": [
+                    {
+                        "name": "queries",
+                        "pins": [
+                            {
+                                "name": "loadHistory",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "mutations",
+                        "pins": [
+                            {
+                                "name": "persistMessage",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 0,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 586 y 37 w 150 h 86"
+                }
+            }
+        ],
+        "connections": [
+            {
+                "src": {
+                    "pin": "authenticateUser",
+                    "node": "TransportHub"
+                },
+                "dst": {
+                    "pin": "authenticateUser",
+                    "node": "SessionService"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messageReceived",
+                    "node": "TransportHub"
+                },
+                "dst": {
+                    "pin": "messageReceived",
+                    "node": "MessageService"
+                }
+            },
+            {
+                "src": {
+                    "pin": "loadHistory",
+                    "node": "SessionService"
+                },
+                "dst": {
+                    "pin": "loadHistory",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "persistMessage",
+                    "node": "MessageService"
+                },
+                "dst": {
+                    "pin": "persistMessage",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "broadcastMessage",
+                    "node": "MessageService"
+                },
+                "dst": {
+                    "pin": "broadcastMessage",
+                    "node": "TransportHub"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 30 y 30 w 150 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1266 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx 91.000 dy 93.000"
+            },
+            "routes": [
+                {
+                    "from": "(pin 0) authenticateUser @ TransportHub",
+                    "to": "(pin 0) authenticateUser @ SessionService",
+                    "wire": "x 43.9 y -46.0 x 70.1"
+                },
+                {
+                    "from": "(pin 0) messageReceived @ TransportHub",
+                    "to": "(pin 0) messageReceived @ MessageService",
+                    "wire": "x 93.0 y 36.0 x 20.0"
+                },
+                {
+                    "from": "(pin 0) loadHistory @ SessionService",
+                    "to": "(pin 0) loadHistory @ MessageStore",
+                    "wire": "x 50.0 y 23.0 x 42.0"
+                },
+                {
+                    "from": "(pin 0) persistMessage @ MessageService",
+                    "to": "(pin 0) persistMessage @ MessageStore",
+                    "wire": "x 51.0 y -59.0 x 42.0"
+                },
+                {
+                    "from": "(pin 0) broadcastMessage @ MessageService",
+                    "to": "(pin 0) broadcastMessage @ TransportHub",
+                    "wire": "x -39.0 y -81.0 x -74.0"
+                }
+            ]
+        }
+    }
+}

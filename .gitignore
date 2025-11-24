@@ -32,4 +32,4 @@ vscodex/.vscode
 **/*.code-workspace
 
 #don't include the examples - they have a separate repo
-examples/
+/examples/

@@ -1,0 +1,1459 @@
+{
+    "header": {
+        "version": "1.0.1",
+        "created": "4/2/2024, 12:51:45 PM",
+        "saved": "11/14/2025, 4:22:44 PM",
+        "utc": "2025-11-14T15:22:44.614Z",
+        "style": "#656134",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "",
+        "nodes": [
+            {
+                "kind": "group",
+                "name": "modal boxes",
+                "nodes": [
+                    {
+                        "kind": "source",
+                        "name": "context menu",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "ContextMenuFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "context menu",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 68 y 74 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "path request",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "PathRequestFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "path",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 357 y 71 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "single text field",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "SingleTextFieldFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 565 y 69 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "message box",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "MessageBoxFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 70 y 168 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "json input",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "JsonInputFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "json",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 355 y 172 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "text block",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "TextBlockFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "text",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 72 y 289 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "node selector",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "NodeSelectorFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "build table",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "selected node",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "get path",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "add file",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "remove file",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 75 y 496 w 150 h 131"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "name and path",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "NameAndPathFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "name and path",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 357 y 287 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "document settings",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "DocumentSettingsFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 70 y 404 w 200 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "confirm box",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "ConfirmBox"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 363 y 418 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "runtime settings",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "RuntimeSettingsFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 361 y 519 w 150 h 56"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "pin profile",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "PinProfileFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 568 y 172 w 150 h 56"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 999 y 90 w 200 h 26",
+                    "view": {
+                        "state": "open",
+                        "rect": "x 792 y 46 w 793 h 590",
+                        "transform": "sx 1.000 sy 1.000 dx 790.500 dy 46.000"
+                    }
+                }
+            },
+            {
+                "kind": "group",
+                "name": "page layout group",
+                "nodes": [
+                    {
+                        "kind": "source",
+                        "name": "canvas layout",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "CanvasLayoutFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "menu",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab ribbon",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "workspace",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "canvas",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "canvas size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 18 y 44 w 200 h 116"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "menu tabs window",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "MenuTabsWindow"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "menu div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tabs div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 24 y 193 w 200 h 146"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "left menu layout",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "LeftMenuLayoutFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "screen areas",
+                                "pins": [
+                                    {
+                                        "name": "left menu",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "left column",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "area one",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "area two",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 10
+                                }
+                            },
+                            {
+                                "name": "messages",
+                                "pins": [
+                                    {
+                                        "name": "vertical",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "horizontal",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 11
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 24 y 372 w 200 h 161"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "column-main layout",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "ColumnMainFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "left column",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "main area",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 329 y 55 w 200 h 71"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "vertical menu tabs content",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "VerticalMenuTabsContent"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "menu div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tabs div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "content size change",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "size change",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 339 y 197 w 250 h 146"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 291 y 114 w 200 h 26",
+                    "view": {
+                        "state": "open",
+                        "rect": "x 59 y 43 w 685 h 585",
+                        "transform": "sx 0.960 sy 0.960 dx 88.076 dy 55.294"
+                    }
+                }
+            },
+            {
+                "kind": "group",
+                "name": "menus and tab ribbons",
+                "nodes": [
+                    {
+                        "kind": "source",
+                        "name": "tab ribbon",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "TabRibbonFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            },
+                            {
+                                "name": "tab",
+                                "pins": [
+                                    {
+                                        "name": "tab new",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab rename",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 11,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab select",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 12,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab remove",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 13,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab request to close",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 14,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "tab request to select",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 15,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 16
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 317 y 49 w 200 h 146"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "old top menu",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "TopMenuFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "save",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "save as",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "save all",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "accept changes",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "sync",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "recalibrate",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make app page",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make build lib",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "analyze model",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "run app page",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "run app in iframe",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 11,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "vertical",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 12,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "horizontal",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 13,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show code editor",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 14,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 15,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 50 y 48 w 150 h 251"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "top menu",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "TopMenuFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "save",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "save as",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "save all",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "accept changes",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "sync model",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "recalibrate",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "grid on-off",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make app page",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "make build lib",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "run app page",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "run app in iframe",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 11,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show settings",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 12,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "set save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 13,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "back to save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 14,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 15,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 44 y 317 w 200 h 251"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "side menu",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "SideMenuFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "vertical",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "horizontal",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show code editor",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "show app",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 318 y 231 w 150 h 101"
+                        }
+                    },
+                    {
+                        "kind": "source",
+                        "name": "vscode side menu",
+                        "factory": {
+                            "path": "./index.js",
+                            "function": "VscodeSideMenuFactory"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            },
+                            {
+                                "name": "menu items",
+                                "pins": [
+                                    {
+                                        "name": "accept changes",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "recalibrate",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "sync",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "grid on-off",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "show settings",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "set save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 8,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "back to save point",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 9,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "make lib",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 10,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "make app",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 11,
+                                            "align": "left"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 12
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 317 y 369 w 200 h 191"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 325 y 672 w 200 h 26",
+                    "view": {
+                        "state": "open",
+                        "rect": "x 63 y 655 w 680 h 609",
+                        "transform": "sx 1.000 sy 1.000 dx 79.000 dy 656.000"
+                    }
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 1061 y 0 w 100 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1530 h 1326",
+                "transform": "sx 0.980 sy 0.980 dx 32.079 dy 36.208"
+            }
+        }
+    }
+}

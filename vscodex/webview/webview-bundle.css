@@ -316,9 +316,10 @@ html, body {
 	transition: background-color 0.15s ease;
 }
 
-.separator.svelte-485lo3:hover /* (unused) .separator.dragging*/ {
+.separator.svelte-485lo3:hover,
+/* .separator.dragging {
 	background-color: #4aa3d5;
-}
+} */
 
 .main-area.svelte-485lo3 {
 	flex: 1 1 auto;

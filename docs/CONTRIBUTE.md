@@ -91,7 +91,7 @@ To ensure smooth collaboration and high-quality contributions, please follow the
 Before you dive into coding, please use the following channels to connect with us:
 
 * **Public Ideas & Q&A:** For general questions, feature suggestions, or big-picture discussions, please start a topic in our *[Discussions](https://github.com/vizualmodel/vmblu/discussions)*. This is the best place to talk about the project openly.
-* **Private Contact/DM:** For private inquiries, professional interest, or specific collaboration proposals that should not be public, you can reach me directly here: **[Sam Verstraete](mailto:your.address@gmail.com)**
+* **Private Contact/DM:** For private inquiries, professional interest, or specific collaboration proposals that should not be public, you can reach us directly here: **[vmblu project](mailto:vmblu.project@gmail.com)**
 * **Be Respectful**
   We expect constructive and respectful communication. Our goal is a positive, welcoming environment.
   *(We follow the [Contributor Covenant](https://www.contributor-covenant.org/) as our Code of Conduct.)*

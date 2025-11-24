@@ -1,0 +1,785 @@
+{
+    "header": {
+        "version": "0.8.2",
+        "created": "2025-10-23T13:54:57.985Z",
+        "saved": "11/4/2025, 5:51:31 PM",
+        "utc": "2025-11-04T16:51:31.937Z",
+        "style": "#2c7be5",
+        "runtime": "@vizualmodel/vmblu/runtime"
+    },
+    "factories": [
+        "./nodes/session-controller.ts",
+        "./nodes/server-connection.ts",
+        "./nodes/login-view.ts",
+        "./nodes/message-composer.ts",
+        "./nodes/message-store.ts",
+        "./nodes/message-timeline.ts"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "ChatClientApp",
+        "prompt": "Root group orchestrating the browser chat client.",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "SessionController",
+                "factory": {
+                    "path": "./nodes/session-controller.ts",
+                    "function": "createSessionController"
+                },
+                "prompt": "Coordinates login flow, message dispatch and state updates between UI and server.",
+                "interfaces": [
+                    {
+                        "name": "ui",
+                        "pins": [
+                            {
+                                "name": "loginSubmitted",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 19,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "logoutRequested",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 20,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "loginRejected",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 21,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sessionEstablished",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 22,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sessionEnded",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 23,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 18
+                        }
+                    },
+                    {
+                        "name": "messages",
+                        "pins": [
+                            {
+                                "name": "messageComposed",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 25,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "messageDispatchFailed",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 26,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "historyLoaded",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 27,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "messageAppended",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 28,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 24
+                        }
+                    },
+                    {
+                        "name": "network",
+                        "pins": [
+                            {
+                                "name": "authenticateUser",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 30,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "sendChatMessage",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 31,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "endSession",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 32,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "incomingBroadcast",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 33,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "connectionError",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 34,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 29
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x -16 y 33 w 200 h 281"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "ServerConnection",
+                "factory": {
+                    "path": "./nodes/server-connection.ts",
+                    "function": "createServerConnection"
+                },
+                "prompt": "Handles HTTP/WebSocket calls to the chat server, exposing login and message APIs.",
+                "interfaces": [
+                    {
+                        "name": "network",
+                        "pins": [
+                            {
+                                "name": "authenticateUser",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sendChatMessage",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "endSession",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "incomingBroadcast",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 11,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "connectionError",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 7
+                        }
+                    }
+                ],
+                "sx": {
+                    "apiBase": "http://localhost:4000",
+                    "wsPath": "/socket"
+                },
+                "editor": {
+                    "rect": "x 324 y 228 w 200 h 116"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "LoginView",
+                "factory": {
+                    "path": "./nodes/login-view.ts",
+                    "function": "createLoginView"
+                },
+                "prompt": "Renders the login screen and emits the chosen display name.",
+                "interfaces": [
+                    {
+                        "name": "view",
+                        "pins": [
+                            {
+                                "name": "sessionEstablished",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sessionEnded",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "loginSubmitted",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "loginRejected",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 367 y 3 w 150 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageComposer",
+                "factory": {
+                    "path": "./nodes/message-composer.ts",
+                    "function": "createMessageComposer"
+                },
+                "prompt": "Provides the input box for composing and sending chat messages.",
+                "interfaces": [
+                    {
+                        "name": "view",
+                        "pins": [
+                            {
+                                "name": "sessionEstablished",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sessionEnded",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "messageComposed",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "messageDispatchFailed",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "sx": {
+                    "target": "#chat-composer"
+                },
+                "editor": {
+                    "rect": "x 635 y 51 w 200 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageStore",
+                "factory": {
+                    "path": "./nodes/message-store.ts",
+                    "function": "createMessageStore"
+                },
+                "prompt": "Maintains the local message history and notifies the timeline when it changes.",
+                "interfaces": [
+                    {
+                        "name": "state",
+                        "pins": [
+                            {
+                                "name": "historyLoaded",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "messageAppended",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "messagesUpdated",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 5
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 693 y 405 w 150 h 86"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "MessageTimeline",
+                "factory": {
+                    "path": "./nodes/message-timeline.ts",
+                    "function": "createMessageTimeline"
+                },
+                "prompt": "Renders the chat history with color coded bubbles for local and remote messages.",
+                "interfaces": [
+                    {
+                        "name": "view",
+                        "pins": [
+                            {
+                                "name": "sessionEstablished",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sessionEnded",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "logoutRequested",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "messagesUpdated",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "sx": {
+                    "target": "#chat-history"
+                },
+                "editor": {
+                    "rect": "x -11 y 390 w 200 h 101"
+                }
+            }
+        ],
+        "connections": [
+            {
+                "src": {
+                    "pin": "loginRejected",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "loginRejected",
+                    "node": "LoginView"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEstablished",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEstablished",
+                    "node": "MessageTimeline"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEstablished",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEstablished",
+                    "node": "MessageComposer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEstablished",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEstablished",
+                    "node": "LoginView"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEnded",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEnded",
+                    "node": "MessageTimeline"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEnded",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEnded",
+                    "node": "LoginView"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sessionEnded",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sessionEnded",
+                    "node": "MessageComposer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messageDispatchFailed",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "messageDispatchFailed",
+                    "node": "MessageComposer"
+                }
+            },
+            {
+                "src": {
+                    "pin": "historyLoaded",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "historyLoaded",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messageAppended",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "messageAppended",
+                    "node": "MessageStore"
+                }
+            },
+            {
+                "src": {
+                    "pin": "authenticateUser",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "authenticateUser",
+                    "node": "ServerConnection"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sendChatMessage",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "sendChatMessage",
+                    "node": "ServerConnection"
+                }
+            },
+            {
+                "src": {
+                    "pin": "endSession",
+                    "node": "SessionController"
+                },
+                "dst": {
+                    "pin": "endSession",
+                    "node": "ServerConnection"
+                }
+            },
+            {
+                "src": {
+                    "pin": "incomingBroadcast",
+                    "node": "ServerConnection"
+                },
+                "dst": {
+                    "pin": "incomingBroadcast",
+                    "node": "SessionController"
+                }
+            },
+            {
+                "src": {
+                    "pin": "connectionError",
+                    "node": "ServerConnection"
+                },
+                "dst": {
+                    "pin": "connectionError",
+                    "node": "SessionController"
+                }
+            },
+            {
+                "src": {
+                    "pin": "loginSubmitted",
+                    "node": "LoginView"
+                },
+                "dst": {
+                    "pin": "loginSubmitted",
+                    "node": "SessionController"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messageComposed",
+                    "node": "MessageComposer"
+                },
+                "dst": {
+                    "pin": "messageComposed",
+                    "node": "SessionController"
+                }
+            },
+            {
+                "src": {
+                    "pin": "messagesUpdated",
+                    "node": "MessageStore"
+                },
+                "dst": {
+                    "pin": "messagesUpdated",
+                    "node": "MessageTimeline"
+                }
+            },
+            {
+                "src": {
+                    "pin": "logoutRequested",
+                    "node": "MessageTimeline"
+                },
+                "dst": {
+                    "pin": "logoutRequested",
+                    "node": "SessionController"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 30 y 30 w 150 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1473 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx 154.000 dy 139.000"
+            },
+            "buses": [
+                {
+                    "kind": "cable",
+                    "name": "session",
+                    "start": "x -79 y 525",
+                    "wire": "y -628.0 x 1028.0"
+                }
+            ],
+            "routes": [
+                {
+                    "from": "(pin 21) loginRejected @ SessionController",
+                    "to": "(bus) session",
+                    "wire": "x -63.0"
+                },
+                {
+                    "from": "(pin 22) sessionEstablished @ SessionController",
+                    "to": "(bus) session",
+                    "wire": "x -20.0 y 0.0 x -43.0"
+                },
+                {
+                    "from": "(pin 23) sessionEnded @ SessionController",
+                    "to": "(bus) session",
+                    "wire": "x -63.0"
+                },
+                {
+                    "from": "(pin 26) messageDispatchFailed @ SessionController",
+                    "to": "(pin 10) messageDispatchFailed @ MessageComposer",
+                    "wire": "x 384.0 y -42.0 x 67.0"
+                },
+                {
+                    "from": "(pin 27) historyLoaded @ SessionController",
+                    "to": "(pin 6) historyLoaded @ MessageStore",
+                    "wire": "x 404.0 y 252.0 x 105.0"
+                },
+                {
+                    "from": "(pin 28) messageAppended @ SessionController",
+                    "to": "(pin 7) messageAppended @ MessageStore",
+                    "wire": "x 388.0 y 252.0 x 121.0"
+                },
+                {
+                    "from": "(pin 30) authenticateUser @ SessionController",
+                    "to": "(pin 8) authenticateUser @ ServerConnection",
+                    "wire": "x 102.6 y 30.0 x 37.4"
+                },
+                {
+                    "from": "(pin 31) sendChatMessage @ SessionController",
+                    "to": "(pin 9) sendChatMessage @ ServerConnection",
+                    "wire": "x 94.2 y 30.0 x 45.8"
+                },
+                {
+                    "from": "(pin 32) endSession @ SessionController",
+                    "to": "(pin 10) endSession @ ServerConnection",
+                    "wire": "x 82.4 y 30.0 x 57.6"
+                },
+                {
+                    "from": "(pin 11) incomingBroadcast @ ServerConnection",
+                    "to": "(pin 33) incomingBroadcast @ SessionController",
+                    "wire": "x -67.0 y -30.0 x -73.0"
+                },
+                {
+                    "from": "(pin 12) connectionError @ ServerConnection",
+                    "to": "(pin 34) connectionError @ SessionController",
+                    "wire": "x -75.0 y -30.0 x -65.0"
+                },
+                {
+                    "from": "(pin 9) loginSubmitted @ LoginView",
+                    "to": "(bus) session",
+                    "wire": "x -77.0 y -178.5"
+                },
+                {
+                    "from": "(pin 9) messageComposed @ MessageComposer",
+                    "to": "(pin 25) messageComposed @ SessionController",
+                    "wire": "x -81.0 y 42.0 x -370.0"
+                },
+                {
+                    "from": "(pin 8) messagesUpdated @ MessageStore",
+                    "to": "(pin 10) messagesUpdated @ MessageTimeline",
+                    "wire": "x -278.1 y 0.0 x -225.9"
+                },
+                {
+                    "from": "(pin 9) logoutRequested @ MessageTimeline",
+                    "to": "(bus) session",
+                    "wire": "x -68.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 7) sessionEstablished @ MessageTimeline",
+                    "wire": "x 48.0 y 0.0 x 20.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 7) sessionEstablished @ MessageComposer",
+                    "wire": "y 196.5 x 29.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 8) sessionEnded @ MessageTimeline",
+                    "wire": "x 68.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 7) sessionEstablished @ LoginView",
+                    "wire": "y 148.5 x 51.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 8) sessionEnded @ LoginView",
+                    "wire": "y 163.5 x 65.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 8) sessionEnded @ MessageComposer",
+                    "wire": "y 211.5 x 42.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 20) logoutRequested @ SessionController",
+                    "wire": "x 63.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 19) loginSubmitted @ SessionController",
+                    "wire": "x 63.0"
+                },
+                {
+                    "from": "(bus) session",
+                    "to": "(pin 10) loginRejected @ LoginView",
+                    "wire": "y 193.5 x 88.0"
+                }
+            ]
+        }
+    }
+}

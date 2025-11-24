@@ -130,7 +130,7 @@ async function getRemoteFS() {
 
     // set the root of the file system
     remoteFS.root = new WSFolder(fsArl, remoteFS)
-    remoteFS.root.is.expanded = true;
+    //remoteFS.root.is.expanded = true;
 
     // now get the folder/file 
     expandRemoteFS(rawFolder, remoteFS.root)

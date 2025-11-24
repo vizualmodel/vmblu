@@ -1,5 +1,5 @@
 vmblu
-Copyright 2025 Vizual Model contributors
+Copyright 2025 Sam Verstraete, vizual model organisation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

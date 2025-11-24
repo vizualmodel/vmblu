@@ -1,0 +1,2287 @@
+{
+    "header": {
+        "version": "1.0.1",
+        "created": "4/2/2024, 1:40:46 PM",
+        "saved": "11/16/2025, 6:11:00 PM",
+        "utc": "2025-11-16T17:11:00.297Z",
+        "style": "#12679b",
+        "runtime": "../../runtime/scaffold.js"
+    },
+    "imports": [
+        "./svelte-lib.vmblu",
+        "./node-editor.vmblu"
+    ],
+    "factories": [
+        "./message-broker.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "webview",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "message broker",
+                "factory": {
+                    "path": "./message-broker.js",
+                    "function": "MessageBroker"
+                },
+                "label": "The broker communicates with vscode",
+                "interfaces": [
+                    {
+                        "name": "document",
+                        "pins": [
+                            {
+                                "name": "open document",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 20,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "set document",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 21,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "get document",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 22,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "reply document",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 23,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 35
+                        }
+                    },
+                    {
+                        "name": "edit",
+                        "pins": [
+                            {
+                                "name": "sync model",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 24,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "new edit",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 25,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "open js file",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 26,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 36
+                        }
+                    },
+                    {
+                        "name": "divs",
+                        "pins": [
+                            {
+                                "name": "floating menu",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 27,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "canvas",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 28,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "canvas resize",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 29,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 30,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 37
+                        }
+                    },
+                    {
+                        "name": "clipboard",
+                        "pins": [
+                            {
+                                "name": "clipboard local",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 31,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "clipboard remote",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 32,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "clipboard switched",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 33,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "clipboard switch",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 34,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 38
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 239 y 177 w 200 h 311"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "context menu",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "context menu"
+                },
+                "label": "Uses callbacks",
+                "prompt": "The context menu handles almost all of the functionality of the editor. Currently the context menu is implemented by using callbacks, meaning that the context menu that the editor sends to this node also contains the functions to be called when the user selects one of the options in the context menu.",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "context menu",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 492 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "path request",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "path request"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "path",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 372 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "side menu",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "vscode side menu"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "menu items",
+                        "pins": [
+                            {
+                                "name": "accept changes",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "recalibrate",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "sync",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "grid on-off",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "show settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "set save point",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "back to save point",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 9,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "make lib",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "make app",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 11,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 12
+                        }
+                    }
+                ],
+                "sx": [
+                    {
+                        "icon": "flare",
+                        "color": "#0fb2e4",
+                        "message": "recalibrate",
+                        "help": "Recalibrate"
+                    },
+                    {
+                        "icon": "grid_view",
+                        "color": "#0fb2e4",
+                        "message": "grid on-off",
+                        "help": "Grid on/off"
+                    },
+                    {
+                        "icon": "check_box",
+                        "color": "#0fb2e4",
+                        "message": "accept changes",
+                        "help": "Accept changes"
+                    },
+                    {
+                        "icon": "bolt",
+                        "color": "#0fb2e4",
+                        "message": "sync",
+                        "help": "sync model"
+                    },
+                    {
+                        "icon": "push_pin",
+                        "color": "#0fb2e4",
+                        "message": "set save point",
+                        "help": "set save point"
+                    },
+                    {
+                        "icon": "reply",
+                        "color": "#0fb2e4",
+                        "message": "back to save point",
+                        "help": "back to save point"
+                    },
+                    {
+                        "icon": "build",
+                        "color": "#0fb2e4",
+                        "message": "make lib",
+                        "help": "Make lib"
+                    },
+                    {
+                        "icon": "handyman",
+                        "color": "#0fb2e4",
+                        "message": "make app",
+                        "help": "Make app"
+                    },
+                    {
+                        "icon": "settings",
+                        "color": "#0fb2e4",
+                        "message": "show settings",
+                        "help": "Settings"
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y -13 w 150 h 191"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "text block",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "text block"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "text",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1404 y 627 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "node settings",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "json input"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "json",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1400 y 537 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "name and path",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "name and path"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "name and path",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 582 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "profile settings",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "pin profile"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "show",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 706 w 150 h 56"
+                }
+            },
+            {
+                "kind": "group",
+                "name": "select node",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "select node",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 53 y 117 w 91 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "node",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 53 y 89 w 57 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "switch library",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left",
+                                    "pad": {
+                                        "rect": "x 53 y 150 w 99 h 15",
+                                        "align": "left"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right",
+                                    "pad": {
+                                        "rect": "x 766 y 270 w 81 h 15",
+                                        "align": "right"
+                                    }
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "nodes": [
+                    {
+                        "kind": "dock",
+                        "name": "node selector",
+                        "link": {
+                            "path": "./svelte-lib.vmblu",
+                            "node": "node selector"
+                        },
+                        "label": "select nodes from the library",
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "selected node",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "show",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "build table",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "remove file",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 6,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "add file",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 5,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "get path",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 7,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 518 y 160 w 150 h 131"
+                        }
+                    },
+                    {
+                        "kind": "dock",
+                        "name": "library manager",
+                        "link": {
+                            "path": "./node-editor.vmblu",
+                            "node": "library manager"
+                        },
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "switch library",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 3,
+                                            "align": "left"
+                                        }
+                                    },
+                                    {
+                                        "name": "build table",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 4,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "remove file",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "add file",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 279 y 175 w 150 h 86"
+                        }
+                    },
+                    {
+                        "kind": "dock",
+                        "name": "path request",
+                        "link": {
+                            "path": "./svelte-lib.vmblu",
+                            "node": "path request"
+                        },
+                        "label": "add a file to the nodelib",
+                        "interfaces": [
+                            {
+                                "name": "",
+                                "pins": [
+                                    {
+                                        "name": "path",
+                                        "kind": "input",
+                                        "editor": {
+                                            "id": 1,
+                                            "align": "right"
+                                        }
+                                    },
+                                    {
+                                        "name": "modal div",
+                                        "kind": "output",
+                                        "editor": {
+                                            "id": 2,
+                                            "align": "right"
+                                        }
+                                    }
+                                ],
+                                "editor": {
+                                    "id": 0
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "rect": "x 290 y 310 w 150 h 56"
+                        }
+                    }
+                ],
+                "connections": [
+                    {
+                        "src": {
+                            "pin": "selected node",
+                            "node": "node selector"
+                        },
+                        "dst": {
+                            "pin": "node"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "remove file",
+                            "node": "node selector"
+                        },
+                        "dst": {
+                            "pin": "remove file",
+                            "node": "library manager"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "add file",
+                            "node": "node selector"
+                        },
+                        "dst": {
+                            "pin": "add file",
+                            "node": "library manager"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "get path",
+                            "node": "node selector"
+                        },
+                        "dst": {
+                            "pin": "path",
+                            "node": "path request"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "modal div",
+                            "node": "node selector"
+                        },
+                        "dst": {
+                            "pin": "modal div"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "build table",
+                            "node": "library manager"
+                        },
+                        "dst": {
+                            "pin": "build table",
+                            "node": "node selector"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "modal div",
+                            "node": "path request"
+                        },
+                        "dst": {
+                            "pin": "modal div"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "select node"
+                        },
+                        "dst": {
+                            "pin": "show",
+                            "node": "node selector"
+                        }
+                    },
+                    {
+                        "src": {
+                            "pin": "switch library"
+                        },
+                        "dst": {
+                            "pin": "switch library",
+                            "node": "library manager"
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1096 y 963 w 150 h 86",
+                    "view": {
+                        "state": "closed",
+                        "rect": "x 660 y 513 w 832 h 432",
+                        "transform": "sx 1.000 sy 1.000 dx 630.500 dy 513.000"
+                    },
+                    "routes": [
+                        {
+                            "from": "(pin 3) selected node @ node selector",
+                            "to": "(pad 2) node",
+                            "wire": "x -58.0 y -91.0 x -350.0"
+                        },
+                        {
+                            "from": "(pin 6) remove file @ node selector",
+                            "to": "(pin 2) remove file @ library manager",
+                            "wire": "x -42.0 y 0.0 x -47.0"
+                        },
+                        {
+                            "from": "(pin 5) add file @ node selector",
+                            "to": "(pin 1) add file @ library manager",
+                            "wire": "x -52.0 y 0.0 x -37.0"
+                        },
+                        {
+                            "from": "(pin 4) get path @ node selector",
+                            "to": "(pin 1) path @ path request",
+                            "wire": "x -34.0 y 75.0 x -44.0"
+                        },
+                        {
+                            "from": "(pin 7) modal div @ node selector",
+                            "to": "(pad 4) modal div",
+                            "wire": "x 98.0"
+                        },
+                        {
+                            "from": "(pin 4) build table @ library manager",
+                            "to": "(pin 1) build table @ node selector",
+                            "wire": "x 89.0"
+                        },
+                        {
+                            "from": "(pin 2) modal div @ path request",
+                            "to": "(pad 4) modal div",
+                            "wire": "x 283.0 y -75.0 x 43.0"
+                        },
+                        {
+                            "from": "(pad 1) select node",
+                            "to": "(pin 2) show @ node selector",
+                            "wire": "x 296.0 y 78.0 x 78.0"
+                        },
+                        {
+                            "from": "(pad 3) switch library",
+                            "to": "(pin 3) switch library @ library manager",
+                            "wire": "x 66.0 y 45.0 x 61.0"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "doc settings",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "document settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 207 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "clipboard",
+                "link": {
+                    "path": "./node-editor.vmblu",
+                    "node": "clipboard"
+                },
+                "label": "The clipboard for copying between editors",
+                "prompt": "aha",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "switch",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "switched",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "remote",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "local",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "get",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 252 y 612 w 200 h 116"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "editor",
+                "link": {
+                    "path": "./node-editor.vmblu",
+                    "node": "editor"
+                },
+                "label": "Every tab in vscode has its own editor",
+                "prompt": "why is the comment not saved ?",
+                "interfaces": [
+                    {
+                        "name": "menu",
+                        "pins": [
+                            {
+                                "name": "accept changes",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "recalibrate",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 14,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "sync model",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 13,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "grid on-off",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 15,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show settings",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 16,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 62
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "pins": [
+                            {
+                                "name": "open document",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 18,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "set document",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 17,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "document settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 19,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 63
+                        }
+                    },
+                    {
+                        "name": "save point",
+                        "pins": [
+                            {
+                                "name": "save point set",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 20,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "save point back",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 61,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "save point confirm",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 22,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 64
+                        }
+                    },
+                    {
+                        "name": "edit",
+                        "pins": [
+                            {
+                                "name": "new edit",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 23,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 65
+                        }
+                    },
+                    {
+                        "name": "lib",
+                        "pins": [
+                            {
+                                "name": "make lib",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 27,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show lib path",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 28,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 68
+                        }
+                    },
+                    {
+                        "name": "app",
+                        "pins": [
+                            {
+                                "name": "make app",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 29,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show app path",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 30,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "run app",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 31,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "run app in iframe",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 32,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "run",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 33,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "open source file",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 39,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 69
+                        }
+                    },
+                    {
+                        "name": "context",
+                        "pins": [
+                            {
+                                "name": "show context menu",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 36,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 70
+                        }
+                    },
+                    {
+                        "name": "json settings",
+                        "pins": [
+                            {
+                                "name": "runtime settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 34,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 37,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 71
+                        }
+                    },
+                    {
+                        "name": "link, factory, filter",
+                        "pins": [
+                            {
+                                "name": "show link",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 26,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show filter",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 59,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "show factory",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 38,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 67
+                        }
+                    },
+                    {
+                        "name": "info",
+                        "pins": [
+                            {
+                                "name": "node comment",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 41,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "pin profile",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 40,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 72
+                        }
+                    },
+                    {
+                        "name": "clipboard",
+                        "pins": [
+                            {
+                                "name": "clipboard get",
+                                "kind": "request",
+                                "editor": {
+                                    "id": 24,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "clipboard set",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 25,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 66
+                        }
+                    },
+                    {
+                        "name": "node lib selection",
+                        "pins": [
+                            {
+                                "name": "select node",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 42,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "selected node",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 43,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "change library",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 45,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "add lib file",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 44,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 73
+                        }
+                    },
+                    {
+                        "name": "div",
+                        "pins": [
+                            {
+                                "name": "canvas",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 47,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "size change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 48,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 74
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 614 y 87 w 200 h 761"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "confirm box",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "confirm box"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "show",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1100 y 282 w 150 h 56"
+                }
+            },
+            {
+                "kind": "dock",
+                "name": "runtime settings",
+                "link": {
+                    "path": "./svelte-lib.vmblu",
+                    "node": "runtime settings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "show",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "modal div",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 1402 y 429 w 150 h 56"
+                }
+            }
+        ],
+        "connections": [
+            {
+                "src": {
+                    "pin": "set document",
+                    "node": "message broker"
+                },
+                "dst": {
+                    "pin": "set document",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sync model",
+                    "node": "message broker"
+                },
+                "dst": {
+                    "pin": "sync model",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "canvas resize",
+                    "node": "message broker"
+                },
+                "dst": {
+                    "pin": "size change",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "clipboard local",
+                    "node": "message broker"
+                },
+                "dst": {
+                    "pin": "local",
+                    "node": "clipboard"
+                }
+            },
+            {
+                "src": {
+                    "pin": "clipboard switched",
+                    "node": "message broker"
+                },
+                "dst": {
+                    "pin": "switched",
+                    "node": "clipboard"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "context menu"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "path request"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "div",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "floating menu",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "accept changes",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "accept changes",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "recalibrate",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "recalibrate",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "sync",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "sync model",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "grid on-off",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "grid on-off",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show settings",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "show settings",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "set save point",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "save point set",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "back to save point",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "save point back",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "make lib",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "make lib",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "make app",
+                    "node": "side menu"
+                },
+                "dst": {
+                    "pin": "make app",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "text block"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "node settings"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "name and path"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "profile settings"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "node",
+                    "node": "select node"
+                },
+                "dst": {
+                    "pin": "selected node",
+                    "node": "editor"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "select node"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "doc settings"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "switch",
+                    "node": "clipboard"
+                },
+                "dst": {
+                    "pin": "clipboard switch",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "remote",
+                    "node": "clipboard"
+                },
+                "dst": {
+                    "pin": "clipboard remote",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "open document",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "open document",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "document settings",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "show",
+                    "node": "doc settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "save point confirm",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "show",
+                    "node": "confirm box"
+                }
+            },
+            {
+                "src": {
+                    "pin": "new edit",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "new edit",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show lib path",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "path",
+                    "node": "path request"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show app path",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "path",
+                    "node": "path request"
+                }
+            },
+            {
+                "src": {
+                    "pin": "open source file",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "open js file",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show context menu",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "context menu",
+                    "node": "context menu"
+                }
+            },
+            {
+                "src": {
+                    "pin": "runtime settings",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "show",
+                    "node": "runtime settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "settings",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "json",
+                    "node": "node settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show link",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "name and path",
+                    "node": "name and path"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show filter",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "name and path",
+                    "node": "name and path"
+                }
+            },
+            {
+                "src": {
+                    "pin": "show factory",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "name and path",
+                    "node": "name and path"
+                }
+            },
+            {
+                "src": {
+                    "pin": "node comment",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "text",
+                    "node": "text block"
+                }
+            },
+            {
+                "src": {
+                    "pin": "pin profile",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "show",
+                    "node": "profile settings"
+                }
+            },
+            {
+                "src": {
+                    "pin": "clipboard get",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "get",
+                    "node": "clipboard"
+                }
+            },
+            {
+                "src": {
+                    "pin": "clipboard set",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "set",
+                    "node": "clipboard"
+                }
+            },
+            {
+                "src": {
+                    "pin": "select node",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "select node",
+                    "node": "select node"
+                }
+            },
+            {
+                "src": {
+                    "pin": "change library",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "switch library",
+                    "node": "select node"
+                }
+            },
+            {
+                "src": {
+                    "pin": "canvas",
+                    "node": "editor"
+                },
+                "dst": {
+                    "pin": "canvas",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "confirm box"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            },
+            {
+                "src": {
+                    "pin": "modal div",
+                    "node": "runtime settings"
+                },
+                "dst": {
+                    "pin": "modal div",
+                    "node": "message broker"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 150 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1590 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -24.000 dy 124.000"
+            },
+            "buses": [
+                {
+                    "kind": "busbar",
+                    "name": "modal div bus",
+                    "start": "x 1562 y 902",
+                    "wire": "x -1300.0"
+                }
+            ],
+            "routes": [
+                {
+                    "from": "(pin 21) set document @ message broker",
+                    "to": "(pin 17) set document @ editor",
+                    "wire": "x 87.0 y 0.0 x 88.0"
+                },
+                {
+                    "from": "(pin 24) sync model @ message broker",
+                    "to": "(pin 13) sync model @ editor",
+                    "wire": "x 106.0 y -248.5 x 302.0 y 113.5 x -33.0"
+                },
+                {
+                    "from": "(pin 29) canvas resize @ message broker",
+                    "to": "(pin 48) size change @ editor",
+                    "wire": "x 51.1 y 450.0 x 123.9"
+                },
+                {
+                    "from": "(pin 31) clipboard local @ message broker",
+                    "to": "(pin 4) local @ clipboard",
+                    "wire": "x -98.0 y 255.0 x 111.0"
+                },
+                {
+                    "from": "(pin 33) clipboard switched @ message broker",
+                    "to": "(pin 2) switched @ clipboard",
+                    "wire": "x -61.0 y 195.0 x 74.0"
+                },
+                {
+                    "from": "(pin 2) modal div @ context menu",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 44.0 y 367.5"
+                },
+                {
+                    "from": "(pin 2) modal div @ path request",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 53.0 y 487.5"
+                },
+                {
+                    "from": "(pin 2) div @ side menu",
+                    "to": "(pin 27) floating menu @ message broker",
+                    "wire": "x -928.0 y 340.0 x 67.0"
+                },
+                {
+                    "from": "(pin 3) accept changes @ side menu",
+                    "to": "(pin 12) accept changes @ editor",
+                    "wire": "x -212.0 y 85.0 x -74.0"
+                },
+                {
+                    "from": "(pin 4) recalibrate @ side menu",
+                    "to": "(pin 14) recalibrate @ editor",
+                    "wire": "x -199.0 y 85.0 x -87.0"
+                },
+                {
+                    "from": "(pin 5) sync @ side menu",
+                    "to": "(pin 13) sync model @ editor",
+                    "wire": "x -188.0 y 85.0 x -98.0"
+                },
+                {
+                    "from": "(pin 6) grid on-off @ side menu",
+                    "to": "(pin 15) grid on-off @ editor",
+                    "wire": "x -182.0 y 85.0 x -104.0"
+                },
+                {
+                    "from": "(pin 7) show settings @ side menu",
+                    "to": "(pin 16) show settings @ editor",
+                    "wire": "x -172.0 y 85.0 x -114.0"
+                },
+                {
+                    "from": "(pin 8) set save point @ side menu",
+                    "to": "(pin 20) save point set @ editor",
+                    "wire": "x -153.0 y 160.0 x -133.0"
+                },
+                {
+                    "from": "(pin 9) back to save point @ side menu",
+                    "to": "(pin 61) save point back @ editor",
+                    "wire": "x -140.0 y 160.0 x -146.0"
+                },
+                {
+                    "from": "(pin 10) make lib @ side menu",
+                    "to": "(pin 27) make lib @ editor",
+                    "wire": "x -104.0 y 220.0 x -182.0"
+                },
+                {
+                    "from": "(pin 11) make app @ side menu",
+                    "to": "(pin 29) make app @ editor",
+                    "wire": "x -94.0 y 250.0 x -192.0"
+                },
+                {
+                    "from": "(pin 2) modal div @ text block",
+                    "to": "(bus) modal div bus",
+                    "wire": "x -44.0 y 232.5"
+                },
+                {
+                    "from": "(pin 2) modal div @ node settings",
+                    "to": "(bus) modal div bus",
+                    "wire": "x -50.0 y 322.5"
+                },
+                {
+                    "from": "(pin 2) modal div @ name and path",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 31.0 y 277.5"
+                },
+                {
+                    "from": "(pin 2) modal div @ profile settings",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 19.0 y 153.5"
+                },
+                {
+                    "from": "(pin 2) node @ select node",
+                    "to": "(pin 43) selected node @ editor",
+                    "wire": "x -149.0 y -246.0 x -133.0"
+                },
+                {
+                    "from": "(pin 4) modal div @ select node",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 66.0 y -133.5"
+                },
+                {
+                    "from": "(pin 2) modal div @ doc settings",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 74.0 y 667.5"
+                },
+                {
+                    "from": "(pin 1) switch @ clipboard",
+                    "to": "(pin 34) clipboard switch @ message broker",
+                    "wire": "x -52.0 y -165.0 x 39.0"
+                },
+                {
+                    "from": "(pin 3) remote @ clipboard",
+                    "to": "(pin 32) clipboard remote @ message broker",
+                    "wire": "x -95.0 y -225.0 x 82.0"
+                },
+                {
+                    "from": "(pin 18) open document @ editor",
+                    "to": "(pin 20) open document @ message broker",
+                    "wire": "x -87.5 y 0.0 x -87.5"
+                },
+                {
+                    "from": "(pin 19) document settings @ editor",
+                    "to": "(pin 1) show @ doc settings",
+                    "wire": "x 143.0 y 0.0 x 143.0"
+                },
+                {
+                    "from": "(pin 22) save point confirm @ editor",
+                    "to": "(pin 1) show @ confirm box",
+                    "wire": "x 143.0 y 0.0 x 143.0"
+                },
+                {
+                    "from": "(pin 23) new edit @ editor",
+                    "to": "(pin 25) new edit @ message broker",
+                    "wire": "x -72.0 y -30.0 x -103.0"
+                },
+                {
+                    "from": "(pin 28) show lib path @ editor",
+                    "to": "(pin 1) path @ path request",
+                    "wire": "x 225.0 y 15.0 x 61.0"
+                },
+                {
+                    "from": "(pin 30) show app path @ editor",
+                    "to": "(pin 1) path @ path request",
+                    "wire": "x 226.0 y -30.0 x 60.0"
+                },
+                {
+                    "from": "(pin 39) open source file @ editor",
+                    "to": "(pin 26) open js file @ message broker",
+                    "wire": "x -97.0 y -165.0 x -78.0"
+                },
+                {
+                    "from": "(pin 36) show context menu @ editor",
+                    "to": "(pin 1) context menu @ context menu",
+                    "wire": "x 167.0 y 0.0 x 119.0"
+                },
+                {
+                    "from": "(pin 34) runtime settings @ editor",
+                    "to": "(pin 2) show @ runtime settings",
+                    "wire": "x 230.0 y -93.0 x 358.0"
+                },
+                {
+                    "from": "(pin 37) settings @ editor",
+                    "to": "(pin 1) json @ node settings",
+                    "wire": "x 218.0 y 0.0 x 368.0"
+                },
+                {
+                    "from": "(pin 26) show link @ editor",
+                    "to": "(pin 1) name and path @ name and path",
+                    "wire": "x 193.0 y 15.0 x 93.0"
+                },
+                {
+                    "from": "(pin 59) show filter @ editor",
+                    "to": "(pin 1) name and path @ name and path",
+                    "wire": "x 143.0 y 0.0 x 143.0"
+                },
+                {
+                    "from": "(pin 38) show factory @ editor",
+                    "to": "(pin 1) name and path @ name and path",
+                    "wire": "x 194.0 y -15.0 x 92.0"
+                },
+                {
+                    "from": "(pin 41) node comment @ editor",
+                    "to": "(pin 1) text @ text block",
+                    "wire": "x 172.0 y 0.0 x 418.0"
+                },
+                {
+                    "from": "(pin 40) pin profile @ editor",
+                    "to": "(pin 1) show @ profile settings",
+                    "wire": "x 161.0 y 64.0 x 125.0"
+                },
+                {
+                    "from": "(pin 24) clipboard get @ editor",
+                    "to": "(pin 6) get @ clipboard",
+                    "wire": "x -162.0"
+                },
+                {
+                    "from": "(pin 25) clipboard set @ editor",
+                    "to": "(pin 5) set @ clipboard",
+                    "wire": "x -162.0"
+                },
+                {
+                    "from": "(pin 42) select node @ editor",
+                    "to": "(pin 1) select node @ select node",
+                    "wire": "x 150.0 y 246.0 x 132.0"
+                },
+                {
+                    "from": "(pin 45) change library @ editor",
+                    "to": "(pin 3) switch library @ select node",
+                    "wire": "x 116.0 y 246.0 x 166.0"
+                },
+                {
+                    "from": "(pin 47) canvas @ editor",
+                    "to": "(pin 28) canvas @ message broker",
+                    "wire": "x -115.0 y -450.0 x -60.0"
+                },
+                {
+                    "from": "(pin 2) modal div @ confirm box",
+                    "to": "(bus) modal div bus",
+                    "wire": "x 63.0 y 577.5"
+                },
+                {
+                    "from": "(pin 1) modal div @ runtime settings",
+                    "to": "(bus) modal div bus",
+                    "wire": "x -61.0 y 430.5"
+                },
+                {
+                    "from": "(bus) modal div bus",
+                    "to": "(pin 30) modal div @ message broker",
+                    "wire": "y -502.5 x -42.6"
+                }
+            ]
+        }
+    }
+}

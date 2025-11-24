@@ -1,0 +1,611 @@
+{
+    "header": {
+        "version": "0.0.1",
+        "created": "6/3/2024, 12:45:02 PM",
+        "saved": "9/16/2025, 11:52:36 AM",
+        "utc": "2025-09-16T09:52:36.876Z",
+        "style": "#1c4a6d",
+        "runtime": "./runtime.js"
+    },
+    "factories": [
+        "./index.js"
+    ],
+    "root": {
+        "kind": "group",
+        "name": "",
+        "nodes": [
+            {
+                "kind": "source",
+                "name": "studio",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "ThreeStudio"
+                },
+                "label": "Not used i believe...",
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "canvas",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "camera",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "light",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "scene",
+                        "pins": [
+                            {
+                                "name": "scene [ add, remove, dispose ]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 287 y 65 w 150 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "light manager",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "LightManager"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "list",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "scene",
+                        "pins": [
+                            {
+                                "name": "scene [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 4
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 281 y 554 w 150 h 71"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "camera manager",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "CameraManager"
+                },
+                "interfaces": [
+                    {
+                        "name": "canvas",
+                        "pins": [
+                            {
+                                "name": "canvas add",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "canvas set",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 16
+                        }
+                    },
+                    {
+                        "name": "camera",
+                        "pins": [
+                            {
+                                "name": "camera list",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "camera settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "active camera",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "camera [select,add,delete,update]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "get camera",
+                                "kind": "reply",
+                                "editor": {
+                                    "id": 15,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 17
+                        }
+                    },
+                    {
+                        "name": "other",
+                        "pins": [
+                            {
+                                "name": "helpers [show,hide]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 10,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "actor [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 13,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "scene [add,remove]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 12,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 18
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 219 y 258 w 212 h 221"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "helper tools",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "HelperTools"
+                },
+                "interfaces": [
+                    {
+                        "name": "grid",
+                        "pins": [
+                            {
+                                "name": "grid change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "grid show",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 9
+                        }
+                    },
+                    {
+                        "name": "axes",
+                        "pins": [
+                            {
+                                "name": "axes change",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            },
+                            {
+                                "name": "axes show",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 7,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 10
+                        }
+                    },
+                    {
+                        "name": "scene",
+                        "pins": [
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 8,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 11
+                        }
+                    }
+                ],
+                "sx": {
+                    "grid": {
+                        "x": {
+                            "on": false,
+                            "color": "#773333"
+                        },
+                        "y": {
+                            "on": false,
+                            "color": "#337733"
+                        },
+                        "z": {
+                            "on": false,
+                            "color": "#333377"
+                        },
+                        "size": 100,
+                        "divisions": 10
+                    },
+                    "axes": {
+                        "on": false,
+                        "size": "50"
+                    }
+                },
+                "editor": {
+                    "rect": "x 285 y 697 w 150 h 146"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "renderer",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "Renderer"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "canvas",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "camera",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "scene",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "actors",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "update [start,stop,step]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 563 y 64 w 150 h 101"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "scene manager",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "SceneManager"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "scene",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "actors",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "actor [add,remove]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 6,
+                                    "align": "right"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 565 y 197 w 161 h 86"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "studio settings",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "StudioSettings"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "add camera",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "select camera",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "grid settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "axes settings",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 4,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    }
+                ],
+                "sx": {
+                    "unit": "AU",
+                    "camera": {
+                        "name": "test",
+                        "type": "perspective",
+                        "near": 0.001,
+                        "far": 100,
+                        "fov": 50,
+                        "zoom": 1,
+                        "aspect": "canvas",
+                        "position": {
+                            "x": 3,
+                            "y": 0,
+                            "z": 2
+                        },
+                        "lookAt": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    "grid": {
+                        "x": false,
+                        "y": false,
+                        "z": true,
+                        "size": 100,
+                        "divisions": 10
+                    },
+                    "axes": {
+                        "on": false,
+                        "size": 10
+                    }
+                },
+                "editor": {
+                    "rect": "x 290 y 907 w 150 h 86"
+                }
+            },
+            {
+                "kind": "source",
+                "name": "space curve manager",
+                "factory": {
+                    "path": "./index.js",
+                    "function": "SpaceCurveManager"
+                },
+                "interfaces": [
+                    {
+                        "name": "",
+                        "pins": [
+                            {
+                                "name": "setup",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 1,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "position",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 2,
+                                    "align": "left"
+                                }
+                            },
+                            {
+                                "name": "curve [show,hide]",
+                                "kind": "input",
+                                "editor": {
+                                    "id": 3,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 0
+                        }
+                    },
+                    {
+                        "name": "scene",
+                        "pins": [
+                            {
+                                "name": "scene [add,remove,dispose]",
+                                "kind": "output",
+                                "editor": {
+                                    "id": 5,
+                                    "align": "left"
+                                }
+                            }
+                        ],
+                        "editor": {
+                            "id": 6
+                        }
+                    }
+                ],
+                "editor": {
+                    "rect": "x 560 y 380 w 200 h 101"
+                }
+            }
+        ],
+        "editor": {
+            "rect": "x 0 y 0 w 100 h 26",
+            "view": {
+                "state": "open",
+                "rect": "x 0 y 0 w 1894 h 1152",
+                "transform": "sx 1.000 sy 1.000 dx -57.000 dy 16.000"
+            }
+        }
+    }
+}
