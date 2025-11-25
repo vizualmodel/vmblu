@@ -1,11 +1,11 @@
 {
     "name": "vmblu",
-    "displayName": "vizual model blueprint",
-    "description": "ai native ● visual ● runnable ● architecture",
-    "version": "0.0.9",
+    "displayName": "vmblu",
+    "description": "AI-native visual architecture modeling.",
+    "version": "0.0.12",
     "publisher": "vizualmodel",
     "private": true,
-    "license": "Apache 2.0",
+    "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
     "repository": {
         "type": "git",
@@ -16,7 +16,19 @@
         "vscode": "^1.74.0"
     },
     "categories": [
-        "Other"
+        "Visualization",
+        "AI",
+        "Programming Languages"
+    ],
+    "keywords": [
+        "vmblu",
+        "architecture",
+        "visual",
+        "modeling",
+        "ai",
+        "graph",
+        "blueprint",
+        "system-design"
     ],
     "main": "./out/extension/vmblu-bundle.js",
     "contributes": {
@@ -73,20 +85,21 @@
         "webview/material-icons/iconfont/material-icons-outlined.woff2",
         "webview/material-icons/iconfont/material-icons-outlined.woff",
         "assets/vmblu-logo-vscode.png",
-        "assets/vmblu-512.png",
+        "assets/vmblu-header.png",
         "assets/vmblu-screenshot.png"
     ],
     "scripts": {
         "vscode:prepublish": "npm run ext && npm run bundle",
-        "vx": "npm run webview && npm run ext &&  npm run bundle & npm run vsix",
+        "vx": "npm run webview && npm run ext &&  npm run bundle && npm run vsix",
         "vsix": "vsce package --no-rewrite-relative-links",
-        "vsix:publish": "vsce package",
+        "publish:patch": "npm run webview && vsce publish patch",
         "webview": "cd ./webview && rollup -c",
         "ext": "tsc -p tsconfig.json",
         "bundle": "cd ./out/extension && rollup -c",
         "lint": "eslint \"extension/**/*.ts\"",
         "watch": "tsc -w -p ./",
-        "help": "tsc -h"
+        "help": "tsc -h",
+        "vsix:publish": "vsce package"
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^25.0.7",
