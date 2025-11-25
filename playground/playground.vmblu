@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "11/16/2025, 5:46:36 PM",
-        "utc": "2025-11-16T16:46:36.978Z",
+        "saved": "11/25/2025, 11:08:15 AM",
+        "utc": "2025-11-25T10:08:15.451Z",
         "style": "#291f32",
         "runtime": "../runtime/src/scaffold.js"
     },
@@ -518,7 +518,6 @@
                 "editor": {
                     "rect": "x 343 y 709 w 211 h 116",
                     "view": {
-                        "state": "closed",
                         "rect": "x 333 y 141 w 1156 h 768",
                         "transform": "sx 1.000 sy 1.000 dx 246.500 dy 322.000"
                     },
@@ -2056,7 +2055,6 @@
                         "editor": {
                             "rect": "x 1522 y 865 w 150 h 86",
                             "view": {
-                                "state": "open",
                                 "rect": "x 978 y 451 w 1154 h 510",
                                 "transform": "sx 1.000 sy 1.000 dx 1004.000 dy 463.000"
                             },
@@ -3050,7 +3048,6 @@
                 "editor": {
                     "rect": "x 817 y 432 w 250 h 206",
                     "view": {
-                        "state": "closed",
                         "rect": "x 183 y 78 w 2444 h 1168",
                         "transform": "sx 1.000 sy 1.000 dx 309.051 dy 83.554"
                     },
@@ -3548,7 +3545,7 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1666 h 1326",
+                "rect": "x 0 y 0 w 1296 h 1326",
                 "transform": "sx 1.000 sy 1.000 dx -49.469 dy 32.331"
             },
             "routes": [

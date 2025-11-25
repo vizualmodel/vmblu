@@ -158,8 +158,6 @@ WSFolder.prototype = {
                 this.folders = [];
                 this.files = [];
 
-                console.log(this.arl)
-
                 // Get the folders and files of the directory
                 for await (const entry of this.arl.handle.values()) {
 

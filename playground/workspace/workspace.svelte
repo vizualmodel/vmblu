@@ -25,7 +25,7 @@ let remoteFS = null
 let localFS = null
 
 // allow or forbid a local file system
-const allowLocalFS = false
+const allowLocalFS = true
 
 onMount(async () => {
 
@@ -72,7 +72,7 @@ async function newLocalFS(e) {
 
     try {
         // make a new local file system
-        localFS = new WSFileSystem('local')
+        const newFS = new WSFileSystem('local')
 
         // Open a directory picker so that the user can select a local directory
         const dirHandle = await window.showDirectoryPicker();
@@ -82,19 +82,19 @@ async function newLocalFS(e) {
         const arl = new LARL(dirName, dirHandle)
 
         // Create the fs
-        localFS.root = new WSFolder(arl, localFS)
+        newFS.root = new WSFolder(arl, newFS)
 
         // set the reference - it is top level, so this is easy
-        arl.setFileSystem(localFS.root, '/')
+        arl.setFileSystem(newFS.root, '/')
 
         // set as expanded
-        localFS.root.is.expanded = true
+        newFS.root.is.expanded = true
 
         // get the content of the drawer
-        await localFS.root.update()
+        await newFS.root.update()
 
         // update
-        localFS = localFS
+        localFS = newFS
 
     } catch (error) {
         // If the user cancels the selection or an error occurs, log it.
@@ -229,7 +229,7 @@ function toggleLocalFS() {
 }
 h1 {
 	font-family: var(--fontBase);
-    font-size: 0.9rem;
+    font-size: 1rem;
     margin: 0.1rem 1rem 0rem 1rem;
 }
 i {
@@ -259,7 +259,7 @@ p.no-selection {
 .menu-item .tooltip {
     visibility: hidden;
     font-family: var(--fontBase);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     background-color: var(--bgTooltip);
     color: var(--cTooltip);
     text-align: left;
@@ -301,24 +301,21 @@ p.no-selection {
     {#if allowLocalFS}
         <div class="heading">
             <h1>Local File System</h1>
-
             <div class="menu-item">
                 <i class="material-icons-outlined" on:click={newLocalFS} >folder</i>
                 <div class="tooltip" >Open folder</div>
             </div>
-
-            <div class="menu-item">
-                <i class="material-icons-outlined" on:click={toggleLocalFS} >{localFS.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
-                <div class="tooltip">{localFS?.root?.is.expanded ? "collapse all" : "expand all"}</div>
-            </div>
-        </div>
-
-        <div class="file-system" bind:this={localDiv}>
-            {#if localFS.root}
-                <FolderFileDiv folder={localFS.root} tx={tx}/>           
-            {:else}
-                <p class="no-selection">You can mount a local folder here to open/edit/save local files if you want.</p>
+            {#if localFS}
+                <div class="menu-item">
+                    <i class="material-icons-outlined" on:click={toggleLocalFS} >{localFS.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
+                    <div class="tooltip">{localFS.root?.is.expanded ? "collapse all" : "expand all"}</div>
+                </div>
             {/if}
         </div>
+        {#if localFS}
+            <div class="file-system" bind:this={localDiv}>
+                <FolderFileDiv folder={localFS.root} tx={tx}/>           
+            </div> 
+        {/if}
     {/if}
 </div>

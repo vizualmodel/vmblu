@@ -61,6 +61,14 @@ The bigger challenges are:
 - Live reconfiguration and testing  
 - AI collaboration through structure-aware tools  
 
+**Message-based architectures** — the foundation of vmblu — bring their own advantages:
+
+- Loose coupling with clear boundaries – Nodes only communicate through messages, not direct calls. You can refactor, replace, or test components independently.
+- Natural concurrency and scalability – Messages are asynchronous by design; the same model runs locally, across threads, or distributed systems without change.
+- Explicit communication contracts – Each message has a defined structure and meaning, making behavior transparent and machine-understandable.
+- Traceable and testable – Every interaction flows through observable messages, enabling time-travel debugging, targeted tests, and reproducible runs.
+- Evolvable and AI-friendly – The message graph becomes a stable backbone. Both humans and LLMs can extend it safely by adding messages or handlers without breaking existing logic. The node-based design also makes vmblu a natural fit for MCP-based (Model Context Protocol) interaction.
+
 Migrating an application to a **vmblu** based design is also not complicated. The vmblu editor itself is now a vmblu application.
 
 **vmblu** is currently at version 0.9, with version 1.0 planned before the end of the year (2025). Specification and file formats are in good shape, but expect frequent updates now that there are more eyes and hands interacting with the software.
@@ -69,7 +77,7 @@ Migrating an application to a **vmblu** based design is also not complicated. Th
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/)  
 - Add the runtime with: `npm install @vizualmodel/vmblu-runtime`  
-- Add the runtime with: `npm install @vizualmodel/vmblu-cli`  
+- Add the cli with: `npm install @vizualmodel/vmblu-cli`  
 - Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
 - Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
 

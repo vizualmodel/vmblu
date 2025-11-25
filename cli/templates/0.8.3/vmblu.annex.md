@@ -11,9 +11,9 @@ The name of a node should be meaningful and unique inside a group node.
 ## A.2 Interface names and Pin names
 
 - Pins are grouped in **interfaces**
-- There can only be one anonymous interface (name is ""), this is acceptable for nodes that have only a few pins.
+- There can only be one anonymous interface (name is ""), this is acceptable for nodes that only have a few pins.
 - Group pins together into meaningful interfaces
-- It is good practice to start a pin name with the name of the interface separated by a period or hyphen.
+- Use the following convention when giving a name to a pin: if the pin belongs to an interface start the name with the name of that interface followed by a period. If the rest of the name is more than one word, separate the words by a hyphen. Examples: *file.save*, *file.save-as*, *file.convert-to-uppercase*, where the interface name is *file*.
 
 ## A.3 Handlers
 

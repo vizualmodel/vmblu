@@ -108,7 +108,7 @@ function onKeydown(e) {}
     --cJSFile: #bbbbbb;
     --cOtherFile:#bbbbbb;
 	--fontBase: arial, helvetica, sans-serif;
-    --sFont: 0.8rem;
+    --sFont: 0.9rem;
     --sIcon: 16px;
 
 	font-family: var(--fontBase);
