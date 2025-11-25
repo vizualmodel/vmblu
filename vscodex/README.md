@@ -1,4 +1,6 @@
 
+![vmblu screenshot](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-header.png)
+
 Modern LLMs make it easy to “vibe code”. But as your app grows, features break, code bloat creeps in and the big picture fades. **vmblu** fixes that by making your architecture *structured, visual, and AI-native*. With vmblu, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
 ## ▘   What is vmblu?
@@ -29,7 +31,8 @@ Clean connectivity by using
 
 The following is a screenshot from an application in vmblu:
 
-![example of a vmblu model](./assets/vmblu-screenshot.png)
+![vmblu screenshot](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-screenshot.png)
+
 
 ## ▘   AI-native by design...
 
