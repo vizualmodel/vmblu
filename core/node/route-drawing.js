@@ -305,8 +305,6 @@ export const routeDrawing = {
         return true
     },
 
-
-
     autoRoute(nodes) {
         
         // get the type of connection

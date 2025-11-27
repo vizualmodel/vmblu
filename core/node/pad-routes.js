@@ -180,9 +180,8 @@ export const padRouteFunctions = {
             // to slide a route it must have at least three segments
             // make a copy of teh wire ! Points in the point array are overwritten !
             if (p.length == 2) {
-                //const p0 = {...p[0]}
-                //const p1 = {...p[1]}
-                route.addTwoSegments({...p[0]},{...p[1]})
+                //route.addTwoSegments({...p[0]},{...p[1]})
+                route.fourPointRoute()
             }
 
             // notation
