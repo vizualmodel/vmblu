@@ -9686,7 +9686,8 @@ BusTack.prototype = {
         this.rect.y += dy;
 
         // check that we have enough segments
-        if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1]);
+        //if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1]);
+        if (this.route.wire.length == 2) this.route.fourPointRoute();
 
         // move the endpoint of the route as well..
         const a = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1);
