@@ -58,10 +58,10 @@ Document.prototype = {
 
         // reset the uid generator
         this.UID.reset()
-        
+
         // get the root node in the file - if 'raw' for the model exists, it is used !
         const newRoot = await this.modcom.getRoot(this.model)
-
+        
         // check
         if (newRoot) {
             // set as root in the main view

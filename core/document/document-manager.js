@@ -42,13 +42,11 @@ DocumentManager.prototype = {
 
         // get the document
         doc.load()
-
-        // then read the source documentation for the model
         .then( () => {
+
+            // then read the source documentation for the model
             doc.model.handleSourceMap()
         })
-
-        // send the stuff to the editor
         .then( () => {
             // set a new tab
             this.tx.send('tab new', arl.getName())
@@ -81,56 +79,6 @@ DocumentManager.prototype = {
         this.active = doc
     },
 
-	// open a document given the arl
-    xxxtoForeground(arl) {
-
-       // check if the document is in the list of documents
-       let doc = this.documents.find( doc => doc.model.arl?.equals(arl))
-
-       // if there is already a view, bring the view to the foreground
-       if (doc) {
-           // select the tab for the doc
-           this.tx.send("tab select", arl.getName())
-
-           // set the doc as the active document
-           this.tx.send('doc set active', doc)
-
-           // set as active
-           this.active = doc
-       }
-       else {
-
-           // create a new document
-           doc = new Document(arl)
-
-           // save in the list
-           this.documents.push(doc)
-
-           // get the document
-           doc.load()
-
-           // then read the source documentation for the model
-           .then( () => {
-                doc.model.handleSourceMap()
-           })
-
-           // send the stuff to the editor
-           .then( () => {
-               // set a new tab
-               this.tx.send('tab new', arl.getName())
-
-               // set as the active document
-               this.tx.send('doc set active', doc)
-
-               // save here also
-               this.active = doc
-           })
-           // .catch( error => {
-           // 	// show a popup message
-           // 	console.error(`Could not open model ${arl.userPath}, error: ${error}`)            
-           // })
-       }
-    },
     /**
      * @prompt User selected a document 
      * This will bring the document to the foreground.
