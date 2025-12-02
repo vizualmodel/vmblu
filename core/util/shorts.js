@@ -347,6 +347,7 @@ export function jsonDeepCopy(toCopy) {
     return toCopy ? JSON.parse(JSON.stringify(toCopy)) : null;
 }
 
+// REVIEW THIS
 export function updateDerivedSettings(original, derived) {
 
     // If the original is null, return the derived as is
@@ -359,10 +360,14 @@ export function updateDerivedSettings(original, derived) {
         return JSON.parse(JSON.stringify(original));
     }
 
+    // keep arrays as is 
+    // MAYBE CHECK IF THE ELEMENT OF THE ARRAY ?
+    if (Array.isArray(original) && Array.isArray(derived)) return derived;
+
     // Iterate over the keys in the original settings
     for (let key in original) {
         if (original.hasOwnProperty(key)) {
-            if (typeof original[key] === 'object' && !Array.isArray(original[key]) && original[key] !== null) {
+            if ( (typeof original[key] === 'object') && !Array.isArray(original[key]) && (original[key] !== null)) {
                 // Recursively update if both original and derived have this key as an object
                 derived[key] = updateDerivedSettings(original[key], derived[key] || {});
             } else {
