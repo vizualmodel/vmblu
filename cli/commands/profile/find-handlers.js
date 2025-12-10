@@ -2,6 +2,11 @@
 
 import { SyntaxKind } from 'ts-morph';
 
+const DEBUG = process.env.VMBLU_PROFILE_DEBUG === '1';
+const debug = (...args) => {
+    if (DEBUG) console.log('[profile-debug]', ...args);
+};
+
 export let currentNode = null;
 export let topLevelClass = null;
 let nodeMap = null;
@@ -178,6 +183,8 @@ function collectObjectLiteralHandlers(objectLiteral) {
         const propName = prop.getName?.();
         if (!isHandler(propName)) return;
 
+        let jsdoc = getFullJsDoc(prop);
+        let line = prop.getStartLineNumber();
         let params = [];
         if (prop.getKind() === SyntaxKind.MethodDeclaration) {
             const docTags = getParamDocs(prop);
@@ -188,10 +195,20 @@ function collectObjectLiteralHandlers(objectLiteral) {
                 const docTags = getParamDocs(fn);
                 params = fn.getParameters().flatMap(p => describeParam(p, docTags));
             }
+        } else if (prop.getKind() === SyntaxKind.ShorthandPropertyAssignment) {
+            const resolved = resolveShorthandHandler(prop);
+            if (resolved) {
+                params = resolved.params;
+                jsdoc = hasDocMetadata(jsdoc) ? jsdoc : resolved.jsdoc ?? jsdoc;
+                line = resolved.line ?? line;
+            } else {
+                debug('shorthand handler unresolved', {
+                    prop: prop.getName?.(),
+                    file: filePath,
+                    line
+                });
+            }
         }
-
-        const jsdoc = getFullJsDoc(prop);
-        const line = prop.getStartLineNumber();
 
         collect(propName, params, line, jsdoc);
     });
@@ -347,7 +364,7 @@ function describeParam(p, docTags = {}) {
                 const symbol = objType.getProperty(subName);
                 if (symbol) {
                     const resolvedType = symbol.getTypeAtLocation(el);
-                    const text = resolvedType.getText();
+                    const text = resolvedType.getText(p.getSourceFile?.());
                     if (text && text !== 'any') {
                         tsType = text;
                     }
@@ -362,13 +379,158 @@ function describeParam(p, docTags = {}) {
 
     const name = p.getName();
     const doc = docTags[name] ?? {};
-    const tsType = p.getType().getText();
+    const tsType = p.getType().getText(p.getSourceFile?.());
 
     return {
         name,
         type: doc.type || tsType || 'string',
         description: doc.description || '',
     };
+}
+
+function resolveShorthandHandler(prop) {
+    const name = prop.getName?.();
+    const nameNode = prop.getNameNode?.();
+    const symbol = prop.getShorthandAssignmentValueSymbol?.() || prop.getSymbol?.() || nameNode?.getSymbol?.();
+    const declarations = symbol?.getDeclarations?.() || [];
+
+    const decl = declarations.find(d =>
+        d.isKind?.(SyntaxKind.FunctionDeclaration) ||
+        d.isKind?.(SyntaxKind.VariableDeclaration)
+    ) || findDeclarationByName(prop, name);
+
+    if (!decl) {
+        const fallback = findDeclarationInScope(prop, name);
+        if (!fallback) {
+            debug('shorthand unresolved after search', {
+                name,
+                hasSymbol: !!symbol,
+                declCount: declarations.length,
+                file: filePath,
+                line: prop.getStartLineNumber()
+            });
+            return null;
+        }
+        return fallback;
+    }
+
+    if (decl.isKind?.(SyntaxKind.FunctionDeclaration)) {
+        const docTags = getParamDocs(decl);
+        const params = decl.getParameters().flatMap(p => describeParam(p, docTags));
+        const jsdoc = getFullJsDoc(decl);
+        const line = decl.getNameNode?.()?.getStartLineNumber?.() ?? decl.getStartLineNumber?.();
+        debug('shorthand -> function decl', { name, line });
+        return { params, jsdoc, line };
+    }
+
+    if (decl.isKind?.(SyntaxKind.VariableDeclaration)) {
+        const init = decl.getInitializer?.();
+        const fn = init && (init.isKind?.(SyntaxKind.FunctionExpression) || init.isKind?.(SyntaxKind.ArrowFunction)) ? init : null;
+        if (!fn) return null;
+
+        const docTags = { ...getParamDocs(decl), ...getParamDocs(fn) };
+        const params = fn.getParameters().flatMap(p => describeParam(p, docTags));
+        const declDocs = getFullJsDoc(decl);
+        const fnDocs = getFullJsDoc(fn);
+        const jsdoc = hasDocMetadata(declDocs) ? declDocs : fnDocs;
+        const line = decl.getNameNode?.()?.getStartLineNumber?.() ?? fn.getStartLineNumber?.();
+        debug('shorthand -> variable decl', { name, line });
+        return { params, jsdoc, line };
+    }
+
+    debug('shorthand decl had unexpected kind; falling back', {
+        name,
+        kind: decl.getKindName?.(),
+        file: filePath,
+        line: prop.getStartLineNumber()
+    });
+    const fallback = findDeclarationInScope(prop, name);
+    if (fallback) return fallback;
+
+    return null;
+}
+
+function findDeclarationByName(prop, name) {
+    if (!name) return null;
+    const sourceFile = prop.getSourceFile?.();
+    if (!sourceFile) return null;
+
+    const targetPos = prop.getStart?.() ?? 0;
+    let best = null;
+
+    const consider = (decl) => {
+        if (!decl || decl.getName?.() !== name) return;
+        const pos = decl.getStart?.();
+        if (typeof pos !== 'number' || pos > targetPos) return;
+        if (!best || pos > (best.getStart?.() ?? -Infinity)) {
+            best = decl;
+        }
+    };
+
+    sourceFile.getDescendantsOfKind(SyntaxKind.FunctionDeclaration).forEach(consider);
+    sourceFile.getDescendantsOfKind(SyntaxKind.VariableDeclaration).forEach(consider);
+
+    return best;
+}
+
+function findDeclarationInScope(prop, name) {
+    if (!name) return null;
+    const sourceFile = prop.getSourceFile?.();
+    if (!sourceFile) return null;
+
+    const targetPos = prop.getStart?.() ?? 0;
+    const scopes = [];
+
+    const fnScope = prop.getFirstAncestor(n =>
+        n.getKind && (
+            n.isKind?.(SyntaxKind.FunctionDeclaration) ||
+            n.isKind?.(SyntaxKind.FunctionExpression) ||
+            n.isKind?.(SyntaxKind.ArrowFunction)
+        )
+    );
+    if (fnScope) scopes.push(fnScope);
+    scopes.push(sourceFile);
+
+    for (const scope of scopes) {
+        let best = null;
+        const consider = (decl) => {
+            if (!decl || decl.getName?.() !== name) return;
+            const pos = decl.getStart?.();
+            if (typeof pos !== 'number' || pos > targetPos) return;
+            if (!best || pos > (best.getStart?.() ?? -Infinity)) {
+                best = decl;
+            }
+        };
+
+        scope.getDescendantsOfKind?.(SyntaxKind.FunctionDeclaration)?.forEach(consider);
+        scope.getDescendantsOfKind?.(SyntaxKind.VariableDeclaration)?.forEach(consider);
+
+        if (best) {
+            if (best.isKind?.(SyntaxKind.FunctionDeclaration)) {
+                const docTags = getParamDocs(best);
+                const params = best.getParameters().flatMap(p => describeParam(p, docTags));
+                const jsdoc = getFullJsDoc(best);
+                const line = best.getNameNode?.()?.getStartLineNumber?.() ?? best.getStartLineNumber?.();
+                debug('shorthand -> function decl (fallback)', { name, line });
+                return { params, jsdoc, line };
+            }
+
+            const init = best.getInitializer?.();
+            const fn = init && (init.isKind?.(SyntaxKind.FunctionExpression) || init.isKind?.(SyntaxKind.ArrowFunction)) ? init : null;
+            if (fn) {
+                const docTags = { ...getParamDocs(best), ...getParamDocs(fn) };
+                const params = fn.getParameters().flatMap(p => describeParam(p, docTags));
+                const declDocs = getFullJsDoc(best);
+                const fnDocs = getFullJsDoc(fn);
+                const jsdoc = hasDocMetadata(declDocs) ? declDocs : fnDocs;
+                const line = best.getNameNode?.()?.getStartLineNumber?.() ?? fn.getStartLineNumber?.();
+                debug('shorthand -> variable decl (fallback)', { name, line });
+                return { params, jsdoc, line };
+            }
+        }
+    }
+
+    return null;
 }
 
 function applyNodeTag(rawTag) {

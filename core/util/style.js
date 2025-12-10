@@ -144,7 +144,7 @@ function StyleFactory() {
         cClose: color.vIcon1, cFullscreen: color.vIcon2, cCalibrate: color.vIcon3, cGrid: color.vIcon4
     }
     this.placement = {
-        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270
+        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270, spacing: 50, tolerance: 10
     }
 }
 StyleFactory.prototype = {

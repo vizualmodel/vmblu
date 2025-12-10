@@ -44,6 +44,14 @@ rectRect(ctx,x,y,w,h,cLine,cFill) {
     }
 },
 
+circle(ctx, x,y,r, color) {
+    ctx.beginPath();
+    ctx.strokeStyle=color;
+    ctx.moveTo(x,y);
+    ctx.arc(x,y,r,0, 2*Math.PI);
+    ctx.stroke();
+},
+
 diamond(ctx,x,y,w,h,cFill) {
     ctx.beginPath();
     ctx.fillStyle = cFill;
@@ -349,28 +357,29 @@ centerLineText(ctx, text,cText,cLine,x,y,w,h) {
     ctx.fillText(text, x + (w - tm.width)/2, y+0.75*h);
 },
 
-interfaceText(ctx, text, font, cText, cLine,x,y,w,h) {
+// interface text - link = 0, 1 or 2
+ifName(ctx, text,color,rc) {
+
+    const {x,y,w,h} = rc;
     
     ctx.beginPath();
 
-    // change the font
-    const saveFont = ctx.font;
-    ctx.font = font;
-
-    ctx.strokeStyle = cLine;
+    ctx.strokeStyle = color.line;
+    ctx.fillStyle = color.line;
     const tm = ctx.measureText(text);
     const guard = 5;
 
-    ctx.moveTo(x,y+h/2);
-    ctx.lineTo(x + (w - tm.width)/2 - guard, y+h/2);
-    ctx.moveTo(x + (w + tm.width)/2 + guard, y+h/2);
-    ctx.lineTo(x+w,y+h/2);
+    const left = x + (w - tm.width)/2;
+    const cy = y+h/2;
+
+    ctx.moveTo(x,cy);
+    ctx.lineTo(left - guard, cy);
+    ctx.moveTo(left + tm.width + guard, cy);
+    ctx.lineTo(x+w,cy);
     ctx.stroke();
 
-    ctx.fillStyle = cText;
-    ctx.fillText(text, x + (w - tm.width)/2, y+0.75*h);
-
-    ctx.font = saveFont;
+    ctx.fillStyle = color.text;
+    ctx.fillText(text, left, y+0.75*h);
 },
 
 centerTextCursor(ctx,rc,text,pChar) {
@@ -1116,7 +1125,7 @@ const I = '|';
 
 const convert = {
 
-    rectToString : rc => `x ${Math.round(rc.x)} y ${Math.round(rc.y)} w ${Math.round(rc.w)} h ${Math.round(rc.h)}`,
+    rectToString : rc => rc ? `x ${Math.round(rc.x)} y ${Math.round(rc.y)} w ${Math.round(rc.w)} h ${Math.round(rc.h)}` : 'x 0 y 0 w 0 h 0',
 
     stringToRect : str => {
 
@@ -1427,26 +1436,26 @@ const convert = {
         let middle = str.slice(opbr+1, clbr).split(',').map(n=>n.trim()).filter(Boolean).join(',');
         let post = str.slice(clbr+1).trim();
 
-        // if there is no point or hyphen, we add a space
+        // if there is no period, hyphen or underscore, we add a period
         const last = pre.at(-1);
-        if ((pre.length > 0)&&(last != '.') && (last != '-') && (last != '_')) pre = pre + ' ';
+        if ((pre.length > 0) && (last != '.') && (last != '-') && (last != '_')) pre = pre + ' ';
         const first = post[0];
-        if ((post.length > 0)&&(first != '.') && (first != '-') && (first != '_')) post = ' ' + post;
+        if ((post.length > 0) && (first != '.') && (first != '-') && (first != '_')) post = ' ' + post;
 
         return [pre, middle, post]
     },
 
-    // a pin name that has been edited can start or end with a '+
-    //hasPlus: str => str[0] == '+' || str.at(-1) == '+' ,
-
+    // a pin name that has been edited can start or end with a special character
+    // that indicates that th einterface name will be added as prefix / postfix
+    // + indicates a single space
     needsPrefix: str => {
         const first = str[0];
-        return (first == '+' || first == '.' || first == '-' || first == '_')
+        return (first == '+' || first == '.' || first == '-' || first == '_' || first == '/')
     },
 
     needsPostfix: str => {
         const last = str.at(-1);
-        return (last == '+' || last == '.' || last == '-' || last == '_')
+        return (last == '+' || last == '.' || last == '-' || last == '_' || last == '/')
     },
 
     // add the prefix / postfix to a message
@@ -1458,13 +1467,9 @@ const convert = {
         const first = name[0];
 
         // Prefix
-        if (first == '.' || first == '-' || first == '_') {
+        if (first == '+' || first == '.' || first == '-' || first == '_' || first == '/') {
             const clean = name.slice(1).trim();
-            complete = prefix + first + clean;
-        }
-        else if (first == '+') {
-            const clean = name.slice(1).trim();
-            complete = prefix + ' ' + clean;
+            complete = first == '+' ? prefix + ' ' + clean : prefix + first + clean;
         }
         
         // done
@@ -1472,19 +1477,15 @@ const convert = {
     },
 
     // add the prefix / postfix to a message
-    combineWithPostfix(postFix, name) {
+    combineWithPostfix(postfix, name) {
 
         // Default is just the name
         let complete = name;
         const last = name.at(-1);
 
-        if (last == '.' || last == '-' || last == '_') {
+        if (last == '+' || last == '.' || last == '-' || last == '_' || last == '/') {
             const clean = name.slice(0,-1).trim();
-            complete = clean + last + postFix;
-        }
-        else if (last == '+') {
-            const clean = name.slice(0,-1).trim();
-            complete = clean + ' ' + postFix;
+            complete = last == '+' ? clean + ' ' + postfix : clean + last + postfix;
         }
         
         // done
@@ -1492,57 +1493,20 @@ const convert = {
     },
 
     prefixMatch(prefix, name) {
-
         if (name.startsWith(prefix)) {
-
             const first = name[prefix.length];
-            return ((first == '.') || (first == '-') || (first == ' ') || (first == '_'))
+            return ((first == '.') || (first == '-') || (first == ' ') || (first == '_') || (first == '/'))
         }
     },
 
     postfixMatch(postfix, name) {
-
         if (name.endsWith(postfix)) {
-
             const last = name.at(-postfix.length-1);
-            return ((last == '.') || (last == '-') || (last == ' ') || (last == "_"))
+            return ((last == '.') || (last == '-') || (last == ' ') || (last == "_") || (last == '/'))
         }
     },
 
-    // add the prefix / postfix to a message
-    xxcombineWithPrefix(prefix, name) {
-
-        // Default is just the name
-        let complete = name;
-
-        // Prefix
-        if (name[0] == '+') {
-
-            const clean = name.slice(1).trim();
-
-            // if there is some sort of a seperation character keep it
-            if ((clean[0] == '.') || (clean[0] == '-') || (prefix.at(-1) == '.') || (prefix.at(-1) == '-')) 
-                complete = prefix + clean;
-            else 
-                // otherwise use a space
-                complete = prefix + ' ' + clean;
-        }
-        // Postfix
-        else if (name.at(-1) == '+') {
-
-            const clean = name.slice(0,-1).trim();
-
-            if ((clean.at(-1) == '.') || (clean.at(-1) == '-') || (prefix[0] == '.') || (prefix[0] == '-')) 
-                complete = clean + prefix;
-            else 
-                complete = clean + ' ' + prefix;
-        }
-        
-        // done
-        return complete
-    },
-
-    // change a string abcdef to abcdef(1) and a string abcdef(3) to abcdef(n)
+    // change a string abcdef to abcdef(n) and a string abcdef(m) to abcdef(n)
     addNumber: (str, n) => {
 
         // Find the position of the last '(' in the string
@@ -1943,7 +1907,7 @@ function StyleFactory() {
         cClose: color.vIcon1, cFullscreen: color.vIcon2, cCalibrate: color.vIcon3, cGrid: color.vIcon4
     };
     this.placement = {
-        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270
+        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270, spacing: 50, tolerance: 10
     };
 }
 StyleFactory.prototype = {
@@ -2335,6 +2299,7 @@ function jsonDeepCopy(toCopy) {
     return toCopy ? JSON.parse(JSON.stringify(toCopy)) : null;
 }
 
+// REVIEW THIS
 function updateDerivedSettings(original, derived) {
 
     // If the original is null, return the derived as is
@@ -2347,10 +2312,14 @@ function updateDerivedSettings(original, derived) {
         return JSON.parse(JSON.stringify(original));
     }
 
+    // keep arrays as is 
+    // MAYBE CHECK IF THE ELEMENT OF THE ARRAY ?
+    if (Array.isArray(original) && Array.isArray(derived)) return derived;
+
     // Iterate over the keys in the original settings
     for (let key in original) {
         if (original.hasOwnProperty(key)) {
-            if (typeof original[key] === 'object' && !Array.isArray(original[key]) && original[key] !== null) {
+            if ( (typeof original[key] === 'object') && !Array.isArray(original[key]) && (original[key] !== null)) {
                 // Recursively update if both original and derived have this key as an object
                 derived[key] = updateDerivedSettings(original[key], derived[key] || {});
             } else {
@@ -2375,8 +2344,8 @@ function updateDerivedSettings(original, derived) {
     return derived;
 }
 
-var version = "0.3.3";
-var schemaVersion = "0.8.3";
+var version = "0.3.5";
+var schemaVersion = "0.8.4";
 var pckg = {
 	version: version,
 	schemaVersion: schemaVersion};
@@ -2753,27 +2722,27 @@ async save(body) {
     return post(this.url+query, body)
 },
 
-async getFolder() {
+// async getFolder() {
 
-    // check
-    if (!this.validURL()) return null
+//     // check
+//     if (!this.validURL()) return null
 
-    // wet have to add the api and service 
-    let href = this.url.origin + '/api/folder' + this.url.pathname;
+//     // wet have to add the api and service 
+//     let href = this.url.origin + '/api/folder' + this.url.pathname
 
-    const url = new URL(href);
+//     const url = new URL(href)
 
-    // request the file - return the body
-    return await get(url)
-    .then( async response => {
+//     // request the file - return the body
+//     return await HTTP.get(url)
+//     .then( async response => {
 
-        // the size of the body could be 0 - that is ok
-        if (response.headers.get('Content-Length') == '0') return null
+//         // the size of the body could be 0 - that is ok
+//         if (response.headers.get('Content-Length') == '0') return null
         
-        // convert
-        return await response.json()
-    })
-},
+//         // convert
+//         return await response.json()
+//     })
+// },
 
 // javascript source files can be imported
 async jsImport() {
@@ -2784,36 +2753,36 @@ async jsImport() {
     return import(this.url)
 },
 
-async getFolderContent(){
+// async getFolderContent(){
 
-    const content = {
-        files: [],
-        folders: []
-    };
+//     const content = {
+//         files: [],
+//         folders: []
+//     }
 
-    // get the folder - return the promise
-    return this.getFolder()
-    .then( raw => {
+//     // get the folder - return the promise
+//     return this.getFolder()
+//     .then( raw => {
         
-        // convert to arls...
-        content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
-        content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name));
+//         // convert to arls...
+//         content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
+//         content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name))
         
-        // return result - that resolves the promise
-        return content
-    })
-    .catch (error => {
+//         // return result - that resolves the promise
+//         return content
+//     })
+//     .catch (error => {
 
-        // debug
-        console.error(error);
+//         // debug
+//         console.error(error)
 
-        // if the path was not found, fail silently else throw
-        if (error.options?.status != '404') throw error
+//         // if the path was not found, fail silently else throw
+//         if (error.options?.status != '404') throw error
 
-        // return result
-        return content
-    })
-}
+//         // return result
+//         return content
+//     })
+// }
 
 // async post(body, mime='application/json', query=null) {
 
@@ -2882,7 +2851,7 @@ async readSourceMap() {
 
     // get the full path
     const fullPath = this.arl?.getFullPath();
-console.log('FULLPATH', fullPath);
+    
     // check
     if (!fullPath) return null
 
@@ -3114,7 +3083,7 @@ generateToolSpecs() {
       }
 
       const tool = {
-        name: meta.mcpName || `${node}_${pin}`,
+        name: meta.mcpName || `${pin} @ ${node}`,
         description: meta.mcpDescription || meta.summary || `Trigger ${pin} on ${node}`,
         parameters: Array.from(paramMap.values()),
         returns: meta.returns || '',
@@ -4117,8 +4086,14 @@ const messageHandling = {
     },
 
     onShowSettings() {
-        this.canvas.getBoundingClientRect();
 
+        // check
+        if (!this.doc?.model) return 
+
+        // Get the 
+        // const rect = this.canvas.getBoundingClientRect();
+
+        // notation
         const header = this.doc.model.header;
         const redraw = () => this.redraw();
 
@@ -4317,6 +4292,10 @@ const messageHandling = {
     },
 
     onSavePointSet({}) {
+
+        // check
+        if (!this.doc?.model) return;
+
         // make this accessible..
         const doc = this.doc;
 
@@ -4326,8 +4305,6 @@ const messageHandling = {
             message: '',
             pos: { x: 500, y: 100 },
             ok: () => {
-                // check
-                if (!doc?.model) return;
 
                 // Get the actual node to save (mostly the root...)
                 const toSave = doc.getNodeToSave();
@@ -4346,6 +4323,10 @@ const messageHandling = {
     },
 
     onSavePointBack({}) {
+
+        // check
+        if (! this.doc?.model) return;
+
         // make this accessible..
         const editor = this;
         const doc = this.doc;
@@ -4627,7 +4608,7 @@ const pinAreaHandling = {
     // select the pins that are in the widgets array
     pinAreaSelect(widgets) {
 
-        if (widgets.length == 0) return
+        if (!widgets?.length) return
 
         // reset (not necessary ?)
         this.widgets.length = 0;
@@ -4636,12 +4617,15 @@ const pinAreaHandling = {
         for (const widget of widgets) {
             if (widget.is.pin || widget.is.ifName) {
                 this.widgets.push(widget);
-                widget.is.selected = true;
+                widget.doSelect();
             }
         }
 
         // set a rectangle around the widgets
         this.pinAreaRectangle();
+
+        // this is a widget selection
+        this.what = selex.pinArea;
     },
 
     // the pins have been sorted in the y position
@@ -4649,7 +4633,7 @@ const pinAreaHandling = {
     pinAreaRectangle() {
 
         // check
-        if (this.widgets.length == 0) return;
+        if (!this.widgets.length) return;
 
         // sort the array
         this.widgets.sort( (a,b) => a.rect.y - b.rect.y);
@@ -4663,12 +4647,9 @@ const pinAreaHandling = {
         this.activate(  look.rect.x - style$1.pin.wOutside, first.y, 
                         look.rect.w + 2*style$1.pin.wOutside, last.y + last.h - first.y, 
                         style$1.selection.cRect);
-        
-        // this is a widget selection
-        this.what = selex.pinArea;
     },
 
-    pinAreaDrag(delta) {
+    widgetsDrag(delta) {
 
         // check
         if (this.widgets.length == 0) return
@@ -4683,6 +4664,142 @@ const pinAreaHandling = {
         // move as required
         this.rect.y += delta.y;
     },
+
+    interfaceSelect(node, ifName) {
+
+        // reset the selection
+        this.reset();
+
+        // find the widgets that belong to the interface
+        const ifPins = node.look.getInterface(ifName);
+
+        // select the pins
+        this.pinAreaSelect(ifPins);
+
+        // set the selection type
+        this.what = selex.ifArea;
+    },
+
+    extend(widget) {
+
+        if (this.what != selex.ifArea || widget.node != this.widgets[0].node) return
+        
+        this.widgets.push(widget);
+
+        this.pinAreaRectangle();
+    },
+
+    // adjust the selction when a widget is added
+    adjustForNewWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // just switch to the new widget
+                this.switchToWidget(widget);
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+                    widget.doSelect();
+                    this.widgets.push(widget);
+                    this.pinAreaRectangle();
+                }
+                else if (widget.is.ifName) {
+
+                    // unddo the previous selection
+                    this.reset();
+
+                    // select the new interface
+                    widget.doSelect();
+                    this.widgets = [widget];
+                    this.pinAreaRectangle();                    
+                }
+                break
+        }
+    },
+
+    // adjust the selction when a widget is removed
+    adjustForRemovedWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // try above ...
+                const above = this.widgetAbove(widget);
+                if (above) return this.switchToWidget(above);
+
+                // if no pin is given try below
+                const below = this.widgetBelow(widget);
+                if (below) return this.switchToWidget(below);
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+
+                    // kick the widget out
+                    const index = this.widgets.findIndex( w => w === widget);
+                    if (index != -1) this.widgets.splice(index, 1);
+
+                    // make a new selection
+                    this.pinAreaRectangle();
+                }
+                break
+        }
+    },
+
+    behind() {
+
+        // check
+        if (this.what !== selex.singleNode && this.what !== selex.ifArea) return null;
+
+        // we add new pins at the end
+        const last = this.widgets.at(-1);
+
+        // check 
+        if (last) return  {x: last.rect.x, y: last.rect.y + last.rect.h};
+
+        // it could be that the node has no pins yet !
+        return this.nodes[0] ? {x: 0, y: this.nodes[0].look.makePlace(null, 0)} : null;
+    },
+
+    whereToAdd() {
+
+        switch(this.what) {
+
+            case selex.singleNode: {
+
+                // get the selected node (only one !)
+                const node = this.getSingleNode();
+
+                // get the selected widget
+                const widget = this.getSelectedWidget();
+
+                // determine the position for the widget
+                const pos = widget  ?   {x: widget.is.left ? widget.rect.x : widget.rect.x + widget.rect.w, y: widget.rect.y + widget.rect.h} :
+                                        {x: 0, y: node.look.makePlace(null, 0)};
+
+                // done
+                return [node, pos]
+            }
+
+            case selex.ifArea: {
+
+                const node = this.getSelectedWidget()?.node;
+                const pos = this.behind();
+                return [node, pos]
+            }
+        }
+    },
+
 };
 
 // a constant for indicating the selection type
@@ -4690,15 +4807,15 @@ const selex = {
     nothing: 0,
     freeRect: 1,
     pinArea: 2,
+    ifArea: 3,
     singleNode: 4,
-    multiNode: 5
+    multiNode: 5,
 };
 
 // nodes etc. selectd in the editor
-function Selection(view=null)  {
-
+function Selection(view = null) {
     // the rectangle
-    this.rect= {x:0, y:0, w:0, h:0};
+    this.rect = { x: 0, y: 0, w: 0, h: 0 };
 
     // when selecting widgets inside a node this is where the selection started
     this.yWidget = 0;
@@ -4713,41 +4830,51 @@ function Selection(view=null)  {
     this.viewPath = view ? view.getNamePath() : '';
 
     // the selected elements
-    this.nodes= [];
-    this.pads= [];
-    this.buses= [];
-    this.tacks= [];
-    this.widgets= [];
+    this.nodes = [];
+    this.pads = [];
+    this.buses = [];
+    this.tacks = [];
+    this.widgets = [];
 }
 Selection.prototype = {
-
     render(ctx) {
-
-        // we only use width as a check 
-        if (this.what === selex.freeRect || this.what === selex.pinArea) {
-
+        // we only use width as a check
+        if (
+            this.what === selex.freeRect ||
+            this.what === selex.pinArea ||
+            this.what === selex.ifArea
+        ) {
             // notation
             const rc = this.rect;
 
             // draw the rectangle
-            shape.roundedRect(ctx, rc.x, rc.y, rc.w, rc.h, style$1.selection.rCorner, 1, this.color.slice(0,7), this.color );
+            shape.roundedRect(
+                ctx,
+                rc.x,
+                rc.y,
+                rc.w,
+                rc.h,
+                style$1.selection.rCorner,
+                1,
+                this.color.slice(0, 7),
+                this.color
+            );
         }
     },
 
     // keep viewpath and color
     reset() {
-
         // not active
         this.what = selex.nothing;
 
-        // reset yWidget 
+        // reset yWidget
         this.yWidget = 0;
 
         // unselect the pins if any
         for (const pin of this.widgets) pin.unSelect();
 
         // unselect the nodes if any
-        for(const node of this.nodes) node.unSelect();
+        for (const node of this.nodes) node.unSelect();
 
         // clear the selected objects
         this.nodes.length = 0;
@@ -4758,12 +4885,11 @@ Selection.prototype = {
     },
 
     shallowCopy() {
-
         const selection = new Selection();
 
-        selection.rect = {...this.rect};
+        selection.rect = { ...this.rect };
         selection.yWidget = this.yWidget;
-        selection.color= this.color;
+        selection.color = this.color;
         selection.what = this.what;
         selection.viewPath = this.viewPath;
         selection.nodes = this.nodes?.slice();
@@ -4772,20 +4898,22 @@ Selection.prototype = {
         selection.tacks = this.tacks?.slice();
         selection.widgets = this.widgets?.slice();
 
-        return selection
+        return selection;
     },
 
     canCancel(hit) {
-
         // if we have hit a selection we cannot cancel it
-        // if we have not hit it we can cancel the rectangle selections 
+        // if we have not hit it we can cancel the rectangle selections
         // The single node selection is not cancelled normally
 
-        return (hit.what == zap.selection) ? false : (this.what === selex.freeRect || this.what === selex.pinArea) 
+        return hit.what == zap.selection
+            ? false
+            : this.what === selex.freeRect ||
+                  this.what === selex.pinArea ||
+                  this.what === selex.ifArea;
     },
 
-    setRect(x,y,w,h) {
-
+    setRect(x, y, w, h) {
         const rc = this.rect;
 
         rc.x = x;
@@ -4794,27 +4922,24 @@ Selection.prototype = {
         rc.h = h;
     },
 
-    activate(x,y,w,h, color) {
-
-        this.setRect(x,y,w,h);
+    activate(x, y, w, h, color) {
+        this.setRect(x, y, w, h);
         if (color) this.color = color;
     },
 
     // start a free rectangle selection
     freeStart(where) {
-
         // reset the current selection
         this.reset();
 
         // free rectangle selection
         this.what = selex.freeRect;
- 
+
         // set the x and y value for the selection rectangle
         this.setRect(where.x, where.y, 0, 0);
     },
 
     singleNode(node) {
-
         // unselect other - if any
         this.reset();
 
@@ -4829,7 +4954,6 @@ Selection.prototype = {
     },
 
     singleNodeAndWidget(node, pin) {
-
         // unselect
         this.reset();
 
@@ -4839,18 +4963,16 @@ Selection.prototype = {
         pin.doSelect();
     },
 
-   // extend an existing selection
+    // extend an existing selection
     extend(node) {
-
         // if there are no nodes this is the first selection
-        if (this.nodes.length <1) {
+        if (this.nodes.length < 1) {
             this.singleNode(node);
-            return
+            return;
         }
 
         // if the node is selected - unselect
         if (this.nodes.includes(node)) {
-
             // remove the node from the array
             eject(this.nodes, node);
 
@@ -4858,7 +4980,7 @@ Selection.prototype = {
             node.unSelect();
 
             // done
-            return
+            return;
         }
 
         // save the node
@@ -4873,90 +4995,91 @@ Selection.prototype = {
 
     // get the single selected node
     getSingleNode() {
-        return this.what == selex.singleNode ? this.nodes[0] : null
+        return this.what == selex.singleNode ? this.nodes[0] : null;
     },
 
     getSelectedWidget() {
-        return this.what == selex.singleNode ? this.widgets[0] : null
+        if (this.what == selex.singleNode)  return this.widgets[0];
+        if (this.what === selex.ifArea) return this.widgets[0];
+        return null;
     },
 
     getPinAreaNode() {
-        return ((this.what == selex.pinArea) && this.widgets[0]) ? this.widgets[0].node : null 
+        return (this.what === selex.pinArea || this.what === selex.ifArea) &&
+            this.widgets[0]
+            ? this.widgets[0].node
+            : null;
     },
 
-    // switch the selected widget
-    switchWidget(pin) {
+    // switch to the selected widget
+    switchToWidget(pin) {
 
-        if (pin) {
-            this.widgets[0]?.unSelect();
-            pin.doSelect();
-            this.widgets[0] = pin;
-            return
-        }
-    
-        // if no pin is given try below
-        const below = this.widgetBelow();
-        if (below) return this.switchWidget(below)
+        if (!pin) return;
 
-        // try above ...
-        const above = this.widgetAbove();
-        if (above) return this.switchWidget(above)
+        // unselect the current
+        this.widgets[0]?.unSelect();
+
+        // select the new one
+        pin.doSelect();
+        this.widgets[0] = pin;
+        return;
     },
 
-    widgetBelow() {
-
-        // get node and widget
-        const [node, current] = (this.what != selex.singleNode) ? [null, null] : [this.nodes[0], this.widgets[0]];
-
-        // check
-        if (!current || !node) return null
+    widgetBelow(current) {
 
         let below = null;
-        for(const widget of node.look.widgets) {
-
-            if ((widget.is.pin || widget.is.ifName) && 
-                (widget.rect.y > current.rect.y) &&
-                (!below || (widget.rect.y < below.rect.y))) below = widget;
+        for (const widget of current.node.look.widgets) {
+            if ((widget.is.pin || widget.is.ifName) &&  widget.rect.y > current.rect.y && (!below || widget.rect.y < below.rect.y)) below = widget;
         }
 
         // done
-        return below
+        return below;
     },
 
-    widgetAbove() {
-
-        // get node and widget
-        const [node, current] = (this.what != selex.singleNode) ? [null, null] : [this.nodes[0], this.widgets[0]];
-
-        // check
-        if (!current || !node) return null
+    widgetAbove(current) {
 
         let above = null;
-        for(const widget of node.look.widgets) {
-
-            if ((widget.is.pin || widget.is.ifName) && 
-                (widget.rect.y < current.rect.y) &&
-                (!above || (widget.rect.y > above.rect.y))) above = widget;
+        for (const widget of current.node.look.widgets) {
+            if ((widget.is.pin || widget.is.ifName) && widget.rect.y < current.rect.y && (!above || widget.rect.y > above.rect.y)) above = widget;
         }
 
         // done
-        return above
+        return above;
     },
 
     // check if we have hit the selection
     hitTest(xyLocal) {
-
         // If there is a rectangle, we have a simple criterion
-        if ((this.what == selex.freeRect || this.what == selex.pinArea) && inside(xyLocal, this.rect)) return [zap.selection, this, null]
+        if (
+            (this.what == selex.freeRect ||
+                this.what == selex.pinArea ||
+                this.what == selex.ifArea) &&
+            inside(xyLocal, this.rect)
+        )
+            return [zap.selection, this, null];
 
         // multi-node or single node
         // search the nodes (in reverse - visible node on top of another will be found first)
-        for (let i = this.nodes.length-1; i>=0; i--) {
-            if (inside(xyLocal, this.nodes[i].look.rect)) return [zap.selection, this, this.nodes[i]]
+        for (let i = this.nodes.length - 1; i >= 0; i--) {
+            if (inside(xyLocal, this.nodes[i].look.rect))
+                return [zap.selection, this, this.nodes[i]];
         }
 
-         // nothing
-         return [zap.nothing, null, null]
+        // nothing
+        return [zap.nothing, null, null];
+    },
+
+    widgetHit(xyLocal) {
+        if (!this.widgets?.length) return null;
+
+        for (const widget of this.widgets) {
+            if (
+                xyLocal.y > widget.rect.y &&
+                xyLocal.y < widget.rect.y + widget.rect.h
+            )
+                return widget;
+        }
+        return null;
     },
 
     setColor(color) {
@@ -4975,11 +5098,10 @@ Selection.prototype = {
     },
 
     drag(delta) {
+        // *1* move
 
-        // *1* move 
-
-        // move the nodes in the selection 
-        for( const node of this.nodes) node.look.moveDelta(delta.x, delta.y);
+        // move the nodes in the selection
+        for (const node of this.nodes) node.look.moveDelta(delta.x, delta.y);
 
         // also move the pads
         for (const pad of this.pads) pad.move(delta);
@@ -4987,24 +5109,21 @@ Selection.prototype = {
         // move the buses if there are nodes in the selection
         if (this.nodes.length > 0)
             for (const bus of this.buses) bus.move(delta.x, delta.y);
-
-        // or otherwise just the bus tacks 
-        else 
-            for (const tack of this.tacks) tack.slide(delta);
+        // or otherwise just the bus tacks
+        else for (const tack of this.tacks) tack.slide(delta);
 
         // move the routes that have start end end points in the selection
-        
 
         // *2* Route adjustments
 
         // now we adjust the end points of the routes again
-        for( const node of this.nodes) node.look.adjustRoutes();
+        for (const node of this.nodes) node.look.adjustRoutes();
 
         // adjust the routes for the pads
-        for(const pad of this.pads) pad.adjustRoutes();
+        for (const pad of this.pads) pad.adjustRoutes();
 
         // also for the buses
-        for (const bus of this.buses) bus.adjustRoutes();      
+        for (const bus of this.buses) bus.adjustRoutes();
 
         // *3* move the selection rectangle
 
@@ -5012,55 +5131,37 @@ Selection.prototype = {
         this.rect.y += delta.y;
     },
 
-    // shallowCopy() {
-
-    //     const slct = new Selection()
-
-    //     // make a shallow copy of the nodes etc
-    //     for (const node of this.nodes) slct.nodes.push(node)
-    //     for (const bus of this.buses) slct.buses.push(bus)
-    //     for (const pad of this.pads) slct.pads.push(pad)
-    //     for (const pin of this.widgets) slct.widgets.push(pin)
-    //     for (const tack of this.tacks) slct.tacks.push(tack)
-
-    //     // make a real copy of the rect
-    //     slct.rect = {...this.rect}
-
-    //     // copy the color
-    //     slct.color = this.color
-
-    //     return slct
-    // },
-
     // return the top left node in the selection
     topLeftNode() {
-
-        if (this.nodes.length == 0) return null
+        if (this.nodes.length == 0) return null;
 
         let topleft = this.nodes[0];
 
-        for(const node of this.nodes) {
-
-            if ((node.look.rect.y < topleft.look.rect.y) && (node.look.rect.x < topleft.look.rect.x)) topleft = node;
+        for (const node of this.nodes) {
+            if (
+                node.look.rect.y < topleft.look.rect.y &&
+                node.look.rect.x < topleft.look.rect.x
+            )
+                topleft = node;
         }
 
-        return topleft
+        return topleft;
     },
 
     // make the view wider then the selection because of the added pads
     makeViewRect() {
-
         const rc = this.rect;
 
-        return {x: rc.x - style$1.view.wExtra, 
-                y: rc.y - style$1.view.hExtra, 
-                w: rc.w + 2*style$1.view.wExtra, 
-                h: rc.h + 2*style$1.view.hExtra}
+        return {
+            x: rc.x - style$1.view.wExtra,
+            y: rc.y - style$1.view.hExtra,
+            w: rc.w + 2 * style$1.view.wExtra,
+            h: rc.h + 2 * style$1.view.hExtra,
+        };
     },
 
-    // position the new group look as close as possible to the top left node 
+    // position the new group look as close as possible to the top left node
     makeLookRect() {
-
         const topleft = this.topLeftNode();
         const rcSel = this.rect;
 
@@ -5068,17 +5169,14 @@ Selection.prototype = {
         const y = topleft ? topleft.look.rect.y : rcSel.y;
 
         // leave w and h at 0
-        return {x,y,w:0,h:0}
+        return { x, y, w: 0, h: 0 };
     },
 
     adjustPaths(ref) {
-
-        if (!this.nodes) return
+        if (!this.nodes) return;
 
         for (const node of this.nodes) node.adjustPaths(ref);
     },
-
-
 };
 Object.assign(Selection.prototype, pinAreaHandling);
 
@@ -5159,12 +5257,13 @@ const mouseMoveHandling = {
                 state.lookWidget.drag(xyLocal);
                 return true
 
+            // OBSOLETE
             case doing.pinAreaDrag:
                 // move the rectangle
-                this.selection.pinAreaDrag(dxdyLocal);
+                // this.selection.pinAreaDrag(dxdyLocal)
 
                 // move the pins
-                this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect);
+                // this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect)
                 return true
 
             case doing.interfaceNameDrag:
@@ -5174,7 +5273,7 @@ const mouseMoveHandling = {
             case doing.interfaceDrag:
 
                 // move the rectangle
-                this.selection.pinAreaDrag(dxdyLocal);
+                this.selection.widgetsDrag(dxdyLocal);
 
                 // swap the widgets if necessary
                 this.selection.widgets[0].node.look.swapInterface(xyLocal, this.selection.widgets);
@@ -5275,7 +5374,7 @@ const mouseMoveHandling = {
                 if ( inside(xyLocal, this.selection.widgets[0].rect)) return false;
 
                 // moving: unselect the node
-                this.selection.nodes[0].unSelect();
+                //this.selection.nodes[0].unSelect()
 
                 // // set a selection rectangle around the selected pins
                 // this.selection.pinAreaRectangle()
@@ -5490,8 +5589,8 @@ const mouseDownHandling = {
 
                     case NONE:{
 
-                        // set the node as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
 
                         // highlight the ifName group
                         this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
@@ -5754,6 +5853,35 @@ const mouseDownHandling = {
                             // drag the whole selection
                             editor.doEdit('selectionDrag', {view: this});
                             this.stateSwitch(doing.selectionDrag);
+                        } 
+                        else if (this.selection.what === selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal);
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+                                // highlight the ifName group
+                                this.selection.widgets = widget.node.look.highLightInterface(widget);
+
+                                // state switch
+                                this.stateSwitch(doing.interfaceNameClicked); 
+                            }
+                            else {  
+                                // save the widget & node
+                                state.lookWidget = widget;
+                                state.node = widget.node;
+
+                                // and highlight the routes
+                                widget.highLightRoutes();
+
+                                // new state
+                                this.stateSwitch(doing.pinClicked);
+
+                                // set the node and pin as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget);
+                            }
                         }
                     }
                     break
@@ -5771,7 +5899,7 @@ const mouseDownHandling = {
                             // first switch the state - might end the previous selection !
                             this.stateSwitch(doing.pinAreaSelect);
                         }
-                        else if (this.selection.what == selex.pinArea) {
+                        else if (this.selection.what === selex.pinArea || this.selection.what === selex.ifArea) {
     
                             // ..and only then start a new selection
                             this.selection.pinAreaStart(this.selection.getPinAreaNode(), xyLocal);
@@ -5800,17 +5928,45 @@ const mouseDownHandling = {
 
                             break;
 
-                            case selex.pinArea:
-
+                            case selex.ifArea:
                                 // set state to drag the pin/proxy up and down
-                                this.stateSwitch(doing.pinAreaDrag); 
+                                this.stateSwitch(doing.interfaceDrag); 
 
-                                // save the edit - the view contains the selection
-                                editor.doEdit('pinAreaDrag', this);
+                                // notation
+                                const pins = this.selection.widgets;
 
+                                // drag the area
+                                editor.doEdit('interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y});
                             break;
                         }
 
+                    }
+                    break
+
+                    case CTRL|SHIFT:{
+
+                        if (this.selection.what == selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal);
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+
+                                // Save the edit
+                                editor.doEdit('interfaceNameDrag',{ifName: widget});
+
+                                // save the widget
+                                this.state.lookWidget = hit.lookWidget;
+
+                                // set the node as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget);
+
+                                // switch to dragging the ifName
+                                this.stateSwitch(doing.interfaceNameDrag);
+                            }
+                        }
                     }
                     break
                 }
@@ -6065,6 +6221,9 @@ const mouseUpHandling = {
                 //this.state.bus.fuseSegment(this.state.busSegment)
                 this.state.bus.is.selected = false;
 
+                // remove highlight
+                this.state.bus.unHighLight();
+
                 // adjust the parameters for the undo operation
                 undo = editor.getParam();
                 undo.newWire = this.state.bus.copyWire();
@@ -6113,8 +6272,9 @@ const mouseUpHandling = {
                 editor.getParam().newPos = {left: pin.is.left, y: pin.rect.y};
                 break
 
+            // OBSOLETE
             case doing.pinAreaDrag:
-                editor.getParam().newY = this.selection.widgets[0].rect.y;
+                // editor.getParam().newY = this.selection.widgets[0].rect.y
                 break
 
             case doing.interfaceNameDrag: {
@@ -6280,7 +6440,7 @@ const nodeCxMenu = {
 	node:null,
 	xyLocal: null,
 
-	// prepres the menu list before showing it
+	// prepare the menu list before showing it
 	prepare(view) {
 
 		this.view = view;
@@ -6371,43 +6531,332 @@ function unGroup() {
 	editor.doEdit('unGroup', {view: nodeCxMenu.view, node: nodeCxMenu.node});
 }
 
+const noLink$1 = [
+    {
+        text: 'new output',
+        char: 'o',
+        icon: 'logout',
+        state: 'enabled',
+        action: newOutput$1,
+    },
+    {
+        text: 'new input',
+        char: 'i',
+        icon: 'login',
+        state: 'enabled',
+        action: newInput$1,
+    },
+    {
+        text: 'new interface',
+        char: 'p',
+        icon: 'drag_handle',
+        state: 'enabled',
+        action: newInterfaceName$1,
+    },
+    {
+        text: 'new request',
+        char: 'q',
+        icon: 'switch_left',
+        state: 'enabled',
+        action: newRequest$1,
+    },
+    {
+        text: 'new reply',
+        char: 'r',
+        icon: 'switch_right',
+        state: 'enabled',
+        action: newReply$1,
+    },
+    {
+        text: 'in/out switch',
+        icon: 'cached',
+        state: 'disabled',
+        action: inOutSwitch$1,
+    },
+    {
+        text: 'add channel',
+        icon: 'adjust',
+        state: 'disabled',
+        action: channelOnOff,
+    },
+    {
+        text: 'paste pins',
+        char: 'ctrl v',
+        icon: 'content_copy',
+        state: 'enabled',
+        action: pasteWidgetsFromClipboard,
+    },
+    { text: 'profile', icon: 'info', state: 'disabled', action: showProfile },
+    {
+        text: 'all pins swap left right',
+        icon: 'swap_horiz',
+        state: 'enabled',
+        action: pinsSwap$1,
+    },
+    {
+        text: 'all pins left',
+        icon: 'arrow_back',
+        state: 'enabled',
+        action: pinsLeft$1,
+    },
+    {
+        text: 'all pins right',
+        icon: 'arrow_forward',
+        state: 'enabled',
+        action: pinsRight$1,
+    },
+    {
+        text: 'disconnect',
+        icon: 'power_off',
+        state: 'disabled',
+        action: disconnectPin,
+    },
+    { text: 'delete', icon: 'delete', state: 'enabled', action: deletePin },
+];
+
+const withLink$1 = [
+    { text: 'profile', icon: 'info', state: 'disabled', action: showProfile },
+    {
+        text: 'all pins swap left right',
+        icon: 'swap_horiz',
+        state: 'enabled',
+        action: pinsSwap$1,
+    },
+    {
+        text: 'all pins left',
+        icon: 'arrow_back',
+        state: 'enabled',
+        action: pinsLeft$1,
+    },
+    {
+        text: 'all pins right',
+        icon: 'arrow_forward',
+        state: 'enabled',
+        action: pinsRight$1,
+    },
+    {
+        text: 'disconnect',
+        icon: 'power_off',
+        state: 'disabled',
+        action: disconnectPin,
+    },
+];
+
+// click on the node
+const pinCxMenu = {
+    choices: null,
+
+    view: null,
+    node: null,
+    widget: null,
+    xyLocal: null,
+    xyScreen: null,
+
+    // a specific function to turn on/off the options of the right click menu
+    prepare(view) {
+        this.view = view;
+        this.node = view.hit.node;
+        this.widget = view.hit.lookWidget;
+        this.xyLocal = view.hit.xyLocal;
+        this.xyScreen = view.hit.xyScreen;
+
+        // linked nodes hve much less options
+        if (this.node.link) {
+            // The number of options is reduced
+            this.choices = withLink$1;
+
+            // only pins can be disconnected
+            let entry = this.choices.find((c) => c.action == disconnectPin);
+            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+            // profiles are only available for pins
+            entry = this.choices.find((c) => c.action == showProfile);
+            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+            return;
+        }
+
+        this.choices = noLink$1;
+
+        // only pins can be disconnected
+        let entry = this.choices.find((c) => c.action == disconnectPin);
+        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+        // swap input to output
+        entry = this.choices.find((c) => c.action == inOutSwitch$1);
+        let enable = this.widget?.is.pin && this.widget.routes.length == 0;
+        entry.state = enable ? 'enabled' : 'disabled';
+        entry.text =
+            enable && this.widget.is.input
+                ? 'change to output'
+                : 'change to input';
+
+        // switch channel on or off
+        entry = this.choices.find((c) => c.action == channelOnOff);
+        enable = this.widget?.is.pin; // && ! this.widget.is.proxy
+        entry.state = enable ? 'enabled' : 'disabled';
+        entry.text =
+            enable && this.widget.is.channel ? 'remove channel' : 'add channel';
+
+        // profiles are only available for pins
+        entry = this.choices.find((c) => c.action == showProfile);
+        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+        // switch the delete action
+        entry = this.choices.find((c) => c.text == 'delete');
+        entry.action = this.widget?.is.pin
+            ? deletePin
+            : this.widget?.is.ifName
+              ? deleteInterfaceName
+              : () => {};
+
+        // check if there are pins to paste
+        entry = this.choices.find((c) => c.text == 'paste pins');
+    },
+};
+
+// is = {channel, input, request, proxy}
+function newInput$1() {
+    // set the flags
+    const is = { channel: false, input: true, proxy: pinCxMenu.node.is.group };
+    editor.doEdit('newPin', {
+        view: pinCxMenu.view,
+        node: pinCxMenu.node,
+        pos: pinCxMenu.xyLocal,
+        is,
+    });
+}
+function newOutput$1() {
+    // set the flags
+    const is = { channel: false, input: false, proxy: pinCxMenu.node.is.group };
+    editor.doEdit('newPin', {
+        view: pinCxMenu.view,
+        node: pinCxMenu.node,
+        pos: pinCxMenu.xyLocal,
+        is,
+    });
+}
+function newRequest$1() {
+    // set the flags
+    const is = { channel: true, input: false, proxy: pinCxMenu.node.is.group };
+    editor.doEdit('newPin', {
+        view: pinCxMenu.view,
+        node: pinCxMenu.node,
+        pos: pinCxMenu.xyLocal,
+        is,
+    });
+}
+function newReply$1() {
+    // set the flags
+    const is = { channel: true, input: true, proxy: pinCxMenu.node.is.group };
+    editor.doEdit('newPin', {
+        view: pinCxMenu.view,
+        node: pinCxMenu.node,
+        pos: pinCxMenu.xyLocal,
+        is,
+    });
+}
+function inOutSwitch$1() {
+    editor.doEdit('ioSwitch', { pin: pinCxMenu.widget });
+}
+function channelOnOff() {
+    editor.doEdit('channelOnOff', { pin: pinCxMenu.widget });
+}
+function disconnectPin() {
+    editor.doEdit('disconnectPin', { pin: pinCxMenu.widget });
+}
+function deletePin() {
+    editor.doEdit('deletePin', { view: pinCxMenu.view, pin: pinCxMenu.widget });
+}
+function newInterfaceName$1() {
+    editor.doEdit('newInterfaceName', {
+        view: pinCxMenu.view,
+        node: pinCxMenu.node,
+        pos: pinCxMenu.xyLocal,
+    });
+}
+function deleteInterfaceName() {
+    editor.doEdit('deleteInterfaceName', {
+        view: pinCxMenu.view,
+        ifName: pinCxMenu.widget,
+    });
+}
+function showProfile(e) {
+    editor.doEdit('showProfile', {
+        pin: pinCxMenu.widget,
+        pos: { x: pinCxMenu.xyScreen.x, y: pinCxMenu.xyScreen.y + 10 },
+    });
+}
+
+function pinsSwap$1() {
+    editor.doEdit('swapPins', {
+        node: pinCxMenu.node,
+        left: true,
+        right: true,
+    });
+}
+
+function pinsLeft$1() {
+    editor.doEdit('swapPins', {
+        node: pinCxMenu.node,
+        left: true,
+        right: false,
+    });
+}
+function pinsRight$1() {
+    editor.doEdit('swapPins', {
+        node: pinCxMenu.node,
+        left: false,
+        right: true,
+    });
+}
+function pasteWidgetsFromClipboard() {
+    // request the clipboard - also set the target, the clipboard can come from another file
+    editor.tx.request('clipboard get', editor.doc).then((clipboard) => {
+        editor.doEdit('pasteWidgetsFromClipboard', {
+            view: pinCxMenu.view,
+            clipboard,
+        });
+    });
+    //.catch( error => console.log('paste: clipboard get error -> ' + error))
+}
+
+const withLink = [
+
+	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
+	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
+	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
+	{text:"copy interface",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:ifToClipboard},
+	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
+];
+
 const noLink = [
 
 	{text:"new output",		char:'o', icon:"logout",state:"enabled", action:newOutput},
 	{text:"new input",		char:'i', icon:"login",state:"enabled", action:newInput},
-	{text:"new ifName",  char:'p', icon:"drag_handle",state:"enabled", action:newInterfaceName},
+	{text:"new interface",  char:'p', icon:"drag_handle",state:"enabled", action:newInterfaceName},
 	{text:"new request",	char:'q', icon:"switch_left",state:"enabled", action:newRequest},
 	{text:"new reply",		char:'r', icon:"switch_right",state:"enabled", action:newReply},
-	{text:"change to output",	  	  icon:"cached",state:"disabled", action:inOutSwap},
-	{text:"add channel",	  	  	  icon:"adjust",state:"disabled", action:channelOnOff},
-	{text:"paste pins",		char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pasteWidgetsFromClipboard},
-	{text:"profile",				  icon:"info",state:"disabled", action:showProfile},
-	{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap$1},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft$1},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight$1},
-	{text:"disconnect",				  icon:"power_off",state:"disabled", action:disconnectPin},
-	{text:"delete",					  icon:"delete",state:"enabled", action:deletePin},
 
-];
+	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
+	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
+	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
+	{text:"i/o swicth",	  	          icon:"cached",state:"enabled", action:ioSwitch},
 
-const withLink = [
-
-	{text:"profile",				  icon:"info",state:"disabled", action:showProfile},
-	{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap$1},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft$1},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight$1},
-	{text:"disconnect",				  icon:"power_off",state:"disabled", action:disconnectPin},
-
+	{text:"copy interface",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:ifToClipboard},
+	{text:"paste pins",		char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pastePinsFromClipboard},
+	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
+	{text:"delete",					  icon:"delete",state:"enabled", action:ifDelete},
 ];
 
 // click on the node
-const pinAreaCxMenu = {
+const ifCxMenu = {
 
 	choices: null,
 
 	view: null,
 	node: null,
-	widget: null,
+	ifWidget: null,
 	xyLocal: null,
 	xyScreen: null,
 
@@ -6415,135 +6864,97 @@ const pinAreaCxMenu = {
 	prepare(view) {
 
 		this.view = view;
-		this.node = view.hit.node;
-		this.widget = view.hit.lookWidget;
-		this.xyLocal = view.hit.xyLocal;
-		this.xyScreen = view.hit.xyScreen;
 
-		// linked nodes hve much less options
-		if (this.node.link) {
+		// Get the data from the selection !
+		if (view.selection.what == selex.ifArea) {
 
-			// The number of options is reduced
-			this.choices = withLink;
+			// check - should never fail
+			const ifWidget = view.selection.widgets[0];
+			if (!ifWidget?.is.ifName) return;
 
-			// only pins can be disconnected
-			let entry = this.choices.find( c => c.action == disconnectPin);
-			entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-			// profiles are only available for pins
-			entry = this.choices.find( c => c.action == showProfile);
-			entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-			return
+			this.node = ifWidget.node;
+			this.ifWidget = ifWidget;
+			this.xyLocal = view.hit.xyLocal;
+			this.xyScreen = view.hit.xyScreen;
 		}
-		
-		this.choices = noLink;
+		// get the data from the view hit
+		else {
+			this.node = view.hit.node;
+			this.ifWidget = view.hit.lookWidget;
+			this.xyLocal = view.hit.xyLocal;
+			this.xyScreen = view.hit.xyScreen;
+		}
 
-		// only pins can be disconnected
-		let entry = this.choices.find( c => c.action == disconnectPin);
-		entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-		// swap input to output
-		entry = this.choices.find(c => c.action == inOutSwap);
-		let enable = this.widget?.is.pin && this.widget.routes.length == 0;
-		entry.state = enable ? "enabled" : "disabled";
-		entry.text = (enable && this.widget.is.input ) ? "change to output" : "change to input";
-
-		// switch channel on or off
-		entry = this.choices.find(c => c.action == channelOnOff);
-		enable = this.widget?.is.pin; // && ! this.widget.is.proxy
-		entry.state = enable ? "enabled" : "disabled";
-		entry.text = (enable && this.widget.is.channel ) ? "remove channel" : "add channel";
-
-		// profiles are only available for pins
-		entry = this.choices.find( c => c.action == showProfile);
-		entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-		// switch the delete action 
-		entry = this.choices.find( c => c.text == "delete");
-		entry.action = this.widget?.is.pin ? deletePin : this.widget?.is.ifName ? deleteInterfaceName : ()=>{};
+		// set the options
+		this.choices = this.node.link ? withLink : noLink;
 
 		// check if there are pins to paste
-		entry = this.choices.find( c => c.text == "paste pins");
-	},
+		const entry = this.choices.find( c => c.text == "paste pins");
+		if (entry) {
+			entry.state = "disabled";
+			editor.tx.request('clipboard get',editor.doc)
+			.then( clipboard => {
+				entry.state = (clipboard.selection.what === selex.ifArea || clipboard.selection.what === selex.pinArea) ? "enabled" : "disabled";
+			})
+			.catch( error => {});
+		}
+	}
 };
 
 // is = {channel, input, request, proxy}
 function newInput() {
-
-	pinAreaCxMenu.node?.cannotBeModified();
-
-	// set the flags
-	const is = {	channel: false, 
-					input: true, 
-					proxy: pinAreaCxMenu.node.is.group
-				};
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is});
+	const is = {channel: false, input: true, proxy: ifCxMenu.node.is.group};
+	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
 }
 function newOutput() {
-	// set the flags
-	const is = {	channel: false, 
-					input: false, 
-					proxy: pinAreaCxMenu.node.is.group
-				};
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is});
+	const is = {channel: false, input: false, proxy: ifCxMenu.node.is.group};
+	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
 }
 function newRequest() {
-	// set the flags
-	const is = {	channel: true, 
-					input: false, 
-					proxy: pinAreaCxMenu.node.is.group
-				};
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is});
+	const is = {channel: true, input: false,proxy: ifCxMenu.node.is.group};
+	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
 }
 function newReply() {
-	// set the flags
-	const is = {	channel: true, 
-					input: true, 
-					proxy: pinAreaCxMenu.node.is.group
-				};
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is});
-}
-function inOutSwap() {
-	editor.doEdit('ioSwap',{pin: pinAreaCxMenu.widget});
-}
-function channelOnOff() {
-	editor.doEdit('channelOnOff',{pin: pinAreaCxMenu.widget});
-}
-function disconnectPin() {
-	editor.doEdit('disconnectPin', {pin: pinAreaCxMenu.widget});
-}
-function deletePin() {
-	editor.doEdit('deletePin',{view: pinAreaCxMenu.view,pin: pinAreaCxMenu.widget});
+	const is = {channel: true,input: true,proxy: ifCxMenu.node.is.group};
+	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
 }
 function newInterfaceName() {
-	editor.doEdit('newInterfaceName', {view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos: pinAreaCxMenu.xyLocal});
+	editor.doEdit('newInterfaceName', {view: ifCxMenu.view, node:ifCxMenu.node, pos: ifCxMenu.xyLocal});
 }
-function deleteInterfaceName() {
-	editor.doEdit('deleteInterfaceName',{view: pinAreaCxMenu.view,ifName: pinAreaCxMenu.widget});
+function ioSwitch() {
+	editor.doEdit('ioSwitchPinArea', {view: ifCxMenu.view});
 }
-function showProfile(e) {
-	editor.doEdit('showProfile',{pin: pinAreaCxMenu.widget, pos: {x:pinAreaCxMenu.xyScreen.x, y:pinAreaCxMenu.xyScreen.y + 10}});
+function ifDisconnect() {
+	editor.doEdit('disconnectPinArea', {});
+}
+function ifDelete() {
+	editor.doEdit('deletePinArea',{view: ifCxMenu.view});
 }
 
-function pinsSwap$1()  {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:true, right:true});
+// pin swapping
+function ifPinsSwap()  {
+	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:true, right:true});
+}
+function ifPinsLeft()  {
+	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:true, right:false});
+}
+function ifPinsRight() {
+	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:false, right:true});
 }
 
-function pinsLeft$1()  {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:true, right:false});
+function ifToClipboard() {
+		editor.doEdit('selectionToClipboard',{view: ifCxMenu.view});
 }
-function pinsRight$1() {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:false, right:true});
-}
-function pasteWidgetsFromClipboard()  {
+
+// paste widgets
+function pastePinsFromClipboard()  {
 
 	// request the clipboard - also set the target, the clipboard can come from another file
 	editor.tx.request('clipboard get',editor.doc).then( clipboard => {
 
-		editor.doEdit('pasteWidgetsFromClipboard',{	view: pinAreaCxMenu.view, clipboard});
-	});
-	//.catch( error => console.log('paste: clipboard get error -> ' + error))
+		editor.doEdit('pasteWidgetsFromClipboard',{	view: ifCxMenu.view, clipboard});
+	})
+	.catch( error => console.log('paste: clipboard get error -> ' + error));
 }
 
 const selectFreeCxMenu = {
@@ -6597,7 +7008,7 @@ function group() {
 }
 
 // click on the node
-const selectWidgetsCxMenu = {
+const pinAreaCxMenu = {
 
 	choices: [
 		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
@@ -6606,6 +7017,8 @@ const selectWidgetsCxMenu = {
 		{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
 		{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
 		{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
+		{text:"in/out switch",	  	  	  icon:"cached",state:"disabled", action:inOutSwitch},
+
 	],
 
 	view: null,
@@ -6625,22 +7038,25 @@ const selectWidgetsCxMenu = {
 	},
 };
 function selectionToClipboard() {
-    editor.doEdit('selectionToClipboard',{view: selectWidgetsCxMenu.view});
+    editor.doEdit('selectionToClipboard',{view: pinAreaCxMenu.view});
 }
 function disconnectPinArea() {
-	editor.doEdit('disconnectPinArea', {view: selectWidgetsCxMenu.view, node: selectWidgetsCxMenu.node, widgets: selectWidgetsCxMenu.widgets});
+	editor.doEdit('disconnectPinArea', {view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets});
 }
 function deletePinArea() {
-	editor.doEdit('deletePinArea',{view: selectWidgetsCxMenu.view, node: selectWidgetsCxMenu.node, widgets: selectWidgetsCxMenu.widgets});
+	editor.doEdit('deletePinArea',{view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets});
 }
 function pinsSwap()  {
-	editor.doEdit('swapPinArea',{view: selectWidgetsCxMenu.view, left:true, right:true});
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:true});
 }
 function pinsLeft()  {
-	editor.doEdit('swapPinArea',{view: selectWidgetsCxMenu.view, left:true, right:false});
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:false});
 }
 function pinsRight() {
-	editor.doEdit('swapPinArea',{view: selectWidgetsCxMenu.view, left:false, right:true});
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:false, right:true});
+}
+function inOutSwitch() {
+	editor.doEdit('ioSwitchPinArea', {view});
 }
 
 const busCxMenu = {
@@ -6782,72 +7198,123 @@ function deletePad() {
 }
 
 const contextHandling = {
-
     // show the rightclick menu
     onContextMenu(xyLocal, e) {
-
         // save the location
         this.saveHitSpot(xyLocal, e);
 
         // check what was hit inside the window !
         this.mouseHit(xyLocal);
 
-        switch(this.hit.what) {
-
+        switch (this.hit.what) {
             case zap.header:
-            case zap.icon: {
-                nodeCxMenu.prepare(this);
-                editor.tx.send("show context menu", {menu:nodeCxMenu.choices, event:e});
-            }
-            break
+            case zap.icon:
+                {
+                    nodeCxMenu.prepare(this);
+                    editor.tx.send('show context menu', {
+                        menu: nodeCxMenu.choices,
+                        event: e,
+                    });
+                }
+                break;
 
             case zap.node:
             case zap.pin:
-            case zap.ifName:{
-                pinAreaCxMenu.prepare(this);
-                editor.tx.send("show context menu", {menu: pinAreaCxMenu.choices, event:e});
-            }
-            break
+                {
+                    pinCxMenu.prepare(this);
+                    editor.tx.send('show context menu', {
+                        menu: pinCxMenu.choices,
+                        event: e,
+                    });
+                }
+                break;
+
+            case zap.ifName:
+                {
+                    // we select the entire interface here
+                    this.selection.interfaceSelect(
+                        this.hit.node,
+                        this.hit.lookWidget
+                    );
+
+                    // prepare the context menu
+                    ifCxMenu.prepare(this);
+
+                    editor.tx.send('show context menu', {
+                        menu: ifCxMenu.choices,
+                        event: e,
+                    });
+                }
+                break;
 
             case zap.busSegment:
-            case zap.busLabel: {
-                busCxMenu.prepare(this);
-                editor.tx.send("show context menu", {menu:busCxMenu.choices, event:e});
-            }
-            break
+            case zap.busLabel:
+                {
+                    busCxMenu.prepare(this);
+                    editor.tx.send('show context menu', {
+                        menu: busCxMenu.choices,
+                        event: e,
+                    });
+                }
+                break;
 
             case zap.pad:
-            case zap.padArrow: {
-                padCxMenu.prepare(this);
-                editor.tx.send("show context menu", {menu:padCxMenu.choices, event:e});
-            }
-            break
-
-            case zap.selection: {
-
-                switch(this.selection.what) {
-
-                    case selex.freeRect: 
-                    case selex.multiNode: {
-                        selectFreeCxMenu.prepare(this);
-                        editor.tx.send("show context menu", {menu:selectFreeCxMenu.choices, event:e});
-                    }
-                    break
-
-                    case selex.pinArea: {
-                        selectWidgetsCxMenu.prepare(this);
-                        editor.tx.send("show context menu", {menu:selectWidgetsCxMenu.choices, event:e});
-                    }
-                    break
+            case zap.padArrow:
+                {
+                    padCxMenu.prepare(this);
+                    editor.tx.send('show context menu', {
+                        menu: padCxMenu.choices,
+                        event: e,
+                    });
                 }
-            }
-            break
+                break;
 
-            case zap.nothing: {
-                bgCxMenu.prepare(this);
-                editor.tx.send("show context menu", {menu:bgCxMenu.choices, event:e});                
-            }
-            break
+            case zap.selection:
+                {
+                    switch (this.selection.what) {
+                        case selex.freeRect:
+                        case selex.multiNode:
+                            {
+                                selectFreeCxMenu.prepare(this);
+                                editor.tx.send('show context menu', {
+                                    menu: selectFreeCxMenu.choices,
+                                    event: e,
+                                });
+                            }
+                            break;
+
+                        case selex.ifArea:
+                            {
+                                ifCxMenu.prepare(this);
+                                editor.tx.send('show context menu', {
+                                    menu: ifCxMenu.choices,
+                                    event: e,
+                                });
+                            }
+                            break;
+
+                        case selex.pinArea:
+                            {
+                                pinAreaCxMenu.prepare(this);
+                                editor.tx.send('show context menu', {
+                                    menu: pinAreaCxMenu.choices,
+                                    event: e,
+                                });
+                            }
+                            break;
+                    }
+                }
+                break;
+
+            case zap.nothing:
+                {
+                    bgCxMenu.prepare(this);
+                    editor.tx.send('show context menu', {
+                        menu: bgCxMenu.choices,
+                        event: e,
+                    });
+                }
+                break;
         }
     },
 };
@@ -6968,16 +7435,14 @@ const selectionHandling = {
     // cb is the clipboard
     deltaForPaste(pos, cb) {
 
+        if (!pos) return null;
+
         // increment the copy count
         cb.copyCount++;
 
         const slct = cb.selection;
 
-        const ref = (slct.what == selex.freeRect) 
-                        ? slct.rect 
-                        : (slct.what == selex.multiNode) 
-                            ? slct.nodes[0].look.rect 
-                            : {x:0, y:0};
+        const ref = (slct.what == selex.freeRect) ? slct.rect : (slct.what == selex.multiNode) ? slct.nodes[0].look.rect  : {x:0, y:0};
 
         // if the position is the same as the reference - move the first, otherwise only move starting from 2
         return ((ref.x == pos.x) && (ref.y == pos.y)) 
@@ -6997,10 +7462,9 @@ const selectionHandling = {
 
         // calculate where the selection has to be pasted
         const delta = this.deltaForPaste(pos, clipboard);
-        //const pasteHere = this.pastePosition(pos, clipboard)
 
         // if we have selected a node and a position inside the node, get it here (before we reset)
-        const [node, inside] = this.selectedNodeAndPosition();
+        const [node, inside] = this.selection.whereToAdd();
 
         // initialise the selection
         this.selection.reset();
@@ -7096,6 +7560,7 @@ const selectionHandling = {
             }
             break
 
+            case selex.ifArea:
             case selex.pinArea: {
 
                 // check
@@ -7104,11 +7569,13 @@ const selectionHandling = {
                 // paste the widgets 
                 const copies = node.look.copyPinArea(cbslct.widgets, inside);
 
-                // add the pads or the adjust the rx/tx tables
+                // add the pads or adjust the rx/tx tables
                 node.is.source ? node.rxtxAddPinArea(copies) : node.addPads(copies);
 
                 // the selection becomes the widgets that were copied
                 this.selection.pinAreaSelect(copies);
+
+                this.selection.what = cbslct.what;
             }
             break
         }
@@ -7192,7 +7659,7 @@ const selectionHandling = {
 
 
     // get the node and the position where a pin must be added
-    selectedNodeAndPosition() {
+    xxxselectedNodeAndPosition() {
 
         // get the selected node (only one !)
         const node = this.selection.getSingleNode();
@@ -7826,351 +8293,372 @@ const alignHandling = {
 function canProceed(view) {
 
     // get the node and the position where to add
-    const [node, pos] = view.selectedNodeAndPosition();
+    let [node, pos] = view.selection.whereToAdd();
+
+    // maybe we have a valid hit position
+    if (!pos) pos = view.hit.xyLocal;
 
     // check
-    if (!node || !pos) return [false, null, null]
+    if (!node || !pos) return [false, null, null];
 
     // check if we can modify the node
-    if (node.cannotBeModified()) return [false, null, null]
+    if (node.cannotBeModified()) return [false, null, null];
 
     // ok
-    return [true, node, pos]
+    return [true, node, pos];
 }
 
 // The table with the <ctrl> + key combinations
 const justKeyTable = {
-
     // add input
     i: (view) => {
-
         //check
         const [ok, node, pos] = canProceed(view);
-        if (!ok) return
+        if (!ok) return;
 
         // type of pin
-        const is = {	
-            channel: false, 
-            input: true, 
-            proxy: node.is.group 
-        };
+        const is = {
+            channel: false,
+            input: true,
+            proxy: node.is.group};
 
         // add the pin
-        editor.doEdit('newPin',{view, node, pos, is});
+        editor.doEdit('newPin', { view, node, pos, is });
     },
 
     // add output
     o: (view) => {
-
         //check
         const [ok, node, pos] = canProceed(view);
-        if (!ok) return
+        if (!ok) return;
 
-        const is = {	
-            channel: false, 
-            input: false, 
+        const is = {
+            channel: false,
+            input: false,
             proxy: node.is.group
         };
 
         // add an input pin where the click happened
-        editor.doEdit('newPin',{view, node, pos, is});
+        editor.doEdit('newPin', { view, node, pos, is });
     },
 
     // add request
     q: (view) => {
-
         //check
         const [ok, node, pos] = canProceed(view);
-        if (!ok) return
+        if (!ok) return;
 
         // type of pin
-        const is = {	
-            channel: true, 
-            input: false, 
-            proxy: node.is.group
+        const is = {
+            channel: true,
+            input: false,
+            proxy: node.is.group,
         };
 
         // add the pin
-        editor.doEdit('newPin',{view, node, pos, is});
+        editor.doEdit('newPin', { view, node, pos, is });
     },
 
     // add reply
     r: (view) => {
-
         //check
         const [ok, node, pos] = canProceed(view);
-        if (!ok) return
+        if (!ok) return;
 
         // type of pin
-        const is = {	
-            channel: true, 
-            input: true, 
-            proxy: node.is.group
+        const is = {
+            channel: true,
+            input: true,
+            proxy: node.is.group,
         };
 
         // add the pin
-        editor.doEdit('newPin',{view, node, pos, is});
+        editor.doEdit('newPin', { view, node, pos, is });
     },
 
     // add ifName
     p: (view) => {
-
         //check
         const [ok, node, pos] = canProceed(view);
-        if (!ok) return
+        if (!ok) return;
 
         // add an input pin where the click happened
-        editor.doEdit('newInterfaceName',{view, node, pos});
+        editor.doEdit('newInterfaceName', { view, node, pos });
     },
 
     // add a label
-	a: (view) => {
-
+    a: (view) => {
         // get the selected node (only one !)
         const node = view.selection.getSingleNode();
-        if (! node ) return
+        if (!node) return;
 
         // check if already a lable
         const label = node.look.findLabel();
-        if (label) 
-            editor.doEdit('widgetTextEdit',{view, widget: label});
-        else 
-            editor.doEdit('addLabel',{node});
+        if (label) editor.doEdit('widgetTextEdit', { view, widget: label });
+        else editor.doEdit('addLabel', { node });
     },
 
     // highlight/unhighlight
     h: (view) => {
         // get the selected node (only one !)
         const node = view.selection.getSingleNode();
-        if (! node ) return
+        if (!node) return;
 
         // highlight/unhighlight
-	    editor.doEdit('nodeHighLight', {node});
+        editor.doEdit('nodeHighLight', { node });
     },
 
     '+': (view) => {
-
         const widget = view.selection.getSelectedWidget();
 
         // check
         if (!widget || !widget.node || widget.node.cannotBeModified()) return;
 
         // ok
-        editor.doEdit('widgetTextEdit',{view, widget, cursor:-1});
+        editor.doEdit('widgetTextEdit', { view, widget, cursor: -1 });
     },
 
     '-': (view) => {
-
         const widget = view.selection.getSelectedWidget();
 
         // check
         if (!widget || !widget.node || widget.node.cannotBeModified()) return;
 
-        // start 
-        editor.doEdit('widgetTextEdit',{view, widget, cursor:0, clear:true});
+        // start
+        editor.doEdit('widgetTextEdit', {
+            view,
+            widget,
+            cursor: 0,
+            clear: true,
+        });
     },
 
     // delete the selection or the single node
-    'Clear': (view) => {
-
+    Clear: (view) => {
         // get the selected node only if nothing else is selected
-        const node = view.selection.what == selex.singleNode ? view.selection.getSingleNode() : null;
+        const node =
+            view.selection.what == selex.singleNode
+                ? view.selection.getSingleNode()
+                : null;
 
-        if (node) 
-            editor.doEdit('disconnectNode',{node});
-        else
-            editor.doEdit('disconnectSelection', {view});
+        if (node) editor.doEdit('disconnectNode', { node });
+        else editor.doEdit('disconnectSelection', { view });
     },
 
     // delete the selection or the single node
-    'Delete': (view) => {
-
-        switch(view.selection.what) {
-
+    Delete: (view) => {
+        switch (view.selection.what) {
             case selex.nothing:
-                break
+                break;
 
             case selex.freeRect:
-                editor.doEdit('deleteSelection', {view});
-                break
+                editor.doEdit('deleteSelection', { view });
+                break;
 
             case selex.pinArea:
-
                 //check if ok
                 const [ok, node, pos] = canProceed(view);
-                if (!ok) return
+                if (!ok) return;
 
-                editor.doEdit('deletePinArea',{ view,
-                                                node: view.selection.getSingleNode(), 
-                                                widgets: view.selection.widgets});
-                break
+                editor.doEdit('deletePinArea', {
+                    view,
+                    node: view.selection.getSingleNode(),
+                    widgets: view.selection.widgets,
+                });
+                break;
 
             case selex.singleNode:
-                
                 // maybe there is a widget selected
                 const widget = view.selection.getSelectedWidget();
 
                 // check
                 if (!widget) {
-
                     // get the node, delete and done
                     const node = view.selection.getSingleNode();
-                    if (node) editor.doEdit('deleteNode',{node});
-                    return
+                    if (node) editor.doEdit('deleteNode', { node });
+                    return;
                 }
 
                 // check
-                if (widget.node.cannotBeModified()) return
+                if (widget.node.cannotBeModified()) return;
 
                 // which pin
-                if (widget.is.pin) 
-                    editor.doEdit('deletePin',{view, pin: widget});
-                else if (widget.is.ifName) 
-                    editor.doEdit('deleteInterfaceName',{view, ifName: widget});
-                break
+                if (widget.is.pin)
+                    editor.doEdit('deletePin', { view, pin: widget });
+                else if (widget.is.ifName)
+                    editor.doEdit('deleteInterfaceName', {
+                        view,
+                        ifName: widget,
+                    });
+                break;
 
             case selex.multiNode:
-                editor.doEdit('deleteSelection', {view});
-                break
-
+                editor.doEdit('deleteSelection', { view });
+                break;
         }
     },
 
-    'Enter': (view) => {
-
+    Enter: (view) => {
         // if there is a pin selected, we start editing the pin
         const editable = view.selection.getSelectedWidget();
         if (editable) {
-
             // check
-            if (editable.node.cannotBeModified()) return
+            if (editable.node.cannotBeModified()) return;
 
             // start editing
-            editor.doEdit('widgetTextEdit',{view, widget: editable});
+            editor.doEdit('widgetTextEdit', { view, widget: editable });
         }
     },
 
-    'ArrowDown': (view) => {
-       const below = view.selection.widgetBelow();
-       if (below) view.selection.switchWidget(below);
+    ArrowDown: (view) => {
+        const below = view.selection.widgetBelow();
+        if (below) view.selection.switchToWidget(below);
     },
 
-    'ArrowUp': (view) => {
-       const above = view.selection.widgetAbove();
-       if (above) view.selection.switchWidget(above);
+    ArrowUp: (view) => {
+        const above = view.selection.widgetAbove();
+        if (above) view.selection.switchToWidget(above);
     },
 
     // undo
-    'Undo': (view) => editor.undoLastEdit(),
+    Undo: (view) => editor.undoLastEdit(),
 
     // redo
-    'Redo': (view) => editor.redoLastEdit(),
+    Redo: (view) => editor.redoLastEdit(),
 
-    // escape 
-    'Escape' : (view) => { view.selection.reset();}
+    // escape
+    Escape: (view) => {
+        view.selection.reset();
+    },
 };
 
 // The table with the <ctrl> + key combinations
 const ctrlKeyTable = {
-
     // a new source node
     s: (view) => {
-
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
         // create a new source node
-        editor.doEdit('newSourceNode',{view, pos: view.hit.xyLocal});
+        editor.doEdit('newSourceNode', { view, pos: view.hit.xyLocal });
     },
 
     // a new group node
     g: (view) => {
-
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
         // create a new source node
-        editor.doEdit('newGroupNode',{view, pos: view.hit.xyLocal});
+        editor.doEdit('newGroupNode', { view, pos: view.hit.xyLocal });
     },
 
     // a new bus
     b: (view) => {
-
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
         // create a new busbar
-        editor.doEdit('busCreate',{view, pos: view.hit.xyLocal, cable:false});
+        editor.doEdit('busCreate', {
+            view,
+            pos: view.hit.xyLocal,
+            cable: false,
+        });
     },
 
     // a new bus
     k: (view) => {
-
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
         // create a new cable
-        editor.doEdit('busCreate',{view, pos: view.hit.xyLocal, cable:true});
+        editor.doEdit('busCreate', {
+            view,
+            pos: view.hit.xyLocal,
+            cable: true,
+        });
     },
 
     // copy
     c: (view) => {
-        editor.doEdit('selectionToClipboard', {view});
+        editor.doEdit('selectionToClipboard', { view });
     },
 
     // a new input pad
     i: (view) => {
-        editor.doEdit('padCreate', {view,pos: view.hit.xyLocal, input:true});
+        editor.doEdit('padCreate', {
+            view,
+            pos: view.hit.xyLocal,
+            input: true,
+        });
     },
 
     // add a new output pad
     o: (view) => {
-        editor.doEdit('padCreate', {view,pos: view.hit.xyLocal, input:false});
+        editor.doEdit('padCreate', {
+            view,
+            pos: view.hit.xyLocal,
+            input: false,
+        });
     },
 
     // paste as link
     l: (view) => {
+        // request the clipboard - also set the target, the clipboard can come from another file
+        editor.tx
+            .request('clipboard get', editor.doc)
+            .then((clipboard) => {
+                // get the type of selection
+                const what = clipboard.selection.what;
 
-       // request the clipboard - also set the target, the clipboard can come from another file
-       editor.tx.request('clipboard get',editor.doc).then( clipboard => {
+                // if there is nothing , done
+                if (what == selex.nothing) return;
 
-            // get the type of selection
-            const what = clipboard.selection.what;
+                // link pin area paste operation is not defined
+                if (what == selex.pinArea) return;
 
-            // if there is nothing , done
-            if (what == selex.nothing) return
-
-            // link pin area paste operation is not defined 
-            if (what == selex.pinArea) return
-
-            // other cases do the standard link operation
-            editor.doEdit('linkFromClipboard',{view, pos: view.hit.xyLocal, clipboard});
-        })
-        .catch( error => console.log('ctrl-l : clipboard get error -> ' + error));
+                // other cases do the standard link operation
+                editor.doEdit('linkFromClipboard', {
+                    view,
+                    pos: view.hit.xyLocal,
+                    clipboard,
+                });
+            })
+            .catch((error) =>
+                console.log('ctrl-l : clipboard get error -> ' + error)
+            );
     },
 
     // paste
     v: (view) => {
-
         // request the clipboard - also set the target, the clipboard can come from another file
-        editor.tx.request('clipboard get',editor.doc).then( clipboard => {
+        editor.tx
+            .request('clipboard get', editor.doc)
+            .then((clipboard) => {
+                // get the type of selection
+                const what = clipboard.selection.what;
 
-            // get the type of selection
-            const what = clipboard.selection.what;
+                // if there is nothing , done
+                if (what == selex.nothing) return;
 
-            // if there is nothing , done
-            if (what == selex.nothing) return
+                // The pin area paste operation is defined elsewhere..
+                if (what == selex.pinArea) {
+                    editor.doEdit('pasteWidgetsFromClipboard', {
+                        view,
+                        clipboard,
+                    });
+                    return;
+                }
 
-            // The pin area paste operation is defined elsewhere..
-            if (what == selex.pinArea) {
-                editor.doEdit('pasteWidgetsFromClipboard', {view, clipboard});
-                return
-            }
-
-            // other cases do the standard paste operation
-            editor.doEdit('pasteFromClipboard',{view, pos: view.hit.xyLocal, clipboard});
-        })
-        .catch( error => console.log('ctrl-v : clipboard get error -> ' + error));
+                // other cases do the standard paste operation
+                editor.doEdit('pasteFromClipboard', {
+                    view,
+                    pos: view.hit.xyLocal,
+                    clipboard,
+                });
+            })
+            .catch((error) =>
+                console.log('ctrl-v : clipboard get error -> ' + error)
+            );
     },
 
     // undo
@@ -8181,24 +8669,22 @@ const ctrlKeyTable = {
 
     // wider
     '+': (view) => {
-
         // get the selected node (only one !)
         const node = view.selection.getSingleNode();
-        if (! node ) return
+        if (!node) return;
 
         // make wider
-        editor.doEdit('wider', {node});
+        editor.doEdit('wider', { node });
     },
 
     // thinner
     '-': (view) => {
-        
         // get the selected node (only one !)
         const node = view.selection.getSingleNode();
-        if (! node ) return
+        if (!node) return;
 
         // make wider
-        editor.doEdit('smaller', {node});
+        editor.doEdit('smaller', { node });
     },
 };
 
@@ -8425,7 +8911,8 @@ function Header(rect, node) {
     // binary state 
     this.is = {
         header: true,
-        highLighted: false
+        highLighted: false,
+        alert: false
     };
     // the title is the name of the node
     this.title = node.name;
@@ -8478,6 +8965,8 @@ Header.prototype = {
 
         // draw the text
         shape.centerText(ctx, this.title, st.font, color, x, y, w, h);
+
+        if (this.is.alert) shape.circle(x,y,10,'#ff0000');
     },
 
     // true if the title area was hit (the y-hit is already established !)
@@ -8619,11 +9108,12 @@ const pinNameHandling = {
     // there is a prefix or a postfix that is not displayed
     withoutPrefix() {
 
-        //const x = '\u271A '
-        const space = '+ ';
+        // change a space into a subscript '+' sign
+        const space = '\u208A';
 
-        if (this.pxlen == 0) return this.name
-
+        if (this.pxlen == 0) {
+            return this.name
+        }
         else if (this.pxlen > 0) {
 
             let noPrefix = this.name.slice(this.pxlen);
@@ -8804,7 +9294,7 @@ const pinNameHandling = {
         // The messages between the pins must overlap
         const allPinMsgs = pin.is.multi ? convert.expandMultis(pin.lowerCase()) : [pin.lowerCase()];
         const allThisMsgs = this.is.multi ? convert.expandMultis(this.lowerCase()) : [this.lowerCase()];
-
+//console.log('MULTI', allPinMsgs, allThisMsgs)
         // at the first common message we return
         for(const pinMsg of allPinMsgs) {
             if ( allThisMsgs.includes(pinMsg)) return true
@@ -8877,10 +9367,9 @@ const pinNameHandling = {
     }
 };
 
-function Pin(rect,node,name,is){
-    
+function Pin(rect, node, name, is) {
     // copy the rectangle
-    this.rect = {...rect}; 
+    this.rect = { ...rect };
 
     // the node for which this is a pin
     this.node = node;
@@ -8898,20 +9387,20 @@ function Pin(rect,node,name,is){
     this.is = {
         pin: true,
         proxy: false,
-        channel: is.channel ?? false,               
+        channel: is.channel ?? false,
         input: is.input ?? false,
-        left: is.left ?? false,      // default set inputs right
-        multi: is.multi ?? false,    // the pin can send / receive several messages
-        selected: false,             // when the pin is selected
+        left: is.left ?? false, // default set inputs right
+        multi: is.multi ?? false, // the pin can send / receive several messages
+        selected: false, // when the pin is selected
         highLighted: false,
-        hoverOk:false,               // to give feedback when hovering over the pin
+        hoverOk: false, // to give feedback when hovering over the pin
         hoverNok: false,
-        zombie: is.zombie ?? false,  // for pins that are invalid
-        added: false,                // for pins that have been added (or name change)
-        duplicate: false
+        zombie: is.zombie ?? false, // for pins that are invalid
+        added: false, // for pins that have been added (or name change)
+        duplicate: false,
     };
 
-    // the parameter profile 
+    // the parameter profile
     this.profile = '';
 
     // The prompt for the input handler or a description of when the output is sent
@@ -8923,195 +9412,283 @@ function Pin(rect,node,name,is){
 
 // The pin prototype
 Pin.prototype = {
-
-
     // pChar is where the cursor has to come
-    drawCursor(ctx, pChar,on) {
-
+    drawCursor(ctx, pChar, on) {
         // notation
         const rc = this.rect;
         const m = style$1.pin.wMargin;
 
         // relative x position of the cursor
-        const cx = ctx.measureText(this.name.slice(0,pChar)).width;
+        const cx = ctx.measureText(this.name.slice(0, pChar)).width;
 
         // absolute position of the cursor...
-        const xCursor = this.is.left ? rc.x + m + cx : rc.x + rc.w - m - ctx.measureText(this.name).width + cx;
+        const xCursor = this.is.left
+            ? rc.x + m + cx
+            : rc.x + rc.w - m - ctx.measureText(this.name).width + cx;
 
         // the color for the blink effect
         const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
         //const color = on ? style.pin.cConnected : style.box.cBackground
 
         // and draw the cursor
-        shape.cursor(ctx, xCursor, rc.y, style$1.std.wCursor, rc.h, color); 
+        shape.cursor(ctx, xCursor, rc.y, style$1.std.wCursor, rc.h, color);
     },
 
     // arrows in and out
     render(ctx) {
-
         // notation
         const st = style$1.pin;
         const rc = this.rect;
 
         // the name to display
-        const displayName = this.pxlen == 0 ?  this.name : this.withoutPrefix();
+        const displayName = this.pxlen == 0 ? this.name : this.withoutPrefix();
 
         // select the color for the widget
-        const {cArrow, cText} = this.setColor();
+        const { cArrow, cText } = this.setColor();
 
         // the y position of the arrow
-        const yArrow = rc.y+(st.hPin-st.wArrow)/2;
+        const yArrow = rc.y + (st.hPin - st.wArrow) / 2;
 
         // we shift the arrow a little bit...
-        const dx = style$1.box.wLine/2;
+        const dx = style$1.box.wLine / 2;
 
         // The shape for a channel is different
-        const pointLeft = this.is.channel ? shape.triangleBall : shape.leftTriangle;
-        const pointRight = this.is.channel ? shape.ballTriangle : shape.rightTriangle;
+        const pointLeft = this.is.channel
+            ? shape.triangleBall
+            : shape.leftTriangle;
+        const pointRight = this.is.channel
+            ? shape.ballTriangle
+            : shape.rightTriangle;
 
-// debug : draws a green rectangle around the pin
-// shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#00FF00", null)
+        // debug : draws a green rectangle around the pin
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#00FF00", null)
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
             const xArrow = rc.x + st.wOutside;
-            this.is.multi   ? shape.leftTextMulti(ctx,displayName,st.fMulti,cText, rc.x + style$1.pin.wMargin,rc.y, rc.w, rc.h)
-                            : shape.leftText(ctx,displayName,cText, rc.x + style$1.pin.wMargin,rc.y, rc.w, rc.h);
-            this.is.input   ? pointRight(ctx,xArrow-dx, yArrow,st.hArrow, st.wArrow,cArrow)
-                            : pointLeft(ctx,xArrow - st.hArrow + dx,yArrow,st.hArrow, st.wArrow,cArrow);
-        }
-        else {
+            this.is.multi
+                ? shape.leftTextMulti(
+                      ctx,
+                      displayName,
+                      st.fMulti,
+                      cText,
+                      rc.x + style$1.pin.wMargin,
+                      rc.y,
+                      rc.w,
+                      rc.h
+                  )
+                : shape.leftText(
+                      ctx,
+                      displayName,
+                      cText,
+                      rc.x + style$1.pin.wMargin,
+                      rc.y,
+                      rc.w,
+                      rc.h
+                  );
+            this.is.input
+                ? pointRight(
+                      ctx,
+                      xArrow - dx,
+                      yArrow,
+                      st.hArrow,
+                      st.wArrow,
+                      cArrow
+                  )
+                : pointLeft(
+                      ctx,
+                      xArrow - st.hArrow + dx,
+                      yArrow,
+                      st.hArrow,
+                      st.wArrow,
+                      cArrow
+                  );
+        } else {
             const xArrow = rc.x + rc.w - st.wOutside;
-            this.is.multi   ? shape.rightTextMulti(ctx, displayName, st.fMulti, cText,rc.x, rc.y,rc.w - style$1.pin.wMargin, rc.h)
-                            : shape.rightText(ctx, displayName, cText,rc.x, rc.y,rc.w - style$1.pin.wMargin, rc.h);
-            this.is.input   ? pointLeft(ctx,xArrow - st.hArrow + dx,yArrow,st.hArrow, st.wArrow,cArrow)
-                            : pointRight(ctx,xArrow -dx ,yArrow,st.hArrow, st.wArrow,cArrow);        
+            this.is.multi
+                ? shape.rightTextMulti(
+                      ctx,
+                      displayName,
+                      st.fMulti,
+                      cText,
+                      rc.x,
+                      rc.y,
+                      rc.w - style$1.pin.wMargin,
+                      rc.h
+                  )
+                : shape.rightText(
+                      ctx,
+                      displayName,
+                      cText,
+                      rc.x,
+                      rc.y,
+                      rc.w - style$1.pin.wMargin,
+                      rc.h
+                  );
+            this.is.input
+                ? pointLeft(
+                      ctx,
+                      xArrow - st.hArrow + dx,
+                      yArrow,
+                      st.hArrow,
+                      st.wArrow,
+                      cArrow
+                  )
+                : pointRight(
+                      ctx,
+                      xArrow - dx,
+                      yArrow,
+                      st.hArrow,
+                      st.wArrow,
+                      cArrow
+                  );
         }
 
         // show name clashes
         if (this.is.duplicate) {
-            shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,st.cBad, null);
+            shape.rectRect(ctx, rc.x, rc.y, rc.w, rc.h, st.cBad, null);
         }
     },
 
     setColor() {
-
         // color of the arrow ( unconnected connected selected)
-        const cArrow =    this.is.hoverNok          ? style$1.pin.cBad
-                        : this.is.hoverOk           ? style$1.pin.cSelected
-                        : this.is.highLighted       ? style$1.pin.cHighLighted
-                        : this.is.selected          ? style$1.pin.cSelected 
-                        : this.routes.length > 0    ? style$1.pin.cConnected 
-                        : style$1.pin.cNormal;
+        const cArrow = this.is.hoverNok
+            ? style$1.pin.cBad
+            : this.is.hoverOk
+              ? style$1.pin.cSelected
+              : this.is.highLighted
+                ? style$1.pin.cHighLighted
+                : this.is.selected
+                  ? style$1.pin.cSelected
+                  : this.routes.length > 0
+                    ? style$1.pin.cConnected
+                    : style$1.pin.cNormal;
 
         // color of the text
-        const cText =     this.is.hoverNok          ? style$1.pin.cBad
-                        : this.is.hoverOk           ? style$1.pin.cSelected
-                        : this.is.added             ? style$1.pin.cAdded 
-                        : this.is.zombie            ? style$1.pin.cBad 
-                        : this.is.highLighted       ? style$1.pin.cHighLighted
-                        : this.is.selected          ? style$1.pin.cSelected 
-                        : this.routes.length > 0    ? style$1.pin.cConnected
+        const cText = this.is.hoverNok
+            ? style$1.pin.cBad
+            : this.is.hoverOk
+              ? style$1.pin.cSelected
+              : this.is.added
+                ? style$1.pin.cAdded
+                : this.is.zombie
+                  ? style$1.pin.cBad
+                  : this.is.highLighted
+                    ? style$1.pin.cHighLighted
+                    : this.is.selected
+                      ? style$1.pin.cSelected
+                      : this.routes.length > 0
+                        ? style$1.pin.cConnected
                         : style$1.pin.cText;
-                
-        return {cArrow, cText}
+
+        return { cArrow, cText };
     },
 
     // returns the center of the pin (h of the arrow is along x-axis here !)
     center() {
-
         const wOut = style$1.pin.wOutside;
         const rc = this.rect;
-        return this.is.left ? {x: rc.x + wOut, y: rc.y + rc.h/2} : {x: rc.x + rc.w - wOut, y: rc.y + rc.h/2}
+        return this.is.left
+            ? { x: rc.x + wOut, y: rc.y + rc.h / 2 }
+            : { x: rc.x + rc.w - wOut, y: rc.y + rc.h / 2 };
     },
 
     // checks if a pin can connect to another pin
     canConnect(pin) {
-
-        // from and to are the same 
-        if (this == pin) return false
+        // from and to are the same
+        if (this == pin) return false;
 
         // both cannot be outputs or inputs
-        if (this.is.input === pin.is.input) return false
+        if (this.is.input === pin.is.input) return false;
 
         // multi messages can only be connected if there is a (partial) overlap
-        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin)) return false
+        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin))
+            return false;
 
         // check if we have already a connection between the pins
-        if (this.haveRoute(pin)) return false
+        if (this.haveRoute(pin)) return false;
 
         // its ok
-        return true
+        return true;
     },
 
-    // There is a route to the widget, but check if messages can flow 
+    // There is a route to the widget, but check if messages can flow
     areConnected(widget) {
-
         if (widget.is.pin) {
-
             // should not happen
-            if (widget.is.input == this.is.input) return false
+            if (widget.is.input == this.is.input) return false;
 
             // multis
-            if ((widget.is.multi || this.is.multi ) && !this.hasMultiOverlap(widget)) return false
-        }
-        else if (widget.is.pad) {
-
+            if (
+                (widget.is.multi || this.is.multi) &&
+                !this.hasMultiOverlap(widget)
+            )
+                return false;
+        } else if (widget.is.pad) {
             // should not happen
-            if (widget.proxy.is.input != this.is.input) return false
+            if (widget.proxy.is.input != this.is.input) return false;
 
             // multis
-            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy)) return false
+            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy))
+                return false;
         }
-        return true
-    },  
+        return true;
+    },
 
     toJSON() {
+        this.is.input
+            ? this.is.channel
+                ? 'reply'
+                : 'input'
+            : this.is.channel
+              ? 'request'
+              : 'output';
 
-        this.is.input ? (this.is.channel ? 'reply' : 'input') : (this.is.channel ? 'request' : 'output');
-
-        // seperate data into editor and 
+        // seperate data into editor and
         const json = {
             name: this.name,
-            kind: this.is.input ? (this.is.channel ? 'reply' : 'input') : (this.is.channel ? 'request' : 'output'),
+            kind: this.is.input
+                ? this.is.channel
+                    ? 'reply'
+                    : 'input'
+                : this.is.channel
+                  ? 'request'
+                  : 'output',
             editor: {
                 id: this.wid,
-                align: (this.is.left ? 'left' : 'right')
-            }
+                align: this.is.left ? 'left' : 'right',
+            },
         };
 
         // if the pin is a proxy, we add the pad-related stuff
         if (this.is.proxy) {
-
             json.editor.pad = {
                 rect: convert.rectToString(this.pad.rect),
-                align: this.pad.is.leftText ? 'left' : 'right'
+                align: this.pad.is.leftText ? 'left' : 'right',
             };
         }
 
-        return json
-    },   
+        return json;
+    },
 
     // remove a route from the routes array
     removeRoute(route) {
-
         eject(this.routes, route);
     },
 
-
     adjustRoutes() {
-        for(const route of this.routes) route.adjust();
+        for (const route of this.routes) route.adjust();
     },
 
     // changes the position from left to right
     leftRightSwap() {
-
         // notation
         const rc = this.node.look.rect;
 
         // change the x coordinate
-        this.rect.x = this.is.left  ? rc.x + rc.w - this.rect.w + style$1.pin.wOutside 
-                                    : rc.x - style$1.pin.wOutside;
+        this.rect.x = this.is.left
+            ? rc.x + rc.w - this.rect.w + style$1.pin.wOutside
+            : rc.x - style$1.pin.wOutside;
         // change
         this.is.left = !this.is.left;
 
@@ -9120,18 +9697,25 @@ Pin.prototype = {
     },
 
     drag(pos) {
-
         // notation
         const rc = this.node.look.rect;
 
         // notation
-        const center = rc.x + rc.w/2;
+        const center = rc.x + rc.w / 2;
 
         // switch left right ?
-        if ((this.is.left && (pos.x > center)) || ( !this.is.left && (pos.x < center))) this.leftRightSwap();
+        if (
+            (this.is.left && pos.x > center) ||
+            (!this.is.left && pos.x < center)
+        )
+            this.leftRightSwap();
 
         // find pin or ifName to swap with
-        const next = this.node.look.findNextWidget(this, pos, next => next.is.pin || next.is.ifName);
+        const next = this.node.look.findNextWidget(
+            this,
+            pos,
+            (next) => next.is.pin || next.is.ifName
+        );
 
         // if no next - done
         if (!next) return;
@@ -9148,7 +9732,6 @@ Pin.prototype = {
     },
 
     moveTo(left, y) {
-
         // check if the pin needs to swap from left to right
         if (left != this.is.left) this.leftRightSwap();
 
@@ -9157,16 +9740,15 @@ Pin.prototype = {
 
         // a widget between the new and the old place has to be moved up or down
         for (const widget of this.node.look.widgets) {
-
             // notation
             const wrc = widget.rect;
 
             // up or down
-            if ((prc.y > y) && (wrc.y >= y) && (wrc.y < prc.y)) {
+            if (prc.y > y && wrc.y >= y && wrc.y < prc.y) {
                 wrc.y += prc.h;
                 if (widget.is.pin) widget.adjustRoutes();
             }
-            if ((prc.y < y) && (wrc.y <= y) && (wrc.y > prc.y)) {
+            if (prc.y < y && wrc.y <= y && wrc.y > prc.y) {
                 wrc.y -= prc.h;
                 if (widget.is.pin) widget.adjustRoutes();
             }
@@ -9179,48 +9761,45 @@ Pin.prototype = {
     },
 
     disconnect() {
-
         // make a copy of the routes - the pin.routes array will be modified during this proc
         const routes = this.routes.slice();
-    
+
         // for all widgets that have routes..
         for (const route of routes) {
-    
             // get the other widget
             const other = route.from == this ? route.to : route.from;
-    
+
             // disconnect
-              other.is.pin ? route.rxtxPinPinDisconnect()
-            : other.is.pad ? route.rxtxPinPadDisconnect()
-            : other.is.tack ? route.rxtxPinBusDisconnect()
-            : null;
-    
+            other.is.pin
+                ? route.rxtxPinPinDisconnect()
+                : other.is.pad
+                  ? route.rxtxPinPadDisconnect()
+                  : other.is.tack
+                    ? route.rxtxPinBusDisconnect()
+                    : null;
+
             // remove the route at both ends
             route.remove();
         }
     },
-    
+
     // this function is used in the undo action (see redox)
     reconnect(routes) {
-    
         // just restore the routes of the pin
         this.routes = routes;
-    
+
         // and also put the routes back in all destinations
         for (const route of routes) {
-    
             // get the other widget
             const other = route.from == this ? route.to : route.from;
-    
+
             if (other.is.pin) {
                 other.routes.push(route);
                 route.rxtxPinPin();
-            }
-            else if (other.is.pad) {
+            } else if (other.is.pad) {
                 other.routes.push(route);
                 route.rxtxPinPad();
-            }
-            else if (other.is.tack) {
+            } else if (other.is.tack) {
                 other.bus.tacks.push(other);
                 route.rxtxPinBus();
             }
@@ -9229,35 +9808,34 @@ Pin.prototype = {
 
     // checks if there is already a route
     haveRoute(other) {
-
-        for(const route of this.routes)  if (route.from == other || route.to == other) return true
-        return false
+        for (const route of this.routes)
+            if (route.from == other || route.to == other) return true;
+        return false;
     },
 
-    ioSwap() {
-
-        // check
-        if (this.routes.length > 0) return false
-        if (this.is.proxy && (this.pad.routes.length > 0)) return false
+    ioSwitch() {
         
+        // check
+        if (this.routes.length > 0) return false;
+        if (this.is.proxy && this.pad.routes.length > 0) return false;
+
         // change the type of pin
         this.is.input = !this.is.input;
 
         // succesful
-        return true
+        return true;
     },
 
     channelOnOff() {
-
         // toggle the channel bit
         this.is.channel = !this.is.channel;
 
         // If  the pin is connected to a bus, the bus tack has to be updated
-        for(const route of this.routes) {
+        for (const route of this.routes) {
             const other = route.from == this ? route.to : route.from;
             if (other.is.tack) other.is.channel = this.is.channel;
         }
-        return true
+        return true;
     },
 
     doSelect() {
@@ -9281,28 +9859,26 @@ Pin.prototype = {
         [a,b,c,d] -> pad - proxy [a,b,c] -> pin [b,c,d]  only messages b,c get through.
     */
     highLightRoutes() {
-
         // highlight the connections of the pin
         for (const route of this.routes) {
-
             // check the other part of the route - note that it might be missing during a disconnect operation !
             const other = route.from == this ? route.to : route.from;
 
             // check
-            if (!other) continue
+            if (!other) continue;
 
             // pin
             if (other.is.pin) {
-                if (!this.areConnected(other)) continue
+                if (!this.areConnected(other)) continue;
                 route.highLight();
-                continue
+                continue;
             }
 
             // pad
             if (other.is.pad) {
-                if (!this.areConnected(other)) continue
+                if (!this.areConnected(other)) continue;
                 route.highLight();
-                continue
+                continue;
             }
 
             // bus
@@ -9314,10 +9890,8 @@ Pin.prototype = {
     },
 
     unHighLightRoutes() {
-
         // highlight the connections of the pin
         for (const route of this.routes) {
-
             // unhighlight
             route.unHighLight();
 
@@ -9325,20 +9899,20 @@ Pin.prototype = {
             const other = route.from == this ? route.to : route.from;
 
             // check
-            if (!other) continue
+            if (!other) continue;
 
             // pin
             if (other.is.pin) {
-                if (!this.areConnected(other)) continue
+                if (!this.areConnected(other)) continue;
                 if (other.is.proxy) other.pad.unHighLightRoutes();
-                continue
+                continue;
             }
 
             // pad
             if (other.is.pad) {
-                if (!this.areConnected(other)) continue
+                if (!this.areConnected(other)) continue;
                 other.proxy.unHighLightRoutes();
-                continue
+                continue;
             }
 
             // bus
@@ -9349,16 +9923,26 @@ Pin.prototype = {
     },
 
     makePadRect(pos) {
-
         // The width of the pad
-        const width = style$1.pad.wExtra + this.node.look.getTextWidth(this.name, this.is.multi);
+        const width =
+            style$1.pad.wExtra +
+            this.node.look.getTextWidth(this.name, this.is.multi);
 
         // determine the rectangle for the pad widget
-        return this.is.left ? {x: pos.x, y: pos.y-style$1.pad.hPad/2, w: width, h:style$1.pad.hPad} 
-                            : {x: pos.x, y: pos.y-style$1.pad.hPad/2, w: width, h:style$1.pad.hPad}
+        return this.is.left
+            ? {
+                  x: pos.x,
+                  y: pos.y - style$1.pad.hPad / 2,
+                  w: width,
+                  h: style$1.pad.hPad,
+              }
+            : {
+                  x: pos.x,
+                  y: pos.y - style$1.pad.hPad / 2,
+                  w: width,
+                  h: style$1.pad.hPad,
+              };
     },
-
-
 };
 Object.assign(Pin.prototype, pinNameHandling);
 
@@ -9686,8 +10270,9 @@ BusTack.prototype = {
         this.rect.y += dy;
 
         // check that we have enough segments
-        //if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1]);
+        //if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1])
         if (this.route.wire.length == 2) this.route.fourPointRoute();
+
 
         // move the endpoint of the route as well..
         const a = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1);
@@ -10014,7 +10599,7 @@ function InterfaceName(rect, text, node) {
     this.is = {
         ifName: true,
         added: false ,              // has been added 
-        zombie: false,              // ifName has been deleted (not used -> interfaceNames are free form ...)
+        zombie: false,              // interface name has been deleted (not used -> interfaceNames are free form ...)
         selected: false,
         highLighted: false
     };
@@ -10056,7 +10641,6 @@ InterfaceName.prototype = {
 
     render(ctx, look) {
         // notation
-        const {x,y,w,h} = this.rect;
         const st = style$1.ifName;
 
         const color =   this.is.added ? st.cAdded : 
@@ -10065,7 +10649,8 @@ InterfaceName.prototype = {
                         this.is.selected ? st.cSelected : 
                         st.cNormal;
 
-        shape.interfaceText(ctx, this.text, st.font, color, st.cBackground, x,y,w,h);
+        // draw
+        shape.ifName(ctx, this.text, {line:st.cBackground, text:color},this.rect); 
     },
 
     toJSON() {
@@ -12020,410 +12605,421 @@ changeFactory: {
  * @node editor editor
  */
 const redoxWidget = {
+    newPin: {
+        doit({ view, node, pos, is }) {
+            // we add new pins at the end of a selection if, or else we keep the pos value
+            pos = view.selection.behind() ?? pos;
 
-newPin: {
+            // create the pin
+            const pin = node.look.addPin('', pos, is);
 
-    doit({view, node, pos, is}){
-        // create the pin
-        const pin = node.look.addPin('', pos, is);
+            // add a pad or the pin to the rx / tx table
+            pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin);
 
-        // add a pad or the pin to the rx / tx table
-        pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin); 
+            // if there is a selection maybe it has to be adjusted
+            view.selection.adjustForNewWidget(pin);
 
-        // switch the selected pin
-        view.selection.switchWidget(pin);
+            // edit the name field
+            view.beginTextEdit(pin);
 
-        // edit the name field
-        view.beginTextEdit(pin);
+            // store and report the new edit - here the rxtx or the pad is added !
+            editor.saveEdit('newPin', { view, pin });
+        },
+        undo({ view, pin }) {
+            // if the pin was not created (no valid name) just return
+            if (!pin || !pin.node.look.widgets.includes(pin)) return;
 
-        // store and report the new edit - here the rxtx or the pad is added !
-        editor.saveEdit('newPin', {view,pin});
-    },
-    undo({view,pin}) {
+            // the node
+            const node = pin.node;
 
-        // if the pin was not created (no valid name) just return
-        if (!pin || !pin.node.look.widgets.includes(pin)) return
+            // adjust selection before deleting the pin
+            view.selection.adjustForRemovedWidget(pin);
 
-        // the node
-        const node = pin.node;
+            // remove the pin
+            node.look.removePin(pin);
 
-        // switch selection
-        view.selection.switchWidget();
+            // it is the last entry in the rx/tx table
+            pin.is.proxy ? node.pads.pop() : node.rxtxPopPin(pin);
+        },
+        redo({ view, pin }) {
+            // if the pin was not created (no valid name) just return
+            if (!pin || !pin.node.look.widgets.includes(pin)) return;
 
-        // remove the pin
-        node.look.removePin(pin);
+            // the node
+            const node = pin.node;
 
-        // it is the last entry in the rx/tx table
-        pin.is.proxy ? node.pads.pop() : node.rxtxPopPin(pin);
-    },
-    redo({view,pin}) {
+            // restore the pin to its previous place in the look
+            node.look.restorePin(pin);
 
-        // if the pin was not created (no valid name) just return
-        if (!pin || !pin.node.look.widgets.includes(pin)) return
+            // add the pin to the rx / tx table
+            pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin);
 
-        // the node
-        const node = pin.node;
-
-        // restore the pin to its previous place in the look
-        node.look.restorePin(pin);
-
-        // add the pin to the rx / tx table
-        pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin); 
-
-        // switch the selected pin
-        view.selection.switchWidget(pin);
-    }
-},
-
-disconnectPin: {
-
-    doit({pin}) {
-        // save the routes before disconnecting ...
-        const savedRoutes = pin.routes.slice();
-        
-        // disconnect
-        pin.disconnect();
-
-        // store and report the new edit
-        editor.saveEdit('disconnectPin',{pin,routes:savedRoutes});
-    },
-    undo({pin, routes}) { 
-        pin.reconnect(routes);
-    },
-    redo({pin, routes}) { 
-        pin.disconnect();
-    }
-},
-
-deletePin: {
-
-    doit({view, pin}) {
-        // save the routes 
-        const pinRoutes = pin.routes.slice();
-
-        // also for the pad if applicable
-        const padRoutes = pin.is.proxy ? pin.pad.routes.slice() : null;
-
-        // save the edit *before* the delete !
-        editor.saveEdit('deletePin',{view, pin, pinRoutes, padRoutes});
-
-        // switch the selection
-        view.selection.switchWidget();
-
-        // disconnect
-        pin.disconnect();
-
-        // delete the pin in the node
-        pin.node.look.removePin(pin);
-
-        // if proxy remove pad
-        if (pin.is.proxy) {
-
-            pin.pad.disconnect();
-
-            pin.node.removePad(pin.pad);
-        }
-        // if not remove from rx table
-        else pin.node.rxtxRemovePin(pin);
-    },
-    undo({view, pin, pinRoutes, padRoutes}) {
-
-        // copy the routes (redo destroys the array - we want to keep it on the undo stack !)
-        const copyRoutes = pinRoutes.slice();
-
-        // put the pin back
-        pin.node.look.restorePin(pin);
-
-        // switch the selection
-        view.selection.switchWidget(pin);
-
-        // reconnect the routes to the pin
-        pin.reconnect(copyRoutes);
-
-        // reconnect the routes to the pad
-        if (pin.is.proxy) {
-
-            // first add the pad again ?
-
-            // reconnect the routes
-            pin.pad.reconnect(padRoutes);
-        }
+            // switch the selected pin
+            view.selection.adjustForNewWidget(pin);
+        },
     },
 
-    redo({view, pin, pinRoutes, padRoutes}) {
+    disconnectPin: {
+        doit({ pin }) {
+            // save the routes before disconnecting ...
+            const savedRoutes = pin.routes.slice();
 
-        // first disconnect
-        pin.disconnect();
+            // disconnect
+            pin.disconnect();
 
-        // switch the selection
-        view.selection.switchWidget();
-
-        // remove the pin
-        pin.node.look.removePin(pin);
-    }
-},
-
-// change the pin from an input type to an output type
-ioSwap: {
-
-    doit({pin}) {
-
-        if (pin.ioSwap()) editor.saveEdit('ioSwap',pin);
+            // store and report the new edit
+            editor.saveEdit('disconnectPin', { pin, routes: savedRoutes });
+        },
+        undo({ pin, routes }) {
+            pin.reconnect(routes);
+        },
+        redo({ pin, routes }) {
+            pin.disconnect();
+        },
     },
-    undo({pin}) {
-        pin.ioSwap();
+
+    deletePin: {
+        doit({ view, pin }) {
+            // save the routes
+            const pinRoutes = pin.routes.slice();
+
+            // also for the pad if applicable
+            const padRoutes = pin.is.proxy ? pin.pad.routes.slice() : null;
+
+            // save the edit *before* the delete !
+            editor.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes });
+
+            // adjust selection before deleting the pin
+            view.selection.adjustForRemovedWidget(pin);
+
+            // disconnect
+            pin.disconnect();
+
+            // delete the pin in the node
+            pin.node.look.removePin(pin);
+
+            // if proxy remove pad
+            if (pin.is.proxy) {
+                pin.pad.disconnect();
+
+                pin.node.removePad(pin.pad);
+            }
+            // if not remove from rx table
+            else pin.node.rxtxRemovePin(pin);
+        },
+        undo({ view, pin, pinRoutes, padRoutes }) {
+            // copy the routes (redo destroys the array - we want to keep it on the undo stack !)
+            const copyRoutes = pinRoutes.slice();
+
+            // put the pin back
+            pin.node.look.restorePin(pin);
+
+            // if there is a selection maybe it has to be adjusted
+            view.selection.adjustForNewWidget(pin);
+
+            // reconnect the routes to the pin
+            pin.reconnect(copyRoutes);
+
+            // reconnect the routes to the pad
+            if (pin.is.proxy) {
+                // first add the pad again ?
+
+                // reconnect the routes
+                pin.pad.reconnect(padRoutes);
+            }
+        },
+
+        redo({ view, pin, pinRoutes, padRoutes }) {
+            // first disconnect
+            pin.disconnect();
+
+            // adjust selection before deleting the pin
+            view.selection.adjustForRemovedWidget(pin);
+
+            // remove the pin
+            pin.node.look.removePin(pin);
+        },
     },
-    redo({pin}) {
-        pin.ioSwap();
-    }
-},
 
-// change the pin from an input type to an output type
-channelOnOff: {
-
-    doit({pin}) {
-
-        if (pin.channelOnOff()) editor.saveEdit('channelOnOff',pin);
+    // change the pin from an input type to an output type
+    ioSwitch: {
+        doit({ pin }) {
+            if (pin.ioSwitch()) editor.saveEdit('ioSwitch', pin);
+        },
+        undo({ pin }) {
+            pin.ioSwitch();
+        },
+        redo({ pin }) {
+            pin.ioSwitch();
+        },
     },
-    undo({pin}) {
-        pin.channelOnOff();
-    },
-    redo({pin}) {
-        pin.channelOnOff();
-    }
-},
 
-pinDrag: {
-
-    doit({pin}) {
-        editor.saveEdit('pinDrag', {pin, oldPos: {left: pin.is.left, y: pin.rect.y}, newPos: null});
+    // change the pin from an input type to an output type
+    channelOnOff: {
+        doit({ pin }) {
+            if (pin.channelOnOff()) editor.saveEdit('channelOnOff', pin);
+        },
+        undo({ pin }) {
+            pin.channelOnOff();
+        },
+        redo({ pin }) {
+            pin.channelOnOff();
+        },
     },
-    undo({pin, oldPos, newPos}) {
-        pin.moveTo(oldPos.left, oldPos.y);
-    },
-    redo({pin, oldPos, newPos}) {
-        pin.moveTo(newPos.left, newPos.y);
-    }
-},
 
+    pinDrag: {
+        doit({ pin }) {
+            // just save the current position
+            editor.saveEdit('pinDrag', {
+                pin,
+                oldPos: { left: pin.is.left, y: pin.rect.y },
+                newPos: null,
+            });
+        },
+        undo({ pin, oldPos, newPos }) {
+            pin.moveTo(oldPos.left, oldPos.y);
+        },
+        redo({ pin, oldPos, newPos }) {
+            pin.moveTo(newPos.left, newPos.y);
+        },
+    },
+
+    /*
 pinAreaDrag: {
 
     doit(view) {
 
         // The widgets that are being dragged
-        const widgets = view.selection.widgets;
+        const widgets = view.selection.widgets
 
         // get the current y-position of the selected widgets
-        editor.saveEdit('pinAreaDrag', {widgets, oldY:widgets[0].rect.y, newY:widgets[0].rect.y});
+        editor.saveEdit('pinAreaDrag', {widgets, oldY:widgets[0].rect.y, newY:widgets[0].rect.y})
     },
     undo({widgets, oldY, newY}) {
     },
     redo({widgets, oldY, newY}) {
     }
 },
+*/
+    showProfile: {
+        doit({ pin, pos }) {
+            // check that we have a model
+            if (!editor.doc?.model) return;
 
-showProfile: {
+            // get the pin profile (can be a single profile or an array !)
+            const profile = pin.is.input
+                ? editor.doc.model.getInputPinProfile(pin)
+                : editor.doc.model.getOutputPinProfile(pin);
 
-    doit({pin, pos}) {
+            // check
+            if (!profile) {
+                console.log(`NO PROFILE ${pin.name}`);
 
-        // check that we have a model
-        if ( ! (editor.doc?.model) ) return 
-
-        // get the pin profile (can be a single profile or an array !)
-        const profile = pin.is.input ? editor.doc.model.getInputPinProfile(pin) : editor.doc.model.getOutputPinProfile(pin);
-
-        // check
-        if (!profile) {
-
-            console.log(`NO PROFILE ${pin.name}`);
-
-            return
-        }
-
-        // show the profile
-        editor.tx.send('pin profile',{pos, pin, profile,
-            
-            // The function that is called when clicking the handler name
-            open(loc){
-                
-                //const arl = new ARL(loc.file)
-
-                // resolve the file name with the model name
-                const arl = editor.doc.model.arl.resolve(loc.file);
-
-                // request to open the source file
-                editor.tx.send('open source file',{arl, line:loc.line});
+                return;
             }
-        });
+
+            // show the profile
+            editor.tx.send('pin profile', {
+                pos,
+                pin,
+                profile,
+
+                // The function that is called when clicking the handler name
+                open(loc) {
+                    //const arl = new ARL(loc.file)
+
+                    // resolve the file name with the model name
+                    const arl = editor.doc.model.arl.resolve(loc.file);
+
+                    // request to open the source file
+                    editor.tx.send('open source file', { arl, line: loc.line });
+                },
+            });
+        },
+
+        undo() {},
+        redo() {},
     },
 
-    undo() {},
-    redo(){}
-},
+    addLabel: {
+        doit({ node }) {
+            // find the label of the look or add an empty one
+            let label =
+                node.look.widgets.find((widget) => widget.is.label) ??
+                node.look.addLabel('');
 
+            // start editing the field - parameters = object - must have the edit ifPins !
+            editor.doc?.focus?.beginTextEdit(label);
 
-newInterfaceName: {
-
-    doit({view, node, pos}) {
-        // make a new ifName and put it in edit mode
-        let ifName = node.look.addIfName('',pos);
-
-        // set the field in edit mode
-        view.beginTextEdit(ifName);
-
-        // switch the selected pin
-        view.selection.switchWidget(ifName);
-
-        // store and report the new edit
-        editor.saveEdit( 'newInterfaceName', {ifName});
-    },
-    undo({ifName}) {
-        ifName.node.look.removeInterfaceName(ifName);
-    },
-    redo({ifName}) {
-        ifName.node.look.restoreInterfaceName(ifName);
-    }
-},
-
-deleteInterfaceName: {
-
-    doit({view,ifName}) {
-
-        // switch the selection
-        view.selection.switchWidget();
-
-        // show the full names of the ifName group
-        const pxlenArray = ifName.node.look.showPrefixes(ifName);
-
-        // remove the pin
-        ifName.node.look.removeInterfaceName(ifName);
-
-        // store and report the new edit
-        editor.saveEdit('deleteInterfaceName',{view,ifName, pxlenArray});
-    },
-    undo({view,ifName, pxlenArray}) {
-        // restore the ifName
-        ifName.node.look.restoreInterfaceName(ifName);
-
-        // restore the prefixes
-        ifName.node.look.hidePrefixes(ifName, pxlenArray);
-
-        // switch the selection
-        view.selection.switchWidget(ifName);
-    },
-    redo({view,ifName, pxlenArray}) {
-
-        // switch the selection
-        view.selection.switchWidget();
-
-        // show the full names of the ifName group
-        ifName.node.look.showPrefixes(ifName);
-
-        // remove the ifName
-        ifName.node.look.removeInterfaceName(ifName);
-    }
-},
-
-interfaceDrag: {
-
-    doit({group, oldY, newY}) {
-
-        // just save the parameters...
-        editor.saveEdit('interfaceDrag',{group, oldY, newY});
-    },
-    undo({group, oldY, newY}) {
-
-        const dy = oldY - newY;
-        const node = group[0].node;
-        node.look.groupMove(group, dy);
+            // signal the edit
+            editor.saveEdit('addLabel', { node, label });
+        },
+        undo({ node, label }) {
+            node.look.removeLabel();
+        },
+        redo({ node, label }) {
+            node.look.restoreLabel(label);
+        },
     },
 
-    redo({group, oldY, newY}) {
+    widgetTextEdit: {
+        doit({ view, widget, cursor, clear }) {
+            // check if field is editable - must return the prop that will be edited
+            const prop = widget.startEdit?.();
 
-        const dy = newY - oldY;
-        const node = group[0].node;
-        node.look.groupMove(group, dy);
-    }
-},
+            // check
+            if (!prop) return;
 
-interfaceNameDrag: {
+            // save the old value
+            editor.saveEdit('widgetTextEdit', {
+                widget,
+                prop,
+                oldText: widget[prop],
+                newText: '',
+            });
 
-    doit({ifName}) {
-        editor.saveEdit('interfaceNameDrag', {ifName, oldY: ifName.rect.y, newY:ifName.rect.y});
-    },
-    undo({ifName, oldY, newY}) {
-        ifName.moveTo(oldY);
-    },
-    redo({ifName, oldY, newY}) {
-        ifName.moveTo(newY);
-    }
-},
-
-addLabel: {
-    doit({node}) {
-
-        // find the label of the look or add an empty one
-        let label = node.look.widgets.find( widget => widget.is.label ) ?? node.look.addLabel('');
-
-        // start editing the field - parameters = object - must have the edit ifPins !
-        editor.doc?.focus?.beginTextEdit(label);
-
-        // signal the edit
-        editor.saveEdit('addLabel',{node, label});
-    },
-    undo({node, label}) {
-
-        node.look.removeLabel();
-    },
-    redo({node, label}) {
-
-        node.look.restoreLabel(label);
-    }
-},
-
-widgetTextEdit: {
-
-    doit({view, widget, cursor, clear}) {
-
-        // check if field is editable - must return the prop that will be edited
-        const prop = widget.startEdit?.();
-
-        // check
-        if (!prop) return
-
-        // save the old value
-        editor.saveEdit('widgetTextEdit',{widget, prop, oldText: widget[prop], newText:''});
-
-        // keyboard handling etc is done here
-        view.beginTextEdit(widget, cursor, clear ?? false);
-    },
-    undo({widget, prop, oldText, newText}) {
-
-        /*
+            // keyboard handling etc is done here
+            view.beginTextEdit(widget, cursor, clear ?? false);
+        },
+        undo({ widget, prop, oldText, newText }) {
+            /*
         better is to call simply undoTextEdit
         ======================================
 
         widget.undoTextEdit(oldText)
         */
 
-        // save the new text now also !
-        newText = widget[prop];
-        editor.getParam().newText = newText;
-        widget[prop] = oldText;
+            // save the new text now also !
+            newText = widget[prop];
+            editor.getParam().newText = newText;
+            widget[prop] = oldText;
 
-        // signal the widget that the value has changed
-        widget.endEdit(newText);
+            // signal the widget that the value has changed
+            widget.endEdit(newText);
+        },
+        redo({ widget, prop, oldText, newText }) {
+            widget[prop] = newText;
 
+            widget.endEdit(oldText);
+        },
     },
-    redo({widget, prop, oldText, newText}) {
+};
 
-        widget[prop] = newText;
+/**
+ * @node editor editor
+ */
+const redoxInterface = {
+    newInterfaceName: {
+        doit({ view, node, pos }) {
+            // get the position behind the selection, if any
+            pos = view.selection.behind() ?? pos;
 
-        widget.endEdit(oldText);
-    }
-}
+            // make a new ifName and put it in edit mode
+            let ifName = node.look.addIfName('', pos);
 
+            // set the field in edit mode
+            view.beginTextEdit(ifName);
 
+            // switch the selected pin
+            view.selection.adjustForNewWidget(ifName);
+
+            // store and report the new edit
+            editor.saveEdit('newInterfaceName', { ifName });
+        },
+        undo({ ifName }) {
+            ifName.node.look.removeInterfaceName(ifName);
+        },
+        redo({ ifName }) {
+            ifName.node.look.restoreInterfaceName(ifName);
+        },
+    },
+
+    deleteInterfaceName: {
+        doit({ view, ifName }) {
+            // switch the selected pin
+            view.selection.adjustForRemovedWidget(ifName);
+
+            // show the full names of the ifName group
+            const pxlenArray = ifName.node.look.showPrefixes(ifName);
+
+            // remove the pin
+            ifName.node.look.removeInterfaceName(ifName);
+
+            // store and report the new edit
+            editor.saveEdit('deleteInterfaceName', {
+                view,
+                ifName,
+                pxlenArray,
+            });
+        },
+        undo({ view, ifName, pxlenArray }) {
+            // restore the ifName
+            ifName.node.look.restoreInterfaceName(ifName);
+
+            // restore the prefixes
+            ifName.node.look.hidePrefixes(ifName, pxlenArray);
+
+            // switch the selection
+            view.selection.switchToWidget(ifName);
+        },
+        redo({ view, ifName, pxlenArray }) {
+            // switch the selection
+            view.selection.switchToWidget();
+
+            // show the full names of the ifName group
+            ifName.node.look.showPrefixes(ifName);
+
+            // remove the ifName
+            ifName.node.look.removeInterfaceName(ifName);
+        },
+    },
+
+    interfaceDrag: {
+        doit({ group, oldY, newY }) {
+            // just save the parameters...
+            editor.saveEdit('interfaceDrag', { group, oldY, newY });
+        },
+        undo({ group, oldY, newY }) {
+            const dy = oldY - newY;
+            const node = group[0].node;
+            node.look.groupMove(group, dy);
+        },
+
+        redo({ group, oldY, newY }) {
+            const dy = newY - oldY;
+            const node = group[0].node;
+            node.look.groupMove(group, dy);
+        },
+    },
+
+    interfaceNameDrag: {
+        doit({ ifName }) {
+            // just save the parameters
+            editor.saveEdit('interfaceNameDrag', {
+                ifName,
+                oldY: ifName.rect.y,
+                newY: ifName.rect.y,
+            });
+        },
+        undo({ ifName, oldY, newY }) {
+            ifName.moveTo(oldY);
+        },
+        redo({ ifName, oldY, newY }) {
+            ifName.moveTo(newY);
+        },
+    },
+
+    // deleteInterface: {
+    //     doit({ ifName }) {
+    //         editor.saveEdit('deleteInterface');
+    //     },
+    //     undo({ ifName, oldY, newY }) {
+    //         ifName.moveTo(oldY);
+    //     },
+    //     redo({ ifName, oldY, newY }) {
+    //         ifName.moveTo(newY);
+    //     },
+    // },
 };
 
 const redoxRoute = {
@@ -13532,7 +14128,7 @@ unGroup: {
 
 };
 
-const redoxSelectWidgets = {
+const redoxPinArea = {
 
 disconnectPinArea: {
 
@@ -13599,6 +14195,10 @@ deletePinArea: {
 swapPinArea: {
 
     doit({view, left, right}){
+
+        // check
+        if (! view.selection.widgets?.length) return
+
         // save the pins that will be swapped
         const swapped = [];
 
@@ -13627,13 +14227,13 @@ pasteWidgetsFromClipboard: {
     doit({view, clipboard}){
 
         // check that the clipboard contains a pin area selection
-        if (clipboard.selection.what != selex.pinArea) return
+        if (clipboard.selection.what != selex.pinArea && clipboard.selection.what != selex.ifArea) return
 
         // get the single node and widget
-        const [node, pos] = view.selectedNodeAndPosition();
+        const [node, pos] = view.selection.whereToAdd();
 
         // check
-        if (node.cannotBeModified()) return
+        if (!node || node.cannotBeModified()) return
 
         // get the widgets from the clipboard
         view.clipboardToSelection(pos,clipboard);
@@ -13684,6 +14284,31 @@ multiToPinArea: {
     },
     redo() {}
 },
+
+ioSwitchPinArea: {
+
+    doit({view}) {
+
+        // check
+        if (!view.selection.widgets.length) return
+
+        // we switch all the selected widgets to
+        const switched = [];
+        
+        // note that a switch only happens when a pin is not connected !
+        for (const pin of view.selection.widgets) {
+            if (pin.is.pin && pin.ioSwitch()) switched.push(pin);
+        }
+
+        // check fro switches...
+        if (switched.length) editor.saveEdit('ioSwitchPinArea',{view, switched});
+    },
+    undo({view, switched}) {
+
+        for (const pin of switched) pin.ioSwitch();
+    },
+    redo() {}
+}
 
 };
 
@@ -13738,7 +14363,7 @@ zooming: {
 
 // we call this redox - oxydation / reduction 
 const redox = {};
-Object.assign(redox, redoxNode, redoxLink, redoxWidget, redoxRoute, redoxBus, redoxPad, redoxSelect, redoxSelectWidgets, redoxView);
+Object.assign(redox, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxBus, redoxPad, redoxSelect, redoxPinArea, redoxView);
 
 const undoRedoHandling = {
 
@@ -14253,7 +14878,7 @@ const nodeClickHandling = {
                 break
         }
     
-    },
+    }
 
 };
 
@@ -14428,16 +15053,16 @@ function Link(model, lName) {
 
     //The format of lName is node @ group1 @ group2 ...
     this.lName = lName;
-    //this.uid = null
+
     this.is = {
-        bad: false
+        bad: false,
     };
 }
 Link.prototype = {
 
     copy() {
+
         const newLink = new Link(this.model, this.lName);
-        //newLink.uid = this.uid
         return newLink
     },
 
@@ -14446,10 +15071,7 @@ Link.prototype = {
         // get the key for the link
         const path = (this.model && !this.model.is.main) ? this.model.arl.userPath : './';
 
-        return {
-            path,
-            node: this.lName
-        }
+        return { path, node: this.lName}
     }
 };
 
@@ -15287,9 +15909,8 @@ const padRouteFunctions = {
             // to slide a route it must have at least three segments
             // make a copy of teh wire ! Points in the point array are overwritten !
             if (p.length == 2) {
-                //const p0 = {...p[0]}
-                //const p1 = {...p[1]}
-                route.addTwoSegments({...p[0]},{...p[1]});
+                //route.addTwoSegments({...p[0]},{...p[1]})
+                route.fourPointRoute();
             }
 
             // notation
@@ -16501,6 +17122,54 @@ const iconHandling = {
     },
 
     blinkToWarn() {
+
+        // time is in ms
+        const blinkFunction = (time) => {
+
+            // check the time
+            if (time - lastTime >= blinkRate) {
+
+                // change the color
+                icon.is.highLighted = !icon.is.highLighted;
+                header.is.highLighted = !header.is.highLighted;
+
+                // redraw
+                editor.redraw();
+
+                // save the time
+                lastTime = time;
+
+                // increment count
+                count++;
+            }
+    
+            // Continue fro the number of blinks requested
+            if (count < maxBlinks) {
+                requestAnimationFrame(blinkFunction);
+            }
+            else {
+                icon.is.highLighted = false;
+                header.is.highLighted = false;
+                editor.redraw();
+            }
+        };
+
+        const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'));
+        const header = this.widgets.find( w => w.is.header);
+
+        if (!icon || !header) return
+
+        const maxBlinks = style$1.icon.nBlinks * 2;
+        const blinkRate = style$1.icon.blinkRate;
+
+        let count = 0;
+        let lastTime = 0;
+    
+        // schedule the first blink function
+        requestAnimationFrame(blinkFunction);
+    },
+
+    xxxblinkToWarn() {
 
         // time is in ms
         const blinkFunction = (time) => {
@@ -17806,8 +18475,47 @@ const jsonHandling$1 = {
     },
 
     // places a node according to a grid
-    // ideally we take into account the placement of the other nodes !
     placeNode(node) {
+
+        const place = style$1.placement;
+        const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
+        const spacing = place.spacing;   // small gap so nodes do not touch
+        const tolerance = place.tolerance;  // allow a little drift when matching columns
+
+        const placedNodes = this.nodes.filter(other => (other !== node) && other.look && other.is.placed);
+        const idx = this.nodes.indexOf(node) >= 0 ? this.nodes.indexOf(node) : this.nodes.length - 1;
+
+        // keep the column grid, but stack vertically based on actual heights
+        const col = idx % place.nodesPerRow;
+        const columnX = marginLeft + col * place.colStep;
+
+        // start at the default top margin for this column
+        let y = place.marginTop;
+
+        // find the bottom of the lowest node already in this column
+        for (const other of placedNodes) {
+            const ox = other.look.rect.x;
+            if (Math.abs(ox - columnX) <= tolerance) {
+                const bottom = other.look.rect.y + other.look.rect.h;
+                if (bottom + spacing > y) y = bottom + spacing;
+            }
+        }
+
+        // move down further if we still overlap any node (safety for slightly misaligned columns)
+        const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing});
+        const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
+        let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h};
+        while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
+            candidate.y += spacing;
+        }
+
+        node.look.moveTo(candidate.x, candidate.y);
+        node.is.placed = true;
+    },
+
+
+    // places a node according to a grid
+    OLD_placeNode(node) {
 
         const place = style$1.placement;
         const index = this.nodes.length - 1;
@@ -19293,7 +20001,7 @@ const routeDrawing = {
         }
     },
 
-    sixPointRoute() {
+    sixPointRoute(nodes=[]) {
 
         // reset points
         if (this.wire.length > 0) this.wire.length = 0;
@@ -19305,32 +20013,50 @@ const routeDrawing = {
         const f = from.center();
         const t = to.center();
 
-        let x1=0, x2=0, y1=0;
+        // deterministic offsets away from node bodies
+        const margin = style$1.look.dxCopy;
 
-        // if both pins 
-        if (from.is.pin && to.is.pin) {
+        let x1 = from.is.left ? f.x - margin : f.x + margin;
+        let x2 = to.is.left ? t.x - margin : t.x + margin;
 
-            // reasonable delta with some variation in it
-            const delta = style$1.look.dxCopy * (2 - Math.random());
+        const frc = from.node.look.rect;
+        const trc = to.node.look.rect;
+        let y1 = f.y + (frc.h/4 + trc.h/4);
 
-            x1 = from.is.left ? f.x - delta : f.x + delta;
-            x2 = to.is.left ? t.x - delta : t.x + delta;
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
+        const expandY = Math.max(style$1.route.split, 10);
 
-            const frc = from.node.look.rect;
-            const trc = to.node.look.rect;
+        const buildWire = (yMid) => {
+            wire.length = 0;
+            wire.push(f);
+            wire.push({x:x1, y:f.y});
+            wire.push({x:x1, y:yMid});
+            wire.push({x:x2, y:yMid});
+            wire.push({x:x2, y:t.y});
+            wire.push(t);
+        };
 
-            y1 = f.y + (frc.h/4 + trc.h/4)*(2 - Math.random());
+        const collides = () => {
+            for (let i=0; i<wire.length-1; i++) {
+                const a = wire[i], b = wire[i+1];
+                if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return true
+            }
+            return false
+        };
+
+        let guard = 0;
+        buildWire(y1);
+        while (collides() && guard < 30) {
+            y1 += expandY;
+            buildWire(y1);
+            guard++;
         }
-        
-        wire.push(f);
-        wire.push({x:x1, y:f.y});
-        wire.push({x:x1, y:y1});
-        wire.push({x:x2, y:y1});
-        wire.push({x:x2, y:t.y});
-        wire.push(t);
+
+        return true
     },
 
-    fourPointRoute() {
+    fourPointRoute(nodes=[]) {
 
         // reset points
         if (this.wire.length > 0) this.wire.length = 0;
@@ -19343,33 +20069,56 @@ const routeDrawing = {
         const t = to.center();
 
         let xNew = 0;
+        const margin = style$1.look.dxCopy;
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
 
         // if both pins are at the same side of the node
         if ((from.is.pin && to.is.pin)&&(from.is.left == to.is.left)) {
 
-            // reasonable delta with some variation in it
-            const delta = style$1.look.dxCopy * (2 - Math.random());
-
-            if (from.is.left) 
-                xNew = from.rect.x < to.rect.x ? from.rect.x - delta : to.rect.x - delta;
+            const left = from.is.left;
+            if (left) 
+                xNew = from.rect.x < to.rect.x ? from.rect.x - margin : to.rect.x - margin;
             else 
-                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + delta : to.rect.x + to.rect.w + delta;
+                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + margin : to.rect.x + to.rect.w + margin;
         }
         else {
 
-            //set an extra point somewhere between the two...
-            const delta = Math.abs(f.x-t.x) * 0.5 * Math.random();
+            // place the bend between the two centers with a fixed offset
+            const delta = Math.abs(f.x - t.x) * 0.25;
+            xNew = f.x < t.x ? f.x + delta : f.x - delta;
+        }
 
-            // xNew is somewhere between the two centers
-            xNew = f.x < t.x    ? f.x + (t.x-f.x)*0.25 + delta 
-                                : f.x - (f.x-t.x)*0.25 - delta;
+        // make the position of the bend also dependant on the relative position of the pin in the node
+        const yFraction = 0.02;
+        const dyPin = from.rect.y - from.node.look.rect.y; 
+        xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction;
 
+        // nudge xNew left/right if the vertical legs would cut through other nodes
+        const tryClearX = (xCandidate) => {
+            const pA = {x:xCandidate, y:f.y};
+            const pB = {x:xCandidate, y:t.y};
+            return blockers.some(n => segmentCuts(pA, pB, n.look.rect))
+        };
+        if (tryClearX(xNew)) {
+            const shifts = [margin, -margin, margin*2, -margin*2];
+            const base = xNew;
+            for (const dx of shifts) {
+                if (!tryClearX(base + dx)) { xNew = base + dx; break }
+            }
         }
         
         wire.push(f);
         wire.push({ x: xNew, y: f.y});
         wire.push({ x: xNew, y: t.y});
         wire.push(t);
+
+        // check for collisions with other nodes; if any, signal failure
+        for (let i=0; i<wire.length-1; i++) {
+            const a = wire[i], b = wire[i+1];
+            if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return false
+        }
+        return true
     },
 
     threePointRoute(horizontal) {
@@ -19494,12 +20243,12 @@ const routeDrawing = {
         const cTo = this.to.center();
 
         for (const node of nodes) {
+            // ignore the nodes that own the endpoints
+            if ((node == this.from.node) || (node == this.to.node)) continue
             if (cutsRectangle(cFrom, cTo, node.look.rect)) return false
         }
         return true
     },
-
-
 
     autoRoute(nodes) {
         
@@ -19513,33 +20262,33 @@ const routeDrawing = {
                 // if there is no route yet we can swap left/right to have a better fit
                 this.checkLeftRight();
 
-                // check for line of sight
-                this.lineOfSight(nodes) ? this.fourPointRoute() : this.sixPointRoute();
+                // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
 
                 break
 
             case 'PIN-PAD':
-                this.fourPointRoute();
+                this.fourPointRoute(nodes);
                 break
 
             case 'PAD-PIN':
-                this.fourPointRoute();
+                this.fourPointRoute(nodes);
                 break
 
             case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
+                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
                 break
 
             case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
+                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
                 break
 
             case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
+                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
                 break
 
             case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
+                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
                 break
         }
     },
@@ -19565,10 +20314,18 @@ const routeDrawing = {
 
         if (this.wire.length == 3) {
 
-            this.wire[3] = this.wire[2];
-            this.wire[2] = this.wire[1];
-            this.wire[2].y = this.wire[3].y;
-            this.wire[1].y = this.wire[0].y;
+            const p0 = this.wire[0];
+            const p1 = this.wire[1];
+            const p2 = this.wire[2];
+
+            // rebuild as a clean orthogonal path
+            this.wire.length = 0;
+            this.wire.push(
+                {x:p0.x, y:p0.y},
+                {x:p1.x, y:p0.y},
+                {x:p1.x, y:p2.y},
+                {x:p2.x, y:p2.y},
+            );
         }
 
     }
@@ -21726,7 +22483,7 @@ Bus.prototype = {
 
     // returns the segment that was hit
     hitSegment(pos) {
-
+        
         // notation
         const L = this.wire.length;
         const x = pos.x;
@@ -22607,27 +23364,27 @@ async save(body) {
     return fs.writeFile(this.url, body)
 },
 
-async getFolder() {
+// async getFolder() {
 
-    // check
-    if (!this.validURL()) return null
+//     // check
+//     if (!this.validURL()) return null
 
-    // wet have to add the api and service 
-    let href = this.url.origin + '/api/folder' + this.url.pathname;
+//     // wet have to add the api and service 
+//     let href = this.url.origin + '/api/folder' + this.url.pathname
 
-    const url = new URL(href);
+//     const url = new URL(href)
 
-    // request the file - return the body
-    return await get(url)
-    .then( async response => {
+//     // request the file - return the body
+//     return await HTTP.get(url)
+//     .then( async response => {
 
-        // the size of the body could be 0 - that is ok
-        if (response.headers.get('Content-Length') == '0') return null
+//         // the size of the body could be 0 - that is ok
+//         if (response.headers.get('Content-Length') == '0') return null
         
-        // convert
-        return await response.json()
-    })
-},
+//         // convert
+//         return await response.json()
+//     })
+// },
 
 // javascript source files can be imported
 async jsImport() {
@@ -22638,40 +23395,45 @@ async jsImport() {
     return import(this.url)
 },
 
-async getFolderContent(){
+// async getFolderContent(){
 
-    const content = {
-        files: [],
-        folders: []
-    };
+//     const content = {
+//         files: [],
+//         folders: []
+//     }
 
-    // get the folder - return the promise
-    return this.getFolder()
-    .then( raw => {
+//     // get the folder - return the promise
+//     return this.getFolder()
+//     .then( raw => {
         
-        // convert to arls...
-        content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
-        content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name));
+//         // convert to arls...
+//         content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
+//         content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name))
         
-        // return result - that resolves the promise
-        return content
-    })
-    .catch (error => {
+//         // return result - that resolves the promise
+//         return content
+//     })
+//     .catch (error => {
 
-        // debug
-        console.error(error);
+//         // debug
+//         console.error(error)
 
-        // if the path was not found, fail silently else throw
-        if (error.options?.status != '404') throw error
+//         // if the path was not found, fail silently else throw
+//         if (error.options?.status != '404') throw error
 
-        // return result
-        return content
-    })
-}
+//         // return result
+//         return content
+//     })
+// }
 };
 
 // extractHandlersFromFile.js
 
+
+const DEBUG = process.env.VMBLU_PROFILE_DEBUG === '1';
+const debug = (...args) => {
+    if (DEBUG) console.log('[profile-debug]', ...args);
+};
 
 let currentNode = null;
 let topLevelClass = null;
@@ -22849,6 +23611,8 @@ function collectObjectLiteralHandlers(objectLiteral) {
         const propName = prop.getName?.();
         if (!isHandler(propName)) return;
 
+        let jsdoc = getFullJsDoc(prop);
+        let line = prop.getStartLineNumber();
         let params = [];
         if (prop.getKind() === SyntaxKind.MethodDeclaration) {
             const docTags = getParamDocs(prop);
@@ -22859,10 +23623,20 @@ function collectObjectLiteralHandlers(objectLiteral) {
                 const docTags = getParamDocs(fn);
                 params = fn.getParameters().flatMap(p => describeParam(p, docTags));
             }
+        } else if (prop.getKind() === SyntaxKind.ShorthandPropertyAssignment) {
+            const resolved = resolveShorthandHandler(prop);
+            if (resolved) {
+                params = resolved.params;
+                jsdoc = hasDocMetadata(jsdoc) ? jsdoc : resolved.jsdoc ?? jsdoc;
+                line = resolved.line ?? line;
+            } else {
+                debug('shorthand handler unresolved', {
+                    prop: prop.getName?.(),
+                    file: filePath,
+                    line
+                });
+            }
         }
-
-        const jsdoc = getFullJsDoc(prop);
-        const line = prop.getStartLineNumber();
 
         collect(propName, params, line, jsdoc);
     });
@@ -23018,7 +23792,7 @@ function describeParam(p, docTags = {}) {
                 const symbol = objType.getProperty(subName);
                 if (symbol) {
                     const resolvedType = symbol.getTypeAtLocation(el);
-                    const text = resolvedType.getText();
+                    const text = resolvedType.getText(p.getSourceFile?.());
                     if (text && text !== 'any') {
                         tsType = text;
                     }
@@ -23033,13 +23807,158 @@ function describeParam(p, docTags = {}) {
 
     const name = p.getName();
     const doc = docTags[name] ?? {};
-    const tsType = p.getType().getText();
+    const tsType = p.getType().getText(p.getSourceFile?.());
 
     return {
         name,
         type: doc.type || tsType || 'string',
         description: doc.description || '',
     };
+}
+
+function resolveShorthandHandler(prop) {
+    const name = prop.getName?.();
+    const nameNode = prop.getNameNode?.();
+    const symbol = prop.getShorthandAssignmentValueSymbol?.() || prop.getSymbol?.() || nameNode?.getSymbol?.();
+    const declarations = symbol?.getDeclarations?.() || [];
+
+    const decl = declarations.find(d =>
+        d.isKind?.(SyntaxKind.FunctionDeclaration) ||
+        d.isKind?.(SyntaxKind.VariableDeclaration)
+    ) || findDeclarationByName(prop, name);
+
+    if (!decl) {
+        const fallback = findDeclarationInScope(prop, name);
+        if (!fallback) {
+            debug('shorthand unresolved after search', {
+                name,
+                hasSymbol: !!symbol,
+                declCount: declarations.length,
+                file: filePath,
+                line: prop.getStartLineNumber()
+            });
+            return null;
+        }
+        return fallback;
+    }
+
+    if (decl.isKind?.(SyntaxKind.FunctionDeclaration)) {
+        const docTags = getParamDocs(decl);
+        const params = decl.getParameters().flatMap(p => describeParam(p, docTags));
+        const jsdoc = getFullJsDoc(decl);
+        const line = decl.getNameNode?.()?.getStartLineNumber?.() ?? decl.getStartLineNumber?.();
+        debug('shorthand -> function decl', { name, line });
+        return { params, jsdoc, line };
+    }
+
+    if (decl.isKind?.(SyntaxKind.VariableDeclaration)) {
+        const init = decl.getInitializer?.();
+        const fn = init && (init.isKind?.(SyntaxKind.FunctionExpression) || init.isKind?.(SyntaxKind.ArrowFunction)) ? init : null;
+        if (!fn) return null;
+
+        const docTags = { ...getParamDocs(decl), ...getParamDocs(fn) };
+        const params = fn.getParameters().flatMap(p => describeParam(p, docTags));
+        const declDocs = getFullJsDoc(decl);
+        const fnDocs = getFullJsDoc(fn);
+        const jsdoc = hasDocMetadata(declDocs) ? declDocs : fnDocs;
+        const line = decl.getNameNode?.()?.getStartLineNumber?.() ?? fn.getStartLineNumber?.();
+        debug('shorthand -> variable decl', { name, line });
+        return { params, jsdoc, line };
+    }
+
+    debug('shorthand decl had unexpected kind; falling back', {
+        name,
+        kind: decl.getKindName?.(),
+        file: filePath,
+        line: prop.getStartLineNumber()
+    });
+    const fallback = findDeclarationInScope(prop, name);
+    if (fallback) return fallback;
+
+    return null;
+}
+
+function findDeclarationByName(prop, name) {
+    if (!name) return null;
+    const sourceFile = prop.getSourceFile?.();
+    if (!sourceFile) return null;
+
+    const targetPos = prop.getStart?.() ?? 0;
+    let best = null;
+
+    const consider = (decl) => {
+        if (!decl || decl.getName?.() !== name) return;
+        const pos = decl.getStart?.();
+        if (typeof pos !== 'number' || pos > targetPos) return;
+        if (!best || pos > (best.getStart?.() ?? -Infinity)) {
+            best = decl;
+        }
+    };
+
+    sourceFile.getDescendantsOfKind(SyntaxKind.FunctionDeclaration).forEach(consider);
+    sourceFile.getDescendantsOfKind(SyntaxKind.VariableDeclaration).forEach(consider);
+
+    return best;
+}
+
+function findDeclarationInScope(prop, name) {
+    if (!name) return null;
+    const sourceFile = prop.getSourceFile?.();
+    if (!sourceFile) return null;
+
+    const targetPos = prop.getStart?.() ?? 0;
+    const scopes = [];
+
+    const fnScope = prop.getFirstAncestor(n =>
+        n.getKind && (
+            n.isKind?.(SyntaxKind.FunctionDeclaration) ||
+            n.isKind?.(SyntaxKind.FunctionExpression) ||
+            n.isKind?.(SyntaxKind.ArrowFunction)
+        )
+    );
+    if (fnScope) scopes.push(fnScope);
+    scopes.push(sourceFile);
+
+    for (const scope of scopes) {
+        let best = null;
+        const consider = (decl) => {
+            if (!decl || decl.getName?.() !== name) return;
+            const pos = decl.getStart?.();
+            if (typeof pos !== 'number' || pos > targetPos) return;
+            if (!best || pos > (best.getStart?.() ?? -Infinity)) {
+                best = decl;
+            }
+        };
+
+        scope.getDescendantsOfKind?.(SyntaxKind.FunctionDeclaration)?.forEach(consider);
+        scope.getDescendantsOfKind?.(SyntaxKind.VariableDeclaration)?.forEach(consider);
+
+        if (best) {
+            if (best.isKind?.(SyntaxKind.FunctionDeclaration)) {
+                const docTags = getParamDocs(best);
+                const params = best.getParameters().flatMap(p => describeParam(p, docTags));
+                const jsdoc = getFullJsDoc(best);
+                const line = best.getNameNode?.()?.getStartLineNumber?.() ?? best.getStartLineNumber?.();
+                debug('shorthand -> function decl (fallback)', { name, line });
+                return { params, jsdoc, line };
+            }
+
+            const init = best.getInitializer?.();
+            const fn = init && (init.isKind?.(SyntaxKind.FunctionExpression) || init.isKind?.(SyntaxKind.ArrowFunction)) ? init : null;
+            if (fn) {
+                const docTags = { ...getParamDocs(best), ...getParamDocs(fn) };
+                const params = fn.getParameters().flatMap(p => describeParam(p, docTags));
+                const declDocs = getFullJsDoc(best);
+                const fnDocs = getFullJsDoc(fn);
+                const jsdoc = hasDocMetadata(declDocs) ? declDocs : fnDocs;
+                const line = best.getNameNode?.()?.getStartLineNumber?.() ?? fn.getStartLineNumber?.();
+                debug('shorthand -> variable decl (fallback)', { name, line });
+                return { params, jsdoc, line };
+            }
+        }
+    }
+
+    return null;
 }
 
 function applyNodeTag(rawTag) {

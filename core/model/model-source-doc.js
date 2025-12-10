@@ -255,7 +255,7 @@ generateToolSpecs() {
       }
 
       const tool = {
-        name: meta.mcpName || `${node}_${pin}`,
+        name: meta.mcpName || `${pin} @ ${node}`,
         description: meta.mcpDescription || meta.summary || `Trigger ${pin} on ${node}`,
         parameters: Array.from(paramMap.values()),
         returns: meta.returns || '',

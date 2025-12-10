@@ -2,8 +2,8 @@
     "header": {
         "version": "0.0.1",
         "created": "5/15/2024, 9:36:44 AM",
-        "saved": "11/14/2025, 4:09:30 PM",
-        "utc": "2025-11-14T15:09:30.123Z",
+        "saved": "12/6/2025, 9:40:00 AM",
+        "utc": "2025-12-06T08:40:00.131Z",
         "style": "#3e7467",
         "runtime": "c:/dev/vmblu/runtime"
     },
@@ -372,7 +372,7 @@
                     }
                 ],
                 "editor": {
-                    "rect": "x 575 y 102 w 150 h 101"
+                    "rect": "x 575 y 104 w 150 h 101"
                 }
             },
             {
@@ -1262,6 +1262,7 @@
                 "editor": {
                     "rect": "x 1037 y 576 w 200 h 116",
                     "view": {
+                        "state": "closed",
                         "rect": "x 624 y 627 w 797 h 472",
                         "transform": "sx 1.000 sy 1.000 dx -128.487 dy 282.816"
                     },
@@ -1875,9 +1876,9 @@
                 "editor": {
                     "rect": "x 264 y 912 w 150 h 41",
                     "view": {
-                        "state": "open",
-                        "rect": "x 640 y 284 w 1011 h 826",
-                        "transform": "sx 1.000 sy 1.000 dx 640.000 dy -291.000"
+                        "state": "closed",
+                        "rect": "x 506 y 192 w 1011 h 826",
+                        "transform": "sx 1.000 sy 1.000 dx 506.000 dy -383.000"
                     },
                     "routes": [
                         {
@@ -2380,7 +2381,7 @@
             "rect": "x 0 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1530 h 1326",
+                "rect": "x 0 y 0 w 1497 h 1326",
                 "transform": "sx 0.969 sy 0.969 dx -102.100 dy 154.327"
             },
             "buses": [
@@ -2401,7 +2402,7 @@
                 {
                     "from": "(pin 6) visible [start,stop] @ screen layout",
                     "to": "(pin 5) update [start,stop,step] @ renderer",
-                    "wire": "x 347.5 y -133.0 x -36.5"
+                    "wire": "x 347.5 y -130.9 x -36.5"
                 },
                 {
                     "from": "(pin 2) canvas @ screen layout",
@@ -2441,12 +2442,12 @@
                 {
                     "from": "(pin 2) actors @ scene manager",
                     "to": "(pin 4) actors @ renderer",
-                    "wire": "x 41.4 y -82.0 x -52.4"
+                    "wire": "x 41.4 y -79.9 x -52.4"
                 },
                 {
                     "from": "(pin 1) scene @ scene manager",
                     "to": "(pin 3) scene @ renderer",
-                    "wire": "x 52.7 y -112.0 x -63.7"
+                    "wire": "x 52.7 y -109.9 x -63.7"
                 },
                 {
                     "from": "(pin 4) scene [add,remove,dispose] @ solar system",
@@ -2486,12 +2487,12 @@
                 {
                     "from": "(pin 4) canvas set @ camera manager",
                     "to": "(pin 1) canvas @ renderer",
-                    "wire": "x 58.3 y -334.0 x -74.3"
+                    "wire": "x 58.3 y -331.9 x -74.3"
                 },
                 {
                     "from": "(pin 8) active camera @ camera manager",
                     "to": "(pin 2) camera @ renderer",
-                    "wire": "x 71.9 y -379.0 x -87.9"
+                    "wire": "x 71.9 y -376.9 x -87.9"
                 },
                 {
                     "from": "(pin 5) camera list @ camera manager",
@@ -2541,7 +2542,7 @@
                 {
                     "from": "(pin 8) update [start,stop,step] @ simulation settings",
                     "to": "(pin 5) update [start,stop,step] @ renderer",
-                    "wire": "x 70.4 y 178.7 x -654.5 y -348.7 x -282.9"
+                    "wire": "x 70.4 y 178.7 x -654.5 y -346.6 x -282.9"
                 },
                 {
                     "from": "(pin 4) simulation user change @ simulation settings",

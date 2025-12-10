@@ -24,7 +24,7 @@ export const nodeCxMenu = {
 	node:null,
 	xyLocal: null,
 
-	// prepres the menu list before showing it
+	// prepare the menu list before showing it
 	prepare(view) {
 
 		this.view = view

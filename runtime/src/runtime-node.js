@@ -288,11 +288,15 @@ RuntimeNode.prototype = {
                 // check
                 if (tx?.targets.length) return runtime.requestFrom(tx.targets, source, pin, param, timeout)
 
-                // not found - give a warning
-                console.warn(`** NO OUTPUT PIN ** Node "${this.name}" pin: "${pin}"`, this.txTable)  
-
-                // and abort the request
-                return runtime.reject('Not connected')
+                // give an error message
+                if (tx) {
+                    console.warn(`** PIN IS NOT CONNECTED ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
+                    return runtime.reject('Not connected')
+                }
+                else {
+                    console.warn(`** NO SUCH OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
+                    return runtime.reject('No such output pin')
+                }
             },
 
             // Returns a message to the sender over the backchannel

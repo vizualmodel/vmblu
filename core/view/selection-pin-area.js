@@ -63,7 +63,7 @@ export const pinAreaHandling = {
     // select the pins that are in the widgets array
     pinAreaSelect(widgets) {
 
-        if (widgets.length == 0) return
+        if (!widgets?.length) return
 
         // reset (not necessary ?)
         this.widgets.length = 0
@@ -72,12 +72,15 @@ export const pinAreaHandling = {
         for (const widget of widgets) {
             if (widget.is.pin || widget.is.ifName) {
                 this.widgets.push(widget)
-                widget.is.selected = true
+                widget.doSelect()
             }
         }
 
         // set a rectangle around the widgets
         this.pinAreaRectangle()
+
+        // this is a widget selection
+        this.what = selex.pinArea
     },
 
     // the pins have been sorted in the y position
@@ -85,7 +88,7 @@ export const pinAreaHandling = {
     pinAreaRectangle() {
 
         // check
-        if (this.widgets.length == 0) return;
+        if (!this.widgets.length) return;
 
         // sort the array
         this.widgets.sort( (a,b) => a.rect.y - b.rect.y)
@@ -99,12 +102,9 @@ export const pinAreaHandling = {
         this.activate(  look.rect.x - style.pin.wOutside, first.y, 
                         look.rect.w + 2*style.pin.wOutside, last.y + last.h - first.y, 
                         style.selection.cRect)
-        
-        // this is a widget selection
-        this.what = selex.pinArea
     },
 
-    pinAreaDrag(delta) {
+    widgetsDrag(delta) {
 
         // check
         if (this.widgets.length == 0) return
@@ -119,4 +119,140 @@ export const pinAreaHandling = {
         // move as required
         this.rect.y += delta.y
     },
+
+    interfaceSelect(node, ifName) {
+
+        // reset the selection
+        this.reset()
+
+        // find the widgets that belong to the interface
+        const ifPins = node.look.getInterface(ifName)
+
+        // select the pins
+        this.pinAreaSelect(ifPins)
+
+        // set the selection type
+        this.what = selex.ifArea;
+    },
+
+    extend(widget) {
+
+        if (this.what != selex.ifArea || widget.node != this.widgets[0].node) return
+        
+        this.widgets.push(widget)
+
+        this.pinAreaRectangle()
+    },
+
+    // adjust the selction when a widget is added
+    adjustForNewWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // just switch to the new widget
+                this.switchToWidget(widget)
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+                    widget.doSelect()
+                    this.widgets.push(widget)
+                    this.pinAreaRectangle()
+                }
+                else if (widget.is.ifName) {
+
+                    // unddo the previous selection
+                    this.reset()
+
+                    // select the new interface
+                    widget.doSelect()
+                    this.widgets = [widget]
+                    this.pinAreaRectangle()                    
+                }
+                break
+        }
+    },
+
+    // adjust the selction when a widget is removed
+    adjustForRemovedWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // try above ...
+                const above = this.widgetAbove(widget);
+                if (above) return this.switchToWidget(above);
+
+                // if no pin is given try below
+                const below = this.widgetBelow(widget);
+                if (below) return this.switchToWidget(below);
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+
+                    // kick the widget out
+                    const index = this.widgets.findIndex( w => w === widget)
+                    if (index != -1) this.widgets.splice(index, 1)
+
+                    // make a new selection
+                    this.pinAreaRectangle()
+                }
+                break
+        }
+    },
+
+    behind() {
+
+        // check
+        if (this.what !== selex.singleNode && this.what !== selex.ifArea) return null;
+
+        // we add new pins at the end
+        const last = this.widgets.at(-1)
+
+        // check 
+        if (last) return  {x: last.rect.x, y: last.rect.y + last.rect.h};
+
+        // it could be that the node has no pins yet !
+        return this.nodes[0] ? {x: 0, y: this.nodes[0].look.makePlace(null, 0)} : null;
+    },
+
+    whereToAdd() {
+
+        switch(this.what) {
+
+            case selex.singleNode: {
+
+                // get the selected node (only one !)
+                const node = this.getSingleNode()
+
+                // get the selected widget
+                const widget = this.getSelectedWidget()
+
+                // determine the position for the widget
+                const pos = widget  ?   {x: widget.is.left ? widget.rect.x : widget.rect.x + widget.rect.w, y: widget.rect.y + widget.rect.h} :
+                                        {x: 0, y: node.look.makePlace(null, 0)}
+
+                // done
+                return [node, pos]
+            }
+
+            case selex.ifArea: {
+
+                const node = this.getSelectedWidget()?.node
+                const pos = this.behind()
+                return [node, pos]
+            }
+        }
+    },
+
 }

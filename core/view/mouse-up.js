@@ -109,6 +109,9 @@ export const mouseUpHandling = {
                 //this.state.bus.fuseSegment(this.state.busSegment)
                 this.state.bus.is.selected = false
 
+                // remove highlight
+                this.state.bus.unHighLight()
+
                 // adjust the parameters for the undo operation
                 undo = editor.getParam()
                 undo.newWire = this.state.bus.copyWire()
@@ -157,8 +160,9 @@ export const mouseUpHandling = {
                 editor.getParam().newPos = {left: pin.is.left, y: pin.rect.y}
                 break
 
+            // OBSOLETE
             case doing.pinAreaDrag:
-                editor.getParam().newY = this.selection.widgets[0].rect.y
+                // editor.getParam().newY = this.selection.widgets[0].rect.y
                 break
 
             case doing.interfaceNameDrag: {

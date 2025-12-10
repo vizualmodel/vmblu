@@ -2,7 +2,10 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initProject } from './init-project.js';
-import pckg from '../../package.json' assert { type: 'json' };
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pckg = require('../../package.json');
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
