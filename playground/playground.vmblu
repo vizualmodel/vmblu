@@ -2,8 +2,8 @@
     "header": {
         "version": "1.0.1",
         "created": "4/2/2024, 12:46:06 PM",
-        "saved": "11/25/2025, 11:08:15 AM",
-        "utc": "2025-11-25T10:08:15.451Z",
+        "saved": "12/8/2025, 11:49:12 AM",
+        "utc": "2025-12-08T10:49:12.838Z",
         "style": "#291f32",
         "runtime": "../runtime/src/scaffold.js"
     },
@@ -518,6 +518,7 @@
                 "editor": {
                     "rect": "x 343 y 709 w 211 h 116",
                     "view": {
+                        "state": "open",
                         "rect": "x 333 y 141 w 1156 h 768",
                         "transform": "sx 1.000 sy 1.000 dx 246.500 dy 322.000"
                     },
@@ -1219,7 +1220,7 @@
                             "c": 9
                         },
                         "editor": {
-                            "rect": "x 1024 y 158 w 200 h 761"
+                            "rect": "x 1031 y 158 w 200 h 761"
                         }
                     },
                     {
@@ -1410,7 +1411,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 1523 y 683 w 150 h 56"
+                            "rect": "x 1528 y 752 w 150 h 56"
                         }
                     },
                     {
@@ -1448,7 +1449,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 1522 y 786 w 150 h 56"
+                            "rect": "x 1519 y 855 w 150 h 56"
                         }
                     },
                     {
@@ -1534,7 +1535,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 143 y 777 w 250 h 146"
+                            "rect": "x 128 y 777 w 250 h 146"
                         }
                     },
                     {
@@ -2053,10 +2054,11 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 1522 y 865 w 150 h 86",
+                            "rect": "x 1519 y 934 w 150 h 86",
                             "view": {
-                                "rect": "x 978 y 451 w 1154 h 510",
-                                "transform": "sx 1.000 sy 1.000 dx 1004.000 dy 463.000"
+                                "state": "closed",
+                                "rect": "x 582 y 294 w 1154 h 510",
+                                "transform": "sx 1.000 sy 1.000 dx 608.000 dy 306.000"
                             },
                             "routes": [
                                 {
@@ -2211,7 +2213,7 @@
                             }
                         ],
                         "editor": {
-                            "rect": "x 681 y 870 w 200 h 116"
+                            "rect": "x 677 y 904 w 200 h 116"
                         }
                     },
                     {
@@ -3048,8 +3050,9 @@
                 "editor": {
                     "rect": "x 817 y 432 w 250 h 206",
                     "view": {
-                        "rect": "x 183 y 78 w 2444 h 1168",
-                        "transform": "sx 1.000 sy 1.000 dx 309.051 dy 83.554"
+                        "state": "open",
+                        "rect": "x 486 y -68 w 2444 h 1168",
+                        "transform": "sx 1.000 sy 1.000 dx 570.051 dy -84.446"
                     },
                     "buses": [
                         {
@@ -3073,107 +3076,107 @@
                         {
                             "from": "(pin 4) div @ tab ribbon",
                             "to": "(pin 2) tabs div @ vertical menu tabs content",
-                            "wire": "x 42.0 y 139.0 x -53.0"
+                            "wire": "x 42.0 y 139.0 x -68.0"
                         },
                         {
                             "from": "(pin 28) show lib path @ editor",
                             "to": "(pin 1) path @ path request",
-                            "wire": "x 108.0 y -232.0 x 182.0"
+                            "wire": "x 101.0 y -232.0 x 182.0"
                         },
                         {
                             "from": "(pin 30) show app path @ editor",
                             "to": "(pin 1) path @ path request",
-                            "wire": "x 108.0 y -307.0 x 182.0"
+                            "wire": "x 101.0 y -307.0 x 182.0"
                         },
                         {
                             "from": "(pin 33) run @ editor",
                             "to": "(pad 1) run",
-                            "wire": "x -49.0 y 334.0 x -787.0"
+                            "wire": "x -56.0 y 334.0 x -787.0"
                         },
                         {
                             "from": "(pin 34) runtime settings @ editor",
                             "to": "(pin 2) show @ runtime settings",
-                            "wire": "x 121.3 y -45.0 x 175.7"
+                            "wire": "x 114.3 y -45.0 x 175.7"
                         },
                         {
                             "from": "(pin 18) open document @ editor",
                             "to": "(pin 5) doc open @ document manager",
-                            "wire": "x -77.0 y 0.0 x -131.0"
+                            "wire": "x -84.0 y 0.0 x -131.0"
                         },
                         {
                             "from": "(pin 19) document settings @ editor",
                             "to": "(pin 1) show @ doc settings",
-                            "wire": "x 155.4 y -273.0 x 142.6"
+                            "wire": "x 148.4 y -273.0 x 142.6"
                         },
                         {
                             "from": "(pin 22) save point confirm @ editor",
                             "to": "(pin 1) show @ confirm box",
-                            "wire": "x 173.3 y -253.0 x 124.7"
+                            "wire": "x 166.3 y -253.0 x 124.7"
                         },
                         {
                             "from": "(pin 36) show context menu @ editor",
                             "to": "(pin 1) context menu @ context menu",
-                            "wire": "x 200.0 y -97.0 x 98.0"
+                            "wire": "x 193.0 y -97.0 x 98.0"
                         },
                         {
                             "from": "(pin 37) settings @ editor",
                             "to": "(pin 1) json @ node settings",
-                            "wire": "x 210.9 y -45.0 x 87.1"
+                            "wire": "x 203.9 y -45.0 x 87.1"
                         },
                         {
                             "from": "(pin 26) show link @ editor",
                             "to": "(pin 1) name and path @ name and path",
-                            "wire": "x 229.1 y 0.0 x 68.9"
+                            "wire": "x 222.1 y 0.0 x 68.9"
                         },
                         {
                             "from": "(pin 59) show filter @ editor",
                             "to": "(pin 1) name and path @ name and path",
-                            "wire": "x 221.0 y -15.0 x 77.0"
+                            "wire": "x 214.0 y -15.0 x 77.0"
                         },
                         {
                             "from": "(pin 38) show factory @ editor",
                             "to": "(pin 1) name and path @ name and path",
-                            "wire": "x 232.0 y -30.0 x 66.0"
+                            "wire": "x 225.0 y -30.0 x 66.0"
                         },
                         {
                             "from": "(pin 39) open source file @ editor",
                             "to": "(pad 8) open source file",
-                            "wire": "x -36.0 y 76.0 x -776.0"
+                            "wire": "x -43.0 y 76.0 x -776.0"
                         },
                         {
                             "from": "(pin 40) pin profile @ editor",
                             "to": "(pin 1) show @ pin profile",
-                            "wire": "x 226.0 y 15.0 x 73.0"
+                            "wire": "x 219.0 y 84.0 x 78.0"
                         },
                         {
                             "from": "(pin 41) node comment @ editor",
                             "to": "(pin 1) text @ text block",
-                            "wire": "x 203.0 y 88.0 x 95.0"
+                            "wire": "x 196.0 y 157.0 x 92.0"
                         },
                         {
                             "from": "(pin 42) select node @ editor",
                             "to": "(pin 1) select node @ select node",
-                            "wire": "x 177.6 y 152.0 x 120.4"
+                            "wire": "x 170.6 y 221.0 x 117.4"
                         },
                         {
                             "from": "(pin 45) change library @ editor",
                             "to": "(pin 3) switch library @ select node",
-                            "wire": "x 132.9 y 152.0 x 165.1"
+                            "wire": "x 125.9 y 221.0 x 162.1"
                         },
                         {
                             "from": "(pin 47) canvas @ editor",
                             "to": "(pin 3) content div @ vertical menu tabs content",
-                            "wire": "x -181.0 y 19.0 x -450.0"
+                            "wire": "x -188.0 y 19.0 x -465.0"
                         },
                         {
                             "from": "(pin 24) clipboard get @ editor",
                             "to": "(pin 6) get @ clipboard",
-                            "wire": "x -90.3 y 67.0 x -52.7"
+                            "wire": "x -97.3 y 101.0 x -56.7"
                         },
                         {
                             "from": "(pin 25) clipboard set @ editor",
                             "to": "(pin 5) set @ clipboard",
-                            "wire": "x -74.3 y 67.0 x -68.7"
+                            "wire": "x -81.3 y 101.0 x -72.7"
                         },
                         {
                             "from": "(pin 2) modal div @ context menu",
@@ -3198,27 +3201,27 @@
                         {
                             "from": "(pin 2) modal div @ pin profile",
                             "to": "(bus) modal div bus",
-                            "wire": "x 103.0"
+                            "wire": "x 45.5 y 0.0 x 52.5"
                         },
                         {
                             "from": "(pin 2) modal div @ text block",
                             "to": "(bus) modal div bus",
-                            "wire": "x 104.0"
+                            "wire": "x 107.0"
                         },
                         {
                             "from": "(pin 4) content size change @ vertical menu tabs content",
                             "to": "(pin 48) size change @ editor",
-                            "wire": "x 467.1 y -19.0 x 163.9"
+                            "wire": "x 482.1 y -19.0 x 170.9"
                         },
                         {
                             "from": "(pin 8) div @ vertical menu tabs content",
                             "to": "(pad 2) div",
-                            "wire": "x -102.0"
+                            "wire": "x -36.0 y 0.0 x -51.0"
                         },
                         {
                             "from": "(pin 4) doc set active @ document manager",
                             "to": "(pin 17) set document @ editor",
-                            "wire": "x 131.0 y 0.0 x 77.0"
+                            "wire": "x 131.0 y 0.0 x 84.0"
                         },
                         {
                             "from": "(pin 9) save as filename @ document manager",
@@ -3253,12 +3256,12 @@
                         {
                             "from": "(pin 2) node @ select node",
                             "to": "(pin 43) selected node @ editor",
-                            "wire": "x -146.5 y -152.0 x -151.5"
+                            "wire": "x -143.5 y -221.0 x -144.5"
                         },
                         {
                             "from": "(pin 4) modal div @ select node",
                             "to": "(bus) modal div bus",
-                            "wire": "x 44.0 y -0.1 x 60.0"
+                            "wire": "x 107.0"
                         },
                         {
                             "from": "(pin 2) modal div @ doc settings",
@@ -3278,57 +3281,57 @@
                         {
                             "from": "(pin 2) div @ side menu",
                             "to": "(pin 1) menu div @ vertical menu tabs content",
-                            "wire": "x -41.6 y 710.0 x 276.6"
+                            "wire": "x -41.6 y 710.0 x 261.6"
                         },
                         {
                             "from": "(pin 5) sync @ side menu",
                             "to": "(pin 13) sync model @ editor",
-                            "wire": "x 933.5 y 76.0 x 32.5"
+                            "wire": "x 933.5 y 76.0 x 39.5"
                         },
                         {
                             "from": "(pin 6) grid on-off @ side menu",
                             "to": "(pin 15) grid on-off @ editor",
-                            "wire": "x 912.4 y 76.0 x 53.6"
+                            "wire": "x 912.4 y 76.0 x 60.6"
                         },
                         {
                             "from": "(pin 3) accept changes @ side menu",
                             "to": "(pin 12) accept changes @ editor",
-                            "wire": "x 901.0 y 76.0 x 65.0"
+                            "wire": "x 901.0 y 76.0 x 72.0"
                         },
                         {
                             "from": "(pin 4) recalibrate @ side menu",
                             "to": "(pin 14) recalibrate @ editor",
-                            "wire": "x 882.0 y 76.0 x 84.0"
+                            "wire": "x 882.0 y 76.0 x 91.0"
                         },
                         {
                             "from": "(pin 7) show settings @ side menu",
                             "to": "(pin 16) show settings @ editor",
-                            "wire": "x 865.5 y 76.0 x 100.5"
+                            "wire": "x 865.5 y 76.0 x 107.5"
                         },
                         {
                             "from": "(pin 10) make lib @ side menu",
                             "to": "(pin 27) make lib @ editor",
-                            "wire": "x 849.0 y 91.0 x 117.0"
+                            "wire": "x 849.0 y 91.0 x 124.0"
                         },
                         {
                             "from": "(pin 11) make app @ side menu",
                             "to": "(pin 29) make app @ editor",
-                            "wire": "x 833.4 y 121.0 x 132.6"
+                            "wire": "x 833.4 y 121.0 x 139.6"
                         },
                         {
                             "from": "(pin 8) set save point @ side menu",
                             "to": "(pin 20) save point set @ editor",
-                            "wire": "x 817.4 y 271.0 x 148.6"
+                            "wire": "x 817.4 y 271.0 x 155.6"
                         },
                         {
                             "from": "(pin 9) back to save point @ side menu",
                             "to": "(pin 61) save point back @ editor",
-                            "wire": "x 807.4 y 271.0 x 158.6"
+                            "wire": "x 807.4 y 271.0 x 165.6"
                         },
                         {
                             "from": "(pad 3) size change",
                             "to": "(pin 7) size change @ vertical menu tabs content",
-                            "wire": "x 245.0 y -84.0 x -39.0"
+                            "wire": "x 245.0 y -84.0 x -54.0"
                         },
                         {
                             "from": "(pad 6) get open models",
@@ -3338,7 +3341,7 @@
                         {
                             "from": "(pad 9) show",
                             "to": "(pin 6) show @ vertical menu tabs content",
-                            "wire": "x 295.0 y -125.0 x -55.0"
+                            "wire": "x 295.0 y -125.0 x -70.0"
                         },
                         {
                             "from": "(pad 21) doc selected",
@@ -3363,7 +3366,7 @@
                         {
                             "from": "(bus) modal div bus",
                             "to": "(pin 5) modal div @ vertical menu tabs content",
-                            "wire": "y -202.5 x -91.1"
+                            "wire": "y -202.5 x -106.1"
                         }
                     ]
                 }
@@ -3545,8 +3548,8 @@
             "rect": "x 1061 y 0 w 100 h 26",
             "view": {
                 "state": "open",
-                "rect": "x 0 y 0 w 1296 h 1326",
-                "transform": "sx 1.000 sy 1.000 dx -49.469 dy 32.331"
+                "rect": "x 0 y 0 w 1497 h 1326",
+                "transform": "sx 1.000 sy 1.000 dx -528.469 dy 165.331"
             },
             "routes": [
                 {

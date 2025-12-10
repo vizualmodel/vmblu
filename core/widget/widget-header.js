@@ -8,7 +8,8 @@ export function Header(rect, node) {
     // binary state 
     this.is = {
         header: true,
-        highLighted: false
+        highLighted: false,
+        alert: false
     }
     // the title is the name of the node
     this.title = node.name
@@ -61,6 +62,8 @@ Header.prototype = {
 
         // draw the text
         shape.centerText(ctx, this.title, st.font, color, x, y, w, h)
+
+        if (this.is.alert) shape.circle(x,y,10,'#ff0000');
     },
 
     // true if the title area was hit (the y-hit is already established !)

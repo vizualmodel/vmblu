@@ -183,7 +183,7 @@ Bus.prototype = {
 
     // returns the segment that was hit
     hitSegment(pos) {
-
+        
         // notation
         const L = this.wire.length
         const x = pos.x

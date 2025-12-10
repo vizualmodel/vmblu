@@ -82,12 +82,13 @@ export const mouseMoveHandling = {
                 state.lookWidget.drag(xyLocal)
                 return true
 
+            // OBSOLETE
             case doing.pinAreaDrag:
                 // move the rectangle
-                this.selection.pinAreaDrag(dxdyLocal)
+                // this.selection.pinAreaDrag(dxdyLocal)
 
                 // move the pins
-                this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect)
+                // this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect)
                 return true
 
             case doing.interfaceNameDrag:
@@ -97,7 +98,7 @@ export const mouseMoveHandling = {
             case doing.interfaceDrag:
 
                 // move the rectangle
-                this.selection.pinAreaDrag(dxdyLocal)
+                this.selection.widgetsDrag(dxdyLocal)
 
                 // swap the widgets if necessary
                 this.selection.widgets[0].node.look.swapInterface(xyLocal, this.selection.widgets)
@@ -198,7 +199,7 @@ export const mouseMoveHandling = {
                 if ( inside(xyLocal, this.selection.widgets[0].rect)) return false;
 
                 // moving: unselect the node
-                this.selection.nodes[0].unSelect()
+                //this.selection.nodes[0].unSelect()
 
                 // // set a selection rectangle around the selected pins
                 // this.selection.pinAreaRectangle()

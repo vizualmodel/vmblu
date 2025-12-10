@@ -1,42 +1,22 @@
 import {editor} from '../editor/index.js'
 
-const noLink = [
-
-	{text:"new output",		char:'o', icon:"logout",state:"enabled", action:newOutput},
-	{text:"new input",		char:'i', icon:"login",state:"enabled", action:newInput},
-	{text:"new ifName",  char:'p', icon:"drag_handle",state:"enabled", action:newInterfaceName},
-	{text:"new request",	char:'q', icon:"switch_left",state:"enabled", action:newRequest},
-	{text:"new reply",		char:'r', icon:"switch_right",state:"enabled", action:newReply},
-	{text:"change to output",	  	  icon:"cached",state:"disabled", action:inOutSwap},
-	{text:"add channel",	  	  	  icon:"adjust",state:"disabled", action:channelOnOff},
-	{text:"paste pins",		char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pasteWidgetsFromClipboard},
-	{text:"profile",				  icon:"info",state:"disabled", action:showProfile},
-	{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
-	{text:"disconnect",				  icon:"power_off",state:"disabled", action:disconnectPin},
-	{text:"delete",					  icon:"delete",state:"enabled", action:deletePin},
-
-]
-
-const withLink = [
-
-	{text:"profile",				  icon:"info",state:"disabled", action:showProfile},
-	{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
-	{text:"disconnect",				  icon:"power_off",state:"disabled", action:disconnectPin},
-
-]
-
 // click on the node
 export const pinAreaCxMenu = {
 
-	choices: null,
+	choices: [
+		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
+		{text:"disconnect",				  icon:"power_off",state:"enabled", action:disconnectPinArea},
+		{text:"delete",					  icon:"delete",state:"enabled", action:deletePinArea},
+		{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
+		{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
+		{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
+		{text:"in/out switch",	  	  	  icon:"cached",state:"disabled", action:inOutSwitch},
+
+	],
 
 	view: null,
 	node: null,
-	widget: null,
+	widgets: null,
 	xyLocal: null,
 	xyScreen: null,
 
@@ -44,133 +24,30 @@ export const pinAreaCxMenu = {
 	prepare(view) {
 
 		this.view = view
-		this.node = view.hit.node
-		this.widget = view.hit.lookWidget
+		this.node = view.state.node
+		this.widgets = view.selection.widgets
 		this.xyLocal = view.hit.xyLocal
 		this.xyScreen = view.hit.xyScreen
-
-		// linked nodes hve much less options
-		if (this.node.link) {
-
-			// The number of options is reduced
-			this.choices = withLink
-
-			// only pins can be disconnected
-			let entry = this.choices.find( c => c.action == disconnectPin)
-			entry.state = this.widget?.is.pin ? 'enabled' : 'disabled'
-
-			// profiles are only available for pins
-			entry = this.choices.find( c => c.action == showProfile)
-			entry.state = this.widget?.is.pin ? 'enabled' : 'disabled'
-
-			return
-		}
-		
-		this.choices = noLink
-
-		// only pins can be disconnected
-		let entry = this.choices.find( c => c.action == disconnectPin)
-		entry.state = this.widget?.is.pin ? 'enabled' : 'disabled'
-
-		// swap input to output
-		entry = this.choices.find(c => c.action == inOutSwap)
-		let enable = this.widget?.is.pin && this.widget.routes.length == 0
-		entry.state = enable ? "enabled" : "disabled"
-		entry.text = (enable && this.widget.is.input ) ? "change to output" : "change to input"
-
-		// switch channel on or off
-		entry = this.choices.find(c => c.action == channelOnOff)
-		enable = this.widget?.is.pin // && ! this.widget.is.proxy
-		entry.state = enable ? "enabled" : "disabled"
-		entry.text = (enable && this.widget.is.channel ) ? "remove channel" : "add channel"
-
-		// profiles are only available for pins
-		entry = this.choices.find( c => c.action == showProfile)
-		entry.state = this.widget?.is.pin ? 'enabled' : 'disabled'
-
-		// switch the delete action 
-		entry = this.choices.find( c => c.text == "delete")
-		entry.action = this.widget?.is.pin ? deletePin : this.widget?.is.ifName ? deleteInterfaceName : ()=>{}
-
-		// check if there are pins to paste
-		entry = this.choices.find( c => c.text == "paste pins")
 	},
 }
-
-// is = {channel, input, request, proxy}
-function newInput() {
-
-	pinAreaCxMenu.node?.cannotBeModified()
-
-	// set the flags
-	const is = {	channel: false, 
-					input: true, 
-					proxy: pinAreaCxMenu.node.is.group
-				}
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is})
+function selectionToClipboard() {
+    editor.doEdit('selectionToClipboard',{view: pinAreaCxMenu.view})
 }
-function newOutput() {
-	// set the flags
-	const is = {	channel: false, 
-					input: false, 
-					proxy: pinAreaCxMenu.node.is.group
-				}
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is})
+function disconnectPinArea() {
+	editor.doEdit('disconnectPinArea', {view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets})
 }
-function newRequest() {
-	// set the flags
-	const is = {	channel: true, 
-					input: false, 
-					proxy: pinAreaCxMenu.node.is.group
-				}
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is})
+function deletePinArea() {
+	editor.doEdit('deletePinArea',{view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets})
 }
-function newReply() {
-	// set the flags
-	const is = {	channel: true, 
-					input: true, 
-					proxy: pinAreaCxMenu.node.is.group
-				}
-	editor.doEdit('newPin',{view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos:pinAreaCxMenu.xyLocal, is})
-}
-function inOutSwap() {
-	editor.doEdit('ioSwap',{pin: pinAreaCxMenu.widget})
-}
-function channelOnOff() {
-	editor.doEdit('channelOnOff',{pin: pinAreaCxMenu.widget})
-}
-function disconnectPin() {
-	editor.doEdit('disconnectPin', {pin: pinAreaCxMenu.widget})
-}
-function deletePin() {
-	editor.doEdit('deletePin',{view: pinAreaCxMenu.view,pin: pinAreaCxMenu.widget})
-}
-function newInterfaceName() {
-	editor.doEdit('newInterfaceName', {view: pinAreaCxMenu.view, node:pinAreaCxMenu.node, pos: pinAreaCxMenu.xyLocal})
-}
-function deleteInterfaceName() {
-	editor.doEdit('deleteInterfaceName',{view: pinAreaCxMenu.view,ifName: pinAreaCxMenu.widget})
-}
-function showProfile(e) {
-	editor.doEdit('showProfile',{pin: pinAreaCxMenu.widget, pos: {x:pinAreaCxMenu.xyScreen.x, y:pinAreaCxMenu.xyScreen.y + 10}})
-}
-
 function pinsSwap()  {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:true, right:true})
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:true})
 }
-
 function pinsLeft()  {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:true, right:false})
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:false})
 }
 function pinsRight() {
-	editor.doEdit('swapPins',{node:pinAreaCxMenu.node,left:false, right:true})
+	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:false, right:true})
 }
-function pasteWidgetsFromClipboard()  {
-
-	// request the clipboard - also set the target, the clipboard can come from another file
-	editor.tx.request('clipboard get',editor.doc).then( clipboard => {
-
-		editor.doEdit('pasteWidgetsFromClipboard',{	view: pinAreaCxMenu.view, clipboard})
-	})
-	//.catch( error => console.log('paste: clipboard get error -> ' + error))
+function inOutSwitch() {
+	editor.doEdit('ioSwitchPinArea', {view})
 }

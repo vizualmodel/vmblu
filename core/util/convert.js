@@ -315,26 +315,26 @@ export const convert = {
         let middle = str.slice(opbr+1, clbr).split(',').map(n=>n.trim()).filter(Boolean).join(',')
         let post = str.slice(clbr+1).trim()
 
-        // if there is no point or hyphen, we add a space
+        // if there is no period, hyphen or underscore, we add a period
         const last = pre.at(-1)
-        if ((pre.length > 0)&&(last != '.') && (last != '-') && (last != '_')) pre = pre + ' '
+        if ((pre.length > 0) && (last != '.') && (last != '-') && (last != '_')) pre = pre + ' '
         const first = post[0]
-        if ((post.length > 0)&&(first != '.') && (first != '-') && (first != '_')) post = ' ' + post
+        if ((post.length > 0) && (first != '.') && (first != '-') && (first != '_')) post = ' ' + post
 
         return [pre, middle, post]
     },
 
-    // a pin name that has been edited can start or end with a '+
-    //hasPlus: str => str[0] == '+' || str.at(-1) == '+' ,
-
+    // a pin name that has been edited can start or end with a special character
+    // that indicates that th einterface name will be added as prefix / postfix
+    // + indicates a single space
     needsPrefix: str => {
         const first = str[0]
-        return (first == '+' || first == '.' || first == '-' || first == '_')
+        return (first == '+' || first == '.' || first == '-' || first == '_' || first == '/')
     },
 
     needsPostfix: str => {
         const last = str.at(-1)
-        return (last == '+' || last == '.' || last == '-' || last == '_')
+        return (last == '+' || last == '.' || last == '-' || last == '_' || last == '/')
     },
 
     // add the prefix / postfix to a message
@@ -346,13 +346,9 @@ export const convert = {
         const first = name[0]
 
         // Prefix
-        if (first == '.' || first == '-' || first == '_') {
+        if (first == '+' || first == '.' || first == '-' || first == '_' || first == '/') {
             const clean = name.slice(1).trim()
-            complete = prefix + first + clean;
-        }
-        else if (first == '+') {
-            const clean = name.slice(1).trim()
-            complete = prefix + ' ' + clean
+            complete = first == '+' ? prefix + ' ' + clean : prefix + first + clean;
         }
         
         // done
@@ -360,19 +356,15 @@ export const convert = {
     },
 
     // add the prefix / postfix to a message
-    combineWithPostfix(postFix, name) {
+    combineWithPostfix(postfix, name) {
 
         // Default is just the name
         let complete = name
         const last = name.at(-1)
 
-        if (last == '.' || last == '-' || last == '_') {
+        if (last == '+' || last == '.' || last == '-' || last == '_' || last == '/') {
             const clean = name.slice(0,-1).trim()
-            complete = clean + last + postFix;
-        }
-        else if (last == '+') {
-            const clean = name.slice(0,-1).trim()
-            complete = clean + ' ' + postFix
+            complete = last == '+' ? clean + ' ' + postfix : clean + last + postfix;
         }
         
         // done
@@ -380,57 +372,20 @@ export const convert = {
     },
 
     prefixMatch(prefix, name) {
-
         if (name.startsWith(prefix)) {
-
             const first = name[prefix.length]
-            return ((first == '.') || (first == '-') || (first == ' ') || (first == '_'))
+            return ((first == '.') || (first == '-') || (first == ' ') || (first == '_') || (first == '/'))
         }
     },
 
     postfixMatch(postfix, name) {
-
         if (name.endsWith(postfix)) {
-
             const last = name.at(-postfix.length-1)
-            return ((last == '.') || (last == '-') || (last == ' ') || (last == "_"))
+            return ((last == '.') || (last == '-') || (last == ' ') || (last == "_") || (last == '/'))
         }
     },
 
-    // add the prefix / postfix to a message
-    xxcombineWithPrefix(prefix, name) {
-
-        // Default is just the name
-        let complete = name
-
-        // Prefix
-        if (name[0] == '+') {
-
-            const clean = name.slice(1).trim()
-
-            // if there is some sort of a seperation character keep it
-            if ((clean[0] == '.') || (clean[0] == '-') || (prefix.at(-1) == '.') || (prefix.at(-1) == '-')) 
-                complete = prefix + clean
-            else 
-                // otherwise use a space
-                complete = prefix + ' ' + clean
-        }
-        // Postfix
-        else if (name.at(-1) == '+') {
-
-            const clean = name.slice(0,-1).trim()
-
-            if ((clean.at(-1) == '.') || (clean.at(-1) == '-') || (prefix[0] == '.') || (prefix[0] == '-')) 
-                complete = clean + prefix
-            else 
-                complete = clean + ' ' + prefix
-        }
-        
-        // done
-        return complete
-    },
-
-    // change a string abcdef to abcdef(1) and a string abcdef(3) to abcdef(n)
+    // change a string abcdef to abcdef(n) and a string abcdef(m) to abcdef(n)
     addNumber: (str, n) => {
 
         // Find the position of the last '(' in the string

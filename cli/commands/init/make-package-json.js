@@ -1,6 +1,9 @@
 import * as fs from 'fs/promises';
 import path from 'path';
-import pckg from '../../package.json' assert { type: 'json' };
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pckg = require('../../package.json');
 
 async function readJsonIfExists(file) {
   try { return JSON.parse(await fs.readFile(file, 'utf8')); } catch { return null; }

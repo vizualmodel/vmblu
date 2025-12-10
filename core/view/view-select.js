@@ -48,16 +48,14 @@ export const selectionHandling = {
     // cb is the clipboard
     deltaForPaste(pos, cb) {
 
+        if (!pos) return null;
+
         // increment the copy count
         cb.copyCount++
 
         const slct = cb.selection
 
-        const ref = (slct.what == selex.freeRect) 
-                        ? slct.rect 
-                        : (slct.what == selex.multiNode) 
-                            ? slct.nodes[0].look.rect 
-                            : {x:0, y:0}
+        const ref = (slct.what == selex.freeRect) ? slct.rect : (slct.what == selex.multiNode) ? slct.nodes[0].look.rect  : {x:0, y:0}
 
         // if the position is the same as the reference - move the first, otherwise only move starting from 2
         return ((ref.x == pos.x) && (ref.y == pos.y)) 
@@ -77,10 +75,9 @@ export const selectionHandling = {
 
         // calculate where the selection has to be pasted
         const delta = this.deltaForPaste(pos, clipboard)
-        //const pasteHere = this.pastePosition(pos, clipboard)
 
         // if we have selected a node and a position inside the node, get it here (before we reset)
-        const [node, inside] = this.selectedNodeAndPosition()
+        const [node, inside] = this.selection.whereToAdd()
 
         // initialise the selection
         this.selection.reset()
@@ -176,6 +173,7 @@ export const selectionHandling = {
             }
             break
 
+            case selex.ifArea:
             case selex.pinArea: {
 
                 // check
@@ -184,11 +182,13 @@ export const selectionHandling = {
                 // paste the widgets 
                 const copies = node.look.copyPinArea(cbslct.widgets, inside)
 
-                // add the pads or the adjust the rx/tx tables
+                // add the pads or adjust the rx/tx tables
                 node.is.source ? node.rxtxAddPinArea(copies) : node.addPads(copies)
 
                 // the selection becomes the widgets that were copied
                 this.selection.pinAreaSelect(copies)
+
+                this.selection.what = cbslct.what;
             }
             break
         }
@@ -272,7 +272,7 @@ export const selectionHandling = {
 
 
     // get the node and the position where a pin must be added
-    selectedNodeAndPosition() {
+    xxxselectedNodeAndPosition() {
 
         // get the selected node (only one !)
         const node = this.selection.getSingleNode()

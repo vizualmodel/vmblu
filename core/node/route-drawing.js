@@ -96,7 +96,7 @@ export const routeDrawing = {
         }
     },
 
-    sixPointRoute() {
+    sixPointRoute(nodes=[]) {
 
         // reset points
         if (this.wire.length > 0) this.wire.length = 0
@@ -108,35 +108,50 @@ export const routeDrawing = {
         const f = from.center()
         const t = to.center()
 
-        let x1=0, x2=0, y1=0
+        // deterministic offsets away from node bodies
+        const margin = style.look.dxCopy
 
-        // if both pins 
-        if (from.is.pin && to.is.pin) {
+        let x1 = from.is.left ? f.x - margin : f.x + margin
+        let x2 = to.is.left ? t.x - margin : t.x + margin
 
-            // reasonable delta with some variation in it
-            const delta = style.look.dxCopy * (2 - Math.random())
+        const frc = from.node.look.rect
+        const trc = to.node.look.rect
+        let y1 = f.y + (frc.h/4 + trc.h/4)
 
-            x1 = from.is.left ? f.x - delta : f.x + delta
-            x2 = to.is.left ? t.x - delta : t.x + delta
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
+        const expandY = Math.max(style.route.split, 10)
 
-            const frc = from.node.look.rect
-            const trc = to.node.look.rect
-
-            y1 = f.y + (frc.h/4 + trc.h/4)*(2 - Math.random())
+        const buildWire = (yMid) => {
+            wire.length = 0
+            wire.push(f)
+            wire.push({x:x1, y:f.y})
+            wire.push({x:x1, y:yMid})
+            wire.push({x:x2, y:yMid})
+            wire.push({x:x2, y:t.y})
+            wire.push(t)
         }
-        else {
 
+        const collides = () => {
+            for (let i=0; i<wire.length-1; i++) {
+                const a = wire[i], b = wire[i+1]
+                if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return true
+            }
+            return false
         }
-        
-        wire.push(f)
-        wire.push({x:x1, y:f.y})
-        wire.push({x:x1, y:y1})
-        wire.push({x:x2, y:y1})
-        wire.push({x:x2, y:t.y})
-        wire.push(t)
+
+        let guard = 0
+        buildWire(y1)
+        while (collides() && guard < 30) {
+            y1 += expandY
+            buildWire(y1)
+            guard++
+        }
+
+        return true
     },
 
-    fourPointRoute() {
+    fourPointRoute(nodes=[]) {
 
         // reset points
         if (this.wire.length > 0) this.wire.length = 0
@@ -149,33 +164,56 @@ export const routeDrawing = {
         const t = to.center()
 
         let xNew = 0
+        const margin = style.look.dxCopy
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
 
         // if both pins are at the same side of the node
         if ((from.is.pin && to.is.pin)&&(from.is.left == to.is.left)) {
 
-            // reasonable delta with some variation in it
-            const delta = style.look.dxCopy * (2 - Math.random())
-
-            if (from.is.left) 
-                xNew = from.rect.x < to.rect.x ? from.rect.x - delta : to.rect.x - delta
+            const left = from.is.left
+            if (left) 
+                xNew = from.rect.x < to.rect.x ? from.rect.x - margin : to.rect.x - margin
             else 
-                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + delta : to.rect.x + to.rect.w + delta
+                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + margin : to.rect.x + to.rect.w + margin
         }
         else {
 
-            //set an extra point somewhere between the two...
-            const delta = Math.abs(f.x-t.x) * 0.5 * Math.random()
+            // place the bend between the two centers with a fixed offset
+            const delta = Math.abs(f.x - t.x) * 0.25
+            xNew = f.x < t.x ? f.x + delta : f.x - delta
+        }
 
-            // xNew is somewhere between the two centers
-            xNew = f.x < t.x    ? f.x + (t.x-f.x)*0.25 + delta 
-                                : f.x - (f.x-t.x)*0.25 - delta
+        // make the position of the bend also dependant on the relative position of the pin in the node
+        const yFraction = 0.02
+        const dyPin = from.rect.y - from.node.look.rect.y 
+        xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction
 
+        // nudge xNew left/right if the vertical legs would cut through other nodes
+        const tryClearX = (xCandidate) => {
+            const pA = {x:xCandidate, y:f.y}
+            const pB = {x:xCandidate, y:t.y}
+            return blockers.some(n => segmentCuts(pA, pB, n.look.rect))
+        }
+        if (tryClearX(xNew)) {
+            const shifts = [margin, -margin, margin*2, -margin*2]
+            const base = xNew
+            for (const dx of shifts) {
+                if (!tryClearX(base + dx)) { xNew = base + dx; break }
+            }
         }
         
         wire.push(f)
         wire.push({ x: xNew, y: f.y})
         wire.push({ x: xNew, y: t.y})
         wire.push(t)
+
+        // check for collisions with other nodes; if any, signal failure
+        for (let i=0; i<wire.length-1; i++) {
+            const a = wire[i], b = wire[i+1]
+            if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return false
+        }
+        return true
     },
 
     threePointRoute(horizontal) {
@@ -300,6 +338,8 @@ export const routeDrawing = {
         const cTo = this.to.center();
 
         for (const node of nodes) {
+            // ignore the nodes that own the endpoints
+            if ((node == this.from.node) || (node == this.to.node)) continue
             if (cutsRectangle(cFrom, cTo, node.look.rect)) return false
         }
         return true
@@ -317,33 +357,33 @@ export const routeDrawing = {
                 // if there is no route yet we can swap left/right to have a better fit
                 this.checkLeftRight()
 
-                // check for line of sight
-                this.lineOfSight(nodes) ? this.fourPointRoute() : this.sixPointRoute()
+                // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes)
 
                 break
 
             case 'PIN-PAD':
-                this.fourPointRoute()
+                this.fourPointRoute(nodes)
                 break
 
             case 'PAD-PIN':
-                this.fourPointRoute()
+                this.fourPointRoute(nodes)
                 break
 
             case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
                 break
 
             case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
                 break
 
             case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
                 break
 
             case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
                 break
         }
     },
@@ -369,10 +409,18 @@ export const routeDrawing = {
 
         if (this.wire.length == 3) {
 
-            this.wire[3] = this.wire[2]
-            this.wire[2] = this.wire[1]
-            this.wire[2].y = this.wire[3].y
-            this.wire[1].y = this.wire[0].y
+            const p0 = this.wire[0]
+            const p1 = this.wire[1]
+            const p2 = this.wire[2]
+
+            // rebuild as a clean orthogonal path
+            this.wire.length = 0
+            this.wire.push(
+                {x:p0.x, y:p0.y},
+                {x:p1.x, y:p0.y},
+                {x:p1.x, y:p2.y},
+                {x:p2.x, y:p2.y},
+            )
         }
 
     }

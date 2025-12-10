@@ -1,7 +1,7 @@
 import {editor} from '../editor/index.js'
 import {selex} from './selection.js'
 
-export const redoxSelectWidgets = {
+export const redoxPinArea = {
 
 disconnectPinArea: {
 
@@ -68,6 +68,10 @@ deletePinArea: {
 swapPinArea: {
 
     doit({view, left, right}){
+
+        // check
+        if (! view.selection.widgets?.length) return
+
         // save the pins that will be swapped
         const swapped = []
 
@@ -96,13 +100,13 @@ pasteWidgetsFromClipboard: {
     doit({view, clipboard}){
 
         // check that the clipboard contains a pin area selection
-        if (clipboard.selection.what != selex.pinArea) return
+        if (clipboard.selection.what != selex.pinArea && clipboard.selection.what != selex.ifArea) return
 
         // get the single node and widget
-        const [node, pos] = view.selectedNodeAndPosition()
+        const [node, pos] = view.selection.whereToAdd()
 
         // check
-        if (node.cannotBeModified()) return
+        if (!node || node.cannotBeModified()) return
 
         // get the widgets from the clipboard
         view.clipboardToSelection(pos,clipboard)
@@ -153,6 +157,31 @@ multiToPinArea: {
     },
     redo() {}
 },
+
+ioSwitchPinArea: {
+
+    doit({view}) {
+
+        // check
+        if (!view.selection.widgets.length) return
+
+        // we switch all the selected widgets to
+        const switched = []
+        
+        // note that a switch only happens when a pin is not connected !
+        for (const pin of view.selection.widgets) {
+            if (pin.is.pin && pin.ioSwitch()) switched.push(pin)
+        }
+
+        // check fro switches...
+        if (switched.length) editor.saveEdit('ioSwitchPinArea',{view, switched})
+    },
+    undo({view, switched}) {
+
+        for (const pin of switched) pin.ioSwitch()
+    },
+    redo() {}
+}
 
 }
 

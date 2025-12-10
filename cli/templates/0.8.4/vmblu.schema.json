@@ -1,0 +1,268 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "@vizual_model/cli/templates/0.8.4/vmblu.schema.json",
+    "title": "vmblu Model (v0.8.4 draft)",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["header", "root"],
+    "properties": {
+        "header": { "$ref": "#/$defs/Header" },
+        "imports": {
+            "description": "List of vmblu files that are referenced in the model. Allows for faster loading.",
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+        },
+        "factories": {
+            "description": "List of files where the source code of the source nodes can be found. Used by the docgen tool.",
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+        },
+        "libraries": {
+            "description": "List of vmblu files from which the editor allows the user to select nodes in an easy way.",
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+        },
+        "root": { 
+            "description": "The starting point of the vmblu model. Every field named 'editor' is there only to let the editor display the model for the user.",
+            "$ref": "#/$defs/Node" 
+        }
+    },
+    "$defs": {
+        "Header": {
+            "description": "Contains meta information about the model. Used by the editor.",
+            "type": "object",
+            "properties": {
+                "version": { "type": "string" },
+                "created": { "type": "string", "format": "date-time"  },
+                "saved": { "type": "string", "format": "date-time"  },
+                "utc": { "type": "string", "format": "date-time" },
+                "style": { "type": "string" },
+                "runtime": { "type": "string" }
+            },
+            "additionalProperties": false,
+            "required": ["version", "created", "saved", "utc"]
+        },
+        "Node" : {
+            "description": "A node describes a component of a software system. Nodes communicate via messages. There are three types of nodes.",
+            "type": "object",
+            "properties": {
+                "kind": {"enum": ["source", "group", "dock"]},
+                "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+                "label": { "type": "string"},
+                "interfaces":{
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/Interface" }
+                },
+                "prompt": {"type": "string"},
+                "sx": { "$ref": "#/$defs/NodeInitialization" },
+                "rx": { "$ref": "#/$defs/RuntimeDirectives" }
+            },
+            "oneOf": [
+                { "$ref": "#/$defs/SourceNode" },
+                { "$ref": "#/$defs/GroupNode" },
+                { "$ref": "#/$defs/DockNode" }
+            ],
+            "required": ["kind", "name"],
+            "unevaluatedProperties": false
+        },
+        "SourceNode": {
+            "description": "A source node has an implementation in source code.",
+            "type": "object",
+            "properties": {
+                "kind": {"const": "source"},
+                "factory": {
+                    "type": "object",
+                    "properties": {
+                        "path": { "type": "string", "minLength": 1 },
+                        "function": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["name"]
+                },
+                "editor": { "$ref": "#/$defs/EditorNode" }
+            }
+        },
+        "GroupNode": {
+            "description": "A group node consists of other connected nodes. It allows to build modular models.",
+            "type": "object",
+            "properties": {
+                "kind": {"const": "group"},
+                "nodes": { 
+                    "type": "array", 
+                    "items": { "$ref": "#/$defs/Node" } 
+                },
+                "connections": { 
+                    "type": "array", 
+                    "items": { "$ref": "#/$defs/Connection" } 
+                },
+                "editor": { "$ref": "#/$defs/EditorGroupNode" }
+            }
+        },
+        "DockNode": {
+            "description": "A dock node is a placeholder for a node that is defined in another file, specified in the link field.",
+            "type": "object",
+            "properties": {
+                "kind": {"const": "dock"},
+                "link": {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                        "path": { "type": "string", "minLength": 1 },
+                        "node": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" }
+                    }
+                },
+                "editor": { "$ref": "#/$defs/EditorNode" }
+            }
+        },
+        "Interface": {
+            "description": "An interface groups a number of pins of a node.",
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+                "name": { "type": "string", "pattern": "^[^@]+$" },
+                "pins": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/Pin" }
+                },
+                "editor" : {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {
+                        "id": {"type": "integer"}
+                    }
+                }
+            }
+        },
+        "Pin": {
+            "description": "A node can receive or send a message via a pin. Inputs connect to outputs and requests connect to replies.",
+            "type": "object",
+            "required": ["name", "kind"],
+            "properties": {
+                "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$"},
+                "kind": { "enum": ["input", "output", "request", "reply"] },
+                "editor": {"$ref": "#/$defs/EditorPin"}
+            }
+        },
+        "Connection": {
+            "description": "A connection can be made between two pins or between two interfaces. For pins the message flow is from 'src' to 'dst', so 'src' is either an output pin of a node or an input pin of the containing group node and 'dst' is either an input pin of a node or an output pin of the containing group node.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to"],
+            "properties": {
+                "src":   { "$ref": "#/$defs/Address" },
+                "dst":     { "$ref": "#/$defs/Address" }
+            }
+        },
+        "Address": {
+            "description": "The format for the address of a pin or interface. If node is omitted the node is the containing group node, and the pin or interface are represented as pads.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "node":      { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+                "pin":       { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+                "interface": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" }
+            },
+            "oneOf": [
+                { "required": ["pin"] },
+                { "required": ["interface"] }
+            ]
+        },
+        "NodeInitialization": {
+            "description": "Node-defined initialization data passed to the node at creation time. Shape is entirely up to the node designer.",
+            "type": "object"
+        },
+        "RuntimeDirectives": {
+            "description": "Runtime-defined creation/hosting directives. Shape is determined by the runtime (e.g., host=worker, debug=true).",
+            "type": "object",
+            "properties": {
+            "$contract": {
+                "type": "string",
+                "description": "Optional contract/version tag or URI (e.g., 'vmblu.rx/v1'). Lets tools know which directive dialect to expect."
+            }
+            },
+            "examples": [
+                { "$contract": "vmblu.rx/v1", "host": "worker", "debug": true, "logLevel": "info" }
+            ]
+        },
+        "EditorNode": {
+            "description": "Allows the editor to position and draw the node.",
+            "type": "object",
+            "properties": {
+                "rect": { "type": "string" }
+            }
+        },
+        "EditorGroupNode": {
+            "description": "Allows the editor to position and draw the content of a group node in a dedicated view.",
+            "type": "object",
+            "properties": {
+                "rect": { "type": "string" },
+                "view": {
+                    "type": "object",
+                    "required": ["rect"],
+                    "properties": {
+                        "state": {"enum": ["open", "closed"]},
+                        "rect": { "type": "string" },
+                        "transform": { "type": "string" }
+                    }
+                },
+                "buses": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/EditorBus"}
+                },
+                "routes": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/EditorRoute"}
+                }
+            }
+        },
+        "EditorPin" : {
+            "description": "Allows the editor to draw the pin in the node it belongs to.",
+            "type": "object",
+            "properties": {
+                "id": { "type": "integer" },
+                "align": { "enum": ["left", "right"]},
+                "pad": {
+                    "type": "object",
+                    "required": ["rect"],
+                    "properties": {
+                        "rect": { "type": "string" },
+                        "align": { "enum": ["left", "right"]}
+                    }
+                }
+            }
+        },
+        "EditorBus": {
+            "description": "A bus is an easy way to route multiple connections between nodes. A bus can also do some routing via a filter.",
+            "type": "object",
+            "required": ["kind","name"],
+            "properties": {
+                "kind": { "enum": ["busbar", "cable"]},
+                "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+                "filter": { "$ref": "#/$defs/Filter" },
+                "start" : { "type": "string"},
+                "wire": { "type": "string" }
+            }
+        },
+        "Filter": {
+            "description": "A bus uses a filter to route messages based on message parameters. A filter is a software routine.",
+            "type": "object",
+            "required": ["path", "function"],
+            "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "function": { "type": "string", "minLength": 1 }
+            }
+        },
+        "EditorRoute": {
+            "description": "A route is how the editor shows the connections between pins or interfaces.The from-string and to-string start with either pin, bus, pad or itf",
+            "type": "object",
+            "properties": {
+                "from":{ "type": "string" },
+                "to":{ "type": "string" },
+                "wire": { "type": "string" }
+            }
+        }
+    }
+}
+

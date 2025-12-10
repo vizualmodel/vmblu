@@ -12,7 +12,7 @@ export function InterfaceName(rect, text, node) {
     this.is = {
         ifName: true,
         added: false ,              // has been added 
-        zombie: false,              // ifName has been deleted (not used -> interfaceNames are free form ...)
+        zombie: false,              // interface name has been deleted (not used -> interfaceNames are free form ...)
         selected: false,
         highLighted: false
     }
@@ -54,7 +54,6 @@ InterfaceName.prototype = {
 
     render(ctx, look) {
         // notation
-        const {x,y,w,h} = this.rect
         const st = style.ifName
 
         const color =   this.is.added ? st.cAdded : 
@@ -63,7 +62,8 @@ InterfaceName.prototype = {
                         this.is.selected ? st.cSelected : 
                         st.cNormal
 
-        shape.interfaceText(ctx, this.text, st.font, color, st.cBackground, x,y,w,h)
+        // draw
+        shape.ifName(ctx, this.text, {line:st.cBackground, text:color},this.rect) 
     },
 
     toJSON() {

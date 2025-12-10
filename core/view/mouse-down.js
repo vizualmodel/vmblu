@@ -100,8 +100,8 @@ export const mouseDownHandling = {
 
                     case NONE:{
 
-                        // set the node as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget)
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget)
 
                         // highlight the ifName group
                         this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget)
@@ -406,6 +406,35 @@ export const mouseDownHandling = {
                             // drag the whole selection
                             editor.doEdit('selectionDrag', {view: this})
                             this.stateSwitch(doing.selectionDrag)
+                        } 
+                        else if (this.selection.what === selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal)
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+                                // highlight the ifName group
+                                this.selection.widgets = widget.node.look.highLightInterface(widget)
+
+                                // state switch
+                                this.stateSwitch(doing.interfaceNameClicked) 
+                            }
+                            else {  
+                                // save the widget & node
+                                state.lookWidget = widget
+                                state.node = widget.node
+
+                                // and highlight the routes
+                                widget.highLightRoutes()
+
+                                // new state
+                                this.stateSwitch(doing.pinClicked)
+
+                                // set the node and pin as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget)
+                            }
                         }
                     }
                     break
@@ -423,7 +452,7 @@ export const mouseDownHandling = {
                             // first switch the state - might end the previous selection !
                             this.stateSwitch(doing.pinAreaSelect)
                         }
-                        else if (this.selection.what == selex.pinArea) {
+                        else if (this.selection.what === selex.pinArea || this.selection.what === selex.ifArea) {
     
                             // ..and only then start a new selection
                             this.selection.pinAreaStart(this.selection.getPinAreaNode(), xyLocal)
@@ -452,14 +481,21 @@ export const mouseDownHandling = {
 
                             break;
 
-                            case selex.pinArea:
-
+                            case selex.ifArea:
                                 // set state to drag the pin/proxy up and down
-                                this.stateSwitch(doing.pinAreaDrag) 
+                                this.stateSwitch(doing.interfaceDrag) 
 
-                                // save the edit - the view contains the selection
-                                editor.doEdit('pinAreaDrag', this)
+                                // notation
+                                const pins = this.selection.widgets
 
+                                // drag the area
+                                editor.doEdit('interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y})
+                            break;
+
+                            case selex.pinArea:
+                                // NO MORE PIN AREA DRAG
+                                // this.stateSwitch(doing.pinAreaDrag) 
+                                // editor.doEdit('pinAreaDrag', this)
                             break;
                         }
 
@@ -467,6 +503,29 @@ export const mouseDownHandling = {
                     break
 
                     case CTRL|SHIFT:{
+
+                        if (this.selection.what == selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal)
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+
+                                // Save the edit
+                                editor.doEdit('interfaceNameDrag',{ifName: widget})
+
+                                // save the widget
+                                this.state.lookWidget = hit.lookWidget
+
+                                // set the node as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget)
+
+                                // switch to dragging the ifName
+                                this.stateSwitch(doing.interfaceNameDrag)
+                            }
+                        }
                     }
                     break
                 }

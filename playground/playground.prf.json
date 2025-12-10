@@ -1,6 +1,6 @@
 {
   "version": "0.3.2",
-  "generatedAt": "2025-11-29T10:33:56.979Z",
+  "generatedAt": "2025-12-08T14:23:00.295Z",
   "entries": [
     {
       "node": "document manager",
@@ -9,7 +9,7 @@
           "pin": "doc selected",
           "handler": "onDocSelected",
           "file": "../core/document/document-manager.js",
-          "line": 140,
+          "line": 88,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -25,7 +25,7 @@
           "pin": "doc new",
           "handler": "onDocNew",
           "file": "../core/document/document-manager.js",
-          "line": 163,
+          "line": 111,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -41,7 +41,7 @@
           "pin": "doc renamed",
           "handler": "onDocRenamed",
           "file": "../core/document/document-manager.js",
-          "line": 190,
+          "line": 138,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -62,7 +62,7 @@
           "pin": "save as",
           "handler": "onSaveAs",
           "file": "../core/document/document-manager.js",
-          "line": 203,
+          "line": 151,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -78,7 +78,7 @@
           "pin": "save",
           "handler": "onSave",
           "file": "../core/document/document-manager.js",
-          "line": 233,
+          "line": 181,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -88,7 +88,7 @@
           "pin": "save all",
           "handler": "onSaveAll",
           "file": "../core/document/document-manager.js",
-          "line": 240,
+          "line": 188,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -98,7 +98,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../core/document/document-manager.js",
-          "line": 247,
+          "line": 195,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -108,7 +108,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../core/document/document-manager.js",
-          "line": 265,
+          "line": 213,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -125,47 +125,47 @@
         {
           "pin": "tab new",
           "file": "../core/document/document-manager.js",
-          "line": 175
+          "line": 123
         },
         {
           "pin": "doc set active",
           "file": "../core/document/document-manager.js",
-          "line": 178
+          "line": 126
         },
         {
           "pin": "save as filename",
           "file": "../core/document/document-manager.js",
-          "line": 215
+          "line": 163
         },
         {
           "pin": "tab rename",
           "file": "../core/document/document-manager.js",
-          "line": 224
+          "line": 172
         },
         {
           "pin": "open models",
           "file": "../core/document/document-manager.js",
-          "line": 257
+          "line": 205
         },
         {
           "pin": "tab remove",
           "file": "../core/document/document-manager.js",
-          "line": 283
+          "line": 231
         },
         {
           "pin": "tab select",
           "file": "../core/document/document-manager.js",
-          "line": 295
+          "line": 243
         },
         {
           "pin": "tab select",
           "file": "../core/document/document-manager.js",
-          "line": 304
+          "line": 252
         },
         {
           "pin": "doc set active",
           "file": "../core/document/document-manager.js",
-          "line": 311
+          "line": 259
         }
       ]
     },
@@ -564,12 +564,12 @@
         {
           "pin": "pin profile",
           "file": "../core/view/redox-widget.js",
-          "line": 229
+          "line": 222
         },
         {
           "pin": "open source file",
           "file": "../core/view/redox-widget.js",
-          "line": 240
+          "line": 235
         }
       ]
     }

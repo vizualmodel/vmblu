@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // Model: hv-layout
 // Path: playground.js
-// Creation date 11/14/2025, 8:33:09 AM
+// Creation date 12/5/2025, 10:01:14 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -37,7 +37,7 @@ const nodeList = [
 	//___________________________________________________WORKSPACE
 	{
 	name: "workspace", 
-	uid: "tbvB", 
+	uid: "HTvl", 
 	factory: WorkspaceFactory,
 	inputs: [
 		"-> dom add modal div",
@@ -46,17 +46,17 @@ const nodeList = [
 		"-> file closed"
 		],
 	outputs: [
-		"dom workspace div -> left column @ column-main layout (lHKr)",
-		"file selected -> doc selected @ document manager (aXkx)",
-		"file new -> doc new @ document manager (aXkx)",
+		"dom workspace div -> left column @ column-main layout (hJZm)",
+		"file selected -> doc selected @ document manager (OZOv)",
+		"file new -> doc new @ document manager (OZOv)",
 		"file get name -> ()",
 		"file context menu -> ()",
-		"file renamed -> doc renamed @ document manager (aXkx)",
-		"file deleted -> doc deleted @ document manager (aXkx)",
+		"file renamed -> doc renamed @ document manager (OZOv)",
+		"file deleted -> doc deleted @ document manager (OZOv)",
 		"files get list => ()",
 		"files selected -> ()",
 		"files deleted -> ()",
-		"folder context menu -> context menu @ context menu (QNIy)",
+		"folder context menu -> context menu @ context menu (Ibyq)",
 		"folder renamed -> ()",
 		"folder deleted -> ()",
 		"drawer get location -> ()"
@@ -82,43 +82,43 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field", 
-	uid: "GPqX", 
+	uid: "iETN", 
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> dom add modal div @ workspace (tbvB)"
+		"modal div -> dom add modal div @ workspace (HTvl)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "QNIy", 
+	uid: "Ibyq", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> dom add modal div @ workspace (tbvB)"
+		"modal div -> dom add modal div @ workspace (HTvl)"
 		]
 	},
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box", 
-	uid: "jsOb", 
+	uid: "GpGM", 
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> dom add modal div @ workspace (tbvB)"
+		"modal div -> dom add modal div @ workspace (HTvl)"
 		]
 	},
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon", 
-	uid: "TWJF", 
+	uid: "xIik", 
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab new",
@@ -127,9 +127,9 @@ const nodeList = [
 		"-> tab remove"
 		],
 	outputs: [
-		"div -> tabs div @ vertical menu tabs content (mOrg)",
-		"tab request to close -> tab request to close @ document manager (aXkx)",
-		"tab request to select -> tab request to select @ document manager (aXkx)"
+		"tab request to close -> tab request to close @ document manager (OZOv)",
+		"tab request to select -> tab request to select @ document manager (OZOv)",
+		"div -> tabs div @ vertical menu tabs content (bDhC)"
 		],
 	sx:	{
 		    "a": 7,
@@ -144,7 +144,7 @@ const nodeList = [
 	//______________________________________________________EDITOR
 	{
 	name: "editor", 
-	uid: "NREV", 
+	uid: "WKrH", 
 	factory: EditorFactory,
 	inputs: [
 		"-> sync model",
@@ -163,28 +163,29 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"show lib path -> path @ path request (kWLQ)",
-		"show app path -> path @ path request (kWLQ)",
+		"show lib path -> path @ path request (dNrl)",
+		"show app path -> path @ path request (dNrl)",
 		"run -> ()",
-		"runtime settings -> show @ runtime settings (uQfg)",
-		"open document -> doc open @ document manager (aXkx)",
-		"document settings -> show @ doc settings (yugd)",
-		"save point confirm -> show @ confirm box (IwRp)",
-		"show context menu -> context menu @ context menu (fnKV)",
-		"settings -> json @ node settings (gBrM)",
-		"show link -> name and path @ name and path (qluS)",
-		"show filter -> name and path @ name and path (qluS)",
-		"show factory -> name and path @ name and path (qluS)",
+		"runtime settings -> show @ runtime settings (tHAO)",
+		"open document -> doc open @ document manager (OZOv)",
+		"document settings -> show @ doc settings (lQmu)",
+		"save point confirm -> show @ confirm box (OUuy)",
+		"show context menu -> context menu @ context menu (dnjx)",
+		"settings -> json @ node settings (GXzC)",
+		"show link -> name and path @ name and path (Qtip)",
+		"show filter -> name and path @ name and path (Qtip)",
+		"show factory -> name and path @ name and path (Qtip)",
+		"show interface link -> ()",
 		"open source file -> ()",
-		"pin profile -> show @ pin profile (ZGxL)",
-		"node comment -> text @ text block (gLsX)",
-		"select node -> show @ node selector (WRDh)",
-		"change library -> switch library @ node library (LBtK)",
+		"pin profile -> show @ pin profile (sEMC)",
+		"node comment -> text @ text block (kBxa)",
+		"select node -> show @ node selector (FHjI)",
+		"change library -> switch library @ node library (aVRy)",
 		"add lib file -> ()",
-		"canvas -> content div @ vertical menu tabs content (mOrg)",
+		"canvas -> content div @ vertical menu tabs content (bDhC)",
 		"new edit -> ()",
-		"clipboard get => get @ clipboard (umgQ)",
-		"clipboard set -> set @ clipboard (umgQ)"
+		"clipboard get => get @ clipboard (hANA)",
+		"clipboard set -> set @ clipboard (hANA)"
 		],
 	sx:	{
 		    "a": 7,
@@ -195,79 +196,79 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "fnKV", 
+	uid: "dnjx", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "kWLQ", 
+	uid: "dNrl", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings", 
-	uid: "gBrM", 
+	uid: "GXzC", 
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path", 
-	uid: "qluS", 
+	uid: "Qtip", 
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile", 
-	uid: "ZGxL", 
+	uid: "sEMC", 
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block", 
-	uid: "gLsX", 
+	uid: "kBxa", 
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content", 
-	uid: "mOrg", 
+	uid: "bDhC", 
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> menu div",
@@ -278,14 +279,14 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"content size change -> size change @ editor (NREV)",
-		"div -> main area @ column-main layout (lHKr)"
+		"content size change -> size change @ editor (WKrH)",
+		"div -> main area @ column-main layout (hJZm)"
 		]
 	},
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager", 
-	uid: "aXkx", 
+	uid: "OZOv", 
 	factory: DocumentManager,
 	inputs: [
 		"-> doc selected",
@@ -302,13 +303,13 @@ const nodeList = [
 		"-> tab request to select"
 		],
 	outputs: [
-		"doc set active -> set document @ editor (NREV)",
-		"save as filename -> path @ path request (kWLQ)",
+		"doc set active -> set document @ editor (WKrH)",
+		"save as filename -> path @ path request (dNrl)",
 		"open models -> ()",
-		"tab new -> tab new @ tab ribbon (TWJF)",
-		"tab rename -> tab rename @ tab ribbon (TWJF)",
-		"tab select -> tab select @ tab ribbon (TWJF)",
-		"tab remove -> tab remove @ tab ribbon (TWJF)"
+		"tab new -> tab new @ tab ribbon (xIik)",
+		"tab rename -> tab rename @ tab ribbon (xIik)",
+		"tab select -> tab select @ tab ribbon (xIik)",
+		"tab remove -> tab remove @ tab ribbon (xIik)"
 		],
 	dx:	{
 		    "logMessages": false,
@@ -321,24 +322,24 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector", 
-	uid: "WRDh", 
+	uid: "FHjI", 
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
 		"-> build table"
 		],
 	outputs: [
-		"selected node -> selected node @ editor (NREV)",
-		"remove file -> remove file @ node library (LBtK)",
-		"add file -> add file @ node library (LBtK)",
-		"get path -> path @ path request (oVjH)",
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"selected node -> selected node @ editor (WKrH)",
+		"remove file -> remove file @ node library (aVRy)",
+		"add file -> add file @ node library (aVRy)",
+		"get path -> path @ path request (zvtb)",
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//________________________________________________NODE LIBRARY
 	{
 	name: "node library", 
-	uid: "LBtK", 
+	uid: "aVRy", 
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -346,37 +347,37 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (WRDh)"
+		"build table -> build table @ node selector (FHjI)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "oVjH", 
+	uid: "zvtb", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//________________________________________________DOC SETTINGS
 	{
 	name: "doc settings", 
-	uid: "yugd", 
+	uid: "lQmu", 
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "umgQ", 
+	uid: "hANA", 
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -392,44 +393,44 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box", 
-	uid: "IwRp", 
+	uid: "OUuy", 
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings", 
-	uid: "uQfg", 
+	uid: "tHAO", 
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ vertical menu tabs content (mOrg)"
+		"modal div -> modal div @ vertical menu tabs content (bDhC)"
 		]
 	},
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu", 
-	uid: "osSD", 
+	uid: "cebA", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> menu div @ vertical menu tabs content (mOrg)",
-		"sync -> sync model @ editor (NREV)",
-		"grid on-off -> grid on-off @ editor (NREV)",
-		"accept changes -> accept changes @ editor (NREV)",
-		"recalibrate -> recalibrate @ editor (NREV)",
-		"show settings -> show settings @ editor (NREV)",
-		"make lib -> make lib @ editor (NREV)",
-		"make app -> make app @ editor (NREV)",
-		"set save point -> save point set @ editor (NREV)",
-		"back to save point -> save point back @ editor (NREV)"
+		"div -> menu div @ vertical menu tabs content (bDhC)",
+		"sync -> sync model @ editor (WKrH)",
+		"grid on-off -> grid on-off @ editor (WKrH)",
+		"accept changes -> accept changes @ editor (WKrH)",
+		"recalibrate -> recalibrate @ editor (WKrH)",
+		"show settings -> show settings @ editor (WKrH)",
+		"make lib -> make lib @ editor (WKrH)",
+		"make app -> make app @ editor (WKrH)",
+		"set save point -> save point set @ editor (WKrH)",
+		"back to save point -> save point back @ editor (WKrH)"
 		],
 	sx:	[
 		    {
@@ -491,7 +492,7 @@ const nodeList = [
 	//________________________________________APPLICATION LAUNCHER
 	{
 	name: "application launcher", 
-	uid: "XUOo", 
+	uid: "geAM", 
 	factory: ApplicationLauncher,
 	inputs: [
 		"-> run application",
@@ -505,14 +506,14 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout", 
-	uid: "lHKr", 
+	uid: "hJZm", 
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
 		"-> main area"
 		],
 	outputs: [
-		"size change -> size change @ vertical menu tabs content (mOrg)"
+		"size change -> size change @ vertical menu tabs content (bDhC)"
 		]
 	},
 ]

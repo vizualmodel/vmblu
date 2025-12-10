@@ -37,6 +37,14 @@ rectRect(ctx,x,y,w,h,cLine,cFill) {
     }
 },
 
+circle(ctx, x,y,r, color) {
+    ctx.beginPath()
+    ctx.strokeStyle=color
+    ctx.moveTo(x,y)
+    ctx.arc(x,y,r,0, 2*Math.PI)
+    ctx.stroke()
+},
+
 diamond(ctx,x,y,w,h,cFill) {
     ctx.beginPath()
     ctx.fillStyle = cFill
@@ -342,28 +350,29 @@ centerLineText(ctx, text,cText,cLine,x,y,w,h) {
     ctx.fillText(text, x + (w - tm.width)/2, y+0.75*h)
 },
 
-interfaceText(ctx, text, font, cText, cLine,x,y,w,h) {
+// interface text - link = 0, 1 or 2
+ifName(ctx, text,color,rc) {
+
+    const {x,y,w,h} = rc
     
     ctx.beginPath()
 
-    // change the font
-    const saveFont = ctx.font
-    ctx.font = font
-
-    ctx.strokeStyle = cLine
+    ctx.strokeStyle = color.line
+    ctx.fillStyle = color.line
     const tm = ctx.measureText(text)
     const guard = 5
 
-    ctx.moveTo(x,y+h/2)
-    ctx.lineTo(x + (w - tm.width)/2 - guard, y+h/2)
-    ctx.moveTo(x + (w + tm.width)/2 + guard, y+h/2)
-    ctx.lineTo(x+w,y+h/2)
+    const left = x + (w - tm.width)/2
+    const cy = y+h/2
+
+    ctx.moveTo(x,cy)
+    ctx.lineTo(left - guard, cy)
+    ctx.moveTo(left + tm.width + guard, cy)
+    ctx.lineTo(x+w,cy)
     ctx.stroke()
 
-    ctx.fillStyle = cText
-    ctx.fillText(text, x + (w - tm.width)/2, y+0.75*h)
-
-    ctx.font = saveFont
+    ctx.fillStyle = color.text
+    ctx.fillText(text, left, y+0.75*h)
 },
 
 centerTextCursor(ctx,rc,text,pChar) {

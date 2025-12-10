@@ -96,7 +96,7 @@ Clipboard.prototype = {
             // send the clipboard to the editor
             this.tx.reply(this)
         })
-        //.catch(error => console.log(`Error in clipboard manager "-> get" ${error}`))
+        .catch(error => console.log(`Clipboard manager -> remote : ${error}`))
     },
 
     onSwitched() {
@@ -228,6 +228,7 @@ Clipboard.prototype = {
             }
             return true
 
+            case selex.ifArea:
             case selex.pinArea: {
 
                 // we need a look and a node to convert the widgets
