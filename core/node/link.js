@@ -4,16 +4,16 @@ export function Link(model, lName) {
 
     //The format of lName is node @ group1 @ group2 ...
     this.lName = lName
-    //this.uid = null
+
     this.is = {
-        bad: false
+        bad: false,
     }
 }
 Link.prototype = {
 
     copy() {
+
         const newLink = new Link(this.model, this.lName)
-        //newLink.uid = this.uid
         return newLink
     },
 
@@ -22,9 +22,6 @@ Link.prototype = {
         // get the key for the link
         const path = (this.model && !this.model.is.main) ? this.model.arl.userPath : './'
 
-        return {
-            path,
-            node: this.lName
-        }
+        return { path, node: this.lName}
     }
 }

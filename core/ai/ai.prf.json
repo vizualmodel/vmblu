@@ -1,0 +1,140 @@
+{
+  "version": "0.3.4",
+  "generatedAt": "2025-12-09T21:30:15.012Z",
+  "entries": [
+    {
+      "node": "McpClientOpenAI",
+      "handles": [
+        {
+          "pin": null,
+          "handler": "onHandleKey",
+          "file": "mcp-client-in-browser.js",
+          "line": 47,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": null,
+          "handler": "onNewPrompt",
+          "file": "mcp-client-in-browser.js",
+          "line": 170,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "prompt",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": null,
+          "handler": "onToolResult",
+          "file": "mcp-client-in-browser.js",
+          "line": 256,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "result",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 176
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 204
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 222
+        },
+        {
+          "pin": "call tool",
+          "file": "mcp-client-in-browser.js",
+          "line": 241
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 251
+        }
+      ]
+    },
+    {
+      "node": "McpServerInBrowser",
+      "handles": [
+        {
+          "pin": null,
+          "handler": "onGetManifest",
+          "file": "mcp-server-in-browser.js",
+          "line": 49,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": null,
+          "handler": "onGetTools",
+          "file": "mcp-server-in-browser.js",
+          "line": 63,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": null,
+          "handler": "onCallTool",
+          "file": "mcp-server-in-browser.js",
+          "line": 72,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "tool result",
+          "file": "mcp-server-in-browser.js",
+          "line": 80
+        }
+      ]
+    }
+  ]
+}

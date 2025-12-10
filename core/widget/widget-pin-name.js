@@ -119,11 +119,12 @@ export const pinNameHandling = {
     // there is a prefix or a postfix that is not displayed
     withoutPrefix() {
 
-        //const x = '\u271A '
-        const space = '+ '
+        // change a space into a subscript '+' sign
+        const space = '\u208A'
 
-        if (this.pxlen == 0) return this.name
-
+        if (this.pxlen == 0) {
+            return this.name
+        }
         else if (this.pxlen > 0) {
 
             let noPrefix = this.name.slice(this.pxlen)
@@ -304,7 +305,7 @@ export const pinNameHandling = {
         // The messages between the pins must overlap
         const allPinMsgs = pin.is.multi ? convert.expandMultis(pin.lowerCase()) : [pin.lowerCase()]
         const allThisMsgs = this.is.multi ? convert.expandMultis(this.lowerCase()) : [this.lowerCase()]
-
+//console.log('MULTI', allPinMsgs, allThisMsgs)
         // at the first common message we return
         for(const pinMsg of allPinMsgs) {
             if ( allThisMsgs.includes(pinMsg)) return true

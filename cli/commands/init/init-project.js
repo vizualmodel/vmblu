@@ -5,9 +5,11 @@ import * as fssync from 'fs';
 import path from 'path';
 //import crypto from 'crypto';
 import { makePackageJson } from './make-package-json.js';
+import { createRequire } from 'module';
 
 // Get the versions
-import pckg from '../../package.json' assert { type: 'json' };
+const require = createRequire(import.meta.url);
+const pckg = require('../../package.json');
 const SCHEMA_VERSION = pckg.schemaVersion
 const CLI_VERSION = pckg.version
 

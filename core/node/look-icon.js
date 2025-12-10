@@ -164,4 +164,52 @@ export const iconHandling = {
         // schedule the first blink function
         requestAnimationFrame(blinkFunction);
     },
+
+    xxxblinkToWarn() {
+
+        // time is in ms
+        const blinkFunction = (time) => {
+
+            // check the time
+            if (time - lastTime >= blinkRate) {
+
+                // change the color
+                icon.is.highLighted = !icon.is.highLighted
+                header.is.highLighted = !header.is.highLighted
+
+                // redraw
+                editor.redraw()
+
+                // save the time
+                lastTime = time
+
+                // increment count
+                count++
+            }
+    
+            // Continue fro the number of blinks requested
+            if (count < maxBlinks) {
+                requestAnimationFrame(blinkFunction);
+            }
+            else {
+                icon.is.highLighted = false
+                header.is.highLighted = false
+                editor.redraw()
+            }
+        };
+
+        const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'))
+        const header = this.widgets.find( w => w.is.header)
+
+        if (!icon || !header) return
+
+        const maxBlinks = style.icon.nBlinks * 2
+        const blinkRate = style.icon.blinkRate;
+
+        let count = 0
+        let lastTime = 0;
+    
+        // schedule the first blink function
+        requestAnimationFrame(blinkFunction);
+    },
 }

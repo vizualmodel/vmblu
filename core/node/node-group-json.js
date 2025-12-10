@@ -139,8 +139,47 @@ export const jsonHandling = {
     },
 
     // places a node according to a grid
-    // ideally we take into account the placement of the other nodes !
     placeNode(node) {
+
+        const place = style.placement
+        const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft
+        const spacing = place.spacing   // small gap so nodes do not touch
+        const tolerance = place.tolerance  // allow a little drift when matching columns
+
+        const placedNodes = this.nodes.filter(other => (other !== node) && other.look && other.is.placed)
+        const idx = this.nodes.indexOf(node) >= 0 ? this.nodes.indexOf(node) : this.nodes.length - 1
+
+        // keep the column grid, but stack vertically based on actual heights
+        const col = idx % place.nodesPerRow
+        const columnX = marginLeft + col * place.colStep
+
+        // start at the default top margin for this column
+        let y = place.marginTop
+
+        // find the bottom of the lowest node already in this column
+        for (const other of placedNodes) {
+            const ox = other.look.rect.x
+            if (Math.abs(ox - columnX) <= tolerance) {
+                const bottom = other.look.rect.y + other.look.rect.h
+                if (bottom + spacing > y) y = bottom + spacing
+            }
+        }
+
+        // move down further if we still overlap any node (safety for slightly misaligned columns)
+        const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing})
+        const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h))
+        let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h}
+        while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
+            candidate.y += spacing
+        }
+
+        node.look.moveTo(candidate.x, candidate.y)
+        node.is.placed = true
+    },
+
+
+    // places a node according to a grid
+    OLD_placeNode(node) {
 
         const place = style.placement
         const index = this.nodes.length - 1
