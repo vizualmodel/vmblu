@@ -1,0 +1,447 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "utc": "2025-12-16T12:00:06.433Z",
+    "style": "#656134"
+  },
+  "root": {
+    "kind": "group",
+    "name": "",
+    "rect": "x 1061 y 0 w 100 h 26",
+    "view": {
+      "state": "open",
+      "rect": "x 0 y 0 w 2192 h 1295",
+      "transform": "sx 0.980 sy 0.980 dx 241.079 dy 73.208"
+    },
+    "nodes": [
+      {
+        "kind": "group",
+        "name": "modal boxes",
+        "rect": "x 999 y 90 w 200 h 26",
+        "view": {
+          "state": "open",
+          "rect": "x 792 y 46 w 793 h 643",
+          "transform": "sx 1.000 sy 1.000 dx 790.500 dy 46.000"
+        },
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "context menu",
+            "rect": "x 68 y 74 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)context menu",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "path request",
+            "rect": "x 357 y 71 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)path",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "single text field",
+            "rect": "x 565 y 69 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "message box",
+            "rect": "x 70 y 168 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "json input",
+            "rect": "x 355 y 172 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)json",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "text block",
+            "rect": "x 72 y 289 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)text",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "node selector",
+            "rect": "x 75 y 496 w 150 h 131",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)build table",
+                  "(2 R)show",
+                  "(3 R)selected node",
+                  "(4 R)get path",
+                  "(5 R)add file",
+                  "(6 R)remove file",
+                  "(7 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "name and path",
+            "rect": "x 357 y 287 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)name and path",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "document settings",
+            "rect": "x 70 y 404 w 200 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "confirm box",
+            "rect": "x 363 y 418 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "runtime settings",
+            "rect": "x 361 y 519 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)modal div",
+                  "(2 L)show"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "pin profile",
+            "rect": "x 568 y 172 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "page layout group",
+        "rect": "x 291 y 114 w 200 h 26",
+        "view": {
+          "state": "open",
+          "rect": "x 59 y 43 w 685 h 585",
+          "transform": "sx 0.960 sy 0.960 dx 88.076 dy 55.294"
+        },
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "canvas layout",
+            "rect": "x 18 y 44 w 200 h 116",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)menu",
+                  "(2 R)tab ribbon",
+                  "(3 R)workspace",
+                  "(4 R)canvas",
+                  "(5 R)modal div",
+                  "(6 R)canvas size change"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "menu tabs window",
+            "rect": "x 24 y 193 w 200 h 146",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)menu div",
+                  "(2 R)tabs div",
+                  "(3 R)content div",
+                  "(4 R)content size change",
+                  "(5 R)modal div",
+                  "(6 R)show",
+                  "(7 R)size change",
+                  "(8 L)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "left menu layout",
+            "rect": "x 24 y 372 w 200 h 161",
+            "interfaces": [
+              {
+                "interface": "(10)screen areas",
+                "pins": [
+                  "(2 R)left menu",
+                  "(3 R)left column",
+                  "(4 R)area one",
+                  "(5 R)area two"
+                ]
+              },
+              {
+                "interface": "(11)messages",
+                "pins": [
+                  "(7 R)vertical",
+                  "(8 R)horizontal",
+                  "(9 R)size change"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "column-main layout",
+            "rect": "x 329 y 55 w 200 h 71",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)left column",
+                  "(4 R)main area",
+                  "(9 R)size change"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "vertical menu tabs content",
+            "rect": "x 339 y 197 w 250 h 146",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)menu div",
+                  "(2 R)tabs div",
+                  "(3 R)content div",
+                  "(4 R)content size change",
+                  "(5 R)modal div",
+                  "(6 R)show",
+                  "(7 R)size change",
+                  "(8 L)div"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "menus and tab ribbons",
+        "rect": "x 325 y 672 w 200 h 26",
+        "view": {
+          "state": "open",
+          "rect": "x 63 y 655 w 680 h 609",
+          "transform": "sx 1.000 sy 1.000 dx 79.000 dy 656.000"
+        },
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "tab ribbon",
+            "rect": "x 317 y 49 w 200 h 146",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(4 L)div"
+                ]
+              },
+              {
+                "interface": "(16)tab",
+                "pins": [
+                  "(10 R)tab new",
+                  "(11 R)tab rename",
+                  "(12 R)tab select",
+                  "(13 R)tab remove",
+                  "(14 R)tab request to close",
+                  "(15 R)tab request to select"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "old top menu",
+            "rect": "x 50 y 48 w 150 h 251",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)save",
+                  "(2 R)save as",
+                  "(3 R)save all",
+                  "(4 R)accept changes",
+                  "(5 R)sync",
+                  "(6 R)recalibrate",
+                  "(7 R)make app page",
+                  "(8 R)make build lib",
+                  "(9 R)analyze model",
+                  "(10 R)run app page",
+                  "(11 R)run app in iframe",
+                  "(12 R)vertical",
+                  "(13 R)horizontal",
+                  "(14 R)show code editor",
+                  "(15 L)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "top menu",
+            "rect": "x 44 y 317 w 200 h 251",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)save",
+                  "(2 R)save as",
+                  "(3 R)save all",
+                  "(4 R)accept changes",
+                  "(5 R)sync model",
+                  "(6 R)recalibrate",
+                  "(7 R)grid on-off",
+                  "(8 R)make app page",
+                  "(9 R)make build lib",
+                  "(10 R)run app page",
+                  "(11 R)run app in iframe",
+                  "(12 R)show settings",
+                  "(13 R)set save point",
+                  "(14 R)back to save point",
+                  "(15 L)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "side menu",
+            "rect": "x 318 y 231 w 150 h 101",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)vertical",
+                  "(2 R)horizontal",
+                  "(3 R)show code editor",
+                  "(4 R)show app",
+                  "(5 L)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "vscode side menu",
+            "rect": "x 317 y 369 w 200 h 191",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 L)div"
+                ]
+              },
+              {
+                "interface": "(12)menu items",
+                "pins": [
+                  "(3 L)accept changes",
+                  "(4 L)recalibrate",
+                  "(5 L)sync",
+                  "(6 L)grid on-off",
+                  "(7 L)show settings",
+                  "(8 L)set save point",
+                  "(9 L)back to save point",
+                  "(10 L)make lib",
+                  "(11 L)make app"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

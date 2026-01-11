@@ -113,7 +113,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 			// report the error
 			cout(`Read file "${uri.path}" gave error: ${error}`);
 
-			return null;
+			return '';
 		}
 	}
 

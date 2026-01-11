@@ -1,0 +1,59 @@
+{
+  "header": {
+    "schema": "no version",
+    "utc": "2025-09-16T09:43:29.001Z",
+    "style": "#3e7467"
+  },
+  "root": {
+    "kind": "group",
+    "name": "ai",
+    "rect": "x 30 y 30 w 150 h 26",
+    "view": {
+      "state": "open",
+      "rect": "x 0 y 0 w 1397 h 1326",
+      "transform": "sx 1.000 sy 1.000 dx -102.000 dy -70.000"
+    },
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "MCP Client in browser",
+        "rect": "x 305 y 86 w 200 h 161",
+        "interfaces": [
+          {
+            "interface": "(15) user interface",
+            "pins": [
+              "(8 R)update chat",
+              "(9 R)new prompt",
+              "(10 R)handle key"
+            ]
+          },
+          {
+            "interface": "(16) server interface",
+            "pins": [
+              "(11 R)get manifest",
+              "(12 R)get tools",
+              "(13 R)call tool",
+              "(14 R)tool result"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "MCP Server in browser",
+        "rect": "x 300 y 280 w 200 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(5 R)get manifest",
+              "(6 R)get tools",
+              "(7 R)call tool",
+              "(8 R)tool result"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

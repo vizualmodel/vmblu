@@ -1,9 +1,9 @@
 {
+    "publisher": "vizualmodel",
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "0.0.14",
-    "publisher": "vizualmodel",
+    "version": "0.0.21",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -46,7 +46,7 @@
                 "displayName": "Vmblu",
                 "selector": [
                     {
-                        "filenamePattern": "*.vmblu"
+                        "filenamePattern": "*.blu.json"
                     }
                 ],
                 "priority": "default"
@@ -57,7 +57,7 @@
                 {
                     "command": "vmblu.globe",
                     "group": "navigation",
-                    "when": "resourceExtname == .vmblu"
+                    "when": "resourceExtname == .blu.json"
                 }
             ]
         },
@@ -65,8 +65,8 @@
             {
                 "id": "vmblu.dataBadge",
                 "defaults": {
-                    "dark": "#9ebbe7",
-                    "light": "#0a1f3f",
+                    "dark": "#5799fc",
+                    "light": "#0b387c",
                     "highContrast": "#00ffff"
                 },
                 "description": "Accent used for Vmblu explorer badge."

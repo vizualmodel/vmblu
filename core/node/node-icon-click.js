@@ -32,7 +32,7 @@ export const nodeClickHandling = {
         const node = this
 
         // check what path to show - show no path if from the main model
-        const linkPath = (node.link && (node.link.model != editor.doc?.model)) ? node.link.model?.arl.userPath : ''
+        const linkPath = (node.link && (node.link.model != editor.doc?.model)) ? node.link.model?.blu.arl.userPath : ''
 
         // name to show
         const linkName = node.link ? node.link.lName : node.name
@@ -57,7 +57,7 @@ export const nodeClickHandling = {
                     editor.doEdit('changeLink',{node, lName: newName, userPath: newPath})
 
                 // open the file if the link is to an outside file !
-                if (node.link.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl)
+                if (node.link.model?.blu.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.getArl())
             },
             cancel:()=>{}
         })
@@ -181,7 +181,7 @@ export const nodeClickHandling = {
             case 'lock': {
 
                 // open the file if it points to an external model
-                if (node.link?.model?.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.arl)
+                if (node.link?.model?.blu.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.getArl())
             }
             break
 

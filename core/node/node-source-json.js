@@ -2,27 +2,23 @@ import {convert} from '../util/index.js'
 
 export const jsonHandling = {
 
-    toJSON() {
+    makeRaw() {
         // get the pins 
-        const {rect, label, interfaces} = this.look.getItemsToSave()
-    
+        const {rect, label, interfaces} = this.look.makeRaw()
+   
         // save as dock or source
-        const json = this.link ? { kind: "dock", name: this.name, link: this.link } : { kind: "source", name: this.name, factory: this.factory }
+        const raw = this.link   ? { kind: "dock", name: this.name, link: this.link.makeRaw(), rect } 
+                                : { kind: "source", name: this.name, factory: this.factory.makeRaw(), rect }
 
         // add if present
-        if (label) json.label = label
-        if (this.prompt) json.prompt = this.prompt
-        if (interfaces.length) json.interfaces = interfaces
-        if (this.sx) json.sx = this.sx
-        if (this.dx) json.dx = this.dx
-
-        // add the editor specific fields
-        json.editor = {
-            rect: convert.rectToString(rect),
-        }
+        if (label) raw.label = label
+        if (this.prompt) raw.prompt = this.prompt
+        if (interfaces.length) raw.interfaces = interfaces
+        if (this.sx) raw.sx = this.sx
+        if (this.dx) raw.dx = this.dx
 
         // done
-        return json
+        return raw
     },
 
     // the node is fused with a node linked from another file
@@ -60,8 +56,8 @@ export const jsonHandling = {
 
             // transform the factory file relative to the main model file
             if (raw.factory.path) {
-                this.factory.arl = current.arl.resolve( raw.factory.path )
-                if (main != current) this.factory.arl.makeRelative(main.arl)
+                this.factory.arl = current.getArl()?.resolve( raw.factory.path )
+                if (main != current) this.factory.arl.makeRelative(main.getArl())
             }
 
             // set or overwrite the name
@@ -74,7 +70,7 @@ export const jsonHandling = {
 
     // Not really json related, but ok...
     // The factory module can contain one or many factories
-    analyzeFactory(fModule) {
+    xxxanalyzeFactory(fModule) {
 
         // the entries in the module
         let entries = Object.entries(fModule)

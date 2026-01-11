@@ -6,10 +6,10 @@ export const importExportHandling = {
 async importFromModel(node, lName, userPath) {
 
     // If no name is given jus give up
-    if ((lName.length == 0)||(userPath.length == 0)) return
+    if ((lName.length == 0)||(userPath.length == 0)) return;
 
     // make an arl
-    const arl = this.model.arl.resolve(userPath)
+    const arl = this.model.getArl().resolve(userPath)
 
     // find or add the model
     const model = await this.modcom.findOrAddModel(arl)
@@ -62,38 +62,6 @@ async importFromModel(node, lName, userPath) {
     node.fuse(newNode)
 },
 
-// encodes a node 
-encode(node, model) {
-    
-    if (!node) return null
-
-    // get the factories
-    node.collectFactories(this.factories)
-
-    // get the imports
-    node.collectModels(this.models)
-
-    // the object to encode
-    const target = {
-        header: model.header,
-    }
-
-    // add the libraries if any
-    if (this.models?.size() > 0) target.imports = this.models
-    if (this.factories?.size() > 0) target.factories = this.factories
-    if (model.libraries?.size() > 0) target.libraries = model.libraries
-
-    // set the root
-    target.root = node
-
-    // stringify the target
-    const text =  JSON.stringify(target,null,4)
-
-    // return the result
-    return text
-},
-
-
 // export a node to a model and set the link in the node
 async exportToModel(node, lName, model) {
 
@@ -110,7 +78,7 @@ async exportToModel(node, lName, model) {
 	newNode.name = lName
 
 	// change references where necessary
-	if (newNode.nodes) for (const sub of newNode.nodes) sub.adjustUserPaths( model.arl  )
+	if (newNode.nodes) for (const sub of newNode.nodes) sub.adjustUserPaths( model.getArl()  )
 
 	// assemble the models and the factories
     newNode.collectFactories(modcom.factories)
@@ -119,15 +87,11 @@ async exportToModel(node, lName, model) {
 	// the object to convert and save
 	const target = {
 		header: model.header,
-//		models: modcom.models,
-//		factories: modcom.factories,
-//		root: newNode
 	}
 
     // add the libraries if any
     if (modcom.models?.size() > 0) target.imports = modcom.models
     if (modcom.factories?.size() > 0) target.factories = modcom.factories
-//    if (model.libraries?.size() > 0) target.libraries = model.libraries
 
     // add the root
     target.root = newNode
@@ -136,7 +100,7 @@ async exportToModel(node, lName, model) {
 	const json =  JSON.stringify(target,null,4)
 
 	// save the json
-	await this.model.arl.save( json )
+	await this.model.getArl().save( json )
 
 	// set the link
 	node.setLink(model, lName)

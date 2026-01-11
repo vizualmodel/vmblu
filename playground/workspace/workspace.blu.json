@@ -1,0 +1,122 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "created": "4/15/2024, 9:13:13 AM",
+    "saved": "12/16/2025, 1:01:06 PM",
+    "utc": "2025-12-16T12:01:06.561Z",
+    "runtime": "./runtime.js"
+  },
+  "factories": [
+    {
+      "path": "./index.js",
+      "function": "WorkspaceFactory"
+    }
+  ],
+  "root": {
+    "kind": "source",
+    "name": "workspace",
+    "factory": {
+      "path": "./index.js",
+      "function": "WorkspaceFactory"
+    },
+    "interfaces": [
+      {
+        "interface": "dom",
+        "pins": [
+          {
+            "name": "dom add modal div",
+            "kind": "input"
+          },
+          {
+            "name": "dom workspace div",
+            "kind": "output"
+          }
+        ]
+      },
+      {
+        "interface": "file",
+        "pins": [
+          {
+            "name": "file selected",
+            "kind": "output"
+          },
+          {
+            "name": "file new",
+            "kind": "output"
+          },
+          {
+            "name": "file renamed",
+            "kind": "output"
+          },
+          {
+            "name": "file deleted",
+            "kind": "output"
+          },
+          {
+            "name": "file get name",
+            "kind": "output"
+          },
+          {
+            "name": "file context menu",
+            "kind": "output"
+          },
+          {
+            "name": "file savedAs",
+            "kind": "input"
+          },
+          {
+            "name": "file active",
+            "kind": "input"
+          },
+          {
+            "name": "file closed",
+            "kind": "input"
+          }
+        ]
+      },
+      {
+        "interface": "files",
+        "pins": [
+          {
+            "name": "files selected",
+            "kind": "output"
+          },
+          {
+            "name": "files deleted",
+            "kind": "output"
+          },
+          {
+            "name": "files get list",
+            "kind": "request"
+          }
+        ]
+      },
+      {
+        "interface": "folder",
+        "pins": [
+          {
+            "name": "folder renamed",
+            "kind": "output"
+          },
+          {
+            "name": "folder deleted",
+            "kind": "output"
+          },
+          {
+            "name": "folder context menu",
+            "kind": "output"
+          }
+        ]
+      },
+      {
+        "interface": "drawer",
+        "pins": [
+          {
+            "name": "drawer get location",
+            "kind": "output"
+          }
+        ]
+      }
+    ]
+  }
+}

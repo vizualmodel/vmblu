@@ -126,12 +126,12 @@ export const iconHandling = {
             if (time - lastTime >= blinkRate) {
 
                 // change the color
-                icon.is.highLighted = !icon.is.highLighted
-                header.is.highLighted = !header.is.highLighted
+                box.is.alarm = !box.is.alarm
+                icon.is.alarm = !icon.is.alarm
 
                 // redraw
                 editor.redraw()
-
+                
                 // save the time
                 lastTime = time
 
@@ -139,21 +139,21 @@ export const iconHandling = {
                 count++
             }
     
-            // Continue fro the number of blinks requested
+            // Continue for the number of blinks requested
             if (count < maxBlinks) {
                 requestAnimationFrame(blinkFunction);
             }
             else {
-                icon.is.highLighted = false
-                header.is.highLighted = false
+                box.is.alarm = false
+                icon.is.alarm = false
                 editor.redraw()
             }
         };
 
+        const box = this.widgets.find(w => w.is.box )
         const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'))
-        const header = this.widgets.find( w => w.is.header)
 
-        if (!icon || !header) return
+        if (!box) return
 
         const maxBlinks = style.icon.nBlinks * 2
         const blinkRate = style.icon.blinkRate;
@@ -165,7 +165,7 @@ export const iconHandling = {
         requestAnimationFrame(blinkFunction);
     },
 
-    xxxblinkToWarn() {
+    xblinkToWarn() {
 
         // time is in ms
         const blinkFunction = (time) => {
@@ -187,7 +187,7 @@ export const iconHandling = {
                 count++
             }
     
-            // Continue fro the number of blinks requested
+            // Continue for the number of blinks requested
             if (count < maxBlinks) {
                 requestAnimationFrame(blinkFunction);
             }
@@ -212,4 +212,5 @@ export const iconHandling = {
         // schedule the first blink function
         requestAnimationFrame(blinkFunction);
     },
+
 }

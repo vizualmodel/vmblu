@@ -1,4 +1,5 @@
 import {shape,convert,style} from '../util/index.js'
+import {TackConnectHandling} from './widget-bus-tack-connect.js'
 
 // an in out symbol is a triangle 
 export function BusTack(bus, wid = null) {
@@ -12,7 +13,7 @@ export function BusTack(bus, wid = null) {
         selected: false,
         highLighted: false,
         channel: false,
-        top: false                  // ball on top for tacks going to inputs / at the bottom for tacks coming from outputs
+        top: false,                  // ball on top for tacks going to inputs / at the bottom for tacks coming from outputs
     }
 
     // save the bus this tack is connected to
@@ -23,6 +24,12 @@ export function BusTack(bus, wid = null) {
 
     // the segment of the bus on which the tack sits 
     this.segment = 0
+
+    // the alias that the tack can use {text, rc}
+    this.alias = null
+
+    // the rectangle for the alias
+    this.rcAlias = null
 
     // direction of the tack 'up 'down' 'right' 'left'
     this.dir = ''
@@ -44,7 +51,30 @@ BusTack.prototype = {
 
         // draw the tack
         shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color)
+
+        // if we have an alias, draw it
+        if (this.alias && this.route) {
+
+            // check if we have the rectangle
+            if (! this.rcAlias) {
+                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
+            }
+
+            shape.hAlias(ctx, this.alias, this.rcAlias, color, style.bus.fAlias)
+        }
     },
+
+    // where to put the alias wrt to the tack
+    aliasZone() {
+
+        const wire = this.route.wire
+
+        let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)] 
+
+        if (a.x === b.x) return a.y < b.y ? 'S' : 'N'
+        else return a.x < b.x ? 'E' : 'W'
+    },
+
 
     // sets the route for a tack and places the tack on that route
     setRoute(route) {
@@ -177,7 +207,7 @@ BusTack.prototype = {
 
 
     toJSON() {
-        return convert.routeToString(this.route)
+        return convert.routeToRaw(this.route)
     },
 
     overlap(rect) {
@@ -349,38 +379,40 @@ BusTack.prototype = {
         this.orient()
     },
 
-    // return the widget at the other end
-    getOther() {
-        return this.route.from == this ? this.route.to : this.route.from
+
+
+    // The text edit functions 
+
+    startEdit() {
+
+        // if we do not have an alias, set it
+        if (! this.alias) this.alias = ''
+
+        // return the field that will be edited
+        return "alias"
     },
 
-    // return the pin or the proxy if the other is a pad
-    getOtherPin() {
-        const other = this.route.from == this ? this.route.to : this.route.from
-        return other.is.pin ? other : (other.is.pad ? other.proxy : null)
+    drawCursor(ctx, pChar, on) {
+
+        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
+        const pos = shape.cursorAlias(ctx, this.alias, rc, pChar, style.bus.fAlias)
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff
+        shape.cursor(ctx, pos.x, pos.y, style.std.wCursor, rc.h, color)
+
+        // force a recompute
+        this.rcAlias = null
     },
 
-    getContactPoint() {
-        return this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
+    endEdit(saved) {
+
+        // clean the user input
+        this.alias = convert.cleanInput(this.alias)
+
+        // check
+        if (!this.alias?.length) this.alias = null
+
+        // reset the rectangle
+        this.rcAlias = null
     },
-
-    // getOtherName() {
-    //     const other = this.route.from == this ? this.route.to : this.route.from
-
-    //     if (other.is.pin) return other.name
-    //     if (other.is.pad) return other.proxy.name
-    //     return null
-    // },
-
-    incoming() {
-        const other = this.route.from == this ? this.route.to : this.route.from
-
-        if (other.is.pin) return !other.is.input
-        if (other.is.pad) return other.proxy.is.input
-        return false
-    },
-
-    // does nothing but makes the widget ifPins more uniform
-    highLightRoutes() {},
-    unHighLightRoutes() {}
 }
+Object.assign(BusTack.prototype, TackConnectHandling)

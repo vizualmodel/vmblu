@@ -121,7 +121,8 @@ rxtxBuildTxTable() {
             }
             // if a bus has a filter propagation stops 
             else if (dst.is.tack) {
-                dst.bus.hasFilter() ?  dstList.push(dst) : dst.bus.makeConxList(widget, dstList)
+                dst.bus.hasFilter() ?  dstList.push(dst) : dst.makeConxList(dstList)
+                //dst.bus.hasFilter() ?  dstList.push(dst) : dst.bus.makeConxList(widget, dstList)
             }
             else if (dst.is.pad) {
                 dst.proxy.makeConxList(dstList)

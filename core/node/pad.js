@@ -241,6 +241,23 @@ Pad.prototype = {
         return true
     },
 
+    makeRaw() {
+        return {
+            wid: this.proxy.wid,
+            text: this.text,
+            left: this.is.leftText,
+            rect: this.rect
+        }
+    },
+
+    // unzip() {
+
+    //     return {
+    //         blu: null,
+    //         viz: convert.padToString(this)
+    //     }
+    // },
+
     moveTo(x,y) {
 
         this.rect.x = x
@@ -290,7 +307,7 @@ Pad.prototype = {
                 if (other.bus.hasFilter()) list.push(other)
 
                 // otherwise continue to complete the list
-                else other.bus.makeConxList(this, list)
+                else other.makeConxList(list)
             }
         }
     },

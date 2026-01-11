@@ -172,7 +172,7 @@ export const compareHandling = {
         const newPin = this.look.addPin(lw.name, pos, lw.is)
 
         // copy profile and prefix length
-        newPin.profile = lw.profile
+        //newPin.profile = lw.profile
         newPin.pxlen = lw.pxlen
 
         // it is a new widget 
@@ -217,7 +217,7 @@ export const compareHandling = {
         }
 
         // profile change (silent)
-        if (lw.is.input && lw.profile != dw.profile) dw.profile = lw.profile     
+        //if (lw.is.input && lw.profile != dw.profile) dw.profile = lw.profile     
         
         // signal the change
         dw.is.added = true

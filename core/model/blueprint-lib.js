@@ -1,28 +1,30 @@
 import {convert} from '../util/index.js'
 import {Path} from '../arl/index.js'
 
-export const JSLibHandling = {
+export const LibHandling = {
 
     toJavascriptLib(libPath) {
 
         // check if we have a path name
         if (!libPath) return 
+
+        const modelArl = this.getArl();
         
         // save the app path in the document
         if (this.target.library?.userPath !== libPath) {
 
             // make the app arl
-            this.target.library = this.resolve(libPath)
+            this.target.library = modelArl.resolve(libPath)
         }
 
         // notation
         const libArl = this.target.library
 
         // the index file to find sources that do not have an explicit factory arl
-        const indexArl = this.resolve('index.js')
+        const indexArl = modelArl.resolve('index.js')
         
         // save the build lib file
-        const lib = this.makeJSLib(this.view.root, this.model.arl, libArl, indexArl)
+        const lib = this.makeJSLib(this.view.root, modelArl, libArl, indexArl)
 
         // save the lib
         libArl.save(lib)

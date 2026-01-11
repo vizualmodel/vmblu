@@ -3,10 +3,9 @@
 // Creation date 4/22/2024, 5:20:28 PM
 // ------------------------------------------------------------------
 import {convert} from '../util/index.js'
-import {Selection,selex} from '../view/selection.js'
-import {GroupNode, Look} from '../node/index.js'
-import {ModelBlueprint} from './index.js'
-import {ARL} from '../arl/index.js'
+import {selex} from '../view/selection.js'
+import {GroupNode} from '../node/index.js'
+import {ClipboardRawCook} from './clipboard-raw-cook.js'
 
 /**
  * @node clipboard
@@ -70,7 +69,51 @@ Clipboard.prototype = {
         this.tx.send('switch')
     },
 
-    onGet(doc) {
+    async onGet(doc) {
+
+        // if the clipboard is the local one ...
+        if ( this.local ) {
+
+            // ...just return the local clipboard
+            //this.tx.reply(this)
+
+            const json = this.onLocal(doc)
+
+            // parse the json 
+            const raw = JSON.parse(json)
+
+            // check
+            if (!raw) return
+
+            //cook the clipboard - reuse the save compiler
+            await this.cook(raw, doc.savecom)
+
+            // send the clipboard to the editor
+            this.tx.reply(this)
+
+            return
+        }
+
+        // otherwise request the remote clipboard
+        this.tx.request('remote')
+        .then( async ({json}) => {
+
+            // parse the json 
+            const raw = JSON.parse(json)
+
+            // check
+            if (!raw) return
+
+            //cook the clipboard - reuse the save compiler
+            await this.cook(raw, doc.savecom)
+
+            // send the clipboard to the editor
+            this.tx.reply(this)
+        })
+        .catch(error => console.log(`Clipboard manager -> remote : ${error}`))
+    },
+
+    xonGet(doc) {
 
         // if the clipboard is the local one ...
         if ( this.local ) {
@@ -99,6 +142,7 @@ Clipboard.prototype = {
         .catch(error => console.log(`Clipboard manager -> remote : ${error}`))
     },
 
+
     onSwitched() {
 
         // indicate that the clipboard is remote now
@@ -116,7 +160,7 @@ Clipboard.prototype = {
 
         // the object to convert and save - for the origin we save the full path 
         const target = {
-            origin: this.origin.arl.getFullPath(),
+            origin: this.origin.getArl()?.getFullPath(),
             header: this.origin.header,
             what: this.selection.what,
             rect: this.selection.rect ? convert.rectToString(this.selection.rect) : null,
@@ -129,6 +173,7 @@ Clipboard.prototype = {
 
         switch(this.selection.what) {
 
+            case selex.ifArea:
             case selex.pinArea:{
                 target.widgets = this.selection.widgets
             }
@@ -162,94 +207,22 @@ Clipboard.prototype = {
             break
 
             default:
-                console.log(`unrecognized ${this.what} in clipboard.js`)
+                console.log(`unrecognized ${this.selection.what} in clipboard.js`)
                 break;
         }
 
+        // make the raw version of the target 
+        const raw = this.makeRaw(target)
+
         // stringify the target
-        const json =  JSON.stringify(target,null,4)
+        const json =  JSON.stringify(raw,null,4)
         
         // and send a reply
-        this.tx.reply({json})
+        // this.tx.reply({json})
+        return json
     },
 
-    // For a remote clipboard, we cook the raw (json) clipboard 
-    async cook(raw, modcom) {
 
-        // we have to have at least the document the clipboard is coming from
-        if ( ! raw.origin) return false
-
-        // reset the clipboard
-        this.resetContent()
-
-        // now we have to resolve the user path to an absolute path
-        const arl = new ARL().absolute(raw.origin)
-
-        // create the model
-        this.origin = new ModelBlueprint(arl)
-
-        // set the raw field - this is what will be cooked
-        this.origin.raw = raw
-
-        // also cook the header
-        if (raw.header) this.origin.header.cook(arl, raw.header)
-
-        // get a selection
-        this.selection = new Selection()
-
-        // set the viewPath
-        this.selection.viewPath = raw.viewPath
-
-        // also get the rectangle if any
-        if (raw.rect) this.selection.rect = convert.stringToRect(raw.rect)
-
-        // the type of content in the selection
-        this.selection.what = +raw.what
-
-        switch(this.selection.what) {
-
-            case selex.freeRect:
-            case selex.multiNode:
-            case selex.singleNode: {
-
-                // reset the model compiler
-                modcom.reset()
-
-                // cook the clipboard
-                const root = await modcom.getRoot(this.origin)
-
-                // check
-                if (!root) return false
-
-                // copy
-                this.selection.nodes = root.nodes?.slice()
-                this.selection.pads = root.pads?.slice()
-                this.selection.buses = root.buses?.slice()
-            }
-            return true
-
-            case selex.ifArea:
-            case selex.pinArea: {
-
-                // we need a look and a node to convert the widgets
-                const look = new Look({x:0, y:0, w:0, h:0})
-                const node = new GroupNode(look)
-
-                // convert all the widgets
-                for(const strWidget of raw.widgets) {
-
-                    // convert
-                    const widget = look.cookWidget(node,strWidget)
-
-                    // check and save
-                    if (widget) this.selection.widgets.push(widget)
-                }
-            }
-            return true
-
-            default: 
-            return false;
-        }
-    },
 
 } // clipboard manager.prototype
+Object.assign(Clipboard.prototype, ClipboardRawCook)

@@ -66,7 +66,7 @@ const sourceFunctions = {
    getSourceArl(jslib) {
 
         // if there is a link and the link is a library - take that
-        if ( this.link?.model?.is.lib ) return this.link.model.arl
+        if ( this.link?.model?.is.lib ) return this.link.model.getArl()
 
         // if there is a current lib (ie a lib where a group was defined) use that
         if (jslib) return jslib.arl
@@ -75,7 +75,7 @@ const sourceFunctions = {
         if (this.factory.arl) return this.factory.arl
 
         // if the link is a json file, the source can be found via the index file in the directory of that model
-        if (this.link?.model) return this.link.model.arl.resolve('index.js')
+        if (this.link?.model) return this.link.model.getArl().resolve('index.js')
             
         // else we assume the source can be locacted by using the index.js file in the model directory
         return null
@@ -150,7 +150,7 @@ const sourceFunctions = {
             if (( ! widget.is.pin )||( widget.is.input )) continue
 
             // if the pin has a profile, add it here
-            if (widget.profile?.length > 0) sendList += '\n\n\t// ' + widget.profile 
+            // if (widget.profile?.length > 0) sendList += '\n\n\t// ' + widget.profile 
 
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->'
@@ -181,7 +181,7 @@ const sourceFunctions = {
             if ((!widget.is.pin)||(!widget.is.input)) return
 
             // if the pin has a profile, add it here
-            sPrototype += (widget.profile?.length > 0) ? '\n\t// ' + widget.profile : '\n'
+            // sPrototype += (widget.profile?.length > 0) ? '\n\t// ' + widget.profile : '\n'
 
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->'

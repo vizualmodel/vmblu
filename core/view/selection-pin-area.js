@@ -135,7 +135,7 @@ export const pinAreaHandling = {
         this.what = selex.ifArea;
     },
 
-    extend(widget) {
+    extendPinArea(widget) {
 
         if (this.what != selex.ifArea || widget.node != this.widgets[0].node) return
         
@@ -246,12 +246,15 @@ export const pinAreaHandling = {
                 return [node, pos]
             }
 
+            case selex.pinArea: 
             case selex.ifArea: {
 
                 const node = this.getSelectedWidget()?.node
                 const pos = this.behind()
                 return [node, pos]
             }
+
+            default: return [null, null]
         }
     },
 

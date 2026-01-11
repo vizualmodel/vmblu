@@ -71,7 +71,7 @@ Bus.prototype = {
                         : st.cNormal
 
         // Draw a bus or a cable...
-        this.is.cable ? shape.drawCable(ctx,this.wire, cLine, st.wCable) : shape.drawBusbar(ctx,this.wire, cLine, st.wBusbar) 
+        shape.drawBus(ctx,this.wire, cLine, st.wCable)
 
         // render the two labels
         this.startLabel.render(ctx)
@@ -108,54 +108,6 @@ Bus.prototype = {
         for (const tack of this.tacks) tack.route.unHighLight()
     },
 
-    // highlight the routes that are connected via the incoming route
-    highLightRoutes(other) {
-
-        // highlight the bus
-        this.is.highLighted = true
-
-        // check for the connections to the bus..
-        for(const tack of this.tacks) {
-
-            // get the other side of the route
-            const widget = tack.route.from == tack ? tack.route.to : tack.route.from
-
-            // skip the other
-            if (widget === other) continue
-
-            // check if connecetd
-            if (this.areConnected(other, widget)) {
-
-                // highlight the route
-                tack.route.highLight()
-            }
-        }
-    },
-
-    // unhighlight the routes that the tack of this route is connected to
-    unHighLightRoutes(other) {
-
-        // unhighlight the bus
-        this.is.highLighted = false
-
-        // check for the connections to the bus..
-        for(const tack of this.tacks) {
-
-            // get the other side of the route
-            const widget = tack.route.from == tack ? tack.route.to : tack.route.from
-
-            // skip
-            if (widget === other) continue
-
-            // check if connecetd
-            if (this.areConnected(other, widget)) {
-
-                // unhighlight
-                tack.route.unHighLight()
-            }
-        }
-    },
-
     // returns zap, bus, label, tack, segment
     hitTest(pos) {
 
@@ -175,6 +127,8 @@ Bus.prototype = {
 
             // check if inside the rectangle
             if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
+
+            if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
         }
 
         // nothing
@@ -264,9 +218,12 @@ Bus.prototype = {
         return newTack
     },
 
-    newTack() {
+    newTack(alias = null) {
         // make a tack
         const tack = new Widget.BusTack(this)
+
+        // set the alias if any
+        if (alias) tack.alias = alias
 
         // set the tack
         this.tacks.push(tack)
@@ -279,9 +236,6 @@ Bus.prototype = {
     copy() {
         // create a new bus
         const newBus = new Bus( this.name, this.wire[0], this.uid)
-
-        // cable or busbar
-        newBus.is.cable = this.is.cable
 
         // copy the wire 
         newBus.wire = this.copyWire()
@@ -383,14 +337,13 @@ Bus.prototype = {
 
     hasFilter(){
         return this.is.filter
-        //return (this.is.cable && this.is.filter)
     },
 
     // returns the arl to be used to get to the source for the filter
     getFilterArl(jslib, link, localIndex) {
 
         // if there is a link and the link is a library - take that
-        if ( link?.model?.is.lib ) return link.model.arl
+        if ( link?.model?.is.lib ) return link.model.getArl()
 
         // if there is a current lib (ie a lib where a group was defined) use that
         if (jslib) return jslib.arl
@@ -399,7 +352,7 @@ Bus.prototype = {
         if (this.filter.arl) return this.filter.arl
 
         // if the link is a json file, the source can be found via the index file in the directory of that model
-        if (link?.model) return link.model.arl.resolve('index.js')
+        if (link?.model) return link.model.getArl().resolve('index.js')
             
         // else we assume the source can be locacted by using the index.js file in the model directory
         return localIndex

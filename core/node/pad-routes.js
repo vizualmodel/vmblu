@@ -321,12 +321,7 @@ export const padRouteFunctions = {
             }
 
             // if the other is a bustack also highlight the routes that go via the bus
-            if (other.is.tack) {
-
-                route.highLight()
-
-                other.bus.highLightRoutes(this)
-            }
+            if (other.is.tack) other.highLightRoutes()
         }
     },
 
@@ -348,7 +343,7 @@ export const padRouteFunctions = {
             //if (other.is.proxy) other.pad.unHighLightRoutes()
 
             // if the other is a bustack also highlight the routes that go via the bus
-            if (other?.is.tack) other.bus.unHighLightRoutes(this)
+            if (other?.is.tack) other.unHighLightRoutes()
         }
     },
 

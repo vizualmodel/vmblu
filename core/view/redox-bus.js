@@ -18,11 +18,9 @@ busHighlight: {
 
 busCreate: {
 
-    doit({view, pos, cable}) {
+    doit({view, pos}) {
         view.state.bus = view.root.addBus("", pos)
         editor.saveEdit('busCreate',{node:view.root, bus: view.state.bus})
-
-        if (cable) view.state.bus.is.cable = true
     },
     undo({node, bus}) {
         node.removeBus(bus)
@@ -61,39 +59,6 @@ busChangeName: {
 
 },
 
-busChangeType: {
-
-    doit({bus}) {
-
-        // make a copy of the tacks
-        const oldTacks = bus.tacks.slice()
-
-        // save the edit
-        editor.saveEdit('busChangeType', {bus, tacks: oldTacks})
-
-        // disconnect
-        bus.disconnect()
-
-        // change the type of bus
-        bus.is.cable = !bus.is.cable
-
-        // ..and reconnect
-        bus.reconnect(oldTacks)
-    },
-    undo({bus, tacks}) {
-        const oldTacks = tacks.slice()
-        bus.disconnect()
-        bus.is.cable = !bus.is.cable
-        bus.reconnect(oldTacks)
-    },
-    redo({bus, tacks}) {
-        const oldTacks = tacks.slice()
-        bus.disconnect()
-        bus.is.cable = !bus.is.cable
-        bus.reconnect(oldTacks)
-    }    
-},
-
 busDeleteRouter: {
 
     doit({bus}) {
@@ -120,7 +85,7 @@ busChangeRouter: {
 
         // resolve the input to a new factory arl 
         if (!bus.filter) bus.filter = new Factory()
-        bus.filter.resolve(newName, userPath, editor.doc.model.arl, bus.name)
+        bus.filter.resolve(newName, userPath, editor.doc.model.getArl(), bus.name)
 
         // set the filter bit
         bus.is.filter = true

@@ -59,7 +59,7 @@ export const linkHandling = {
         // if the node has a link ...change the link - we do not change the subnodes ! 
         if (this.link) {
 
-            this.link.model.arl.makeRelative( newRefArl )
+            this.link.model.getArl().makeRelative( newRefArl )
         }
 
         // if the node is a source node, change the factory arl if any

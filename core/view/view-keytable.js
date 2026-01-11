@@ -272,21 +272,7 @@ export const ctrlKeyTable = {
         // create a new busbar
         editor.doEdit('busCreate', {
             view,
-            pos: view.hit.xyLocal,
-            cable: false,
-        });
-    },
-
-    // a new bus
-    k: (view) => {
-        // only do this if there is no selection
-        // if (view.selection.what != selex.nothing) return
-
-        // create a new cable
-        editor.doEdit('busCreate', {
-            view,
-            pos: view.hit.xyLocal,
-            cable: true,
+            pos: view.hit.xyLocal
         });
     },
 

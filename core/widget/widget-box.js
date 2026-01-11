@@ -10,6 +10,7 @@ export function Box(rect, node) {
     this.is = {
         box: true,
         selected: false,
+        alarm: false
     }
 
 }
@@ -23,6 +24,11 @@ Box.prototype = {
         const st = style.box
 
         // draw the selection rectangle first if needed !
+        if (this.is.alarm) {
+            const dx = st.dxSel
+            const dy = st.dySel
+            shape.roundedRect(ctx,x-2*dx, y-2*dy, w+4*dx, 4*dy, st.rCorner, st.wLineSel, st.cAlarm.slice(0,7), st.cAlarm)
+        }
         if (this.is.selected) {
 
             // check for a label

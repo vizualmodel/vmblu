@@ -6,20 +6,22 @@ This folder contains the CLI commands that are available for vmblu.
 ```txt
 vmblu/
   cli/                      # your CLI source
+    bin/
+      vmblu.js              # discovers and adds commands
     commands/
       init/
       profile/
       migrate/
     templates/
       x.y.z/                # a directory per version x.y.z
-        vmblu.schema.json
-        vmblu.annex.md
-        seed.md
-        srcdoc.schema.json
-    bin/
-      vmblu.js             # the executable (router)
+        blueprint.schema.json
+        blueprint.annex.md
+        vizual.schema.json
+        system-prompt.md
+        profile.schema.json
     package.json
     README.md
+    LICENSE.txt
 ```
 
 ## Add more commands

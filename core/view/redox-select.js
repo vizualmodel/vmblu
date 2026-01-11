@@ -363,7 +363,7 @@ pasteFromClipboard: {
         view.clipboardToSelection(pos, clipboard)
 
         // Change the factory and link paths if the selection is copied from a different directory
-        if ( ! editor.doc.model.arl.sameDir(clipboard.origin.arl) ) clipboard.selection.adjustPaths( editor.doc.model.arl )
+        if ( ! editor.doc.model.getArl().sameDir(clipboard.origin.arl) ) clipboard.selection.adjustPaths( editor.doc.model.getArl() )
 
         // change the names of the copied nodes if duplicates
         view.checkPastedNames(clipboard.copyCount)
@@ -384,7 +384,7 @@ linkFromClipboard: {
     doit({view, pos, clipboard}){
 
         // also set the relative path for the model
-        clipboard.origin.arl.makeRelative(editor.doc.model.arl)
+        clipboard.origin.arl.makeRelative(editor.doc.model.getArl())
 
         // copy the clipboard to the view and to the selection
         view.clipboardToSelection(pos, clipboard)
