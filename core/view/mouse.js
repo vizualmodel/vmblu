@@ -56,7 +56,8 @@ export const mouseHandling = {
         const hit = this.hit;
 
         // if there is an active selection we check if it was hit
-        if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
+        //if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
+        if ( this.selection.what == selex.freeRect || this.selection.what == selex.multiNode) {
             [hit.what, hit.selection, hit.node] = this.selection.hitTest(xyLocal)
             if (hit.what != zap.nothing) return 
         }
@@ -142,6 +143,10 @@ export const mouseHandling = {
 
             case zap.pad:
                 editor.doEdit('widgetTextEdit',{view:this, widget: hit.pad})
+                break;
+
+            case zap.tack:
+                editor.doEdit('widgetTextEdit',{view:this, widget: hit.tack})
                 break;
         }
     },

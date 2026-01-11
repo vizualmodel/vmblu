@@ -72,7 +72,7 @@ highLight() {
 
             route.highLight()
 
-            if (other.is.tack) other.bus.highLightRoutes(widget)
+            if (other.is.tack) other.highLightRoutes()
         }
     }
 },
@@ -95,7 +95,7 @@ unHighLight() {
 
             route.unHighLight()
 
-            if (other.is.tack) other.bus.unHighLightRoutes(widget)
+            if (other.is.tack) other.unHighLightRoutes()
         }
     }
 },

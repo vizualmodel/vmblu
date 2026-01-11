@@ -103,10 +103,11 @@ function onKeydown(e) {}
 <style>
 .file-dir-list {
 
-    --cFolder:#97a7bb;
-    --cJSONFile: #d6a78b;
-    --cJSFile: #bbbbbb;
-    --cOtherFile:#bbbbbb;
+    --cFolder:rgb(236, 236, 236);
+    --cModelFile: rgb(0, 225, 255);
+    --cVmbluFile: rgb(255, 94, 0);
+    --cJsFile: #87f35c;
+    --cOtherFile:rgb(167, 167, 167);
 	--fontBase: arial, helvetica, sans-serif;
     --sFont: 0.9rem;
     --sIcon: 16px;
@@ -150,11 +151,14 @@ span.file-name {
     margin-left: 0.2rem;
     font-size:var(--sFont);
 }
+span.model-file {
+    color:var(--cModelFile);
+}
 span.vmblu-file {
-    color:var(--cJSONFile);
+    color:var(--cVmbluFile);
 }
 span.js-file {
-    color:var(--cJSFile);
+    color:var(--cJsFile);
 }
 span.other-file {
     color:var(--cOtherFile);
@@ -168,11 +172,14 @@ i.file-icon {
     vertical-align: middle;
     font-weight:100;
 }
+i.model-file {
+    color:var(--cModelFile);
+}
 i.vmblu-file {
-    color:var(--cJSONFile);
+    color:var(--cVmbluFile);
 }
 i.js-file {
-    color:var(--cJSFile);
+    color:var(--cJsFile);
 }
 i.other-file {
     color:var(--cOtherFile);

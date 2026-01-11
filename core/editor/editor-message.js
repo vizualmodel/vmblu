@@ -24,7 +24,7 @@ export const messageHandling = {
 
         // switch the node library (it can be empty but not null)
         this.tx.send('change library', {
-            ref: doc.model.arl,
+            ref: doc.model.getArl(),
             libraries: doc.model.libraries,
         });
 
@@ -59,7 +59,7 @@ export const messageHandling = {
         // send the settings to the popup
         this.tx.send('document settings', {
             title: 'Document Settings',
-            path: this.doc.model.arl?.getFullPath() ?? '- unspecified -',
+            path: this.doc.model.getArl()?.getFullPath() ?? '- unspecified -',
             settings: header,
             pos: { x: 25, y: 25 },
             onColor(rgb) {
@@ -158,7 +158,7 @@ export const messageHandling = {
         // propose a path for the lib
         const libPath =
             doc.target.library?.userPath ??
-            Path.removeExt(doc.model.arl.userPath) + '-lib.js';
+            Path.getSplit(doc.model.getArl().userPath).name + '.lib.js';
 
         // request the path for the save as operation
         this.tx.send('show lib path', {
@@ -175,25 +175,26 @@ export const messageHandling = {
         const doc = this.doc;
 
         // check that we have a model
-        if (!doc?.view?.root) return;
+        if (! doc?.view?.root ) return;
 
-        // CHECK ALSO FOR doc.model.arl + message !
+        // CHECK ALSO FOR doc.model.getArl() + message !
 
         // the position of the popup
         const pos = { x: e.screenX, y: e.screenY };
 
         // convert to a workspace path
-        //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.arl.userPath, 'js')
+        //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.getArl().userPath, 'js')
         const appPath =
             doc.target.library?.userPath ??
-            Path.removeExt(doc.model.arl.userPath) + '.app.js';
+            Path.getSplit(doc.model.getArl().userPath).name + '.app.js';
 
         // request the path for the save as operation
         this.tx.send('show app path', {
             title: 'Make application...',
             path: appPath,
             pos: pos,
-            ok: (appPath) => doc.toJavascriptApp(appPath),
+            ok: (appPath) => doc.model.makeAndSaveApp(appPath, doc.view.root),
+            //ok: (appPath) => doc.toJavascriptApp(appPath),
             cancel: () => {},
         });
     },
@@ -256,7 +257,7 @@ export const messageHandling = {
         const doc = this.doc;
 
         //title,message, pos,ok, cancel}
-        this.tx.send('save point.confirm', {
+        this.tx.send('save point confirm', {
             title: 'Confirm to set a new save point',
             message: '',
             pos: { x: 500, y: 100 },
@@ -309,10 +310,10 @@ export const messageHandling = {
                     const text = JSON.stringify(doc.model.raw, null, 4);
 
                     // check and save
-                    if (text) doc.model.arl.save(text);
+                    if (text) doc.model.getArl().save(text);
                 } catch (err) {
                     console.log(
-                        `JSON stringify error: ${err}\nin 'on save point.back'`
+                        `JSON stringify error: ${err}\nin 'on save point back'`
                     );
                 }
             },

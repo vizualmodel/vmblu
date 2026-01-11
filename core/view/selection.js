@@ -165,6 +165,7 @@ Selection.prototype = {
 
     // extend an existing selection
     extend(node) {
+
         // if there are no nodes this is the first selection
         if (this.nodes.length < 1) {
             this.singleNode(node);

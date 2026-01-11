@@ -1,6 +1,6 @@
 {
-  "version": "0.3.2",
-  "generatedAt": "2025-12-05T12:40:10.131Z",
+  "version": "0.3.5",
+  "generatedAt": "2025-12-16T14:52:15.216Z",
   "entries": [
     {
       "node": "document manager",
@@ -78,7 +78,7 @@
           "pin": "save",
           "handler": "onSave",
           "file": "document/document-manager.js",
-          "line": 181,
+          "line": 184,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -88,7 +88,7 @@
           "pin": "save all",
           "handler": "onSaveAll",
           "file": "document/document-manager.js",
-          "line": 188,
+          "line": 191,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -98,7 +98,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "document/document-manager.js",
-          "line": 195,
+          "line": 198,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -108,7 +108,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "document/document-manager.js",
-          "line": 213,
+          "line": 216,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -135,37 +135,37 @@
         {
           "pin": "save as filename",
           "file": "document/document-manager.js",
-          "line": 163
+          "line": 166
         },
         {
           "pin": "tab rename",
           "file": "document/document-manager.js",
-          "line": 172
+          "line": 175
         },
         {
           "pin": "open models",
           "file": "document/document-manager.js",
-          "line": 205
+          "line": 208
         },
         {
           "pin": "tab remove",
           "file": "document/document-manager.js",
-          "line": 231
+          "line": 234
         },
         {
           "pin": "tab select",
           "file": "document/document-manager.js",
-          "line": 243
+          "line": 246
         },
         {
           "pin": "tab select",
           "file": "document/document-manager.js",
-          "line": 252
+          "line": 255
         },
         {
           "pin": "doc set active",
           "file": "document/document-manager.js",
-          "line": 259
+          "line": 262
         }
       ]
     },
@@ -415,7 +415,7 @@
           "line": 226
         },
         {
-          "pin": "save point.confirm",
+          "pin": "save point confirm",
           "file": "editor/editor-message.js",
           "line": 259
         },

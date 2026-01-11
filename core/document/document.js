@@ -2,8 +2,6 @@ import {View} from '../view/index.js'
 import {Path} from '../arl/index.js'
 import {RingStack} from '../util/index.js'
 import {ModelCompiler, ModelBlueprint} from '../model/index.js'
-import {JSAppHandling} from './javascript-app.js'
-import {JSLibHandling} from './javascript-lib.js'
 import {importExportHandling} from './import-export.js'
 import {UIDGenerator} from './uid-generator.js'
 
@@ -44,7 +42,7 @@ export function Document(arl=null) {
 Document.prototype = {
 
     resolve(path) {
-        return this.model?.arl?.resolve(path)
+        return this.model?.getArl()?.resolve(path)
     },
 
     // loads a document 
@@ -68,8 +66,8 @@ Document.prototype = {
             this.view.syncRoot(newRoot)            
         }
         else {
-            this.view.initRoot(Path.nameOnly(this.model.arl.userPath))
-            console.warn(`Empty root for ${this.model.arl.userPath} -  ok for empty file`)
+            this.view.initRoot(Path.nameOnly(this.model.blu.arl.userPath))
+            console.warn(`Empty root for ${this.model.blu.arl.userPath} -  ok for empty file`)
         }
 
         // load the library files for the document - but don't wait for it....
@@ -89,8 +87,8 @@ Document.prototype = {
             this.view.syncRoot(newRoot)            
         }
         else {
-            this.view.initRoot(Path.nameOnly(this.model.arl.userPath))
-            console.warn(`Empty root for ${this.model.arl.userPath} -  ok for empty file`)
+            this.view.initRoot(Path.nameOnly(this.model.getArl().userPath))
+            console.warn(`Empty root for ${this.model.getArl().userPath} -  ok for empty file`)
         }
     },
 
@@ -108,19 +106,21 @@ Document.prototype = {
         // check
         if (!toSave) return
 
-        // encode the root node as a text string
-        const text = this.savecom.encode(toSave, this.model)
+        // encode the model as two parts
+        const compiled = this.savecom.encode(toSave, this.model)
 
-        // also make the raw json structure up to date
-        this.model.raw = JSON.parse(text)
+        // check
+        if (!compiled) return
 
-        // reset the dirty flag
-        this.model.is.dirty = false
-        
-        // save the stringified text
-        return this.model.arl.save( text )
+        // save both parts of the model
+        if (compiled.blu) this.model.blu.arl.save( compiled.blu )
+        if (compiled.viz) this.model.viz.arl.save( compiled.viz )
+
+        // save the new raw also in the model
+        this.model.setRaw(compiled.raw)
     },
 
+    // TO CHANGE !!!!
     async saveAs(path) {
 
         // if there is no extension, add  it
@@ -128,17 +128,17 @@ Document.prototype = {
 
         if (Path.isAbsolutePath(path)) {
 
-            const userPath = Path.relative(path, this.model.arl.url)
+            const userPath = Path.relative(path, this.model.getArl().url)
             
-            console.log(`${userPath} ${path} ${this.model.arl.url}`)
+            //console.log(`${userPath} ${path} ${this.model.getArl().url}`)
 
             // save to the new location
-            this.model.arl.url = path
-            this.model.arl.userPath = userPath
+            this.model.getArl().url = path
+            this.model.getArl().userPath = userPath
         }
         else {
             // get a new arl
-            const newArl = this.model.arl.resolve(path)
+            const newArl = this.model.getArl().resolve(path)
 
             //check
             if (!newArl) {
@@ -147,7 +147,7 @@ Document.prototype = {
             }
 
             // set the new arl
-            this.model.arl = newArl
+            // this.model.getArl() = newArl
         }
 
         return this.save()
@@ -163,7 +163,8 @@ Document.prototype = {
         if (this.model.is.dirty) {
 
             // sync the model
-            this.model.raw = JSON.parse(this.modcom.encode(this.view.root, this.model))
+            //this.model.raw = JSON.parse(this.modcom.encode(this.view.root, this.model))
+            this.model.raw = this.modcom.encode(this.view.root, this.model).raw
             
             // also set the fresh flag
             this.model.is.fresh = true
@@ -198,4 +199,4 @@ Document.prototype = {
         return toSave
     }
 }
-Object.assign(Document.prototype, JSAppHandling, JSLibHandling, importExportHandling)
+Object.assign(Document.prototype, importExportHandling)

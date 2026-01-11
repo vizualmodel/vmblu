@@ -1,0 +1,139 @@
+{
+  "header": {
+    "schema": "no version",
+    "created": "6/17/2025, 10:54:52 AM",
+    "saved": "9/16/2025, 11:43:29 AM",
+    "utc": "2025-09-16T09:43:29.001Z",
+    "runtime": "./runtime.js"
+  },
+  "factories": [
+    {
+      "path": "./mcp-client-in-browser.js",
+      "function": "McpClientOpenAI"
+    },
+    {
+      "path": "./mcp-server-in-browser.js",
+      "function": "McpServerInBrowser"
+    }
+  ],
+  "root": {
+    "kind": "group",
+    "name": "ai",
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "MCP Client in browser",
+        "prompt": "An MCP client communicates with the server and uses just two messages to implement the transport layer for an mcp client from a model implementation.\n\nThe client has a UI to receive prompts from the user and to show the repsonse from the LLM. The client sends the div it uses for that to the page that has to integrate it.",
+        "factory": {
+          "path": "./mcp-client-in-browser.js",
+          "function": "McpClientOpenAI"
+        },
+        "interfaces": [
+          {
+            "interface": "user interface",
+            "pins": [
+              {
+                "name": "update chat",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "new prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "handle key",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "server interface",
+            "pins": [
+              {
+                "name": "get manifest",
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "get tools",
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "call tool",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "tool result",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "MCP Server in browser",
+        "prompt": "The MCP server is specific to the application and tells the client the services it can deliver. The server has no UI on itself and is LLM-agnostic. It just uses two messages for the transport layer used by the model implementation of the mcp server it encapsulates.",
+        "factory": {
+          "path": "./mcp-server-in-browser.js",
+          "function": "McpServerInBrowser"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "get manifest",
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "get tools",
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "call tool",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "tool result",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

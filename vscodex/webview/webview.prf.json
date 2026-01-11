@@ -1,6 +1,6 @@
 {
-  "version": "0.3.2",
-  "generatedAt": "2025-12-05T12:40:10.645Z",
+  "version": "0.4.1",
+  "generatedAt": "2026-01-11T12:27:11.692Z",
   "entries": [
     {
       "node": "message broker",
@@ -270,7 +270,7 @@
           "pin": "save",
           "handler": "onSave",
           "file": "../../core/document/document-manager.js",
-          "line": 181,
+          "line": 184,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -280,7 +280,7 @@
           "pin": "save all",
           "handler": "onSaveAll",
           "file": "../../core/document/document-manager.js",
-          "line": 188,
+          "line": 191,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -290,7 +290,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../../core/document/document-manager.js",
-          "line": 195,
+          "line": 198,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -300,7 +300,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../../core/document/document-manager.js",
-          "line": 213,
+          "line": 216,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -327,37 +327,37 @@
         {
           "pin": "save as filename",
           "file": "../../core/document/document-manager.js",
-          "line": 163
+          "line": 166
         },
         {
           "pin": "tab rename",
           "file": "../../core/document/document-manager.js",
-          "line": 172
+          "line": 175
         },
         {
           "pin": "open models",
           "file": "../../core/document/document-manager.js",
-          "line": 205
+          "line": 208
         },
         {
           "pin": "tab remove",
           "file": "../../core/document/document-manager.js",
-          "line": 231
+          "line": 234
         },
         {
           "pin": "tab select",
           "file": "../../core/document/document-manager.js",
-          "line": 243
+          "line": 246
         },
         {
           "pin": "tab select",
           "file": "../../core/document/document-manager.js",
-          "line": 252
+          "line": 255
         },
         {
           "pin": "doc set active",
           "file": "../../core/document/document-manager.js",
-          "line": 259
+          "line": 262
         }
       ]
     },
@@ -492,7 +492,7 @@
           "pin": "run app",
           "handler": "onRunApp",
           "file": "../../core/editor/editor-message.js",
-          "line": 201,
+          "line": 202,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -502,7 +502,7 @@
           "pin": "run app in iframe",
           "handler": "onRunAppInIframe",
           "file": "../../core/editor/editor-message.js",
-          "line": 213,
+          "line": 214,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -512,7 +512,7 @@
           "pin": "pin profile",
           "handler": "onPinProfile",
           "file": "../../core/editor/editor-message.js",
-          "line": 233,
+          "line": 234,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -522,7 +522,7 @@
           "pin": "selected node",
           "handler": "onSelectedNode",
           "file": "../../core/editor/editor-message.js",
-          "line": 236,
+          "line": 237,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -548,7 +548,7 @@
           "pin": "save point set",
           "handler": "onSavePointSet",
           "file": "../../core/editor/editor-message.js",
-          "line": 250,
+          "line": 251,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -558,7 +558,7 @@
           "pin": "save point back",
           "handler": "onSavePointBack",
           "file": "../../core/editor/editor-message.js",
-          "line": 281,
+          "line": 282,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -594,27 +594,27 @@
         {
           "pin": "run",
           "file": "../../core/editor/editor-message.js",
-          "line": 206
+          "line": 207
         },
         {
           "pin": "run",
           "file": "../../core/editor/editor-message.js",
-          "line": 217
+          "line": 218
         },
         {
           "pin": "iframe",
           "file": "../../core/editor/editor-message.js",
-          "line": 226
-        },
-        {
-          "pin": "save point.confirm",
-          "file": "../../core/editor/editor-message.js",
-          "line": 259
+          "line": 227
         },
         {
           "pin": "save point confirm",
           "file": "../../core/editor/editor-message.js",
-          "line": 291
+          "line": 260
+        },
+        {
+          "pin": "save point confirm",
+          "file": "../../core/editor/editor-message.js",
+          "line": 292
         }
       ]
     },
@@ -625,7 +625,7 @@
           "pin": "set",
           "handler": "onSet",
           "file": "../../core/model/clipboard.js",
-          "line": 52,
+          "line": 51,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -646,7 +646,7 @@
           "pin": "get",
           "handler": "onGet",
           "file": "../../core/model/clipboard.js",
-          "line": 73,
+          "line": 72,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -662,7 +662,7 @@
           "pin": "switched",
           "handler": "onSwitched",
           "file": "../../core/model/clipboard.js",
-          "line": 102,
+          "line": 146,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -672,7 +672,7 @@
           "pin": "local",
           "handler": "onLocal",
           "file": "../../core/model/clipboard.js",
-          "line": 109,
+          "line": 153,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -689,7 +689,7 @@
         {
           "pin": "switch",
           "file": "../../core/model/clipboard.js",
-          "line": 70
+          "line": 69
         }
       ]
     },

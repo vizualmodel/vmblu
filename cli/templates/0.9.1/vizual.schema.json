@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "@vizual_model/cli/templates/0.9.1/visual.schema.json",
+  "title": "vmblu Visual Model (v0.9.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "header": { "$ref": "#/$defs/Header" },
+    "root": {
+      "description": "Visual representation of the root node and its contents.",
+      "$ref": "#/$defs/Node"
+    }
+  },
+  "required": ["root"],
+  "$defs": {
+    "Header": {
+      "description": "Contains meta information about the visual model (layout).",
+      "type": "object",
+      "properties": {
+        "version": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "saved": { "type": "string", "format": "date-time" },
+        "utc": { "type": "string", "format": "date-time" },
+        "style": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "required": ["version", "created", "saved", "utc"]
+    },
+
+    "Node": {
+      "description": "Visual data for a node. Structure mirrors the blueprint node tree, but only contains editor-related data.",
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["source", "group", "dock"] },
+        "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+        "label": { "type": "string" },
+        "rect": {
+          "description": "Serialized rectangle describing position and size of the node.",
+          "type": "string"
+        },
+        "interfaces": {
+          "description": "Visual metadata for interfaces of this node.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Interface" }
+        }
+      },
+      "oneOf": [
+        { "$ref": "#/$defs/SourceNode" },
+        { "$ref": "#/$defs/GroupNode" },
+        { "$ref": "#/$defs/DockNode" }
+      ],
+      "required": ["kind", "name"],
+      "unevaluatedProperties": false
+    },
+
+    "SourceNode": {
+      "description": "Visual data for a source node.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "source" }
+      }
+    },
+
+    "GroupNode": {
+      "description": "Visual data for a group node and its child nodes.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "group" },
+        "nodes": {
+          "description": "Visual data for child nodes inside this group.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Node" }
+        },
+        "view": {
+          "description": "Viewport and transform for this group's canvas.",
+          "type": "object",
+          "properties": {
+            "state": { "enum": ["open", "closed"] },
+            "rect": { "type": "string" },
+            "transform": { "type": "string" }
+          },
+          "required": ["rect"],
+          "additionalProperties": false
+        },
+        "pads" : {
+          "description": "Visual metadata for the pads of a group node.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Pad" }
+        },
+        "buses": {
+          "description": "Visual representation of buses in this group.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "A bus is an easy way to route multiple connections between nodes.",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[^@]+$"
+              },
+              "filter": {
+                "description": "Filter used to route messages based on parameters.",
+                "type": "object",
+                "required": ["path", "function"],
+                "properties": {
+                  "path": { "type": "string", "minLength": 1 },
+                  "function": { "type": "string", "minLength": 1 }
+                },
+                "additionalProperties": false
+              },
+              "start": { "type": "string" },
+              "wire": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "routes": {
+          "description": "Visual representation of connections between pins or interfaces.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "A route as drawn by the editor between two endpoints.",
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "wire": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+
+    "DockNode": {
+      "description": "Visual data for a dock node.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "dock" }
+      }
+    },
+
+    "Interface": {
+      "description": "Visual metadata for an interface of a node. Structure mirrors the blueprint interface, but only contains editor-related data.",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[^@]+$" },
+        "pins": {
+          "description": "Visual metadata for pins belonging to this interface.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Pin" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Pin": {
+      "description": "Visual metadata for a pin of a node, ncoded as a compact string.",
+      "type": "string"
+    },
+
+    "Pad": {
+      "description": "Visual metadata for a pin of a node, ncoded as a compact string.",
+      "type": "string"
+    }
+  }
+}

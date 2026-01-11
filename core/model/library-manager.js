@@ -1,4 +1,4 @@
-import {ModelBlueprint} from './model-blueprint.js'
+import {ModelBlueprint} from './blueprint.js'
 
 export function LibraryManager(tx, sx) {
 
@@ -29,6 +29,7 @@ LibraryManager.prototype = {
         this.tx.send("build table", this.libraries.map)
     },
 
+    //*** WE NEED A COMPILER HERE */
     async onAddFile(userPath){
 
         // check
@@ -50,10 +51,7 @@ LibraryManager.prototype = {
             model = new ModelBlueprint(arl)
 
             // get the file
-            await model.getRaw()
-
-            // make the key for the model
-            // model.makeKey()
+            await compiler.getRaw(model)
 
             // add to the map
             this.libraries.add(model)

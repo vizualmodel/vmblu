@@ -1,0 +1,632 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "created": "4/2/2024, 1:26:41 PM",
+    "saved": "12/16/2025, 12:41:01 PM",
+    "utc": "2025-12-16T11:41:01.251Z",
+    "runtime": "./runtime.js"
+  },
+  "imports": [
+    "../ui/out/svelte-lib.blu.json"
+  ],
+  "factories": [
+    {
+      "path": "./index.js",
+      "function": "EditorFactory"
+    }
+  ],
+  "root": {
+    "kind": "group",
+    "name": "node-editor",
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "editor",
+        "factory": {
+          "path": "./index.js",
+          "function": "EditorFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "menu",
+            "pins": [
+              {
+                "name": "accept changes",
+                "kind": "input"
+              },
+              {
+                "name": "sync model",
+                "kind": "input"
+              },
+              {
+                "name": "recalibrate",
+                "kind": "input"
+              },
+              {
+                "name": "grid on-off",
+                "kind": "input"
+              },
+              {
+                "name": "show settings",
+                "kind": "input"
+              }
+            ]
+          },
+          {
+            "interface": "document",
+            "pins": [
+              {
+                "name": "set document",
+                "kind": "input"
+              },
+              {
+                "name": "open document",
+                "kind": "output"
+              },
+              {
+                "name": "document settings",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "edit",
+            "pins": [
+              {
+                "name": "new edit",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "save point",
+            "pins": [
+              {
+                "name": "save point set",
+                "kind": "input"
+              },
+              {
+                "name": "save point back",
+                "kind": "input"
+              },
+              {
+                "name": "save point confirm",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "clipboard",
+            "pins": [
+              {
+                "name": "clipboard get",
+                "kind": "request"
+              },
+              {
+                "name": "clipboard set",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "link, factory, filter",
+            "pins": [
+              {
+                "name": "show link",
+                "kind": "output"
+              },
+              {
+                "name": "show factory",
+                "kind": "output"
+              },
+              {
+                "name": "show filter",
+                "kind": "output"
+              },
+              {
+                "name": "open source file",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "lib",
+            "pins": [
+              {
+                "name": "make lib",
+                "kind": "input"
+              },
+              {
+                "name": "show lib path",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "app",
+            "pins": [
+              {
+                "name": "make app",
+                "kind": "input"
+              },
+              {
+                "name": "show app path",
+                "kind": "output"
+              },
+              {
+                "name": "run app",
+                "kind": "input"
+              },
+              {
+                "name": "run app in iframe",
+                "kind": "input"
+              },
+              {
+                "name": "run",
+                "kind": "output"
+              },
+              {
+                "name": "runtime settings",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "context",
+            "pins": [
+              {
+                "name": "show context menu",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "json settings",
+            "pins": [
+              {
+                "name": "settings",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "info",
+            "pins": [
+              {
+                "name": "pin profile",
+                "kind": "output"
+              },
+              {
+                "name": "node comment",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "node lib selection",
+            "pins": [
+              {
+                "name": "select node",
+                "kind": "output"
+              },
+              {
+                "name": "selected node",
+                "kind": "input"
+              },
+              {
+                "name": "add lib file",
+                "kind": "output"
+              },
+              {
+                "name": "change library",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "div",
+            "pins": [
+              {
+                "name": "canvas",
+                "kind": "output"
+              },
+              {
+                "name": "size change",
+                "kind": "input"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "library manager",
+        "factory": {
+          "path": "./index.js",
+          "function": "LibraryManager"
+        },
+        "label": "makes a node library from the model files",
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "add file",
+                "kind": "input"
+              },
+              {
+                "name": "remove file",
+                "kind": "input"
+              },
+              {
+                "name": "switch library",
+                "kind": "input"
+              },
+              {
+                "name": "build table",
+                "kind": "output"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "document manager",
+        "factory": {
+          "path": "./index.js",
+          "function": "DocumentManager"
+        },
+        "label": "Manages the list of open documents",
+        "prompt": "The document manager is typically used together with a tab-ribbon ui element.\n\nThe document manager is also the node that gets and saves the content of the documents.\n\nThe selection, closing, renaming etc is typically handled here.\n\nThe editor is typically only aware of one document - the active document - that is set by the document manager.",
+        "interfaces": [
+          {
+            "interface": "doc",
+            "pins": [
+              {
+                "name": "doc selected",
+                "kind": "input"
+              },
+              {
+                "name": "doc new",
+                "kind": "input"
+              },
+              {
+                "name": "doc renamed",
+                "kind": "input"
+              },
+              {
+                "name": "doc deleted",
+                "kind": "input"
+              },
+              {
+                "name": "doc get",
+                "kind": "input"
+              },
+              {
+                "name": "doc set active",
+                "kind": "output"
+              },
+              {
+                "name": "doc open",
+                "kind": "input"
+              }
+            ]
+          },
+          {
+            "interface": "file",
+            "pins": [
+              {
+                "name": "save",
+                "kind": "input"
+              },
+              {
+                "name": "save as",
+                "kind": "input"
+              },
+              {
+                "name": "save as filename",
+                "kind": "output"
+              },
+              {
+                "name": "save all",
+                "kind": "input"
+              },
+              {
+                "name": "get open models",
+                "kind": "input"
+              },
+              {
+                "name": "open models",
+                "kind": "output"
+              }
+            ]
+          },
+          {
+            "interface": "tab",
+            "pins": [
+              {
+                "name": "tab request to close",
+                "kind": "input"
+              },
+              {
+                "name": "tab request to select",
+                "kind": "input"
+              },
+              {
+                "name": "tab select",
+                "kind": "output"
+              },
+              {
+                "name": "tab remove",
+                "kind": "output"
+              },
+              {
+                "name": "tab new",
+                "kind": "output"
+              },
+              {
+                "name": "tab rename",
+                "kind": "output"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "clipboard",
+        "factory": {
+          "path": "./index.js",
+          "function": "Clipboard"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "switch",
+                "kind": "output"
+              },
+              {
+                "name": "switched",
+                "kind": "input"
+              },
+              {
+                "name": "remote",
+                "kind": "request"
+              },
+              {
+                "name": "local",
+                "kind": "reply"
+              },
+              {
+                "name": "set",
+                "kind": "input"
+              },
+              {
+                "name": "get",
+                "kind": "reply"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "select node",
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "select node",
+                "kind": "input"
+              },
+              {
+                "name": "node",
+                "kind": "output"
+              },
+              {
+                "name": "switch library",
+                "kind": "input"
+              },
+              {
+                "name": "modal div",
+                "kind": "output"
+              }
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "node selector",
+            "link": {
+              "path": "../ui/out/svelte-lib.blu.json",
+              "node": "node selector"
+            },
+            "label": "select nodes from the library",
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "selected node",
+                    "kind": "output"
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input"
+                  },
+                  {
+                    "name": "build table",
+                    "kind": "input"
+                  },
+                  {
+                    "name": "remove file",
+                    "kind": "output"
+                  },
+                  {
+                    "name": "add file",
+                    "kind": "output"
+                  },
+                  {
+                    "name": "get path",
+                    "kind": "output"
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "library manager",
+            "link": {
+              "path": "./",
+              "node": "library manager"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "switch library",
+                    "kind": "input"
+                  },
+                  {
+                    "name": "build table",
+                    "kind": "output"
+                  },
+                  {
+                    "name": "remove file",
+                    "kind": "input"
+                  },
+                  {
+                    "name": "add file",
+                    "kind": "input"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "path request",
+            "link": {
+              "path": "../ui/out/svelte-lib.blu.json",
+              "node": "path request"
+            },
+            "label": "add a file to the nodelib",
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "path",
+                    "kind": "input"
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "src": {
+              "pin": "selected node",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "node"
+            }
+          },
+          {
+            "src": {
+              "pin": "remove file",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "remove file",
+              "node": "library manager"
+            }
+          },
+          {
+            "src": {
+              "pin": "add file",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "add file",
+              "node": "library manager"
+            }
+          },
+          {
+            "src": {
+              "pin": "get path",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "path",
+              "node": "path request"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "build table",
+              "node": "library manager"
+            },
+            "dst": {
+              "pin": "build table",
+              "node": "node selector"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "select node"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "node selector"
+            }
+          },
+          {
+            "src": {
+              "pin": "switch library"
+            },
+            "dst": {
+              "pin": "switch library",
+              "node": "library manager"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

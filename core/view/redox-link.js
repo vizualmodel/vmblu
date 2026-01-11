@@ -12,13 +12,13 @@ cutLink: {
         if (!node.link) return
 
         // save the current link
-        editor.saveEdit('cutLink',{node, lName: node.link.lName, userPath: node.link.model.arl.userPath})
+        editor.saveEdit('cutLink',{node, lName: node.link.lName, userPath: node.link.model.getArl().userPath})
 
         // and we simply set the link status
         node.clearLink()
 
         // now we have to adjust the user paths of the sub-nodes
-        node.adjustUserPaths(editor.doc.model.arl)
+        node.adjustUserPaths(editor.doc.model.getArl())
     },
     undo({node, lName, userPath}) {
 
@@ -36,7 +36,7 @@ cutLink: {
         node.clearLink()
 
         // change references where necessary
-        // if (node.nodes) for (const sub of node.nodes) sub.adjustUserPaths( editor.doc.model.arl  )
+        // if (node.nodes) for (const sub of node.nodes) sub.adjustUserPaths( editor.doc.model.getArl()  )
     }
 },
 
@@ -96,7 +96,7 @@ saveToLink: {
         if (! userPath.length > 0) return
 
         // export the node
-        editor.doc.exportToModel(node, newName, new ModelBlueprint( editor.doc.model.arl.resolve(userPath)))
+        editor.doc.exportToModel(node, newName, new ModelBlueprint( editor.doc.model.getArl().resolve(userPath)))
     },
     undo({}) {
     },
@@ -112,7 +112,7 @@ changeFactory: {
         const oldFactory = node.factory.clone()
 
         // resolve the input to a new factory arl 
-        node.factory?.resolve(newName, userPath, editor.doc.model.arl, node.name)
+        node.factory?.resolve(newName, userPath, editor.doc.model.getArl(), node.name)
 
         // keep the old factory
         editor.saveEdit('changeFactory',{node, oldFactory, newFactory: node.factory})

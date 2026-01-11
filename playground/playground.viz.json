@@ -1,0 +1,1120 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "utc": "2025-12-16T09:49:03.571Z",
+    "style": "#291f32"
+  },
+  "root": {
+    "kind": "group",
+    "name": "hv-layout",
+    "rect": "x 1061 y 0 w 100 h 26",
+    "view": {
+      "state": "open",
+      "rect": "x 0 y 0 w 1609 h 1326",
+      "transform": "sx 1.000 sy 1.000 dx -146.469 dy 163.331"
+    },
+    "nodes": [
+      {
+        "kind": "group",
+        "name": "workspace group",
+        "rect": "x 343 y 709 w 211 h 116",
+        "view": {
+          "state": "open",
+          "rect": "x 378 y 101 w 1156 h 768",
+          "transform": "sx 1.000 sy 1.000 dx 291.500 dy 282.000"
+        },
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(1 R)dom workspace div"
+            ]
+          },
+          {
+            "interface": "(12) file",
+            "pins": [
+              "(8 R)file selected",
+              "(9 R)file new",
+              "(10 R)file renamed",
+              "(11 R)file deleted"
+            ]
+          }
+        ],
+        "pads": [
+          "(1 R)x 781 y 56 w 132 h 15|dom workspace div",
+          "(8 R)x 781 y 86 w 93 h 15|file selected",
+          "(9 R)x 782 y 101 w 71 h 15|file new",
+          "(10 R)x 781 y 146 w 96 h 15|file renamed",
+          "(11 R)x 781 y 161 w 88 h 15|file deleted"
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "workspace",
+            "rect": "x 453 y 6 w 200 h 371",
+            "interfaces": [
+              {
+                "interface": "(36) dom",
+                "pins": [
+                  "(2 R)dom add modal div",
+                  "(3 R)dom workspace div"
+                ]
+              },
+              {
+                "interface": "(37) file",
+                "pins": [
+                  "(5 R)file selected",
+                  "(21 R)file new",
+                  "(7 R)file get name",
+                  "(8 R)file context menu",
+                  "(27 R)file renamed",
+                  "(28 R)file deleted",
+                  "(29 R)file savedAs",
+                  "(30 R)file active",
+                  "(31 R)file closed"
+                ]
+              },
+              {
+                "interface": "(38) files",
+                "pins": [
+                  "(11 R)files get list",
+                  "(32 R)files selected",
+                  "(33 R)files deleted"
+                ]
+              },
+              {
+                "interface": "(39) folder",
+                "pins": [
+                  "(14 R)folder context menu",
+                  "(34 R)folder renamed",
+                  "(35 R)folder deleted"
+                ]
+              },
+              {
+                "interface": "(40) drawer",
+                "pins": [
+                  "(15 R)drawer get location"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "single text field",
+            "rect": "x 105 y 21 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 R)modal div",
+                  "(1 R)show"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "context menu",
+            "rect": "x 105 y 269 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 R)modal div",
+                  "(1 R)context menu"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "message box",
+            "rect": "x 105 y 145 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 R)modal div",
+                  "(1 R)show"
+                ]
+              }
+            ]
+          }
+        ],
+        "routes": [
+          {
+            "from": "(pin 3) dom workspace div @ workspace",
+            "to": "(pad 1) dom workspace div",
+            "wire": "x 128.0"
+          },
+          {
+            "from": "(pin 5) file selected @ workspace",
+            "to": "(pad 8) file selected",
+            "wire": "x 64.0 y 0.0 x 64.0"
+          },
+          {
+            "from": "(pin 21) file new @ workspace",
+            "to": "(pad 9) file new",
+            "wire": "x 64.5 y 0.0 x 64.5"
+          },
+          {
+            "from": "(pin 27) file renamed @ workspace",
+            "to": "(pad 10) file renamed",
+            "wire": "x 64.0 y 0.0 x 64.0"
+          },
+          {
+            "from": "(pin 28) file deleted @ workspace",
+            "to": "(pad 11) file deleted",
+            "wire": "x 64.0 y 0.0 x 64.0"
+          },
+          {
+            "from": "(pin 14) folder context menu @ workspace",
+            "to": "(pin 1) context menu @ context menu",
+            "wire": "x 64.0 y 153.2 x -357.0 y -145.2 x -105.0"
+          },
+          {
+            "from": "(pin 2) modal div @ single text field",
+            "to": "(pin 2) dom add modal div @ workspace",
+            "wire": "x 199.0 y 0.0 x 199.0"
+          },
+          {
+            "from": "(pin 2) modal div @ context menu",
+            "to": "(pin 2) dom add modal div @ workspace",
+            "wire": "x 105.2 y -248.0 x 292.8"
+          },
+          {
+            "from": "(pin 2) modal div @ message box",
+            "to": "(pin 2) dom add modal div @ workspace",
+            "wire": "x 105.2 y -124.0 x 292.8"
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "playground editor",
+        "rect": "x 817 y 432 w 250 h 206",
+        "view": {
+          "state": "big",
+          "rect": "x 197 y -41 w 2619 h 1168",
+          "transform": "sx 1.005 sy 1.005 dx 291.775 dy -46.289"
+        },
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(1 R)run",
+              "(2 L)div",
+              "(3 L)size change",
+              "(6 L)get open models",
+              "(7 L)open models",
+              "(8 L)open source file",
+              "(9 R)show"
+            ]
+          },
+          {
+            "interface": "(18) doc",
+            "pins": [
+              "(14 R)doc selected",
+              "(15 R)doc new",
+              "(16 R)doc renamed",
+              "(17 R)doc deleted"
+            ]
+          }
+        ],
+        "pads": [
+          "(1 L)x 141 y 722 w 47 h 15|run",
+          "(2 L)x -4 y 902 w 45 h 15|div",
+          "(3 L)x 93 y 971 w 94 h 15|size change",
+          "(6 L)x -110 y 488 w 119 h 15|get open models",
+          "(7 L)x 15 y 507 w 99 h 15|open models",
+          "(8 L)x 98 y 734 w 114 h 15|open source file",
+          "(9 L)x 95 y 997 w 58 h 15|show",
+          "(14 L)x 103 y 358 w 96 h 15|doc selected",
+          "(15 L)x 102 y 373 w 74 h 15|doc new",
+          "(16 L)x 100 y 388 w 99 h 15|doc renamed",
+          "(17 L)x 101 y 403 w 91 h 15|doc deleted"
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "tab ribbon",
+            "rect": "x 204 y 548 w 200 h 146",
+            "interfaces": [
+              {
+                "interface": "(16) tab",
+                "pins": [
+                  "(10 R)tab new",
+                  "(11 R)tab rename",
+                  "(12 R)tab select",
+                  "(13 R)tab remove",
+                  "(14 R)tab request to close",
+                  "(15 R)tab request to select",
+                  "(4 R)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "editor",
+            "rect": "x 1031 y 158 w 200 h 761",
+            "interfaces": [
+              {
+                "interface": "(62) menu",
+                "pins": [
+                  "(13 L)sync model",
+                  "(15 L)grid on-off",
+                  "(12 L)accept changes",
+                  "(14 L)recalibrate",
+                  "(16 L)show settings"
+                ]
+              },
+              {
+                "interface": "(68) lib",
+                "pins": [
+                  "(27 L)make lib",
+                  "(28 R)show lib path"
+                ]
+              },
+              {
+                "interface": "(69) app",
+                "pins": [
+                  "(29 L)make app",
+                  "(31 R)run app",
+                  "(32 R)run app in iframe",
+                  "(30 R)show app path",
+                  "(33 L)run",
+                  "(34 R)runtime settings"
+                ]
+              },
+              {
+                "interface": "(63) document",
+                "pins": [
+                  "(17 L)set document",
+                  "(18 L)open document",
+                  "(19 R)document settings"
+                ]
+              },
+              {
+                "interface": "(65) save point",
+                "pins": [
+                  "(20 L)save point set",
+                  "(61 L)save point back",
+                  "(22 R)save point confirm"
+                ]
+              },
+              {
+                "interface": "(70) context",
+                "pins": [
+                  "(36 R)show context menu"
+                ]
+              },
+              {
+                "interface": "(71) json settings",
+                "pins": [
+                  "(37 R)settings"
+                ]
+              },
+              {
+                "interface": "(67) link, factory, filter",
+                "pins": [
+                  "(59 R)show filter",
+                  "(26 R)show link",
+                  "(38 R)show factory",
+                  "(39 L)open source file"
+                ]
+              },
+              {
+                "interface": "(72) info",
+                "pins": [
+                  "(40 R)pin profile"
+                ]
+              },
+              {
+                "interface": "(73) node lib selection",
+                "pins": [
+                  "(41 R)node comment",
+                  "(42 R)select node",
+                  "(43 R)selected node",
+                  "(45 R)change library",
+                  "(44 R)add lib file"
+                ]
+              },
+              {
+                "interface": "(74) div",
+                "pins": [
+                  "(47 L)canvas",
+                  "(48 L)size change"
+                ]
+              },
+              {
+                "interface": "(64) edit",
+                "pins": [
+                  "(23 R)new edit"
+                ]
+              },
+              {
+                "interface": "(66) clipboard",
+                "pins": [
+                  "(24 L)clipboard get",
+                  "(25 L)clipboard set"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "context menu",
+            "rect": "x 1522 y 436 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)context menu",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "path request",
+            "rect": "x 1514 y 45 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)path",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "node settings",
+            "rect": "x 1522 y 518 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)json",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "name and path",
+            "rect": "x 1522 y 593 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)name and path",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "pin profile",
+            "rect": "x 1528 y 752 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "text block",
+            "rect": "x 1519 y 855 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)text",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "vertical menu tabs content",
+            "rect": "x 128 y 777 w 250 h 146",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)menu div",
+                  "(2 R)tabs div",
+                  "(3 R)content div",
+                  "(4 R)content size change",
+                  "(5 R)modal div",
+                  "(6 R)show",
+                  "(7 R)size change",
+                  "(8 L)div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "document manager",
+            "rect": "x 566 y 323 w 250 h 356",
+            "interfaces": [
+              {
+                "interface": "(40) doc",
+                "pins": [
+                  "(35 L)doc selected",
+                  "(36 L)doc new",
+                  "(37 L)doc renamed",
+                  "(38 L)doc deleted",
+                  "(39 R)doc get",
+                  "(4 R)doc set active",
+                  "(5 R)doc open"
+                ]
+              },
+              {
+                "interface": "(41) file",
+                "pins": [
+                  "(9 L)save as filename",
+                  "(7 L)save",
+                  "(8 L)save as",
+                  "(12 L)open models",
+                  "(10 R)save all",
+                  "(11 L)get open models"
+                ]
+              },
+              {
+                "interface": "(42) tab",
+                "pins": [
+                  "(29 L)tab new",
+                  "(30 L)tab rename",
+                  "(27 L)tab select",
+                  "(28 L)tab remove",
+                  "(25 L)tab request to close",
+                  "(26 L)tab request to select"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "group",
+            "name": "select node",
+            "rect": "x 1519 y 934 w 150 h 86",
+            "view": {
+              "state": "closed",
+              "rect": "x 582 y 294 w 1154 h 510",
+              "transform": "sx 1.000 sy 1.000 dx 608.000 dy 306.000"
+            },
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)select node",
+                  "(2 L)node",
+                  "(3 L)switch library",
+                  "(4 R)modal div"
+                ]
+              }
+            ],
+            "pads": [
+              "(1 L)x 39 y 75 w 91 h 15|select node",
+              "(2 L)x 39 y 97 w 57 h 15|node",
+              "(3 L)x 36 y 194 w 99 h 15|switch library",
+              "(4 R)x 783 y 135 w 81 h 15|modal div"
+            ],
+            "nodes": [
+              {
+                "kind": "dock",
+                "name": "node selector",
+                "rect": "x 540 y 159 w 150 h 131",
+                "interfaces": [
+                  {
+                    "interface": "(0)",
+                    "pins": [
+                      "(2 L)show",
+                      "(3 L)selected node",
+                      "(1 L)build table",
+                      "(6 L)remove file",
+                      "(5 L)add file",
+                      "(4 L)get path",
+                      "(7 R)modal div"
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "dock",
+                "name": "node library",
+                "rect": "x 226 y 174 w 150 h 86",
+                "interfaces": [
+                  {
+                    "interface": "(0)",
+                    "pins": [
+                      "(3 L)switch library",
+                      "(4 R)build table",
+                      "(2 R)remove file",
+                      "(1 R)add file"
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "dock",
+                "name": "path request",
+                "rect": "x 226 y 321 w 150 h 56",
+                "interfaces": [
+                  {
+                    "interface": "(0)",
+                    "pins": [
+                      "(1 R)path",
+                      "(2 R)modal div"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "routes": [
+              {
+                "from": "(pin 3) selected node @ node selector",
+                "to": "(pad 2) node",
+                "wire": "x -122.0 y -97.0 x -322.0"
+              },
+              {
+                "from": "(pin 6) remove file @ node selector",
+                "to": "(pin 2) remove file @ node library",
+                "wire": "x -46.0 y 0.0 x -118.0"
+              },
+              {
+                "from": "(pin 5) add file @ node selector",
+                "to": "(pin 1) add file @ node library",
+                "wire": "x -82.0 y 0.0 x -82.0"
+              },
+              {
+                "from": "(pin 4) get path @ node selector",
+                "to": "(pin 1) path @ path request",
+                "wire": "x -71.0 y 87.0 x -93.0"
+              },
+              {
+                "from": "(pin 7) modal div @ node selector",
+                "to": "(pad 4) modal div",
+                "wire": "x 37.0 y -134.0 x 56.0"
+              },
+              {
+                "from": "(pin 4) build table @ node library",
+                "to": "(pin 1) build table @ node selector",
+                "wire": "x 73.0 y 0.0 x 91.0"
+              },
+              {
+                "from": "(pin 2) modal div @ path request",
+                "to": "(pad 4) modal div",
+                "wire": "x 367.0 y -221.0 x 40.0"
+              },
+              {
+                "from": "(pad 1) select node",
+                "to": "(pin 2) show @ node selector",
+                "wire": "x 326.0 y 104.0 x 84.0"
+              },
+              {
+                "from": "(pad 3) switch library",
+                "to": "(pin 3) switch library @ node library",
+                "wire": "x 91.0"
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "doc settings",
+            "rect": "x 1522 y 170 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "clipboard",
+            "rect": "x 677 y 904 w 200 h 116",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)switch",
+                  "(2 L)switched",
+                  "(3 L)remote",
+                  "(4 L)local",
+                  "(6 R)get",
+                  "(5 R)set"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "confirm box",
+            "rect": "x 1522 y 250 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "runtime settings",
+            "rect": "x 1521 y 338 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 L)show",
+                  "(1 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "side menu",
+            "rect": "x -94 y 84 w 150 h 221",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(2 L)div"
+                ]
+              },
+              {
+                "interface": "(26) menu items",
+                "pins": [
+                  "(15 R)sync",
+                  "(16 R)grid on-off",
+                  "(17 R)accept changes",
+                  "(18 R)recalibrate",
+                  "(19 R)show settings",
+                  "(20 R)make lib",
+                  "(21 R)make app",
+                  "(22 R)set save point",
+                  "(23 R)back to save point",
+                  "(24 R)save",
+                  "(25 R)save as"
+                ]
+              }
+            ]
+          }
+        ],
+        "buses": [
+          {
+            "name": "modal div bus",
+            "start": "x 207 y 1067",
+            "wire": "x 1569.0 y -1004.0"
+          }
+        ],
+        "routes": [
+          {
+            "from": "(pin 14) tab request to close @ tab ribbon",
+            "to": "(pin 25) tab request to close @ document manager",
+            "wire": "x 131.8 y 0.0 x 30.2"
+          },
+          {
+            "from": "(pin 15) tab request to select @ tab ribbon",
+            "to": "(pin 26) tab request to select @ document manager",
+            "wire": "x 140.0 y 0.0 x 22.0"
+          },
+          {
+            "from": "(pin 4) div @ tab ribbon",
+            "to": "(pin 2) tabs div @ vertical menu tabs content",
+            "wire": "x 42.0 y 139.0 x -68.0"
+          },
+          {
+            "from": "(pin 28) show lib path @ editor",
+            "to": "(pin 1) path @ path request",
+            "wire": "x 101.0 y -233.0 x 182.0"
+          },
+          {
+            "from": "(pin 30) show app path @ editor",
+            "to": "(pin 1) path @ path request",
+            "wire": "x 101.0 y -308.0 x 182.0"
+          },
+          {
+            "from": "(pin 33) run @ editor",
+            "to": "(pad 1) run",
+            "wire": "x -121.0 y 334.0 x -722.0"
+          },
+          {
+            "from": "(pin 34) runtime settings @ editor",
+            "to": "(pin 2) show @ runtime settings",
+            "wire": "x 114.3 y -45.0 x 175.7"
+          },
+          {
+            "from": "(pin 18) open document @ editor",
+            "to": "(pin 5) doc open @ document manager",
+            "wire": "x -20.0 y 0.0 x -195.0"
+          },
+          {
+            "from": "(pin 19) document settings @ editor",
+            "to": "(pin 1) show @ doc settings",
+            "wire": "x 148.4 y -273.0 x 142.6"
+          },
+          {
+            "from": "(pin 22) save point confirm @ editor",
+            "to": "(pin 1) show @ confirm box",
+            "wire": "x 166.3 y -253.0 x 124.7"
+          },
+          {
+            "from": "(pin 36) show context menu @ editor",
+            "to": "(pin 1) context menu @ context menu",
+            "wire": "x 193.0 y -97.0 x 98.0"
+          },
+          {
+            "from": "(pin 37) settings @ editor",
+            "to": "(pin 1) json @ node settings",
+            "wire": "x 203.9 y -45.0 x 87.1"
+          },
+          {
+            "from": "(pin 59) show filter @ editor",
+            "to": "(pin 1) name and path @ name and path",
+            "wire": "x 214.0 y 0.0 x 77.0"
+          },
+          {
+            "from": "(pin 26) show link @ editor",
+            "to": "(pin 1) name and path @ name and path",
+            "wire": "x 222.1 y -15.0 x 68.9"
+          },
+          {
+            "from": "(pin 38) show factory @ editor",
+            "to": "(pin 1) name and path @ name and path",
+            "wire": "x 225.0 y -30.0 x 66.0"
+          },
+          {
+            "from": "(pin 39) open source file @ editor",
+            "to": "(pad 8) open source file",
+            "wire": "x -110.0 y 76.0 x -709.0"
+          },
+          {
+            "from": "(pin 40) pin profile @ editor",
+            "to": "(pin 1) show @ pin profile",
+            "wire": "x 219.0 y 84.0 x 78.0"
+          },
+          {
+            "from": "(pin 41) node comment @ editor",
+            "to": "(pin 1) text @ text block",
+            "wire": "x 196.0 y 157.0 x 92.0"
+          },
+          {
+            "from": "(pin 42) select node @ editor",
+            "to": "(pin 1) select node @ select node",
+            "wire": "x 170.6 y 221.0 x 117.4"
+          },
+          {
+            "from": "(pin 45) change library @ editor",
+            "to": "(pin 3) switch library @ select node",
+            "wire": "x 125.9 y 221.0 x 162.1"
+          },
+          {
+            "from": "(pin 47) canvas @ editor",
+            "to": "(pin 3) content div @ vertical menu tabs content",
+            "wire": "x -258.0 y 19.0 x -395.0"
+          },
+          {
+            "from": "(pin 24) clipboard get @ editor",
+            "to": "(pin 6) get @ clipboard",
+            "wire": "x -63.3 y 101.0 x -90.7"
+          },
+          {
+            "from": "(pin 25) clipboard set @ editor",
+            "to": "(pin 5) set @ clipboard",
+            "wire": "x -46.3 y 101.0 x -107.7"
+          },
+          {
+            "from": "(pin 2) modal div @ context menu",
+            "to": "(bus) modal div bus",
+            "wire": "x 104.0"
+          },
+          {
+            "from": "(pin 2) modal div @ path request",
+            "to": "(bus) modal div bus",
+            "wire": "x 112.0"
+          },
+          {
+            "from": "(pin 2) modal div @ node settings",
+            "to": "(bus) modal div bus",
+            "wire": "x 104.0"
+          },
+          {
+            "from": "(pin 2) modal div @ name and path",
+            "to": "(bus) modal div bus",
+            "wire": "x 52.0 y 0.0 x 52.0"
+          },
+          {
+            "from": "(pin 2) modal div @ pin profile",
+            "to": "(bus) modal div bus",
+            "wire": "x 45.5 y 0.0 x 52.5"
+          },
+          {
+            "from": "(pin 2) modal div @ text block",
+            "to": "(bus) modal div bus",
+            "wire": "x 107.0"
+          },
+          {
+            "from": "(pin 4) content size change @ vertical menu tabs content",
+            "to": "(pin 48) size change @ editor",
+            "wire": "x 408.1 y -19.0 x 244.9"
+          },
+          {
+            "from": "(pin 8) div @ vertical menu tabs content",
+            "to": "(pad 2) div",
+            "wire": "x -36.0 y 0.0 x -51.0"
+          },
+          {
+            "from": "(pin 4) doc set active @ document manager",
+            "to": "(pin 17) set document @ editor",
+            "wire": "x 131.0 y 0.0 x 84.0"
+          },
+          {
+            "from": "(pin 9) save as filename @ document manager",
+            "to": "(pin 1) path @ path request",
+            "wire": "x -53.0 y -413.0 x 1001.0"
+          },
+          {
+            "from": "(pin 12) open models @ document manager",
+            "to": "(pad 7) open models",
+            "wire": "x -416.0 y -16.0 x -36.0"
+          },
+          {
+            "from": "(pin 29) tab new @ document manager",
+            "to": "(pin 10) tab new @ tab ribbon",
+            "wire": "x -162.0"
+          },
+          {
+            "from": "(pin 30) tab rename @ document manager",
+            "to": "(pin 11) tab rename @ tab ribbon",
+            "wire": "x -162.0"
+          },
+          {
+            "from": "(pin 27) tab select @ document manager",
+            "to": "(pin 12) tab select @ tab ribbon",
+            "wire": "x -162.0"
+          },
+          {
+            "from": "(pin 28) tab remove @ document manager",
+            "to": "(pin 13) tab remove @ tab ribbon",
+            "wire": "x -162.0"
+          },
+          {
+            "from": "(pin 2) node @ select node",
+            "to": "(pin 43) selected node @ editor",
+            "wire": "x -143.5 y -221.0 x -144.5"
+          },
+          {
+            "from": "(pin 4) modal div @ select node",
+            "to": "(bus) modal div bus",
+            "wire": "x 107.0"
+          },
+          {
+            "from": "(pin 2) modal div @ doc settings",
+            "to": "(bus) modal div bus",
+            "wire": "x 104.0"
+          },
+          {
+            "from": "(pin 2) modal div @ confirm box",
+            "to": "(bus) modal div bus",
+            "wire": "x 51.0 y -0.5 x 53.0"
+          },
+          {
+            "from": "(pin 1) modal div @ runtime settings",
+            "to": "(bus) modal div bus",
+            "wire": "x 105.0"
+          },
+          {
+            "from": "(pin 2) div @ side menu",
+            "to": "(pin 1) menu div @ vertical menu tabs content",
+            "wire": "x -39.6 y 693.0 x 261.6"
+          },
+          {
+            "from": "(pin 15) sync @ side menu",
+            "to": "(pin 13) sync model @ editor",
+            "wire": "x 897.0 y 59.0 x 78.0"
+          },
+          {
+            "from": "(pin 16) grid on-off @ side menu",
+            "to": "(pin 15) grid on-off @ editor",
+            "wire": "x 897.0 y 59.0 x 78.0"
+          },
+          {
+            "from": "(pin 17) accept changes @ side menu",
+            "to": "(pin 12) accept changes @ editor",
+            "wire": "x 897.0 y 59.0 x 78.0"
+          },
+          {
+            "from": "(pin 18) recalibrate @ side menu",
+            "to": "(pin 14) recalibrate @ editor",
+            "wire": "x 884.0 y 59.0 x 91.0"
+          },
+          {
+            "from": "(pin 19) show settings @ side menu",
+            "to": "(pin 16) show settings @ editor",
+            "wire": "x 867.5 y 59.0 x 107.5"
+          },
+          {
+            "from": "(pin 20) make lib @ side menu",
+            "to": "(pin 27) make lib @ editor",
+            "wire": "x 851.0 y 74.0 x 124.0"
+          },
+          {
+            "from": "(pin 21) make app @ side menu",
+            "to": "(pin 29) make app @ editor",
+            "wire": "x 835.4 y 104.0 x 139.6"
+          },
+          {
+            "from": "(pin 22) set save point @ side menu",
+            "to": "(pin 20) save point set @ editor",
+            "wire": "x 819.4 y 254.0 x 155.6"
+          },
+          {
+            "from": "(pin 23) back to save point @ side menu",
+            "to": "(pin 61) save point back @ editor",
+            "wire": "x 809.4 y 254.0 x 165.6"
+          },
+          {
+            "from": "(pin 24) save @ side menu",
+            "to": "(pin 7) save @ document manager",
+            "wire": "x 441.4 y 224.0 x 68.6"
+          },
+          {
+            "from": "(pin 25) save as @ side menu",
+            "to": "(pin 8) save as @ document manager",
+            "wire": "x 426.4 y 224.0 x 83.6"
+          },
+          {
+            "from": "(pad 3) size change",
+            "to": "(pin 7) size change @ vertical menu tabs content",
+            "wire": "x 245.0 y -84.0 x -54.0"
+          },
+          {
+            "from": "(pad 6) get open models",
+            "to": "(pin 11) get open models @ document manager",
+            "wire": "x 455.4 y 65.0 x 101.6"
+          },
+          {
+            "from": "(pad 9) show",
+            "to": "(pin 6) show @ vertical menu tabs content",
+            "wire": "x 295.0 y -125.0 x -70.0"
+          },
+          {
+            "from": "(pad 14) doc selected",
+            "to": "(pin 35) doc selected @ document manager",
+            "wire": "x 209.5 y 0.0 x 157.5"
+          },
+          {
+            "from": "(pad 15) doc new",
+            "to": "(pin 36) doc new @ document manager",
+            "wire": "x 221.0 y 0.0 x 169.0"
+          },
+          {
+            "from": "(pad 16) doc renamed",
+            "to": "(pin 37) doc renamed @ document manager",
+            "wire": "x 209.0 y 0.0 x 158.0"
+          },
+          {
+            "from": "(pad 17) doc deleted",
+            "to": "(pin 38) doc deleted @ document manager",
+            "wire": "x 213.0 y 0.0 x 161.0"
+          },
+          {
+            "from": "(bus) modal div @ modal div bus",
+            "to": "(pin 5) modal div @ vertical menu tabs content",
+            "wire": "y -202.5 x -106.1"
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "application launcher",
+        "rect": "x 343 y 208 w 200 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(2 R)run application",
+              "(1 L)iframe",
+              "(3 L)size change",
+              "(4 L)show"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "column-main layout",
+        "rect": "x 339 y 432 w 200 h 71",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 R)left column",
+              "(4 R)main area",
+              "(9 R)size change"
+            ]
+          }
+        ]
+      }
+    ],
+    "routes": [
+      {
+        "from": "(pin 1) dom workspace div @ workspace group",
+        "to": "(pin 3) left column @ column-main layout",
+        "wire": "x 80.5 y -277.0 x -95.5"
+      },
+      {
+        "from": "(pin 8) file selected @ workspace group",
+        "to": "(pin 14) doc selected @ playground editor",
+        "wire": "x 159.0 y -187.0 x 354.0"
+      },
+      {
+        "from": "(pin 9) file new @ workspace group",
+        "to": "(pin 15) doc new @ playground editor",
+        "wire": "x 169.4 y -187.0 x 343.6"
+      },
+      {
+        "from": "(pin 10) file renamed @ workspace group",
+        "to": "(pin 16) doc renamed @ playground editor",
+        "wire": "x 180.9 y -187.0 x 332.1"
+      },
+      {
+        "from": "(pin 11) file deleted @ workspace group",
+        "to": "(pin 17) doc deleted @ playground editor",
+        "wire": "x 191.3 y -187.0 x 321.7"
+      },
+      {
+        "from": "(pin 2) div @ playground editor",
+        "to": "(pin 4) main area @ column-main layout",
+        "wire": "x -134.0 y 0.0 x -144.0"
+      },
+      {
+        "from": "(pin 9) size change @ column-main layout",
+        "to": "(pin 3) size change @ playground editor",
+        "wire": "x 144.0 y 0.0 x 134.0"
+      }
+    ]
+  }
+}

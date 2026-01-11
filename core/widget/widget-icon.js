@@ -7,7 +7,8 @@ export function Icon(rect, iconType) {
     this.is = {
         icon: true,
         bad: false,
-        highLighted: false
+        highLighted: false,
+        alarm: false
     }
     this.type = iconType
 
@@ -33,7 +34,8 @@ Icon.prototype = {
         "link"(ctx) {
             const {x,y,w,h} = {...this.rect}
 
-            const color =     this.is.highLighted ? style.icon.cHighLighted
+            const color =     this.is.alarm ? style.icon.cAlarm 
+                            : this.is.highLighted ? style.icon.cHighLighted
                             : this.is.bad ? style.icon.cBadLink 
                             : style.icon.cLink
 
@@ -43,7 +45,8 @@ Icon.prototype = {
         "lock"(ctx) {
             const {x,y,w,h} = {...this.rect}
 
-            const color =     this.is.highLighted ? style.icon.cHighLighted
+            const color =     this.is.alarm ? style.icon.cAlarm 
+                            : this.is.highLighted ? style.icon.cHighLighted
                             : this.is.bad ? style.icon.cBadLink 
                             : style.icon.cLink
 
@@ -112,8 +115,5 @@ Icon.prototype = {
 
     },
 
-    toJSON() {
-        //return undefined
-        //return {icon: convert.iconToString(this.rect, this.type)}
-    }
+    toJSON() {}
 }

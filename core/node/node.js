@@ -214,13 +214,13 @@ Node.prototype = {
     cookCommon(raw) {
 
         // If there is no editor part, add the skeleton
-        if (!raw.editor) raw.editor = {rect: null}
+        // if (!raw.editor) raw.editor = {rect: null}
 
         // the rectangle as specified in the file - if any
-        const rc = raw.editor.rect ? convert.stringToRect(raw.editor.rect) : {x:0, y:0, w:0, h:0}
+        const rc = raw.rect ? raw.rect : {x:0, y:0, w:0, h:0}
 
         // set the place bit
-        this.is.placed = raw.editor.rect ? true : false
+        this.is.placed = raw.rect ? true : false
 
         // create a new look
         this.look = new Look(rc)

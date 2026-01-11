@@ -1,5 +1,6 @@
 import {editor} from '../editor/index.js'
 import {Pad} from '../node/index.js'
+import {style} from '../util/index.js'
 
 export const redoxPad = {
 
@@ -20,7 +21,7 @@ padCreate: {
         let proxy = view.root.look.addPin('', pos, is)
 
         // determine the rectangle for the pad widget
-        const rect = proxy.makePadRect({x:pos.x, y:pos.y-style.pad.hPad/2})
+        const rect = proxy.makePadRect({x:pos.x, y:pos.y- style.pad.hPad/2})
 
         // create the pad
         const pad = new Pad(rect, proxy)

@@ -33,9 +33,9 @@ ActualTarget.prototype = {
     }
 }
 
-export const JSAppHandling = {
+export const AppHandling = {
 
-    toJavascriptApp(appPath) {
+    makeAndSaveApp(appPath, node) {
 
         // check if we have a path name
         if (!appPath) return 
@@ -44,39 +44,42 @@ export const JSAppHandling = {
         if (this.target.application?.userPath !== appPath) {
 
             // make the app arl
-            this.target.application = this.resolve(appPath)
+            this.target.application = this.getArl().resolve(appPath)
         }
 
         // notation
         const srcArl = this.target.application
     
         // the index file to find sources that do not have an explicit factory arl
-        const indexArl = this.resolve('index.js')
+        const indexArl = this.getArl().resolve('index.js')
     
         // the runtime to use for this model
-        const runtime = this.model.header.runtime ?? '@vizualmodel/vmblu-runtime'
+        const runtime = this.header.runtime ?? '@vizualmodel/vmblu-runtime'
     
         // and save the app 
-        const jsSource = this.makeJSApp(this.view.root, srcArl, indexArl, runtime)
+        const jsSource = this.makeJSApp(node, srcArl, indexArl, runtime)
 
         // and save the source
         srcArl.save(jsSource)
 
         // check if there are mcp compliant tools...
-        const mcpToolString = this.model.makeMcpToolString(this.view.root)
+        const mcpToolString = this.makeMcpToolString(node)
 
         // save the tools
         if (mcpToolString) {
 
+            // get the name from the model file
+            const split = Path.getSplit(this.getArl().userPath)
+
             // get the arl for the mcp spec
-            const mcpArl = srcArl.resolve(Path.removeExt(this.model.arl.userPath) + '-mcp.js')
+            const mcpArl = srcArl.resolve(split.name + '.mcp.js')
 
             // save the mcp file
             mcpArl.save(mcpToolString)
         }
     
         // return the src arl and the html arl so that the app can be started (if wanted)
-        const htmlArl = this.resolve(Path.changeExt(appPath,'html'))
+        const htmlArl = this.getArl().resolve(Path.changeExt(appPath,'html'))
         // modcom.saveHtmlPage(doc.root, srcArl, htmlArl)
     
         // return the src and html arl

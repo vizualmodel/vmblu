@@ -1,0 +1,57 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "utc": "2025-12-16T12:01:06.561Z",
+    "style": "#00aaff"
+  },
+  "root": {
+    "kind": "source",
+    "name": "workspace",
+    "rect": "x 228 y 75 w 150 h 371",
+    "interfaces": [
+      {
+        "interface": "(36)dom",
+        "pins": [
+          "(2 R)dom add modal div",
+          "(3 R)dom workspace div"
+        ]
+      },
+      {
+        "interface": "(37)file",
+        "pins": [
+          "(5 R)file selected",
+          "(21 R)file new",
+          "(27 R)file renamed",
+          "(28 R)file deleted",
+          "(7 R)file get name",
+          "(8 R)file context menu",
+          "(29 R)file savedAs",
+          "(30 R)file active",
+          "(31 R)file closed"
+        ]
+      },
+      {
+        "interface": "(38)files",
+        "pins": [
+          "(32 R)files selected",
+          "(33 R)files deleted",
+          "(11 R)files get list"
+        ]
+      },
+      {
+        "interface": "(39)folder",
+        "pins": [
+          "(34 R)folder renamed",
+          "(35 R)folder deleted",
+          "(14 R)folder context menu"
+        ]
+      },
+      {
+        "interface": "(40)drawer",
+        "pins": [
+          "(15 R)drawer get location"
+        ]
+      }
+    ]
+  }
+}

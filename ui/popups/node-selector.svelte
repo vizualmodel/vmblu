@@ -204,12 +204,12 @@ span.arrow:hover {
                 {#each col as entry, iNode}
                     {#if entry.nextModel}
                         <div class="arl" data-col={iCol} data-node={iNode}>
-                        {#if entry.model.arl?.getExt() === 'js'}
+                        {#if entry.model.getArl()?.getExt() === 'js'}
                             <i class="material-icons-outlined lib lib-js" on:click={onRemoveLib} on:keydown={onKeydown}>cancel</i>
-                            <p class="lib lib-js" >{entry.model.arl.getName()}</p>
+                            <p class="lib lib-js" >{entry.model.getArl().getName()}</p>
                         {:else}
                             <i class="material-icons-outlined lib lib-json" on:click={onRemoveLib} on:keydown={onKeydown}>cancel</i>
-                            <p class="lib lib-json" >{entry.model.arl.getName()}</p>
+                            <p class="lib lib-json" >{entry.model.getArl().getName()}</p>
                         {/if}
                         </div>
                     {:else if entry.node}

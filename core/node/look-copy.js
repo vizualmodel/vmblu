@@ -20,7 +20,7 @@ export const copyHandling = {
 
             if (w.is.pin) {
                 nw = w.is.proxy ? new Widget.Proxy(w.rect, newNode, w.name, w.is) : new Widget.Pin(w.rect, newNode, w.name, w.is) 
-                nw.profile = w.profile
+                //nw.profile = w.profile
                 nw.pxlen = w.pxlen
             }
             else if (w.is.ifName) {        
@@ -64,7 +64,7 @@ export const copyHandling = {
             if (w.is.pin) {
                 // remark the *inversion* proxy -> pin !
                 nw = w.is.proxy ? new Widget.Pin(w.rect, newNode, w.name, w.is) : new Widget.Proxy(w.rect, newNode, w.name, w.is) 
-                nw.profile = w.profile
+                //nw.profile = w.profile
                 nw.pxlen = w.pxlen
             }
             else if (w.is.ifName) {

@@ -42,8 +42,11 @@ export async function profile(argv = process.argv.slice(2)) {
     const outPath = cli.outFile
         ? path.resolve(cli.outFile)
         : (() => {
-            const { dir, name } = path.parse(absoluteModelPath);
-            return path.join(dir, `${name}.prf.json`);
+            const { dir, name, ext } = path.parse(absoluteModelPath);
+            const baseName = ext === '.json' && name.endsWith('.blu')
+                ? name.slice(0, -'.blu'.length)
+                : name;
+            return path.join(dir, `${baseName}.prf.json`);
         })();
 
     if (cli.deltaFile) cli.deltaFile = path.resolve(cli.deltaFile);
@@ -116,7 +119,61 @@ export async function profile(argv = process.argv.slice(2)) {
     console.log(`Documentation written to ${outPath}`);
 }
 
-function parseCliArgs(argv) {
+function normalizePathValue(value) {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') {
+        if (typeof value.fsPath === 'string') return value.fsPath;
+        if (typeof value.path === 'string') return value.path;
+        if (typeof value.url === 'string') return value.url;
+    }
+    return null;
+}
+
+function toStringArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+        return value.map(normalizePathValue).filter(Boolean);
+    }
+    const normalized = normalizePathValue(value);
+    return normalized ? [normalized] : [];
+}
+
+function normalizeArgv(argv) {
+    if (Array.isArray(argv)) return argv;
+    if (!argv || typeof argv !== 'object') return [];
+
+    const args = [];
+    const modelFile = normalizePathValue(argv.modelFile ?? argv['model-file'] ?? argv.model ?? argv._?.[0]);
+    if (modelFile) args.push(modelFile);
+
+    const outFile = normalizePathValue(argv.outFile ?? argv.out ?? argv.o);
+    if (outFile) args.push('--out', outFile);
+
+    if (argv.full) args.push('--full');
+
+    if (argv.reason != null) args.push('--reason', String(argv.reason));
+
+    const deltaFile = normalizePathValue(argv.deltaFile ?? argv['delta-file']);
+    if (deltaFile) args.push('--delta-file', deltaFile);
+
+    const changed = toStringArray(argv.changed);
+    if (changed.length) args.push('--changed', ...changed);
+
+    const deleted = toStringArray(argv.deleted);
+    if (deleted.length) args.push('--deleted', ...deleted);
+
+    return args;
+}
+
+function normalizeToken(token) {
+    if (typeof token === 'string') return token;
+    if (typeof token === 'number') return String(token);
+    return normalizePathValue(token);
+}
+
+function parseCliArgs(argvInput) {
+
+    const argv = normalizeArgv(argvInput);
 
     const result = {
         modelFile: null,
@@ -130,10 +187,14 @@ function parseCliArgs(argv) {
 
     let i = 0;
     while (i < argv.length) {
-        const token = argv[i];
+        const token = normalizeToken(argv[i]);
+        if (!token) {
+            i += 1;
+            continue;
+        }
 
         if (token === '--out') {
-            const next = argv[i + 1];
+            const next = normalizeToken(argv[i + 1]);
             if (next && !next.startsWith('--')) {
                 result.outFile = next;
                 i += 2;
@@ -151,7 +212,7 @@ function parseCliArgs(argv) {
         }
 
         if (token === '--reason') {
-            const next = argv[i + 1];
+            const next = normalizeToken(argv[i + 1]);
             if (next && !next.startsWith('--')) {
                 result.reason = next;
                 i += 2;
@@ -163,7 +224,7 @@ function parseCliArgs(argv) {
         }
 
         if (token === '--delta-file') {
-            const next = argv[i + 1];
+            const next = normalizeToken(argv[i + 1]);
             if (next && !next.startsWith('--')) {
                 result.deltaFile = next;
                 i += 2;
@@ -177,8 +238,10 @@ function parseCliArgs(argv) {
         if (token === '--changed') {
             const values = [];
             i += 1;
-            while (i < argv.length && !argv[i].startsWith('--')) {
-                values.push(argv[i]);
+            while (i < argv.length) {
+                const value = normalizeToken(argv[i]);
+                if (!value || value.startsWith('--')) break;
+                values.push(value);
                 i += 1;
             }
             if (values.length === 0) {
@@ -192,8 +255,10 @@ function parseCliArgs(argv) {
         if (token === '--deleted') {
             const values = [];
             i += 1;
-            while (i < argv.length && !argv[i].startsWith('--')) {
-                values.push(argv[i]);
+            while (i < argv.length) {
+                const value = normalizeToken(argv[i]);
+                if (!value || value.startsWith('--')) break;
+                values.push(value);
                 i += 1;
             }
             if (values.length === 0) {
@@ -204,7 +269,7 @@ function parseCliArgs(argv) {
             continue;
         }
 
-        if (typeof token === 'string' && token.startsWith('--')) {
+        if (token.startsWith('--')) {
             console.warn('Warning: unknown option "' + token + '" ignored.');
             i += 1;
             continue;

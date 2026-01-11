@@ -77,25 +77,25 @@ export const selectionHandling = {
         const delta = this.deltaForPaste(pos, clipboard)
 
         // if we have selected a node and a position inside the node, get it here (before we reset)
-        const [node, inside] = this.selection.whereToAdd()
+        const [nodeSel, posSel] = this.selection.whereToAdd()
 
         // initialise the selection
         this.selection.reset()
 
         // the selection in the clipboard
-        const cbslct = clipboard.selection
+        const cliboSelect = clipboard.selection
 
         // set the type of selection
-        this.selection.what = cbslct.what
+        this.selection.what = cliboSelect.what
 
         // copy as required
-        switch(cbslct.what) {
+        switch(cliboSelect.what) {
 
             case selex.freeRect:
             case selex.multiNode:
 
                 // copy the nodes in the clipboard
-                for (const node of cbslct.nodes) {
+                for (const node of cliboSelect.nodes) {
 
                     // make a copy
                     let newNode = node.copy()
@@ -114,10 +114,10 @@ export const selectionHandling = {
                 this.root.uidChangeAll(editor.doc.UID)
 
                 // for multiNode, we're done
-                if (cbslct.what == selex.multiNode) return
+                if (cliboSelect.what == selex.multiNode) return
 
                 // copy the buses in the clipboard
-                for (const bus of cbslct.buses) {
+                for (const bus of cliboSelect.buses) {
 
                     // make a copy
                     let newBus = bus.copy()
@@ -133,16 +133,16 @@ export const selectionHandling = {
                 }
 
                 // copy the pads - i don't think so....
-                for (const pad of cbslct.pads) {
+                for (const pad of cliboSelect.pads) {
                 }
 
                 // we could copy the routes that go bteween the nodes/busses in the copy ...
 
                 // check if we need to set the rectangle again...
-                if (cbslct.rect) {
+                if (cliboSelect.rect) {
 
                     // notation
-                    const rc = cbslct.rect
+                    const rc = cliboSelect.rect
 
                     // set the rectangle
                     this.selection.activate(rc.x + delta.x, rc.y + delta.y, rc.w, rc.h, style.selection.cRect)
@@ -154,7 +154,7 @@ export const selectionHandling = {
             case selex.singleNode: {
 
                 // make a copy
-                let newNode = cbslct.nodes[0]?.copy()
+                let newNode = cliboSelect.nodes[0]?.copy()
 
                 // we want new UIDs for the copied node(s)
                 newNode.uidChangeAll(editor.doc.UID)
@@ -177,18 +177,18 @@ export const selectionHandling = {
             case selex.pinArea: {
 
                 // check
-                if (!node || !inside) return
+                if (!nodeSel || !posSel) return
 
                 // paste the widgets 
-                const copies = node.look.copyPinArea(cbslct.widgets, inside)
+                const copies = nodeSel.look.copyPinArea(cliboSelect.widgets, posSel)
 
                 // add the pads or adjust the rx/tx tables
-                node.is.source ? node.rxtxAddPinArea(copies) : node.addPads(copies)
+                nodeSel.is.source ? nodeSel.rxtxAddPinArea(copies) : nodeSel.addPads(copies)
 
                 // the selection becomes the widgets that were copied
                 this.selection.pinAreaSelect(copies)
 
-                this.selection.what = cbslct.what;
+                this.selection.what = cliboSelect.what;
             }
             break
         }

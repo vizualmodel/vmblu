@@ -230,6 +230,7 @@ labelText(ctx, text, font, cText,x,y,w,h) {
     // set the font back
     ctx.font = saveFont
 },
+
 labelCursor(ctx,text,x,y,w,h,pCursor) {
     let cx = ctx.measureText(text.slice(0,pCursor)).width
     return {x: x + cx + 1, y: y-0.25*h}
@@ -712,7 +713,7 @@ vCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 },
 
 // draw straigth 
-drawBusbar(ctx, p, cLine, wLine) {
+drawBus(ctx, p, cLine, wLine) {
 
     const wSave = ctx.lineWidth
 
@@ -819,6 +820,89 @@ twistedPair(ctx, color, width, points) {
 
     // reset the dash pattern to nothing
     //ctx.setLineDash([])
+},
+
+// get the rectangle of the alias - x, y are the position of the tack
+// and dir tells where to put the alias wrt the tack
+rcAlias(ctx, text, zone, x, y, font) {
+
+    // change the font
+    const saveFont = ctx.font
+    ctx.font = font
+
+    // The length of the text
+    const w = ctx.measureText(text).width
+
+    // shift away from the tack
+    const d = {x:10, y:20}
+
+    // small shift to center on wire
+    const m = {x:5, y:2.5}
+
+    switch(zone) {
+
+        case 'N': 
+            x -= w/2 - m.x
+            y -= d.y
+            break;
+
+        case 'S':
+            x -= w/2 - m.x
+            y += d.y
+            break;
+
+        case 'E':
+            x += d.x
+            y -= m.y
+            break;
+
+        case 'W':
+            x -= w + d.x
+            y -= m.y
+            break;   
+    }
+
+    ctx.font = saveFont
+
+    return {x,y,w,h:14}
+},
+
+// Draw the alias 
+hAlias(ctx,text,rc,cRect,font) {
+
+    // change the font
+    const saveFont = ctx.font
+    ctx.font = font
+
+    // extra white space before and after the text
+    const ws = 5
+
+    ctx.beginPath();
+    ctx.fillStyle = cRect
+    shape._roundedRect(ctx, rc.x - ws,rc.y,rc.w + 2*ws,rc.h, 5)
+    ctx.fill()
+
+    // text
+    ctx.fillStyle = '#000000'
+    ctx.fillText(text,rc.x,rc.y + 0.75*rc.h)  
+
+    // set the font back
+    ctx.font = saveFont
+},
+
+cursorAlias(ctx,text,rc,pCursor, font) {
+
+    // change the font
+    const saveFont = ctx.font
+    ctx.font = font
+
+    // where the cursor has to go
+    let cx = ctx.measureText(text.slice(0,pCursor)).width
+
+    // set the font back
+    ctx.font = saveFont
+
+    return {x: rc.x + cx + 1, y: rc.y}
 },
 
 }

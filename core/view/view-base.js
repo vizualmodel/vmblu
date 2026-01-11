@@ -118,7 +118,12 @@ export function View(rect, node=null, parent=null) {
 }
 View.prototype = {
 
-    toJSON() {
+    makeRaw() {
+        return {
+            state: this.viewState.visible ? (this.viewState.big ? 'big':'open' ) : 'closed',
+            rect: this.viewState.big ? this.viewState.rect : this.rect,
+            tf: this.tf
+        }
     },
 
     stateSwitch(newAction) {
