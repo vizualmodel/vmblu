@@ -36,6 +36,7 @@ const color = {
     orangeT:'#ff800022',
     green:  '#7fff00',
     red:    '#FE2712', 
+    redT:    '#FE271222', 
     yellow: '#fefe33',
     pink:   '#f9d5e5',
     purple: '#ff80ff',
@@ -86,15 +87,15 @@ function StyleFactory() {
     } 
     this.box = {
         rCorner:7.5,  wLine:2, cLine: color.shade1, cBackground:color.shade2, 
-        cContainer: color.yellow, cSelected: color.orangeT, dxSel:10, dySel:10, wLineSel: 1
+        cContainer: color.yellow, cSelected: color.orangeT, cAlarm: color.redT, dxSel:10, dySel:10, wLineSel: 1
     }
     this.header = {
         font: "normal 13px tahoma", hHeader:15, hTitle:15, wLine:1, wChar:6, rCorner:7.5,
         cTitle: color.shade3, cBackground: color.shade1, cBad: color.red, cHighLighted: color.purple
     }
     this.icon = {
-        wIcon:8, hIcon:10, blinkRate: 200, nBlinks: 4,
-        cSrc:color.shade3, cLink: color.shade3, cBadLink: color.red, cHighLighted: color.purple,
+        wIcon:8, hIcon:10, blinkRate: 500, nBlinks: 2,
+        cSrc:color.shade3, cLink: color.shade3, cBadLink: color.red, cAlarm: color.red, cHighLighted: color.purple,
         cGroup:color.shade3, cCog: color.shade3, cPulse: color.shade3, cComment: color.shade3,
         xPadding:6, yPadding:2, xSpacing:3,
     }
@@ -122,8 +123,8 @@ function StyleFactory() {
         cAdded: color.green, cDeleted: color.red
     } 
     this.bus = {
-        wNormal: 6, wBusbar: 6, wCable: 8, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5, wFilter: 15,
-        cNormal: color.shade4, cSelected: color.purple, cHighLighted: color.purple, cBad: color.red, cText: color.black, 
+        wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5, wFilter: 15,
+        cNormal: color.shade4, cSelected: color.purple, cHighLighted: color.purple, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
     } 
     this.selection = {
         xPadding: 20, yPadding: 20, 

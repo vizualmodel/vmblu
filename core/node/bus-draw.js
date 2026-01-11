@@ -10,7 +10,7 @@ export const busDrawing = {
         // notation
         const r1 = this.wire[L - 2]
         const r2 = this.wire[L - 1]
-        const wBus = this.is.cable ? style.bus.wCable : style.bus.wBusbar
+        const wBus = style.bus.wCable
         const hLabel = this.endLabel.rect.h
         let limit = null
 

@@ -78,19 +78,35 @@ export function getExt(path) {
 }
 
 export function changeExt(path, newExt) {
-    // get the position of the last period
-    let n = path.lastIndexOf('.')
 
-    // change the extension (the period is part of path)
-    return n > 0 ? path.slice(0,n+1) + newExt : path + '.' + newExt
+    let n = path.lastIndexOf('.')
+    const ext = newExt[0] == '.' ? newExt : '.' + newExt
+    return n > 0 ? path.slice(0,n) + newExt : path + '.' + newExt
+}
+
+// splits 'file.ext' in 'file' and '.ext' and 'file.ext1.ext2' if 'file' and '.ext1.ext2'
+export function getSplit(path)  {
+
+    // we only need the fileName
+    let slash = path.lastIndexOf('/')
+    const fileName = slash > 0 ? path.slice(slash+1) : path
+
+    let p1 = fileName.lastIndexOf('.')
+    let p2 = fileName.lastIndexOf('.', p1-1)
+    
+    return {
+        name: p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
+        ext: p2 > 0 ? fileName.slice(p2) : (p1 > 0 ? fileName.slice(p1) : null)
+    }
 }
 
 export function removeExt(path) {
 
-    // get the position of the last period
-    let n = path.lastIndexOf('.')
+    const split = getSplit(path)
 
-    return n > 0 ? path.slice(0,n) : path
+    if (!split.ext) return path
+
+    return path.slice(0, path.length - split.ext.length)
 }
 
 export function checkPath(path) {
@@ -287,51 +303,59 @@ export function relative(path, ref) {
 //                      /a/b/c + d = /a/b/d
 export function absolute(path, ref) {
 
-    let slash = 0
-    let folder = null
+    // keep the original values intact while resolving
+    const target = path ?? ''
+    const reference = ref ?? ''
 
-    // check
-    if (!ref  || ref.length == 0)  return path
-    if (!path || path.length == 0) return ref
+    if (!reference.length) return target
+    if (!target.length)    return reference
 
-    // check that path and ref are valid path names - use the regex ..(TO DO)
+    // already absolute
+    if (target.startsWith('/')) return target
 
-    // if the path is already absolute, just return path
-    if (path.startsWith('/')) {
-        return path
-    }
-    // the path is relative to the ref
-    else if (path.startsWith('./')) {
+    // derive the base directory from the reference (ref is a file)
+    const lastSlash = reference.lastIndexOf('/')
+    const baseDir = lastSlash < 0 ? '' : reference.slice(0, lastSlash)
+    const rooted = reference.startsWith('/')
+    const stack = baseDir ? baseDir.split('/').filter(Boolean) : []
+    let extraUp = 0
 
-        slash = ref.lastIndexOf('/')
-        folder = slash < 0 ? '' : ref.slice(0, slash)
+    // split and normalize the target path components
+    const parts = target.split('/')
+    for (const part of parts) {
 
-        return folder + '/' + path.slice(2)
-    }
-    // the path starts with ../../ etc
-    else if (path.startsWith('../')) {
+        // ignore empty segments and current directory markers
+        if (!part || part === '.') continue
 
-        slash = ref.lastIndexOf('/')
-        folder = slash < 0 ? '' : ref.slice(0, slash)
-
-        while (path.startsWith('../')) {
-
-            // remove one folder from folder
-            slash = folder.lastIndexOf('/')
-            folder = slash < 0 ? '' : folder.slice(0, slash)
-
-            // take of the leading ../
-            path = path.slice(3)
+        if (part === '..') {
+            if (stack.length) {
+                stack.pop()
+            } else if (!rooted) {
+                extraUp++
+            }
+            // if rooted and nothing to pop, stay at root
+        } else {
+            stack.push(part)
         }
-
-        return folder + '/' + path
     }
-    // the path starts with a character == same as ./ case
-    else {
-        slash = ref.lastIndexOf('/')
 
-        folder = slash < 0 ? '' : ref.slice(0, slash)
+    // rebuild the path
+    let resolved = rooted ? '/' : ''
+    if (!rooted && extraUp) resolved += '../'.repeat(extraUp)
 
-        return folder + '/' + path
+    resolved += stack.join('/')
+
+    // avoid returning an empty string; rooted means '/'
+    return resolved || (rooted ? '/' : '.')
+}
+
+// domain path resource are the shorthands as they appear in the workspace file 
+export function stringCheck(userPath) {
+    if (typeof userPath === 'string') return userPath;
+    if (userPath && typeof userPath === 'object') {
+        if (typeof userPath.fsPath === 'string') return userPath.fsPath;
+        if (typeof userPath.path === 'string') return userPath.path;
+        if (typeof userPath.url === 'string') return userPath.url;
     }
+    return null;
 }

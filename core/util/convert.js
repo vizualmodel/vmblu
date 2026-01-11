@@ -61,15 +61,6 @@ export const convert = {
         return +str.slice(period+1)
     },
 
-    stringToId(str) {
-        const a = str.indexOf(I)
-
-        return {
-            uid: str.slice(0,a),
-            name: str.slice(a+1)
-        }
-    },
-
     pointToString(point) {
         return `x ${point.x} y ${point.y}`;
     },
@@ -80,6 +71,68 @@ export const convert = {
             return { x: parseFloat(match[1]), y: parseFloat(match[2]) };
         }
         return null
+    },
+
+    interfaceToString: ifName => {
+
+        return ifName.interface ? `(${ifName.wid}) ${ifName.interface}` : '(0)'
+    },
+
+    stringToInterface: str => {
+
+        const opbr = str.indexOf('(')
+        const clbr = str.indexOf(')')
+
+        // check
+        if (opbr < 0 || clbr < 0) return {text: '-invalid-',id:0}
+
+        // ok
+        return {
+            text: str.slice(clbr+1).trim() ?? "",
+            wid: +str.slice(opbr+1,clbr),
+        }
+    },
+
+    pinToString: pin => {
+        return `(${pin.wid}` + (pin.left ? ' L)' : ' R)') + pin.name
+    },
+
+    stringToPin: str => {
+
+        const opbr = str.indexOf('(')
+        const clbr = str.indexOf(')')
+
+        // check
+        if (opbr < 0 || clbr < 0) return {name: '-invalid-',id:0,left:true}
+
+        // ok
+        return {
+            name: str.slice(clbr+1).trim(),
+            wid: +str.slice(opbr+1,clbr-1),
+            left: str[clbr-1] === 'L'
+        }
+    },
+
+    padToString: pad => {
+
+        const id = pad.left ? '(' + pad.wid + ' L)' : '(' + pad.wid + ' R)'
+        return   id + convert.rectToString(pad.rect) + '|' + pad.text;
+    },
+
+    stringToPad: str => {
+
+        const opbr = str.indexOf('(')
+        const clbr = str.indexOf(')')
+        const pipe = str.indexOf('|')
+
+        if (opbr < 0 || clbr < 0 || pipe < 0) return {text: '-invalid-',rect: {x:0, y:0, w:0, h:0}, left:true}
+
+        return {
+            wid: str.slice(opbr+1, clbr-2),
+            left: str.slice(clbr-1, clbr) === 'L',
+            rect: convert.stringToRect( str.slice(clbr+1,pipe)),
+            text: str.slice(pipe+1),
+        }
     },
 
     // returns the segment lengths in x and y direction
@@ -154,7 +207,7 @@ export const convert = {
         else return []
     },
 
-    routeToString(route) {
+    routeToRaw(route) {
 
         // used below
         let from = route.from
@@ -162,8 +215,8 @@ export const convert = {
 
         //const pinString = (pin) =>  '(pin) ' + pin.name + ' @ ' + pin.node.name
         const pinString = (pin) =>  `(pin ${pin.wid}) ${pin.name} @ ${pin.node.name}`
-        const busString = (tack) => '(bus) ' + tack.bus.name
-        //const padString = (pad) =>  '(pad) ' + pad.proxy.name
+        //const busString = (tack) => '(bus) ' + tack.bus.name
+        const busString = (tack) => tack.alias?.length ? `(bus) ${tack.alias} @ ${tack.bus.name}` : '(bus) ' + tack.bus.name
         const padString = (pad) =>  `(pad ${pad.proxy.wid}) ${pad.proxy.name}`
         const itfString = (itf) =>  '(itf) ' + itf.name + ' @ ' + itf.node.name
 
@@ -209,13 +262,19 @@ export const convert = {
     // and endpoint starts with (pin) (pad) (bus) or (itf)
     rawToEndPoint(raw) {
 
-        const kind = raw.trim().slice(1,4)
-        let clbr=0, wid=0, at=0
+        const opbr = raw.indexOf('(')
+        const clbr = raw.indexOf(')')
+
+        // check
+        if (opbr < 0 || clbr < 0) return null
+
+        // get the type of connection
+        const kind = raw.slice(opbr+1,4)
+        let wid=0, at=0
 
         switch(kind) {
 
             case 'pin': 
-                clbr = raw.indexOf(')')
                 wid = raw.slice(4,clbr).trim()
                 at = raw.indexOf('@')
                 return {
@@ -225,14 +284,19 @@ export const convert = {
                 }
 
             case 'pad': 
-                clbr = raw.indexOf(')')
                 wid = raw.slice(4,clbr).trim()            
                 return {
                     pad: raw.slice(clbr+1).trim(),
                     wid: wid.length > 0 ? +wid : 0
                 }
 
-            case 'bus': return {bus: raw.slice(5).trim()}
+            case 'bus': 
+                at = raw.indexOf('@')
+                raw.slice()
+                return {
+                    bus: at > 0 ? raw.slice(at+1).trim() : raw.slice(clbr+1).trim(),
+                    alias: at > 0 ? raw.slice(clbr+1, at).trim() : null
+                }
 
             case 'itf': return {itf: raw.slice(5).trim()}
         }
@@ -408,36 +472,22 @@ export const convert = {
         return str + '(' + n.toString() + ')'
     },
 
-    viewToJSON: (view) => {
-
-        let state, rect, transform
-
-        // view can still be in its 'raw' format { state, rect, transform }
-        if (view.viewState) {
-            state = view.viewState.visible ? (view.viewState.big ? 'big':'open' ) : 'closed';
-            rect = view.viewState.big ? convert.rectToString(view.viewState.rect): convert.rectToString(view.rect)
-            transform = convert.transformToString(view.tf)
-        }
-        else {
-            state = view.status
-            rect = convert.rectToString( view.rect)
-            transform = convert.transformToString(view.tf)
-        }
-
-        // done
+    toViewStrings: (view) => {
         return {
-            state, rect, transform
+            state: view.state,
+            rect: convert.rectToString( view.rect),
+            transform: convert.transformToString(view.tf)
         }
     },
 
-    stringToView: (rawView) => {
+    fromViewStrings: (rawView) => {
 
         // the view itself will be restored 
         return {   
             raw:    true,
             state:  rawView.state,
             rect:   convert.stringToRect( rawView.rect), 
-            tf:     convert.stringToTransform(rawView.transform)
+            tf:   convert.stringToTransform(rawView.transform)
         }
     },
 

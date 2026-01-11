@@ -40,7 +40,7 @@ export const messageBrokerVscode = {
 					this.tx.send('set document', this.activeDoc)
 
 					// write to the output file (= same name as model file but with .prf added before extension)
-					const outFilename = Path.nameOnly(arl.userPath) + '.prf.json'
+					const outFilename = Path.getSplit(arl.userPath).name + '.prf.json'
 
 					// Make the output file name
 					const outFile = arl.resolve(outFilename)

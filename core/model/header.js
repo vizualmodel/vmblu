@@ -1,4 +1,4 @@
-import {ModelStore} from './model-store.js'
+import {ModelMap} from './model-map.js'
 import {style} from '../util/index.js'
 import cliPackage from '../../cli/package.json' assert { type: 'json' };
 
@@ -7,7 +7,7 @@ export function ModelHeader() {
     const today = new Date()
 
     // Set the schema version in the header
-    this.version = cliPackage.schemaVersion
+    this.schema = cliPackage.schemaVersion
     this.created = today.toLocaleString()
     this.saved = today.toLocaleString()
     this.utc = today.toJSON()
@@ -15,22 +15,6 @@ export function ModelHeader() {
     this.runtime = '@vizualmodel/vmblu-runtime'
 }
 ModelHeader.prototype = {
-
-    toJSON() {
-
-        const today = new Date()
-
-        const header = {
-            version: this.version,
-            created: this.created,
-            saved: today.toLocaleString(),
-            utc: today.toJSON(),
-            style: this.style.rgb,
-            runtime: this.runtime,
-        }
-
-        return header
-    },
 
     // get the header data from the raw file
     cook(arl, raw) {
@@ -41,7 +25,7 @@ ModelHeader.prototype = {
         this.created = raw.created?.slice() ?? today.toLocaleString(),
         this.saved = raw.saved?.slice() ?? today.toLocaleString(),
         this.utc = raw.utc?.slice() ?? today.toJSON()
-        this.version = raw.version?.slice() ?? 'no version'
+        this.schema = raw.schema?.slice() ?? 'no version'
 
         // Create a style for the model
         this.style = style.create(raw.style)

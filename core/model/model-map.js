@@ -1,13 +1,13 @@
-import {ModelBlueprint} from './model-blueprint.js'
+import {ModelBlueprint} from './blueprint.js'
 import {convert} from '../util/index.js'
 
 // The model file uses a model map
-export function ModelStore() {
+export function ModelMap() {
 
     // the key to the map is the full path - the value is a model or an array of models...
     this.map = new Map()
 }
-ModelStore.prototype = {
+ModelMap.prototype = {
 
     reset() {
         this.map.clear()
@@ -20,7 +20,7 @@ ModelStore.prototype = {
     // New models are returned in an array but not added to the map
     newModels(ref, rawModels) {
 
-        // a list of models that are new, i.e. not yet in the ModelStore
+        // a list of models that are new, i.e. not yet in the ModelMap
         const modelList=[]
 
         // check
@@ -48,7 +48,10 @@ ModelStore.prototype = {
     
     add(model) {
 
-        const fullPath = model.arl.getFullPath()
+        // get the full path
+        const fullPath = model.fullPath()
+
+        if (!fullPath) return null;
 
         // check if the key is already in the map
         const storedLink = this.map.get(fullPath)
@@ -65,7 +68,7 @@ ModelStore.prototype = {
 
     contains(arl) {
 
-        // check
+        if (!arl) return true
         return this.map.has(arl.getFullPath())
     },
 
@@ -74,9 +77,13 @@ ModelStore.prototype = {
     },
 
     valuesArray() {
-
         return Array.from(this.map.values())
+    },
 
+    all(f) {
+        const val = Array.from(this.map.values())
+        if (!val?.length) return []
+        return val.map( e => f(e))
     },
 
     // find the model if you only have the arl
@@ -86,17 +93,23 @@ ModelStore.prototype = {
         if (!arl) return null
 
         for(const model of this.map.values()) {
-            if (model.arl?.equals(arl)) return model
+            if ( model.getArl()?.equals(arl)) return model
         }
         return null
     },
 
-    toJSON(){
-        // return the list of links
-        return [...this.map.values()]
+    cook(arlRef, rawModels) {
+
+        // get the models for the libraries
+        const newModels = this.newModels(arlRef, rawModels)
+
+        // add the model to the modellist - the model is not fetched yet 
+        // this happens at the end when the model is loaded (see library.load)
+        for(const model of newModels) this.add(model)
     },
 
-    // (re)loads all the model in the map
+/**** WE NEED A COMPILER HERE  */
+
     async load() {
 
         // a promise array
@@ -109,29 +122,11 @@ ModelStore.prototype = {
             model.is.selectable = true
 
             // get the content of the file
-            pList.push( model.getRaw() )
+            pList.push( compiler.getRaw(model) )
         }
 
         // wait for all...
         await Promise.all(pList)
     },
 
-
-
-    // // check all models if they have changed
-    // async checkForChanges() {
-
-    //     // a promiss array
-    //     const pList = []
-
-    //     // build the library for the modcom in the node library....
-    //     for (const model of this.map.values()) {
-
-    //         // check if it has changed
-    //         pList.push( model.hasChanged() )
-    //     }
-
-    //     // wait for all...
-    //     await Promise.all(pList)
-    // },
 }

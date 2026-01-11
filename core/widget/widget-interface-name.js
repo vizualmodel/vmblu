@@ -16,6 +16,7 @@ export function InterfaceName(rect, text, node) {
         selected: false,
         highLighted: false
     }
+
     // the text in the ifName
     this.text = text ?? ''
 
@@ -66,11 +67,11 @@ InterfaceName.prototype = {
         shape.ifName(ctx, this.text, {line:st.cBackground, text:color},this.rect) 
     },
 
-    toJSON() {
+    makeRaw() {
         return {
-            ifPins: this.text,
-            id: this.wid
-        }
+            interface: this.text,
+            wid: this.wid,
+        };
     },
 
     drag(pos) {

@@ -4,20 +4,15 @@ import {Widget} from '../widget/index.js'
 export const jsonHandling = {
 
 // collect the elements of the look that need to be saved in the vmblu file
-getItemsToSave() {
+makeRaw() {
 
     const widgets = []
-    //const interfaces = []
 
-    const toSave = {
+    const raw = {
         rect: {...this.rect},
         label: null,
         interfaces: []
     }
-
-    // get the rectangle
-    //const rect = {...this.rect}
-    //let label = null
 
     // Check the widgets
     for( const w of this.widgets) {
@@ -27,9 +22,9 @@ getItemsToSave() {
 
         // for a label do not include it in the rectangle size
         if (w.is.label) {
-            toSave.rect.y += w.rect.h
-            toSave.rect.h -= w.rect.h        
-            toSave.label = w
+            raw.rect.y += w.rect.h
+            raw.rect.h -= w.rect.h        
+            raw.label = w
             continue
         }
 
@@ -38,28 +33,12 @@ getItemsToSave() {
 
         // save pins, but expand multis into seperate messages
         else if (w.is.pin) {
-
             widgets.push(w)
-
-            // save multis as single messages
-            // if (w.is.multi) {
-            //     const mArray = w.expandMultis()
-            //     for (const mName of mArray) {
-
-            //         // create a new pin record
-            //         const mPin = new Widget.Pin(w.rect, w.node, mName, w.is)
-
-            //         // multis have the same wid
-            //         mPin.wid = w.wid
-            //         pins.push(mPin)
-            //     }
-            // }
-            // else pins.push(w)
         }
     }
 
     // if there are no widgets there are no interfaces
-    if (widgets.length == 0) return toSave
+    if (widgets.length == 0) return raw
 
     // sort the widgets array
     widgets.sort( (a,b) => a.rect.y - b.rect.y)
@@ -71,27 +50,31 @@ getItemsToSave() {
     // If the first widget is a pin we have an unnamed ifPins (always the first)
     if (widgets[0].is.pin) {
         ifnr++;
-        toSave.interfaces[ifnr] = { name: '',pins:[], editor: {id: 0}}
-        ifPins = toSave.interfaces[ifnr].pins
+        raw.interfaces[ifnr] = {interface: '',pins:[], wid: 0}
+        ifPins = raw.interfaces[ifnr].pins
     }
 
     // go through all the widgets
     for (const w of widgets) {
 
         // ad a pin to the current interface
-        if (w.is.pin) ifPins.push(w)
-
-        // an interface name starts a new ifPins
+        if (w.is.pin) { 
+            ifPins.push(w.makeRaw())
+        }
         else if (w.is.ifName) {
+
+            // an interface name starts a new ifPins
             ifnr++;
-            toSave.interfaces[ifnr] = {name: w.text, pins: [], editor: {id: w.wid}}
-            ifPins = toSave.interfaces[ifnr].pins
+            raw.interfaces[ifnr] = {interface: w.text, pins: [], wid: w.wid}
+            ifPins = raw.interfaces[ifnr].pins
         }
     }
 
     // done
-    return  toSave
+    return  raw
 },
+
+
 
 acceptChanges() {
 
@@ -156,15 +139,14 @@ cook( raw ) {
         const newInterface = this.cookInterface(rawInterface)
 
         // cook the pins
-        for (const rawPin of rawInterface.pins) {
-            
-            // cook the pin
-            const newPin = this.cookPin(rawPin)
+        for (const rawPin of rawInterface.pins) this.cookPin(rawPin)
+    }
 
-            // if the new pin is a proxy (the node is a group), we have to cook or add a pad to the group
-            if (this.node.is.group) {
-                rawPin.editor?.pad ? this.node.cookPad(newPin, rawPin.editor.pad ) : this.node.addPad(newPin)
-            }
+    // add the pads for the pins of a group node
+    if (this.node.is.group) for (const widget of this.widgets) {
+        if (widget.is.pin) {
+            const rawPad = raw.pads?.find( rawPad => rawPad.text === widget.name)
+            rawPad ? this.node.cookPad(widget, rawPad ) : this.node.addPad(widget)
         }
     }
 
@@ -177,9 +159,6 @@ cook( raw ) {
 
 cookPin(raw) {
 
-    // if there is no editor field, add it
-    if (!raw.editor) raw.editor = {id:0, align: 'left'}
-
     // the state of the pin
     const is = {
         input: false,
@@ -191,7 +170,7 @@ cookPin(raw) {
 
     // set the state bits
     is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
-    is.left = raw.editor.align == "left" ? true : false;
+    is.left = raw.left
     is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
 
     // a comma seperated list between [] is a multi message
@@ -199,12 +178,20 @@ cookPin(raw) {
 
     // proxy or pure pin
     is.proxy = this.node.is.group
-
     // set the y-position to zero - widget will be placed correctly
     const newPin = this.addPin(raw.name, 0, is)
 
+    // set the contract
+    if (raw.contract) {
+        newPin.contract.owner =  (raw.contract.role == 'owner')
+        newPin.contract.payload = newPin.contract.owner ? raw.contract.payload : null
+    }
+
+    // set the prompt
+    if (raw.prompt) newPin.prompt = raw.prompt
+
     // recover the wid
-    newPin.wid = raw.editor.id
+    newPin.wid = raw.wid ?? 0
 
     // check for an interface name prefix
     newPin.ifNamePrefixCheck()
@@ -218,14 +205,14 @@ cookPin(raw) {
 
 cookInterface(raw) {
 
-    // If the interface has no name ther is no interface widget
-    if (raw.name.length == 0) return null
+    // If the interface has no name there is no interface widget
+    if (! raw.interface?.length) return null
 
     // add the interface name
-    const newInterface = this.addIfName(raw.name, null)
+    const newInterface = this.addIfName(raw.interface, null)
 
     // set the wid
-    newInterface.wid = raw.editor?.id || 0
+    newInterface.wid = raw.wid ?? 0
 
     // done
     return newInterface

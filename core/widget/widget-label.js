@@ -53,10 +53,5 @@ Label.prototype = {
 
     toJSON() {
         return this.text
-
-        // return {
-        //     label: this.text,
-        //     //rect: convert.relativeRect(this.rect, this.node.look.rect)
-        // }
     },
 }

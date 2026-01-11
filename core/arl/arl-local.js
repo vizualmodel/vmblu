@@ -190,6 +190,19 @@ async save(body) {
         return dir;
     };
 
+    const createFileHandle = async () =>  {
+        // not found: create it. First get the filetree handle
+        const rootDirHandle = this.fileTree.arl.handle;
+
+        const dirPath = dirname(this.fullPath);     // e.g. '/projects/demo'
+        const fileName = basename(this.fullPath);   // e.g. 'data.json'
+
+        const parentDir = await ensureDirHandle(rootDirHandle, dirPath);
+        const fileHandle =  await parentDir.getFileHandle(fileName, { create: true });
+
+        return fileHandle
+    }
+
     // ---- ensure we have a file handle (find or create) ----
     try {
         if (!this.handle) {
@@ -204,18 +217,11 @@ async save(body) {
                 this.handle = wsFile.arl.handle;
 
             } else {
-                // not found: create it. First get the root directory
-                const rootDirHandle = this.fileTree.getRoot().handle;
-
-                const dirPath = dirname(this.fullPath);     // e.g. '/projects/demo'
-                const fileName = basename(this.fullPath);   // e.g. 'data.json'
-
-                const parentDir = await ensureDirHandle(rootDirHandle, dirPath);
-                this.handle = await parentDir.getFileHandle(fileName, { create: true });
-
                 // Optional: let your file tree know this file now exists
                 // (depends on your fileTree implementation)
                 // await this.fileTree?.registerFile?.(this.fullPath, this.handle);
+
+                this.handle = await createFileHandle()
             }
         }
 
@@ -224,12 +230,7 @@ async save(body) {
             await this.handle.getFile();
         } 
         catch {
-            const rootDirHandle = this.fileTree.getRoot().handle;
-
-            const dirPath = dirname(this.fullPath);
-            const fileName = basename(this.fullPath);
-            const parentDir = await ensureDirHandle(rootDirHandle, dirPath);
-            this.handle = await parentDir.getFileHandle(fileName, { create: true });
+            this.handle = await createFileHandle()
         }
     } 
     catch (err) {

@@ -18,15 +18,18 @@ FactoryMap.prototype = {
     },
 
     // get the factories from the strings in the file
-    addRawFactories(model) {
+    cook(model) {
+
+        // get the arl of the model
+        const modelArl = model.getArl()
 
         for (const rawFactory of model.raw.factories) {
 
-            // check that we have a path
-            // if (!rawFactory.path) continue
+            //const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path
+            if (!rawFactory.path) continue
 
             // the factories have to be resolved wrt the file that contains them
-            const arl = model.arl.resolve( rawFactory )
+            const arl = modelArl.resolve(rawFactory.path)
 
             // get the full path of the factory
             const fullPath = arl.getFullPath()
@@ -63,14 +66,10 @@ FactoryMap.prototype = {
         return this
     },
 
-    toJSON(){
-        // return the list of links
-        const list = []
-
-        // save the factory path
-        for (const factory of this.map.values()) list.push(factory.arl.userPath)
-
-        return list
+    all(f) {
+        const val = Array.from(this.map.values())
+        if (!val?.length) return []
+        return val.map( e => f(e))
     },
 
 }

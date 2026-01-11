@@ -5,78 +5,6 @@ import {Widget} from '../widget/index.js'
 
 export const busConnect = {
 
-
-    pinNameCheck(A,B) {
-
-        if (this.is.cable) {
-
-            // there has to be a full name match
-            if (A.is.multi || B.is.multi) {
-                if (!A.hasFullNameMatch(B)) return false
-            }
-            else {
-                if (A.name != B.name) return false
-            }
-        }
-        else {
-            if (A.is.multi || B.is.multi) {
-                if ( !A.hasMultiOverlap(B)) return false
-            }
-        }
-
-        return true
-    },
-
-    // check if two widgets connected to the bus are logically connected
-    // if two pins are connected to a bus, the bus is external and a and b can belong to the same node
-    // when there is a pad, the proxy and the pin are always from a differnt node 
-    // two pads can be connected by a bus
-
-    areConnected(A,B) {
-
-        if (A.is.pin) {
-            if (B.is.pin) {
-
-                // input / output have to match
-                if (A.is.input == B.is.input) return false
-
-                // you cannot connect to your own node via a bus
-                if (A.node == B.node) return false
-
-                // check the names of the connecting pins
-                return this.pinNameCheck(A, B)
-            }
-            else if (B.is.pad) {
-
-                // input / output have to be different
-                if (A.is.input != B.proxy.is.input) return false
-
-                // check the names
-                return this.pinNameCheck(A, B.proxy)
-            }
-        }
-        else if (A.is.pad) {
-            if (B.is.pin) {
-
-                // input / output have to match
-                if (A.proxy.is.input != B.is.input) return false
-
-                // check the names
-                return this.pinNameCheck(A.proxy, B)
-            }
-            else if (B.is.pad) {
-
-                // input / output have to be different
-                if (A.proxy.is.input == B.proxy.is.input) return false
-
-                // check the names
-                return this.pinNameCheck(A.proxy, B.proxy)
-            }
-        }
-        console.log(A,B)
-        return false
-    },
-
     // disconnect all routes to and from a bus
     disconnect() {
 
@@ -116,32 +44,6 @@ export const busConnect = {
 
             // change the rxtx tables...
             other.is.pin ? tack.route.rxtxPinBus() : tack.route.rxtxPadBus()
-        }
-    },
-
-    // make the list of pins/pads connected to the widget via the bus
-    makeConxList(widget, list) {
-
-        for(const tack of this.tacks) {
-
-            // TEMP
-            if (! tack.route?.from || ! tack.route?.to) continue
-
-            // Take the widget at the other end of the route
-            const other = tack.route.from == tack ? tack.route.to : tack.route.from
-
-            // check if the two are connected
-            if (! this.areConnected(widget, other)) continue
-
-            // search further if required
-            if (other.is.pin) {
-                
-                other.is.proxy ? other.pad.makeConxList(list) : list.push(other)
-            }
-            else if (other.is.pad) {
-
-                other.proxy.makeConxList(list)
-            }
         }
     },
 

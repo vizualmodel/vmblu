@@ -48,7 +48,7 @@ export const collectHandling = {
             const model = this.link.model
         
             // add the model if it is not the main file (it is only added if not yet in the list)
-            if ( model &&  !model.arl.equals(main.arl))  models.add(model)
+            if ( model &&  !model.getArl().equals(main.arl))  models.add(model)
         }
         else {
             // ...continue for all nodes
@@ -108,7 +108,7 @@ export const collectHandling = {
         else {
             // output a warning for bad links
             if (this.link?.is.bad) {
-                console.warn(`Group node "${this.name}" is missing. ModelBlueprint "${this.link.model.arl.userPath}" not found`)
+                console.warn(`Group node "${this.name}" is missing. ModelBlueprint "${this.link.model.getArl().userPath}" not found`)
             }
             // output a warning for empty group nodes
             else if (!this.nodes) {
@@ -118,7 +118,7 @@ export const collectHandling = {
 
                 // add the buses with a router to the array !
                 for(const bus of this.buses) {
-                    if (bus.is.cable && bus.is.filter) filterList.push(bus)
+                    if (bus.is.filter) filterList.push(bus)
                 }
 
                 // and the nodes !

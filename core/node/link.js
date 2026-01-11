@@ -17,11 +17,30 @@ Link.prototype = {
         return newLink
     },
 
-    toJSON() {
+    makeRaw() {
 
         // get the key for the link
-        const path = (this.model && !this.model.is.main) ? this.model.arl.userPath : './'
-
+        const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './'
         return { path, node: this.lName}
-    }
+    },
+
+    // toJSON() {
+
+    //     // get the key for the link
+    //     const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './'
+
+    //     return { path, node: this.lName}
+    // },
+
+    // unzip() {
+
+    //     // get the key for the link
+    //     const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './'
+
+    //     return {
+    //         blu: { path, node: this.lName},
+    //         viz: null
+    //     }
+
+    // }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.3.5",
-  "schemaVersion": "0.8.4",
+  "version": "0.4.1",
+  "schemaVersion": "0.9.1",
   "type": "module",
   "bin": {
     "vmblu": "bin/vmblu.js"
@@ -37,7 +37,8 @@
     },
   "scripts": {
     "vmblu": "vmblu",
-    "local": "node ./bin/vmblu.js profile",
+    "local-profile": "node ./bin/vmblu.js profile",
+    "local-init": "node ./bin/vmblu.js init",
     "build": "rollup -c ./commands/profile/rollup.config.js"
   }
 }
