@@ -187,7 +187,8 @@ export const mouseUpHandling = {
                 editor.getParam().newY = ifName.rect.y
 
                 // done - set the widget and node as selected
-                this.selection.singleNodeAndWidget(ifName.node, ifName)
+                // this.selection.singleNodeAndWidget(ifName.node, ifName)
+                this.selection.interfaceSelect(ifName.node,ifName)
             }
             break;
 

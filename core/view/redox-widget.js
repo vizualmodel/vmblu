@@ -229,7 +229,7 @@ pinAreaDrag: {
                     //const arl = new ARL(loc.file)
 
                     // resolve the file name with the model name
-                    const arl = editor.doc.model.arl.resolve(loc.file);
+                    const arl = editor.doc.model.getArl().resolve(loc.file);
 
                     // request to open the source file
                     editor.tx.send('open source file', { arl, line: loc.line });

@@ -4,13 +4,25 @@ import fs from 'fs/promises';
 import path from 'path';
 
 // domain path resource are the shorthands as they appear in the workspace file 
+function xxuserPathString(userPath) {
+    if (typeof userPath === 'string') return userPath;
+    if (userPath && typeof userPath === 'object') {
+        if (typeof userPath.fsPath === 'string') return userPath.fsPath;
+        if (typeof userPath.path === 'string') return userPath.path;
+        if (typeof userPath.url === 'string') return userPath.url;
+    }
+    return null;
+}
+
 export function ARL(userPath) {
 
+    const stringPath = Path.stringCheck(userPath);
+
     // the reference to the ARL as entered by the user
-    this.userPath = userPath
+    this.userPath = stringPath ?? '';
 
     // the resolved url
-    this.url = path.resolve(userPath);
+    this.url = stringPath ? path.resolve(stringPath) : null;
 }
 
 ARL.prototype =  {  // makes a url based on the components
@@ -77,11 +89,14 @@ setWSReference(wsRef) {},
 // resolve a path wrt this arl - returns a new arl !
 resolve(userPath) {
 
+    const stringPath = path.stringCheck(userPath);
+    if (!stringPath) return null;
+
     // make an arl
-    const arl = new ARL(userPath)
+    const arl = new ARL(stringPath)
 
     // check if absolute already
-    if (path.isAbsolute(userPath)) return arl
+    if (path.isAbsolute(stringPath)) return arl
 
     // relative path: check that we have a url
     if (!this.url) {
@@ -94,7 +109,7 @@ resolve(userPath) {
     const ref = (slash != -1) ? this.url.slice(0, slash) : this.url
 
     // resolve
-    arl.url = path.resolve(ref, userPath);
+    arl.url = path.resolve(ref, stringPath);
 
     // done
     return arl

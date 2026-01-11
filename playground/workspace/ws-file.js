@@ -23,23 +23,44 @@ WSFile.prototype = {
         return start < 0 ? "any" : this.name.slice(start+1)
     },
 
+    getSplit(path)  {
+
+        // we only need the fileName
+        let slash = path.lastIndexOf('/')
+        const fileName = slash > 0 ? path.slice(slash+1) : path
+
+        let p1 = fileName.lastIndexOf('.')
+        let p2 = fileName.lastIndexOf('.', p1-1)
+        
+        return {
+            name: p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
+            ext: p2 > 0 ? fileName.slice(p2) : (p1 > 0 ? fileName.slice(p1) : null)
+        }
+    },
+
     getIcon() {
-        const ext = this.getExt()
-        if (ext == 'vmblu') return 'account_tree' 
-        if (ext == 'nmsh') return 'account_tree'
-        if (ext == 'js' || ext == 'msj') return 'electric_bolt' 
-        if (ext == 'json') return 'data_object'
-        if (ext == 'html') return 'code'
-        if (ext == 'css') return  'tag'
+        const ext = this.getSplit(this.name).ext
+        if (ext == '.blu.json') return 'account_tree' 
+        if (ext == ".viz.json") return "data_object"
+        if (ext == ".prf.json") return "data_object"
+        if (ext == ".app.js") return "electric_bolt"
+        if (ext == ".mcp.js") return "electric_bolt"
+        if (ext == '.js' || ext == 'msj') return 'electric_bolt' 
+        if (ext == '.json') return 'data_object'
+        if (ext == '.html') return 'code'
+        if (ext == '.css') return  'tag'
         return 'description'
     },
 
     getFileClass() {
-        const ext = this.getExt()
+        const ext = this.getSplit(this.name).ext
 
-        if (ext == "vmblu") return "vmblu-file"
-        if (ext == "nmsh") return "nmsh-file"
-        if (ext == "js") return "js-file"
+        if (ext == ".blu.json") return "model-file"
+        if (ext == ".viz.json") return "vmblu-file"
+        if (ext == ".prf.json") return "vmblu-file"
+        if (ext == ".app.js") return "vmblu-file"
+        if (ext == ".mcp.js") return "vmblu-file"
+        if (ext == ".js") return "js-file"
         return "other-file"
     },
 

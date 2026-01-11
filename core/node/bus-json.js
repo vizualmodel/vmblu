@@ -3,9 +3,11 @@ import {Factory} from './index.js'
 
 export const busJsonHandling = {
 
-toJSON() {
-    // cable or busbar
-    const json = this.is.cable    ? {   kind: 'cable', name: this.name } : { kind: 'busbar', name:  this.name}
+makeRaw() {
+
+    const json = {
+        name: this.name
+    }
 
     // save the filter if applicable
     if (this.is.filter && this.filter) json.filter = this.filter
@@ -17,12 +19,10 @@ toJSON() {
     // done
     return json
 },
-    
+
+ 
 cook(raw, modcom) {
     
-    // set the type of bus
-    this.is.cable = (raw.kind == 'cable') ? true : false
-
     // set the name
     this.name = raw.name
 
@@ -39,8 +39,8 @@ cook(raw, modcom) {
 
         // transform the factory file relative to the main model file
         if (raw.filter.path) {
-            this.filter.arl = current.arl.resolve( raw.filter.path )
-            if (main != current) this.filter.arl.makeRelative(main.arl)
+            this.filter.arl = current.getArl().resolve( raw.filter.path )
+            if (main != current) this.filter.arl.makeRelative(main.getArl())
         }
     }
 

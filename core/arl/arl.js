@@ -4,8 +4,10 @@ import * as Path from './path.js'
 // domain path resource are the shorthands as they appear in the workspace file 
 export function ARL(userPath) {
 
+    const stringPath = Path.stringCheck(userPath);
+
     // the reference to the ARL as entered by the user
-    this.userPath = userPath
+    this.userPath = stringPath
 
     // the resolved url
     this.url = null

@@ -6,8 +6,7 @@ export const bgCxMenu = {
 	choices:[
 		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
 		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
-		{text:'new busbar',		icon:'swap_horiz',  char:'ctrl b',	state:"enabled",	action:newBusbar},
-		{text:'new cable',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newCable},
+		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
 		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
 		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
 		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
@@ -36,12 +35,8 @@ function newSourceNode() {
 	editor.doEdit('newSourceNode',{view: bgCxMenu.view,pos: bgCxMenu.xyLocal})
 }
 
-function newBusbar() {
-	editor.doEdit('busCreate',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal, cable:false})
-}
-
-function newCable() {
-	editor.doEdit('busCreate',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal, cable:true})
+function newBus() {
+	editor.doEdit('busCreate',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal})
 }
 
 function newInputPad() {

@@ -185,9 +185,11 @@ export const routeDrawing = {
         }
 
         // make the position of the bend also dependant on the relative position of the pin in the node
-        const yFraction = 0.02
-        const dyPin = from.rect.y - from.node.look.rect.y 
-        xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction
+        if (from.is.pin) {
+            const yFraction = 0.02
+            const dyPin = from.rect.y - from.node.look.rect.y
+            xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction
+        }
 
         // nudge xNew left/right if the vertical legs would cut through other nodes
         const tryClearX = (xCandidate) => {

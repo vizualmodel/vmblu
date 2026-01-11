@@ -1,4 +1,4 @@
-import { shape, convert, style, eject } from '../util/index.js';
+import { shape, style, eject } from '../util/index.js';
 import { pinNameHandling } from './widget-pin-name.js';
 
 export function Pin(rect, node, name, is) {
@@ -34,8 +34,14 @@ export function Pin(rect, node, name, is) {
         duplicate: false,
     };
 
+    // the contract for the pin - payload is either one string or an object with two strings (request/reply)
+    this.contract = {
+        owner: false,
+        payload: null,
+    }
+
     // the parameter profile
-    this.profile = '';
+    // this.profile = '';
 
     // The prompt for the input handler or a description of when the output is sent
     this.prompt = '';
@@ -46,28 +52,7 @@ export function Pin(rect, node, name, is) {
 
 // The pin prototype
 Pin.prototype = {
-    // pChar is where the cursor has to come
-    drawCursor(ctx, pChar, on) {
-        // notation
-        const rc = this.rect;
-        const m = style.pin.wMargin;
-
-        // relative x position of the cursor
-        const cx = ctx.measureText(this.name.slice(0, pChar)).width;
-
-        // absolute position of the cursor...
-        const xCursor = this.is.left
-            ? rc.x + m + cx
-            : rc.x + rc.w - m - ctx.measureText(this.name).width + cx;
-
-        // the color for the blink effect
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-        //const color = on ? style.pin.cConnected : style.box.cBackground
-
-        // and draw the cursor
-        shape.cursor(ctx, xCursor, rc.y, style.std.wCursor, rc.h, color);
-    },
-
+    
     // arrows in and out
     render(ctx) {
         // notation
@@ -101,81 +86,19 @@ Pin.prototype = {
         if (this.is.left) {
             const xArrow = rc.x + st.wOutside;
             this.is.multi
-                ? shape.leftTextMulti(
-                      ctx,
-                      displayName,
-                      st.fMulti,
-                      cText,
-                      rc.x + style.pin.wMargin,
-                      rc.y,
-                      rc.w,
-                      rc.h
-                  )
-                : shape.leftText(
-                      ctx,
-                      displayName,
-                      cText,
-                      rc.x + style.pin.wMargin,
-                      rc.y,
-                      rc.w,
-                      rc.h
-                  );
+                ? shape.leftTextMulti(ctx, displayName, st.fMulti, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h)
+                : shape.leftText(ctx, displayName, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h);
             this.is.input
-                ? pointRight(
-                      ctx,
-                      xArrow - dx,
-                      yArrow,
-                      st.hArrow,
-                      st.wArrow,
-                      cArrow
-                  )
-                : pointLeft(
-                      ctx,
-                      xArrow - st.hArrow + dx,
-                      yArrow,
-                      st.hArrow,
-                      st.wArrow,
-                      cArrow
-                  );
+                ? pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow)
+                : pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow);
         } else {
             const xArrow = rc.x + rc.w - st.wOutside;
             this.is.multi
-                ? shape.rightTextMulti(
-                      ctx,
-                      displayName,
-                      st.fMulti,
-                      cText,
-                      rc.x,
-                      rc.y,
-                      rc.w - style.pin.wMargin,
-                      rc.h
-                  )
-                : shape.rightText(
-                      ctx,
-                      displayName,
-                      cText,
-                      rc.x,
-                      rc.y,
-                      rc.w - style.pin.wMargin,
-                      rc.h
-                  );
+                ? shape.rightTextMulti(ctx, displayName, st.fMulti, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h)
+                : shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h);
             this.is.input
-                ? pointLeft(
-                      ctx,
-                      xArrow - st.hArrow + dx,
-                      yArrow,
-                      st.hArrow,
-                      st.wArrow,
-                      cArrow
-                  )
-                : pointRight(
-                      ctx,
-                      xArrow - dx,
-                      yArrow,
-                      st.hArrow,
-                      st.wArrow,
-                      cArrow
-                  );
+                ? pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow)
+                : pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow);
         }
 
         // show name clashes
@@ -186,33 +109,20 @@ Pin.prototype = {
 
     setColor() {
         // color of the arrow ( unconnected connected selected)
-        const cArrow = this.is.hoverNok
-            ? style.pin.cBad
-            : this.is.hoverOk
-              ? style.pin.cSelected
-              : this.is.highLighted
-                ? style.pin.cHighLighted
-                : this.is.selected
-                  ? style.pin.cSelected
-                  : this.routes.length > 0
-                    ? style.pin.cConnected
-                    : style.pin.cNormal;
+        const cArrow = this.is.hoverNok ? style.pin.cBad 
+                        : this.is.hoverOk ? style.pin.cSelected 
+                        : this.is.highLighted ? style.pin.cHighLighted 
+                        : this.is.selected ? style.pin.cSelected 
+                        : this.routes.length > 0 ? style.pin.cConnected : style.pin.cNormal;
 
         // color of the text
-        const cText = this.is.hoverNok
-            ? style.pin.cBad
-            : this.is.hoverOk
-              ? style.pin.cSelected
-              : this.is.added
-                ? style.pin.cAdded
-                : this.is.zombie
-                  ? style.pin.cBad
-                  : this.is.highLighted
-                    ? style.pin.cHighLighted
-                    : this.is.selected
-                      ? style.pin.cSelected
-                      : this.routes.length > 0
-                        ? style.pin.cConnected
+        const cText =   this.is.hoverNok? style.pin.cBad
+                        : this.is.hoverOk ? style.pin.cSelected
+                        : this.is.added ? style.pin.cAdded
+                        : this.is.zombie ? style.pin.cBad
+                        : this.is.highLighted ? style.pin.cHighLighted
+                        : this.is.selected ? style.pin.cSelected
+                        : this.routes.length > 0 ? style.pin.cConnected
                         : style.pin.cText;
 
         return { cArrow, cText };
@@ -236,8 +146,7 @@ Pin.prototype = {
         if (this.is.input === pin.is.input) return false;
 
         // multi messages can only be connected if there is a (partial) overlap
-        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin))
-            return false;
+        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin)) return false;
 
         // check if we have already a connection between the pins
         if (this.haveRoute(pin)) return false;
@@ -253,56 +162,33 @@ Pin.prototype = {
             if (widget.is.input == this.is.input) return false;
 
             // multis
-            if (
-                (widget.is.multi || this.is.multi) &&
-                !this.hasMultiOverlap(widget)
-            )
+            if ((widget.is.multi || this.is.multi) && !this.hasMultiOverlap(widget))
                 return false;
         } else if (widget.is.pad) {
             // should not happen
             if (widget.proxy.is.input != this.is.input) return false;
 
             // multis
-            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy))
-                return false;
+            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy)) return false;
         }
         return true;
     },
 
-    toJSON() {
-        const kind = this.is.input
-            ? this.is.channel
-                ? 'reply'
-                : 'input'
-            : this.is.channel
-              ? 'request'
-              : 'output';
-
-        // seperate data into editor and
-        const json = {
+    makeRaw() {
+        const rawPin = {
             name: this.name,
-            kind: this.is.input
-                ? this.is.channel
-                    ? 'reply'
-                    : 'input'
-                : this.is.channel
-                  ? 'request'
-                  : 'output',
-            editor: {
-                id: this.wid,
-                align: this.is.left ? 'left' : 'right',
+            kind: this.is.input ? (this.is.channel ? 'reply' : 'input') : (this.is.channel ? 'request' : 'output'),
+            contract: {
+                role: this.contract.owner ? "owner" : "follower"
             },
+            wid: this.wid,
+            left: this.is.left 
         };
 
-        // if the pin is a proxy, we add the pad-related stuff
-        if (this.is.proxy) {
-            json.editor.pad = {
-                rect: convert.rectToString(this.pad.rect),
-                align: this.pad.is.leftText ? 'left' : 'right',
-            };
-        }
+        if (this.contract.owner) rawPin.contract.payload = this.payload
+        if (this.prompt) rawPin.prompt = this.prompt
 
-        return json;
+        return rawPin
     },
 
     // remove a route from the routes array
@@ -517,8 +403,7 @@ Pin.prototype = {
 
             // bus
             if (other.is.tack) {
-                route.highLight();
-                other.bus.highLightRoutes(this);
+                other.highLightRoutes();
             }
         }
     },
@@ -551,7 +436,7 @@ Pin.prototype = {
 
             // bus
             if (other.is.tack) {
-                other.bus.unHighLightRoutes(this);
+                other.unHighLightRoutes();
             }
         }
     },

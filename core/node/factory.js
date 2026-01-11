@@ -14,11 +14,24 @@ export function Factory (name = null) {
 }
 Factory.prototype = {
 
-    toJSON() {
+    // toJSON() {
+    //     return  {   
+    //         path: this.arl?.userPath ?? "./index.js", 
+    //         function: this.fName
+    //     }
+    // },
+
+    // unzip() {
+    //     return  { blu: {    path: this.arl?.userPath ?? "./index.js", 
+    //                         function: this.fName },
+    //               viz: null }        
+    // },
+
+    makeRaw() {
         return  {   
-                    path: this.arl?.userPath ?? "./index.js", 
-                    function: this.fName
-                }
+            path: this.arl?.userPath ?? "./index.js", 
+            function: this.fName
+        }
     },
 
     copy(from) {

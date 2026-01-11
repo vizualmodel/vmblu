@@ -126,13 +126,15 @@ export const mouseDownHandling = {
                     case CTRL:{
 
                         // set the node as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget)
+                        // this.selection.singleNodeAndWidget(hit.node, hit.lookWidget)
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget)
 
                         // highlight the ifName group
                         this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget)
 
                         // set a selection rectangle around the selected pins
-                        this.selection.pinAreaRectangle()
+                        // this.selection.pinAreaRectangle()
 
                         // notation
                         const pins = this.selection.widgets

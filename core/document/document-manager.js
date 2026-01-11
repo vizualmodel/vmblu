@@ -29,7 +29,7 @@ DocumentManager.prototype = {
      */
 
     haveDocument(arl) {
-        return this.documents.find( doc => doc.model.arl?.equals(arl))
+        return this.documents.find( doc => doc.model.getArl()?.equals(arl))
     },
 
     openDocument(arl) {
@@ -70,7 +70,7 @@ DocumentManager.prototype = {
         if (!doc) return 
        
         // select the tab for the doc
-        this.tx.send("tab select", doc.model.arl.getName())
+        this.tx.send("tab select", doc.model.getArl().getName())
 
         // set the doc as the active document
         this.tx.send('doc set active', doc)
@@ -109,7 +109,7 @@ DocumentManager.prototype = {
      * @param {ARL} arl - ARL for the new document to be created.
      */
 	onDocNew(arl) {
-
+        
         // create a new tab
         const doc = new Document(arl) 
 
@@ -150,6 +150,9 @@ DocumentManager.prototype = {
      */
 	onSaveAs(e) {
 
+        // check
+        if (!this.active) return;
+
         // the position of the popup
         const pos = e ? {x:e.screenX, y:e.screenY} : {x:25, y:25}
 
@@ -157,11 +160,11 @@ DocumentManager.prototype = {
         const doc = this.active
 
         // save the old doc name
-        const oldName = doc.model.arl.getName()
+        const oldName = doc.model.getArl().getName()
 
         // request the path for the save as operation
         this.tx.send("save as filename",{   title:  'Save as...' ,
-                                            entry:  doc.model.arl.userPath, 
+                                            entry:  doc.model.getArl().userPath, 
                                             pos:    pos,
                                             ok:     (userPath) => {
 
@@ -169,7 +172,7 @@ DocumentManager.prototype = {
                                                         if (!doc.saveAs(userPath)) return
                                                         
                                                         // and change the doc name
-                                                        this.tx.send('tab rename',{oldName, newName: doc.model.arl.getName()})
+                                                        this.tx.send('tab rename',{oldName, newName: doc.model.getArl().getName()})
                                                     },
                                             cancel: ()=>{}
                                         })		
@@ -179,14 +182,14 @@ DocumentManager.prototype = {
      * @pin save @ document manager
      */
 	onSave() {
-        this.active.save()
+        this.active?.save()
 	},
     /**
      * @prompt Save all currently open documents.
      * @pin save all @ document manager
      */
 	onSaveAll() {
-        this.documents.forEach( doc => doc.model.arl && doc.save())
+        this.documents?.forEach( doc => doc.model.getArl() && doc.save())
 	},
     /**
      * @prompt Send a message with the list of open models (as ARLs).
@@ -198,7 +201,7 @@ DocumentManager.prototype = {
 
         // get all the arl
         this.documents.forEach( doc => {
-            if (doc.model.arl) models.push(doc.model.arl)
+            if (doc.model.getArl()) models.push(doc.model.getArl())
         })
 
         // return the array of files
@@ -219,7 +222,7 @@ DocumentManager.prototype = {
         for (let i=0; i<L; i++) {
 
             // find the tab to remove
-            if (name == this.documents[i].model.arl.getName()) {
+            if (name == this.documents[i].model.getArl().getName()) {
 
                 // shift the documents below one position up
                 for (let j=i; j<L-1; j++) this.documents[j] = this.documents[j+1]
@@ -231,7 +234,7 @@ DocumentManager.prototype = {
                 this.tx.send("tab remove",name)
 
                 // if we close the active doc, we have to change that
-                if (name == this.active.model.arl.getName()) {
+                if (name == this.active.model.getArl().getName()) {
 
                     // choose the doc below
                     if (i+1<L-1) {
@@ -240,7 +243,7 @@ DocumentManager.prototype = {
 						this.active = this.documents[i+1]
 
                         // select the tab in the ribbon
-                        this.tx.send("tab select", this.active.model.arl.getName())
+                        this.tx.send("tab select", this.active.model.getArl().getName())
 					}
                     // .. or the doc above
                     else if (i > 0) {
@@ -249,7 +252,7 @@ DocumentManager.prototype = {
                         this.active = this.documents[i-1]
 
                         // select the tab in the ribbon
-                        this.tx.send("tab select", this.active.model.arl.getName())
+                        this.tx.send("tab select", this.active.model.getArl().getName())
                     }
 
                     // or nothing..
@@ -272,7 +275,7 @@ DocumentManager.prototype = {
 	onTabRequestToSelect(name) {
 
         // check if the file is in the list of open files
-        const doc = this.documents.find( doc => doc.model.arl.getName() == name)
+        const doc = this.documents.find( doc => doc.model.getArl().getName() == name)
 
         // if there is already a view, bring the view to the foreground
         if (doc) {

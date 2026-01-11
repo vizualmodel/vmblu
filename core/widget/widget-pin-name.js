@@ -1,4 +1,4 @@
-import {convert, eject} from '../util/index.js'
+import {convert, eject, style, shape} from '../util/index.js'
 
 const SEPARATOR = ' '
 
@@ -18,6 +18,29 @@ export const pinNameHandling = {
         // return the field that will be edited
         return "name"
     },
+
+    // pChar is where the cursor has to come
+    drawCursor(ctx, pChar, on) {
+        // notation
+        const rc = this.rect;
+        const m = style.pin.wMargin;
+
+        // relative x position of the cursor
+        const cx = ctx.measureText(this.name.slice(0, pChar)).width;
+
+        // absolute position of the cursor...
+        const xCursor = this.is.left
+            ? rc.x + m + cx
+            : rc.x + rc.w - m - ctx.measureText(this.name).width + cx;
+
+        // the color for the blink effect
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
+        //const color = on ? style.pin.cConnected : style.box.cBackground
+
+        // and draw the cursor
+        shape.cursor(ctx, xCursor, rc.y, style.std.wCursor, rc.h, color);
+    },
+
 
     endEdit(saved) {
         this.checkNewName() ? this.nameChanged(saved) : this.restoreSavedName(saved)      

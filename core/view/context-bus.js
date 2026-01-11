@@ -6,7 +6,6 @@ export const busCxMenu = {
 	choices: [
 		{icon:"highlight",text:"",state:"enabled", action:busHighLight},
 		{icon:"sell",text:"change name",state:"enabled", action:changeName},
-		{icon:"sell",text:"",state:"enabled", action:changeType},
 		{icon:"rss_feed",text:"",state:"enabled", action:changeFilter},
 		{icon:"timeline",text:"straight connections",state:"enabled", action:straightConnections},
 		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect},
@@ -28,12 +27,8 @@ export const busCxMenu = {
 		let choice = this.choices.find( choice => choice.action == busHighLight)
 		choice.text = this.bus.is.highLighted ? "remove highlight" : "highlight routes"
 
-		choice = this.choices.find( choice => choice.action == changeType)
-		choice.text = this.bus.is.cable ? "change to busbar" : "change to cable"
-
 		choice = this.choices.find( choice => choice.action == changeFilter)
-		choice.state = this.bus.is.cable ? "enabled" : "disabled"
-		choice.text = (this.bus.is.cable && this.bus.is.filter) ? "change filter" : "add filter"
+		choice.text = (this.bus.is.filter) ? "change filter" : "add filter"
 	}
 }
 
@@ -44,14 +39,6 @@ function busHighLight() {
 function changeName() {
 	editor.doEdit('busChangeName', {bus: busCxMenu.bus, label: busCxMenu.busLabel})
 }
-
-function changeType() {
-	editor.doEdit('busChangeType', {bus: busCxMenu.bus})
-}
-
-// function deleteFilter() {
-// 	editor.doEdit('busDeleteFilter', {bus: busCxMenu.bus})
-// }
 
 function changeFilter() {
 

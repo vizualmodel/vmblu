@@ -4,66 +4,62 @@ import {convert, style} from '../util/index.js'
 
 export const jsonHandling = {
 
-    toJSON() {
-
+    makeRaw() {
+       
         // separate function for links
-        if (this.link) return this.dockToJSON()
+        if (this.link) return this.makeRawDock()
 
-        // get the items to save
-        const {rect, label, interfaces} = this.look ? this.look.getItemsToSave() : {rect: null, label: null, interfaces: []}
+        // get the look to save
+        const {label, rect, interfaces} = this.look  ? this.look.makeRaw() : {label: null, rect:null, interfaces:[]} 
 
-        // The json structure to save
-        const json = { kind: "group", name: this.name} 
+        const raw = { kind: "group", name: this.name, rect} 
 
-        // add if present
-        if (label) json.label = label
-        if (interfaces.length) json.interfaces = interfaces
-        if (this.sx) json.sx = this.sx    
-        if (this.dx) json.dx = this.dx
-        if (this.prompt) json.prompt = this.prompt
-        if (this.nodes.length) json.nodes = this.nodes
+        if (label) raw.label = label
+        if (this.prompt) raw.prompt = this.prompt
+        if (this.savedView) raw.view = this.savedView.raw ? this.savedView : this.savedView.makeRaw();
+        if (interfaces.length) raw.interfaces = interfaces
+        if (this.sx) raw.sx = this.sx    
+        if (this.dx) raw.dx = this.dx
 
-        // get the routes inside this group node
+        // The nodes
+        if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw())
+
+        // get the routes and connections inside this group node
         const [routes, conx] = this.getRoutesAndConnections()
 
         // set the connections 
-        if (conx.length) json.connections = conx
+        if (conx.length) raw.connections = conx
 
-        // add the editor specific fields: rect, view, buses, routes
-        json.editor = {rect: convert.rectToString(rect)}
-
-        // add the view
-        if (this.savedView) json.editor.view = convert.viewToJSON(this.savedView)
+        // The pads
+        if (this.pads.length) raw.pads = this.pads.map( pad => pad.makeRaw())
 
         // the buses
-        if (this.buses.length) json.editor.buses = this.buses
+        if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw())
 
-        // save the routes
-        if (routes.length) json.editor.routes = routes
+        // save the routes (they are already in the raw format)
+        if (routes.length) raw.routes = routes
     
         // done
-        return json
+        return raw
     },
 
-    dockToJSON() {
+    makeRawDock() {
 
-        // get the elements to save
-        const {rect, label, interfaces} = this.look ? this.look.getItemsToSave() : {rect: null, label: null, interfaces: []}
+        // get the look to save
+        const {label, rect, interfaces} = this.look  ? this.look.makeRaw() : {label: null, rect:null, interfaces:[]} 
 
-        const json = { kind: "dock", name: this.name, link: this.link } 
+        // The basis of raw
+        const raw = { kind: "dock", name: this.name, link: this.link.makeRaw(), rect } 
 
         // add if present
-        if (label) json.label = label
-        if (this.prompt) json.prompt = this.prompt
-        if (interfaces.length) json.interfaces = interfaces
-        if (this.sx) json.sx = this.sx    
-        if (this.dx) json.dx = this.dx
-
-        // add the editor specific fields
-        json.editor = { rect: convert.rectToString(rect) }
+        if (label) raw.label = label
+        if (this.prompt) raw.prompt = this.prompt
+        if (interfaces.length) raw.interfaces = interfaces
+        if (this.sx) raw.sx = this.sx    
+        if (this.dx) raw.dx = this.dx
 
         // done
-        return json
+        return raw
     },
 
     // cook the content of the node (nodes, buses, pads and routes)
@@ -73,7 +69,7 @@ export const jsonHandling = {
         this.cookCommon(raw)
 
         // if there is a view - make a simple view for the node only rect and tf - the view is restored later 
-        if (raw.editor.view) this.savedView = convert.stringToView(raw.editor.view)
+        this.savedView = raw.view
 
         // handle the subnodes
         if (raw.nodes) for(const rawNode of raw.nodes) {
@@ -92,7 +88,7 @@ export const jsonHandling = {
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
      
         // get the buses
-        if (raw.editor.buses) for(const rawBus of raw.editor.buses) {
+        if (raw.buses) for(const rawBus of raw.buses) {
 
             // the name is also used for the bus labels !
             const bus = new Bus(rawBus.name, {x:0, y:0})
@@ -108,7 +104,7 @@ export const jsonHandling = {
         const routes = []
 
         // now cook the routes...
-        if (raw.editor.routes) for(const rawRoute of raw.editor.routes) {
+        if (raw.routes) for(const rawRoute of raw.routes) {
 
             // cook the route
             const route = this.cookRoute(rawRoute)
@@ -177,32 +173,11 @@ export const jsonHandling = {
         node.is.placed = true
     },
 
-
-    // places a node according to a grid
-    OLD_placeNode(node) {
-
-        const place = style.placement
-        const index = this.nodes.length - 1
-
-        // find row and column 
-        const col = index % place.nodesPerRow
-        const row = Math.floor(index / place.nodesPerRow);
-
-        // check if we need extra space for the pads
-        const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
-
-        // move the node to its location
-        node.look.moveTo( marginLeft + col * place.colStep, place.marginTop  + row * place.rowStep)
-
-        // set the flag
-        node.is.placed = true
-    },
-
     // rawPad exists, but might be incomplete
     cookPad(proxy, rawPad) {
 
         // get the rect
-        let rect = rawPad.rect ? convert.stringToRect(rawPad.rect) : {x:10,y:10,w:0,h:0};
+        let rect = rawPad.rect ? rawPad.rect : {x:10,y:10,w:0,h:0};
 
         // if no width is given, calculate
         if (rect.w == 0) rect = proxy.makePadRect({x: rect.x, y:rect.y})
@@ -211,7 +186,7 @@ export const jsonHandling = {
         const newPad = new Pad(rect, proxy, null)
 
         // set the direction of the text
-        newPad.is.leftText = rawPad.align == "left" ? true : false;
+        newPad.is.leftText = rawPad.left
 
         // save the pad in the proxy
         proxy.pad = newPad
@@ -239,8 +214,8 @@ export const jsonHandling = {
         }
 
         // if the endpoint is a bus, make a tack
-        if (from.is.bus) from = from.newTack();
-        if (to.is.bus) to = to.newTack();
+        if (from.is.bus) from = from.newTack(source.alias);
+        if (to.is.bus) to = to.newTack(target.alias);
 
         // create the route
         const route = new Route(from, to)

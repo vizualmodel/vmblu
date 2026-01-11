@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "@vizual_model/cli/templates/0.9.1/blueprint.schema.json",
+  "title": "vmblu Blueprint Model (v0.9.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["header", "root"],
+  "properties": {
+    "header": { "$ref": "#/$defs/Header" },
+
+    "imports": {
+      "description": "List of vmblu blueprint files that are referenced in the model. Allows for faster loading.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+
+    "factories": {
+      "description": "List of files where the source code of the source nodes can be found. Used by the docgen tool.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+
+    "libraries": {
+      "description": "List of vmblu blueprint files from which the editor allows the user to select nodes in an easy way.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+
+    "types": {
+      "description": "Repository of named data types used in pin contracts. Each vmbluType is either a primitive (string/number/boolean/any/...) or a key in this 'types' object.",
+      "$ref": "#/$defs/Types"
+    },
+
+    "root": {
+      "description": "The starting point of the vmblu blueprint model.",
+      "$ref": "#/$defs/Node"
+    }
+  },
+
+  "$defs": {
+    "Header": {
+      "description": "Contains meta information about the model. Used by tools and editors.",
+      "type": "object",
+      "properties": {
+        "version": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "saved": { "type": "string", "format": "date-time" },
+        "utc": { "type": "string", "format": "date-time" },
+        "style": { "type": "string" },
+        "runtime": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "required": ["version", "created", "saved", "utc"]
+    },
+
+    "Types": {
+      "description": "Repository of named architectural data types.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/Type" }
+    },
+
+    "Type": {
+      "description": "Definition of a single named type used in contracts.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Basic category of the type.",
+          "type": "string",
+          "enum": ["object", "array", "external", "primitive"],
+          "default": "object"
+        },
+        "summary": {
+          "description": "Short human-readable description of the type.",
+          "type": "string"
+        },
+
+        "fields": {
+          "description": "For object types: map of field name to field descriptor.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "vmbluType": {
+                "description": "A vmblu type: either a primitive (string/number/boolean/any/...) or a named type key in the 'types' section.",
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "description": "Short description of the field.",
+                "type": "string"
+              }
+            },
+            "required": ["vmbluType"],
+            "additionalProperties": false
+          }
+        },
+
+        "required": {
+          "description": "For object types: list of required field names.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+
+        "items": {
+          "description": "For array types: element type descriptor.",
+          "type": "object",
+          "properties": {
+            "vmbluType": {
+              "description": "A vmblu type: either a primitive (string/number/boolean/any/...) or a named type key in the 'types' section.",
+              "type": "string",
+              "minLength": 1
+            },
+            "summary": {
+              "description": "Short description of the element.",
+              "type": "string"
+            }
+          },
+          "required": ["vmbluType"],
+          "additionalProperties": false
+        },
+
+        "external": {
+          "description": "For external/opaque types: identifies the external symbol (e.g. THREE.Vector3).",
+          "type": "object",
+          "properties": {
+            "library": {
+              "description": "Library or package providing this type (e.g. 'three').",
+              "type": "string",
+              "minLength": 1
+            },
+            "symbol": {
+              "description": "Symbol name of the type in the library (e.g. 'Vector3').",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["symbol"],
+          "additionalProperties": false
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "description": "Object type must define fields.",
+              "properties": { "kind": { "const": "object" } },
+              "required": ["fields"]
+            },
+            {
+              "description": "Array type must define items.",
+              "properties": { "kind": { "const": "array" } },
+              "required": ["items"]
+            },
+            {
+              "description": "External type must define external symbol info.",
+              "properties": { "kind": { "const": "external" } },
+              "required": ["external"]
+            },
+            {
+              "description": "Primitive type is opaque here (typically used for documentation or aliasing).",
+              "properties": { "kind": { "const": "primitive" } }
+            }
+          ]
+        }
+      ],
+      "additionalProperties": false
+    },
+
+    "Node": {
+      "description": "A node describes a component of a software system. Nodes communicate via messages. There are three types of nodes.",
+      "oneOf": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/NodeBase" },
+            { "$ref": "#/$defs/SourceNodeSpec" }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/NodeBase" },
+            { "$ref": "#/$defs/GroupNodeSpec" }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/NodeBase" },
+            { "$ref": "#/$defs/DockNodeSpec" }
+          ],
+          "unevaluatedProperties": false
+        }
+      ]
+    },
+
+    "NodeBase": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["source", "group", "dock"] },
+        "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+        "label": { "type": "string" },
+
+        "interfaces": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Interface" }
+        },
+
+        "prompt": { "type": "string" },
+
+        "sx": { "$ref": "#/$defs/NodeInitialization" },
+        "rx": { "$ref": "#/$defs/RuntimeDirectives" }
+      },
+      "required": ["kind", "name"]
+    },
+
+    "SourceNodeSpec": {
+      "description": "A source node has an implementation in source code.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "source" },
+        "factory": {
+          "description": "Describes where the node's implementation can be found.",
+          "type": "object",
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "function": { "type": "string", "minLength": 1 }
+          },
+          "required": ["path", "function"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["factory"]
+    },
+
+    "GroupNodeSpec": {
+      "description": "A group node consists of other connected nodes. It allows to build modular models.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "group" },
+
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Node" }
+        },
+
+        "connections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Connection" }
+        }
+      }
+    },
+
+    "DockNodeSpec": {
+      "description": "A dock node is a placeholder for a node that is defined in another file, specified in the link field.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "dock" },
+        "link": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "node": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" }
+          },
+          "required": ["node"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["link"]
+    },
+
+    "Interface": {
+      "description": "An interface groups a number of pins of a node.",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^(|[^@]+)$" },
+        "pins": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Pin" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Pin": {
+      "description": "A node can receive or send a message via a pin.",
+      "type": "object",
+      "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+        "kind": { "enum": ["input", "output", "request", "reply"] },
+        "contract": {
+          "type": "object",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "role": { "const": "follower" }
+              },
+              "required": ["role"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "role": { "const": "owner" },
+                "payload": { "type": "string", "minLength": 1 }
+              },
+              "required": ["role", "payload"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "role": { "const": "owner" },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "request": { "type": "string", "minLength": 1 },
+                    "reply": { "type": "string", "minLength": 1 }
+                  },
+                  "required": ["request", "reply"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["role", "payload"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "prompt": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "Connection": {
+      "description": "A connection can be made between two pins. The message flow is from 'src' to 'dst'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["src", "dst"],
+      "properties": {
+        "src": { "$ref": "#/$defs/Address" },
+        "dst": { "$ref": "#/$defs/Address" }
+      }
+    },
+
+    "Address": {
+      "description": "The address of a pin. If node is omitted the node is the containing group node.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
+        "pin": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" }
+      },
+      "required": ["pin"]
+    },
+
+    "NodeInitialization": {
+      "description": "Node-defined initialization data passed to the node at creation time. Shape is entirely up to the node designer.",
+      "type": "object"
+    },
+
+    "RuntimeDirectives": {
+      "description": "Runtime-defined creation/hosting directives. Shape is determined by the runtime (e.g., host=worker, debug=true).",
+      "type": "object"
+    }
+  }
+}

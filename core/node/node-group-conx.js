@@ -19,20 +19,16 @@ export const conxHandling = {
         }
 
         // If the destination is a bus we have to find the actual connected pins and pads
-        const bus = dst.bus
         const fanout = []
 
         // check the connections to the bus
-        for(const tack of bus.tacks) {
+        for(const tack of dst.bus.tacks) {
 
             // skip the to tack
             if (tack == dst) continue
 
-            // Take the widget at the other end of the route
-            const other = tack.route.from == tack ? tack.route.to : tack.route.from
-
             // check if the two are connected (i/o, name)
-            if (bus.areConnected(src, other)) fanout.push(other)
+            if (dst.areConnected(tack)) fanout.push(tack.getOther())
         }           
 
         // save all the destinations from the bus that were found
@@ -61,7 +57,7 @@ export const conxHandling = {
                 for(const route of pin.routes) {
 
                     // store the route for that pin
-                    routes.push(convert.routeToString(route))
+                    routes.push(convert.routeToRaw(route))
 
                     // get the destination (it can be null for half-routes !)
                     const other = route.from == pin ? route.to : route.from
@@ -82,7 +78,7 @@ export const conxHandling = {
             for(const route of pad.routes) {
 
                 // push the route string
-                routes.push(convert.routeToString(route))
+                routes.push(convert.routeToRaw(route))
 
                 // get the destination (it can be null for half-routes !)
                 const other = route.from == pad ? route.to : route.from
@@ -100,8 +96,8 @@ export const conxHandling = {
             for(const tack of bus.tacks) {
 
                 const other = tack.getOther()
-                if (other.is.pin && other.is.input) routes.push(convert.routeToString(tack.route))
-                if (other.is.pad && !other.proxy.is.input) routes.push(convert.routeToString(tack.route))
+                if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route))
+                if (other.is.pad && !other.proxy.is.input) routes.push(convert.routeToRaw(tack.route))
             }
         }
 
@@ -196,24 +192,24 @@ export const conxHandling = {
 
         // helper functions -----------------------------------
         const findConx = (A, B) => conx.find( cx => ((A == cx.src) && (B == cx.dst)) || ((A == cx.dst) && (B == cx.src)) )
-        //const findConx = (A, B) => conx.find( cx => ((A == cx.src) && (B == cx.dst)) )
 
-        const checkBus = (bus, src, via) => {
+        // dst is a tack
+        const checkBus = (src, dst) => {
 
             // check for the connections to the bus..
-            for(const tack of bus.tacks) {
+            for(const tack of dst.bus.tacks) {
 
                 // skip this tack of the route...
-                if (tack == via) continue
-
-                // get the other side of the route
-                const dst = tack.getOther()
+                if (tack == dst) continue
 
                 // check if logically conneceted via this bus (i/o and name must match...)
-                if (bus.areConnected(src, dst)) {
+                if (tack.areConnected(dst)) {
+
+                    // get the other side of the route
+                    const other = tack.getOther()
 
                     // check if we find this connection in conx
-                    const cx = findConx(src, dst)
+                    const cx = findConx(src, other)
 
                     // if the connection is found set the connection status, if not set the route status
                     if (cx) 
@@ -235,11 +231,10 @@ export const conxHandling = {
             return
         }
 
-             
         // check the routes 
         if (src.is.tack){
 
-            // we accept routes that come from a bus...
+            // we do not check routes that come from a bus...
             route.is.noConx = false
         }
         // pin or pad
@@ -248,7 +243,7 @@ export const conxHandling = {
             if (dst.is.tack) {
 
                 // The bus that the tack is connected to
-                checkBus(dst.bus, src, dst)
+                checkBus(src, dst)
             }
             // pin or pad
             else {
