@@ -47,6 +47,10 @@ export const regex = {
 
 const MAX_EXT_LENGTH = 6
 
+export function normalizeSeparators(value) {
+    return (typeof value === 'string') ? value.replace(/\\/g, '/') : value
+}
+
 export function getDomain(str) {
 
     // find the first colon and the first slash
@@ -97,6 +101,23 @@ export function getSplit(path)  {
     return {
         name: p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
         ext: p2 > 0 ? fileName.slice(p2) : (p1 > 0 ? fileName.slice(p1) : null)
+    }
+}
+
+// splits 'name.ext' in 'name' and '.ext' and 'name.kind.ext' if 'file' '.kind' and '.ext'
+export function split(path)  {
+
+    // we only need the fileName
+    let slash = path.lastIndexOf('/')
+    const fileName = slash > 0 ? path.slice(slash+1) : path
+
+    let p1 = fileName.lastIndexOf('.')
+    let p2 = fileName.lastIndexOf('.', p1-1)
+    
+    return {
+        name:   p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
+        kind:   p2 > 0 ? fileName.slice(p2,p1) : null,
+        ext:    p1 > 0 ? fileName.slice(p1) : null
     }
 }
 
@@ -158,93 +179,6 @@ export function isAbsolutePath(path) {
 
 // breaks an entry into its different parts
 
-// make a path when a newPath is enterd - it can be absolute or relative to the old path
-export function xxxassemble(oldPath,newPath) {
-
-    // check
-    if (!oldPath) return newPath
-
-    // check
-    if (! newPath?.length) return null
-
-    // check against regular expression for a vizual model path
-    let components = newPath.match(regex.vizPath)
-
-    // check - return null if the path is invalid
-    if (components == null) return null
-
-    // if the newPath has a domain spec, then just return the newPath
-    const start = components[1][0]
-    if ((start != '.')&&(start != '/')) return newPath
-
-    // the first component is / or ../ etc.
-    const redirect = components[1]
-
-    // find the last slash
-    let slash = oldPath.lastIndexOf('/')
-
-    // strip the old path of the filename but keep final slash
-    let reuse = slash > 0 ? oldPath.slice(0, slash+1) : '/'
-
-    // check if the newpath starts with / or .
-    if (redirect.length) {
-
-        // absolute path
-        //if (redirect[0] == '/') reuse = '/'
-
-        // path relative to the old path
-        if (redirect[0] == '.') {
-
-            // copy the current path
-            reuse = oldPath.slice()
-
-            // go up in the directory tree if required
-            if (redirect.slice(0,3) == "../") {
-
-                // count the number of slashes in relative 
-                let up = (redirect.length-1)/3 - 1
-
-                // avoid the final slash in the next search
-                slash--
-
-                // remove the nr of directories as required...
-                while (up-- > 0) {
-                    slash = reuse.lastIndexOf('/',slash)
-                    if (slash > -1)
-                        reuse = reuse.slice(0,slash)
-                    else
-                        break
-                }
-                // if there is part of the path to reuse, terminate it with a slash
-                if (reuse.length > 0) reuse = reuse + '/' 
-            }
-        }
-    }
-
-    // get the other components of the new filename
-    const dirs = components[2] ?? ''
-    let fileName = components[3] 
-
-    // check the extension 
-    let period = fileName.lastIndexOf('.')
-
-    // if no extension use the extension of the oldPath
-    if (period < 0) {
-        // get the extension of the current path - including the period
-        period = oldPath.lastIndexOf('.')
-
-        // add the extension - if any - to the filename
-        fileName += period > 1 ? oldPath.slice(period) : ''
-    }
-
-    // debugging
-    // components?.forEach( (c,i) => console.log('%d>%s',i,c))
-    // console.log(`new path: ${reuse} + ${dirs} + ${fileName}`)
-
-    // return the path 
-    return reuse + dirs + fileName 
-}
-
 // returns the last i where the strings are the same
 function commonPart(a,b) { 
     const max = a.length < b.length ? a.length : b.length
@@ -256,6 +190,9 @@ function commonPart(a,b) {
 // relativePath  /A/B/C/filea , /A/B/G/fileb => ../C/filea
 // relativePath  /A/B/C/filea , /A/B/G/F/fileb => ../../C/filea
 export function relative(path, ref) {
+
+    path = normalizeSeparators(path)
+    ref = normalizeSeparators(ref)
 
     // find it - but change to lowercase first
     const common = commonPart( path,ref )
@@ -302,6 +239,9 @@ export function relative(path, ref) {
 //                      /a/b/c + ../d = /a/d
 //                      /a/b/c + d = /a/b/d
 export function absolute(path, ref) {
+
+    path = normalizeSeparators(path)
+    ref = normalizeSeparators(ref)
 
     // keep the original values intact while resolving
     const target = path ?? ''

@@ -11,10 +11,10 @@ The prompt for a node should be a clear, concise and up-to-date description of i
 
 ## A.2 Interface names and Pin names
 
-- Pins are grouped in **interfaces**
+- **Interfaces** are a group of pins that belong together. The purpose of interfaces is to make the design and functionality of a node easier to understand.
 - There can only be one anonymous interface (name is ""), this is acceptable for nodes that only have a few pins.
-- Group pins together into meaningful interfaces
-- Use the following convention when giving a name to a pin: if the pin belongs to an interface start the name with the name of that interface followed by a period. If the rest of the name is more than one word, separate the words by a hyphen. Examples: _file.save_, _file.save-as_, _file.convert-to-uppercase_, where the interface name is _file_.
+- Group pins together into an interface with a meaningful name.
+- Use the following convention when giving a name to a pin: if the pin belongs to an interface start the name with the name of that interface followed by a period. If the rest of the name is more than one word, separate the words by a hyphen. Examples: *file.save*, *file.save-as*, *file.convert-to-uppercase*, where the interface name is *file*.
 
 ## A.3 Pin contracts and types
 
@@ -32,25 +32,18 @@ The prompt for a node should be a clear, concise and up-to-date description of i
 
   * `role: "owner"` means: **this pin defines the payload type** and is authoritative.
   * `role: "follower"` means: **this pin adapts** to the connected owner’s contract.
-  * If `role` is `"owner"`, the pin contract must include the payload type
-  * If `role` is `"follower"`, the pin must *not* include the payload type
 
-A follower pin has no payload type by itself; it becomes meaningful only when connected. When a follower pin is disconnected, it stays a follower and has no stored payload type.
 
 For input/output pins, the payload type is a single type that refers to a type in the `types`section. For request/reply pins the payload type consists of two types: the request payload and the reply payload. Both types also refer to a type in the `types` section.
 
-A contract can thus have three different forms:
+A follower pin always copies the payload type of the owner pin it is connected to. An unconnected follower pin will be given the payload 'any'.
 
-* for pins that follow it is simply
+Examples:
+
+* for input or output pins where the pin follows 
 ```json
 "contract" : {
-  "role": "follower"
-}
-```
-* for input or output pins that own the contract it is
-```json
-"contract" : {
-  "role": "owner",
+  "role": "follower",
   "payload" : "vmbluType"
 }
 ```
@@ -87,9 +80,9 @@ An input pin of the containing group node is connected to an input of a node ins
 
 For a connection between two pins also the contracts of the pins have to be checked.
 
-* **owner ↔ follower**: valid. The follower must conform to the owner’s `payload`.
+* **owner ↔ follower**: valid. The follower must conform to the owner’s `payload`. If there is a conflict, copy the owners's payload type to the follower.
 * **owner ↔ owner**: valid only if both owners’ `payload` values match. If they do not match, the connection is invalid unless one side is changed to `follower`.
-* **follower ↔ follower**: invalid. To make it valid, upgrade one side to `owner` and define its `vmbluType`.
+* **follower ↔ follower**: invalid. To make it valid, upgrade one side to `owner` and match the follower's contract payload to that of the owner.
 
 Implementation obligations:
 

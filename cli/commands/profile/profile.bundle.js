@@ -5,10 +5,11 @@ import { fileURLToPath } from 'url';
 import ts from 'typescript';
 import { SyntaxKind, Project } from 'ts-morph';
 import fs from 'fs/promises';
+import { createRequire } from 'module';
 
 // use path variables later ?
 // const RR = new Path2D()
-const shape$1 = {
+const shape = {
 
 // xy position, w width, h height, r radius at the corner
  _roundedRect(ctx, x, y, w, h, r) {
@@ -609,7 +610,7 @@ hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     ctx.beginPath();
     ctx.fillStyle = cRect;
-    shape$1._roundedRect(ctx,x,y,w,h,r);
+    shape._roundedRect(ctx,x,y,w,h,r);
     ctx.fill();
 
     // center the text
@@ -622,7 +623,7 @@ vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     ctx.beginPath();
     ctx.fillStyle = cRect;
-    shape$1._roundedRect(ctx,x,y,w,h,r);
+    shape._roundedRect(ctx,x,y,w,h,r);
     ctx.fill();
 
     ctx.save();                 // Save the current state
@@ -681,13 +682,13 @@ hCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
     ctx.beginPath();
     ctx.fillStyle = cRect;
     //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
-    shape$1._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
+    shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
     ctx.fill();
 
     // black line inside
     ctx.beginPath();
     ctx.strokeStyle = cText;
-    shape$1._roundedRect(ctx,x,y,w,h,r);
+    shape._roundedRect(ctx,x,y,w,h,r);
     ctx.stroke();    
 
     // text
@@ -702,13 +703,13 @@ vCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
     ctx.beginPath();
     ctx.fillStyle = cRect;
     //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
-    shape$1._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
+    shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
     ctx.fill();
 
     // black line inside
     ctx.beginPath();
     ctx.strokeStyle = cText;
-    shape$1._roundedRect(ctx,x,y,w,h,r);
+    shape._roundedRect(ctx,x,y,w,h,r);
     ctx.stroke();    
 
     ctx.save();                 // Save the current state
@@ -886,7 +887,7 @@ hAlias(ctx,text,rc,cRect,font) {
 
     ctx.beginPath();
     ctx.fillStyle = cRect;
-    shape$1._roundedRect(ctx, rc.x - ws,rc.y,rc.w + 2*ws,rc.h, 5);
+    shape._roundedRect(ctx, rc.x - ws,rc.y,rc.w + 2*ws,rc.h, 5);
     ctx.fill();
 
     // text
@@ -1932,6 +1933,7 @@ const color = {
     orangeT:'#ff800022',
     green:  '#7fff00',
     red:    '#FE2712', 
+    redT:    '#FE271222', 
     yellow: '#fefe33',
     pink:   '#f9d5e5',
     purple: '#ff80ff',
@@ -1978,19 +1980,19 @@ function StyleFactory() {
         wCursor: 2, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
     }; 
     this.look = {
-        wBox:150, hTop:20, hBottom:6, wExtra:50, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5,
+        wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5, 
     }; 
     this.box = {
         rCorner:7.5,  wLine:2, cLine: color.shade1, cBackground:color.shade2, 
-        cContainer: color.yellow, cSelected: color.orangeT, dxSel:10, dySel:10, wLineSel: 1
+        cContainer: color.yellow, cSelected: color.orangeT, cAlarm: color.redT, dxSel:10, dySel:10, wLineSel: 1
     };
     this.header = {
         font: "normal 13px tahoma", hHeader:15, hTitle:15, wLine:1, wChar:6, rCorner:7.5,
         cTitle: color.shade3, cBackground: color.shade1, cBad: color.red, cHighLighted: color.purple
     };
     this.icon = {
-        wIcon:8, hIcon:10, blinkRate: 200, nBlinks: 4,
-        cSrc:color.shade3, cLink: color.shade3, cBadLink: color.red, cHighLighted: color.purple,
+        wIcon:8, hIcon:10, blinkRate: 500, nBlinks: 2,
+        cSrc:color.shade3, cLink: color.shade3, cBadLink: color.red, cAlarm: color.red, cHighLighted: color.purple,
         cGroup:color.shade3, cCog: color.shade3, cPulse: color.shade3, cComment: color.shade3,
         xPadding:6, yPadding:2, xSpacing:3,
     };
@@ -2002,7 +2004,7 @@ function StyleFactory() {
         cSelected: color.orange, cHighLighted: color.purple
     };
     this.pin = {
-        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:6,
+        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7,
         cNormal: color.shade1, cSelected: color.orange, cHighLighted: color.purple, 
         cConnected: color.shade4, cAdded: color.green,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
         fMulti: "italic 11px tahoma"
@@ -2040,16 +2042,19 @@ function StyleFactory() {
         cClose: color.vIcon1, cFullscreen: color.vIcon2, cCalibrate: color.vIcon3, cGrid: color.vIcon4
     };
     this.placement = {
-        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270, spacing: 50, tolerance: 10
+        marginTop: 30, marginLeft: 90, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 300, spacing: 50, tolerance: 10
+    };
+    this.autoroute = {
+        xMargin: 15, xDelta: 5, yDelta: 15
     };
 }
 StyleFactory.prototype = {
 
     // changes to a new style and returns the previous style
     switch( newStyle ) {
-        if (!newStyle) return style$1
-        const previous = style$1;
-        style$1 = newStyle;
+        if (!newStyle) return style
+        const previous = style;
+        style = newStyle;
         return previous
     },
 
@@ -2101,7 +2106,7 @@ StyleFactory.prototype = {
 };
 
 // The style that is active at a given moment. Set to a default style.
-let style$1 = new StyleFactory().adapt("#00aaff");
+let style = new StyleFactory().adapt("#00aaff");
 
 function TextEdit() {
 
@@ -2477,22 +2482,19 @@ function updateDerivedSettings(original, derived) {
     return derived;
 }
 
-var version = "0.4.1";
-var schemaVersion = "0.9.1";
-var pckg = {
-	version: version,
-	schemaVersion: schemaVersion};
+// Auto-generated by cli/scripts/generate-schema-version.js
+const SCHEMA_VERSION = "0.9.2";
 
 function ModelHeader() {
 
     const today = new Date();
 
     // Set the schema version in the header
-    this.schema = pckg.schemaVersion;
+    this.version = SCHEMA_VERSION;
     this.created = today.toLocaleString();
     this.saved = today.toLocaleString();
     this.utc = today.toJSON();
-    this.style = style$1;
+    this.style = style;
     this.runtime = '@vizualmodel/vmblu-runtime';
 }
 ModelHeader.prototype = {
@@ -2506,10 +2508,10 @@ ModelHeader.prototype = {
         this.created = raw.created?.slice() ?? today.toLocaleString(),
         this.saved = raw.saved?.slice() ?? today.toLocaleString(),
         this.utc = raw.utc?.slice() ?? today.toJSON();
-        this.schema = raw.schema?.slice() ?? 'no version';
+        this.version = raw.version?.slice() ?? 'no version';
 
         // Create a style for the model
-        this.style = style$1.create(raw.style);
+        this.style = style.create(raw.style);
 
         // get the runtime
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime';
@@ -2608,6 +2610,10 @@ async function post(resource,body,mime='text/plain') {
 // regular expression for a file name and path
 // The file extension is handled separately when required
 
+function normalizeSeparators(value) {
+    return (typeof value === 'string') ? value.replace(/\\/g, '/') : value
+}
+
 function changeExt(path, newExt) {
 
     let n = path.lastIndexOf('.');
@@ -2628,6 +2634,23 @@ function getSplit(path)  {
     return {
         name: p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
         ext: p2 > 0 ? fileName.slice(p2) : (p1 > 0 ? fileName.slice(p1) : null)
+    }
+}
+
+// splits 'name.ext' in 'name' and '.ext' and 'name.kind.ext' if 'file' '.kind' and '.ext'
+function split(path)  {
+
+    // we only need the fileName
+    let slash = path.lastIndexOf('/');
+    const fileName = slash > 0 ? path.slice(slash+1) : path;
+
+    let p1 = fileName.lastIndexOf('.');
+    let p2 = fileName.lastIndexOf('.', p1-1);
+    
+    return {
+        name:   p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
+        kind:   p2 > 0 ? fileName.slice(p2,p1) : null,
+        ext:    p1 > 0 ? fileName.slice(p1) : null
     }
 }
 
@@ -2657,6 +2680,21 @@ function nameOnly(path) {
     return (period > slash) ? path.slice(slash+1, period) : path.slice(slash+1)
 }
 
+
+// // returns the path as in the workspace
+// // TWO FUNCTIONS BELOW TO BE IMPROVED !!!
+// export function wsPath( arlPath) {
+//     // find the second slash (path starts with a slash)
+//     let slash = arlPath.indexOf('/', 1)
+//     return slash < 0 ? arlPath : arlPath.slice(slash)
+// }
+
+// export function arlPath( wsPath) {
+//     return '/public' + wsPath
+// }
+
+// breaks an entry into its different parts
+
 // returns the last i where the strings are the same
 function commonPart(a,b) { 
     const max = a.length < b.length ? a.length : b.length;
@@ -2668,6 +2706,9 @@ function commonPart(a,b) {
 // relativePath  /A/B/C/filea , /A/B/G/fileb => ../C/filea
 // relativePath  /A/B/C/filea , /A/B/G/F/fileb => ../../C/filea
 function relative(path, ref) {
+
+    path = normalizeSeparators(path);
+    ref = normalizeSeparators(ref);
 
     // find it - but change to lowercase first
     const common = commonPart( path,ref );
@@ -2707,10 +2748,24 @@ function relative(path, ref) {
 }
 
 // domain path resource are the shorthands as they appear in the workspace file 
+function stringCheck(userPath) {
+    if (typeof userPath === 'string') return userPath;
+    if (userPath && typeof userPath === 'object') {
+        if (typeof userPath.fsPath === 'string') return userPath.fsPath;
+        if (typeof userPath.path === 'string') return userPath.path;
+        if (typeof userPath.url === 'string') return userPath.url;
+    }
+    return null;
+}
+
+// domain path resource are the shorthands as they appear in the workspace file 
 function ARL$1(userPath) {
 
+    const stringPath = stringCheck(userPath);
+    const normalizedPath = normalizeSeparators(stringPath ?? '');
+
     // the reference to the ARL as entered by the user
-    this.userPath = userPath;
+    this.userPath = normalizedPath;
 
     // the resolved url
     this.url = null;
@@ -2790,6 +2845,8 @@ setWSReference(wsRef) {},
 // resolve a path wrt this arl - returns a new arl !
 resolve(userPath) {
 
+    const normalizedPath = normalizeSeparators(userPath);
+
     // relative path: check that we have a url
     if (!this.url) {
         console.error(`cannot resolve ${userPath} - missing reference`);
@@ -2797,10 +2854,10 @@ resolve(userPath) {
     }
 
     // make an arl
-    const arl = new ARL$1(userPath);
+    const arl = new ARL$1(normalizedPath);
 
     // and make a url that is relative to this
-    arl.url = new URL(userPath, this.url);
+    arl.url = new URL(normalizedPath, this.url);
 
     // done
     return arl
@@ -2977,6 +3034,324 @@ async jsImport() {
 // },
 };
 
+const RawHandling = {
+
+// gets the blu and viz file - only fails if blu is missing
+async fetch() {
+
+    // if the extension is json it is another node file
+    if (this.blu.arl) {
+
+        try {
+            const [bRaw, vRaw] = await Promise.all([
+                this.blu.arl.get('json'),
+                this.viz.arl.get('json').catch(error => {
+                    // viz file not found - return null which makes the promise resolve successfully !
+                    console.warn(`Viz file failed to load, proceeding with null: ${error.message}`);
+                    return null;
+                })
+            ]);
+
+            // set the fresh bit 
+            this.blu.is.fresh = true;
+            this.viz.is.fresh = true;
+
+            return {bRaw, vRaw};
+        }
+        catch( error ) {
+            // This ONLY catches the rejection from pBlu, the mandatory promise.
+            console.warn(`${this.blu.arl.userPath} could not be found or is not valid.`, error);
+            return {bRaw:null, vRaw:null};
+        }
+    }
+
+    else if (this.bundle.arl) {
+
+        const rawCode = await this.bundle.arl.get('text')
+        .catch( error => {
+            console.error(`${this.bundle.arl.userPath} is not a valid bundle`, error);
+        });
+
+        //check
+        if (!rawCode) return {bRaw:null, vRaw: null}
+
+        // analyze the source to find the raw this
+        const raw = this.analyzeJSLib(rawCode);
+
+        // error if failed
+        if (! raw) console.error(`model not found in bundle: ${this.bundle.arl.userPath}`);
+
+        // we are done 
+        return {bRaw:raw, vRaw: null}
+    }
+    // it's one or the other !
+    else return {bRaw:null, vRaw: null}
+},
+
+// get the raw model from two files and combine in one
+async getRaw() {
+
+    // get both parts of a model
+    const {bRaw:bRaw, vRaw:vRaw} = await this.fetch();
+
+    // we need a blu file , and it should have at least a header
+    if (!bRaw || !bRaw.header) return null;
+
+    // make the header
+    this.joinHeader(bRaw, vRaw);
+
+    // combine bRaw and vRaw in bRaw
+    if (vRaw?.root) this.joinNode(bRaw.root, vRaw.root); 
+
+    // set raw in the model
+    this.raw = bRaw;
+
+    // We also return the result
+    return bRaw
+},
+
+saveRaw() {
+
+    // now split the result in two parts
+    const split = this.splitRaw(this.raw);
+
+    // and return raw and the stringified results
+    const blu = JSON.stringify(split.blu,null,2);
+    const viz = JSON.stringify(split.viz,null,2);
+
+    // save both parts of the model
+    if (blu) this.blu.arl.save( blu );
+    if (viz) this.viz.arl.save( viz );
+},
+
+// Splits raw into a part for the blu file and the viz file
+splitRaw(raw) {
+
+    // Split the raw model in a blu and viz section
+    const sHeader = this.splitHeader(raw.header);
+    const sRoot = this.splitNode(raw.root);
+
+    const blu = {
+        header: sHeader.blu
+    };
+
+    if (raw.imports) blu.imports = raw.imports;
+    if (raw.factories) blu.factories = raw.factories;
+    if (raw.types) blu.types = raw.types;
+    blu.root = sRoot.blu;
+
+    const viz = {
+        header: sHeader.viz,
+        root: sRoot.viz
+    };
+
+    return { blu, viz}
+},
+
+splitHeader(rHeader) {
+
+    const {version, created, saved, utc, runtime, style} = {...rHeader};
+    const headerVersion = version ?? 'no version';
+    const styleRgb = (typeof style === 'string') ? style : style?.rgb ?? style?.color ?? null;
+
+    return { 
+            blu : {version: headerVersion, created, saved, utc, runtime},
+            viz : {version: headerVersion, utc, style: styleRgb}
+    }
+},
+
+splitInterfaces(rawInterfaces) {
+
+    // check
+    if (! rawInterfaces?.length) return {blu:[], viz:[]}
+
+    // map
+    const blu = rawInterfaces.map( rif => {
+
+        const pins = rif.pins.map( pin => {
+                const bluPin = {    name: pin.name, 
+                                    kind: pin.kind,
+                                    contract: pin.contract
+                                };
+                if (pin.prompt?.length) bluPin.prompt = pin.prompt;
+                return bluPin
+            });
+        return { interface: rif.interface, pins}
+    });
+    const viz = rawInterfaces.map( rif => {
+
+        const pins = rif.pins.map( pin => convert.pinToString(pin));
+        return {interface: convert.interfaceToString(rif), pins}
+    });
+
+    return {blu, viz}
+},
+
+splitNode(rNode) {
+
+    const interfaces = this.splitInterfaces(rNode.interfaces);
+
+    const blu = {
+        kind: rNode.kind,
+        name: rNode.name,
+    };
+    if (rNode.label) blu.label = rNode.label;
+    if (rNode.prompt) blu.prompt = rNode.prompt;
+
+    const viz = {
+        kind: rNode.kind,
+        name: rNode.name,
+        rect: convert.rectToString(rNode.rect),     
+    };
+
+    if (rNode.kind == 'dock') {
+        blu.link = rNode.link;
+        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
+        if (rNode.sx) blu.sx = rNode.sx;
+        if (rNode.dx) blu.dx = rNode.dx;
+
+        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
+    }
+    else if (rNode.kind == 'source') {
+        blu.factory = rNode.factory;     
+        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
+        if (rNode.sx) blu.sx = rNode.sx;
+        if (rNode.dx) blu.dx = rNode.dx; 
+
+        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
+    }
+    else if (rNode.kind == 'group') {
+
+        const splitNodes = rNode.nodes.map( rNode => this.splitNode(rNode));
+
+        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
+        if (rNode.sx) blu.sx = rNode.sx;
+        if (rNode.dx) blu.dx = rNode.dx;
+        if (splitNodes.length) blu.nodes = splitNodes.map( node => node.blu );
+        if (rNode.connections) blu.connections = rNode.connections;
+
+        if (rNode.view) viz.view = convert.toViewStrings(rNode.view); 
+        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
+        if (rNode.pads) viz.pads = rNode.pads.map( pad => convert.padToString(pad));
+        if (splitNodes.length) viz.nodes = splitNodes.map( node => node.viz );
+        if (rNode.buses) viz.buses = rNode.buses;
+        if (rNode.routes) viz.routes = rNode.routes;
+    }
+
+    return {blu, viz}
+},
+
+
+joinHeader(bRaw, vRaw) {
+    const vStyle = vRaw?.header?.style;
+    bRaw.header.style = (typeof vStyle === 'string') ? vStyle : style.rgb;
+    // this.header.cook(arl, bRaw.header)
+},
+
+joinNode(bNode, vNode) {
+
+    // The rectangle and the view of the node
+    bNode.rect = vNode.rect ? convert.stringToRect(vNode.rect) : null;
+
+    // The interfaces
+    if (bNode.interfaces?.length && vNode.interfaces?.length) this.joinInterfaces(bNode, vNode);
+
+    // group node specific
+    if (bNode.kind == "group") {
+
+        // The node view
+        bNode.view = vNode.view ? convert.fromViewStrings(vNode.view) : null;
+
+        // The pads
+        bNode.pads = vNode.pads ? vNode.pads.map( pad => convert.stringToPad(pad)) : [];
+
+        // The nodes
+        bNode.nodes = bNode.nodes?.map( bn => {
+            const vn = vNode.nodes?.find(vn => bn.name == vn.name);
+            if (vn) this.joinNode(bn, vn); 
+            return bn;
+        });
+
+        // copy the buses
+        bNode.buses = vNode.buses;
+
+        // copy the routes
+        bNode.routes = vNode.routes;
+    }
+},
+
+joinInterfaces(bNode, vNode) {
+
+    // first convert strings
+    vNode.interfaces = vNode.interfaces.map( iface => {
+        const vif = {...convert.stringToInterface(iface.interface)};
+        vif.pins = iface.pins.map( pin => convert.stringToPin(pin));
+        return vif
+    });
+
+    // combine b and v
+    bNode.interfaces = bNode.interfaces.map( bInterface => {
+        const vInterface = vNode.interfaces.find( vInterface => vInterface.text == bInterface.interface);
+        if (vInterface) {
+            bInterface.pins = bInterface.pins.map( pin => {
+                const vpin = vInterface.pins.find( vpin => vpin.name == pin.name);
+                return vpin ? {...pin, wid:vpin.wid, left: vpin.left} : {...pin, wid:0, left: false};
+            });
+        }
+        return bInterface
+    });
+},
+
+// Finds the model text in the library file...
+analyzeJSLib(rawCode) {
+
+    // find the libname in the code
+    let start = rawCode.indexOf('"{\\n');
+    let end = rawCode.indexOf('\\n}";', start);
+
+    // check
+    if (start < 0 || end < 0) return null
+
+    // get the part between starting and ending bracket
+    let rawText = rawCode.slice(start+1,end+3);
+
+    // allocate an array for the resulting text
+    const cleanArray = new Array(rawText.length);
+    let iClean = 0;
+    let iRaw = 0;
+
+    // remove all the scape sequences
+    while (iRaw < rawText.length) {
+
+        // get the first character
+        const char1 = rawText.charAt(iRaw++);
+
+        // if not a backslash, just copy
+        if (char1 != '\\') {
+            cleanArray[iClean++] = char1;
+        }
+        else {
+
+            // get the character that has been escaped 
+            const char2 = rawText.charAt(iRaw++);
+
+            // handle the different escape sequences
+            if (char2 == 'n') 
+                cleanArray[iClean++] = '\n';
+            else if (char2 == '"') 
+                cleanArray[iClean++] = '"';
+        }
+    }
+
+    // combine all characters into a new string
+    const cleanText = cleanArray.join('');
+
+    // and parse
+    return JSON.parse(cleanText)
+},
+
+};
+
 const ProfileHandling = {
 
 // reads the source doc file and parses it into documentation
@@ -2998,14 +3373,17 @@ async handleSourceMap() {
 // Reads the sourceMap of the model
 async readSourceMap() {
 
+    // get the model arl
+    const arl = this.getArl();
+
     // get the full path
-    const fullPath = this.arl?.getFullPath();
+    const fullPath = arl?.getFullPath();
     
     // check
     if (!fullPath) return null
 
     // make an arl 
-    const sourceMapArl = this.arl.resolve(removeExt(fullPath) + '.prf.json');
+    const sourceMapArl = arl.resolve(removeExt(fullPath) + '.src.prf');
 
     // get the file
     return await sourceMapArl.get('json')
@@ -3144,6 +3522,163 @@ getOutputPinProfile(pin) {
     // done
     return multiProfile
 },
+
+getContract(pin) {
+
+    // check
+    if (!pin?.contract) return null
+
+    // normalize types
+    const types = typeof this.vmbluTypes === 'string' 
+        ? JSON.parse(this.vmbluTypes) 
+        : (this.vmbluTypes ?? null);
+
+    const role = pin.contract.owner ? 'owner' : 'follower';
+    const payload = pin.contract.payload ?? 'any';
+
+    // render a vmbluType into structured lines
+    const renderType = (typeName, indentLevel = 0, stack = new Set()) => {
+        const indent = '  '.repeat(indentLevel);
+        const lines = [];
+        const tokens = [];
+        const pushLine = (parts) => {
+            const text = indent + parts.map(p => p.text).join('');
+            lines.push(text);
+            tokens.push({ indent: indentLevel, parts });
+        };
+
+        // no type means any
+        if (!typeName) {
+            pushLine([{ kind: 'type', text: 'any' }]);
+            return { lines, tokens, kind: 'primitive' }
+        }
+
+        // unknown or primitive
+        if (!types || !types[typeName]) {
+            pushLine([{ kind: 'type', text: typeName }]);
+            return { lines, tokens, kind: 'primitive' }
+        }
+
+        const def = types[typeName];
+        const kind = def.kind ?? (def.fields ? 'object' : def.items ? 'array' : def.external ? 'external' : 'primitive');
+        const summary = def.summary ? ` - ${def.summary}` : '';
+        pushLine([
+            { kind: 'type', text: typeName },
+            { kind: 'kind', text: ` (${kind})` },
+            ...(summary ? [{ kind: 'summary', text: summary }] : [])
+        ]);
+
+        if (kind === 'object') {
+            const required = new Set(def.required ?? []);
+            const fields = def.fields ?? {};
+            for (const [name, field] of Object.entries(fields)) {
+                const fieldType = field.vmbluType ?? 'any';
+                const fieldSummary = field.summary ? ` - ${field.summary}` : '';
+                const mark = required.has(name) ? '*' : '';
+                tokens.push({
+                    indent: indentLevel + 1,
+                    parts: [
+                        { kind: 'field', text: `${name}${mark}` },
+                        { kind: 'punct', text: ': ' },
+                        { kind: 'type', text: fieldType },
+                        ...(fieldSummary ? [{ kind: 'summary', text: fieldSummary }] : [])
+                    ]
+                });
+                lines.push(`${indent}  ${name}${mark}: ${fieldType}${fieldSummary}`);
+
+                if (types[fieldType] && !stack.has(fieldType)) {
+                    stack.add(fieldType);
+                    const child = renderType(fieldType, indentLevel + 2, stack);
+                    stack.delete(fieldType);
+                    lines.push(...child.lines);
+                    tokens.push(...child.tokens);
+                }
+            }
+        }
+        else if (kind === 'array') {
+            const itemType = def.items?.vmbluType ?? 'any';
+            const itemSummary = def.items?.summary ? ` - ${def.items.summary}` : '';
+            tokens.push({
+                indent: indentLevel + 1,
+                parts: [
+                    { kind: 'field', text: 'items' },
+                    { kind: 'punct', text: ': ' },
+                    { kind: 'type', text: itemType },
+                    ...(itemSummary ? [{ kind: 'summary', text: itemSummary }] : [])
+                ]
+            });
+            lines.push(`${indent}  items: ${itemType}${itemSummary}`);
+
+            if (types[itemType] && !stack.has(itemType)) {
+                stack.add(itemType);
+                const child = renderType(itemType, indentLevel + 2, stack);
+                stack.delete(itemType);
+                lines.push(...child.lines);
+                tokens.push(...child.tokens);
+            }
+        }
+        else if (kind === 'external') {
+            const symbol = def.external?.symbol;
+            const library = def.external?.library;
+            if (symbol) {
+                const full = library ? `${library}.${symbol}` : symbol;
+                tokens.push({
+                    indent: indentLevel + 1,
+                    parts: [
+                        { kind: 'field', text: 'symbol' },
+                        { kind: 'punct', text: ': ' },
+                        { kind: 'type', text: full }
+                    ]
+                });
+                lines.push(`${indent}  symbol: ${full}`);
+            }
+        }
+
+        return { lines, tokens, kind, summary: def.summary ?? null }
+    };
+
+    // payload can be a single type or a request/reply pair
+    if (payload && typeof payload === 'object') {
+        const requestType = payload.request ?? 'any';
+        const replyType = payload.reply ?? 'any';
+        const request = renderType(requestType);
+        const reply = renderType(replyType);
+
+        const lines = [
+            'request:',
+            ...request.lines.map(line => `  ${line}`),
+            'reply:',
+            ...reply.lines.map(line => `  ${line}`)
+        ];
+        const shift = (tokens, by) => tokens.map(t => ({ ...t, indent: t.indent + by }));
+        const tokens = [
+            { indent: 0, parts: [{ kind: 'header', text: 'request' }] },
+            ...shift(request.tokens, 1),
+            { indent: 0, parts: [{ kind: 'header', text: 'reply' }] },
+            ...shift(reply.tokens, 1)
+        ];
+
+        return {
+            role,
+            payload,
+            request: { type: requestType, ...request, text: request.lines.join('\n') },
+            reply: { type: replyType, ...reply, text: reply.lines.join('\n') },
+            lines,
+            tokens,
+            text: lines.join('\n')
+        }
+    }
+
+    const rendered = renderType(payload);
+    return {
+        role,
+        payload,
+        type: payload,
+        ...rendered,
+        tokens: rendered.tokens,
+        text: rendered.lines.join('\n')
+    }
+}
 
 };
 
@@ -3819,384 +4354,6 @@ runtime.start()
     }
 };
 
-const LibHandling = {
-
-    toJavascriptLib(libPath) {
-
-        // check if we have a path name
-        if (!libPath) return 
-
-        const modelArl = this.getArl();
-        
-        // save the app path in the document
-        if (this.target.library?.userPath !== libPath) {
-
-            // make the app arl
-            this.target.library = modelArl.resolve(libPath);
-        }
-
-        // notation
-        const libArl = this.target.library;
-
-        // the index file to find sources that do not have an explicit factory arl
-        const indexArl = modelArl.resolve('index.js');
-        
-        // save the build lib file
-        const lib = this.makeJSLib(this.view.root, modelArl, libArl, indexArl);
-
-        // save the lib
-        libArl.save(lib);
-    },
-
-    // save the file that can be used to build the lib
-    makeJSLib(node, modelArl, libArl, indexArl) {
-
-        // assemble the nodes and files needed into the imports array..[{arl, items: [] }]
-        let imports = [];
-
-        // put the index file as the first on the imports
-        imports.push({arl:indexArl, items:[]});
-
-        // the files and nodes used in this model
-        node.collectImports(imports);
-
-        // make a javascript compliant name
-        const jsRootName = convert.nodeToFactory(nameOnly(libArl.userPath));
-
-        // The header
-        const today = new Date();
-        const sHeader =    '// ------------------------------------------------------------------'
-                        +`\n// Lib: ${jsRootName}`
-                        +`\n// Model File: ${modelArl.userPath}`
-                        +`\n// Lib   File: ${libArl.userPath}`
-                        +`\n// Creation date ${today.toLocaleString()}`
-                        +'\n// ------------------------------------------------------------------';
-
-        // export the imported source types & looks that are not part of the libraries
-        const sImports = '\n\n//Export' + this.JSImportExportString(imports,'\nexport ', libArl); 
-
-        // derive the name for finding the 
-        const modelFile = './' + fileName(modelArl.userPath);
-
-        // import/export the model that was saved - MAIN PATH IS WRONG
-        const sModel =   `\n\n// The model\nimport ${jsRootName} from '${modelFile}'`+`\nexport {${jsRootName}}`;
-
-        // combine all parts
-        return sHeader + sImports + sModel
-    },
-};
-
-function ModelBlueprint(arl) {
-    
-    // check if model or library...
-    this.is = {
-        selectable: false,  // will be set if this model is visible in the select node popup
-        main: false,        // set to true for the main model
-    };
-
-    this.blu = {
-        arl: null,
-        is : {
-            dirty: false,   // set to true if the model has changed and the file still needs to be synced
-            fresh: false    // true if raw has just been updated from file
-        }
-    };
-    this.viz = {
-        arl: null,
-        is : {
-            dirty: false,
-            fresh: false
-        }       
-    };
-
-    this.bundle = {
-        arl: null
-    };
-
-    this.target = {
-        application: null,
-        library:null
-    };
-
-    // The header of the model
-    this.header = new ModelHeader();
-
-    // The libraries that the model can use
-    this.libraries = new ModelMap();
-
-    // The types that are used in message contracts in this model
-    this.vmbluTypes = null;
-
-    // the model in the resource - json, but must still be cooked
-    this.raw = null;
-
-    // the map of the source code for the model, organised per node and pin (it is a map of maps)
-    this.sourceMap = null;
-
-    // now analyze the file type and set the arls
-    this.analyzeArl(arl);
-}
-ModelBlueprint.prototype = {
-
-    fullPath() {
-
-        return this.blu.arl ? this.blu.arl.getFullPath() : this.bundle.arl ? this.bundle.arl.getFullPath() : null
-    },
-
-    getArl() {
-        return this.blu.arl ? this.blu.arl : this.bundle.arl ? this.bundle.arl : null;
-    },
-
-    isBlueprint() {
-        return this.blu.arl != null;
-    },
-
-    isBundle() {
-        return this.bundle.arl != null;
-    },
-
-    analyzeArl(arl) {
-
-        if(!arl) return
-
-        // split the name in a name and a - possibly double -  extension
-        const split = getSplit(arl.userPath);
-
-        // check the extension
-        if (split.ext === '.blu.json') {
-            this.blu.arl = arl;
-            this.viz.arl = arl.resolve(split.name + '.viz.json');
-        }
-        else if ((split.ext === '.js') || (split.ext === '.mjs')) {
-            this.bundle.arl = arl;
-        }
-    },
-
-    makeKey() {
-        //this.key = convert.djb2(this.vmblu.arl.getFullPath())
-    },
-
-    copy() {
-
-        const newModel = new ModelBlueprint(this.arl);
-
-        //newModel.key = this.key ? this.key.slice() : null
-        newModel.header = {...this.header};
-        newModel.raw = this.raw;
-
-        return newModel
-    },
-
-    setRaw(newRaw) {
-        this.raw = newRaw;
-        this.blu.is.dirty = false;
-        this.viz.is.dirty = false;
-    },
-
-    findRawNode(lName) {
-
-        const root = this.raw?.root;
-        if (!root) return null;
-
-        // split and reverse
-        const parts = convert.splitLink(lName); // name @ group1 @ group2 => now: ['group2', 'group1', 'name']
-
-        // if there is just one name (no group names) look in all groups...
-        if (parts.length == 1) {
-            if (lName == root.name) return root
-            return root.nodes ? this.findRawRecursive(root.nodes, lName) : null;
-        }
-
-        // we use the group names
-        let search = root;
-
-        // walk through the parts of the name...
-        for (const name of parts) {
-
-            search = search.nodes?.find(n => name === n.name);
-            if (!search) return null;
-        }
-
-        return search;
-    },
-
-    // find a node recursively in the raw nodes - we do a breadth first search!
-    findRawRecursive(nodes, name) {
-
-        // first search in the list of nodes
-        for (const rawNode of nodes) {
-            // get the name
-            if (name == rawNode.name) return rawNode
-        }
-
-        // now look in the subnodes for each node
-        for (const rawNode of nodes) {
-
-            // check if the node is a group node
-            if (rawNode.kind == 'group' && rawNode.nodes.length > 0) {
-
-                // if there are sub-nodes, maybe the node is there ?
-                const found = this.findRawRecursive(rawNode.nodes, name);
-                if (found) return found
-            }
-        }
-        return null
-    },
-
-    setSelectable() {
-        this.is.selectable = true;
-    },
-
-    // cook some parts of the model ...
-    preCook() {
-        this.header.cook(this.getArl(), this.raw.header);
-        this.vmbluTypes = this.raw.types ? JSON.parse(this.raw.types) : null;
-    },
-
-    // cookLibraries(arlRef, rawLibs) {
-
-    //     // get the models for the libraries
-    //     const newModels = this.libraries.newModels(arlRef, rawLibs)
-
-    //     // add the model to the modellist - the model is not fetched yet 
-    //     // this happens at the end when the model is loaded (see library.load)
-    //     for(const model of newModels) this.libraries.add(model)
-    // },
-
-};
-
-Object.assign(ModelBlueprint.prototype, ProfileHandling, McpHandling, AppHandling, LibHandling);
-
-// The model file uses a model map
-function ModelMap() {
-
-    // the key to the map is the full path - the value is a model or an array of models...
-    this.map = new Map();
-}
-ModelMap.prototype = {
-
-    reset() {
-        this.map.clear();
-    },
-
-    size() {
-        return this.map.size
-    },
-
-    // New models are returned in an array but not added to the map
-    newModels(ref, rawModels) {
-
-        // a list of models that are new, i.e. not yet in the ModelMap
-        const modelList=[];
-
-        // check
-        if (rawModels.length < 1) return modelList
-
-        // for each model in the array
-        for (const rawModel of rawModels) {
-
-            // now we have to resolve the user path to an absolute path
-            const arl = ref.resolve(rawModel);
-
-            // check if we have already handled this file...
-            if ( this.contains(arl) ) continue
-
-            // create the new model - there is no uid !
-            const newModel = new ModelBlueprint(arl);
-
-            // also add it to the new model list
-            modelList.push(newModel);
-        }
-
-        // return the list of models that are not yet in the map
-        return modelList
-    }, 
-    
-    add(model) {
-
-        // get the full path
-        const fullPath = model.fullPath();
-
-        if (!fullPath) return null;
-
-        // check if the key is already in the map
-        const storedLink = this.map.get(fullPath);
-
-        // if the stored model is for a different arl, we have a key-clash and we have to add an array of links for the key
-        if ( storedLink ) return this
-
-        // just add the model to the map
-        this.map.set(fullPath, model);
-        
-        // return the linkmap
-        return this
-    },
-
-    contains(arl) {
-
-        if (!arl) return true
-        return this.map.has(arl.getFullPath())
-    },
-
-    get(key) {
-        return this.map.get(key)
-    },
-
-    valuesArray() {
-        return Array.from(this.map.values())
-    },
-
-    all(f) {
-        const val = Array.from(this.map.values());
-        if (!val?.length) return []
-        return val.map( e => f(e))
-    },
-
-    // find the model if you only have the arl
-    findArl(arl) {
-
-        // check 
-        if (!arl) return null
-
-        for(const model of this.map.values()) {
-            if ( model.getArl()?.equals(arl)) return model
-        }
-        return null
-    },
-
-    cook(arlRef, rawModels) {
-
-        // get the models for the libraries
-        const newModels = this.newModels(arlRef, rawModels);
-
-        // add the model to the modellist - the model is not fetched yet 
-        // this happens at the end when the model is loaded (see library.load)
-        for(const model of newModels) this.add(model);
-    },
-
-/**** WE NEED A COMPILER HERE  */
-
-    async load() {
-
-        // a promise array
-        const pList = [];
-
-        // build the library for the modcom in the node library....
-        for (const model of this.map.values()) {
-
-            // set it as selectable
-            model.is.selectable = true;
-
-            // get the content of the file
-            pList.push( compiler.getRaw(model) );
-        }
-
-        // wait for all...
-        await Promise.all(pList);
-    },
-
-};
-
 // pin is the receiving pin
 function RxPin(pin) {
 
@@ -4779,11 +4936,21 @@ const messageHandling = {
         });
     },
 
+    onSyncLinks() {
+        // read the document again and redraw
+        this.doc?.updateLinks().then(() => this.redraw());
+    },
+
+    onReloadModel() {
+
+        // reset the model
+        this.doc.reset();
+        
+        // load the model again...
+        this.doc.load().then(() => this.redraw());       
+    },
+
     onSyncModel() {
-        this.doc?.update().then(() => {
-            // and redraw
-            this.redraw();
-        });
     },
 
     onRecalibrate() {
@@ -4819,23 +4986,30 @@ const messageHandling = {
     onSizeChange(rect) {
         // check if the size is given
         if (!rect) return;
+        
+        // adjust - note that dpr will normally not change but it is possible (move to different monitor for example)
+        const dpr = rect.dpr ?? window.devicePixelRatio ?? 1;
 
-        // adjust
-        this.canvas.width = rect.w;
-        this.canvas.height = rect.h;
+        // set the witdh and height
+        this.canvas.width = Math.round(rect.w * dpr);
+        this.canvas.height = Math.round(rect.h * dpr);
 
-        // don't forget to adjust the style
+        // keep CSS size in sync with the logical size
         this.canvas.style.width = rect.w + 'px';
         this.canvas.style.height = rect.h + 'px';
 
         // Initialize the 2D context
         this.ctx = this.canvas.getContext('2d');
+        const sx = this.canvas.width / rect.w;
+        const sy = this.canvas.height / rect.h;
+        this.ctx.setTransform(sx, 0, 0, sy, 0, 0);
 
         // we have to reinit the canvas context
         this.setStyle();
 
         // if there is a document,
         if (this.doc) {
+            
             // change the size of the main view
             this.doc.view?.setRect(0, 0, rect.w, rect.h);
 
@@ -4975,7 +5149,8 @@ const messageHandling = {
                 const modcom = new ModelCompiler(doc.UID);
 
                 // encode the root node as a string, but convert it back to json !
-                doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
+                //doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
+                doc.model.raw = modcom.encode(toSave, doc.model);
             },
             cancel: () => {},
         });
@@ -5079,7 +5254,8 @@ const mouseHandling = {
         const hit = this.hit;
 
         // if there is an active selection we check if it was hit
-        if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
+        //if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
+        if ( this.selection.what == selex.freeRect || this.selection.what == selex.multiNode) {
             [hit.what, hit.selection, hit.node] = this.selection.hitTest(xyLocal);
             if (hit.what != zap.nothing) return 
         }
@@ -5227,7 +5403,7 @@ const pinAreaHandling = {
         this.what = selex.pinArea;
 
         // start a pin selection - make the rectangle as wide as the look
-        this.activate(rect.x - style$1.pin.wOutside, pos.y, rect.w + 2*style$1.pin.wOutside, 0, style$1.selection.cRect);
+        this.activate(rect.x - style.pin.wOutside, pos.y, rect.w + 2*style.pin.wOutside, 0, style.selection.cRect);
     },
 
     pinAreaResize(node, pos) {
@@ -5251,7 +5427,7 @@ const pinAreaHandling = {
 
             // highlight the pins that are selected
             this.widgets = [];
-            const dy = style$1.pin.hPin/2;
+            const dy = style.pin.hPin/2;
             for(const widget of node.look.widgets) {
 
                 if (widget.is.pin || widget.is.ifName) {
@@ -5307,9 +5483,9 @@ const pinAreaHandling = {
         const last = this.widgets.at(-1).rect;
 
         // draw a rectangle - make the rectangle as wide as the look
-        this.activate(  look.rect.x - style$1.pin.wOutside, first.y, 
-                        look.rect.w + 2*style$1.pin.wOutside, last.y + last.h - first.y, 
-                        style$1.selection.cRect);
+        this.activate(  look.rect.x - style.pin.wOutside, first.y, 
+                        look.rect.w + 2*style.pin.wOutside, last.y + last.h - first.y, 
+                        style.selection.cRect);
     },
 
     widgetsDrag(delta) {
@@ -5321,7 +5497,7 @@ const pinAreaHandling = {
         const node = this.widgets[0].node;
 
         // move the selection rectangle only in the y-direction, but stay in the node !
-        if (this.rect.y + delta.y < node.look.rect.y + style$1.header.hHeader ) return
+        if (this.rect.y + delta.y < node.look.rect.y + style.header.hHeader ) return
         if (this.rect.y + delta.y > node.look.rect.y + node.look.rect.h) return
 
         // move as required
@@ -5487,7 +5663,7 @@ function Selection(view = null) {
     this.yWidget = 0;
 
     // The color of the selection - can change
-    this.color = style$1.selection.cRect;
+    this.color = style.selection.cRect;
 
     // the selection type
     this.what = selex.nothing;
@@ -5514,13 +5690,13 @@ Selection.prototype = {
             const rc = this.rect;
 
             // draw the rectangle
-            shape$1.roundedRect(
+            shape.roundedRect(
                 ctx,
                 rc.x,
                 rc.y,
                 rc.w,
                 rc.h,
-                style$1.selection.rCorner,
+                style.selection.rCorner,
                 1,
                 this.color.slice(0, 7),
                 this.color
@@ -5576,7 +5752,8 @@ Selection.prototype = {
             ? false
             : this.what === selex.freeRect ||
                   this.what === selex.pinArea ||
-                  this.what === selex.ifArea;
+                  this.what === selex.ifArea ||
+                  this.what === selex.multiNode;
     },
 
     setRect(x, y, w, h) {
@@ -5718,10 +5895,7 @@ Selection.prototype = {
     hitTest(xyLocal) {
         // If there is a rectangle, we have a simple criterion
         if (
-            (this.what == selex.freeRect ||
-                this.what == selex.pinArea ||
-                this.what == selex.ifArea) &&
-            inside(xyLocal, this.rect)
+            (this.what == selex.freeRect || this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect)
         )
             return [zap.selection, this, null];
 
@@ -5820,10 +5994,10 @@ Selection.prototype = {
         const rc = this.rect;
 
         return {
-            x: rc.x - style$1.view.wExtra,
-            y: rc.y - style$1.view.hExtra,
-            w: rc.w + 2 * style$1.view.wExtra,
-            h: rc.h + 2 * style$1.view.hExtra,
+            x: rc.x - style.view.wExtra,
+            y: rc.y - style.view.hExtra,
+            w: rc.w + 2 * style.view.wExtra,
+            h: rc.h + 2 * style.view.hExtra,
         };
     },
 
@@ -6282,13 +6456,15 @@ const mouseDownHandling = {
                     case CTRL:{
 
                         // set the node as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
+                        // this.selection.singleNodeAndWidget(hit.node, hit.lookWidget)
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
 
                         // highlight the ifName group
                         this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
 
                         // set a selection rectangle around the selected pins
-                        this.selection.pinAreaRectangle();
+                        // this.selection.pinAreaRectangle()
 
                         // notation
                         const pins = this.selection.widgets;
@@ -6512,10 +6688,11 @@ const mouseDownHandling = {
             break
 
             case zap.selection: {
+                
                 switch(keys) {
 
                     case NONE:{
-                        if (this.selection.what == selex.freeRect){  
+                        if (this.selection.what === selex.freeRect || this.selection.what === selex.multiNode){  
                             
                             // drag the whole selection
                             editor.doEdit('selectionDrag', {view: this});
@@ -6850,7 +7027,7 @@ const mouseUpHandling = {
                 param.newPos = {x: node.look.rect.x, y: node.look.rect.y};
 
                 // do a node drag check - if too small remove from redox stack
-                if (blockDistance(param.oldPos, param.newPos) < style$1.look.smallMove) {
+                if (blockDistance(param.oldPos, param.newPos) < style.look.smallMove) {
 
                     // move the node back, but keep the y value to keep the 'snap' intact (?)
                     node.move({x: param.oldPos.x - param.newPos.x, y:0});
@@ -6966,7 +7143,8 @@ const mouseUpHandling = {
                 editor.getParam().newY = ifName.rect.y;
 
                 // done - set the widget and node as selected
-                this.selection.singleNodeAndWidget(ifName.node, ifName);
+                // this.selection.singleNodeAndWidget(ifName.node, ifName)
+                this.selection.interfaceSelect(ifName.node,ifName);
             }
             break;
 
@@ -7194,115 +7372,29 @@ function unGroup() {
 }
 
 const noLink$1 = [
-    {
-        text: 'new output',
-        char: 'o',
-        icon: 'logout',
-        state: 'enabled',
-        action: newOutput$1,
-    },
-    {
-        text: 'new input',
-        char: 'i',
-        icon: 'login',
-        state: 'enabled',
-        action: newInput$1,
-    },
-    {
-        text: 'new interface',
-        char: 'p',
-        icon: 'drag_handle',
-        state: 'enabled',
-        action: newInterfaceName$1,
-    },
-    {
-        text: 'new request',
-        char: 'q',
-        icon: 'switch_left',
-        state: 'enabled',
-        action: newRequest$1,
-    },
-    {
-        text: 'new reply',
-        char: 'r',
-        icon: 'switch_right',
-        state: 'enabled',
-        action: newReply$1,
-    },
-    {
-        text: 'in/out switch',
-        icon: 'cached',
-        state: 'disabled',
-        action: inOutSwitch$1,
-    },
-    {
-        text: 'add channel',
-        icon: 'adjust',
-        state: 'disabled',
-        action: channelOnOff,
-    },
-    {
-        text: 'paste pins',
-        char: 'ctrl v',
-        icon: 'content_copy',
-        state: 'enabled',
-        action: pasteWidgetsFromClipboard,
-    },
-    { text: 'profile', icon: 'info', state: 'disabled', action: showProfile },
-    {
-        text: 'all pins swap left right',
-        icon: 'swap_horiz',
-        state: 'enabled',
-        action: pinsSwap$1,
-    },
-    {
-        text: 'all pins left',
-        icon: 'arrow_back',
-        state: 'enabled',
-        action: pinsLeft$1,
-    },
-    {
-        text: 'all pins right',
-        icon: 'arrow_forward',
-        state: 'enabled',
-        action: pinsRight$1,
-    },
-    {
-        text: 'disconnect',
-        icon: 'power_off',
-        state: 'disabled',
-        action: disconnectPin,
-    },
-    { text: 'delete', icon: 'delete', state: 'enabled', action: deletePin },
+    {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput$1,},
+    {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput$1,},
+    {text: 'new interface',     char: 'p',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName$1,},
+    {text: 'new request',       char: 'q',  icon: 'switch_left',        state: 'enabled',        action: newRequest$1,    },
+    {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply$1,    },
+    {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch$1,    },
+    {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
+    {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
+    {text: 'profile',                       icon: 'info', state: 'disabled', action: showProfile },    
+    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
+    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
+    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
+    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },    
+    {text: 'delete',                        icon: 'delete', state: 'enabled', action: deletePin },
 ];
 
 const withLink$1 = [
-    { text: 'profile', icon: 'info', state: 'disabled', action: showProfile },
-    {
-        text: 'all pins swap left right',
-        icon: 'swap_horiz',
-        state: 'enabled',
-        action: pinsSwap$1,
-    },
-    {
-        text: 'all pins left',
-        icon: 'arrow_back',
-        state: 'enabled',
-        action: pinsLeft$1,
-    },
-    {
-        text: 'all pins right',
-        icon: 'arrow_forward',
-        state: 'enabled',
-        action: pinsRight$1,
-    },
-    {
-        text: 'disconnect',
-        icon: 'power_off',
-        state: 'disabled',
-        action: disconnectPin,
-    },
-];
+    {text: 'profile',                      icon: 'info', state: 'disabled', action: showProfile },    
+    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
+    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
+    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
+    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },
+    ];
 
 // click on the node
 const pinCxMenu = {
@@ -7630,6 +7722,7 @@ const selectFreeCxMenu = {
 		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard$1},
         {text:"group",icon:"developer_board",state:"enabled", action:group},
         {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect$2},
+        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
         {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
     ],
 
@@ -7667,6 +7760,9 @@ function selectionToClipboard$1() {
 }
 function group() {
     editor.doEdit('selectionToGroup',{view: selectFreeCxMenu.view});
+}
+function autoRoute() {
+    editor.doEdit('autoRouteSelection',{view: selectFreeCxMenu.view});
 }
 
 // click on the node
@@ -8095,8 +8191,8 @@ const selectionHandling = {
 
         // if the position is the same as the reference - move the first, otherwise only move starting from 2
         return ((ref.x == pos.x) && (ref.y == pos.y)) 
-                    ? {x: cb.copyCount * style$1.look.dxCopy,y: cb.copyCount * style$1.look.dyCopy}
-                    : {x: pos.x - ref.x + (cb.copyCount-1) * style$1.look.dxCopy, y: pos.y - ref.y + (cb.copyCount-1) * style$1.look.dyCopy }
+                    ? {x: cb.copyCount * style.look.dxCopy,y: cb.copyCount * style.look.dyCopy}
+                    : {x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
     },
 
     // save the selection to the clipboard (no copies are made !)
@@ -8181,7 +8277,7 @@ const selectionHandling = {
                     const rc = cliboSelect.rect;
 
                     // set the rectangle
-                    this.selection.activate(rc.x + delta.x, rc.y + delta.y, rc.w, rc.h, style$1.selection.cRect);
+                    this.selection.activate(rc.x + delta.x, rc.y + delta.y, rc.w, rc.h, style.selection.cRect);
                 }
 
                 // done
@@ -8634,7 +8730,7 @@ const alignHandling = {
         slct.sort( (a,b) => a.look.rect.x - b.look.rect.x);
 
         // constant for minimal seperatiion
-        const minSpace = style$1.selection.xPadding;
+        const minSpace = style.selection.xPadding;
 
         // set the initial position
         let {x,y} = {...slct[0].look.rect};
@@ -8670,7 +8766,7 @@ const alignHandling = {
         slct.sort( (a,b) => a.look.rect.y - b.look.rect.y);
 
         // constant for minimal seperation
-        const minSpace = style$1.selection.yPadding;
+        const minSpace = style.selection.yPadding;
 
         // set the initial position
         let {x,y} = {...slct[0].look.rect};
@@ -9436,7 +9532,7 @@ const keyboardHandling = {
         const blinkFunction = (time) => {
 
             // check the time
-            if (time - lastTime >= style$1.std.blinkRate) {
+            if (time - lastTime >= style.std.blinkRate) {
 
                 // execute the recursive blink function from the top !
                 keepBlinking = editor.doc.view.recursiveBlink(editor.ctx, on);
@@ -9496,6 +9592,7 @@ function Box(rect, node) {
     this.is = {
         box: true,
         selected: false,
+        alarm: false
     };
 
 }
@@ -9506,9 +9603,14 @@ Box.prototype = {
 
         // notation
         const {x,y,w,h} = this.rect;
-        const st = style$1.box;
+        const st = style.box;
 
         // draw the selection rectangle first if needed !
+        if (this.is.alarm) {
+            const dx = st.dxSel;
+            const dy = st.dySel;
+            shape.roundedRect(ctx,x-2*dx, y-2*dy, w+4*dx, 4*dy, st.rCorner, st.wLineSel, st.cAlarm.slice(0,7), st.cAlarm);
+        }
         if (this.is.selected) {
 
             // check for a label
@@ -9516,11 +9618,11 @@ Box.prototype = {
             const hLabel = label && (label.text.length > 0) ? label.rect.h : 0;
             const dx = st.dxSel;
             const dy = st.dySel;
-            shape$1.roundedRect(ctx,x-dx, y-dy-hLabel, w+2*dx, h+2*dy+hLabel, st.rCorner, st.wLineSel, st.cSelected.slice(0,7), st.cSelected);
+            shape.roundedRect(ctx,x-dx, y-dy-hLabel, w+2*dx, h+2*dy+hLabel, st.rCorner, st.wLineSel, st.cSelected.slice(0,7), st.cSelected);
         }
 
         // draw a rounded filled rectangle
-        shape$1.roundedRect(ctx,x, y, w, h, st.rCorner, st.wLine, st.cLine, st.cBackground);
+        shape.roundedRect(ctx,x, y, w, h, st.rCorner, st.wLine, st.cLine, st.cBackground);
     },
 
     increaseHeight( delta) {
@@ -9570,44 +9672,47 @@ Header.prototype = {
 
         // check for consequences...
         this.node.look.headerChanged(this, saved);
+
+        // check if the node name is unique 
+        editor.doc.focus.root.checkDuplicates(this.node);
     },
 
     // draw a blinking cursor
     drawCursor(ctx, pChar, on) {
 
         // calculate the cursor coord based on the character position
-        const cursor = shape$1.centerTextCursor(ctx, this.rect, this.title,pChar);    
+        const cursor = shape.centerTextCursor(ctx, this.rect, this.title,pChar);    
 
         // select color - on or off
         // const color = on ? style.header.cTitle : style.header.cBackground 
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
 
         // draw the cursor
-        shape$1.cursor(ctx, cursor.x, cursor.y, style$1.std.wCursor, this.rect.h, color );
+        shape.cursor(ctx, cursor.x, cursor.y, style.std.wCursor, this.rect.h, color );
     },
 
     render(ctx) {
 
         // notation
-        let st = style$1.header;
+        let st = style.header;
         let {x,y,w,h} = this.rect;
 
         // render the top of the look with rounded corners..
-        shape$1.roundedHeader(ctx, x, y, w, h, st.rCorner, st.wLine, st.cBackground, st.cBackground);
+        shape.roundedHeader(ctx, x, y, w, h, st.rCorner, st.wLine, st.cBackground, st.cBackground);
 
         // select a color
         const color = this.node.is.duplicate ? st.cBad : (this.is.highLighted ? st.cHighLighted : st.cTitle);
 
         // draw the text
-        shape$1.centerText(ctx, this.title, st.font, color, x, y, w, h);
+        shape.centerText(ctx, this.title, st.font, color, x, y, w, h);
 
-        if (this.is.alert) shape$1.circle(x,y,10,'#ff0000');
+        if (this.is.alert) shape.circle(x,y,10,'#ff0000');
     },
 
     // true if the title area was hit (the y-hit is already established !)
     hitTitle(pos) {
 
-        const icon = style$1.icon;
+        const icon = style.icon;
         const rc = this.rect;
 
         // the space for the icons left and right
@@ -9703,7 +9808,7 @@ const pinNameHandling = {
         // the new name is empty - allowed only if no routes
         if (this.name.length == 0) return (this.routes?.length == 0)
 
-        // if the newName starts with + or ends with + we have prefix naming
+        // if the newName starts or ends with a special character
         if (convert.needsPrefix(this.name) || convert.needsPostfix(this.name)) {
 
             // the name should be longer than just the one character
@@ -10080,7 +10185,7 @@ Pin.prototype = {
     // arrows in and out
     render(ctx) {
         // notation
-        const st = style$1.pin;
+        const st = style.pin;
         const rc = this.rect;
 
         // the name to display
@@ -10093,33 +10198,33 @@ Pin.prototype = {
         const yArrow = rc.y + (st.hPin - st.wArrow) / 2;
 
         // we shift the arrow a little bit...
-        const dx = style$1.box.wLine / 2;
+        const dx = style.box.wLine / 2;
 
         // The shape for a channel is different
         const pointLeft = this.is.channel
-            ? shape$1.triangleBall
-            : shape$1.leftTriangle;
+            ? shape.triangleBall
+            : shape.leftTriangle;
         const pointRight = this.is.channel
-            ? shape$1.ballTriangle
-            : shape$1.rightTriangle;
+            ? shape.ballTriangle
+            : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#00FF00", null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#007700", null)
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
             const xArrow = rc.x + st.wOutside;
             this.is.multi
-                ? shape$1.leftTextMulti(ctx, displayName, st.fMulti, cText, rc.x + style$1.pin.wMargin, rc.y, rc.w, rc.h)
-                : shape$1.leftText(ctx, displayName, cText, rc.x + style$1.pin.wMargin, rc.y, rc.w, rc.h);
+                ? shape.leftTextMulti(ctx, displayName, st.fMulti, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h)
+                : shape.leftText(ctx, displayName, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h);
             this.is.input
                 ? pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow);
         } else {
             const xArrow = rc.x + rc.w - st.wOutside;
             this.is.multi
-                ? shape$1.rightTextMulti(ctx, displayName, st.fMulti, cText, rc.x, rc.y, rc.w - style$1.pin.wMargin, rc.h)
-                : shape$1.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - style$1.pin.wMargin, rc.h);
+                ? shape.rightTextMulti(ctx, displayName, st.fMulti, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h)
+                : shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h);
             this.is.input
                 ? pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow);
@@ -10127,34 +10232,34 @@ Pin.prototype = {
 
         // show name clashes
         if (this.is.duplicate) {
-            shape$1.rectRect(ctx, rc.x, rc.y, rc.w, rc.h, st.cBad, null);
+            shape.rectRect(ctx, rc.x, rc.y, rc.w, rc.h, st.cBad, null);
         }
     },
 
     setColor() {
         // color of the arrow ( unconnected connected selected)
-        const cArrow = this.is.hoverNok ? style$1.pin.cBad 
-                        : this.is.hoverOk ? style$1.pin.cSelected 
-                        : this.is.highLighted ? style$1.pin.cHighLighted 
-                        : this.is.selected ? style$1.pin.cSelected 
-                        : this.routes.length > 0 ? style$1.pin.cConnected : style$1.pin.cNormal;
+        const cArrow = this.is.hoverNok ? style.pin.cBad 
+                        : this.is.hoverOk ? style.pin.cSelected 
+                        : this.is.highLighted ? style.pin.cHighLighted 
+                        : this.is.selected ? style.pin.cSelected 
+                        : this.routes.length > 0 ? style.pin.cConnected : style.pin.cNormal;
 
         // color of the text
-        const cText =   this.is.hoverNok? style$1.pin.cBad
-                        : this.is.hoverOk ? style$1.pin.cSelected
-                        : this.is.added ? style$1.pin.cAdded
-                        : this.is.zombie ? style$1.pin.cBad
-                        : this.is.highLighted ? style$1.pin.cHighLighted
-                        : this.is.selected ? style$1.pin.cSelected
-                        : this.routes.length > 0 ? style$1.pin.cConnected
-                        : style$1.pin.cText;
+        const cText =   this.is.hoverNok? style.pin.cBad
+                        : this.is.hoverOk ? style.pin.cSelected
+                        : this.is.added ? style.pin.cAdded
+                        : this.is.zombie ? style.pin.cBad
+                        : this.is.highLighted ? style.pin.cHighLighted
+                        : this.is.selected ? style.pin.cSelected
+                        : this.routes.length > 0 ? style.pin.cConnected
+                        : style.pin.cText;
 
         return { cArrow, cText };
     },
 
     // returns the center of the pin (h of the arrow is along x-axis here !)
     center() {
-        const wOut = style$1.pin.wOutside;
+        const wOut = style.pin.wOutside;
         const rc = this.rect;
         return this.is.left
             ? { x: rc.x + wOut, y: rc.y + rc.h / 2 }
@@ -10203,13 +10308,13 @@ Pin.prototype = {
             name: this.name,
             kind: this.is.input ? (this.is.channel ? 'reply' : 'input') : (this.is.channel ? 'request' : 'output'),
             contract: {
-                role: this.contract.owner ? "owner" : "follower"
+                role: this.contract.owner ? "owner" : "follower",
+                payload: this.contract.payload ?? 'any'
             },
             wid: this.wid,
             left: this.is.left 
         };
 
-        if (this.contract.owner) rawPin.contract.payload = this.payload;
         if (this.prompt) rawPin.prompt = this.prompt;
 
         return rawPin
@@ -10221,7 +10326,8 @@ Pin.prototype = {
     },
 
     adjustRoutes() {
-        for (const route of this.routes) route.adjust();
+
+        if (this.routes.length) for (const route of this.routes) route.adjust();
     },
 
     // changes the position from left to right
@@ -10231,8 +10337,9 @@ Pin.prototype = {
 
         // change the x coordinate
         this.rect.x = this.is.left
-            ? rc.x + rc.w - this.rect.w + style$1.pin.wOutside
-            : rc.x - style$1.pin.wOutside;
+            ? rc.x + rc.w - this.rect.w + style.pin.wOutside
+            : rc.x - style.pin.wOutside;
+
         // change
         this.is.left = !this.is.left;
 
@@ -10248,18 +10355,10 @@ Pin.prototype = {
         const center = rc.x + rc.w / 2;
 
         // switch left right ?
-        if (
-            (this.is.left && pos.x > center) ||
-            (!this.is.left && pos.x < center)
-        )
-            this.leftRightSwap();
+        if ((this.is.left && pos.x > center) ||(!this.is.left && pos.x < center)) this.leftRightSwap();
 
         // find pin or ifName to swap with
-        const next = this.node.look.findNextWidget(
-            this,
-            pos,
-            (next) => next.is.pin || next.is.ifName
-        );
+        const next = this.node.look.findNextWidget(this,pos,(next) => next.is.pin || next.is.ifName);
 
         // if no next - done
         if (!next) return;
@@ -10468,24 +10567,41 @@ Pin.prototype = {
     makePadRect(pos) {
         // The width of the pad
         const width =
-            style$1.pad.wExtra +
+            style.pad.wExtra +
             this.node.look.getTextWidth(this.name, this.is.multi);
 
         // determine the rectangle for the pad widget
         return this.is.left
             ? {
                   x: pos.x,
-                  y: pos.y - style$1.pad.hPad / 2,
+                  y: pos.y - style.pad.hPad / 2,
                   w: width,
-                  h: style$1.pad.hPad,
+                  h: style.pad.hPad,
               }
             : {
                   x: pos.x,
-                  y: pos.y - style$1.pad.hPad / 2,
+                  y: pos.y - style.pad.hPad / 2,
                   w: width,
-                  h: style$1.pad.hPad,
+                  h: style.pad.hPad,
               };
     },
+
+    // returns the rang of the pin on the left or right
+    // {true, 2} means second pin on the left side
+    rank() {
+
+        // get the pins at the same side
+        const pins = this.node.look.widgets.filter( w => w.is.pin);
+
+        // sort the array according to y-value
+        pins.sort( (a,b) => a.rect.y - b.rect.y);
+
+        // the index of the pin
+        const index = pins.findIndex( pin => pin === this);
+
+        // return the result
+        return {up: index + 1, down: pins.length - index}
+    }
 };
 Object.assign(Pin.prototype, pinNameHandling);
 
@@ -10745,6 +10861,10 @@ const TackConnectHandling = {
             if (this.areConnected(tack)) tack.route.unHighLight();
         }
     },
+
+    rank() {
+        return {up:1, down:1}
+    }
 };
 
 // an in out symbol is a triangle 
@@ -10788,25 +10908,25 @@ BusTack.prototype = {
 
     render(ctx) {
         // the color
-        const color =  this.is.selected ? style$1.bus.cSelected 
-                     : this.is.highLighted ? style$1.bus.cHighLighted
-                     : style$1.bus.cNormal;
+        const color =  this.is.selected ? style.bus.cSelected 
+                     : this.is.highLighted ? style.bus.cHighLighted
+                     : style.bus.cNormal;
 
         // put a small rectangle for a tack for router
-        if (this.bus.is.filter) shape$1.filterSign(ctx, this.getContactPoint(),style$1.bus.wCable, color);
+        if (this.bus.is.filter) shape.filterSign(ctx, this.getContactPoint(),style.bus.wCable, color);
 
         // draw the tack
-        shape$1.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style$1.route.wNormal, color);
+        shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color);
 
         // if we have an alias, draw it
         if (this.alias && this.route) {
 
             // check if we have the rectangle
             if (! this.rcAlias) {
-                this.rcAlias = shape$1.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style$1.bus.fAlias);
+                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
             }
 
-            shape$1.hAlias(ctx, this.alias, this.rcAlias, color, style$1.bus.fAlias);
+            shape.hAlias(ctx, this.alias, this.rcAlias, color, style.bus.fAlias);
         }
     },
 
@@ -10876,12 +10996,12 @@ BusTack.prototype = {
         const sp = bWire[this.segment];
 
         // to place the arrow we take the width of the bus into account - the -1 is to avoid a very small gap
-        const shift = style$1.bus.wNormal/2 - 1;
+        const shift = style.bus.wNormal/2 - 1;
 
         // set the rectangle values
         if (horizontal) {
-            rc.w = style$1.bus.wArrow;
-            rc.h = style$1.bus.hArrow;
+            rc.w = style.bus.wArrow;
+            rc.h = style.bus.hArrow;
             rc.x = a.x - rc.w/2;
             if (b.y > a.y) {
                 rc.y = sp.y + shift;
@@ -10895,8 +11015,8 @@ BusTack.prototype = {
             a.y = sp.y;
         }
         else {
-            rc.w = style$1.bus.hArrow;
-            rc.h = style$1.bus.wArrow;
+            rc.w = style.bus.hArrow;
+            rc.h = style.bus.wArrow;
             rc.y = a.y - rc.h/2;
             if (b.x > a.x) {
                 rc.x = sp.x + shift;
@@ -11045,7 +11165,7 @@ BusTack.prototype = {
         let pa = this.bus.wire[this.segment -1];
         let pb = this.bus.wire[this.segment];
         const rc = this.rect;
-        const wBus = style$1.bus.wNormal;
+        const wBus = style.bus.wNormal;
 
         // horizontal segment
         if (pa.y == pb.y) {
@@ -11087,7 +11207,7 @@ BusTack.prototype = {
         const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
 
         // horizontal segment
-        if ((a.y == b.y) && (Math.abs(c.y - b.y) < style$1.route.tooClose)) {
+        if ((a.y == b.y) && (Math.abs(c.y - b.y) < style.route.tooClose)) {
 
             // move the endpoint
             a.y = c.y;
@@ -11099,7 +11219,7 @@ BusTack.prototype = {
             this.orient();
         }
         // vertical segment
-        else if ((a.x == b.x)&&(Math.abs(b.x - c.x) < style$1.route.tooClose)) {
+        else if ((a.x == b.x)&&(Math.abs(b.x - c.x) < style.route.tooClose)) {
 
             // move the endpoint
             a.x = c.x;
@@ -11140,10 +11260,10 @@ BusTack.prototype = {
 
     drawCursor(ctx, pChar, on) {
 
-        const rc = shape$1.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style$1.bus.fAlias);
-        const pos = shape$1.cursorAlias(ctx, this.alias, rc, pChar, style$1.bus.fAlias);
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
-        shape$1.cursor(ctx, pos.x, pos.y, style$1.std.wCursor, rc.h, color);
+        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
+        const pos = shape.cursorAlias(ctx, this.alias, rc, pChar, style.bus.fAlias);
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
+        shape.cursor(ctx, pos.x, pos.y, style.std.wCursor, rc.h, color);
 
         // force a recompute
         this.rcAlias = null;
@@ -11212,7 +11332,7 @@ const BusLabelFunctions = {
 
     place() {
         //notation
-        const st = style$1.bus;
+        const st = style.bus;
         const wire = this.bus.wire;
 
         // set the size of the label
@@ -11256,13 +11376,13 @@ const BusLabelFunctions = {
     },
 
     drawCursor(ctx, pChar, on) {
-        const pCursor = shape$1.centerTextCursor(ctx, this.rect,this.text,pChar);
+        const pCursor = shape.centerTextCursor(ctx, this.rect,this.text,pChar);
 
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
 
         this.is.horizontal ?
-              shape$1.cursor(ctx, pCursor.x, pCursor.y, style$1.std.wCursor, this.rect.h,  color)
-            : shape$1.cursor(ctx, this.rect.x, pCursor.y + 0.75 * this.rect.w, this.rect.w, style$1.std.wCursor, color);
+              shape.cursor(ctx, pCursor.x, pCursor.y, style.std.wCursor, this.rect.h,  color)
+            : shape.cursor(ctx, this.rect.x, pCursor.y + 0.75 * this.rect.w, this.rect.w, style.std.wCursor, color);
     },
 
     render(ctx, look) {
@@ -11279,7 +11399,7 @@ const BusLabelFunctions = {
             other.place();
         }
         // notation
-        const st = style$1.bus;
+        const st = style.bus;
         const rc = this.rect;
         const state = this.bus.is;
 
@@ -11290,16 +11410,16 @@ const BusLabelFunctions = {
                         : st.cNormal;
 
         // draw a filter symbol next to the label if required
-        if (this.bus.is.filter) shape$1.filterSymbol(ctx, rc.x - st.wFilter, rc.y - st.wFilter, st.wFilter, cLabel);
+        if (this.bus.is.filter) shape.filterSymbol(ctx, rc.x - st.wFilter, rc.y - st.wFilter, st.wFilter, cLabel);
 
         // draw the label
-        this.is.horizontal  ? shape$1.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
-                            : shape$1.vCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText);
+        this.is.horizontal  ? shape.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
+                            : shape.vCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText);
     },
 
     setSize(ctx) {
-        this.rect.w = ctx.measureText(this.text).width + 2*style$1.bus.hLabel;
-        this.rect.h = style$1.bus.hLabel;
+        this.rect.w = ctx.measureText(this.text).width + 2*style.bus.hLabel;
+        this.rect.h = style.bus.hLabel;
         return this
     },
 
@@ -11366,19 +11486,19 @@ InterfaceName.prototype = {
     drawCursor(ctx, pChar, on) {
 
         // where to put the cursor
-        const pos = shape$1.centerTextCursor(ctx,this.rect,this.text, pChar);
+        const pos = shape.centerTextCursor(ctx,this.rect,this.text, pChar);
 
         // select color - on or off
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
         //const color = on ? style.header.cTitle : style.header.cBackground 
 
         // draw it
-        shape$1.cursor(ctx, pos.x , pos.y, style$1.std.wCursor, this.rect.h, color );
+        shape.cursor(ctx, pos.x , pos.y, style.std.wCursor, this.rect.h, color );
     },
 
     render(ctx, look) {
         // notation
-        const st = style$1.ifName;
+        const st = style.ifName;
 
         const color =   this.is.added ? st.cAdded : 
                         this.is.zombie ? st.cBad : 
@@ -11387,7 +11507,7 @@ InterfaceName.prototype = {
                         st.cNormal;
 
         // draw
-        shape$1.ifName(ctx, this.text, {line:st.cBackground, text:color},this.rect); 
+        shape.ifName(ctx, this.text, {line:st.cBackground, text:color},this.rect); 
     },
 
     makeRaw() {
@@ -11490,10 +11610,10 @@ Label.prototype = {
 
     drawCursor(ctx, pChar, on) {
         const rc = this.rect;
-        const pCursor = shape$1.labelCursor(ctx, this.text, rc.x,rc.y,rc.w,rc.h,pChar);
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
+        const pCursor = shape.labelCursor(ctx, this.text, rc.x,rc.y,rc.w,rc.h,pChar);
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
         //const color = on ? style.label.cNormal : style.std.cBackground
-        shape$1.cursor(ctx, pCursor.x, pCursor.y, style$1.std.wCursor, rc.h, color);
+        shape.cursor(ctx, pCursor.x, pCursor.y, style.std.wCursor, rc.h, color);
     },
 
     render(ctx, look) {
@@ -11505,7 +11625,7 @@ Label.prototype = {
         //ctx.font = style.label.font
 
         // draw the text
-        shape$1.labelText(ctx, this.text, style$1.label.font, style$1.label.cNormal, x, y, w, h);
+        shape.labelText(ctx, this.text, style.label.font, style.label.cNormal, x, y, w, h);
 
         // set the font back
         //ctx.font = style.std.font
@@ -11523,7 +11643,8 @@ function Icon(rect, iconType) {
     this.is = {
         icon: true,
         bad: false,
-        highLighted: false
+        highLighted: false,
+        alarm: false
     };
     this.type = iconType;
 
@@ -11549,9 +11670,10 @@ Icon.prototype = {
         "link"(ctx) {
             const {x,y,w,h} = {...this.rect};
 
-            const color =     this.is.highLighted ? style$1.icon.cHighLighted
-                            : this.is.bad ? style$1.icon.cBadLink 
-                            : style$1.icon.cLink;
+            const color =     this.is.alarm ? style.icon.cAlarm 
+                            : this.is.highLighted ? style.icon.cHighLighted
+                            : this.is.bad ? style.icon.cBadLink 
+                            : style.icon.cLink;
 
             shapeIcon.link(ctx, x,y,w,h, color); 
         },
@@ -11559,66 +11681,67 @@ Icon.prototype = {
         "lock"(ctx) {
             const {x,y,w,h} = {...this.rect};
 
-            const color =     this.is.highLighted ? style$1.icon.cHighLighted
-                            : this.is.bad ? style$1.icon.cBadLink 
-                            : style$1.icon.cLink;
+            const color =     this.is.alarm ? style.icon.cAlarm 
+                            : this.is.highLighted ? style.icon.cHighLighted
+                            : this.is.bad ? style.icon.cBadLink 
+                            : style.icon.cLink;
 
             shapeIcon.lock(ctx, x,y,w,h, color);
         },
 
         "factory"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            shapeIcon.factory(ctx, x,y,w,h,  style$1.icon.cSrc);
+            shapeIcon.factory(ctx, x,y,w,h,  style.icon.cSrc);
         },
 
         "group"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            shapeIcon.group(ctx, x,y,w,h,  style$1.icon.cGroup);
+            shapeIcon.group(ctx, x,y,w,h,  style.icon.cGroup);
         },
 
         "cog"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            shapeIcon.cog(ctx, x,y,w,h,  style$1.icon.cCog, style$1.header.cBackground);
+            shapeIcon.cog(ctx, x,y,w,h,  style.icon.cCog, style.header.cBackground);
         },
 
         "pulse"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            shapeIcon.pulse(ctx, x,y,w,h,  style$1.icon.cPulse, style$1.header.cBackground);
+            shapeIcon.pulse(ctx, x,y,w,h,  style.icon.cPulse, style.header.cBackground);
         },
 
         "comment"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            shapeIcon.comment(ctx, x,y,w,h,  style$1.icon.cComment);
+            shapeIcon.comment(ctx, x,y,w,h,  style.icon.cComment);
         },
 
         // The view icons
         "close"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            const cIcon = this.is.highLighted ? style$1.view.cClose : style$1.view.cDim;
+            const cIcon = this.is.highLighted ? style.view.cClose : style.view.cDim;
             shapeIcon.close(ctx, x,y,w,h, cIcon);
         },
 
         "big"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            const cIcon = this.is.highLighted ? style$1.view.cFullscreen : style$1.view.cDim;
+            const cIcon = this.is.highLighted ? style.view.cFullscreen : style.view.cDim;
             shapeIcon.bigView(ctx, x,y,w,h, cIcon);
         },
 
         "small"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            const cIcon = this.is.highLighted ? style$1.view.cFullscreen : style$1.view.cDim;
+            const cIcon = this.is.highLighted ? style.view.cFullscreen : style.view.cDim;
             shapeIcon.smallView(ctx, x,y,w,h, cIcon);
         },
 
         "calibrate"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            const cIcon = this.is.highLighted ? style$1.view.cCalibrate : style$1.view.cDim;
+            const cIcon = this.is.highLighted ? style.view.cCalibrate : style.view.cDim;
             shapeIcon.calibrate(ctx, x,y,w,h, cIcon);
         },
 
         "grid"(ctx) {
             const {x,y,w,h} = {...this.rect};
-            const cIcon = this.is.highLighted ? style$1.view.cGrid : style$1.view.cDim;
+            const cIcon = this.is.highLighted ? style.view.cGrid : style.view.cDim;
             shapeIcon.grid(ctx, x,y,w,h, cIcon);
         },
 
@@ -11656,7 +11779,7 @@ ViewTitle.prototype = {
 
         // notation
         const rc = this.rect;
-        const st = style$1.view;
+        const st = style.view;
 
         // background color (uses the box color !)
         const background = this.is.highLighted ? st.cHighLight : st.cLine;
@@ -11665,17 +11788,17 @@ ViewTitle.prototype = {
         const cTitle = this.is.highLighted ? st.cTitleHighLight : st.cTitle;
 
         // the header rectangle
-        shape$1.roundedHeader(ctx, rc.x,rc.y,rc.w, st.hHeader,st.rCorner, st.wLine, null, background);
+        shape.roundedHeader(ctx, rc.x,rc.y,rc.w, st.hHeader,st.rCorner, st.wLine, null, background);
         //shape.roundedHeader(ctx, rc.x,rc.y,rc.w, st.hHeader,st.rCorner, style.header.wLine, null, background)
 
         // draw the text
-        shape$1.centerText(ctx, this.node.name,style$1.view.fHeader, cTitle, rc.x, rc.y, rc.w, rc.h);
+        shape.centerText(ctx, this.node.name,style.view.fHeader, cTitle, rc.x, rc.y, rc.w, rc.h);
 
         // if edited, we have to add a cursor
         if (this.textEdit) {
 
-            let pCursor = shape$1.centerTextCursor(ctx, rc,this.node.name,this.textEdit.cursor);
-            shape$1.cursor(ctx, pCursor.x, pCursor.y, 2, rc.h, cTitle );
+            let pCursor = shape.centerTextCursor(ctx, rc,this.node.name,this.textEdit.cursor);
+            shape.cursor(ctx, pCursor.x, pCursor.y, 2, rc.h, cTitle );
         }
     }
 };
@@ -11698,13 +11821,13 @@ ViewBox.prototype = {
 
         // notation
         const rc = this.rect;
-        const st = style$1.view;
+        const st = style.view;
 
         // select the color
         const color = this.is.highLighted ? st.cHighLight : st.cLine;
 
         // draw the rectangle 
-        shape$1.viewRect(ctx, rc.x,rc.y,rc.w, rc.h, st.rCorner, st.wLine, color, st.cBackground);
+        shape.viewRect(ctx, rc.x,rc.y,rc.w, rc.h, st.rCorner, st.wLine, color, st.cBackground);
     },
 };
 
@@ -11842,28 +11965,28 @@ resize(border,delta) {
     switch (border.name) {
 
         case 'corner': 
-            if (rc.h + delta.y > style$1.view.hHeader) rc.h += delta.y;
-            if (rc.w + delta.x > style$1.look.wBox) rc.w += delta.x;
+            if (rc.h + delta.y > style.view.hHeader) rc.h += delta.y;
+            if (rc.w + delta.x > style.look.wBox) rc.w += delta.x;
             break
 
         case 'top':
-            if (rc.h - delta.y < style$1.view.hHeader) return
+            if (rc.h - delta.y < style.view.hHeader) return
             rc.y += delta.y;
             rc.h -= delta.y;
             break
 
         case 'bottom':
-            if (rc.h + delta.y < style$1.view.hHeader) return
+            if (rc.h + delta.y < style.view.hHeader) return
             rc.h += delta.y;
             break
 
         case 'right':
-            if (rc.w + delta.x < style$1.look.wBox) return 
+            if (rc.w + delta.x < style.look.wBox) return 
             rc.w += delta.x;
             break
 
         case 'left':
-            if (rc.w - delta.x < style$1.look.wBox) return
+            if (rc.w - delta.x < style.look.wBox) return
             rc.x += delta.x;
             rc.w -= delta.x;
             break
@@ -11878,8 +12001,8 @@ resize(border,delta) {
 // ** RECURSIVE **
 whichView(p) {
 
-    const hdr = style$1.view.hHeader;
-    const lwi = style$1.view.wLine;
+    const hdr = style.view.hHeader;
+    const lwi = style.view.wLine;
 
     // check the views in reverse order - the last one is on top !
     for (let i = this.views.length-1; i>=0; i--) {
@@ -12053,13 +12176,13 @@ addViewWidgets() {
 
     // notation
     const rc = this.rect;
-    const st = style$1.view;
+    const st = style.view;
 
     // add the box - re-use the view rectangle...
     this.widgets.push(new ViewBox(this.rect));
 
     // add the title
-    if (this.root) this.widgets.push(new ViewTitle({ x:0,y: 0, w: rc.w, h: style$1.view.hHeader}, this.root));
+    if (this.root) this.widgets.push(new ViewTitle({ x:0,y: 0, w: rc.w, h: style.view.hHeader}, this.root));
 
     // add the view icons
     for( const iconName of ['close', 'big', 'calibrate', 'grid']) {
@@ -12083,7 +12206,7 @@ placeWidgets() {
 
     // notation
     const rc = this.rect;
-    const st = style$1.view;
+    const st = style.view;
 
     // The position of the first Icon
     let xIcon = rc.x + st.xPadding;
@@ -12091,7 +12214,7 @@ placeWidgets() {
     for(const widget of this.widgets) {
         if (widget.is.icon) {
             // center on y
-            widget.rect.y = rc.y + (style$1.view.hHeader - st.hIcon)/2;
+            widget.rect.y = rc.y + (style.view.hHeader - st.hIcon)/2;
 
             // set the x
             widget.rect.x = xIcon;
@@ -12210,7 +12333,7 @@ big(save=true) {
     // notation
     const prc = this.parent.rect;
     const ptf = this.parent.tf;
-    const st = style$1.view;
+    const st = style.view;
 
     // save the current rect
     if (save) Object.assign(this.viewState.rect, this.rect);
@@ -12470,7 +12593,7 @@ function View(rect, node=null, parent=null) {
 
     // the transform parameters - shift the content below the header of the view window !
     //this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y}
-    this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y + style$1.view.hHeader};
+    this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y + style.view.hHeader};
 
     // the rectangle of the view
     this.rect = rect;
@@ -12598,12 +12721,12 @@ View.prototype = {
         }
 
         // check
-        if (rc.w < style$1.view.wDefault) rc.w = style$1.view.wDefault;
-        if (rc.h < style$1.view.hDefault) rc.h = style$1.view.hDefault;
+        if (rc.w < style.view.wDefault) rc.w = style.view.wDefault;
+        if (rc.h < style.view.hDefault) rc.h = style.view.hDefault;
 
         // position the view 
         rc.x = node.look.rect.x;
-        rc.y = node.look.rect.y + style$1.view.hHeader + style$1.header.hHeader;
+        rc.y = node.look.rect.y + style.view.hHeader + style.header.hHeader;
 
         // done
         return rc
@@ -12691,14 +12814,14 @@ View.prototype = {
     render(ctx) {
 
         // switch to the style of the file where the node comes from
-        const savedStyle = style$1.switch(this.root?.link?.model?.header?.style);
+        const savedStyle = style.switch(this.root?.link?.model?.header?.style);
 
         // save the current context settings
         ctx.save();
 
         // notation
         const rc = this.rect;
-        const st = style$1.view;
+        const st = style.view;
 
         // views with a parent have widgets and a clip rectangle
         if (this.parent) {
@@ -12730,7 +12853,7 @@ View.prototype = {
         ctx.restore();
 
         // restore the style
-        style$1.switch(savedStyle);
+        style.switch(savedStyle);
     },
 
     renderContent(ctx) {
@@ -12803,7 +12926,7 @@ View.prototype = {
 
         const rc = this.rect;
         const tf = this.tf;
-        const grid = style$1.view.grid;
+        const grid = style.view.grid;
         
         // the top-left and bottom right coordinates of the view
         const area = {  x:(rc.x - tf.dx)/tf.sx, 
@@ -12812,7 +12935,7 @@ View.prototype = {
                         h: rc.h/tf.sy
                     };
         // the grid
-        shape$1.grid(ctx, area.x, area.y, area.w, area.h , grid.dx, grid.dy, grid.cLine, grid.cAxis);
+        shape.grid(ctx, area.x, area.y, area.w, area.h , grid.dx, grid.dy, grid.cLine, grid.cAxis);
     },
 
     getNamePath() {
@@ -13540,22 +13663,25 @@ pinAreaDrag: {
             // check that we have a model
             if (!editor.doc?.model) return;
 
+            // get the contract for the pin
+            const contract = editor.doc.model.getContract(pin);
+
             // get the pin profile (can be a single profile or an array !)
             const profile = pin.is.input
                 ? editor.doc.model.getInputPinProfile(pin)
                 : editor.doc.model.getOutputPinProfile(pin);
 
             // check
-            if (!profile) {
-                console.log(`NO PROFILE ${pin.name}`);
-
-                return;
-            }
+            // if (!profile) {
+            //     console.log(`NO PROFILE ${pin.name}`);
+            //     // return;
+            // }
 
             // show the profile
             editor.tx.send('pin profile', {
                 pos,
                 pin,
+                contract,
                 profile,
 
                 // The function that is called when clicking the handler name
@@ -14117,7 +14243,7 @@ padCreate: {
         let proxy = view.root.look.addPin('', pos, is);
 
         // determine the rectangle for the pad widget
-        const rect = proxy.makePadRect({x:pos.x, y:pos.y- style$1.pad.hPad/2});
+        const rect = proxy.makePadRect({x:pos.x, y:pos.y- style.pad.hPad/2});
 
         // create the pad
         const pad = new Pad(rect, proxy);
@@ -14825,6 +14951,25 @@ unGroup: {
     }
 },
 
+// MAKE UNDO POSSIBLE !
+autoRouteSelection: {
+
+    doit({view}){
+
+        if (! view?.root) return
+
+        const nodes = view.selection.nodes;
+        if (nodes.length < 2) return
+
+        const routes = view.root.getInternalRoutes(nodes);
+
+        for (const route of routes) route.autoRoute( view.root.nodes );
+    },
+    undo(){},
+    redo(){}
+
+}
+
 };
 
 const redoxPinArea = {
@@ -15241,7 +15386,7 @@ Editor.prototype = {
 
     // clear the screen
     clear() { 
-        this.ctx.fillStyle = style$1.std.cBackground;
+        this.ctx.fillStyle = style.std.cBackground;
         this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
     },
 
@@ -15272,11 +15417,11 @@ Editor.prototype = {
     setStyle() {
 
         // if we have doc we set the style specified in the doc
-        if (this.doc) style$1.switch(this.doc.model.header?.style);
+        if (this.doc) style.switch(this.doc.model.header?.style);
 
         // also set the standard ctx values 
         const ctx = this.ctx;
-        const std = style$1.std;
+        const std = style.std;
 
         ctx.font = std.font;
         ctx.strokeStyle = std.cLine;
@@ -15331,11 +15476,11 @@ Editor.prototype = {
         // if the position is the same as the reference - move the first, otherwise only move starting from 2
         if ((ref.x == pos.x) && (ref.y == pos.y)) 
 
-            return {    x: cb.copyCount * style$1.look.dxCopy, 
-                        y: cb.copyCount * style$1.look.dyCopy}
+            return {    x: cb.copyCount * style.look.dxCopy, 
+                        y: cb.copyCount * style.look.dyCopy}
         else 
-            return {    x: pos.x - ref.x + (cb.copyCount-1) * style$1.look.dxCopy, 
-                        y: pos.y - ref.y + (cb.copyCount-1) * style$1.look.dyCopy }
+            return {    x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, 
+                        y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
     },
 
     // to calculate the delta it does not matter if the copy and paste are in the same or in different views
@@ -15355,11 +15500,11 @@ Editor.prototype = {
         // if the position is the same as the reference - move the first, otherwise only move starting from 2
         if ((ref.x == pos.x) && (ref.y == pos.y)) 
 
-            return {    x: cb.copyCount * style$1.look.dxCopy, 
-                        y: cb.copyCount * style$1.look.dyCopy}
+            return {    x: cb.copyCount * style.look.dxCopy, 
+                        y: cb.copyCount * style.look.dyCopy}
         else 
-            return {    x: pos.x - ref.x + (cb.copyCount-1) * style$1.look.dxCopy, 
-                        y: pos.y - ref.y + (cb.copyCount-1) * style$1.look.dyCopy }
+            return {    x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, 
+                        y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
     },
 
     // this is to copy to the external windows clipboard
@@ -16066,8 +16211,8 @@ const compareHandling = {
         // reset the dockLook pins - by default set all pins and interfaceNames to zombie
         for (const dw of dockLook.widgets) {
 
-            // only pins and seperators have a wid - set to zombie so we can reset for pins that have been handled.
-            if (dw.wid) {
+            // set pins and interfaces to zombies - they will be un-zombied as we find them.
+            if (dw.is.pin || dw.is.ifName) {
                 dw.is.added = false;
                 dw.is.zombie = true;
             }
@@ -16292,7 +16437,7 @@ const widgetHandling = {
     makePlace(pos, height) {
 
         // yFree starts at the bottom
-        let yFree = this.rect.y + this.rect.h - style$1.look.hBottom; //- height
+        let yFree = this.rect.y + this.rect.h - style.look.hBottom; //- height
 
         // if there is no position given then yFree is ok
         if (!pos) return yFree
@@ -16322,7 +16467,7 @@ const widgetHandling = {
     pinRectangle(displayName, y, left, multi=false) {
 
         // notation
-        const st = style$1.pin;
+        const st = style.pin;
         let rc = this.rect;
 
         // total width of the widget
@@ -16332,7 +16477,7 @@ const widgetHandling = {
         if (width > rc.w) this.wider(width - rc.w);
 
         // get the y position of the rectangle
-        const yNew = this.makePlace({x:0, y}, style$1.pin.hPin);
+        const yNew = this.makePlace({x:0, y}, style.pin.hPin);
 
         // the rectangle for the pin 
         const rect = left   ? {x: rc.x - st.wOutside,                   y: yNew, w: width, h: st.hPin}
@@ -16350,7 +16495,7 @@ const widgetHandling = {
 
         // adjust x for left or right - add y at the end
         return {x: left ? rc.x : rc.x + rc.w, 
-                y: rc.y + rc.h - style$1.look.hBottom}
+                y: rc.y + rc.h - style.look.hBottom}
     },
 
     // every widget below y is moved up by dy
@@ -16660,7 +16805,7 @@ const padRouteFunctions = {
             const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
 
             // check if we can fuse segments 
-            if (Math.abs(c.y - b.y) < style$1.route.tooClose) {
+            if (Math.abs(c.y - b.y) < style.route.tooClose) {
                 dy = c.y - a.y;
                 a.y = c.y;
                 front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
@@ -16839,6 +16984,10 @@ const padRouteFunctions = {
         }
     },
 
+    rank() {
+        return {up:1, down:1}
+    }
+
 };
 
 function Pad(rect, proxy, uid=null) {
@@ -16880,7 +17029,7 @@ Pad.prototype = {
     render(ctx, look) {
         
         // notation
-        let st = style$1.pad;
+        let st = style.pad;
         const rc = this.rect;
         const proxy = this.proxy;
 
@@ -16901,7 +17050,7 @@ Pad.prototype = {
 
         // when being edited we recalculate the width of the rectangle
         if (this.is.beingEdited) {
-            rc.w = style$1.pad.wExtra + ctx.measureText(this.text).width;
+            rc.w = style.pad.wExtra + ctx.measureText(this.text).width;
             this.place();
         }
 
@@ -16912,44 +17061,44 @@ Pad.prototype = {
             const xArrow =  rc.x + rc.w - st.rBullet/2 - st.hArrow; 
 
             // draw a rectangle and a circle
-            shape$1.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+            shape.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
 
             if (proxy.is.channel) {
                 // draw a triangle
-                proxy.is.input  ? shape$1.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape$1.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+                proxy.is.input  ? shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
             }
             else {
                 // draw a triangle
-                proxy.is.input  ? shape$1.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape$1.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+                proxy.is.input  ? shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape$1.leftTextMulti(ctx,this.text,style$1.pin.fMulti,cText,rc.x + style$1.pad.wMargin,rc.y, rc.w,rc.h)
-                            : shape$1.leftText(ctx,this.text,cText,rc.x + style$1.pad.wMargin,rc.y, rc.w,rc.h);
+            proxy.is.multi  ? shape.leftTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
+                            : shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
         }
         else {
             // The x-position of the arrow
             const xArrow = rc.x + st.rBullet/2;
 
             // draw the rectangle and the bullet
-            shape$1.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+            shape.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
 
             if (proxy.is.channel) {
                 // draw a triangle
-                proxy.is.input  ? shape$1.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape$1.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+                proxy.is.input  ? shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
             }
             else {
                 // draw a triangle
-                proxy.is.input  ? shape$1.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape$1.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+                proxy.is.input  ? shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape$1.rightTextMulti(ctx,this.text,style$1.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
-                            : shape$1.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
+            proxy.is.multi  ? shape.rightTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
+                            : shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
         }
     },
 
@@ -16961,14 +17110,14 @@ Pad.prototype = {
         const cx = ctx.measureText(this.text.slice(0,pChar)).width;
 
         // absolute position of the cursor...
-        const xCursor = this.is.leftText ? rc.x + cx + style$1.pad.wMargin: rc.x + rc.w - ctx.measureText(this.text).width + cx;
+        const xCursor = this.is.leftText ? rc.x + cx + style.pad.wMargin: rc.x + rc.w - ctx.measureText(this.text).width + cx;
 
         // the color for the blink effect
         //const color = on ? style.pad.cText : style.pad.cBackground
-        const color = on ? style$1.std.cBlinkOn : style$1.std.cBlinkOff;
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
 
         // and draw the cursor
-        shape$1.cursor(ctx, xCursor, rc.y, style$1.std.wCursor, rc.h, color); 
+        shape.cursor(ctx, xCursor, rc.y, style.std.wCursor, rc.h, color); 
     },
 
     // returns the center of the pad bullet
@@ -17010,7 +17159,7 @@ Pad.prototype = {
 
     getWidth() {
         const proxy = this.proxy;
-        return style$1.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
+        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
     },
 
     endEdit(saved) {
@@ -17166,10 +17315,10 @@ Pad.prototype = {
 
         // we have hit the pad - check if we have hit the arrow (left or right)
         if (this.is.leftText) {
-            return (pos.x > this.rect.x + this.rect.w - 2*style$1.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+            return (pos.x > this.rect.x + this.rect.w - 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
         }
         else {
-            return (pos.x < this.rect.x + 2*style$1.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+            return (pos.x < this.rect.x + 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
         }
     },
 
@@ -17195,7 +17344,7 @@ const widgetLifecycle = {
 addHeader() {
 
     // the space taken by the icons
-    const iconSpace = 2*(style$1.icon.xPadding + 2*style$1.icon.wIcon + style$1.icon.xSpacing);
+    const iconSpace = 2*(2*style.icon.xPadding + 2*style.icon.wIcon + style.icon.xSpacing);
 
     // the required width for the look..
     const W = this.getTextWidth(this.node.name) + iconSpace;
@@ -17207,7 +17356,7 @@ addHeader() {
     if (W > rc.w) this.wider(W - rc.w);
 
     // the width of the title widget is the same as the width of the look
-    const wRect = { x: rc.x , y: rc.y, w: rc.w, h: style$1.header.hTitle};
+    const wRect = { x: rc.x , y: rc.y, w: rc.w, h: style.header.hTitle};
 
     // create the title
     const widget = new Header(wRect, this.node); 
@@ -17230,9 +17379,9 @@ addLabel(text) {
 
     // the width of the label widget is the same as the width of the look
     const wRect = { x: rc.x , 
-                    y: rc.y - style$1.label.hLabel, 
+                    y: rc.y - style.label.hLabel, 
                     w: rc.w, 
-                    h: style$1.label.hLabel};
+                    h: style.label.hLabel};
 
     // create the label
     const widget = new Label(wRect, text, this.node);
@@ -17241,8 +17390,8 @@ addLabel(text) {
     this.widgets.push(widget);
 
     // increase the size and position of the look
-    rc.y -= style$1.label.hLabel;
-    rc.h += style$1.label.hLabel;
+    rc.y -= style.label.hLabel;
+    rc.h += style.label.hLabel;
 
     // done
     return widget
@@ -17258,8 +17407,8 @@ removeLabel() {
     eject(this.widgets, label);
     
     // decrease the size and position of the look
-    this.rect.y += style$1.label.hLabel;
-    this.rect.h -= style$1.label.hLabel;
+    this.rect.y += style.label.hLabel;
+    this.rect.h -= style.label.hLabel;
 },
 
 restoreLabel(label) {
@@ -17267,8 +17416,8 @@ restoreLabel(label) {
     this.widgets.push(label);
 
     // increase the size and position of the look
-    this.rect.y -= style$1.label.hLabel;
-    this.rect.h += style$1.label.hLabel;
+    this.rect.y -= style.label.hLabel;
+    this.rect.h += style.label.hLabel;
 },
 
 // is = {channel, input, request, proxy, left } - left can be absent 
@@ -17316,10 +17465,10 @@ restorePin(pin) {
 addIfName(text, pos) {
 
     // shift the widgets that are below pos.y to make place for the new ifName
-    const yFree = this.makePlace(pos, style$1.ifName.hSep);
+    const yFree = this.makePlace(pos, style.ifName.hSep);
 
     // the rectangle for the widget
-    const rect = {x: this.rect.x, y: yFree, w:this.rect.w, h:style$1.ifName.hSep};
+    const rect = {x: this.rect.x, y: yFree, w:this.rect.w, h:style.ifName.hSep};
 
     // create a new ifName
     const ifName = new InterfaceName(rect, text, this.node);
@@ -17748,7 +17897,7 @@ const iconHandling = {
             return
         }
         // the space taken by the icons
-        const iconSpace = 2*(style$1.icon.xPadding + 2*(style$1.icon.wIcon + style$1.icon.xSpacing));
+        const iconSpace = 2*(style.icon.xPadding + 2*(style.icon.wIcon + style.icon.xSpacing));
 
         // calculate the new width for the header
         let newWidth = this.getTextWidth(header.title) + iconSpace;
@@ -17764,14 +17913,14 @@ const iconHandling = {
             header.node.factory.fName = convert.nodeToFactory(header.node.name);
 
         // check if the node name is unique 
-        editor.doc.focus.root.checkDuplicates(header.node);
+        // editor.doc.focus.root.checkDuplicates(header.node)
     },
 
     // return the rectangle for the icon. Pos L = left, R = right          L1 L2 L3 .......... R3 R2 R1
     iconRect(rc, pos) {
 
         let xIcon = rc.x;
-        const st = style$1.icon;
+        const st = style.icon;
 
         switch(pos) {
             case 'L1':  xIcon = rc.x + st.xPadding;
@@ -17860,12 +18009,12 @@ const iconHandling = {
             if (time - lastTime >= blinkRate) {
 
                 // change the color
-                icon.is.highLighted = !icon.is.highLighted;
-                header.is.highLighted = !header.is.highLighted;
+                box.is.alarm = !box.is.alarm;
+                icon.is.alarm = !icon.is.alarm;
 
                 // redraw
                 editor.redraw();
-
+                
                 // save the time
                 lastTime = time;
 
@@ -17873,24 +18022,24 @@ const iconHandling = {
                 count++;
             }
     
-            // Continue fro the number of blinks requested
+            // Continue for the number of blinks requested
             if (count < maxBlinks) {
                 requestAnimationFrame(blinkFunction);
             }
             else {
-                icon.is.highLighted = false;
-                header.is.highLighted = false;
+                box.is.alarm = false;
+                icon.is.alarm = false;
                 editor.redraw();
             }
         };
 
+        const box = this.widgets.find(w => w.is.box );
         const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'));
-        const header = this.widgets.find( w => w.is.header);
 
-        if (!icon || !header) return
+        if (!box) return
 
-        const maxBlinks = style$1.icon.nBlinks * 2;
-        const blinkRate = style$1.icon.blinkRate;
+        const maxBlinks = style.icon.nBlinks * 2;
+        const blinkRate = style.icon.blinkRate;
 
         let count = 0;
         let lastTime = 0;
@@ -17899,7 +18048,7 @@ const iconHandling = {
         requestAnimationFrame(blinkFunction);
     },
 
-    xxxblinkToWarn() {
+    xblinkToWarn() {
 
         // time is in ms
         const blinkFunction = (time) => {
@@ -17921,7 +18070,7 @@ const iconHandling = {
                 count++;
             }
     
-            // Continue fro the number of blinks requested
+            // Continue for the number of blinks requested
             if (count < maxBlinks) {
                 requestAnimationFrame(blinkFunction);
             }
@@ -17937,8 +18086,8 @@ const iconHandling = {
 
         if (!icon || !header) return
 
-        const maxBlinks = style$1.icon.nBlinks * 2;
-        const blinkRate = style$1.icon.blinkRate;
+        const maxBlinks = style.icon.nBlinks * 2;
+        const blinkRate = style.icon.blinkRate;
 
         let count = 0;
         let lastTime = 0;
@@ -17946,6 +18095,7 @@ const iconHandling = {
         // schedule the first blink function
         requestAnimationFrame(blinkFunction);
     },
+
 };
 
 const moveHandling = {
@@ -17968,7 +18118,7 @@ const moveHandling = {
     // move to absolute position
     moveTo(x,y) {
 
-        // calculate the delta
+        // calculate the delta and move over the delta...
         this.moveDelta(x - this.rect.x, y - this.rect.y);
     },
 
@@ -18100,7 +18250,7 @@ const moveHandling = {
 
                 // check if we have to move the node in the y direction a bit...
                 const delta = c.y - a.y;
-                if (Math.abs(delta) < style$1.route.tooClose) {
+                if (Math.abs(delta) < style.route.tooClose) {
 
                     // move the node
                     this.moveDelta(0, delta);
@@ -18120,6 +18270,9 @@ const copyHandling = {
 
     // copy the look of a node for another node. Note that the routes of pins/proxies are handled later.
     copy(newNode) {
+
+        // ensure look.node is set for widgets created via this copy
+        newNode.look.node = newNode;
 
         // copy the look - set the height to 0
         // const newLook = new Look(this.rect)
@@ -18165,6 +18318,9 @@ const copyHandling = {
     // copy the look from a source node to a group node look and vice versa
     // the routes are not copied
     copyConvert(newNode) {
+
+        // ensure look.node is set for widgets created via this copy
+        newNode.look.node = newNode;
 
         // copy the wid generator 
         newNode.look.widGenerator = this.widGenerator;
@@ -18462,8 +18618,11 @@ cook( raw ) {
     // get the highest wid value
     for (const widget of this.widgets) if (widget.wid && (widget.wid > this.widGenerator)) this.widGenerator = widget.wid;
 
-    // if there are widgets with a wid of zero, correct this
-    for (const widget of this.widgets) if (widget.wid == 0) widget.wid = this.generateWid();
+    // if there are widgets with a wid of zero, correct this and set these widgets as new
+    for (const widget of this.widgets) if (widget.wid && (widget.wid == 0)) {
+        widget.wid = this.generateWid();
+        widget.is.added = true;
+    }
 },
 
 cookPin(raw) {
@@ -18479,7 +18638,7 @@ cookPin(raw) {
 
     // set the state bits
     is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
-    is.left = raw.left;
+    is.left = raw.left ?? false;
     is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
 
     // a comma seperated list between [] is a multi message
@@ -18487,13 +18646,15 @@ cookPin(raw) {
 
     // proxy or pure pin
     is.proxy = this.node.is.group;
+
     // set the y-position to zero - widget will be placed correctly
-    const newPin = this.addPin(raw.name, 0, is);
+    //const newPin = this.addPin(raw.name, 0, is)
+    const newPin = this.addPin(raw.name, {x:0, y:NaN}, is);
 
     // set the contract
     if (raw.contract) {
         newPin.contract.owner =  (raw.contract.role == 'owner');
-        newPin.contract.payload = newPin.contract.owner ? raw.contract.payload : null;
+        newPin.contract.payload = raw.contract?.payload  ?? 'any';
     }
 
     // set the prompt
@@ -18535,8 +18696,8 @@ cookInterface(raw) {
 function Look (rect) {
 
     this.rect = {...rect};
-    this.rect.w = rect.w > 0 ? rect.w : style$1.look.wBox;
-    this.rect.h = rect.h > 0 ? rect.h : style$1.look.hTop + style$1.look.hBottom;
+    this.rect.w = rect.w > 0 ? rect.w : style.look.wBox;
+    this.rect.h = rect.h > 0 ? rect.h : style.look.hTop + style.look.hBottom;
 
     // the node for which this look is created
     this.node = null;
@@ -18562,7 +18723,7 @@ Look.prototype = {
     // get the min width required for the widgets (= max width widgets !)
     getMinWidth() {
 
-        let minWidth = style$1.look.wBox;
+        let minWidth = style.look.wBox;
         for(const widget of this.widgets) {
             if ( widget.is.pin  && (widget.rect.w > minWidth)) minWidth = widget.rect.w;
         }
@@ -18598,7 +18759,7 @@ Look.prototype = {
     adjustPinWidth(widget) {
 
         // Get the new width
-        const newWidth = style$1.pin.wMargin + this.getTextWidth(widget.withoutPrefix(), widget.is.multi);
+        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix(), widget.is.multi);
 
         // move the x of the widgets if at the right
         if ( ! widget.is.left) widget.rect.x += (widget.rect.w - newWidth);
@@ -18611,42 +18772,29 @@ Look.prototype = {
     },
 
     getTextWidth(str, multi=false) {
+        {
+            const text = str ?? '';
+            const baseWidth = style.pin.wChar;
+            
+            if (!multi) return text.length * baseWidth
 
-        // get the canvas context
-        const ctx = editor.getCanvasContext();
-
-        if (!multi) return ctx.measureText(str).width
-        
-        // cut the text in three parts 
-        const [pre, middle, post] = convert.getPreMiddlePost(str);
-
-        // measure pre and post
-        let width = ctx.measureText(pre + '[').width + ctx.measureText(']'+ post).width;
-
-        // change font
-        const savedFont = ctx.font;
-        ctx.font = style$1.pin.fMulti;
-
-        // measure the multi text
-        width += ctx.measureText(middle).width;
-
-        // restore the font
-        ctx.font = savedFont;
-
-        // done
-        return width
+            const [pre, middle, post] = convert.getPreMiddlePost(text);
+            const normalWidth = (pre.length + post.length + 2) * baseWidth;
+            const multiWidth = middle.length * baseWidth;
+            return normalWidth + multiWidth
+        }
     },
 
     wider(delta=0) {
 
         // not wider than the max value
-        if (this.rect.w >= style$1.look.wMax) return
+        if (this.rect.w >= style.look.wMax) return
 
         // multiples of style.look.wExtra
-        delta = delta > 0 ? Math.ceil( delta / style$1.look.wExtra)*style$1.look.wExtra : style$1.look.wExtra;
+        delta = delta > 0 ? Math.ceil( delta / style.look.wExtra)*style.look.wExtra : style.look.wExtra;
 
         // not wider then max width
-        if (this.rect.w + delta > style$1.look.wMax) delta = style$1.look.wMax - this.rect.w;
+        if (this.rect.w + delta > style.look.wMax) delta = style.look.wMax - this.rect.w;
 
         // adjust
         this.changeWidth( delta );   
@@ -18660,7 +18808,7 @@ Look.prototype = {
         if (this.rect.w <= minWidth) return
 
         // multiples of style.look.wExtra
-        delta = delta > 0 ? (1 + Math.floor( delta / style$1.look.wExtra))*style$1.look.wExtra : style$1.look.wExtra;
+        delta = delta > 0 ? (1 + Math.floor( delta / style.look.wExtra))*style.look.wExtra : style.look.wExtra;
 
         // not smaller then the min width
         if (this.rect.w - delta < minWidth) delta = this.rect.w - minWidth;
@@ -18737,13 +18885,13 @@ Node.prototype = {
     render(ctx){
         
         // switch to the link style - will return the current style
-        const savedStyle = this.link?.model ? style$1.switch(this.link.model.header.style) : null;
+        const savedStyle = this.link?.model ? style.switch(this.link.model.header.style) : null;
 
         // render the node
         this.look?.render(ctx);
 
         // reset the style
-        if (savedStyle) style$1.switch(savedStyle);
+        if (savedStyle) style.switch(savedStyle);
     },
 
     // recursively find a node with a given uid
@@ -18819,7 +18967,7 @@ Node.prototype = {
 
         // notation
         const {x,y,w,h} = this.look.rect;
-        const dx = style$1.pin.wOutside;
+        const dx = style.pin.wOutside;
 
         // check if we have hit the look
         if ((( pos.x < x - dx)||(pos.x > x + w + dx)||(pos.y < y )||(pos.y > y+h))) return [zap.nothing,null, null]
@@ -18898,7 +19046,7 @@ Node.prototype = {
     },
 
     // cooks the elements that are common to group and source nodes
-    cookCommon(raw) {
+    cookCommon(raw, modcom) {
 
         // If there is no editor part, add the skeleton
         // if (!raw.editor) raw.editor = {rect: null}
@@ -18913,7 +19061,7 @@ Node.prototype = {
         this.look = new Look(rc);
         
         // set the minimum height of the look
-        this.look.rect.h = style$1.look.hTop + style$1.look.hBottom;
+        this.look.rect.h = style.look.hTop + style.look.hBottom;
 
         // add the basic decoration
         this.look.decorate(this);
@@ -19119,7 +19267,7 @@ const jsonHandling$1 = {
     cook(raw, modcom) {
 
         // cook the common parts
-        this.cookCommon(raw);
+        this.cookCommon(raw, modcom);
 
         // if there is a view - make a simple view for the node only rect and tf - the view is restored later 
         this.savedView = raw.view;
@@ -19132,10 +19280,10 @@ const jsonHandling$1 = {
 
             // save if successful
             if (node) this.nodes.push(node);
-
-            // if the node has not been properly placed, do it now
-            if (!node.is.placed) this.placeNode(node);
         }
+
+        // If there are nodes that have to be placed do it here
+        if (this.nodes) this.placeUnplacedNodes(raw.connections);
 
         // cook the connections inside this group node - retuns an array of {from, to, status} - from/to are pins or pads
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
@@ -19170,7 +19318,7 @@ const jsonHandling$1 = {
             // and check the route against the connections - the status of the conx and route is adapted
             for (const route of routes) this.findRouteInConx(route, conx);
 
-            // create the routes for the connections that were not foudn
+            // create the routes for the connections that were not found
             this.createRoutes(conx);
         }
     },
@@ -19178,7 +19326,7 @@ const jsonHandling$1 = {
     // Place the node as the root node in a view
     placeRoot() {
         // The root is not a container - make some extra margins
-        const place = style$1.placement;
+        const place = style.placement;
 
         // move the node to its location
         this.look.moveTo( place.marginLeft , place.marginTop);
@@ -19187,43 +19335,59 @@ const jsonHandling$1 = {
         this.is.placed = true;
     },
 
-    // places a node according to a grid
-    placeNode(node) {
+    // places all unplaced nodes according to a grid
+    placeUnplacedNodes(rawConnections) {
 
-        const place = style$1.placement;
+        const unplaced = this.nodes.filter(node => node?.look && !node.is.placed);
+        if (!unplaced.length) return
+
+        const place = style.placement;
         const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
-        const spacing = place.spacing;   // small gap so nodes do not touch
-        const tolerance = place.tolerance;  // allow a little drift when matching columns
+        const spacing = place.spacing;
+        const tolerance = place.tolerance;
 
-        const placedNodes = this.nodes.filter(other => (other !== node) && other.look && other.is.placed);
-        const idx = this.nodes.indexOf(node) >= 0 ? this.nodes.indexOf(node) : this.nodes.length - 1;
-
-        // keep the column grid, but stack vertically based on actual heights
-        const col = idx % place.nodesPerRow;
-        const columnX = marginLeft + col * place.colStep;
-
-        // start at the default top margin for this column
-        let y = place.marginTop;
-
-        // find the bottom of the lowest node already in this column
-        for (const other of placedNodes) {
-            const ox = other.look.rect.x;
-            if (Math.abs(ox - columnX) <= tolerance) {
-                const bottom = other.look.rect.y + other.look.rect.h;
-                if (bottom + spacing > y) y = bottom + spacing;
-            }
+        const degree = new Map();
+        for (const raw of rawConnections ?? []) {
+            const src = raw.src ?? raw.from;
+            const dst = raw.dst ?? raw.to;
+            if (!src?.node || !dst?.node) continue
+            degree.set(src.node, (degree.get(src.node) ?? 0) + 1);
+            degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1);
         }
 
-        // move down further if we still overlap any node (safety for slightly misaligned columns)
+        const placedNodes = this.nodes.filter(node => node?.look && node.is.placed);
         const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing});
         const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
-        let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h};
-        while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
-            candidate.y += spacing;
-        }
 
-        node.look.moveTo(candidate.x, candidate.y);
-        node.is.placed = true;
+        const order = unplaced.slice().sort((a, b) => {
+            const da = degree.get(a.name) ?? 0;
+            const db = degree.get(b.name) ?? 0;
+            return db - da
+        });
+
+        for (let i = 0; i < order.length; i++) {
+            const node = order[i];
+            const col = i % place.nodesPerRow;
+            const columnX = marginLeft + col * place.colStep;
+
+            let y = place.marginTop;
+            for (const other of placedNodes) {
+                const ox = other.look.rect.x;
+                if (Math.abs(ox - columnX) <= tolerance) {
+                    const bottom = other.look.rect.y + other.look.rect.h;
+                    if (bottom + spacing > y) y = bottom + spacing;
+                }
+            }
+
+            let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h};
+            while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
+                candidate.y += spacing;
+            }
+
+            node.look.moveTo(candidate.x, candidate.y);
+            node.is.placed = true;
+            placedNodes.push(node);
+        }
     },
 
     // rawPad exists, but might be incomplete
@@ -19261,8 +19425,8 @@ const jsonHandling$1 = {
 
         //check for errors - It can be that from/to are not found if the pin name for a linked node has changed
         if (!from || !to) {
-            if (!from) console.error(`invalid route *FROM* ${rawRoute.from} to ${rawRoute.to}`);
-            if (!to) console.error(`invalid route from ${rawRoute.from} *TO* ${rawRoute.to}`);
+            if (!from) console.error(`invalid route from ${rawRoute.from} to ${rawRoute.to} - 'from' endpoint not found`);
+            if (!to) console.error(`invalid route from ${rawRoute.from} to ${rawRoute.to} - 'to' endpoint not found`);
             return null;
         }
 
@@ -19489,7 +19653,7 @@ const proxyHandling = {
                 route = new Route(newProxy, destination);
 
                 // make a smart connection between the two destinations
-                route.builder();
+                route.autoRoute();
 
                 // and save the route in the new proxy...
                 newProxy.routes.push(route);
@@ -19556,17 +19720,17 @@ const proxyHandling = {
     addPad(proxy) {
 
         // the y position of the pad
-        const yOffset = style$1.placement.marginTop + this.pads.length * (style$1.pad.hPad + style$1.pad.hSpace);
+        const yOffset = style.placement.marginTop + this.pads.length * (style.pad.hPad + style.pad.hSpace);
  
         // get the width of the view or use a default value..
-        const width = this.savedView ? this.savedView.rect.w : style$1.view.wDefault;
+        const width = this.savedView ? this.savedView.rect.w : style.view.wDefault;
 
         // take the position of the view into account
         const dx = this.savedView ? this.savedView.rect.x : 0;
 
         // get the pad rectangle
-        const rect = proxy.is.left  ? proxy.makePadRect({x: style$1.pad.wViewLeft + dx, y: yOffset})
-                                    : proxy.makePadRect({x: width - style$1.pad.wViewRight + dx, y: yOffset});
+        const rect = proxy.is.left  ? proxy.makePadRect({x: style.pad.wViewLeft + dx, y: yOffset})
+                                    : proxy.makePadRect({x: width - style.pad.wViewRight + dx, y: yOffset});
  
         // create the pad
         const pad = new Pad(rect, proxy);
@@ -19902,9 +20066,6 @@ const conxHandling = {
 
             // create a new route
             const route = new Route(cx.src, cx.dst);
-            
-            // make a smart connection between the two destinations
-            route.autoRoute(this.nodes);
 
             // The route is for a new connection
             route.is.newConx = true;
@@ -19912,8 +20073,72 @@ const conxHandling = {
             // and save the route in the endpoints
             route.from.routes.push(route);
             route.to.routes.push(route);
+
+            // make a smart connection between the two destinations
+            route.autoRoute(this.nodes);
         }
+    },
+
+    // create a single route between src and dst
+    createRoute(src, dst) {
+
+        // check
+        if (!src || !dst) return
+        if (!src.canConnect(dst)) return
+
+        // create a new route from the src
+        const route = new Route(src, null);
+
+        // The route is for a new connection
+        route.is.newConx = true;
+        
+        // and save the route in the from endpoint
+        route.from.routes.push(route);
+
+        // make the actual connection
+        if (route.connect(dst)) {
+            
+            // if ok make a smart connection between the two destinations
+            route.autoRoute(this.nodes);
+        }
+        else {
+            // could not connect - drop the route in the source as well
+            route.from.routes.pop();
+        }
+    },
+
+    getInternalRoutes(nodes) {
+
+        const routes = [];
+
+        // get all the routes from the output pins of all the nodes
+        for(const node of nodes) {
+
+            // sav all the routes of output pins
+            for(const pin of node.look.widgets) {
+
+                // only output pins
+                if (! pin.is.pin || pin.is.input) continue
+
+                // look at all routes
+                for(const route of pin.routes) {
+
+                    // get the destination (it can be null for half-routes !)
+                    const other = route.from == pin ? route.to : route.from;
+
+                    // check that the node is in the list of nodes
+                    if ( ! nodes.includes(other.node)) continue
+
+                    // store the route for that pin
+                    routes.push(route);
+                }
+            }
+        }
+
+        return routes
     }
+
+
 };
 
 // default name
@@ -20159,6 +20384,28 @@ const groupFunctions = {
         return source
     },
 
+    // makes a list of all the source nodes - that are not links - in the model 
+    makeSourceList(list) {
+
+        // copy the nodes that are part of this node
+        for(const node of this.nodes) {
+
+            // skip linked nodes
+            if (node.link) continue;
+
+            // copy source nodes
+            if (node.is.source) {
+
+                // make a copy of the node - also copies the widgets
+                const copy = node.copy();
+
+                // and add the copy to the node list
+                list.push(copy);
+            }
+            else node.makeSourceList(list);
+        }
+    }
+
 };
 Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling$1, conxHandling);
 
@@ -20207,7 +20454,7 @@ const jsonHandling = {
     cook(raw, modcom) {
 
         // cook the common parts
-        this.cookCommon(raw);
+        this.cookCommon(raw, modcom);
 
         // add the factory
         if (raw.factory) {
@@ -20229,59 +20476,6 @@ const jsonHandling = {
         // and set up the rx tx tables
         this.rxtxPrepareTables();
     },
-
-    // Not really json related, but ok...
-    // The factory module can contain one or many factories
-    xxxanalyzeFactory(fModule) {
-
-        // the entries in the module
-        let entries = Object.entries(fModule);
-
-        // find the factory entry in the list
-        const entry = entries.find( entry => entry[0] == this.factory.fName );
-
-        // not found 
-        if (!entry) return
-
-        // a dummy tx.send function
-        const tx = {
-            out() {}
-        };
-
-        // the factory function
-        const factory = entry[1];
-
-        // call the factory to get the actual runtime cell
-        let cell = factory.prototype?.constructor === factory ? factory(tx, null) : new factory(tx, null);
-
-        // cycle through the props ....
-        for( const prop in cell) {
-
-            if (prop.startsWith("-> ") && typeof cell[prop] == "function") {
-
-                // get the name of the pin (without on)
-                const handler = prop.slice(3);
-
-                // get the source of the handler
-                const source = cell[prop].toString();
-
-                // find the parameters
-                const opbr = source.indexOf('(');
-                const clbr = source.indexOf(')');
-
-                // get the profile - without the brackets
-                const profile = source.slice(opbr+1, clbr);
-                //console.log('<', handler,'>',profile)
-
-                // add the profile to the appropriate widget
-                for( const widget of this.look.widgets) {
-                    if (widget.is.pin && widget.name == handler) {
-                        widget.profile = profile;
-                    }
-                }
-            }
-        }
-    }
 };
 
 // A node that implements source code
@@ -20628,7 +20822,7 @@ const routeDrawing = {
         if (a.y == b.y) {
 
             // need to split ?
-            if (Math.abs(next.y - a.y) > style$1.route.split) {
+            if (Math.abs(next.y - a.y) > style.route.split) {
 
                 // create a new segment
                 wire.push({x:a.x, y:next.y});
@@ -20638,14 +20832,14 @@ const routeDrawing = {
                 a.x = next.x;
 
                 // check if points are getting too close, if so drop 
-                if ((L>2) && (Math.abs(a.x - b.x) < style$1.route.tooClose)) wire.pop();
+                if ((L>2) && (Math.abs(a.x - b.x) < style.route.tooClose)) wire.pop();
             }
         }
         // moving in the y-direction
         else {
 
             // need to split ?
-            if (Math.abs(next.x - a.x) > style$1.route.split) {
+            if (Math.abs(next.x - a.x) > style.route.split) {
 
                 // create a new segment
                 wire.push({x:next.x, y:a.y});
@@ -20655,47 +20849,47 @@ const routeDrawing = {
                 a.y = next.y;
 
                 // check if points are getting too close
-                if ((L>2) && (Math.abs(a.y - b.y) < style$1.route.tooClose)) wire.pop();
+                if ((L>2) && (Math.abs(a.y - b.y) < style.route.tooClose)) wire.pop();
             }
         }
     },
 
-    // make a route between from and to
-    builder() {
+    // // make a route between from and to
+    // builder() {
 
-        const conx = this.typeString();
+    //     const conx = this.typeString()
 
-        switch (conx) {
+    //     switch (conx) {
 
-            case 'PIN-PIN':
-                this.fourPointRoute();
-                break
+    //         case 'PIN-PIN':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PIN-PAD':
-                this.fourPointRoute();
-                break
+    //         case 'PIN-PAD':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PAD-PIN':
-                this.fourPointRoute();
-                break
+    //         case 'PAD-PIN':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
-                break
+    //         case 'PIN-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
-                break
+    //         case 'BUS-PIN':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
-                break
+    //         case 'PAD-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true);
-                break
-        }
-    },
+    //         case 'BUS-PAD':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+    //     }
+    // },
 
     sixPointRoute(nodes=[]) {
 
@@ -20710,20 +20904,30 @@ const routeDrawing = {
         const t = to.center();
 
         // deterministic offsets away from node bodies
-        const margin = style$1.look.dxCopy;
-
-        let x1 = from.is.left ? f.x - margin : f.x + margin;
-        let x2 = to.is.left ? t.x - margin : t.x + margin;
+        
+        const dpx = style.autoroute.xDelta;
+        const mg = style.autoroute.xMargin;
 
         const frc = from.node.look.rect;
         const trc = to.node.look.rect;
-        let y1 = f.y + (frc.h/4 + trc.h/4);
+        let yMid = f.y + (frc.h/4 + trc.h/4);
+
+        const fRank = from.rank();
+        const fRankValue = yMid < f.y ? fRank.up : fRank.down;
+        const xBase1 = from.is.left ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue;
+
+        const tRank = to.rank();
+        const tRankValue = yMid < t.y ? tRank.up : tRank.down;
+        const xBase2 = to.is.left ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue;
+
+        let x1 = xBase1;
+        let x2 = xBase2;
 
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
-        const expandY = Math.max(style$1.route.split, 10);
+        const expandY = style.autoroute.yDelta;
 
-        const buildWire = (yMid) => {
+        const buildWire = () => {
             wire.length = 0;
             wire.push(f);
             wire.push({x:x1, y:f.y});
@@ -20733,19 +20937,26 @@ const routeDrawing = {
             wire.push(t);
         };
 
-        const collides = () => {
-            for (let i=0; i<wire.length-1; i++) {
-                const a = wire[i], b = wire[i+1];
-                if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return true
+        const firstHorizontalCut = () => {
+            const p1 = {x:x1, y:yMid};
+            const p2 = {x:x2, y:yMid};
+            for (const node of blockers) {
+                if (segmentCuts(p1, p2, node.look.rect)) return node
             }
-            return false
+            return null
         };
 
         let guard = 0;
-        buildWire(y1);
-        while (collides() && guard < 30) {
-            y1 += expandY;
-            buildWire(y1);
+        buildWire();
+        let hit = firstHorizontalCut();
+        while (hit && guard < 30) {
+            const rc = hit.look.rect;
+            const distTop = yMid - rc.y;
+            const distBottom = (rc.y + rc.h) - yMid;
+            if (distTop < distBottom) yMid -= expandY;
+            else yMid += expandY;
+            buildWire();
+            hit = firstHorizontalCut();
             guard++;
         }
 
@@ -20757,40 +20968,59 @@ const routeDrawing = {
         // reset points
         if (this.wire.length > 0) this.wire.length = 0;
 
-        // create a simple route between the two widgets
+        // create a simple orthogonal route between the two widgets
         const wire = this.wire;
         const from = this.from;
         const to = this.to;
         const f = from.center();
         const t = to.center();
 
-        let xNew = 0;
-        const margin = style$1.look.dxCopy;
+        // helper data for collision checks and gentle nudges
+        const margin = style.look.dxCopy;
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
 
-        // if both pins are at the same side of the node
-        if ((from.is.pin && to.is.pin)&&(from.is.left == to.is.left)) {
-
-            const left = from.is.left;
-            if (left) 
-                xNew = from.rect.x < to.rect.x ? from.rect.x - margin : to.rect.x - margin;
-            else 
-                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + margin : to.rect.x + to.rect.w + margin;
+        // choose the x for the vertical leg (xNew):
+        // - prefer the middle when pins face each other with no node overlap in x
+        // - otherwise, push the vertical leg away from the "from" side
+        const dpx = style.autoroute.xDelta;
+        const mg = style.autoroute.xMargin;
+        const isBusRoute = from.is?.tack || to.is?.tack;
+        let fromLeft = from.is?.left ?? from.is?.leftText ?? false;
+        let toLeft = to.is?.left ?? to.is?.leftText ?? false;
+        if (isBusRoute) {
+            // For bus connections, infer "facing" by relative position to avoid routing past the bus.
+            fromLeft = f.x > t.x;
+            toLeft = t.x > f.x;
         }
-        else {
+        const rank = from.rank ? from.rank() : {up: 1, down: 1};
+        const rankValue = t.y < f.y ? rank.up : rank.down;
+        let xNew = fromLeft ? f.x - mg - dpx * rankValue : f.x + mg + dpx * rankValue;
 
-            // place the bend between the two centers with a fixed offset
-            const delta = Math.abs(f.x - t.x) * 0.25;
-            xNew = f.x < t.x ? f.x + delta : f.x - delta;
+        // if the nodes are clearly separated in x and the pins face each other,
+        // keep the vertical leg between the pins for a clean, direct route
+        const frc = from.node?.look?.rect;
+        const trc = to.node?.look?.rect;
+        const xOverlap = frc && trc ? !((frc.x + frc.w < trc.x) || (trc.x + trc.w < frc.x)) : true;
+        const pinsFaceEachOther = fromLeft !== toLeft;
+        if (!xOverlap && pinsFaceEachOther) {
+            xNew = (f.x + t.x) / 2;
         }
 
-        // make the position of the bend also dependant on the relative position of the pin in the node
-        if (from.is.pin) {
-            const yFraction = 0.02;
-            const dyPin = from.rect.y - from.node.look.rect.y;
-            xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction;
-        }
+        // enforce the "shape" rule:
+        // - opposite sides: keep the vertical leg between the two endpoints
+        // - same side: push the vertical leg outside both endpoints (left or right)
+        const minX = Math.min(f.x, t.x);
+        const maxX = Math.max(f.x, t.x);
+        const enforceShapeRule = (xCandidate) => {
+            if (fromLeft !== toLeft) {
+                if (xCandidate < minX) return minX
+                if (xCandidate > maxX) return maxX
+                return xCandidate
+            }
+            return fromLeft ? Math.min(xCandidate, minX - mg) : Math.max(xCandidate, maxX + mg)
+        };
+        xNew = enforceShapeRule(xNew);
 
         // nudge xNew left/right if the vertical legs would cut through other nodes
         const tryClearX = (xCandidate) => {
@@ -20802,10 +21032,12 @@ const routeDrawing = {
             const shifts = [margin, -margin, margin*2, -margin*2];
             const base = xNew;
             for (const dx of shifts) {
-                if (!tryClearX(base + dx)) { xNew = base + dx; break }
+                const candidate = enforceShapeRule(base + dx);
+                if (!tryClearX(candidate)) { xNew = candidate; break }
             }
         }
         
+        // build a 4-point orthogonal wire: horizontal, vertical, horizontal
         wire.push(f);
         wire.push({ x: xNew, y: f.y});
         wire.push({ x: xNew, y: t.y});
@@ -20934,20 +21166,6 @@ const routeDrawing = {
         this.drawXY(xyLocal);
     },
 
-    // checks if there is an unobstructed path from p1 to p2
-    lineOfSight(nodes) {
-        
-        const cFrom = this.from.center();
-        const cTo = this.to.center();
-
-        for (const node of nodes) {
-            // ignore the nodes that own the endpoints
-            if ((node == this.from.node) || (node == this.to.node)) continue
-            if (cutsRectangle(cFrom, cTo, node.look.rect)) return false
-        }
-        return true
-    },
-
     autoRoute(nodes) {
         
         // get the type of connection
@@ -20966,45 +21184,51 @@ const routeDrawing = {
                 break
 
             case 'PIN-PAD':
-                this.fourPointRoute(nodes);
-                break
-
             case 'PAD-PIN':
                 this.fourPointRoute(nodes);
                 break
 
             case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
+            case 'PAD-BUS':
+                this.autoBusRoute(this.to, nodes);
                 break
 
             case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
-                break
-
-            case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
-                break
-
             case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);
+                this.autoBusRoute(this.from, nodes);
                 break
         }
     },
 
+    autoBusRoute(tack, nodes) {
+        tack.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);      
+    },
+
     checkLeftRight() {
 
-        const cFrom = this.from.center();
-        const cTo = this.to.center();
+        // from and to already contain the route ! so 1 is ok.
+        if ( (this.from.routes.length > 1) && (this.to.routes.length > 1)) return;
 
-        if (this.from.routes.length == 0) {
+        // sort according to x 
+        const [near, far] = this.from.center().x < this.to.center().x ? [this.from, this.to] : [this.to, this.from];
 
-            if ((this.from.is.left && (cFrom.x < cTo.x)) || (!this.from.is.left && (cFrom.x > cTo.x)) ) this.from.leftRightSwap();
+        const nrc = near.node.look.rect;
+        const frc = far.node.look.rect;
+
+        // no x-overlap make right-left
+        if ((nrc.x + nrc.w < frc.x) || (frc.x + frc.w < nrc.x)) {
+
+            if ( near.is.left && near.routes.length < 2) near.leftRightSwap();
+            if ( !far.is.left && far.routes.length < 2) far.leftRightSwap();
         }
-        if (this.to.routes.length == 0) {
+        // x-overlap make left-left or right-right
+        else {
+            if (near.is.left != far.is.left) {
 
-            if ((this.to.is.left && (cTo.x < cFrom.x)) || (!this.to.is.left && (cTo.x > cFrom.x)) ) this.to.leftRightSwap();
+                if (near.routes.length < 2) near.leftRightSwap();
+                else if (far.routes.length < 2) far.leftRightSwap();
+            }
         }
-
     },
 
     // sometimes a route can be pathological - this is a fix for that
@@ -21122,7 +21346,7 @@ const routeMoving = {
         if (s-2 < 0) return false
 
         const [before, a, b] = [p[s-2], p[s-1], p[s]];
-        const min = style$1.route.tooClose;
+        const min = style.route.tooClose;
 
         // horizontal segment
         if (a.y == b.y) {
@@ -21156,7 +21380,7 @@ const routeMoving = {
 
         // notation
         const [a, b, after] = [p[s-1], p[s], p[s+1]];
-        const min = style$1.route.tooClose;
+        const min = style.route.tooClose;
 
         // horizontal segment
         if (a.y == b.y) {
@@ -21207,6 +21431,9 @@ const routeMoving = {
     // The endpoint(s) of the route have changed - make a better route
     adjust() {
 
+        // in autoroute situations the wire can be missing
+        if (!this.wire.length) return
+
         // notation
         const from = this.from;
         const to = this.to;
@@ -21221,12 +21448,6 @@ const routeMoving = {
         // from previous - to previous
         const fp = this.wire[0];
         const tp = this.wire.at(-1);
-
-// TEMPORARY SOMETIMES THE WIRE IS GONE ?
-if (!fp || !tp || !tn || !fn) {
-    console.error('*** MISSING ENDPOINTS FOR ROUTE ***', this);
-    return
-}
 
         // the deltas
         const df = {x: fn.x - fp.x, y: fn.y - fp.y};
@@ -21261,7 +21482,7 @@ if (!fp || !tp || !tn || !fn) {
         // notation
         let last = p.length - 1;
         const sMax = p.length-1;
-        const xMin = style$1.route.tooClose + 5;
+        const xMin = style.route.tooClose + 5;
 
         // if we move the start of the route
         if (p[0].x != a.x || p[0].y != a.y) {
@@ -21295,7 +21516,7 @@ if (!fp || !tp || !tn || !fn) {
             p[last].y = b.y;
             p[last-1].y = b.y;
 
-            // check the horizontal = uneven segments, starting from the back
+            //check the horizontal = uneven segments, starting from the back
             for(let s = sMax; s > 1; s -= 2) {
                 const dx = p[s].x - p[s-1].x;
                 if (Math.abs(dx) < xMin) {
@@ -21340,10 +21561,10 @@ if (!fp || !tp || !tn || !fn) {
         p[last-1].y = b.y;
     },
 
-    adjustFourPointRoute(a,b) {
+    xxxxadjustFourPointRoute(a,b) {
 
         // notation
-        const tooClose = style$1.route.tooClose;
+        const tooClose = style.route.tooClose;
         const [p0, p1, p2, p3] = this.wire;
 
         // the new middle is the old middle by default
@@ -22156,18 +22377,18 @@ Route.prototype = {
         if (this.wire.length < 2) return 
 
         // color
-        const color = this.is.selected      ? style$1.route.cSelected 
-                    : this.is.highLighted   ? style$1.route.cHighLighted
-                    : this.is.newConx       ? style$1.route.cAdded
-                    : this.is.noConx        ? style$1.route.cDeleted
-                    : this.is.notUsed       ? style$1.route.cNotUsed
-                    : style$1.route.cNormal;
+        let color = this.is.selected      ? style.route.cSelected 
+                    : this.is.highLighted   ? style.route.cHighLighted
+                    : this.is.newConx       ? style.route.cAdded
+                    : this.is.noConx        ? style.route.cDeleted
+                    : this.is.notUsed       ? style.route.cNotUsed
+                    : style.route.cNormal;
 
         //linewidth
-        const width = this.is.selected ? style$1.route.wSelected : style$1.route.wNormal;
+        const width = this.is.selected ? style.route.wSelected : style.route.wNormal;
 
         // draw the line segments
-        this.is.twistedPair ? shape$1.twistedPair(ctx, color, width, this.wire) : shape$1.drawWire(ctx,color, width, this.wire);
+        this.is.twistedPair ? shape.twistedPair(ctx, color, width, this.wire) : shape.drawWire(ctx,color, width, this.wire);
     },
 
     // change the route direction
@@ -22429,7 +22650,7 @@ const busConnect = {
         const route = new Route(widget, tack);
 
         // make a smart connection between the two destinations
-        route.builder();
+        route.autoRoute();
 
         // and save the route in the new proxy...
         widget.routes.push(route);
@@ -22575,7 +22796,7 @@ const busDrawing = {
         // notation
         const r1 = this.wire[L - 2];
         const r2 = this.wire[L - 1];
-        const wBus = style$1.bus.wCable;
+        const wBus = style.bus.wCable;
         const hLabel = this.endLabel.rect.h;
         let limit = null;
 
@@ -22592,7 +22813,7 @@ const busDrawing = {
         else if (horizontal) {
 
             // change to vertical ?
-            if (Math.abs(next.y - r2.y) > style$1.bus.split) {
+            if (Math.abs(next.y - r2.y) > style.bus.split) {
 
                 // create a new segment
                 this.wire.push({x:r2.x, y:next.y});
@@ -22609,14 +22830,14 @@ const busDrawing = {
                 r2.x = next.x;
 
                 // remove the segment if too small 
-                if ((L > 2) && (Math.abs(r2.x - r1.x) < style$1.bus.tooClose)) this.wire.pop();
+                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.bus.tooClose)) this.wire.pop();
             }
         }
         // Vertical - moving in the y-direction
         else if (vertical) {
 
             // change to horizontal ?
-            if (Math.abs(next.x - r2.x) > style$1.bus.split) {
+            if (Math.abs(next.x - r2.x) > style.bus.split) {
 
                 // new segment
                 this.wire.push({x:next.x, y:r2.y});
@@ -22632,7 +22853,7 @@ const busDrawing = {
                 r2.y = next.y;
 
                 // check if points are getting too close
-                if ((L > 2) && (Math.abs(r2.y - r1.y) < style$1.bus.tooClose)) this.wire.pop();
+                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.bus.tooClose)) this.wire.pop();
             }
         }
 
@@ -22651,8 +22872,8 @@ const busDrawing = {
         const pb = p[p.length-1];
 
         // check is we need to switch horizontal/vertical
-        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style$1.bus.split) ? pos.x : pb.x + delta.x;
-        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style$1.bus.split) ? pos.y : pb.y + delta.y;
+        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.bus.split) ? pos.x : pb.x + delta.x;
+        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.bus.split) ? pos.y : pb.y + delta.y;
 
         // draw the bus
         this.drawXY({x,y});
@@ -22822,7 +23043,7 @@ const busDrawing = {
         if (p.length < 3) return
         
         // notation
-        const deltaMin = style$1.bus.tooClose;
+        const deltaMin = style.bus.tooClose;
 
         // horizontal segment
         if (p[s-1].y == p[s].y) {
@@ -22943,7 +23164,7 @@ function Bus(name, from, uid = null) {
     this.wire.push({x:from.x, y:from.y});
 
     // w and h for the labels - w is set by place()
-    const h = style$1.bus.hLabel;
+    const h = style.bus.hLabel;
     const w = 0;
 
     // now set the labels
@@ -22963,7 +23184,7 @@ Bus.prototype = {
 
         if (this.wire.length < 2) return
 
-        const st = style$1.bus;
+        const st = style.bus;
 
         const cLine =     this.is.hoverNok ? st.cBad 
                         : this.is.selected || this.is.hoverOk ? st.cSelected
@@ -22971,7 +23192,7 @@ Bus.prototype = {
                         : st.cNormal;
 
         // Draw a bus or a cable...
-        shape$1.drawBus(ctx,this.wire, cLine, st.wCable);
+        shape.drawBus(ctx,this.wire, cLine, st.wCable);
 
         // render the two labels
         this.startLabel.render(ctx);
@@ -23286,6 +23507,680 @@ Bus.prototype = {
 };
 Object.assign(Bus.prototype, busConnect, busJsonHandling, busDrawing);
 
+// The x values of the elements of the test model
+const X = {
+    gap:100,
+    sequencer: 100,
+    bus: 0,
+    mirror: 0,
+    nut:0
+};
+const Y = {
+    headroom: 50,
+    gap: 100
+};
+
+const mirrorName = node => node.name + 'Mirror';
+
+const TestHandling = {
+
+    makeTestArl(testFolder) {
+        const arl = this.getArl();
+        const modelName = nameOnly(arl.userPath);
+        const split$1 = split(modelName);
+        return arl.resolve(testFolder + '/' + split$1.name + '.tst.blu')
+    },
+
+    addSequencePins(look, master) {
+
+        // the state of the pin
+        const is = {
+            input: !master,
+            left: !master,
+            channel: false,
+            multi: false,
+            zombie: false
+        };
+
+        // The position - set y to NaN for auto placement
+        const pos = {x:0, y:NaN};
+
+        // add the interface
+        look.addIfName('sequence');
+
+        // Add three pins to the sequencer
+        look.addPin('sequence.start',pos,is);
+        look.addPin('sequence.stop',pos,is);
+
+        is.input = master;
+        look.addPin('sequence.result',pos,is);
+    },
+
+    makeSequencer() {
+
+        // The look
+        const seqLook = new Look({x: X.sequencer, y: Y.headroom, w:0, h:0});
+
+        // The node
+        const sequencer = new SourceNode(seqLook, 'sequencer');
+
+        // Add the pins as master
+        this.addSequencePins(seqLook, true);
+
+        // done
+        return sequencer
+    },
+
+    connectViaBus(root, sequencer, mirrorList) {
+
+        // add a bus
+        const bus = root.addBus('sequencer.bus', {x:X.bus, y:Y.headroom});
+
+        // make it as long as the mirror list
+        const rc = mirrorList.at(-1).look.rect; 
+        bus.drawXY({x:X.bus, y:rc.y + rc.h + Y.gap});
+
+        // connect the sequencer
+        for (const pinName of ['sequence.start', 'sequence.stop', 'sequence.result']) {
+            const pin = sequencer.look.widgets.find( pin => pin.is.pin && pin.name === pinName);
+            if (pin) bus.makeRoute(pin);
+        }
+
+        // connect the mirrors to the list
+        for (const mirror of mirrorList) {
+
+            for (const pinName of ['sequence.start', 'sequence.stop', 'sequence.result']) {
+                const pin = mirror.look.widgets.find( pin => pin.is.pin && pin.name === pinName);
+
+                if (pin) bus.makeRoute(pin);
+            }
+        }
+    },
+
+    // Node under test is added as a linked node
+    addNuts(root, refArl, nutList) {
+
+        // copy the model, but make it relative to this model !
+        const refModel = this.copy();
+        refModel.getArl().makeRelative(refArl);
+
+
+        let yDelta = Y.headroom;
+        for (const nut of nutList) {
+
+            // position the nut
+            nut.look.moveTo(X.nut, yDelta );
+
+            // change y position
+            yDelta += (nut.look.rect.h + Y.gap);
+
+            //all pins to the left
+            for(const w of nut.look.widgets) {
+                if (w.is.pin && !w.is.left) w.leftRightSwap();
+            }
+
+            // make the factory relative (maybe not necessary..)
+            if (nut.factory?.arl) nut.factory.arl.makeRelative( refArl );
+
+            // make the nut a linked node
+            nut.setLink(refModel, nut.name);
+
+            // add
+            root.nodes.push(nut);
+        }
+    },
+
+    addMirrors(root, refArl, mirrorList) {
+
+        let yDelta = Y.headroom;
+        let maxWidth = 0;
+        for (const mirror of mirrorList) {
+
+            // position the mirror
+            mirror.look.moveTo(X.mirror, yDelta);
+
+            yDelta += (mirror.look.rect.h + Y.gap);
+
+            // change the name of the node
+            mirror.name = mirrorName(mirror);
+
+            // add
+            root.nodes.push(mirror);
+
+            // all pins to the right
+            for(const w of mirror.look.widgets) {
+
+                if (w.is.pin) {
+
+                    // all pins to the right
+                    if (w.is.left) w.leftRightSwap();
+
+                    // change i/o
+                    w.ioSwitch();
+                }
+
+                if (w.is.header) {
+                    w.title = mirror.name;
+                    mirror.look.headerChanged(w,'?');
+                }
+            }
+
+            // Add the sequencer pins for the mirror - master = false
+            this.addSequencePins(mirror.look, false);
+
+            // add the factory for the mirror
+            mirror.factory.resolve(mirror.name, './mirrors/' + mirror.name + '.js', refArl);
+
+            // find the maxWidth
+            if (mirror.look.rect.w > maxWidth) maxWidth = mirror.look.rect.w;
+        }
+        return maxWidth
+    },
+
+    mirrorToNutConnect(root, mirrorList, nutList) {
+
+        for (const nut of nutList) {
+
+            // find the mirror node
+            const mirror = mirrorList.find( mirror => mirror.name === mirrorName(nut));
+
+            // check
+            if (!mirror) continue
+
+            // connect
+            for (const pin of nut.look.widgets) {
+
+                // check
+                if (!pin.is.pin) continue
+
+                // find the corresponding pin
+                const mPin = mirror.look.widgets.find( mPin => mPin.is.pin && (mPin.name === pin.name));
+
+                // check
+                if (!mPin) continue
+
+                // make a route
+                root.createRoute(pin, mPin);
+            }
+        }
+    },
+
+    makeTestApp(testFolder, node) {
+
+        // The node must be a group node
+        if (!node.is.group) return
+
+        // The arl for the test model
+        const testArl = this.makeTestArl(testFolder);
+
+        // The root of the model
+        const testRoot = new GroupNode(new Look({x:0, y:0, w:0, h:0}));
+
+        // make a Sequencer node
+        const sequencer = this.makeSequencer();
+
+        // add to the model
+        testRoot.addNode(sequencer);
+
+        // position of the mirror nodes
+        X.bus = X.sequencer + sequencer.look.rect.w + X.gap;
+        X.mirror = X.bus + X.gap;
+
+        // make a copy of all source nodes
+        const mirrorList = [];
+        node.makeSourceList(mirrorList);
+
+        // convert the nodes into test mirrors
+        const width = this.addMirrors(testRoot, testArl, mirrorList);
+
+        // set the position of the nuts
+        X.nut = X.mirror + width + X.gap;
+
+        // make a second copy of all source nodes (nut = node under test)
+        const nutList = [];
+        node.makeSourceList(nutList);
+
+        // copy the node to the new model - place all pins to the left - nut = node under test
+        this.addNuts(testRoot, testArl, nutList);
+
+        // connect all node to the mirror nodes
+        this.mirrorToNutConnect(testRoot, mirrorList, nutList);
+
+        // make a bus and connect the sequencer and the mirror nodes
+        this.connectViaBus(testRoot, sequencer, mirrorList);
+
+        // create a new model
+        const testModel = new ModelBlueprint(testArl);
+
+        // save the test model
+        const compiler = new ModelCompiler();
+
+        // Use the compiler to encode the model to a raw jason structure
+        testModel.raw = compiler.encode(testRoot, testModel);
+
+        // split and save the model in the two files
+        testModel.saveRaw();
+    }
+};
+
+const LibHandling = {
+
+    toJavascriptLib(libPath) {
+
+        // check if we have a path name
+        if (!libPath) return 
+
+        const modelArl = this.getArl();
+        
+        // save the app path in the document
+        if (this.target.library?.userPath !== libPath) {
+
+            // make the app arl
+            this.target.library = modelArl.resolve(libPath);
+        }
+
+        // notation
+        const libArl = this.target.library;
+
+        // the index file to find sources that do not have an explicit factory arl
+        const indexArl = modelArl.resolve('index.js');
+        
+        // save the build lib file
+        const lib = this.makeJSLib(this.view.root, modelArl, libArl, indexArl);
+
+        // save the lib
+        libArl.save(lib);
+    },
+
+    // save the file that can be used to build the lib
+    makeJSLib(node, modelArl, libArl, indexArl) {
+
+        // assemble the nodes and files needed into the imports array..[{arl, items: [] }]
+        let imports = [];
+
+        // put the index file as the first on the imports
+        imports.push({arl:indexArl, items:[]});
+
+        // the files and nodes used in this model
+        node.collectImports(imports);
+
+        // make a javascript compliant name
+        const jsRootName = convert.nodeToFactory(nameOnly(libArl.userPath));
+
+        // The header
+        const today = new Date();
+        const sHeader =    '// ------------------------------------------------------------------'
+                        +`\n// Lib: ${jsRootName}`
+                        +`\n// Model File: ${modelArl.userPath}`
+                        +`\n// Lib   File: ${libArl.userPath}`
+                        +`\n// Creation date ${today.toLocaleString()}`
+                        +'\n// ------------------------------------------------------------------';
+
+        // export the imported source types & looks that are not part of the libraries
+        const sImports = '\n\n//Export' + this.JSImportExportString(imports,'\nexport ', libArl); 
+
+        // derive the name for finding the 
+        const modelFile = './' + fileName(modelArl.userPath);
+
+        // import/export the model that was saved - MAIN PATH IS WRONG
+        const sModel =   `\n\n// The model\nimport ${jsRootName} from '${modelFile}'`+`\nexport {${jsRootName}}`;
+
+        // combine all parts
+        return sHeader + sImports + sModel
+    },
+};
+
+function ModelBlueprint(arl) {
+    
+    // check if model or library...
+    this.is = {
+        selectable: false,  // will be set if this model is visible in the select node popup
+        main: false,        // set to true for the main model
+    };
+
+    this.blu = {
+        arl: null,
+        is : {
+            dirty: false,   // set to true if the model has changed and the file still needs to be synced
+            fresh: false    // true if raw has just been updated from file
+        }
+    };
+    this.viz = {
+        arl: null,
+        is : {
+            dirty: false,
+            fresh: false
+        }       
+    };
+
+    this.bundle = {
+        arl: null
+    };
+
+    this.target = {
+        application: null,
+        library:null
+    };
+
+    // The header of the model
+    this.header = new ModelHeader();
+
+    // The libraries that the model can use
+    this.libraries = new ModelMap();
+
+    // The types that are used in message contracts in this model
+    this.vmbluTypes = null;
+
+    // the model in the resource - json, but must still be cooked
+    this.raw = null;
+
+    // the map of the source code for the model, organised per node and pin (it is a map of maps)
+    this.sourceMap = null;
+
+    // now analyze the file type and set the arls
+    this.analyzeArl(arl);
+}
+ModelBlueprint.prototype = {
+
+    fullPath() {
+
+        return this.blu.arl ? this.blu.arl.getFullPath() : this.bundle.arl ? this.bundle.arl.getFullPath() : null
+    },
+
+    getArl() {
+        return this.blu.arl ? this.blu.arl : this.bundle.arl ? this.bundle.arl : null;
+    },
+
+    isBlueprint() {
+        return this.blu.arl != null;
+    },
+
+    isBundle() {
+        return this.bundle.arl != null;
+    },
+
+    analyzeArl(arl) {
+
+        if(!arl) return
+
+        // split the name in name, kind and ext
+        const split$1 = split(arl.userPath);
+
+        // check the extension
+        if (split$1.ext === '.blu') {
+            this.blu.arl = arl;
+            this.viz.arl = arl.resolve(split$1.name + split$1.kind + '.viz');
+        }
+        else if ((split$1.ext === '.js') || (split$1.ext === '.mjs')) {
+            this.bundle.arl = arl;
+        }
+    },
+
+    // save as operation
+    changeArl(path) {
+
+        let bluPath = '';
+        let vizPath = '';
+
+        if (! path?.length) return false;
+
+        const split$1 = split(arl.userPath);
+
+        if (split$1.ext === '.blu') {
+            bluPath = path;
+            vizPath = split$1.name + split$1.kind + '.viz';
+        }
+        else {
+            bluPath = path + '.blu';
+            vizPath = path + '.viz';
+        }
+
+        this.blu.arl = this.blu.arl.resolve(bluPath);
+        this.viz.arl = this.viz.arl.resolve(vizPath);
+
+        return true
+    },
+
+    makeKey() {
+        //this.key = convert.djb2(this.vmblu.arl.getFullPath())
+    },
+
+    copy() {
+
+        // copy the main arl
+        const arl = this.getArl().copy();
+
+        // make a new model
+        const newModel = new ModelBlueprint(arl);
+
+        // copy header(full) and raw(ref)
+        newModel.header = {...this.header};
+        newModel.raw = this.raw;
+
+        return newModel
+    },
+
+    setRaw(newRaw) {
+        this.raw = newRaw;
+        this.blu.is.dirty = false;
+        this.viz.is.dirty = false;
+    },
+
+    reset() {
+        this.raw = null;
+        this.blu.is.dirty = false;
+        this.blu.is.fresh = false;
+        this.viz.is.dirty = false;
+        this.viz.is.fresh = false;
+        this.libraries.reset();
+        this.vmbluTypes = null;
+    },
+
+    findRawNode(lName) {
+
+        const root = this.raw?.root;
+        if (!root) return null;
+
+        // split and reverse
+        const parts = convert.splitLink(lName); // name @ group1 @ group2 => now: ['group2', 'group1', 'name']
+
+        // if there is just one name (no group names) look in all groups...
+        if (parts.length == 1) {
+            if (lName == root.name) return root
+            return root.nodes ? this.findRawRecursive(root.nodes, lName) : null;
+        }
+
+        // we use the group names
+        let search = root;
+
+        // walk through the parts of the name...
+        for (const name of parts) {
+
+            search = search.nodes?.find(n => name === n.name);
+            if (!search) return null;
+        }
+
+        return search;
+    },
+
+    // find a node recursively in the raw nodes - we do a breadth first search!
+    findRawRecursive(nodes, name) {
+
+        // first search in the list of nodes
+        for (const rawNode of nodes) {
+            // get the name
+            if (name == rawNode.name) return rawNode
+        }
+
+        // now look in the subnodes for each node
+        for (const rawNode of nodes) {
+
+            // check if the node is a group node
+            if (rawNode.kind == 'group' && rawNode.nodes.length > 0) {
+
+                // if there are sub-nodes, maybe the node is there ?
+                const found = this.findRawRecursive(rawNode.nodes, name);
+                if (found) return found
+            }
+        }
+        return null
+    },
+
+    setSelectable() {
+        this.is.selectable = true;
+    },
+
+    // cook some parts of the model ...
+    preCook() {
+        this.header.cook(this.getArl(), this.raw.header);
+        const rawTypes = this.raw?.types;
+        this.vmbluTypes = typeof rawTypes === 'string' ? JSON.parse(rawTypes) : rawTypes ?? null;
+    },
+
+    // cookLibraries(arlRef, rawLibs) {
+
+    //     // get the models for the libraries
+    //     const newModels = this.libraries.newModels(arlRef, rawLibs)
+
+    //     // add the model to the modellist - the model is not fetched yet 
+    //     // this happens at the end when the model is loaded (see library.load)
+    //     for(const model of newModels) this.libraries.add(model)
+    // },
+
+};
+
+Object.assign(ModelBlueprint.prototype, RawHandling, ProfileHandling, McpHandling, AppHandling, TestHandling, LibHandling);
+
+// The model file uses a model map
+function ModelMap() {
+
+    // the key to the map is the full path - the value is a model or an array of models...
+    this.map = new Map();
+}
+ModelMap.prototype = {
+
+    reset() {
+        this.map.clear();
+    },
+
+    size() {
+        return this.map.size
+    },
+
+    // New models are returned in an array but not added to the map
+    newModels(ref, rawModels) {
+
+        // a list of models that are new, i.e. not yet in the ModelMap
+        const modelList=[];
+
+        // check
+        if (rawModels.length < 1) return modelList
+
+        // for each model in the array
+        for (const rawModel of rawModels) {
+
+            // now we have to resolve the user path to an absolute path
+            const arl = ref.resolve(rawModel);
+
+            // check if we have already handled this file...
+            if ( this.contains(arl) ) continue
+
+            // create the new model - there is no uid !
+            const newModel = new ModelBlueprint(arl);
+
+            // also add it to the new model list
+            modelList.push(newModel);
+        }
+
+        // return the list of models that are not yet in the map
+        return modelList
+    }, 
+    
+    add(model) {
+
+        // get the full path
+        const fullPath = model.fullPath();
+
+        if (!fullPath) return null;
+
+        // check if the key is already in the map
+        const storedLink = this.map.get(fullPath);
+
+        // if the stored model is for a different arl, we have a key-clash and we have to add an array of links for the key
+        if ( storedLink ) return this
+
+        // just add the model to the map
+        this.map.set(fullPath, model);
+        
+        // return the linkmap
+        return this
+    },
+
+    contains(arl) {
+
+        if (!arl) return true
+        return this.map.has(arl.getFullPath())
+    },
+
+    get(key) {
+        return this.map.get(key)
+    },
+
+    valuesArray() {
+        return Array.from(this.map.values())
+    },
+
+    all(f) {
+        const val = Array.from(this.map.values());
+        if (!val?.length) return []
+        return val.map( e => f(e))
+    },
+
+    // find the model if you only have the arl
+    findArl(arl) {
+
+        // check 
+        if (!arl) return null
+
+        for(const model of this.map.values()) {
+            if ( model.getArl()?.equals(arl)) return model
+        }
+        return null
+    },
+
+    cook(arlRef, rawModels) {
+
+        // get the models for the libraries
+        const newModels = this.newModels(arlRef, rawModels);
+
+        // add the model to the modellist - the model is not fetched yet 
+        // this happens at the end when the model is loaded (see library.load)
+        for(const model of newModels) this.add(model);
+    },
+
+/**** WE NEED A COMPILER HERE  */
+
+    async load() {
+
+        // a promise array
+        const pList = [];
+
+        // build the library for the modcom in the node library....
+        for (const model of this.map.values()) {
+
+            // set it as selectable
+            model.is.selectable = true;
+
+            // get the content of the file
+            pList.push( model.getRaw() );
+        }
+
+        // wait for all...
+        await Promise.all(pList);
+    },
+
+};
+
 // The model file uses a factory map
 function FactoryMap() {
 
@@ -23310,8 +24205,11 @@ FactoryMap.prototype = {
 
         for (const rawFactory of model.raw.factories) {
 
+            //const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path
+            if (!rawFactory.path) continue
+
             // the factories have to be resolved wrt the file that contains them
-            const arl = modelArl.resolve( rawFactory.path );
+            const arl = modelArl.resolve(rawFactory.path);
 
             // get the full path of the factory
             const fullPath = arl.getFullPath();
@@ -23356,245 +24254,11 @@ FactoryMap.prototype = {
 
 };
 
-const CompilerWrite = {
-
-// serialize the node 
-encode(node, model) {
-
-   if (!node) return null
-
-    // get the factories
-    node.collectFactories(this.factories);
-
-    // get the imports
-    node.collectModels(this.models);
-
-    // the object to encode
-    const raw = {
-        header: model.header,
-    };
-
-    // add the models, factories and libraries
-    if (this.models?.size() > 0) raw.imports = this.models.all( model => model.blu.arl.userPath);
-    if (this.factories?.size() > 0) raw.factories = this.factories.all( 
-        factory => ({   path: factory.arl?.userPath ?? "./index.js", 
-                        function: factory.fName 
-                    }));
-    if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => lib.blu.arl.userPath);
-
-    // add the types
-    if (model.vmbluTypes) raw.types = model.vmbluTypes;
-
-    // set the root
-    raw.root = node.makeRaw();
-
-    // now split the result in two parts
-    const split = this.splitRaw(raw);
-
-    // and return raw and the stringified results
-    return {raw,
-            blu: JSON.stringify(split.blu,null,2),
-            viz: JSON.stringify(split.viz,null,2)}
-},
-
-// Splits raw into a part for the blu file and the viz file
-splitRaw(raw) {
-
-    // Split the raw model in a blu and viz section
-    const sHeader = this.splitHeader(raw.header);
-    const sRoot = this.splitNode(raw.root);
-
-    const blu = {
-        header: sHeader.blu
-    };
-
-    if (raw.imports) blu.imports = raw.imports;
-    if (raw.factories) blu.factories = raw.factories;
-    if (raw.types) blu.types = raw.types;
-    blu.root = sRoot.blu;
-
-    const viz = {
-        header: sHeader.viz,
-        root: sRoot.viz
-    };
-
-    return { blu, viz}
-},
-
-splitHeader(rHeader) {
-
-    const {schema, created, saved, utc,runtime, style} = {...rHeader};
-
-    return { 
-            blu : {schema, created, saved, utc,runtime},
-            viz : {schema, utc, style: style.rgb}
-    }
-},
-
-splitInterfaces(rawInterfaces) {
-
-    // check
-    if (! rawInterfaces?.length) return {blu:[], viz:[]}
-
-    // map
-    const blu = rawInterfaces.map( rif => {
-
-        const pins = rif.pins.map( pin => {
-                const bluPin = {    name: pin.name, 
-                                    kind: pin.kind,
-                                    contract: pin.contract
-                                };
-                if (pin.prompt?.length) bluPin.prompt = pin.prompt;
-                return bluPin
-            });
-        return { interface: rif.interface, pins}
-    });
-    const viz = rawInterfaces.map( rif => {
-
-        const pins = rif.pins.map( pin => convert.pinToString(pin));
-        return {interface: convert.interfaceToString(rif), pins}
-    });
-
-    return {blu, viz}
-},
-
-splitNode(rNode) {
-
-    const interfaces = this.splitInterfaces(rNode.interfaces);
-
-    const blu = {
-        kind: rNode.kind,
-        name: rNode.name,
-    };
-    if (rNode.label) blu.label = rNode.label;
-    if (rNode.prompt) blu.prompt = rNode.prompt;
-
-    const viz = {
-        kind: rNode.kind,
-        name: rNode.name,
-        rect: convert.rectToString(rNode.rect),     
-    };
-
-    if (rNode.kind == 'dock') {
-        blu.link = rNode.link;
-        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
-        if (rNode.sx) blu.sx = rNode.sx;
-        if (rNode.dx) blu.dx = rNode.dx;
-
-        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
-    }
-    else if (rNode.kind == 'source') {
-        blu.factory = rNode.factory;     
-        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
-        if (rNode.sx) blu.sx = rNode.sx;
-        if (rNode.dx) blu.dx = rNode.dx; 
-
-        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
-    }
-    else if (rNode.kind == 'group') {
-
-        const splitNodes = rNode.nodes.map( rNode => this.splitNode(rNode));
-
-        if (interfaces.blu.length) blu.interfaces = interfaces.blu;
-        if (rNode.sx) blu.sx = rNode.sx;
-        if (rNode.dx) blu.dx = rNode.dx;
-        if (splitNodes.length) blu.nodes = splitNodes.map( node => node.blu );
-        if (rNode.connections) blu.connections = rNode.connections;
-
-        if (rNode.view) viz.view = convert.toViewStrings(rNode.view); 
-        if (interfaces.viz.length) viz.interfaces = interfaces.viz;
-        if (rNode.pads) viz.pads = rNode.pads.map( pad => convert.padToString(pad));
-        if (splitNodes.length) viz.nodes = splitNodes.map( node => node.viz );
-        if (rNode.buses) viz.buses = rNode.buses;
-        if (rNode.routes) viz.routes = rNode.routes;
-    }
-
-    return {blu, viz}
-},
-
-
-
-};
-
 // the blu file and the viz file are combind into a single format that is stored in blu version of node
 // the viz part might have to be converted from a compact string to a raw json structure.
 // The raw does not contain compact representations 
 
-const CompilerRead = {
-
-// gets the blu and viz file - only fails if blu is missing
-async fetch(model) {
-
-    // if the extension is json it is another node file
-    if (model.blu.arl) {
-
-        try {
-            const [bRaw, vRaw] = await Promise.all([
-                model.blu.arl.get('json'),
-                model.viz.arl.get('json').catch(error => {
-                    // viz file not found - return null which makes the promise resolve successfully !
-                    console.warn(`Viz file failed to load, proceeding with null: ${error.message}`);
-                    return null;
-                })
-            ]);
-
-            // set the fresh bit 
-            model.blu.is.fresh = true;
-            model.viz.is.fresh = true;
-
-            return {bRaw, vRaw};
-        }
-        catch( error ) {
-            // This ONLY catches the rejection from pBlu, the mandatory promise.
-            console.error(`${model.blu.arl.userPath} could not be found or is not valid.`, error);
-            return {bRaw:null, vRaw:null};
-        }
-    }
-
-    else if (model.bundle.arl) {
-
-        const rawCode = await model.bundle.arl.get('text')
-        .catch( error => {
-            console.error(`${model.bundle.arl.userPath} is not a valid bundle`, error);
-        });
-
-        //check
-        if (!rawCode) return {bRaw:null, vRaw: null}
-
-        // analyze the source to find the raw model
-        const raw = this.analyzeJSLib(rawCode);
-
-        // error if failed
-        if (! raw) console.error(`Model not found in bundle: ${model.bundle.arl.userPath}`);
-
-        // we are done 
-        return {bRaw:raw, vRaw: null}
-    }
-    // it's one or the other !
-    else return {bRaw:null, vRaw: null}
-},
-
-// get the raw model from two files and combine in one
-async getRaw(model) {
-
-    // get both parts of a model
-    const {bRaw:bRaw, vRaw:vRaw} = await this.fetch(model);
-
-    // we need a blu file , and it should have at least a header
-    if (!bRaw || !bRaw.header) return null;
-
-    // make the header
-    this.joinHeader(bRaw, vRaw);
-
-    // combine bRaw and vRaw in bRaw
-    if (vRaw?.root) this.joinNode(bRaw.root, vRaw.root); 
-
-    // set raw in the model
-    model.raw = bRaw;
-
-    // We also return the result
-    return bRaw
-},
+const CompilerMapHandling = {
     
 // recursive function to load a model and all dependencies of a model - only loads a model file if it is not yet loaded
 async getFactoriesAndModels(model) {
@@ -23612,7 +24276,7 @@ async getFactoriesAndModels(model) {
     if ( ! model.raw ) {
 
         // get the raw model
-        if (! await this.getRaw(model)) return
+        if (! await model.getRaw()) return
 
         // prepare the model 
         model.preCook();
@@ -23670,7 +24334,7 @@ async updateFactoriesAndModels() {
         if (this.models.contains(model.getArl())) continue
 
         // load the model
-        if (!await this.getRaw(model)) continue
+        if (!await model.getRaw()) continue
 
         // check
         if (!model.raw) continue
@@ -23698,116 +24362,57 @@ console.log(`-SYNC- newer version of '${model.getArl().userPath}'`);
     await Promise.all(pList);
 },
 
- // Finds the model text in the library file...
-analyzeJSLib(rawCode) {
+//  // Finds the model text in the library file...
+// analyzeJSLib(rawCode) {
 
-    // find the libname in the code
-    let start = rawCode.indexOf('"{\\n');
-    let end = rawCode.indexOf('\\n}";', start);
+//     // find the libname in the code
+//     let start = rawCode.indexOf('"{\\n')
+//     let end = rawCode.indexOf('\\n}";', start)
 
-    // check
-    if (start < 0 || end < 0) return null
+//     // check
+//     if (start < 0 || end < 0) return null
 
-    // get the part between starting and ending bracket
-    let rawText = rawCode.slice(start+1,end+3);
+//     // get the part between starting and ending bracket
+//     let rawText = rawCode.slice(start+1,end+3)
 
-    // allocate an array for the resulting text
-    const cleanArray = new Array(rawText.length);
-    let iClean = 0;
-    let iRaw = 0;
+//     // allocate an array for the resulting text
+//     const cleanArray = new Array(rawText.length)
+//     let iClean = 0
+//     let iRaw = 0
 
-    // remove all the scape sequences
-    while (iRaw < rawText.length) {
+//     // remove all the scape sequences
+//     while (iRaw < rawText.length) {
 
-        // get the first character
-        const char1 = rawText.charAt(iRaw++);
+//         // get the first character
+//         const char1 = rawText.charAt(iRaw++)
 
-        // if not a backslash, just copy
-        if (char1 != '\\') {
-            cleanArray[iClean++] = char1;
-        }
-        else {
+//         // if not a backslash, just copy
+//         if (char1 != '\\') {
+//             cleanArray[iClean++] = char1
+//         }
+//         else {
 
-            // get the character that has been escaped 
-            const char2 = rawText.charAt(iRaw++);
+//             // get the character that has been escaped 
+//             const char2 = rawText.charAt(iRaw++)
 
-            // handle the different escape sequences
-            if (char2 == 'n') 
-                cleanArray[iClean++] = '\n';
-            else if (char2 == '"') 
-                cleanArray[iClean++] = '"';
-        }
-    }
+//             // handle the different escape sequences
+//             if (char2 == 'n') 
+//                 cleanArray[iClean++] = '\n'
+//             else if (char2 == '"') 
+//                 cleanArray[iClean++] = '"'
+//         }
+//     }
 
-    // combine all characters into a new string
-    const cleanText = cleanArray.join('');
+//     // combine all characters into a new string
+//     const cleanText = cleanArray.join('')
 
-    // and parse
-    return JSON.parse(cleanText)
-},
-
-joinHeader(bRaw, vRaw) {
-    bRaw.header.style = vRaw ? vRaw.header.style : style$1.rgb;
-    // this.header.cook(arl, bRaw.header)
-},
-
-joinNode(bNode, vNode) {
-
-    // The rectangle and the view of the node
-    bNode.rect = vNode.rect ? convert.stringToRect(vNode.rect) : null;
-
-    // The interfaces
-    if (bNode.interfaces?.length && vNode.interfaces?.length) this.joinInterfaces(bNode, vNode);
-
-    // group node specific
-    if (bNode.kind == "group") {
-
-        // The node view
-        bNode.view = vNode.view ? convert.fromViewStrings(vNode.view) : null;
-
-        // The pads
-        bNode.pads = vNode.pads ? vNode.pads.map( pad => convert.stringToPad(pad)) : [];
-
-        // The nodes
-        bNode.nodes = bNode.nodes?.map( bn => {
-            const vn = vNode.nodes?.find(vn => bn.name == vn.name);
-            if (vn) this.joinNode(bn, vn); 
-            return bn;
-        });
-
-        // copy the buses
-        bNode.buses = vNode.buses;
-
-        // copy the routes
-        bNode.routes = vNode.routes;
-    }
-},
-
-joinInterfaces(bNode, vNode) {
-
-    // first convert strings
-    vNode.interfaces = vNode.interfaces.map( iface => {
-        const vif = {...convert.stringToInterface(iface.interface)};
-        vif.pins = iface.pins.map( pin => convert.stringToPin(pin));
-        return vif
-    });
-
-    // combine b and v
-    bNode.interfaces = bNode.interfaces.map( bInterface => {
-        const vInterface = vNode.interfaces.find( vInterface => vInterface.text == bInterface.interface);
-        if (vInterface) {
-            bInterface.pins = bInterface.pins.map( pin => {
-                const vpin = vInterface.pins.find( vpin => vpin.name == pin.name);
-                return vpin ? {...pin, wid:vpin.wid, left: vpin.left} : {...pin, wid:0, left: false};
-            });
-        }
-        return bInterface
-    });
-},
+//     // and parse
+//     return JSON.parse(cleanText)
+// },
 
 };
 
-function ModelCompiler( UID ) {
+function ModelCompiler( UID, options = {} ) {
 
     // All the models referenced in the model files 
     this.models = new ModelMap();
@@ -23890,9 +24495,6 @@ async findOrAddModel(arl) {
 
     // it is a new model
     model = new ModelBlueprint(arl);
-
-    // make a key for the model (it is a new model !)
-    // model.makeKey()
 
     // load the model and its dependencies
     await this.getFactoriesAndModels(model);
@@ -24027,11 +24629,11 @@ badLink(raw, lName, model) {
 },
 
 // update all the nodes that have a link
-updateNode(node) {
+updateLinkedNode(node) {
 
     //console.log(`${node.name} => ${node.link ? (node.link.model.is.fresh ? 'update' : 'no update') : 'no link'}`)
 
-    // check the link
+    // if there is a link but the link is bad, bail out
     if (node.link && node.link.is.bad) return
 
     // if raw has been updated (i.e. is fresh), recompile the node
@@ -24045,9 +24647,6 @@ updateNode(node) {
             node.linkIsBad();
             return
         }
-
-        // maybe we have to change the type of node..
-        // node = node.compatible(newNode) ? node : this.switchNodeType(node)   
         
         // maybe we have to change the type of node..
         if (!node.compatible(newNode)) {
@@ -24073,12 +24672,50 @@ updateNode(node) {
     }
 
     // for group nodes check the subnodes...
-    if (node.nodes) for(const subNode of node.nodes) this.updateNode(subNode);
+    if (node.nodes) for(const subNode of node.nodes) this.updateLinkedNode(subNode);
+},
+
+// serialize the node 
+encode(node, model) {
+
+   if (!node) return null
+
+    // get the factories
+    node.collectFactories(this.factories);
+
+    // get the imports
+    node.collectModels(this.models);
+
+    // the object to encode
+    const raw = {
+        header: model.header,
+    };
+
+    // add the models, factories and libraries
+    if (this.models?.size() > 0) raw.imports = this.models.all( model => model.blu.arl.userPath);
+    if (this.factories?.size() > 0) raw.factories = this.factories.all(  factory => ({   path: factory.arl?.userPath ?? "./index.js", function: factory.fName }));
+    if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => lib.blu.arl.userPath);
+
+    // add the types
+    if (model.vmbluTypes) raw.types = model.vmbluTypes;
+
+    // set the root
+    raw.root = node.makeRaw();
+
+    // now split the result in two parts
+    // const split = this.splitRaw(raw)
+
+    // and return raw and the stringified results
+    // return {raw,
+    //         blu: JSON.stringify(split.blu,null,2),
+    //         viz: JSON.stringify(split.viz,null,2)}
+
+    return raw
 },
 
 };
 
-Object.assign(ModelCompiler.prototype, CompilerRead, CompilerWrite);
+Object.assign(ModelCompiler.prototype, CompilerMapHandling);
 
 /**
  * @node clipboard
@@ -24432,26 +25069,16 @@ Clipboard.prototype = {
 }; // clipboard manager.prototype
 Object.assign(Clipboard.prototype, ClipboardRawCook);
 
-// domain path resource are the shorthands as they appear in the workspace file 
-function userPathString(userPath) {
-    if (typeof userPath === 'string') return userPath;
-    if (userPath && typeof userPath === 'object') {
-        if (typeof userPath.fsPath === 'string') return userPath.fsPath;
-        if (typeof userPath.path === 'string') return userPath.path;
-        if (typeof userPath.url === 'string') return userPath.url;
-    }
-    return null;
-}
-
 function ARL(userPath) {
 
-    const stringPath = userPathString(userPath);
+    const stringPath = stringCheck(userPath);
+    const normalizedPath = normalizeSeparators(stringPath ?? '');
 
     // the reference to the ARL as entered by the user
-    this.userPath = stringPath ?? '';
+    this.userPath = normalizedPath;
 
     // the resolved url
-    this.url = stringPath ? path.resolve(stringPath) : null;
+    this.url = stringPath ? normalizeSeparators(path.resolve(stringPath)) : null;
 }
 
 ARL.prototype =  {  // makes a url based on the components
@@ -24518,11 +25145,13 @@ setWSReference(wsRef) {},
 // resolve a path wrt this arl - returns a new arl !
 resolve(userPath) {
 
-    const stringPath = userPathString(userPath);
+    const stringPath = stringCheck(userPath);
     if (!stringPath) return null;
 
+    const normalizedPath = normalizeSeparators(stringPath);
+
     // make an arl
-    const arl = new ARL(stringPath);
+    const arl = new ARL(normalizedPath);
 
     // check if absolute already
     if (path.isAbsolute(stringPath)) return arl
@@ -24534,11 +25163,11 @@ resolve(userPath) {
     }
 
     // remove the last file name
-    const slash = this.url.lastIndexOf("\\");
+    const slash = Math.max(this.url.lastIndexOf('/'), this.url.lastIndexOf("\\"));
     const ref = (slash != -1) ? this.url.slice(0, slash) : this.url;
 
     // resolve
-    arl.url = path.resolve(ref, stringPath);
+    arl.url = normalizeSeparators(path.resolve(ref, normalizedPath));
 
     // done
     return arl
@@ -25389,11 +26018,18 @@ function findTransmissions(sourceFile, filePath, nodeMap) {
         // check
         if (expr.getKind() !== SyntaxKind.PropertyAccessExpression) return
 
-        // Match tx.send or this.tx.send - regular expression could be : expr.getText().match(/\w+\.tx\.send/)
+        // Match tx.send/tx.request or this.tx.send/this.tx.request
         const text = expr.getText();
 
         // check
-        if (! (text === 'tx.send' || text === 'this.tx.send' || text.endsWith('.tx.send'))) return;
+        if (!(
+            text === 'tx.send' ||
+            text === 'this.tx.send' ||
+            text.endsWith('.tx.send') ||
+            text === 'tx.request' ||
+            text === 'this.tx.request' ||
+            text.endsWith('.tx.request')
+        )) return;
 
         const args = node.getArguments();
         if (args.length === 0 || !args[0].isKind(SyntaxKind.StringLiteral)) return;
@@ -25495,6 +26131,8 @@ function getEnclosingHandlerName(callExpression) {
     return null;
 }
 
+const require = createRequire(import.meta.url);
+const pckg = require('../../package.json');
 const PROFILE_VERSION = pckg.version;
 
 // The main function for the profile tool
@@ -25508,7 +26146,7 @@ async function profile(argv = process.argv.slice(2)) {
     }
 
     const absoluteModelPath = path.resolve(cli.modelFile);
-    const modelPath = absoluteModelPath.replace(/\\/g, '/');
+    const modelPath = normalizeSeparators(absoluteModelPath);
 
     if (!fs$1.existsSync(absoluteModelPath) || !fs$1.statSync(absoluteModelPath).isFile()) {
         console.error(cli.modelFile, 'is not a file');
@@ -25519,10 +26157,10 @@ async function profile(argv = process.argv.slice(2)) {
         ? path.resolve(cli.outFile)
         : (() => {
             const { dir, name, ext } = path.parse(absoluteModelPath);
-            const baseName = ext === '.json' && name.endsWith('.blu')
-                ? name.slice(0, -'.blu'.length)
+            const baseName = ext === '.blu' && name.endsWith('.mod')
+                ? name.slice(0, -'.mod'.length)
                 : name;
-            return path.join(dir, `${baseName}.prf.json`);
+            return path.join(dir, `${baseName}.src.prf`);
         })();
 
     if (cli.deltaFile) cli.deltaFile = path.resolve(cli.deltaFile);
@@ -25562,7 +26200,7 @@ async function profile(argv = process.argv.slice(2)) {
         // console.log(sourceFile.getFilePath())
 
         // A file reference is always relative to the model file
-        const filePath = path.relative(path.dirname(modelPath), sourceFile.getFilePath()).replace(/\\/g, '/');
+        const filePath = normalizeSeparators(path.relative(path.dirname(modelPath), sourceFile.getFilePath()));
 
         // the node map to collect the data for the file
         const nodeMap = new Map();
@@ -25768,6 +26406,9 @@ function parseCliArgs(argvInput) {
 // Gets all the source files that are part of this project
 function setupProject(factories) {
 
+    // show the version that we use
+    console.log('version: ',PROFILE_VERSION);
+
     // Initialize ts-morph without tsconfig
     const project = new Project({
         compilerOptions: {
@@ -25795,7 +26436,8 @@ function setupProject(factories) {
         try {
             project.addSourceFileAtPath(factory.arl.url);
         } catch (err) {
-            console.warn(`Could not load ${filePath}: ${err.message}`);
+            //console.warn(`Could not load ${filePath}: ${err.message}`);
+            console.warn(err.message);
         }
     }
 

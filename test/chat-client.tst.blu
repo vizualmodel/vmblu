@@ -1,0 +1,58 @@
+{
+  "header": {
+    "schema": "0.9.2",
+    "created": "2/1/2026, 5:26:38 PM",
+    "saved": "2/1/2026, 5:26:38 PM",
+    "utc": "2026-02-01T16:26:38.401Z",
+    "runtime": "@vizualmodel/vmblu-runtime"
+  },
+  "root": {
+    "kind": "group",
+    "name": "group",
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "sequencer",
+        "factory": {
+          "path": "./index.js",
+          "function": "Sequencer"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "sequence.result",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "sequence.stop",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "sequence.start",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "sequence",
+            "pins": []
+          }
+        ]
+      }
+    ]
+  }
+}

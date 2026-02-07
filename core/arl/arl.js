@@ -5,9 +5,10 @@ import * as Path from './path.js'
 export function ARL(userPath) {
 
     const stringPath = Path.stringCheck(userPath);
+    const normalizedPath = Path.normalizeSeparators(stringPath ?? '');
 
     // the reference to the ARL as entered by the user
-    this.userPath = stringPath
+    this.userPath = normalizedPath
 
     // the resolved url
     this.url = null
@@ -87,6 +88,8 @@ setWSReference(wsRef) {},
 // resolve a path wrt this arl - returns a new arl !
 resolve(userPath) {
 
+    const normalizedPath = Path.normalizeSeparators(userPath);
+
     // relative path: check that we have a url
     if (!this.url) {
         console.error(`cannot resolve ${userPath} - missing reference`)
@@ -94,10 +97,10 @@ resolve(userPath) {
     }
 
     // make an arl
-    const arl = new ARL(userPath)
+    const arl = new ARL(normalizedPath)
 
     // and make a url that is relative to this
-    arl.url = new URL(userPath, this.url)
+    arl.url = new URL(normalizedPath, this.url)
 
     // done
     return arl
@@ -273,5 +276,3 @@ async jsImport() {
 //     })
 // },
 }
-
-

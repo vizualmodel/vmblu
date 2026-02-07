@@ -211,7 +211,7 @@ Node.prototype = {
     },
 
     // cooks the elements that are common to group and source nodes
-    cookCommon(raw) {
+    cookCommon(raw, modcom) {
 
         // If there is no editor part, add the skeleton
         // if (!raw.editor) raw.editor = {rect: null}

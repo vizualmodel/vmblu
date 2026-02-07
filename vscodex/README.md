@@ -7,7 +7,9 @@ Modern LLMs make it easy to “vibe code”. But as your app grows, features bre
 
 ## `▞   What is vmblu?`
 
-**vmblu** is a graphical editor, format spec and tool set, for building software as a **network of message-passing nodes**. **vmblu** makes the architecture of your software explicit and easy to navigate — by humans and LLMs.
+**vmblu** is for developers who understand that AI changes how software is built — and who want architecture that keeps AI correct, safe, and observable.
+
+**vmblu** is a graphical editor, format spec and tool set, for building software as a **network of message-passing nodes**. **vmblu** makes the architecture of your software explicit and easier to navigate and understand — by humans and LLMs.
 
 **vmblu** is 
 - **AI-native** - LLMs can design the architecture, write the code and interact with the running system.
@@ -23,7 +25,7 @@ The **vmblu model** is not documentation, it is the actual system.
 - **vmblu** is for building real, complex systems. It is an excellent foundation to build agentic systems. 
 - **Message-based architectures** — the foundation of vmblu — bring their own advantages.
 - **Migrating** an application to a **vmblu** based design is not complicated. The vmblu editor itself is now a vmblu application.
-- **vmblu** is currently at version 0.0.21, with version 1.0.0 planned in the first quarter of the year (2026). It is in good shape, but expect updates.
+- **vmblu** is currently at version 0.0.30, with version 1.0.0 planned in the first quarter of the year (2026). It is in good shape, but expect updates.
 
 ## `▞   Quick start`
 

@@ -38,6 +38,8 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	// The webview panel for this document - we do not support multi tab for the same document
 	public panel: any = null;
+	// Optional model watcher for suppressing local-save change notifications
+	public modelWatcher: { setLocalSave?: () => void } | null = null;
 
 	// The disposable (event listeners) for this document
 	public disposables: vscode.Disposable[] = [];
@@ -183,6 +185,9 @@ export class VmbluDocument implements vscode.CustomDocument {
 		// The webview where we will ask for the file data
 		const broker = this.panel.webview;
 
+		// Let the model watcher suppress the change notification for this local save
+		this.modelWatcher?.setLocalSave?.();
+
 		// make a promise to wait for...
 		this.wait.promise = new Promise( (resolve, reject) => {
 			this.wait.resolve = resolve;
@@ -208,6 +213,9 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 		// The webview where we will ask for the file data
 		const broker = this.panel.webview;
+
+		// Let the model watcher suppress the change notification for this local save
+		this.modelWatcher?.setLocalSave?.();
 
 		// make a promise to wait for...
 		this.wait.promise = new Promise( (resolve, reject) => {

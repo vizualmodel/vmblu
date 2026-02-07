@@ -912,6 +912,33 @@ textarea.svelte-ikhghf {
 }
 
 
+  .contract.svelte-1ie22kd {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+  }
+
+  .role.svelte-1ie22kd {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.3rem;
+  }
+  .role.svelte-1ie22kd p:where(.svelte-1ie22kd) {
+    font-family: var(--fFixed);
+    font-size: 0.7rem;
+    color: #f0fc44;
+    margin: 0 0 0 0rem;
+  }
+
+  .text.svelte-1ie22kd {
+    font-family: var(--fFixed);
+    font-size: 0.7rem;
+    color: #44a3fc;
+    white-space: pre-wrap;
+    margin: 0 0 0 1rem;
+  }
+
+
 .pin.svelte-11yhn9u {
     display: flex;
     flex-direction: row;

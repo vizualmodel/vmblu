@@ -92,7 +92,18 @@ Look.prototype = {
     getTextWidth(str, multi=false) {
 
         // get the canvas context
-        const ctx = editor.getCanvasContext()
+        const ctx = editor?.getCanvasContext?.()
+        if (!ctx) {
+            const text = str ?? ''
+            const baseWidth = style.pin.wChar
+            
+            if (!multi) return text.length * baseWidth
+
+            const [pre, middle, post] = convert.getPreMiddlePost(text)
+            const normalWidth = (pre.length + post.length + 2) * baseWidth
+            const multiWidth = middle.length * baseWidth
+            return normalWidth + multiWidth
+        }
 
         if (!multi) return ctx.measureText(str).width
         

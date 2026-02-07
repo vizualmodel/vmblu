@@ -400,10 +400,11 @@ export const mouseDownHandling = {
             break
 
             case zap.selection: {
+                
                 switch(keys) {
 
                     case NONE:{
-                        if (this.selection.what == selex.freeRect){  
+                        if (this.selection.what === selex.freeRect || this.selection.what === selex.multiNode){  
                             
                             // drag the whole selection
                             editor.doEdit('selectionDrag', {view: this})

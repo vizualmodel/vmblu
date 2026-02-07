@@ -1,6 +1,6 @@
 {
-  "version": "0.3.5",
-  "generatedAt": "2025-12-16T14:52:15.216Z",
+  "version": "0.4.2",
+  "generatedAt": "2026-02-04T09:28:36.255Z",
   "entries": [
     {
       "node": "document manager",
@@ -209,10 +209,30 @@
           "params": []
         },
         {
+          "pin": "sync links",
+          "handler": "onSyncLinks",
+          "file": "editor/editor-message.js",
+          "line": 80,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "reload model",
+          "handler": "onReloadModel",
+          "file": "editor/editor-message.js",
+          "line": 85,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
           "pin": "sync model",
           "handler": "onSyncModel",
           "file": "editor/editor-message.js",
-          "line": 80,
+          "line": 94,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -222,7 +242,7 @@
           "pin": "recalibrate",
           "handler": "onRecalibrate",
           "file": "editor/editor-message.js",
-          "line": 87,
+          "line": 97,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -232,7 +252,7 @@
           "pin": "grid on off",
           "handler": "onGridOnOff",
           "file": "editor/editor-message.js",
-          "line": 95,
+          "line": 105,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -242,7 +262,7 @@
           "pin": "accept changes",
           "handler": "onAcceptChanges",
           "file": "editor/editor-message.js",
-          "line": 106,
+          "line": 116,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -252,7 +272,7 @@
           "pin": "size change",
           "handler": "onSizeChange",
           "file": "editor/editor-message.js",
-          "line": 117,
+          "line": 127,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -268,7 +288,7 @@
           "pin": "make lib",
           "handler": "onMakeLib",
           "file": "editor/editor-message.js",
-          "line": 148,
+          "line": 165,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -284,7 +304,7 @@
           "pin": "make app",
           "handler": "onMakeApp",
           "file": "editor/editor-message.js",
-          "line": 173,
+          "line": 190,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -300,7 +320,7 @@
           "pin": "run app",
           "handler": "onRunApp",
           "file": "editor/editor-message.js",
-          "line": 201,
+          "line": 219,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -310,7 +330,7 @@
           "pin": "run app in iframe",
           "handler": "onRunAppInIframe",
           "file": "editor/editor-message.js",
-          "line": 213,
+          "line": 231,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -320,7 +340,7 @@
           "pin": "pin profile",
           "handler": "onPinProfile",
           "file": "editor/editor-message.js",
-          "line": 233,
+          "line": 251,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -330,7 +350,7 @@
           "pin": "selected node",
           "handler": "onSelectedNode",
           "file": "editor/editor-message.js",
-          "line": 236,
+          "line": 254,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -356,7 +376,7 @@
           "pin": "save point set",
           "handler": "onSavePointSet",
           "file": "editor/editor-message.js",
-          "line": 250,
+          "line": 268,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -366,7 +386,7 @@
           "pin": "save point back",
           "handler": "onSavePointBack",
           "file": "editor/editor-message.js",
-          "line": 281,
+          "line": 300,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -392,37 +412,37 @@
         {
           "pin": "show lib path",
           "file": "editor/editor-message.js",
-          "line": 164
+          "line": 181
         },
         {
           "pin": "show app path",
           "file": "editor/editor-message.js",
-          "line": 192
+          "line": 209
         },
         {
           "pin": "run",
           "file": "editor/editor-message.js",
-          "line": 206
+          "line": 224
         },
         {
           "pin": "run",
           "file": "editor/editor-message.js",
-          "line": 217
+          "line": 235
         },
         {
           "pin": "iframe",
           "file": "editor/editor-message.js",
-          "line": 226
+          "line": 244
         },
         {
           "pin": "save point confirm",
           "file": "editor/editor-message.js",
-          "line": 259
+          "line": 277
         },
         {
           "pin": "save point confirm",
           "file": "editor/editor-message.js",
-          "line": 291
+          "line": 310
         }
       ]
     },
@@ -433,7 +453,7 @@
           "pin": "set",
           "handler": "onSet",
           "file": "model/clipboard.js",
-          "line": 52,
+          "line": 51,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -454,7 +474,7 @@
           "pin": "get",
           "handler": "onGet",
           "file": "model/clipboard.js",
-          "line": 73,
+          "line": 72,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -470,7 +490,7 @@
           "pin": "switched",
           "handler": "onSwitched",
           "file": "model/clipboard.js",
-          "line": 102,
+          "line": 146,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -480,7 +500,7 @@
           "pin": "local",
           "handler": "onLocal",
           "file": "model/clipboard.js",
-          "line": 109,
+          "line": 153,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -497,7 +517,7 @@
         {
           "pin": "switch",
           "file": "model/clipboard.js",
-          "line": 70
+          "line": 69
         }
       ]
     },
@@ -564,12 +584,12 @@
         {
           "pin": "pin profile",
           "file": "view/redox-widget.js",
-          "line": 222
+          "line": 224
         },
         {
           "pin": "open source file",
           "file": "view/redox-widget.js",
-          "line": 235
+          "line": 238
         }
       ]
     }

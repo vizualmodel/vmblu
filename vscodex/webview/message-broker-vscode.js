@@ -40,13 +40,13 @@ export const messageBrokerVscode = {
 					this.tx.send('set document', this.activeDoc)
 
 					// write to the output file (= same name as model file but with .prf added before extension)
-					const outFilename = Path.getSplit(arl.userPath).name + '.prf.json'
+					const outFilename = Path.getSplit(arl.userPath).name + '.src.prf'
 
 					// Make the output file name
 					const outFile = arl.resolve(outFilename)
 
-					// also request to run run documentation.js on the factory files...
-					vscode.postMessage({verb:'watch source doc', model: arl, outFile})
+					// also request to start the source code and model watchers
+					vscode.postMessage({verb:'start watchers', model: arl, outFile})
 				})
 				.catch( error => {
 
@@ -104,14 +104,22 @@ export const messageBrokerVscode = {
 				return
 			}
 
-			// the document became visible - do a sync
+			// the document became visible - some of the links might have changed - do a sync.
 			case 'visible' : {
 
-				this.tx.send('sync model')
+				this.tx.send('sync links')
+				return
+			}
+
+			// an llm has changed the model - reread from file
+			case 'model changed' : {
+
+				this.tx.send('reload model')
 				return
 			}
 
 			case 'source doc' : {
+			
 				this.activeDoc.model.sourceMap = this.activeDoc.model.parseSourceMap(message.rawSourceDoc) 
 				return
 			}

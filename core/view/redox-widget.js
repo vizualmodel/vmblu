@@ -206,22 +206,25 @@ pinAreaDrag: {
             // check that we have a model
             if (!editor.doc?.model) return;
 
+            // get the contract for the pin
+            const contract = editor.doc.model.getContract(pin)
+
             // get the pin profile (can be a single profile or an array !)
             const profile = pin.is.input
                 ? editor.doc.model.getInputPinProfile(pin)
                 : editor.doc.model.getOutputPinProfile(pin);
 
             // check
-            if (!profile) {
-                console.log(`NO PROFILE ${pin.name}`);
-
-                return;
-            }
+            // if (!profile) {
+            //     console.log(`NO PROFILE ${pin.name}`);
+            //     // return;
+            // }
 
             // show the profile
             editor.tx.send('pin profile', {
                 pos,
                 pin,
+                contract,
                 profile,
 
                 // The function that is called when clicking the handler name

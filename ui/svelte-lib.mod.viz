@@ -10,8 +10,8 @@
     "rect": "x 1061 y 0 w 100 h 26",
     "view": {
       "state": "open",
-      "rect": "x 0 y 0 w 2192 h 1295",
-      "transform": "sx 0.980 sy 0.980 dx 241.079 dy 73.208"
+      "rect": "x 0 y 0 w 1668 h 1326",
+      "transform": "sx 0.980 sy 0.980 dx 65.079 dy 37.208"
     },
     "nodes": [
       {
@@ -253,7 +253,7 @@
             "rect": "x 24 y 372 w 200 h 161",
             "interfaces": [
               {
-                "interface": "(10)screen areas",
+                "interface": "(0) screen areas",
                 "pins": [
                   "(2 R)left menu",
                   "(3 R)left column",
@@ -262,7 +262,7 @@
                 ]
               },
               {
-                "interface": "(11)messages",
+                "interface": "(0) messages",
                 "pins": [
                   "(7 R)vertical",
                   "(8 R)horizontal",
@@ -330,7 +330,7 @@
                 ]
               },
               {
-                "interface": "(16)tab",
+                "interface": "(0) tab",
                 "pins": [
                   "(10 R)tab new",
                   "(11 R)tab rename",
@@ -425,7 +425,7 @@
                 ]
               },
               {
-                "interface": "(12)menu items",
+                "interface": "(0) menu items",
                 "pins": [
                   "(3 L)accept changes",
                   "(4 L)recalibrate",

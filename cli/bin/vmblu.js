@@ -30,7 +30,7 @@ async function run() {
 
   if (['-v', '--version', 'version'].includes(cmd)) {
     const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-    console.log(pkg.version);
+    console.log('version: ' + pkg.version + ' schema: ' + pkg.schemaVersion);
     process.exit(0);
   }
 

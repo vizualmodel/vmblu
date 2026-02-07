@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "0.0.21",
+    "version": "0.0.30",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -46,7 +46,7 @@
                 "displayName": "Vmblu",
                 "selector": [
                     {
-                        "filenamePattern": "*.blu.json"
+                        "filenamePattern": "*.blu"
                     }
                 ],
                 "priority": "default"
@@ -57,7 +57,7 @@
                 {
                     "command": "vmblu.globe",
                     "group": "navigation",
-                    "when": "resourceExtname == .blu.json"
+                    "when": "resourceExtname == .blu"
                 }
             ]
         },

@@ -392,4 +392,8 @@ export const padRouteFunctions = {
         }
     },
 
+    rank() {
+        return {up:1, down:1}
+    }
+
 }

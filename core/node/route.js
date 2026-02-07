@@ -29,7 +29,7 @@ Route.prototype = {
         if (this.wire.length < 2) return 
 
         // color
-        const color = this.is.selected      ? style.route.cSelected 
+        let color = this.is.selected      ? style.route.cSelected 
                     : this.is.highLighted   ? style.route.cHighLighted
                     : this.is.newConx       ? style.route.cAdded
                     : this.is.noConx        ? style.route.cDeleted

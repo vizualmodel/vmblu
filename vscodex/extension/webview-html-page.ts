@@ -16,6 +16,16 @@ export function makeHtmlPage(csp:string, app:vscode.Uri, css:vscode.Uri, icons:v
 		<title>Vmblu</title>
 		<link rel="stylesheet" type="text/css" href= ${css}/>
 		<link rel="stylesheet" type="text/css" href= ${icons}/>
+		<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			display: block !important;
+			justify-content: flex-start !important;
+			align-items: flex-start !important;
+		}
+		</style>
 		<script nonce="${nonce}" type='module' src=${app}></script>
 	</head>
 	<body style="overflow:hidden;">

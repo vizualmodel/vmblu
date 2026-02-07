@@ -59,42 +59,42 @@ export const routeDrawing = {
         }
     },
 
-    // make a route between from and to
-    builder() {
+    // // make a route between from and to
+    // builder() {
 
-        const conx = this.typeString()
+    //     const conx = this.typeString()
 
-        switch (conx) {
+    //     switch (conx) {
 
-            case 'PIN-PIN':
-                this.fourPointRoute()
-                break
+    //         case 'PIN-PIN':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PIN-PAD':
-                this.fourPointRoute()
-                break
+    //         case 'PIN-PAD':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PAD-PIN':
-                this.fourPointRoute()
-                break
+    //         case 'PAD-PIN':
+    //             this.fourPointRoute()
+    //             break
 
-            case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-                break
+    //         case 'PIN-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-                break
+    //         case 'BUS-PIN':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-                break
+    //         case 'PAD-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
 
-            case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-                break
-        }
-    },
+    //         case 'BUS-PAD':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+    //     }
+    // },
 
     sixPointRoute(nodes=[]) {
 
@@ -109,20 +109,30 @@ export const routeDrawing = {
         const t = to.center()
 
         // deterministic offsets away from node bodies
-        const margin = style.look.dxCopy
-
-        let x1 = from.is.left ? f.x - margin : f.x + margin
-        let x2 = to.is.left ? t.x - margin : t.x + margin
+        
+        const dpx = style.autoroute.xDelta
+        const mg = style.autoroute.xMargin
 
         const frc = from.node.look.rect
         const trc = to.node.look.rect
-        let y1 = f.y + (frc.h/4 + trc.h/4)
+        let yMid = f.y + (frc.h/4 + trc.h/4)
+
+        const fRank = from.rank()
+        const fRankValue = yMid < f.y ? fRank.up : fRank.down
+        const xBase1 = from.is.left ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue
+
+        const tRank = to.rank()
+        const tRankValue = yMid < t.y ? tRank.up : tRank.down
+        const xBase2 = to.is.left ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue
+
+        let x1 = xBase1
+        let x2 = xBase2
 
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
-        const expandY = Math.max(style.route.split, 10)
+        const expandY = style.autoroute.yDelta
 
-        const buildWire = (yMid) => {
+        const buildWire = () => {
             wire.length = 0
             wire.push(f)
             wire.push({x:x1, y:f.y})
@@ -132,19 +142,26 @@ export const routeDrawing = {
             wire.push(t)
         }
 
-        const collides = () => {
-            for (let i=0; i<wire.length-1; i++) {
-                const a = wire[i], b = wire[i+1]
-                if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return true
+        const firstHorizontalCut = () => {
+            const p1 = {x:x1, y:yMid}
+            const p2 = {x:x2, y:yMid}
+            for (const node of blockers) {
+                if (segmentCuts(p1, p2, node.look.rect)) return node
             }
-            return false
+            return null
         }
 
         let guard = 0
-        buildWire(y1)
-        while (collides() && guard < 30) {
-            y1 += expandY
-            buildWire(y1)
+        buildWire()
+        let hit = firstHorizontalCut()
+        while (hit && guard < 30) {
+            const rc = hit.look.rect
+            const distTop = yMid - rc.y
+            const distBottom = (rc.y + rc.h) - yMid
+            if (distTop < distBottom) yMid -= expandY
+            else yMid += expandY
+            buildWire()
+            hit = firstHorizontalCut()
             guard++
         }
 
@@ -156,40 +173,59 @@ export const routeDrawing = {
         // reset points
         if (this.wire.length > 0) this.wire.length = 0
 
-        // create a simple route between the two widgets
+        // create a simple orthogonal route between the two widgets
         const wire = this.wire
         const from = this.from
         const to = this.to
         const f = from.center()
         const t = to.center()
 
-        let xNew = 0
+        // helper data for collision checks and gentle nudges
         const margin = style.look.dxCopy
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
 
-        // if both pins are at the same side of the node
-        if ((from.is.pin && to.is.pin)&&(from.is.left == to.is.left)) {
-
-            const left = from.is.left
-            if (left) 
-                xNew = from.rect.x < to.rect.x ? from.rect.x - margin : to.rect.x - margin
-            else 
-                xNew = from.rect.x + from.rect.w > to.rect.x + to.rect.w ? from.rect.x + from.rect.w + margin : to.rect.x + to.rect.w + margin
+        // choose the x for the vertical leg (xNew):
+        // - prefer the middle when pins face each other with no node overlap in x
+        // - otherwise, push the vertical leg away from the "from" side
+        const dpx = style.autoroute.xDelta
+        const mg = style.autoroute.xMargin
+        const isBusRoute = from.is?.tack || to.is?.tack
+        let fromLeft = from.is?.left ?? from.is?.leftText ?? false
+        let toLeft = to.is?.left ?? to.is?.leftText ?? false
+        if (isBusRoute) {
+            // For bus connections, infer "facing" by relative position to avoid routing past the bus.
+            fromLeft = f.x > t.x
+            toLeft = t.x > f.x
         }
-        else {
+        const rank = from.rank ? from.rank() : {up: 1, down: 1}
+        const rankValue = t.y < f.y ? rank.up : rank.down
+        let xNew = fromLeft ? f.x - mg - dpx * rankValue : f.x + mg + dpx * rankValue
 
-            // place the bend between the two centers with a fixed offset
-            const delta = Math.abs(f.x - t.x) * 0.25
-            xNew = f.x < t.x ? f.x + delta : f.x - delta
+        // if the nodes are clearly separated in x and the pins face each other,
+        // keep the vertical leg between the pins for a clean, direct route
+        const frc = from.node?.look?.rect
+        const trc = to.node?.look?.rect
+        const xOverlap = frc && trc ? !((frc.x + frc.w < trc.x) || (trc.x + trc.w < frc.x)) : true
+        const pinsFaceEachOther = fromLeft !== toLeft
+        if (!xOverlap && pinsFaceEachOther) {
+            xNew = (f.x + t.x) / 2
         }
 
-        // make the position of the bend also dependant on the relative position of the pin in the node
-        if (from.is.pin) {
-            const yFraction = 0.02
-            const dyPin = from.rect.y - from.node.look.rect.y
-            xNew = from.is.left ? xNew - dyPin * yFraction : xNew + dyPin * yFraction
+        // enforce the "shape" rule:
+        // - opposite sides: keep the vertical leg between the two endpoints
+        // - same side: push the vertical leg outside both endpoints (left or right)
+        const minX = Math.min(f.x, t.x)
+        const maxX = Math.max(f.x, t.x)
+        const enforceShapeRule = (xCandidate) => {
+            if (fromLeft !== toLeft) {
+                if (xCandidate < minX) return minX
+                if (xCandidate > maxX) return maxX
+                return xCandidate
+            }
+            return fromLeft ? Math.min(xCandidate, minX - mg) : Math.max(xCandidate, maxX + mg)
         }
+        xNew = enforceShapeRule(xNew)
 
         // nudge xNew left/right if the vertical legs would cut through other nodes
         const tryClearX = (xCandidate) => {
@@ -201,10 +237,12 @@ export const routeDrawing = {
             const shifts = [margin, -margin, margin*2, -margin*2]
             const base = xNew
             for (const dx of shifts) {
-                if (!tryClearX(base + dx)) { xNew = base + dx; break }
+                const candidate = enforceShapeRule(base + dx)
+                if (!tryClearX(candidate)) { xNew = candidate; break }
             }
         }
         
+        // build a 4-point orthogonal wire: horizontal, vertical, horizontal
         wire.push(f)
         wire.push({ x: xNew, y: f.y})
         wire.push({ x: xNew, y: t.y})
@@ -333,20 +371,6 @@ export const routeDrawing = {
         this.drawXY(xyLocal)
     },
 
-    // checks if there is an unobstructed path from p1 to p2
-    lineOfSight(nodes) {
-        
-        const cFrom = this.from.center();
-        const cTo = this.to.center();
-
-        for (const node of nodes) {
-            // ignore the nodes that own the endpoints
-            if ((node == this.from.node) || (node == this.to.node)) continue
-            if (cutsRectangle(cFrom, cTo, node.look.rect)) return false
-        }
-        return true
-    },
-
     autoRoute(nodes) {
         
         // get the type of connection
@@ -365,45 +389,51 @@ export const routeDrawing = {
                 break
 
             case 'PIN-PAD':
-                this.fourPointRoute(nodes)
-                break
-
             case 'PAD-PIN':
                 this.fourPointRoute(nodes)
                 break
 
             case 'PIN-BUS':
-                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
+            case 'PAD-BUS':
+                this.autoBusRoute(this.to, nodes)
                 break
 
             case 'BUS-PIN':
-                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
-                break
-
-            case 'PAD-BUS':
-                this.to.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
-                break
-
             case 'BUS-PAD':
-                this.from.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)
+                this.autoBusRoute(this.from, nodes)
                 break
         }
     },
 
+    autoBusRoute(tack, nodes) {
+        tack.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)      
+    },
+
     checkLeftRight() {
 
-        const cFrom = this.from.center();
-        const cTo = this.to.center();
+        // from and to already contain the route ! so 1 is ok.
+        if ( (this.from.routes.length > 1) && (this.to.routes.length > 1)) return;
 
-        if (this.from.routes.length == 0) {
+        // sort according to x 
+        const [near, far] = this.from.center().x < this.to.center().x ? [this.from, this.to] : [this.to, this.from];
 
-            if ((this.from.is.left && (cFrom.x < cTo.x)) || (!this.from.is.left && (cFrom.x > cTo.x)) ) this.from.leftRightSwap();
+        const nrc = near.node.look.rect
+        const frc = far.node.look.rect
+
+        // no x-overlap make right-left
+        if ((nrc.x + nrc.w < frc.x) || (frc.x + frc.w < nrc.x)) {
+
+            if ( near.is.left && near.routes.length < 2) near.leftRightSwap();
+            if ( !far.is.left && far.routes.length < 2) far.leftRightSwap();
         }
-        if (this.to.routes.length == 0) {
+        // x-overlap make left-left or right-right
+        else {
+            if (near.is.left != far.is.left) {
 
-            if ((this.to.is.left && (cTo.x < cFrom.x)) || (!this.to.is.left && (cTo.x > cFrom.x)) ) this.to.leftRightSwap();
+                if (near.routes.length < 2) near.leftRightSwap()
+                else if (far.routes.length < 2) far.leftRightSwap()
+            }
         }
-
     },
 
     // sometimes a route can be pathological - this is a fix for that
@@ -428,4 +458,3 @@ export const routeDrawing = {
     }
     
 }
-

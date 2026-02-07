@@ -20,7 +20,7 @@ export const moveHandling = {
     // move to absolute position
     moveTo(x,y) {
 
-        // calculate the delta
+        // calculate the delta and move over the delta...
         this.moveDelta(x - this.rect.x, y - this.rect.y)
     },
 

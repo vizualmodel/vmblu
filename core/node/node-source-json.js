@@ -45,7 +45,7 @@ export const jsonHandling = {
     cook(raw, modcom) {
 
         // cook the common parts
-        this.cookCommon(raw)
+        this.cookCommon(raw, modcom)
 
         // add the factory
         if (raw.factory) {
@@ -67,57 +67,4 @@ export const jsonHandling = {
         // and set up the rx tx tables
         this.rxtxPrepareTables()
     },
-
-    // Not really json related, but ok...
-    // The factory module can contain one or many factories
-    xxxanalyzeFactory(fModule) {
-
-        // the entries in the module
-        let entries = Object.entries(fModule)
-
-        // find the factory entry in the list
-        const entry = entries.find( entry => entry[0] == this.factory.fName )
-
-        // not found 
-        if (!entry) return
-
-        // a dummy tx.send function
-        const tx = {
-            out() {}
-        }
-
-        // the factory function
-        const factory = entry[1]
-
-        // call the factory to get the actual runtime cell
-        let cell = factory.prototype?.constructor === factory ? factory(tx, null) : new factory(tx, null)
-
-        // cycle through the props ....
-        for( const prop in cell) {
-
-            if (prop.startsWith("-> ") && typeof cell[prop] == "function") {
-
-                // get the name of the pin (without on)
-                const handler = prop.slice(3)
-
-                // get the source of the handler
-                const source = cell[prop].toString()
-
-                // find the parameters
-                const opbr = source.indexOf('(')
-                const clbr = source.indexOf(')')
-
-                // get the profile - without the brackets
-                const profile = source.slice(opbr+1, clbr)
-                //console.log('<', handler,'>',profile)
-
-                // add the profile to the appropriate widget
-                for( const widget of this.look.widgets) {
-                    if (widget.is.pin && widget.name == handler) {
-                        widget.profile = profile
-                    }
-                }
-            }
-        }
-    }
 }

@@ -2,11 +2,10 @@ import {ModelMap} from './model-map.js'
 import {ModelBlueprint} from './blueprint.js'
 import {GroupNode, SourceNode} from '../node/index.js'
 import {FactoryMap} from './factory-map.js'
-import {CompilerWrite} from './compiler-write.js'
-import {CompilerRead} from './compiler-read.js'
+import {CompilerMapHandling} from './compiler-maps.js'
 
 
-export function ModelCompiler( UID ) {
+export function ModelCompiler( UID, options = {} ) {
 
     // All the models referenced in the model files 
     this.models = new ModelMap()
@@ -19,6 +18,9 @@ export function ModelCompiler( UID ) {
 
     // set the uid generator (if any)
     this.UID = UID
+
+    // options currently unused; kept for forward compatibility
+    void options
 }
 ModelCompiler.prototype = {
 
@@ -89,9 +91,6 @@ async findOrAddModel(arl) {
 
     // it is a new model
     model = new ModelBlueprint(arl)
-
-    // make a key for the model (it is a new model !)
-    // model.makeKey()
 
     // load the model and its dependencies
     await this.getFactoriesAndModels(model)
@@ -226,11 +225,11 @@ badLink(raw, lName, model) {
 },
 
 // update all the nodes that have a link
-updateNode(node) {
+updateLinkedNode(node) {
 
     //console.log(`${node.name} => ${node.link ? (node.link.model.is.fresh ? 'update' : 'no update') : 'no link'}`)
 
-    // check the link
+    // if there is a link but the link is bad, bail out
     if (node.link && node.link.is.bad) return
 
     // if raw has been updated (i.e. is fresh), recompile the node
@@ -244,9 +243,6 @@ updateNode(node) {
             node.linkIsBad()
             return
         }
-
-        // maybe we have to change the type of node..
-        // node = node.compatible(newNode) ? node : this.switchNodeType(node)   
         
         // maybe we have to change the type of node..
         if (!node.compatible(newNode)) {
@@ -272,9 +268,47 @@ updateNode(node) {
     }
 
     // for group nodes check the subnodes...
-    if (node.nodes) for(const subNode of node.nodes) this.updateNode(subNode);
+    if (node.nodes) for(const subNode of node.nodes) this.updateLinkedNode(subNode);
+},
+
+// serialize the node 
+encode(node, model) {
+
+   if (!node) return null
+
+    // get the factories
+    node.collectFactories(this.factories)
+
+    // get the imports
+    node.collectModels(this.models)
+
+    // the object to encode
+    const raw = {
+        header: model.header,
+    }
+
+    // add the models, factories and libraries
+    if (this.models?.size() > 0) raw.imports = this.models.all( model => model.blu.arl.userPath)
+    if (this.factories?.size() > 0) raw.factories = this.factories.all(  factory => ({   path: factory.arl?.userPath ?? "./index.js", function: factory.fName }))
+    if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => lib.blu.arl.userPath)
+
+    // add the types
+    if (model.vmbluTypes) raw.types = model.vmbluTypes
+
+    // set the root
+    raw.root = node.makeRaw()
+
+    // now split the result in two parts
+    // const split = this.splitRaw(raw)
+
+    // and return raw and the stringified results
+    // return {raw,
+    //         blu: JSON.stringify(split.blu,null,2),
+    //         viz: JSON.stringify(split.viz,null,2)}
+
+    return raw
 },
 
 }
 
-Object.assign(ModelCompiler.prototype, CompilerRead, CompilerWrite)
+Object.assign(ModelCompiler.prototype, CompilerMapHandling)

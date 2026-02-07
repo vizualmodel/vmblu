@@ -153,8 +153,11 @@ cook( raw ) {
     // get the highest wid value
     for (const widget of this.widgets) if (widget.wid && (widget.wid > this.widGenerator)) this.widGenerator = widget.wid
 
-    // if there are widgets with a wid of zero, correct this
-    for (const widget of this.widgets) if (widget.wid == 0) widget.wid = this.generateWid()
+    // if there are widgets with a wid of zero, correct this and set these widgets as new
+    for (const widget of this.widgets) if (widget.wid && (widget.wid == 0)) {
+        widget.wid = this.generateWid()
+        widget.is.added = true
+    }
 },
 
 cookPin(raw) {
@@ -170,7 +173,7 @@ cookPin(raw) {
 
     // set the state bits
     is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
-    is.left = raw.left
+    is.left = raw.left ?? false;
     is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
 
     // a comma seperated list between [] is a multi message
@@ -178,13 +181,15 @@ cookPin(raw) {
 
     // proxy or pure pin
     is.proxy = this.node.is.group
+
     // set the y-position to zero - widget will be placed correctly
-    const newPin = this.addPin(raw.name, 0, is)
+    //const newPin = this.addPin(raw.name, 0, is)
+    const newPin = this.addPin(raw.name, {x:0, y:NaN}, is)
 
     // set the contract
     if (raw.contract) {
         newPin.contract.owner =  (raw.contract.role == 'owner')
-        newPin.contract.payload = newPin.contract.owner ? raw.contract.payload : null
+        newPin.contract.payload = raw.contract?.payload  ?? 'any'
     }
 
     // set the prompt

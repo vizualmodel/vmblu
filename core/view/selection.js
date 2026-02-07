@@ -110,7 +110,8 @@ Selection.prototype = {
             ? false
             : this.what === selex.freeRect ||
                   this.what === selex.pinArea ||
-                  this.what === selex.ifArea;
+                  this.what === selex.ifArea ||
+                  this.what === selex.multiNode;
     },
 
     setRect(x, y, w, h) {
@@ -252,10 +253,7 @@ Selection.prototype = {
     hitTest(xyLocal) {
         // If there is a rectangle, we have a simple criterion
         if (
-            (this.what == selex.freeRect ||
-                this.what == selex.pinArea ||
-                this.what == selex.ifArea) &&
-            inside(xyLocal, this.rect)
+            (this.what == selex.freeRect || this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect)
         )
             return [zap.selection, this, null];
 

@@ -12,13 +12,16 @@ import { Project } from 'ts-morph';
 // vmblu
 import { ModelBlueprint, ModelCompiler } from '../../../core/model/index.js';
 import { ARL } from '../../../core/arl/arl-node.js'
+import { normalizeSeparators } from '../../../core/arl/path.js';
 
 // profile tool
 import {findHandlers} from './find-handlers.js'
 import {findTransmissions} from './find-transmissions.js'
 
 // allign with package version
-import pckg from '../../package.json' assert { type: 'json' };
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pckg = require('../../package.json');
 const PROFILE_VERSION = pckg.version;
 
 // The main function for the profile tool
@@ -32,7 +35,7 @@ export async function profile(argv = process.argv.slice(2)) {
     }
 
     const absoluteModelPath = path.resolve(cli.modelFile);
-    const modelPath = absoluteModelPath.replace(/\\/g, '/');
+    const modelPath = normalizeSeparators(absoluteModelPath);
 
     if (!fs.existsSync(absoluteModelPath) || !fs.statSync(absoluteModelPath).isFile()) {
         console.error(cli.modelFile, 'is not a file');
@@ -43,10 +46,10 @@ export async function profile(argv = process.argv.slice(2)) {
         ? path.resolve(cli.outFile)
         : (() => {
             const { dir, name, ext } = path.parse(absoluteModelPath);
-            const baseName = ext === '.json' && name.endsWith('.blu')
-                ? name.slice(0, -'.blu'.length)
+            const baseName = ext === '.blu' && name.endsWith('.mod')
+                ? name.slice(0, -'.mod'.length)
                 : name;
-            return path.join(dir, `${baseName}.prf.json`);
+            return path.join(dir, `${baseName}.src.prf`);
         })();
 
     if (cli.deltaFile) cli.deltaFile = path.resolve(cli.deltaFile);
@@ -86,7 +89,7 @@ export async function profile(argv = process.argv.slice(2)) {
         // console.log(sourceFile.getFilePath())
 
         // A file reference is always relative to the model file
-        const filePath = path.relative(path.dirname(modelPath), sourceFile.getFilePath()).replace(/\\/g, '/');
+        const filePath = normalizeSeparators(path.relative(path.dirname(modelPath), sourceFile.getFilePath()));
 
         // the node map to collect the data for the file
         const nodeMap = new Map();
@@ -292,6 +295,9 @@ function parseCliArgs(argvInput) {
 // Gets all the source files that are part of this project
 function setupProject(factories) {
 
+    // show the version that we use
+    console.log('version: ',PROFILE_VERSION)
+
     // Initialize ts-morph without tsconfig
     const project = new Project({
         compilerOptions: {
@@ -319,7 +325,8 @@ function setupProject(factories) {
         try {
             project.addSourceFileAtPath(factory.arl.url);
         } catch (err) {
-            console.warn(`Could not load ${filePath}: ${err.message}`);
+            //console.warn(`Could not load ${filePath}: ${err.message}`);
+            console.warn(err.message);
         }
     }
 

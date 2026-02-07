@@ -30,7 +30,7 @@ export const iconHandling = {
             header.node.factory.fName = convert.nodeToFactory(header.node.name)
 
         // check if the node name is unique 
-        editor.doc.focus.root.checkDuplicates(header.node)
+        // editor.doc.focus.root.checkDuplicates(header.node)
     },
 
     // return the rectangle for the icon. Pos L = left, R = right          L1 L2 L3 .......... R3 R2 R1

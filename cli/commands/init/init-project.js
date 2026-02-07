@@ -63,26 +63,19 @@ function defaultModel(projectName) {
       utc: now,
       style: "#2c7be5",
       runtime: "@vizualmodel/vmblu-runtime",
-      description: `${projectName} — vmblu model (scaffolded)`
+      description: `${projectName} - vmblu model (scaffolded)`
     },
-    models: [],
+    imports: [],
     factories: [],
+    types: {},
     root: {
-      group: "Root",
-      pins: [],
+      kind: "group",
+      name: "Root",
+      prompt: "Root group for the application.",
+      interfaces: [],
       nodes: [],
-      routes: [],
-      prompt: "Root group for the application."
+      connections: []
     }
-  }, null, 2);
-}
-
-function defaultDoc(projectName) {
-  const now = new Date().toISOString();
-  return JSON.stringify({
-    version: CLI_VERSION,
-    generatedAt: now,
-    entries: {}
   }, null, 2);
 }
 
@@ -124,23 +117,9 @@ function fallbackProfileSchema() {
 }`;
 }
 
-function fallbackSeed() {
-  return `# Session Seed (System Prompt)
-
-vmblu (Vizual Model Blueprint) is a graphical editor that maintains a visual, runnable model of a software system.
-vmblu models software as interconnected nodes that pass messages via pins.  
-The model has a well defined format described by a schema. An additional annex gives semantic background information about the schema.
-The parameter profiles of messages and where in the actual source code messages are received and sent, is stored in a second file, the profile file.
-The profile file is generated automatically by vmblu and is only to be consulted, not written.
-
-You are an expert **architecture + code copilot** for **vmblu** .
-You can find the location of the model file, the model schema, the model annex, the profile file and the profile schema in the 'manifest.json' file of this project.
-The location of all other files in the project can be found via the model file.
-
-Your job is to co-design the architecture and the software for the system.
-For modifications of the model, always follow the schema. 
-If the profile does not contain profile information it could be that the code for a message has not been written yet, this should not stop you from continuing
-`}
+function fallbackPrompt(promptType) {
+  return `# Missing prompt for ${promptType}`
+}
 
 /**
  * Initialize a vmblu project directory.
@@ -175,8 +154,7 @@ async function initProject(opts) {
   if (!targetDir) throw new Error("initProject: targetDir is required");
 
   const absTarget = path.resolve(targetDir);
-  const modelFile = path.join(absTarget, `${projectName}.blu.json`);
-  // const docFile   = path.join(absTarget, `${projectName}.prf.json`);
+  const modelFile = path.join(absTarget, `${projectName}.mod.blu`);
 
   const llmDir     = path.join(absTarget, 'llm');
   //const sessionDir = path.join(llmDir, 'session');
@@ -187,7 +165,9 @@ async function initProject(opts) {
   const annexSrc  = path.join(templatesDir, schemaVersion, 'blueprint.annex.md');
   const vizualSrc = path.join(templatesDir, schemaVersion, 'vizual.schema.json');
   const profileSchemaSrc = path.join(templatesDir, schemaVersion, 'profile.schema.json');
-  const promptSrc = path.join(templatesDir, schemaVersion, 'system-prompt.md');
+  const promptPrj = path.join(templatesDir, schemaVersion, 'system-prompt.project.md');
+  const promptDev = path.join(templatesDir, schemaVersion, 'system-prompt.dev.md');
+  const promptTst = path.join(templatesDir, schemaVersion, 'system-prompt.test.md');
   
   // 1) Create folders
   //for (const dir of [absTarget, llmDir, sessionDir, nodesDir]) {
@@ -200,16 +180,14 @@ async function initProject(opts) {
   ui.info(`create ${modelFile}${force ? ' (force)' : ''}`);
   await writeFileSafe(modelFile, defaultModel(projectName), { force, dry: dryRun });
 
-  //ui.info(`create ${docFile}${force ? ' (force)' : ''}`);
-  //await writeFileSafe(docFile, defaultDoc(projectName), { force, dry: dryRun });
-
   // 3) Copy schema + annex into llm/
   const schemaDst = path.join(llmDir, 'blueprint.schema.json');
   const annexDst  = path.join(llmDir, 'blueprint.annex.md');
   const vizualDst = path.join(llmDir, 'vizual.schema.json');
   const profileSchemaDst = path.join(llmDir, 'profile.schema.json');
-  const promptDst  = path.join(llmDir, 'system-prompt.md');
-
+  const promptPrjDst  = path.join(llmDir, 'system-prompt.project.md');
+  const promptDevDst  = path.join(llmDir, 'system-prompt.dev.md');
+  const promptTstDst  = path.join(llmDir, 'system-prompt.test.md');
 
   ui.info(`copy ${schemaSrc} -> ${schemaDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(schemaSrc, schemaDst, fallbackSchema(), { force, dry: dryRun });
@@ -223,49 +201,16 @@ async function initProject(opts) {
    ui.info(`copy ${profileSchemaSrc} -> ${profileSchemaDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(profileSchemaSrc, profileSchemaDst, fallbackProfileSchema(), { force, dry: dryRun });
 
-  ui.info(`copy ${promptSrc} -> ${promptDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptSrc, promptDst, fallbackSeed(), { force, dry: dryRun });
+  ui.info(`copy ${promptPrj} -> ${promptPrjDst}${force ? ' (force)' : ''}`);
+  await copyOrWriteFallback(promptPrj, promptPrjDst, fallbackPrompt('project'), { force, dry: dryRun });
 
-  /*
+  ui.info(`copy ${promptDev} -> ${promptDevDst}${force ? ' (force)' : ''}`);
+  await copyOrWriteFallback(promptDev, promptDevDst, fallbackPrompt('development'), { force, dry: dryRun });
 
-  // 4) Build manifest with hashes
-  const willWriteManifest = !(await exists(path.join(llmDir, 'manifest.json'))) || force;
-  let manifest = null;
+  ui.info(`copy ${promptTst} -> ${promptTstDst}${force ? ' (force)' : ''}`);
+  await copyOrWriteFallback(promptTst, promptTstDst, fallbackPrompt('test'), { force, dry: dryRun });
 
-  if (dryRun) {
-    ui.info(`would write manifest.json in ${llmDir}`);
-  } else {
-
-    // I don't need the hashes
-    // const [schemaHash, annexHash, modelHash, docHash] = await Promise.all([
-    //   sha256(schemaDst), sha256(annexDst), sha256(modelFile), sha256(docFile)
-    // ]);
-
-    // Paths in manifest should be relative to /llm to keep it portable
-    const llmPosix = llmDir; // absolute
-    manifest = {
-      version: schemaVersion,
-      model:  { 
-        path: rel(llmPosix, modelFile),
-        schema: 'vmblu.schema.json',
-        annex: 'vmblu.annex.md',
-      },
-      profile: { 
-        path: rel(llmPosix, docFile), 
-        schema: 'profile.schema.json',
-      },
-    };
-
-    if (willWriteManifest) {
-      const manifestPath = path.join(llmDir, 'manifest.json');
-      ui.info(`create ${manifestPath}${force ? ' (force)' : ''}`);
-      await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-    } else {
-      ui.warn(`manifest.json exists and --force not set. Skipped.`);
-    }
-  }
-  
-  */
+  // 4) Build manifest with hashes DELETED
 
   // 5) Make the package file
   makePackageJson({ absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^" + CLI_VERSION }, ui);
@@ -276,7 +221,9 @@ async function initProject(opts) {
     ${path.basename(modelFile)}
     package.json
     llm/
-      system-prompt.md
+      system-prompt.project.md
+      system-prompt.dev.md
+      system-prompt.test.md
       blueprint.schema.json
       blueprint.annex.md
       vizual.schema.json
@@ -289,9 +236,9 @@ async function initProject(opts) {
     schemaVersion,
     files: {
       model: modelFile,
-      doc: docFile,
       schema: schemaDst,
       annex: annexDst,
+      vizualSchema: vizualDst,
       profileSchema: profileSchemaDst,
       // manifest: path.join(llmDir, 'manifest.json')
     },

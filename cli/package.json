@@ -1,7 +1,7 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.4.1",
-  "schemaVersion": "0.9.1",
+  "version": "0.4.2",
+  "schemaVersion": "0.9.2",
   "type": "module",
   "bin": {
     "vmblu": "bin/vmblu.js"
@@ -9,6 +9,8 @@
   "files": [
     "bin",
     "commands/init",
+    "commands/make-app",
+    "commands/make-test",
     "commands/profile/index.js",
     "commands/profile/profile.bundle.js",
     "templates",
@@ -18,27 +20,28 @@
   "engines": {
     "node": ">=18"
   },
-    "devDependencies": {
-        "rollup": "^4.6.1",
-        "@rollup/plugin-commonjs": "^25.0.7",
-        "@rollup/plugin-json": "^6.0.1",
-        "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-terser": "^0.4.4",
-        "eslint": "^9.36.0",
-        "@eslint/js": "^9.36.0",
-        "eslint-config-prettier": "^10.1.8",
-        "globals": "^16.4.0",
-        "prettier": "^3.6.2",
-        "tsup": "^8.5.0"
-    },
-    "dependencies": {
-        "ts-morph": "^26.0.0",
-        "typescript": "^5.8.3"
-    },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "rollup": "^4.6.1",
+    "tsup": "^8.5.0"
+  },
+  "dependencies": {
+    "ts-morph": "^26.0.0",
+    "typescript": "^5.8.3"
+  },
   "scripts": {
     "vmblu": "vmblu",
     "local-profile": "node ./bin/vmblu.js profile",
     "local-init": "node ./bin/vmblu.js init",
+    "prebuild": "node ./scripts/generate-schema-version.js",
     "build": "rollup -c ./commands/profile/rollup.config.js"
   }
 }

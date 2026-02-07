@@ -176,6 +176,9 @@ export const routeMoving = {
     // The endpoint(s) of the route have changed - make a better route
     adjust() {
 
+        // in autoroute situations the wire can be missing
+        if (!this.wire.length) return
+
         // notation
         const from = this.from
         const to = this.to
@@ -190,12 +193,6 @@ export const routeMoving = {
         // from previous - to previous
         const fp = this.wire[0]
         const tp = this.wire.at(-1)
-
-// TEMPORARY SOMETIMES THE WIRE IS GONE ?
-if (!fp || !tp || !tn || !fn) {
-    console.error('*** MISSING ENDPOINTS FOR ROUTE ***', this)
-    return
-}
 
         // the deltas
         const df = {x: fn.x - fp.x, y: fn.y - fp.y}
@@ -264,7 +261,7 @@ if (!fp || !tp || !tn || !fn) {
             p[last].y = b.y
             p[last-1].y = b.y
 
-            // check the horizontal = uneven segments, starting from the back
+            //check the horizontal = uneven segments, starting from the back
             for(let s = sMax; s > 1; s -= 2) {
                 const dx = p[s].x - p[s-1].x
                 if (Math.abs(dx) < xMin) {
@@ -309,7 +306,7 @@ if (!fp || !tp || !tn || !fn) {
         p[last-1].y = b.y
     },
 
-    adjustFourPointRoute(a,b) {
+    xxxxadjustFourPointRoute(a,b) {
 
         // notation
         const tooClose = style.route.tooClose

@@ -2,9 +2,11 @@ import {convert, style} from '../util/index.js'
 import {ModelHeader} from './header.js'
 import {Path} from '../arl/index.js'
 import {ModelMap} from './model-map.js'
+import {RawHandling} from './blueprint-raw.js'
 import {ProfileHandling} from './blueprint-prf.js'
 import {McpHandling} from './blueprint-mcp.js'
 import {AppHandling} from './blueprint-app.js'
+import {TestHandling} from './blueprint-tst.js'
 import {LibHandling} from './blueprint-lib.js'
 
 export function ModelBlueprint(arl) {
@@ -80,17 +82,42 @@ ModelBlueprint.prototype = {
 
         if(!arl) return
 
-        // split the name in a name and a - possibly double -  extension
-        const split = Path.getSplit(arl.userPath)
+        // split the name in name, kind and ext
+        const split = Path.split(arl.userPath)
 
         // check the extension
-        if (split.ext === '.blu.json') {
+        if (split.ext === '.blu') {
             this.blu.arl = arl
-            this.viz.arl = arl.resolve(split.name + '.viz.json')
+            this.viz.arl = arl.resolve(split.name + split.kind + '.viz')
         }
         else if ((split.ext === '.js') || (split.ext === '.mjs')) {
             this.bundle.arl = arl
         }
+    },
+
+    // save as operation
+    changeArl(path) {
+
+        let bluPath = ''
+        let vizPath = ''
+
+        if (! path?.length) return false;
+
+        const split = Path.split(arl.userPath)
+
+        if (split.ext === '.blu') {
+            bluPath = path
+            vizPath = split.name + split.kind + '.viz'
+        }
+        else {
+            bluPath = path + '.blu'
+            vizPath = path + '.viz'
+        }
+
+        this.blu.arl = this.blu.arl.resolve(bluPath)
+        this.viz.arl = this.viz.arl.resolve(vizPath)
+
+        return true
     },
 
     makeKey() {
@@ -99,9 +126,13 @@ ModelBlueprint.prototype = {
 
     copy() {
 
-        const newModel = new ModelBlueprint(this.arl)
+        // copy the main arl
+        const arl = this.getArl().copy()
 
-        //newModel.key = this.key ? this.key.slice() : null
+        // make a new model
+        const newModel = new ModelBlueprint(arl)
+
+        // copy header(full) and raw(ref)
         newModel.header = {...this.header}
         newModel.raw = this.raw
 
@@ -112,6 +143,16 @@ ModelBlueprint.prototype = {
         this.raw = newRaw
         this.blu.is.dirty = false
         this.viz.is.dirty = false
+    },
+
+    reset() {
+        this.raw = null
+        this.blu.is.dirty = false
+        this.blu.is.fresh = false
+        this.viz.is.dirty = false
+        this.viz.is.fresh = false
+        this.libraries.reset()
+        this.vmbluTypes = null
     },
 
     findRawNode(lName) {
@@ -171,7 +212,8 @@ ModelBlueprint.prototype = {
     // cook some parts of the model ...
     preCook() {
         this.header.cook(this.getArl(), this.raw.header)
-        this.vmbluTypes = this.raw.types ? JSON.parse(this.raw.types) : null;
+        const rawTypes = this.raw?.types
+        this.vmbluTypes = typeof rawTypes === 'string' ? JSON.parse(rawTypes) : rawTypes ?? null
     },
 
     // cookLibraries(arlRef, rawLibs) {
@@ -186,4 +228,4 @@ ModelBlueprint.prototype = {
 
 }
 
-Object.assign(ModelBlueprint.prototype, ProfileHandling, McpHandling, AppHandling, LibHandling)
+Object.assign(ModelBlueprint.prototype, RawHandling, ProfileHandling, McpHandling, AppHandling, TestHandling, LibHandling)

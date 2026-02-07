@@ -318,74 +318,57 @@ RuntimeNode.prototype = {
             },
 
             // you can select a destination here - message will only be sent if there is a connection to that node
-            wireless(nodeName) {
+            select(nodeName) {
 
-                // find the node in the runtime - use the lowercase name to find a node !
-                const node = runtime.actors.find( actor => actor.name.toLowerCase() == nodeName.toLowerCase())
-
-                // check
-                if (!node) {
-                    console.warn(`** WIRELESS SEND TO UNKNOWN NODE ** ${nodeName}`)
-                    return {
-                        send(pin, param) {return 0},
-                        request(pin, param, timeout = 1000) { return new Promise((resolve, reject) => {reject(new Error('no node'));});}   
-                    }
-                }
-
-                // A helper function - we know that node exists
-                function makeTarget(pin) {
-                    const L = node.rxTable.length
-                    for(let i = 0; i < L; i++) {
-                        if (node.rxTable[i].pin == pin) {
-
-                            // return a target
-                            return {
-                                uid: node.uid,         
-                                actor: node,
-                                pin,           
-                                channel: node.rxTable[i].channel,  
-                                hix: HIX_HANDLER || i,      
-                            }
-                        }
-                    }
-                    return null
-                }
+                const _nodeName = nodeName
 
                 return {
 
-                    // sends a message over a pin
+                    // returns the local reference of the message
                     send(pin, param) {
 
-                        // find the receiving pin in the node
-                        const target = makeTarget(pin)
-
                         // check
-                        if (!target) {
-                            console.warn(`** WIRELESS SEND TO UNKNOWN PIN ** ${nodeName} pin: ${pin}`)
-                            return 0
-                        }
+                        if (!pin) return 0
+
+                        // get the targets for this pin
+                        const targets = source.findTargets(pin)
+
+                        // select the target with the right name
+                        const actualTarget = targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
 
                         // send
-                        return runtime.sendTo([target], source, pin, param)
+                        return actualTarget ? runtime.sendTo([actualTarget], source, pin, param) : 0
                     },
 
                     // sends a request and returns a promise or an array of promises
                     request(pin, param, timeout = 0) {
 
-                        // find the receiving pin in the node
-                        const target = makeTarget(pin)
+                        // check
+                        if (!pin) return null
 
-                        if (!target) {
-                            console.warn(`** WIRELESS REQUEST TO UNKNOWN PIN ** ${nodeName} pin: ${pin}`)
-                            return new Promise((resolve, reject) => {reject(new Error('no pin'));});  
+                        // get the targets for this pin
+                        const tx = source.txTable.find( tx => tx.pin == pin)
+
+                        // check
+                        if (tx?.targets.length) {
+
+                            const actualTarget = tx.targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+
+                            if (actualTarget) return runtime.requestFrom([actualTarget], source, pin, param, timeout)
                         }
 
-                        // send out the request
-                        return runtime.requestFrom([target], source, pin, param, timeout)
+                        // give an error message
+                        if (tx) {
+                            console.warn(`** PIN IS NOT CONNECTED ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
+                            return runtime.reject('Not connected')
+                        }
+                        else {
+                            console.warn(`** NO SUCH OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
+                            return runtime.reject('No such output pin')
+                        }
                     },
                 }
             }
-
         }
     },
 

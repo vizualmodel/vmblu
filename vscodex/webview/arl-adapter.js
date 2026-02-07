@@ -61,7 +61,7 @@ const vscodeARLmethods = {
 	nativeWindows(windowsPath) {
 
 		// change backslashes to forward slashes
-		windowsPath = windowsPath.replace(/\\/g, '/');
+		windowsPath = Path.normalizeSeparators(windowsPath);
 
 		// change the ':' to '%3A'
 		if (windowsPath.indexOf(':') > -1) windowsPath = windowsPath.replace(/:/g,'%3A');

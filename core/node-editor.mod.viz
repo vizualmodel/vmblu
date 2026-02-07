@@ -10,27 +10,28 @@
     "rect": "x 1043 y 0 w 150 h 26",
     "view": {
       "state": "open",
-      "rect": "x 0 y 0 w 2192 h 1295",
-      "transform": "sx 1.000 sy 1.000 dx 2.000 dy -1.000"
+      "rect": "x 0 y 0 w 1609 h 1326",
+      "transform": "sx 1.000 sy 1.000 dx 9.000 dy 0.000"
     },
     "nodes": [
       {
         "kind": "source",
         "name": "editor",
-        "rect": "x 225 y 90 w 200 h 761",
+        "rect": "x 225 y 90 w 200 h 776",
         "interfaces": [
           {
-            "interface": "(62)menu",
+            "interface": "(0) menu",
             "pins": [
               "(12 L)accept changes",
-              "(13 L)sync model",
+              "(64 L)reload model",
+              "(62 L)sync links",
               "(14 L)recalibrate",
               "(15 L)grid on-off",
               "(16 L)show settings"
             ]
           },
           {
-            "interface": "(63)document",
+            "interface": "(0) document",
             "pins": [
               "(17 L)set document",
               "(18 L)open document",
@@ -38,13 +39,13 @@
             ]
           },
           {
-            "interface": "(65)edit",
+            "interface": "(0) edit",
             "pins": [
               "(23 L)new edit"
             ]
           },
           {
-            "interface": "(64)save point",
+            "interface": "(0) save point",
             "pins": [
               "(20 R)save point set",
               "(61 R)save point back",
@@ -52,14 +53,14 @@
             ]
           },
           {
-            "interface": "(66)clipboard",
+            "interface": "(0) clipboard",
             "pins": [
               "(24 L)clipboard get",
               "(25 L)clipboard set"
             ]
           },
           {
-            "interface": "(67)link, factory, filter",
+            "interface": "(0) link, factory, filter",
             "pins": [
               "(26 R)show link",
               "(38 R)show factory",
@@ -68,14 +69,14 @@
             ]
           },
           {
-            "interface": "(68)lib",
+            "interface": "(0) lib",
             "pins": [
               "(27 R)make lib",
               "(28 R)show lib path"
             ]
           },
           {
-            "interface": "(69)app",
+            "interface": "(0) app",
             "pins": [
               "(29 R)make app",
               "(30 R)show app path",
@@ -86,26 +87,26 @@
             ]
           },
           {
-            "interface": "(70)context",
+            "interface": "(0) context",
             "pins": [
               "(36 R)show context menu"
             ]
           },
           {
-            "interface": "(71)json settings",
+            "interface": "(0) json settings",
             "pins": [
               "(37 R)settings"
             ]
           },
           {
-            "interface": "(72)info",
+            "interface": "(0) info",
             "pins": [
               "(40 R)pin profile",
               "(41 R)node comment"
             ]
           },
           {
-            "interface": "(73)node lib selection",
+            "interface": "(0) node lib selection",
             "pins": [
               "(42 R)select node",
               "(43 R)selected node",
@@ -114,7 +115,7 @@
             ]
           },
           {
-            "interface": "(74)div",
+            "interface": "(0) div",
             "pins": [
               "(47 L)canvas",
               "(48 L)size change"
@@ -144,7 +145,7 @@
         "rect": "x 525 y 251 w 200 h 356",
         "interfaces": [
           {
-            "interface": "(40)doc",
+            "interface": "(0) doc",
             "pins": [
               "(35 R)doc selected",
               "(36 R)doc new",
@@ -156,7 +157,7 @@
             ]
           },
           {
-            "interface": "(41)file",
+            "interface": "(0) file",
             "pins": [
               "(7 L)save",
               "(8 L)save as",
@@ -167,7 +168,7 @@
             ]
           },
           {
-            "interface": "(42)tab",
+            "interface": "(0) tab",
             "pins": [
               "(25 L)tab request to close",
               "(26 L)tab request to select",
@@ -202,6 +203,7 @@
         "name": "select node",
         "rect": "x 550 y 844 w 150 h 86",
         "view": {
+          "state": "closed",
           "rect": "x 331 y 481 w 873 h 550",
           "transform": "sx 1.000 sy 1.000 dx 352.500 dy 496.000"
         },
