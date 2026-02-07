@@ -11,6 +11,7 @@ export const selectFreeCxMenu = {
 		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard},
         {text:"group",icon:"developer_board",state:"enabled", action:group},
         {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect},
+        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
         {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
     ],
 
@@ -48,4 +49,7 @@ function selectionToClipboard() {
 }
 function group() {
     editor.doEdit('selectionToGroup',{view: selectFreeCxMenu.view})
+}
+function autoRoute() {
+    editor.doEdit('autoRouteSelection',{view: selectFreeCxMenu.view})
 }

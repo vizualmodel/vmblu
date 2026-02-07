@@ -1,0 +1,33 @@
+{
+  "header": {
+    "schema": "0.9.2",
+    "utc": "2026-02-01T16:26:38.401Z",
+    "style": "#00aaff"
+  },
+  "root": {
+    "kind": "group",
+    "name": "group",
+    "rect": "x 0 y 0 w 150 h 26",
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "sequencer",
+        "rect": "x 0 y 0 w 150 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(4 R)sequence.result",
+              "(3 R)sequence.stop",
+              "(2 R)sequence.start"
+            ]
+          },
+          {
+            "interface": "(1) sequence",
+            "pins": []
+          }
+        ]
+      }
+    ]
+  }
+}

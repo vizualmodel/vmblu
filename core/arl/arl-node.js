@@ -17,12 +17,13 @@ function xxuserPathString(userPath) {
 export function ARL(userPath) {
 
     const stringPath = Path.stringCheck(userPath);
+    const normalizedPath = Path.normalizeSeparators(stringPath ?? '');
 
     // the reference to the ARL as entered by the user
-    this.userPath = stringPath ?? '';
+    this.userPath = normalizedPath;
 
     // the resolved url
-    this.url = stringPath ? path.resolve(stringPath) : null;
+    this.url = stringPath ? Path.normalizeSeparators(path.resolve(stringPath)) : null;
 }
 
 ARL.prototype =  {  // makes a url based on the components
@@ -89,11 +90,13 @@ setWSReference(wsRef) {},
 // resolve a path wrt this arl - returns a new arl !
 resolve(userPath) {
 
-    const stringPath = path.stringCheck(userPath);
+    const stringPath = Path.stringCheck(userPath);
     if (!stringPath) return null;
 
+    const normalizedPath = Path.normalizeSeparators(stringPath);
+
     // make an arl
-    const arl = new ARL(stringPath)
+    const arl = new ARL(normalizedPath)
 
     // check if absolute already
     if (path.isAbsolute(stringPath)) return arl
@@ -105,11 +108,11 @@ resolve(userPath) {
     }
 
     // remove the last file name
-    const slash = this.url.lastIndexOf("\\")
+    const slash = Math.max(this.url.lastIndexOf('/'), this.url.lastIndexOf("\\"))
     const ref = (slash != -1) ? this.url.slice(0, slash) : this.url
 
     // resolve
-    arl.url = path.resolve(ref, stringPath);
+    arl.url = Path.normalizeSeparators(path.resolve(ref, normalizedPath));
 
     // done
     return arl
@@ -239,5 +242,3 @@ async jsImport() {
 //     })
 // }
 }
-
-

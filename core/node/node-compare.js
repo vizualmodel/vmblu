@@ -98,8 +98,8 @@ export const compareHandling = {
         // reset the dockLook pins - by default set all pins and interfaceNames to zombie
         for (const dw of dockLook.widgets) {
 
-            // only pins and seperators have a wid - set to zombie so we can reset for pins that have been handled.
-            if (dw.wid) {
+            // set pins and interfaces to zombies - they will be un-zombied as we find them.
+            if (dw.is.pin || dw.is.ifName) {
                 dw.is.added = false
                 dw.is.zombie = true
             }

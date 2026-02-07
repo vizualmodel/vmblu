@@ -79,7 +79,7 @@ export const pinNameHandling = {
         // the new name is empty - allowed only if no routes
         if (this.name.length == 0) return (this.routes?.length == 0)
 
-        // if the newName starts with + or ends with + we have prefix naming
+        // if the newName starts or ends with a special character
         if (convert.needsPrefix(this.name) || convert.needsPostfix(this.name)) {
 
             // the name should be longer than just the one character

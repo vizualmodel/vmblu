@@ -4,7 +4,7 @@ import * as Path from './path.js'
 export function LARL(userPath, handle=null) {
 
     // the reference to the ARL as entered by the user
-    this.userPath = userPath
+    this.userPath = Path.normalizeSeparators(userPath)
 
     // the handle for local files or folders
     this.handle = handle
@@ -72,14 +72,16 @@ getFullPath() {
 
 resolve(userPath){
 
+    const normalizedPath = Path.normalizeSeparators(userPath)
+
     // The reference can be a directory or a file - .absolute always assumes a file, so add /x to make it a file...
     const ref = (this.handle?.kind != 'directory') ? this.fullPath : (this.fullPath.at(-1) == '/' ? this.fullPath + 'x' : this.fullPath + '/x') 
 
     // resolve the path
-    const fullPath = Path.absolute(userPath, ref)
+    const fullPath = Path.absolute(normalizedPath, ref)
 
     // create a new local arl
-    const alr = new LARL(userPath)
+    const alr = new LARL(normalizedPath)
 
     // set the file tree
     alr.setFileSystem(this.fileTree, fullPath)
@@ -119,6 +121,36 @@ validURL() {
 async get(as = 'text') {
 
     let file;
+
+    // if the handle for this file is null, we have to find it first
+    if (!this.handle) {
+
+        // find the file
+        const wsFile = await this.fileTree.findFile(this.fullPath)
+
+        // check
+        if (!wsFile) throw(new Error(`get(${this.fullPath}) in local-arl.js : handle for the file not found)`))
+
+        // set the handle
+        this.handle = wsFile.arl.handle
+    }
+
+    // Attempt to retrieve the file from the handle.
+    file = await this.handle.getFile();
+
+    // If the file is empty, return null (mirroring the behavior for remote files)
+    if (file.size === 0) return null;
+    
+    // Read the file content as text.
+    const content = await file.text();
+    
+    // Return the content as JSON if requested, otherwise as raw text.
+    return as === 'json' ? JSON.parse(content) : content;        
+},
+
+async xxxget(as = 'text') {
+
+    let file;
     try {
 
         // if the handle for this file is null, we have to find it first
@@ -129,7 +161,7 @@ async get(as = 'text') {
 
             // check
             if (!wsFile) {
-                console.warn(`LALR.get(${this.fullPath}: file not found)`)
+                console.warn(`get(${this.fullPath}) in local-arl.js : handle for the file not found)`)
                 return null
             }
 
@@ -143,7 +175,7 @@ async get(as = 'text') {
     } catch (error) {
 
         // If an error occurs (e.g., file not found), log the error and return null.
-        console.error(`LALR.get(${this.fullPath}) failed: ${error}`)
+        console.warn(`get(${this.fullPath}) in local-arl.js failed: ${error}`)
         return null;
     }
     
@@ -278,5 +310,3 @@ async jsImport() {
 // },
 
 }
-
-

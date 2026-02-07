@@ -83,7 +83,7 @@ function StyleFactory() {
         wCursor: 2, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
     } 
     this.look = {
-        wBox:150, hTop:20, hBottom:6, wExtra:50, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5,
+        wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5, 
     } 
     this.box = {
         rCorner:7.5,  wLine:2, cLine: color.shade1, cBackground:color.shade2, 
@@ -107,7 +107,7 @@ function StyleFactory() {
         cSelected: color.orange, cHighLighted: color.purple
     }
     this.pin = {
-        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:6,
+        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7,
         cNormal: color.shade1, cSelected: color.orange, cHighLighted: color.purple, 
         cConnected: color.shade4, cAdded: color.green,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
         fMulti: "italic 11px tahoma"
@@ -145,7 +145,10 @@ function StyleFactory() {
         cClose: color.vIcon1, cFullscreen: color.vIcon2, cCalibrate: color.vIcon3, cGrid: color.vIcon4
     }
     this.placement = {
-        marginTop: 30, marginLeft: 30, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 270, spacing: 50, tolerance: 10
+        marginTop: 30, marginLeft: 90, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 300, spacing: 50, tolerance: 10
+    }
+    this.autoroute = {
+        xMargin: 15, xDelta: 5, yDelta: 15
     }
 }
 StyleFactory.prototype = {

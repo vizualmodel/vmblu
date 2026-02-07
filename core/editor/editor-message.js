@@ -77,11 +77,21 @@ export const messageHandling = {
         });
     },
 
+    onSyncLinks() {
+        // read the document again and redraw
+        this.doc?.updateLinks().then(() => this.redraw());
+    },
+
+    onReloadModel() {
+
+        // reset the model
+        this.doc.reset()
+        
+        // load the model again...
+        this.doc.load().then(() => this.redraw());       
+    },
+
     onSyncModel() {
-        this.doc?.update().then(() => {
-            // and redraw
-            this.redraw();
-        });
     },
 
     onRecalibrate() {
@@ -117,23 +127,30 @@ export const messageHandling = {
     onSizeChange(rect) {
         // check if the size is given
         if (!rect) return;
+        
+        // adjust - note that dpr will normally not change but it is possible (move to different monitor for example)
+        const dpr = rect.dpr ?? window.devicePixelRatio ?? 1;
 
-        // adjust
-        this.canvas.width = rect.w;
-        this.canvas.height = rect.h;
+        // set the witdh and height
+        this.canvas.width = Math.round(rect.w * dpr);
+        this.canvas.height = Math.round(rect.h * dpr);
 
-        // don't forget to adjust the style
+        // keep CSS size in sync with the logical size
         this.canvas.style.width = rect.w + 'px';
         this.canvas.style.height = rect.h + 'px';
 
         // Initialize the 2D context
         this.ctx = this.canvas.getContext('2d');
+        const sx = this.canvas.width / rect.w;
+        const sy = this.canvas.height / rect.h;
+        this.ctx.setTransform(sx, 0, 0, sy, 0, 0);
 
         // we have to reinit the canvas context
         this.setStyle();
 
         // if there is a document,
         if (this.doc) {
+            
             // change the size of the main view
             this.doc.view?.setRect(0, 0, rect.w, rect.h);
 
@@ -273,7 +290,8 @@ export const messageHandling = {
                 const modcom = new ModelCompiler(doc.UID);
 
                 // encode the root node as a string, but convert it back to json !
-                doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
+                //doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
+                doc.model.raw = modcom.encode(toSave, doc.model);
             },
             cancel: () => {},
         });

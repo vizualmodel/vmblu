@@ -51,7 +51,7 @@ LibraryManager.prototype = {
             model = new ModelBlueprint(arl)
 
             // get the file
-            await compiler.getRaw(model)
+            await model.getRaw()
 
             // add to the map
             this.libraries.add(model)

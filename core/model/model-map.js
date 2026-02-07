@@ -122,7 +122,7 @@ ModelMap.prototype = {
             model.is.selectable = true
 
             // get the content of the file
-            pList.push( compiler.getRaw(model) )
+            pList.push( model.getRaw() )
         }
 
         // wait for all...

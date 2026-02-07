@@ -66,7 +66,7 @@ export const jsonHandling = {
     cook(raw, modcom) {
 
         // cook the common parts
-        this.cookCommon(raw)
+        this.cookCommon(raw, modcom)
 
         // if there is a view - make a simple view for the node only rect and tf - the view is restored later 
         this.savedView = raw.view
@@ -79,10 +79,10 @@ export const jsonHandling = {
 
             // save if successful
             if (node) this.nodes.push(node)
-
-            // if the node has not been properly placed, do it now
-            if (!node.is.placed) this.placeNode(node)
         }
+
+        // If there are nodes that have to be placed do it here
+        if (this.nodes) this.placeUnplacedNodes(raw.connections);
 
         // cook the connections inside this group node - retuns an array of {from, to, status} - from/to are pins or pads
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
@@ -117,7 +117,7 @@ export const jsonHandling = {
             // and check the route against the connections - the status of the conx and route is adapted
             for (const route of routes) this.findRouteInConx(route, conx);
 
-            // create the routes for the connections that were not foudn
+            // create the routes for the connections that were not found
             this.createRoutes(conx)
         }
     },
@@ -134,43 +134,59 @@ export const jsonHandling = {
         this.is.placed = true
     },
 
-    // places a node according to a grid
-    placeNode(node) {
+    // places all unplaced nodes according to a grid
+    placeUnplacedNodes(rawConnections) {
+
+        const unplaced = this.nodes.filter(node => node?.look && !node.is.placed)
+        if (!unplaced.length) return
 
         const place = style.placement
         const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft
-        const spacing = place.spacing   // small gap so nodes do not touch
-        const tolerance = place.tolerance  // allow a little drift when matching columns
+        const spacing = place.spacing
+        const tolerance = place.tolerance
 
-        const placedNodes = this.nodes.filter(other => (other !== node) && other.look && other.is.placed)
-        const idx = this.nodes.indexOf(node) >= 0 ? this.nodes.indexOf(node) : this.nodes.length - 1
-
-        // keep the column grid, but stack vertically based on actual heights
-        const col = idx % place.nodesPerRow
-        const columnX = marginLeft + col * place.colStep
-
-        // start at the default top margin for this column
-        let y = place.marginTop
-
-        // find the bottom of the lowest node already in this column
-        for (const other of placedNodes) {
-            const ox = other.look.rect.x
-            if (Math.abs(ox - columnX) <= tolerance) {
-                const bottom = other.look.rect.y + other.look.rect.h
-                if (bottom + spacing > y) y = bottom + spacing
-            }
+        const degree = new Map()
+        for (const raw of rawConnections ?? []) {
+            const src = raw.src ?? raw.from
+            const dst = raw.dst ?? raw.to
+            if (!src?.node || !dst?.node) continue
+            degree.set(src.node, (degree.get(src.node) ?? 0) + 1)
+            degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1)
         }
 
-        // move down further if we still overlap any node (safety for slightly misaligned columns)
+        const placedNodes = this.nodes.filter(node => node?.look && node.is.placed)
         const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing})
         const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h))
-        let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h}
-        while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
-            candidate.y += spacing
-        }
 
-        node.look.moveTo(candidate.x, candidate.y)
-        node.is.placed = true
+        const order = unplaced.slice().sort((a, b) => {
+            const da = degree.get(a.name) ?? 0
+            const db = degree.get(b.name) ?? 0
+            return db - da
+        })
+
+        for (let i = 0; i < order.length; i++) {
+            const node = order[i]
+            const col = i % place.nodesPerRow
+            const columnX = marginLeft + col * place.colStep
+
+            let y = place.marginTop
+            for (const other of placedNodes) {
+                const ox = other.look.rect.x
+                if (Math.abs(ox - columnX) <= tolerance) {
+                    const bottom = other.look.rect.y + other.look.rect.h
+                    if (bottom + spacing > y) y = bottom + spacing
+                }
+            }
+
+            let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h}
+            while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
+                candidate.y += spacing
+            }
+
+            node.look.moveTo(candidate.x, candidate.y)
+            node.is.placed = true
+            placedNodes.push(node)
+        }
     },
 
     // rawPad exists, but might be incomplete
@@ -208,8 +224,8 @@ export const jsonHandling = {
 
         //check for errors - It can be that from/to are not found if the pin name for a linked node has changed
         if (!from || !to) {
-            if (!from) console.error(`invalid route *FROM* ${rawRoute.from} to ${rawRoute.to}`)
-            if (!to) console.error(`invalid route from ${rawRoute.from} *TO* ${rawRoute.to}`)
+            if (!from) console.error(`invalid route from ${rawRoute.from} to ${rawRoute.to} - 'from' endpoint not found`)
+            if (!to) console.error(`invalid route from ${rawRoute.from} to ${rawRoute.to} - 'to' endpoint not found`)
             return null;
         }
 

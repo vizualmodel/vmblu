@@ -1,207 +1,15 @@
 {
-  "version": "0.3.2",
-  "generatedAt": "2025-11-14T10:43:12.067Z",
+  "version": "0.4.1",
+  "generatedAt": "2026-01-29T11:59:16.081Z",
   "entries": [
-    {
-      "node": "message broker",
-      "handles": [
-        {
-          "pin": null,
-          "handler": "onMessage",
-          "file": "message-broker-vscode.js",
-          "line": 16,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "event",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        }
-      ],
-      "transmits": [
-        {
-          "pin": "set document",
-          "file": "message-broker-vscode.js",
-          "line": 40
-        },
-        {
-          "pin": "set document",
-          "file": "message-broker-vscode.js",
-          "line": 77
-        },
-        {
-          "pin": "sync model",
-          "file": "message-broker-vscode.js",
-          "line": 110
-        },
-        {
-          "pin": "clipboard switched",
-          "file": "message-broker-vscode.js",
-          "line": 123
-        }
-      ]
-    },
-    {
-      "node": "message broker",
-      "handles": [
-        {
-          "pin": null,
-          "handler": "-> open document",
-          "file": "message-broker-webview.js",
-          "line": 12,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "arl",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "canvas",
-          "handler": "-> canvas",
-          "file": "message-broker-webview.js",
-          "line": 19,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "canvas",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "modal div",
-          "handler": "-> modal div",
-          "file": "message-broker-webview.js",
-          "line": 45,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "modalDiv",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "floating menu",
-          "handler": "-> floating menu",
-          "file": "message-broker-webview.js",
-          "line": 51,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "menuDiv",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "clipboard switch",
-          "handler": "-> clipboard switch",
-          "file": "message-broker-webview.js",
-          "line": 58,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": []
-        },
-        {
-          "pin": "clipboard local",
-          "handler": "-> clipboard local",
-          "file": "message-broker-webview.js",
-          "line": 65,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "json",
-              "type": "string",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "clipboard remote",
-          "handler": "-> clipboard remote",
-          "file": "message-broker-webview.js",
-          "line": 71,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": []
-        },
-        {
-          "pin": "new edit",
-          "handler": "-> new edit",
-          "file": "message-broker-webview.js",
-          "line": 77,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "edit",
-              "type": "any",
-              "description": ""
-            }
-          ]
-        },
-        {
-          "pin": "open js file",
-          "handler": "-> open js file",
-          "file": "message-broker-webview.js",
-          "line": 83,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": [
-            {
-              "name": "arl",
-              "type": "string",
-              "description": ""
-            },
-            {
-              "name": "line",
-              "type": "string",
-              "description": ""
-            }
-          ]
-        }
-      ],
-      "transmits": [
-        {
-          "pin": "canvas resize",
-          "file": "message-broker-webview.js",
-          "line": 39
-        }
-      ]
-    },
     {
       "node": "document manager",
       "handles": [
         {
           "pin": "doc selected",
           "handler": "onDocSelected",
-          "file": "../../core/document/document-manager.js",
-          "line": 140,
+          "file": "../core/document/document-manager.js",
+          "line": 88,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -216,8 +24,8 @@
         {
           "pin": "doc new",
           "handler": "onDocNew",
-          "file": "../../core/document/document-manager.js",
-          "line": 163,
+          "file": "../core/document/document-manager.js",
+          "line": 111,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -232,8 +40,8 @@
         {
           "pin": "doc renamed",
           "handler": "onDocRenamed",
-          "file": "../../core/document/document-manager.js",
-          "line": 190,
+          "file": "../core/document/document-manager.js",
+          "line": 138,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -253,8 +61,8 @@
         {
           "pin": "save as",
           "handler": "onSaveAs",
-          "file": "../../core/document/document-manager.js",
-          "line": 203,
+          "file": "../core/document/document-manager.js",
+          "line": 151,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -269,8 +77,8 @@
         {
           "pin": "save",
           "handler": "onSave",
-          "file": "../../core/document/document-manager.js",
-          "line": 233,
+          "file": "../core/document/document-manager.js",
+          "line": 184,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -279,8 +87,8 @@
         {
           "pin": "save all",
           "handler": "onSaveAll",
-          "file": "../../core/document/document-manager.js",
-          "line": 240,
+          "file": "../core/document/document-manager.js",
+          "line": 191,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -289,8 +97,8 @@
         {
           "pin": "get open models",
           "handler": "onGetOpenModels",
-          "file": "../../core/document/document-manager.js",
-          "line": 247,
+          "file": "../core/document/document-manager.js",
+          "line": 198,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -299,8 +107,8 @@
         {
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
-          "file": "../../core/document/document-manager.js",
-          "line": 265,
+          "file": "../core/document/document-manager.js",
+          "line": 216,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -316,48 +124,48 @@
       "transmits": [
         {
           "pin": "tab new",
-          "file": "../../core/document/document-manager.js",
-          "line": 175
+          "file": "../core/document/document-manager.js",
+          "line": 123
         },
         {
           "pin": "doc set active",
-          "file": "../../core/document/document-manager.js",
-          "line": 178
+          "file": "../core/document/document-manager.js",
+          "line": 126
         },
         {
           "pin": "save as filename",
-          "file": "../../core/document/document-manager.js",
-          "line": 215
+          "file": "../core/document/document-manager.js",
+          "line": 166
         },
         {
           "pin": "tab rename",
-          "file": "../../core/document/document-manager.js",
-          "line": 224
+          "file": "../core/document/document-manager.js",
+          "line": 175
         },
         {
           "pin": "open models",
-          "file": "../../core/document/document-manager.js",
-          "line": 257
+          "file": "../core/document/document-manager.js",
+          "line": 208
         },
         {
           "pin": "tab remove",
-          "file": "../../core/document/document-manager.js",
-          "line": 283
+          "file": "../core/document/document-manager.js",
+          "line": 234
         },
         {
           "pin": "tab select",
-          "file": "../../core/document/document-manager.js",
-          "line": 295
+          "file": "../core/document/document-manager.js",
+          "line": 246
         },
         {
           "pin": "tab select",
-          "file": "../../core/document/document-manager.js",
-          "line": 304
+          "file": "../core/document/document-manager.js",
+          "line": 255
         },
         {
           "pin": "doc set active",
-          "file": "../../core/document/document-manager.js",
-          "line": 311
+          "file": "../core/document/document-manager.js",
+          "line": 262
         }
       ]
     },
@@ -367,7 +175,7 @@
         {
           "pin": null,
           "handler": "onSetDocument",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 10,
           "summary": "",
           "returns": "",
@@ -383,7 +191,7 @@
         {
           "pin": "get document",
           "handler": "onGetDocument",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 39,
           "summary": "",
           "returns": "",
@@ -393,8 +201,28 @@
         {
           "pin": "show settings",
           "handler": "onShowSettings",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 44,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sync links",
+          "handler": "onSyncLinks",
+          "file": "../core/editor/editor-message.js",
+          "line": 80,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "reload model",
+          "handler": "onReloadModel",
+          "file": "../core/editor/editor-message.js",
+          "line": 85,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -403,8 +231,8 @@
         {
           "pin": "sync model",
           "handler": "onSyncModel",
-          "file": "../../core/editor/editor-message.js",
-          "line": 80,
+          "file": "../core/editor/editor-message.js",
+          "line": 94,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -413,8 +241,8 @@
         {
           "pin": "recalibrate",
           "handler": "onRecalibrate",
-          "file": "../../core/editor/editor-message.js",
-          "line": 87,
+          "file": "../core/editor/editor-message.js",
+          "line": 97,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -423,8 +251,8 @@
         {
           "pin": "grid on off",
           "handler": "onGridOnOff",
-          "file": "../../core/editor/editor-message.js",
-          "line": 95,
+          "file": "../core/editor/editor-message.js",
+          "line": 105,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -433,8 +261,8 @@
         {
           "pin": "accept changes",
           "handler": "onAcceptChanges",
-          "file": "../../core/editor/editor-message.js",
-          "line": 106,
+          "file": "../core/editor/editor-message.js",
+          "line": 116,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -443,8 +271,8 @@
         {
           "pin": "size change",
           "handler": "onSizeChange",
-          "file": "../../core/editor/editor-message.js",
-          "line": 117,
+          "file": "../core/editor/editor-message.js",
+          "line": 127,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -459,8 +287,8 @@
         {
           "pin": "make lib",
           "handler": "onMakeLib",
-          "file": "../../core/editor/editor-message.js",
-          "line": 148,
+          "file": "../core/editor/editor-message.js",
+          "line": 165,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -475,8 +303,8 @@
         {
           "pin": "make app",
           "handler": "onMakeApp",
-          "file": "../../core/editor/editor-message.js",
-          "line": 173,
+          "file": "../core/editor/editor-message.js",
+          "line": 190,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -491,8 +319,8 @@
         {
           "pin": "run app",
           "handler": "onRunApp",
-          "file": "../../core/editor/editor-message.js",
-          "line": 201,
+          "file": "../core/editor/editor-message.js",
+          "line": 219,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -501,8 +329,8 @@
         {
           "pin": "run app in iframe",
           "handler": "onRunAppInIframe",
-          "file": "../../core/editor/editor-message.js",
-          "line": 213,
+          "file": "../core/editor/editor-message.js",
+          "line": 231,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -511,8 +339,8 @@
         {
           "pin": "pin profile",
           "handler": "onPinProfile",
-          "file": "../../core/editor/editor-message.js",
-          "line": 233,
+          "file": "../core/editor/editor-message.js",
+          "line": 251,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -521,8 +349,8 @@
         {
           "pin": "selected node",
           "handler": "onSelectedNode",
-          "file": "../../core/editor/editor-message.js",
-          "line": 236,
+          "file": "../core/editor/editor-message.js",
+          "line": 254,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -547,8 +375,8 @@
         {
           "pin": "save point set",
           "handler": "onSavePointSet",
-          "file": "../../core/editor/editor-message.js",
-          "line": 250,
+          "file": "../core/editor/editor-message.js",
+          "line": 268,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -557,8 +385,8 @@
         {
           "pin": "save point back",
           "handler": "onSavePointBack",
-          "file": "../../core/editor/editor-message.js",
-          "line": 281,
+          "file": "../core/editor/editor-message.js",
+          "line": 299,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -568,53 +396,53 @@
       "transmits": [
         {
           "pin": "change library",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 26
         },
         {
           "pin": "reply document",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 41
         },
         {
           "pin": "document settings",
-          "file": "../../core/editor/editor-message.js",
+          "file": "../core/editor/editor-message.js",
           "line": 60
         },
         {
           "pin": "show lib path",
-          "file": "../../core/editor/editor-message.js",
-          "line": 164
+          "file": "../core/editor/editor-message.js",
+          "line": 181
         },
         {
           "pin": "show app path",
-          "file": "../../core/editor/editor-message.js",
-          "line": 192
+          "file": "../core/editor/editor-message.js",
+          "line": 209
         },
         {
           "pin": "run",
-          "file": "../../core/editor/editor-message.js",
-          "line": 206
+          "file": "../core/editor/editor-message.js",
+          "line": 224
         },
         {
           "pin": "run",
-          "file": "../../core/editor/editor-message.js",
-          "line": 217
+          "file": "../core/editor/editor-message.js",
+          "line": 235
         },
         {
           "pin": "iframe",
-          "file": "../../core/editor/editor-message.js",
-          "line": 226
-        },
-        {
-          "pin": "save point.confirm",
-          "file": "../../core/editor/editor-message.js",
-          "line": 259
+          "file": "../core/editor/editor-message.js",
+          "line": 244
         },
         {
           "pin": "save point confirm",
-          "file": "../../core/editor/editor-message.js",
-          "line": 291
+          "file": "../core/editor/editor-message.js",
+          "line": 277
+        },
+        {
+          "pin": "save point confirm",
+          "file": "../core/editor/editor-message.js",
+          "line": 309
         }
       ]
     },
@@ -624,8 +452,8 @@
         {
           "pin": "set",
           "handler": "onSet",
-          "file": "../../core/model/clipboard.js",
-          "line": 52,
+          "file": "../core/model/clipboard.js",
+          "line": 51,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -645,8 +473,8 @@
         {
           "pin": "get",
           "handler": "onGet",
-          "file": "../../core/model/clipboard.js",
-          "line": 73,
+          "file": "../core/model/clipboard.js",
+          "line": 72,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -661,8 +489,8 @@
         {
           "pin": "switched",
           "handler": "onSwitched",
-          "file": "../../core/model/clipboard.js",
-          "line": 102,
+          "file": "../core/model/clipboard.js",
+          "line": 146,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -671,8 +499,8 @@
         {
           "pin": "local",
           "handler": "onLocal",
-          "file": "../../core/model/clipboard.js",
-          "line": 109,
+          "file": "../core/model/clipboard.js",
+          "line": 153,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -688,8 +516,8 @@
       "transmits": [
         {
           "pin": "switch",
-          "file": "../../core/model/clipboard.js",
-          "line": 70
+          "file": "../core/model/clipboard.js",
+          "line": 69
         }
       ]
     },
@@ -699,52 +527,52 @@
       "transmits": [
         {
           "pin": "show link",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 20
         },
         {
           "pin": "show link",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 41
         },
         {
           "pin": "open document",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 60
         },
         {
           "pin": "show factory",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 88
         },
         {
           "pin": "open source file",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 107
         },
         {
           "pin": "settings",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 144
         },
         {
           "pin": "runtime settings",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 153
         },
         {
           "pin": "node comment",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 163
         },
         {
           "pin": "open document",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 184
         },
         {
           "pin": "open source file",
-          "file": "../../core/node/node-icon-click.js",
+          "file": "../core/node/node-icon-click.js",
           "line": 197
         }
       ]
@@ -755,13 +583,13 @@
       "transmits": [
         {
           "pin": "pin profile",
-          "file": "../../core/view/redox-widget.js",
-          "line": 229
+          "file": "../core/view/redox-widget.js",
+          "line": 224
         },
         {
           "pin": "open source file",
-          "file": "../../core/view/redox-widget.js",
-          "line": 240
+          "file": "../core/view/redox-widget.js",
+          "line": 238
         }
       ]
     }

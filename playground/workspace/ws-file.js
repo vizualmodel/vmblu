@@ -13,6 +13,7 @@ export function WSFile(arl, folder) {
 }
 WSFile.prototype = {
 
+
     getPath() {
         let path = this.folder.getPath()
         return path.at(-1) == '/' ? path + this.name : path + '/' + this.name
@@ -38,13 +39,29 @@ WSFile.prototype = {
         }
     },
 
+    // splits 'name.ext' in 'name' and '.ext' and 'name.kind.ext' if 'file' '.kind' and '.ext'
+    split(path)  {
+
+        // we only need the fileName
+        let slash = path.lastIndexOf('/')
+        const fileName = slash > 0 ? path.slice(slash+1) : path
+
+        let p1 = fileName.lastIndexOf('.')
+        let p2 = fileName.lastIndexOf('.', p1-1)
+        
+        return {
+            name:   p2 > 0 ? fileName.slice(0,p2) : (p1 > 0 ? fileName.slice(0,p1) : fileName),
+            kind:   p2 > 0 ? fileName.slice(p2,p1) : null,
+            ext:    p1 > 0 ? fileName.slice(p1) : null
+        }
+    },
+
     getIcon() {
-        const ext = this.getSplit(this.name).ext
-        if (ext == '.blu.json') return 'account_tree' 
-        if (ext == ".viz.json") return "data_object"
-        if (ext == ".prf.json") return "data_object"
-        if (ext == ".app.js") return "electric_bolt"
-        if (ext == ".mcp.js") return "electric_bolt"
+        const ext = this.split(this.name).ext
+        //const ext = this.getSplit(this.name).ext
+        if (ext == '.blu') return 'account_tree' 
+        if (ext == ".viz") return "data_object"
+        if (ext == ".prf") return "data_object"
         if (ext == '.js' || ext == 'msj') return 'electric_bolt' 
         if (ext == '.json') return 'data_object'
         if (ext == '.html') return 'code'
@@ -53,13 +70,12 @@ WSFile.prototype = {
     },
 
     getFileClass() {
-        const ext = this.getSplit(this.name).ext
+        const ext = this.split(this.name).ext
 
-        if (ext == ".blu.json") return "model-file"
-        if (ext == ".viz.json") return "vmblu-file"
-        if (ext == ".prf.json") return "vmblu-file"
-        if (ext == ".app.js") return "vmblu-file"
-        if (ext == ".mcp.js") return "vmblu-file"
+        if (ext == ".blu") return "model-file"
+        if (ext == ".viz") return "vmblu-file"
+        if (ext == ".prf") return "vmblu-file"
+
         if (ext == ".js") return "js-file"
         return "other-file"
     },

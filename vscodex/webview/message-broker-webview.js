@@ -22,8 +22,10 @@ export const messageBrokerWebview = {
 		document.documentElement.className = "dark" + " common"
 
         // note that the context of a canvas gets reset when the size changes !
-		canvas.width = window.visualViewport.width;
-		canvas.height = window.visualViewport.height;
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		canvas.style.width = window.innerWidth + 'px';
+		canvas.style.height = window.innerHeight + 'px';
 
         // add the canvas to the main window
         document.body.append(canvas)
@@ -31,15 +33,29 @@ export const messageBrokerWebview = {
 		// and focus the canvas
 		canvas.focus()
 
-		// Listen for the 'resize' event and send a resize request when that happens
-		let resizeTimeout;
-		window.visualViewport.addEventListener('resize', () => {
-			clearTimeout(resizeTimeout);
-			resizeTimeout = setTimeout(() => {
-				this.tx.send("canvas resize", {x:0, y:0, w:window.visualViewport.width, h:window.visualViewport.height})
-			}, 100);
-			//this.tx.send("canvas resize", {x:0, y:0, w:window.visualViewport.width, h:window.visualViewport.height})
-		});
+		//let rafId = 0;
+		// let lastW = 0;
+		// let lastH = 0;
+		// let lastDpr = 0;
+
+		// set a resize event function
+		const onResize = () => {
+			if (this.resizing) return;
+			this.resizing = requestAnimationFrame(() => {
+				this.resizing = 0;
+				const w = Math.round(window.innerWidth);
+				const h = Math.round(window.innerHeight);
+				const dpr = window.devicePixelRatio || 1;
+				//if (cssW === lastW && cssH === lastH && dpr === lastDpr) return;
+				// lastW = cssW;
+				// lastH = cssH;
+				// lastDpr = dpr;
+				this.tx.send("canvas resize", {x: 0,y: 0,w,h,dpr});
+			});
+		};
+
+		// add the resize event listener
+		window.addEventListener("resize", onResize, { passive: true });
     },
 
 	"-> modal div"(modalDiv) {

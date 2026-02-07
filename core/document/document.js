@@ -45,17 +45,24 @@ Document.prototype = {
         return this.model?.getArl()?.resolve(path)
     },
 
-    // loads a document 
-    async load() {
+    // reset the doc , eg before a new load
+    reset() {
 
-        //check
-        if (! this.model ) return 
+        this.model?.reset()
         
         // reset the model compiler
         this.modcom.reset()
 
         // reset the uid generator
         this.UID.reset()
+    },
+
+    // loads a document from file    
+    // FILE -> RAW -> MODEL
+    async load() {
+
+        //check
+        if (! this.model ) return 
 
         // get the root node in the file - if 'raw' for the model exists, it is used !
         const newRoot = await this.modcom.getRoot(this.model)
@@ -74,11 +81,13 @@ Document.prototype = {
         this.model.libraries?.load()
     },
 
-    // reparse the raw model (no loading required) -> used in getSavePoint
+    // reparse the raw model (no loading required) -> used in getSavePoint    
+    // RAW -> MODEL
     reCompile() {
 
         this.UID.reset()
 
+        // it is like getRoot but without re-reading all the files
         const newRoot = this.modcom.compileNode(this.model,null)
 
         // check
@@ -92,6 +101,34 @@ Document.prototype = {
         }
     },
 
+    // reconstruct the main model 'raw' from what is in memory and then reload the linked nodes
+    // MODEL -> RAW -> MODEL
+    async updateLinks() {
+
+        // check
+        if (! this.model || ! this.view?.root) return
+
+        // check if the main model needs to be synced
+        if (this.model.is.dirty) {
+
+            // sync the model
+            this.model.raw = this.modcom.encode(this.view.root, this.model)
+            
+            // also set the fresh flag
+            this.model.is.fresh = true
+        }
+
+        // check for any changes in the models
+        await this.modcom.updateFactoriesAndModels()
+
+        // update the nodes in the model for which the model has changed
+        this.modcom.updateLinkedNode(this.view.root)
+
+        // reset the fresh flag
+        this.modcom.resetFresh()
+    },
+
+    // MODEL -> RAW -> FILE
     async save() {
 
         // check
@@ -107,78 +144,26 @@ Document.prototype = {
         if (!toSave) return
 
         // encode the model as two parts
-        const compiled = this.savecom.encode(toSave, this.model)
+        const raw = this.savecom.encode(toSave, this.model)
 
         // check
-        if (!compiled) return
+        if (!raw) return
 
-        // save both parts of the model
-        if (compiled.blu) this.model.blu.arl.save( compiled.blu )
-        if (compiled.viz) this.model.viz.arl.save( compiled.viz )
+        // set raw in the model again
+        this.model.setRaw(raw)
 
-        // save the new raw also in the model
-        this.model.setRaw(compiled.raw)
+        // and save
+        this.model.saveRaw()
     },
 
-    // TO CHANGE !!!!
+    // change the arl and save
     async saveAs(path) {
 
-        // if there is no extension, add  it
-        if (!Path.hasExt(path)) path += '.vmblu'
-
-        if (Path.isAbsolutePath(path)) {
-
-            const userPath = Path.relative(path, this.model.getArl().url)
-            
-            //console.log(`${userPath} ${path} ${this.model.getArl().url}`)
-
-            // save to the new location
-            this.model.getArl().url = path
-            this.model.getArl().userPath = userPath
-        }
-        else {
-            // get a new arl
-            const newArl = this.model.getArl().resolve(path)
-
-            //check
-            if (!newArl) {
-                console.log(`Invalid path: "${path}" in Document.saveAs`)
-                return null
-            }
-
-            // set the new arl
-            // this.model.getArl() = newArl
-        }
-
+        if (!this.model.changeArl(path)) return;
         return this.save()
     },
 
-    // for each node that is a link, update the node
-    async update() {
 
-        // check
-        if (! this.model || ! this.view?.root) return
-
-        // check if the main model needs to be synced
-        if (this.model.is.dirty) {
-
-            // sync the model
-            //this.model.raw = JSON.parse(this.modcom.encode(this.view.root, this.model))
-            this.model.raw = this.modcom.encode(this.view.root, this.model).raw
-            
-            // also set the fresh flag
-            this.model.is.fresh = true
-        }
-
-        // check for any changes in the models
-        await this.modcom.updateFactoriesAndModels()
-
-        // update the nodes in the model for which the model has changed
-        this.modcom.updateNode(this.view.root)
-
-        // reset the fresh flag
-        this.modcom.resetFresh()
-    },
 
     // get the node that needs to be saved
     getNodeToSave() {

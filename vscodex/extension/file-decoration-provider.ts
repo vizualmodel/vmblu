@@ -7,7 +7,7 @@ export class VmbluFileDecorationProvider implements vscode.FileDecorationProvide
         if (uri.scheme === 'untitled') return undefined;
 
         const lowerPath = uri.path.toLowerCase();
-        if (!lowerPath.endsWith('.blu.json'))return undefined;
+        if (!lowerPath.endsWith('.blu'))return undefined;
 
         //const decoration = new vscode.FileDecoration('■⊙⇅⇆▚', 'vmblu model file', new vscode.ThemeColor('vmblu.dataBadge'));
         const decoration = new vscode.FileDecoration('▞', 'vmblu model file', new vscode.ThemeColor('vmblu.dataBadge'));

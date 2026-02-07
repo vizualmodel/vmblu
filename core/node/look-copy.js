@@ -7,6 +7,9 @@ export const copyHandling = {
     // copy the look of a node for another node. Note that the routes of pins/proxies are handled later.
     copy(newNode) {
 
+        // ensure look.node is set for widgets created via this copy
+        newNode.look.node = newNode
+
         // copy the look - set the height to 0
         // const newLook = new Look(this.rect)
 
@@ -51,6 +54,9 @@ export const copyHandling = {
     // copy the look from a source node to a group node look and vice versa
     // the routes are not copied
     copyConvert(newNode) {
+
+        // ensure look.node is set for widgets created via this copy
+        newNode.look.node = newNode
 
         // copy the wid generator 
         newNode.look.widGenerator = this.widGenerator

@@ -28,11 +28,18 @@ export function findTransmissions(sourceFile, filePath, nodeMap) {
         // check
         if (expr.getKind() !== SyntaxKind.PropertyAccessExpression) return
 
-        // Match tx.send or this.tx.send - regular expression could be : expr.getText().match(/\w+\.tx\.send/)
+        // Match tx.send/tx.request or this.tx.send/this.tx.request
         const text = expr.getText()
 
         // check
-        if (! (text === 'tx.send' || text === 'this.tx.send' || text.endsWith('.tx.send'))) return;
+        if (!(
+            text === 'tx.send' ||
+            text === 'this.tx.send' ||
+            text.endsWith('.tx.send') ||
+            text === 'tx.request' ||
+            text === 'this.tx.request' ||
+            text.endsWith('.tx.request')
+        )) return;
 
         const args = node.getArguments();
         if (args.length === 0 || !args[0].isKind(SyntaxKind.StringLiteral)) return;

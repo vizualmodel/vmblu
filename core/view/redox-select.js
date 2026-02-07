@@ -486,4 +486,23 @@ unGroup: {
     }
 },
 
+// MAKE UNDO POSSIBLE !
+autoRouteSelection: {
+
+    doit({view}){
+
+        if (! view?.root) return
+
+        const nodes = view.selection.nodes
+        if (nodes.length < 2) return
+
+        const routes = view.root.getInternalRoutes(nodes)
+
+        for (const route of routes) route.autoRoute( view.root.nodes )
+    },
+    undo(){},
+    redo(){}
+
+}
+
 }

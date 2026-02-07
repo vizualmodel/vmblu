@@ -80,7 +80,7 @@ Pin.prototype = {
             : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#00FF00", null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#007700", null)
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
@@ -179,13 +179,13 @@ Pin.prototype = {
             name: this.name,
             kind: this.is.input ? (this.is.channel ? 'reply' : 'input') : (this.is.channel ? 'request' : 'output'),
             contract: {
-                role: this.contract.owner ? "owner" : "follower"
+                role: this.contract.owner ? "owner" : "follower",
+                payload: this.contract.payload ?? 'any'
             },
             wid: this.wid,
             left: this.is.left 
         };
 
-        if (this.contract.owner) rawPin.contract.payload = this.payload
         if (this.prompt) rawPin.prompt = this.prompt
 
         return rawPin
@@ -197,7 +197,8 @@ Pin.prototype = {
     },
 
     adjustRoutes() {
-        for (const route of this.routes) route.adjust();
+
+        if (this.routes.length) for (const route of this.routes) route.adjust();
     },
 
     // changes the position from left to right
@@ -209,11 +210,12 @@ Pin.prototype = {
         this.rect.x = this.is.left
             ? rc.x + rc.w - this.rect.w + style.pin.wOutside
             : rc.x - style.pin.wOutside;
+
         // change
         this.is.left = !this.is.left;
 
         // reconnect the routes
-        this.adjustRoutes();
+        this.adjustRoutes()
     },
 
     drag(pos) {
@@ -224,18 +226,10 @@ Pin.prototype = {
         const center = rc.x + rc.w / 2;
 
         // switch left right ?
-        if (
-            (this.is.left && pos.x > center) ||
-            (!this.is.left && pos.x < center)
-        )
-            this.leftRightSwap();
+        if ((this.is.left && pos.x > center) ||(!this.is.left && pos.x < center)) this.leftRightSwap();
 
         // find pin or ifName to swap with
-        const next = this.node.look.findNextWidget(
-            this,
-            pos,
-            (next) => next.is.pin || next.is.ifName
-        );
+        const next = this.node.look.findNextWidget(this,pos,(next) => next.is.pin || next.is.ifName);
 
         // if no next - done
         if (!next) return;
@@ -462,5 +456,22 @@ Pin.prototype = {
                   h: style.pad.hPad,
               };
     },
+
+    // returns the rang of the pin on the left or right
+    // {true, 2} means second pin on the left side
+    rank() {
+
+        // get the pins at the same side
+        const pins = this.node.look.widgets.filter( w => w.is.pin)
+
+        // sort the array according to y-value
+        pins.sort( (a,b) => a.rect.y - b.rect.y)
+
+        // the index of the pin
+        const index = pins.findIndex( pin => pin === this)
+
+        // return the result
+        return {up: index + 1, down: pins.length - index}
+    }
 };
 Object.assign(Pin.prototype, pinNameHandling);

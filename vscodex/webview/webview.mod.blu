@@ -7,8 +7,8 @@
     "runtime": "../../runtime/scaffold.js"
   },
   "imports": [
-    "../../ui/svelte-lib.blu.json",
-    "../../core/node-editor.blu.json"
+    "../../ui/svelte-lib.mod.blu",
+    "../../core/node-editor.mod.blu"
   ],
   "factories": [
     {
@@ -34,19 +34,31 @@
             "pins": [
               {
                 "name": "open document",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "set document",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "get document",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "reply document",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -54,16 +66,32 @@
             "interface": "edit",
             "pins": [
               {
-                "name": "sync model",
-                "kind": "output"
+                "name": "sync links",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "reload model",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "new edit",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "open js file",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -72,19 +100,31 @@
             "pins": [
               {
                 "name": "floating menu",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "canvas",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "canvas resize",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -93,19 +133,31 @@
             "pins": [
               {
                 "name": "clipboard local",
-                "kind": "request"
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "clipboard remote",
-                "kind": "reply"
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "clipboard switched",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "clipboard switch",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -117,7 +169,7 @@
         "label": "Uses callbacks",
         "prompt": "The context menu handles almost all of the functionality of the editor. Currently the context menu is implemented by using callbacks, meaning that the context menu that the editor sends to this node also contains the functions to be called when the user selects one of the options in the context menu.",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "context menu"
         },
         "interfaces": [
@@ -126,11 +178,17 @@
             "pins": [
               {
                 "name": "context menu",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -140,7 +198,7 @@
         "kind": "dock",
         "name": "path request",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "path request"
         },
         "interfaces": [
@@ -149,11 +207,17 @@
             "pins": [
               {
                 "name": "path",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -163,7 +227,7 @@
         "kind": "dock",
         "name": "side menu",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "vscode side menu"
         },
         "interfaces": [
@@ -172,7 +236,10 @@
             "pins": [
               {
                 "name": "div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -180,40 +247,67 @@
             "interface": "menu items",
             "pins": [
               {
+                "name": "sync",
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
                 "name": "accept changes",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "recalibrate",
-                "kind": "output"
-              },
-              {
-                "name": "sync",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "grid on-off",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "set save point",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "back to save point",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "make lib",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "make app",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -279,7 +373,7 @@
         "kind": "dock",
         "name": "text block",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "text block"
         },
         "interfaces": [
@@ -288,11 +382,17 @@
             "pins": [
               {
                 "name": "text",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -302,7 +402,7 @@
         "kind": "dock",
         "name": "node settings",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "json input"
         },
         "interfaces": [
@@ -311,11 +411,17 @@
             "pins": [
               {
                 "name": "json",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -325,7 +431,7 @@
         "kind": "dock",
         "name": "name and path",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "name and path"
         },
         "interfaces": [
@@ -334,11 +440,17 @@
             "pins": [
               {
                 "name": "name and path",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -348,7 +460,7 @@
         "kind": "dock",
         "name": "profile settings",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "pin profile"
         },
         "interfaces": [
@@ -357,11 +469,17 @@
             "pins": [
               {
                 "name": "show",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -376,19 +494,31 @@
             "pins": [
               {
                 "name": "select node",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "node",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "switch library",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -399,7 +529,7 @@
             "name": "node selector",
             "label": "select nodes from the library",
             "link": {
-              "path": "../../ui/svelte-lib.blu.json",
+              "path": "../../ui/svelte-lib.mod.blu",
               "node": "node selector"
             },
             "interfaces": [
@@ -408,31 +538,52 @@
                 "pins": [
                   {
                     "name": "selected node",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "show",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "build table",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "remove file",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "add file",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "get path",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "modal div",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }
@@ -442,7 +593,7 @@
             "kind": "dock",
             "name": "library manager",
             "link": {
-              "path": "../../core/node-editor.blu.json",
+              "path": "../../core/node-editor.mod.blu",
               "node": "library manager"
             },
             "interfaces": [
@@ -451,19 +602,31 @@
                 "pins": [
                   {
                     "name": "switch library",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "build table",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "remove file",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "add file",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }
@@ -474,7 +637,7 @@
             "name": "path request",
             "label": "add a file to the nodelib",
             "link": {
-              "path": "../../ui/svelte-lib.blu.json",
+              "path": "../../ui/svelte-lib.mod.blu",
               "node": "path request"
             },
             "interfaces": [
@@ -483,11 +646,17 @@
                 "pins": [
                   {
                     "name": "path",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "modal div",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }
@@ -586,7 +755,7 @@
         "kind": "dock",
         "name": "doc settings",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "document settings"
         },
         "interfaces": [
@@ -595,11 +764,17 @@
             "pins": [
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -611,7 +786,7 @@
         "label": "The clipboard for copying between editors",
         "prompt": "aha",
         "link": {
-          "path": "../../core/node-editor.blu.json",
+          "path": "../../core/node-editor.mod.blu",
           "node": "clipboard"
         },
         "interfaces": [
@@ -620,27 +795,45 @@
             "pins": [
               {
                 "name": "switch",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "switched",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "remote",
-                "kind": "request"
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "local",
-                "kind": "reply"
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "get",
-                "kind": "reply"
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "set",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -652,7 +845,7 @@
         "label": "Every tab in vscode has its own editor",
         "prompt": "why is the comment not saved ?",
         "link": {
-          "path": "../../core/node-editor.blu.json",
+          "path": "../../core/node-editor.mod.blu",
           "node": "editor"
         },
         "interfaces": [
@@ -661,23 +854,45 @@
             "pins": [
               {
                 "name": "accept changes",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "sync links",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "reload model",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "recalibrate",
-                "kind": "input"
-              },
-              {
-                "name": "sync model",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "grid on-off",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show settings",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -686,15 +901,24 @@
             "pins": [
               {
                 "name": "open document",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "set document",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "document settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -703,15 +927,24 @@
             "pins": [
               {
                 "name": "save point set",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save point back",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save point confirm",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -720,7 +953,10 @@
             "pins": [
               {
                 "name": "new edit",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -729,11 +965,17 @@
             "pins": [
               {
                 "name": "make lib",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show lib path",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -742,27 +984,45 @@
             "pins": [
               {
                 "name": "make app",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show app path",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run app",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run app in iframe",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "open source file",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -771,7 +1031,10 @@
             "pins": [
               {
                 "name": "show context menu",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -780,11 +1043,17 @@
             "pins": [
               {
                 "name": "runtime settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -793,15 +1062,24 @@
             "pins": [
               {
                 "name": "show link",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show filter",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show factory",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -810,11 +1088,17 @@
             "pins": [
               {
                 "name": "node comment",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "pin profile",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -823,11 +1107,17 @@
             "pins": [
               {
                 "name": "clipboard get",
-                "kind": "request"
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "clipboard set",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -836,19 +1126,31 @@
             "pins": [
               {
                 "name": "select node",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "selected node",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "change library",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "add lib file",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -857,11 +1159,17 @@
             "pins": [
               {
                 "name": "canvas",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "size change",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -871,7 +1179,7 @@
         "kind": "dock",
         "name": "confirm box",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "confirm box"
         },
         "interfaces": [
@@ -880,11 +1188,17 @@
             "pins": [
               {
                 "name": "show",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -894,7 +1208,7 @@
         "kind": "dock",
         "name": "runtime settings",
         "link": {
-          "path": "../../ui/svelte-lib.blu.json",
+          "path": "../../ui/svelte-lib.mod.blu",
           "node": "runtime settings"
         },
         "interfaces": [
@@ -903,11 +1217,17 @@
             "pins": [
               {
                 "name": "show",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -927,11 +1247,21 @@
       },
       {
         "src": {
-          "pin": "sync model",
+          "pin": "sync links",
           "node": "message broker"
         },
         "dst": {
-          "pin": "sync model",
+          "pin": "sync links",
+          "node": "editor"
+        }
+      },
+      {
+        "src": {
+          "pin": "reload model",
+          "node": "message broker"
+        },
+        "dst": {
+          "pin": "reload model",
           "node": "editor"
         }
       },
@@ -997,31 +1327,31 @@
       },
       {
         "src": {
-          "pin": "accept changes",
-          "node": "side menu"
-        },
-        "dst": {
-          "pin": "accept changes",
-          "node": "editor"
-        }
-      },
-      {
-        "src": {
-          "pin": "recalibrate",
-          "node": "side menu"
-        },
-        "dst": {
-          "pin": "recalibrate",
-          "node": "editor"
-        }
-      },
-      {
-        "src": {
           "pin": "sync",
           "node": "side menu"
         },
         "dst": {
-          "pin": "sync model",
+          "pin": "sync links",
+          "node": "editor"
+        }
+      },
+      {
+        "src": {
+          "pin": "accept changes",
+          "node": "side menu"
+        },
+        "dst": {
+          "pin": "accept changes",
+          "node": "editor"
+        }
+      },
+      {
+        "src": {
+          "pin": "recalibrate",
+          "node": "side menu"
+        },
+        "dst": {
+          "pin": "recalibrate",
           "node": "editor"
         }
       },

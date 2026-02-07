@@ -30,6 +30,9 @@ export function MessageBroker(tx, sx) {
 	// the document flags set by the vscode document
 	this.documentFlags = 0x0
 
+	// the resize id
+	this.resizing = 0
+
 	// adapt the console.log function !
 	adaptConsole()
 

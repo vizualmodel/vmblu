@@ -1,4 +1,5 @@
 import {shape, convert, style} from '../util/index.js'
+import {editor} from '../editor/index.js'
 
 export function Header(rect, node) {
 
@@ -32,6 +33,9 @@ Header.prototype = {
 
         // check for consequences...
         this.node.look.headerChanged(this, saved)
+
+        // check if the node name is unique 
+        editor.doc.focus.root.checkDuplicates(this.node)
     },
 
     // draw a blinking cursor

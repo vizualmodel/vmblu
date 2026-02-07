@@ -1,13 +1,13 @@
 import {ModelMap} from './model-map.js'
 import {style} from '../util/index.js'
-import cliPackage from '../../cli/package.json' assert { type: 'json' };
+import {SCHEMA_VERSION} from './schema-version.js'
 
 export function ModelHeader() {
 
     const today = new Date()
 
     // Set the schema version in the header
-    this.schema = cliPackage.schemaVersion
+    this.version = SCHEMA_VERSION
     this.created = today.toLocaleString()
     this.saved = today.toLocaleString()
     this.utc = today.toJSON()
@@ -25,7 +25,7 @@ ModelHeader.prototype = {
         this.created = raw.created?.slice() ?? today.toLocaleString(),
         this.saved = raw.saved?.slice() ?? today.toLocaleString(),
         this.utc = raw.utc?.slice() ?? today.toJSON()
-        this.schema = raw.schema?.slice() ?? 'no version'
+        this.version = raw.version?.slice() ?? 'no version'
 
         // Create a style for the model
         this.style = style.create(raw.style)

@@ -8,12 +8,17 @@ import * as os from 'os';
 type Arl = { url: string };
 type someAction = (data: any) => void;
 
+function normalizeSeparators(value: string): string {
+  return value.replace(/\\/g, '/');
+}
+
 export class SourceDocWatcher {
   private modelUri: vscode.Uri | null = null;
   private outUri: vscode.Uri;
   private fileWatcher: vscode.FileSystemWatcher | null = null;
   private disposables: vscode.Disposable[] = [];
   private customerAction: someAction;
+  private started = false;
 
   // NEW: incremental state
   private pendingChanged = new Set<string>();
@@ -46,6 +51,7 @@ export class SourceDocWatcher {
 
   start() {
     this.stop();
+    this.started = true;
 
     // Watch only JS/TS; adjust if you also emit JSX/TSX
     this.fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.{js,ts}');
@@ -68,6 +74,7 @@ export class SourceDocWatcher {
     this.disposables.forEach(d => d.dispose());
     this.disposables = [];
     this.fileWatcher = null;
+    this.started = false;
   }
 
   dispose() { this.stop(); }
@@ -90,8 +97,9 @@ export class SourceDocWatcher {
     trigger(kind);
   }
 
+
   private isIgnored(p: string): boolean {
-    const norm = p.replace(/\\/g, '/');
+    const norm = normalizeSeparators(p);
     return (
       norm.includes('/node_modules/') ||
       norm.includes('/.git/') ||
@@ -221,7 +229,7 @@ export class SourceDocWatcher {
           this.vmbluExecutableSource = 'local';
           this.vmbluMissingNotified = false;
           this.vmbluExecutableRootsKey = rootsKey;
-          //cout(`[SourceDocWatcher] Resolved vmblu CLI at ${candidate}`);
+          cout(`[SourceDocWatcher] Using vmblu CLI at ${candidate}`);
           return candidate;
         } catch {
           //cout(`[SourceDocWatcher] No CLI at ${candidate}`);
@@ -233,6 +241,7 @@ export class SourceDocWatcher {
     this.vmbluExecutable = binNames[0];
     this.vmbluExecutableSource = 'path';
     this.vmbluExecutableRootsKey = rootsKey;
+    cout(`[SourceDocWatcher] Using vmblu CLI from PATH: ${this.vmbluExecutable}`);
     return this.vmbluExecutable;
   }
 

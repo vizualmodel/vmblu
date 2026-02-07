@@ -248,5 +248,27 @@ const groupFunctions = {
         return source
     },
 
+    // makes a list of all the source nodes - that are not links - in the model 
+    makeSourceList(list) {
+
+        // copy the nodes that are part of this node
+        for(const node of this.nodes) {
+
+            // skip linked nodes
+            if (node.link) continue;
+
+            // copy source nodes
+            if (node.is.source) {
+
+                // make a copy of the node - also copies the widgets
+                const copy = node.copy()
+
+                // and add the copy to the node list
+                list.push(copy)
+            }
+            else node.makeSourceList(list)
+        }
+    }
+
 }
 Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling, conxHandling)

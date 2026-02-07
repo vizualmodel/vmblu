@@ -269,9 +269,6 @@ export const conxHandling = {
 
             // create a new route
             const route = new Route(cx.src, cx.dst)
-            
-            // make a smart connection between the two destinations
-            route.autoRoute(this.nodes)
 
             // The route is for a new connection
             route.is.newConx = true
@@ -279,6 +276,70 @@ export const conxHandling = {
             // and save the route in the endpoints
             route.from.routes.push(route)
             route.to.routes.push(route)
+
+            // make a smart connection between the two destinations
+            route.autoRoute(this.nodes)
         }
+    },
+
+    // create a single route between src and dst
+    createRoute(src, dst) {
+
+        // check
+        if (!src || !dst) return
+        if (!src.canConnect(dst)) return
+
+        // create a new route from the src
+        const route = new Route(src, null)
+
+        // The route is for a new connection
+        route.is.newConx = true
+        
+        // and save the route in the from endpoint
+        route.from.routes.push(route)
+
+        // make the actual connection
+        if (route.connect(dst)) {
+            
+            // if ok make a smart connection between the two destinations
+            route.autoRoute(this.nodes)
+        }
+        else {
+            // could not connect - drop the route in the source as well
+            route.from.routes.pop()
+        }
+    },
+
+    getInternalRoutes(nodes) {
+
+        const routes = []
+
+        // get all the routes from the output pins of all the nodes
+        for(const node of nodes) {
+
+            // sav all the routes of output pins
+            for(const pin of node.look.widgets) {
+
+                // only output pins
+                if (! pin.is.pin || pin.is.input) continue
+
+                // look at all routes
+                for(const route of pin.routes) {
+
+                    // get the destination (it can be null for half-routes !)
+                    const other = route.from == pin ? route.to : route.from
+
+                    // check that the node is in the list of nodes
+                    if ( ! nodes.includes(other.node)) continue
+
+                    // store the route for that pin
+                    routes.push(route)
+                }
+            }
+        }
+
+        return routes
     }
+
+
 }

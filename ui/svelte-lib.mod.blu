@@ -1,0 +1,1288 @@
+{
+  "header": {
+    "schema": "0.9.1",
+    "created": "4/2/2024, 12:51:45 PM",
+    "saved": "12/16/2025, 1:00:06 PM",
+    "utc": "2025-12-16T12:00:06.433Z",
+    "runtime": "./runtime.js"
+  },
+  "factories": [
+    {
+      "path": "./index.js",
+      "function": "ContextMenuFactory"
+    }
+  ],
+  "root": {
+    "kind": "group",
+    "name": "",
+    "nodes": [
+      {
+        "kind": "group",
+        "name": "modal boxes",
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "context menu",
+            "factory": {
+              "path": "./index.js",
+              "function": "ContextMenuFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "context menu",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "path request",
+            "factory": {
+              "path": "./index.js",
+              "function": "PathRequestFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "path",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "single text field",
+            "factory": {
+              "path": "./index.js",
+              "function": "SingleTextFieldFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "message box",
+            "factory": {
+              "path": "./index.js",
+              "function": "MessageBoxFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "json input",
+            "factory": {
+              "path": "./index.js",
+              "function": "JsonInputFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "json",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "text block",
+            "factory": {
+              "path": "./index.js",
+              "function": "TextBlockFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "text",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "node selector",
+            "factory": {
+              "path": "./index.js",
+              "function": "NodeSelectorFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "build table",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "selected node",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "get path",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "add file",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "remove file",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "name and path",
+            "factory": {
+              "path": "./index.js",
+              "function": "NameAndPathFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "name and path",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "document settings",
+            "factory": {
+              "path": "./index.js",
+              "function": "DocumentSettingsFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "confirm box",
+            "factory": {
+              "path": "./index.js",
+              "function": "ConfirmBox"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "runtime settings",
+            "factory": {
+              "path": "./index.js",
+              "function": "RuntimeSettingsFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "pin profile",
+            "factory": {
+              "path": "./index.js",
+              "function": "PinProfileFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "page layout group",
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "canvas layout",
+            "factory": {
+              "path": "./index.js",
+              "function": "CanvasLayoutFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "menu",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab ribbon",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "workspace",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "canvas",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "canvas size change",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "menu tabs window",
+            "factory": {
+              "path": "./index.js",
+              "function": "MenuTabsWindow"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "menu div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tabs div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "content div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "content size change",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "size change",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "left menu layout",
+            "factory": {
+              "path": "./index.js",
+              "function": "LeftMenuLayoutFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "screen areas",
+                "pins": [
+                  {
+                    "name": "left menu",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "left column",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "area one",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "area two",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              },
+              {
+                "interface": "messages",
+                "pins": [
+                  {
+                    "name": "vertical",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "horizontal",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "size change",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "column-main layout",
+            "factory": {
+              "path": "./index.js",
+              "function": "ColumnMainFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "left column",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "main area",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "size change",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "vertical menu tabs content",
+            "factory": {
+              "path": "./index.js",
+              "function": "VerticalMenuTabsContent"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "menu div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tabs div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "content div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "content size change",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "size change",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "menus and tab ribbons",
+        "nodes": [
+          {
+            "kind": "source",
+            "name": "tab ribbon",
+            "factory": {
+              "path": "./index.js",
+              "function": "TabRibbonFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              },
+              {
+                "interface": "tab",
+                "pins": [
+                  {
+                    "name": "tab new",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab rename",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab select",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab remove",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab request to close",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "tab request to select",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "old top menu",
+            "factory": {
+              "path": "./index.js",
+              "function": "TopMenuFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "save",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "save as",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "save all",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "accept changes",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "sync",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "recalibrate",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make app page",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make build lib",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "analyze model",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "run app page",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "run app in iframe",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "vertical",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "horizontal",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show code editor",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "top menu",
+            "factory": {
+              "path": "./index.js",
+              "function": "TopMenuFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "save",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "save as",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "save all",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "accept changes",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "sync model",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "recalibrate",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "grid on-off",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make app page",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make build lib",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "run app page",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "run app in iframe",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "set save point",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "back to save point",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "side menu",
+            "factory": {
+              "path": "./index.js",
+              "function": "SideMenuFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "vertical",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "horizontal",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show code editor",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show app",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "vscode side menu",
+            "factory": {
+              "path": "./index.js",
+              "function": "VscodeSideMenuFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              },
+              {
+                "interface": "menu items",
+                "pins": [
+                  {
+                    "name": "accept changes",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "recalibrate",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "sync",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "grid on-off",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "show settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "set save point",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "back to save point",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make lib",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "make app",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

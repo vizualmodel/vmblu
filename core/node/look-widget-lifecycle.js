@@ -7,7 +7,7 @@ export const widgetLifecycle = {
 addHeader() {
 
     // the space taken by the icons
-    const iconSpace = 2*(style.icon.xPadding + 2*style.icon.wIcon + style.icon.xSpacing)
+    const iconSpace = 2*(2*style.icon.xPadding + 2*style.icon.wIcon + style.icon.xSpacing)
 
     // the required width for the look..
     const W = this.getTextWidth(this.node.name) + iconSpace;

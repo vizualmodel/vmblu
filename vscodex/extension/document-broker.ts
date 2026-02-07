@@ -7,6 +7,7 @@ import { execFile } from 'child_process';
 import type { ExecFileException } from 'child_process';
 import * as fs from 'fs/promises'; // or 'fs' with .promises
 import { SourceDocWatcher } from './source-doc-watcher';
+import { ModelFileWatcher } from './model-file-watcher';
 import {getExtensionContext} from './extension.js';
 
 
@@ -121,27 +122,6 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			return;
 		}
 
-		// request from the webview to open a text document - typically a source file
-		case 'xxopen source' : {
-
-			// make a uri
-			const uri = this.makeUri(message.arl);
-
-			if (! uri) {
-				console.log('Could not make uri..', message.arl.url);
-				return;
-			}
-
-			// open and show the document
-			vscode.workspace.openTextDocument(uri)
-			.then( newDocument => {
-				vscode.window.showTextDocument(newDocument);
-			});
-
-			// done
-			return;
-		}
-
 		// open a source file and optionally jump to a specific line nr
 		case 'open source': {
 
@@ -166,7 +146,7 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			return;
 		}
 
-		case 'watch source doc': {
+		case 'start watchers': {
 
 			// make an output file uri
 			const outFile = vscode.Uri.parse((message.outFile as { url: string }).url);
@@ -174,8 +154,7 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			// set up a source file watcher - specify the intermediate outputfile to use and the customer action
 			const watcher = new SourceDocWatcher(
 								outFile,
-								(rawSourceDoc) => {broker.postMessage({verb: 'source doc',rawSourceDoc});}
-							);			
+								(rawSourceDoc) => {broker.postMessage({verb: 'source doc', rawSourceDoc});});			
 
 			// make sure it gets cleaned up
 			getExtensionContext()?.subscriptions.push(watcher);
@@ -184,8 +163,14 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			watcher.start();
 
 			// set the factories - this will do an update
-			//watcher.setFactoryFiles( message.factories );
 			watcher.setModelFile(message.model);
+
+			// Also start a model watcher
+			const modelWatcher = new ModelFileWatcher(() => {broker.postMessage({verb: 'model changed'});});
+			getExtensionContext()?.subscriptions.push(modelWatcher);
+			modelWatcher.setModelFile(message.model);
+			modelWatcher.start();
+			this.modelWatcher = modelWatcher;
 
 			return;
 		}

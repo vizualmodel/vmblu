@@ -7,7 +7,7 @@
     "runtime": "./runtime.js"
   },
   "imports": [
-    "../ui/out/svelte-lib.blu.json"
+    "../ui/svelte-lib.mod.blu"
   ],
   "factories": [
     {
@@ -32,23 +32,45 @@
             "pins": [
               {
                 "name": "accept changes",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
-                "name": "sync model",
-                "kind": "input"
+                "name": "reload model",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
+              },
+              {
+                "name": "sync links",
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "recalibrate",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "grid on-off",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show settings",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -57,15 +79,24 @@
             "pins": [
               {
                 "name": "set document",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "open document",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "document settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -74,7 +105,10 @@
             "pins": [
               {
                 "name": "new edit",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -83,15 +117,24 @@
             "pins": [
               {
                 "name": "save point set",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save point back",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save point confirm",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -100,11 +143,17 @@
             "pins": [
               {
                 "name": "clipboard get",
-                "kind": "request"
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "clipboard set",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -113,19 +162,31 @@
             "pins": [
               {
                 "name": "show link",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show factory",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show filter",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "open source file",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -134,11 +195,17 @@
             "pins": [
               {
                 "name": "make lib",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show lib path",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -147,27 +214,45 @@
             "pins": [
               {
                 "name": "make app",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "show app path",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run app",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run app in iframe",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "run",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "runtime settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -176,7 +261,10 @@
             "pins": [
               {
                 "name": "show context menu",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -185,7 +273,10 @@
             "pins": [
               {
                 "name": "settings",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -194,11 +285,17 @@
             "pins": [
               {
                 "name": "pin profile",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "node comment",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -207,19 +304,31 @@
             "pins": [
               {
                 "name": "select node",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "selected node",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "add lib file",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "change library",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -228,11 +337,17 @@
             "pins": [
               {
                 "name": "canvas",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "size change",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -241,30 +356,42 @@
       {
         "kind": "source",
         "name": "library manager",
+        "label": "makes a node library from the model files",
         "factory": {
           "path": "./index.js",
           "function": "LibraryManager"
         },
-        "label": "makes a node library from the model files",
         "interfaces": [
           {
             "interface": "",
             "pins": [
               {
                 "name": "add file",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "remove file",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "switch library",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "build table",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -273,43 +400,64 @@
       {
         "kind": "source",
         "name": "document manager",
+        "label": "Manages the list of open documents",
+        "prompt": "The document manager is typically used together with a tab-ribbon ui element.\n\nThe document manager is also the node that gets and saves the content of the documents.\n\nThe selection, closing, renaming etc is typically handled here.\n\nThe editor is typically only aware of one document - the active document - that is set by the document manager.",
         "factory": {
           "path": "./index.js",
           "function": "DocumentManager"
         },
-        "label": "Manages the list of open documents",
-        "prompt": "The document manager is typically used together with a tab-ribbon ui element.\n\nThe document manager is also the node that gets and saves the content of the documents.\n\nThe selection, closing, renaming etc is typically handled here.\n\nThe editor is typically only aware of one document - the active document - that is set by the document manager.",
         "interfaces": [
           {
             "interface": "doc",
             "pins": [
               {
                 "name": "doc selected",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc new",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc renamed",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc deleted",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc get",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc set active",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "doc open",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -318,27 +466,45 @@
             "pins": [
               {
                 "name": "save",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save as",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save as filename",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "save all",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "get open models",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "open models",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           },
@@ -347,27 +513,45 @@
             "pins": [
               {
                 "name": "tab request to close",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "tab request to select",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "tab select",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "tab remove",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "tab new",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "tab rename",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -386,27 +570,45 @@
             "pins": [
               {
                 "name": "switch",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "switched",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "remote",
-                "kind": "request"
+                "kind": "request",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "local",
-                "kind": "reply"
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "set",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "get",
-                "kind": "reply"
+                "kind": "reply",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -421,19 +623,31 @@
             "pins": [
               {
                 "name": "select node",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "node",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "switch library",
-                "kind": "input"
+                "kind": "input",
+                "contract": {
+                  "role": "follower"
+                }
               },
               {
                 "name": "modal div",
-                "kind": "output"
+                "kind": "output",
+                "contract": {
+                  "role": "follower"
+                }
               }
             ]
           }
@@ -442,42 +656,63 @@
           {
             "kind": "dock",
             "name": "node selector",
+            "label": "select nodes from the library",
             "link": {
-              "path": "../ui/out/svelte-lib.blu.json",
+              "path": "../ui/svelte-lib.mod.blu",
               "node": "node selector"
             },
-            "label": "select nodes from the library",
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
                     "name": "selected node",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "show",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "build table",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "remove file",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "add file",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "get path",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "modal div",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }
@@ -496,19 +731,31 @@
                 "pins": [
                   {
                     "name": "switch library",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "build table",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "remove file",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "add file",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }
@@ -517,22 +764,28 @@
           {
             "kind": "dock",
             "name": "path request",
+            "label": "add a file to the nodelib",
             "link": {
-              "path": "../ui/out/svelte-lib.blu.json",
+              "path": "../ui/svelte-lib.mod.blu",
               "node": "path request"
             },
-            "label": "add a file to the nodelib",
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
                     "name": "path",
-                    "kind": "input"
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower"
+                    }
                   },
                   {
                     "name": "modal div",
-                    "kind": "output"
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower"
+                    }
                   }
                 ]
               }

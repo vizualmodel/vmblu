@@ -106,7 +106,7 @@ export const busConnect = {
         const route = new Route(widget, tack)
 
         // make a smart connection between the two destinations
-        route.builder()
+        route.autoRoute()
 
         // and save the route in the new proxy...
         widget.routes.push(route)

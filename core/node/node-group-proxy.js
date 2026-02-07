@@ -84,7 +84,7 @@ export const proxyHandling = {
                 route = new Route(newProxy, destination)
 
                 // make a smart connection between the two destinations
-                route.builder()
+                route.autoRoute()
 
                 // and save the route in the new proxy...
                 newProxy.routes.push(route)
