@@ -1,6 +1,7 @@
 import {Node} from './node.js'
 import {SourceNode, Look} from './index.js'
 import {jsonHandling} from './node-group-json.js'
+import {NodePlacement} from './node-placement.js'
 import {proxyHandling} from './node-group-proxy.js'
 import {conxHandling} from './node-group-conx.js'
 import {eject, jsonDeepCopy, convert} from '../util/index.js'
@@ -271,4 +272,4 @@ const groupFunctions = {
     }
 
 }
-Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling, conxHandling)
+Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling, NodePlacement, conxHandling)

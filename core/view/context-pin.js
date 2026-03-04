@@ -1,15 +1,15 @@
 import { editor } from '../editor/index.js';
 
 const noLink = [
+    {text: 'profile',           char: 'p',  icon: 'info', state: 'disabled', action: showProfile },    
     {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput,},
     {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput,},
-    {text: 'new interface',     char: 'p',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName,},
+    {text: 'new interface',     char: 'f',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName,},
     {text: 'new request',       char: 'q',  icon: 'switch_left',        state: 'enabled',        action: newRequest,    },
     {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply,    },
     {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch,    },
     {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
     {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
-    {text: 'profile',                       icon: 'info', state: 'disabled', action: showProfile },    
     {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap,    },    
     {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft,    },    
     {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight,    },    

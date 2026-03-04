@@ -20,7 +20,8 @@ export function Pad(rect, proxy, uid=null) {
         leftText: proxy.is.left,
         hoverOk: false,
         hoverNok: false,
-        beingEdited: false
+        beingEdited: false,
+        placed: false
     }
 
     // set the text
@@ -242,12 +243,16 @@ Pad.prototype = {
     },
 
     makeRaw() {
-        return {
+        const raw = {
             wid: this.proxy.wid,
             text: this.text,
             left: this.is.leftText,
             rect: this.rect
         }
+
+        if (this.is.placed) raw.placed = true
+
+        return raw
     },
 
     // unzip() {

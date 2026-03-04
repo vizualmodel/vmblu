@@ -1,0 +1,3 @@
+display_name: vmblu
+short_description: Bootstrap and work in vmblu projects by initializing (if needed) and reading .vmblu/vmblu.prompt.md before coding.
+default_prompt: use vmblu

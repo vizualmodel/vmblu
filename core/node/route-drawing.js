@@ -3,6 +3,166 @@ import {style, cutsRectangle} from '../util/index.js'
 
 export const routeDrawing = {
 
+    // Returns true when the connector point is on the left side of the widget.
+    // For pads, `leftText` means the text is on the left and the bullet/connector is on the right.
+    connectorOnLeft(widget) {
+        if (!widget?.is) return false
+        if (widget.is.pad) return !widget.is.leftText
+        if (typeof widget.is.left === 'boolean') return widget.is.left
+        if (typeof widget.is.leftText === 'boolean') return widget.is.leftText
+        return false
+    },
+
+    ownerNode(widget) {
+        if (!widget) return null
+        if (widget.node) return widget.node
+        if (widget.proxy?.node) return widget.proxy.node
+        if (widget.bus?.node) return widget.bus.node
+        return null
+    },
+
+    // For autoroute collision on endpoint legs, pads belong to the enclosing group and
+    // are allowed to route inside that group. Only real node-owned widgets (pins/tacks)
+    // should reject routes that cut through their own node body.
+    endpointBlockRect(widget) {
+        if (!widget?.is) return null
+        if (widget.is.pad) return null
+        const node = this.ownerNode(widget)
+        return node?.look?.rect ?? null
+    },
+
+    routeCutsEndpointBody(wire, rc, allowSegmentIndex) {
+        if (!rc || !wire || wire.length < 2) return false
+        for (let i = 0; i < wire.length - 1; i++) {
+            if (i === allowSegmentIndex) continue
+            if (cutsRectangle(wire[i], wire[i + 1], rc)) return true
+        }
+        return false
+    },
+
+    // Collect orthogonal segments from already routed connections so autoroute can
+    // prefer less crowded lanes. Routes are deduplicated because the same route can
+    // be reachable from multiple widgets.
+    collectRouteSegments(nodes=[]) {
+        const routes = new Set()
+        const segments = []
+
+        for (const node of nodes ?? []) {
+            const widgets = node?.look?.widgets ?? []
+            for (const widget of widgets) {
+                if (!widget?.routes?.length) continue
+                for (const route of widget.routes) {
+                    if (!route || route === this || routes.has(route) || route.wire.length < 2) continue
+                    routes.add(route)
+
+                    for (let i = 0; i < route.wire.length - 1; i++) {
+                        const a = route.wire[i]
+                        const b = route.wire[i + 1]
+                        if (a.x === b.x) {
+                            segments.push({dir:'v', x: a.x, y1: Math.min(a.y, b.y), y2: Math.max(a.y, b.y)})
+                        }
+                        else if (a.y === b.y) {
+                            segments.push({dir:'h', y: a.y, x1: Math.min(a.x, b.x), x2: Math.max(a.x, b.x)})
+                        }
+                    }
+                }
+            }
+        }
+
+        return segments
+    },
+
+    rangeOverlap(a1, a2, b1, b2) {
+        return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1))
+    },
+
+    quantizeLane(value, step = 1) {
+        const s = Math.max(1, step || 1)
+        return Math.round(value / s) * s
+    },
+
+    collectLaneUsage(segments, xStep = 5, yStep = 5) {
+        const vertical = new Map()
+        const horizontal = new Map()
+
+        for (const seg of segments ?? []) {
+            if (seg.dir === 'v') {
+                const key = this.quantizeLane(seg.x, xStep)
+                vertical.set(key, (vertical.get(key) ?? 0) + 1)
+            }
+            else if (seg.dir === 'h') {
+                const key = this.quantizeLane(seg.y, yStep)
+                horizontal.set(key, (horizontal.get(key) ?? 0) + 1)
+            }
+        }
+
+        return {vertical, horizontal}
+    },
+
+    laneRegistryPenaltyVertical(x, laneUsage, laneStep = 5) {
+        if (!laneUsage?.vertical) return 0
+        const key = this.quantizeLane(x, laneStep)
+        let penalty = (laneUsage.vertical.get(key) ?? 0) * 120
+
+        const left = key - laneStep
+        const right = key + laneStep
+        penalty += (laneUsage.vertical.get(left) ?? 0) * 25
+        penalty += (laneUsage.vertical.get(right) ?? 0) * 25
+
+        return penalty
+    },
+
+    laneRegistryPenaltyHorizontal(y, laneUsage, laneStep = 5) {
+        if (!laneUsage?.horizontal) return 0
+        const key = this.quantizeLane(y, laneStep)
+        let penalty = (laneUsage.horizontal.get(key) ?? 0) * 120
+
+        const up = key - laneStep
+        const down = key + laneStep
+        penalty += (laneUsage.horizontal.get(up) ?? 0) * 25
+        penalty += (laneUsage.horizontal.get(down) ?? 0) * 25
+
+        return penalty
+    },
+
+    lanePenaltyVertical(x, y1, y2, segments, laneStep = 5) {
+        let penalty = 0
+        const yy1 = Math.min(y1, y2)
+        const yy2 = Math.max(y1, y2)
+
+        for (const seg of segments) {
+            if (seg.dir !== 'v') continue
+            const overlap = this.rangeOverlap(yy1, yy2, seg.y1, seg.y2)
+            if (overlap <= 0) continue
+
+            const dx = Math.abs(seg.x - x)
+            if (dx < 1) penalty += 1000 + overlap
+            else if (dx < laneStep) penalty += 200 + overlap
+            else if (dx < laneStep * 2) penalty += 20
+        }
+
+        return penalty
+    },
+
+    lanePenaltyHorizontal(y, x1, x2, segments, laneStep = 5) {
+        let penalty = 0
+        const xx1 = Math.min(x1, x2)
+        const xx2 = Math.max(x1, x2)
+
+        for (const seg of segments) {
+            if (seg.dir !== 'h') continue
+            const overlap = this.rangeOverlap(xx1, xx2, seg.x1, seg.x2)
+            if (overlap <= 0) continue
+
+            const dy = Math.abs(seg.y - y)
+            if (dy < 1) penalty += 1000 + overlap
+            else if (dy < laneStep) penalty += 200 + overlap
+            else if (dy < laneStep * 2) penalty += 20
+        }
+
+        return penalty
+    },
+
     // draw freely with x/y segments
     // we always assume that the route is extended at the last point (i.e. the to widget !)
     drawXY(next) {
@@ -113,33 +273,48 @@ export const routeDrawing = {
         const dpx = style.autoroute.xDelta
         const mg = style.autoroute.xMargin
 
-        const frc = from.node.look.rect
-        const trc = to.node.look.rect
+        const fromNode = this.ownerNode(from)
+        const toNode = this.ownerNode(to)
+        const frc = fromNode?.look?.rect
+        const trc = toNode?.look?.rect
+        if (!frc || !trc) return this.fourPointRoute(nodes)
         let yMid = f.y + (frc.h/4 + trc.h/4)
+
+        const fromLeft = this.connectorOnLeft(from)
+        const toLeft = this.connectorOnLeft(to)
 
         const fRank = from.rank()
         const fRankValue = yMid < f.y ? fRank.up : fRank.down
-        const xBase1 = from.is.left ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue
+        const xBase1 = fromLeft ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue
 
         const tRank = to.rank()
         const tRankValue = yMid < t.y ? tRank.up : tRank.down
-        const xBase2 = to.is.left ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue
+        const xBase2 = toLeft ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue
 
         let x1 = xBase1
         let x2 = xBase2
 
-        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== fromNode && n !== toNode)
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
         const expandY = style.autoroute.yDelta
+        const routeSegments = this.collectRouteSegments(nodes)
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, expandY)
 
         const buildWire = () => {
             wire.length = 0
-            wire.push(f)
-            wire.push({x:x1, y:f.y})
-            wire.push({x:x1, y:yMid})
-            wire.push({x:x2, y:yMid})
-            wire.push({x:x2, y:t.y})
-            wire.push(t)
+        wire.push(f)
+        wire.push({x:x1, y:f.y})
+        wire.push({x:x1, y:yMid})
+        wire.push({x:x2, y:yMid})
+        wire.push({x:x2, y:t.y})
+        wire.push(t)
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from)
+        const toRc = this.endpointBlockRect(to)
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
         }
 
         const firstHorizontalCut = () => {
@@ -165,6 +340,36 @@ export const routeDrawing = {
             guard++
         }
 
+        // If multiple y lanes are available, prefer the less crowded horizontal lane.
+        if (!hit && routeSegments.length) {
+            const yBase = yMid
+            const yCandidates = [0, 1, -1, 2, -2, 3, -3].map(step => yBase + step * expandY)
+            let bestY = yMid
+            let bestScore = Infinity
+
+            for (const candidateY of yCandidates) {
+                const p1 = {x:x1, y:candidateY}
+                const p2 = {x:x2, y:candidateY}
+                if (blockers.some(node => segmentCuts(p1, p2, node.look.rect))) continue
+
+                const score =
+                    this.lanePenaltyVertical(x1, f.y, candidateY, routeSegments, dpx) +
+                    this.lanePenaltyHorizontal(candidateY, x1, x2, routeSegments, expandY) +
+                    this.lanePenaltyVertical(x2, candidateY, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyHorizontal(candidateY, laneUsage, expandY) +
+                    this.laneRegistryPenaltyVertical(x1, laneUsage, dpx) +
+                    this.laneRegistryPenaltyVertical(x2, laneUsage, dpx)
+
+                if (score < bestScore) {
+                    bestScore = score
+                    bestY = candidateY
+                }
+            }
+
+            yMid = bestY
+            buildWire()
+        }
+
         return true
     },
 
@@ -184,15 +389,17 @@ export const routeDrawing = {
         const margin = style.look.dxCopy
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node)
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect)
+        const routeSegments = this.collectRouteSegments(nodes)
 
         // choose the x for the vertical leg (xNew):
         // - prefer the middle when pins face each other with no node overlap in x
         // - otherwise, push the vertical leg away from the "from" side
         const dpx = style.autoroute.xDelta
         const mg = style.autoroute.xMargin
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, style.autoroute.yDelta)
         const isBusRoute = from.is?.tack || to.is?.tack
-        let fromLeft = from.is?.left ?? from.is?.leftText ?? false
-        let toLeft = to.is?.left ?? to.is?.leftText ?? false
+        let fromLeft = this.connectorOnLeft(from)
+        let toLeft = this.connectorOnLeft(to)
         if (isBusRoute) {
             // For bus connections, infer "facing" by relative position to avoid routing past the bus.
             fromLeft = f.x > t.x
@@ -241,12 +448,42 @@ export const routeDrawing = {
                 if (!tryClearX(candidate)) { xNew = candidate; break }
             }
         }
+
+        // Prefer a less crowded vertical lane when several valid lanes exist.
+        if (routeSegments.length) {
+            const xBase = xNew
+            const shifts = [0, dpx, -dpx, dpx*2, -dpx*2, margin, -margin]
+            let bestX = xNew
+            let bestScore = Infinity
+
+            for (const dx of shifts) {
+                const candidate = enforceShapeRule(xBase + dx)
+                if (tryClearX(candidate)) continue
+
+                const score =
+                    this.lanePenaltyVertical(candidate, f.y, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyVertical(candidate, laneUsage, dpx)
+                if (score < bestScore) {
+                    bestScore = score
+                    bestX = candidate
+                }
+            }
+
+            xNew = bestX
+        }
         
         // build a 4-point orthogonal wire: horizontal, vertical, horizontal
         wire.push(f)
         wire.push({ x: xNew, y: f.y})
         wire.push({ x: xNew, y: t.y})
         wire.push(t)
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from)
+        const toRc = this.endpointBlockRect(to)
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
 
         // check for collisions with other nodes; if any, signal failure
         for (let i=0; i<wire.length-1; i++) {
@@ -390,7 +627,9 @@ export const routeDrawing = {
 
             case 'PIN-PAD':
             case 'PAD-PIN':
-                this.fourPointRoute(nodes)
+                
+               // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes)
                 break
 
             case 'PIN-BUS':

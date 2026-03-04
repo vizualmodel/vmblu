@@ -28,6 +28,13 @@
     export const handlers = {
         onShow({ pos, pin, contract, profile, open = null }) {
 
+            // check and just hide if repeat
+            if (_pin && pin === _pin) {
+                _pin = null
+                box.hide()
+                return
+            }
+
             box.title = pin.name + ' @ ' + pin.node.name + (pin.is.input ? ' (in)' : ' (out)') 
             // box.title = pin.is.left ? ((pin.is.input ? ' \u25B6 ' : ' \u25C0 ' ) + pin.name) : (pin.name + (pin.is.input ? ' \u25C0 ' : ' \u25B6 '));
             _pin = pin;

@@ -93,7 +93,7 @@ This is a minimal scaffold. Replace with the official annex matching your pinned
 function fallbackSchema() {
   return `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "vmblu.schema.json (placeholder)",
+  "title": "blu.schema.json (placeholder)",
   "type": "object",
   "description": "Placeholder schema. Replace with official version."
 }`;
@@ -102,7 +102,7 @@ function fallbackSchema() {
 function fallbackVizual() {
   return `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "vizual.schema.json (placeholder)",
+  "title": "viz.schema.json (placeholder)",
   "type": "object",
   "description": "Placeholder schema. Replace with official version."
 }`;
@@ -111,7 +111,7 @@ function fallbackVizual() {
 function fallbackProfileSchema() {
   return `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "profile.schema.json (placeholder)",
+  "title": "prf.schema.json (placeholder)",
   "type": "object",
   "description": "Placeholder schema. Replace with official version."
 }`;
@@ -132,8 +132,8 @@ function fallbackPrompt(promptType) {
  * @param {boolean}[opts.dryRun]            Print actions, do not write
  * @param {string} [opts.templatesDir]      Root where templates live (defaults to package templates)
  *                                          expects:
- *                                            templates/schemas/<ver>/vmblu.schema.json
- *                                            templates/annex/<ver>/vmblu.annex.md
+ *                                            templates/<ver>/blu.schema.json
+ *                                            templates/<ver>/blu.annex.md
  * @param {Object} [opts.ui]                { info, warn, error } callbacks (optional)
  */
 async function initProject(opts) {
@@ -156,22 +156,22 @@ async function initProject(opts) {
   const absTarget = path.resolve(targetDir);
   const modelFile = path.join(absTarget, `${projectName}.mod.blu`);
 
-  const llmDir     = path.join(absTarget, 'llm');
-  //const sessionDir = path.join(llmDir, 'session');
+  const vmbluDir   = path.join(absTarget, '.vmblu');
+  //const sessionDir = path.join(vmbluDir, 'session');
   const nodesDir   = path.join(absTarget, 'nodes');
 
   // Template sources
-  const schemaSrc = path.join(templatesDir, schemaVersion, 'blueprint.schema.json');
-  const annexSrc  = path.join(templatesDir, schemaVersion, 'blueprint.annex.md');
-  const vizualSrc = path.join(templatesDir, schemaVersion, 'vizual.schema.json');
-  const profileSchemaSrc = path.join(templatesDir, schemaVersion, 'profile.schema.json');
-  const promptPrj = path.join(templatesDir, schemaVersion, 'system-prompt.project.md');
-  const promptDev = path.join(templatesDir, schemaVersion, 'system-prompt.dev.md');
-  const promptTst = path.join(templatesDir, schemaVersion, 'system-prompt.test.md');
+  const schemaSrc = path.join(templatesDir, schemaVersion, 'blu.schema.json');
+  const annexSrc  = path.join(templatesDir, schemaVersion, 'blu.annex.md');
+  const vizualSrc = path.join(templatesDir, schemaVersion, 'viz.schema.json');
+  const profileSchemaSrc = path.join(templatesDir, schemaVersion, 'prf.schema.json');
+  const promptPrj = path.join(templatesDir, schemaVersion, 'vmblu.prompt.md');
+  const promptDev = path.join(templatesDir, schemaVersion, 'develop.prompt.md');
+  const promptTst = path.join(templatesDir, schemaVersion, 'test.prompt.md');
   
   // 1) Create folders
-  //for (const dir of [absTarget, llmDir, sessionDir, nodesDir]) {
-  for (const dir of [absTarget, llmDir, nodesDir]) {
+  //for (const dir of [absTarget, vmbluDir, sessionDir, nodesDir]) {
+  for (const dir of [absTarget, vmbluDir, nodesDir]) {
     ui.info(`mkdir -p ${dir}`);
     await ensureDir(dir, dryRun);
   }
@@ -180,14 +180,14 @@ async function initProject(opts) {
   ui.info(`create ${modelFile}${force ? ' (force)' : ''}`);
   await writeFileSafe(modelFile, defaultModel(projectName), { force, dry: dryRun });
 
-  // 3) Copy schema + annex into llm/
-  const schemaDst = path.join(llmDir, 'blueprint.schema.json');
-  const annexDst  = path.join(llmDir, 'blueprint.annex.md');
-  const vizualDst = path.join(llmDir, 'vizual.schema.json');
-  const profileSchemaDst = path.join(llmDir, 'profile.schema.json');
-  const promptPrjDst  = path.join(llmDir, 'system-prompt.project.md');
-  const promptDevDst  = path.join(llmDir, 'system-prompt.dev.md');
-  const promptTstDst  = path.join(llmDir, 'system-prompt.test.md');
+  // 3) Copy schema + annex into .vmblu/
+  const schemaDst = path.join(vmbluDir, 'blu.schema.json');
+  const annexDst  = path.join(vmbluDir, 'blu.annex.md');
+  const vizualDst = path.join(vmbluDir, 'viz.schema.json');
+  const profileSchemaDst = path.join(vmbluDir, 'prf.schema.json');
+  const promptPrjDst  = path.join(vmbluDir, 'vmblu.prompt.md');
+  const promptDevDst  = path.join(vmbluDir, 'develop.prompt.md');
+  const promptTstDst  = path.join(vmbluDir, 'test.prompt.md');
 
   ui.info(`copy ${schemaSrc} -> ${schemaDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(schemaSrc, schemaDst, fallbackSchema(), { force, dry: dryRun });
@@ -202,10 +202,10 @@ async function initProject(opts) {
   await copyOrWriteFallback(profileSchemaSrc, profileSchemaDst, fallbackProfileSchema(), { force, dry: dryRun });
 
   ui.info(`copy ${promptPrj} -> ${promptPrjDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptPrj, promptPrjDst, fallbackPrompt('project'), { force, dry: dryRun });
+  await copyOrWriteFallback(promptPrj, promptPrjDst, fallbackPrompt('vmblu'), { force, dry: dryRun });
 
   ui.info(`copy ${promptDev} -> ${promptDevDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptDev, promptDevDst, fallbackPrompt('development'), { force, dry: dryRun });
+  await copyOrWriteFallback(promptDev, promptDevDst, fallbackPrompt('develop'), { force, dry: dryRun });
 
   ui.info(`copy ${promptTst} -> ${promptTstDst}${force ? ' (force)' : ''}`);
   await copyOrWriteFallback(promptTst, promptTstDst, fallbackPrompt('test'), { force, dry: dryRun });
@@ -220,14 +220,14 @@ async function initProject(opts) {
 `  ${absTarget}/
     ${path.basename(modelFile)}
     package.json
-    llm/
-      system-prompt.project.md
-      system-prompt.dev.md
-      system-prompt.test.md
-      blueprint.schema.json
-      blueprint.annex.md
-      vizual.schema.json
-      profile.schema.json
+    .vmblu/
+      vmblu.prompt.md
+      develop.prompt.md
+      test.prompt.md
+      blu.schema.json
+      blu.annex.md
+      viz.schema.json
+      prf.schema.json
     nodes/\n`);
 
   return {
@@ -240,7 +240,7 @@ async function initProject(opts) {
       annex: annexDst,
       vizualSchema: vizualDst,
       profileSchema: profileSchemaDst,
-      // manifest: path.join(llmDir, 'manifest.json')
+      // manifest: path.join(vmbluDir, 'manifest.json')
     },
     dryRun,
     //manifest

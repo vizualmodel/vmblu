@@ -222,20 +222,6 @@ export const selectionHandling = {
         }
     },
 
-    // The clipboard has been copied already, now we set the links
-    xxlinkToClipboardNodes(clipboard, model) {
-
-        // the nodes in the clipboard and the selection are copies - we set them as links
-        const L = clipboard.selection.nodes.length
-
-        // check - should match ...
-        if (L != this.selection.nodes.length) return
-
-        for(let i=0; i<L; i++) {
-            this.selection.nodes[i].setLink(model, clipboard.selection.nodes[i].name )
-        }
-    },
-
     // note that the selection is a stored previous selection, not the current one !
     removeSelection(selection) {
 

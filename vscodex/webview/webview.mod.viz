@@ -1,6 +1,6 @@
 {
   "header": {
-    "schema": "0.9.1",
+    "version": "no version",
     "utc": "2025-12-16T12:00:24.931Z",
     "style": "#12679b"
   },
@@ -10,7 +10,7 @@
     "rect": "x 0 y 0 w 150 h 26",
     "view": {
       "state": "open",
-      "rect": "x 0 y 0 w 1484 h 1326",
+      "rect": "x 0 y 0 w 1526 h 1326",
       "transform": "sx 1.000 sy 1.000 dx -49.000 dy 147.000"
     },
     "nodes": [

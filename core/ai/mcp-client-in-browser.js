@@ -109,11 +109,26 @@ export class McpClientOpenAI {
 /**
  * Convert an abstract MCP toolspec to OpenAI-compatible format.
  *
- * @param {Array<object>} tools - Output from generateToolSpecs()
+ * @param {Array<object>|object} specOrTools - Output from generateToolSpecs() or a generated mcpSpec object
  * @returns {Array<object>} - OpenAI tool spec array
  */
-convertToOpenAITools(tools) {
+convertToOpenAITools(specOrTools) {
+  const tools = Array.isArray(specOrTools)
+    ? specOrTools
+    : (Array.isArray(specOrTools?.tools) ? specOrTools.tools : []);
+
   return tools.map(tool => {
+    if (tool?.parameters?.type === 'object' && tool.parameters.properties) {
+      return {
+        type: 'function',
+        function: {
+          name: String(tool.name || '').replace(/\s+/g, '_'),
+          description: tool.description || '',
+          parameters: tool.parameters
+        }
+      };
+    }
+
     const schema = {
       type: 'object',
       properties: {},

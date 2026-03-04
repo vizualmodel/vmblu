@@ -1,6 +1,5 @@
-import {Route, Bus, Pad, Link} from './index.js'
-import {Widget} from '../widget/index.js'
-import {convert, style} from '../util/index.js'
+import {Route, Bus, Pad} from './index.js'
+import {convert} from '../util/index.js'
 
 export const jsonHandling = {
 
@@ -82,7 +81,10 @@ export const jsonHandling = {
         }
 
         // If there are nodes that have to be placed do it here
-        if (this.nodes) this.placeUnplacedNodes(raw.connections);
+        if (this.nodes) {
+            this.placeNodesColumnFirst(raw.connections)
+            this.checkPadOverlap()
+        }
 
         // cook the connections inside this group node - retuns an array of {from, to, status} - from/to are pins or pads
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
@@ -118,76 +120,10 @@ export const jsonHandling = {
             for (const route of routes) this.findRouteInConx(route, conx);
 
             // create the routes for the connections that were not found
-            this.createRoutes(conx)
+            this.createNewRoutes(conx)
         }
     },
 
-    // Place the node as the root node in a view
-    placeRoot() {
-        // The root is not a container - make some extra margins
-        const place = style.placement
-
-        // move the node to its location
-        this.look.moveTo( place.marginLeft , place.marginTop)
-
-        // set the flag
-        this.is.placed = true
-    },
-
-    // places all unplaced nodes according to a grid
-    placeUnplacedNodes(rawConnections) {
-
-        const unplaced = this.nodes.filter(node => node?.look && !node.is.placed)
-        if (!unplaced.length) return
-
-        const place = style.placement
-        const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft
-        const spacing = place.spacing
-        const tolerance = place.tolerance
-
-        const degree = new Map()
-        for (const raw of rawConnections ?? []) {
-            const src = raw.src ?? raw.from
-            const dst = raw.dst ?? raw.to
-            if (!src?.node || !dst?.node) continue
-            degree.set(src.node, (degree.get(src.node) ?? 0) + 1)
-            degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1)
-        }
-
-        const placedNodes = this.nodes.filter(node => node?.look && node.is.placed)
-        const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing})
-        const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h))
-
-        const order = unplaced.slice().sort((a, b) => {
-            const da = degree.get(a.name) ?? 0
-            const db = degree.get(b.name) ?? 0
-            return db - da
-        })
-
-        for (let i = 0; i < order.length; i++) {
-            const node = order[i]
-            const col = i % place.nodesPerRow
-            const columnX = marginLeft + col * place.colStep
-
-            let y = place.marginTop
-            for (const other of placedNodes) {
-                const ox = other.look.rect.x
-                if (Math.abs(ox - columnX) <= tolerance) {
-                    const bottom = other.look.rect.y + other.look.rect.h
-                    if (bottom + spacing > y) y = bottom + spacing
-                }
-            }
-
-            let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h}
-            while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
-                candidate.y += spacing
-            }
-
-            node.look.moveTo(candidate.x, candidate.y)
-            node.is.placed = true
-            placedNodes.push(node)
-        }
-    },
 
     // rawPad exists, but might be incomplete
     cookPad(proxy, rawPad) {
@@ -203,6 +139,7 @@ export const jsonHandling = {
 
         // set the direction of the text
         newPad.is.leftText = rawPad.left
+        newPad.is.placed = !!rawPad.placed
 
         // save the pad in the proxy
         proxy.pad = newPad

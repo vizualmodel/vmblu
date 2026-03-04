@@ -74,8 +74,6 @@ makeRaw() {
     return  raw
 },
 
-
-
 acceptChanges() {
 
     // save the widgets to remove

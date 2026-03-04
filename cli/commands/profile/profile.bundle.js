@@ -1904,6 +1904,7 @@ function isValidHexColor(hex) {
     return regex.test(hex);
 }
 
+// fixed colors
 const color = {
 
     // The base colors for the nodes etc
@@ -1921,6 +1922,17 @@ const color = {
     vIcon3: '#33cc33',
     vIcon4: '#e9bb16',
 
+    // absolute node colors
+    select:      '#ff8000',
+    selectT:     '#ff800022',
+    add:         '#7fff00',
+    highLight:   '#ff80ff',
+
+    icon1: '#00ffff',
+    icon2: '#00ffff',
+    icon3: '#00ffff',
+    icon4: '#00ffff',
+
     // grey 
     grey3: '#333',
     grey6: '#666',
@@ -1929,14 +1941,8 @@ const color = {
     // absolute colors
     black:  '#000',
     white:  '#fff',
-    orange: '#ff8000',
-    orangeT:'#ff800022',
-    green:  '#7fff00',
     red:    '#FE2712', 
-    redT:    '#FE271222', 
-    yellow: '#fefe33',
-    pink:   '#f9d5e5',
-    purple: '#ff80ff',
+    redT:   '#FE271222', 
     blue:   '#0000ff',
 
     // set the shades for this color object
@@ -1954,9 +1960,9 @@ const color = {
         // change the shades
         this.shade1 = convert.hslToHex(`hsl(${hue},${sat},40%,1)`);          // box, seperator line, pin unconnected, title background
         this.shade2 = convert.hslToHex(`hsl(${hue},${sat},30%,0.50)`);       // box bg, pad bg - 0.5 transparency
-        this.shade3 = convert.hslToHex(`hsl(${hue}, 100%, 75%, 1)`);         // icon, title
-        this.shade4 = convert.hslToHex(`hsl(${hue},${sat},60%,1)`);          // route, bus, pin connected
-        this.shade5 = convert.hslToHex(`hsl(${hue}, 50%, 75%, 1)`);         // ifPins
+        this.shade3 = convert.hslToHex(`hsl(${hue}, 100%, 90%, 1)`);         // title
+        this.shade4 = convert.hslToHex(`hsl(${hue},${sat},60%,1)`);          // pin connected
+        this.shade5 = convert.hslToHex(`hsl(${hue}, 50%, 75%, 1)`);          // ifPins
 
 
         // change the shades - dark theme...
@@ -1984,48 +1990,50 @@ function StyleFactory() {
     }; 
     this.box = {
         rCorner:7.5,  wLine:2, cLine: color.shade1, cBackground:color.shade2, 
-        cContainer: color.yellow, cSelected: color.orangeT, cAlarm: color.redT, dxSel:10, dySel:10, wLineSel: 1
+        cSelected: color.selectT, cAlarm: color.redT, dxSel:10, dySel:10, wLineSel: 1
     };
     this.header = {
         font: "normal 13px tahoma", hHeader:15, hTitle:15, wLine:1, wChar:6, rCorner:7.5,
-        cTitle: color.shade3, cBackground: color.shade1, cBad: color.red, cHighLighted: color.purple
+        cTitle: color.shade3, cBackground: color.shade1, cBad: color.red, cHighLighted: color.highLight
     };
+
     this.icon = {
         wIcon:8, hIcon:10, blinkRate: 500, nBlinks: 2,
-        cSrc:color.shade3, cLink: color.shade3, cBadLink: color.red, cAlarm: color.red, cHighLighted: color.purple,
-        cGroup:color.shade3, cCog: color.shade3, cPulse: color.shade3, cComment: color.shade3,
-        xPadding:6, yPadding:2, xSpacing:3,
+        cSrc:color.shade5, cLink: color.shade5, cGroup: color.shade5, cCog: color.shade5, cPulse: color.shade5, cComment: color.shade5,
+        cBadLink: color.red, cAlarm: color.red, cHighLighted: color.highLight,
+        xPadding:6, yPadding:2, xSpacing:4,
     };
+
     this.label = {
         font: "italic 12px tahoma", hLabel: 15, cNormal: color.greyC,
     };
     this.ifName = {
-        font: "normal 12px tahoma", hSep: 15, cNormal: color.shade5, cBackground: color.shade1, cAdded: color.green, cBad: color.red, 
-        cSelected: color.orange, cHighLighted: color.purple
+        font: "normal 12px tahoma", hSep: 15, cNormal: color.shade5, cBackground: color.shade1, cAdded: color.add, cBad: color.red, 
+        cSelected: color.select, cHighLighted: color.highLight
     };
     this.pin = {
         hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7,
-        cNormal: color.shade1, cSelected: color.orange, cHighLighted: color.purple, 
-        cConnected: color.shade4, cAdded: color.green,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
+        cNormal: color.shade1, cSelected: color.select, cHighLighted: color.highLight, 
+        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
         fMulti: "italic 11px tahoma"
     }; 
     this.pad = {
         hPad: 15,hSpace: 15, rBullet: 7.5, wArrow:10, hArrow:10, wExtra: 30, wMargin:4,  wViewLeft: 10,  wViewRight: 100, 
-        cBackground: color.shade2, cSelected: color.orange, cHighLighted: color.purple, cConnected: color.shade4, 
+        cBackground: color.shade2, cSelected: color.select, cHighLighted: color.highLight, cConnected: color.shade4, 
         cBad: color.red, cText: color.shade1, cArrow:color.shade1, 
     }; 
     this.route = {
         wSelected: 2, wNormal: 2, split: 30, tooClose: 15, 
-        cNormal: color.shade4, cSelected: color.purple, cHighLighted: color.purple , cNotUsed: color.grey3, 
-        cAdded: color.green, cDeleted: color.red
+        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight , cNotUsed: color.grey3, 
+        cAdded: color.add, cDeleted: color.red
     }; 
     this.bus = {
         wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5, wFilter: 15,
-        cNormal: color.shade4, cSelected: color.purple, cHighLighted: color.purple, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
+        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
     }; 
     this.selection = {
         xPadding: 20, yPadding: 20, 
-        cRect: color.orangeT, cPinGroup: color.orangeT, wLine: 0, rCorner: 7.5,
+        cRect: color.selectT, cPinGroup: color.selectT, wLine: 0, rCorner: 7.5,
     }; 
     this.view = {
         wDefault: 800, hDefault: 500, wLine: 4, rCorner: 15, wExtra:200, hExtra: 20,
@@ -2042,10 +2050,10 @@ function StyleFactory() {
         cClose: color.vIcon1, cFullscreen: color.vIcon2, cCalibrate: color.vIcon3, cGrid: color.vIcon4
     };
     this.placement = {
-        marginTop: 30, marginLeft: 90, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 300, spacing: 50, tolerance: 10
+        marginTop: 30, marginLeft: 90, marginLeftPads: 210, nodesPerRow: 5, rowStep: 360, colStep: 300, spacing: 50, tolerance: 10, padGutterGap: 60
     };
     this.autoroute = {
-        xMargin: 15, xDelta: 5, yDelta: 15
+        xMargin: 15, xDelta: 10, yDelta: 15
     };
 }
 StyleFactory.prototype = {
@@ -2081,32 +2089,37 @@ StyleFactory.prototype = {
         this.box.cBackground = 
         this.pad.cBackground = color.shade2;
 
-        // shade3
-        this.header.cTitle = 
-        this.icon.cSrc =
-        this.icon.cGroup =
-        this.icon.cCog =
-        this.icon.cLink = 
-        this.icon.cPulse = 
-        this.icon.cComment = 
+        // shade 3
+        this.header.cTitle =
         this.view.cTitleHighLight = color.shade3;
 
         // shade4
+        this.route.cNormal =
+        this.bus.cNormal = 
         this.pin.cConnected = 
-        this.pad.cConnected = 
-        this.route.cNormal = 
-        this.bus.cNormal = color.shade4;
+        this.pad.cConnected = color.shade4;
 
         // shade5
+        this.icon.cSrc = 
+        this.icon.cCog = 
+        this.icon.cPulse = 
+        this.icon.cComment = 
+        this.icon.cLink = 
+        this.icon.cGroup =
         this.ifName.cNormal = color.shade5;
 
         // return this for chaining
         return this
     }
+
+    // a small function to test color settings interactively (see editor-message.js onShowSettings)
+    ,adaptinteractive(rgb) {
+        this.route.cNormal = rgb;
+    }
 };
 
 // The style that is active at a given moment. Set to a default style.
-let style = new StyleFactory().adapt("#00aaff");
+let style = new StyleFactory().adapt("#0066ff");
 
 function TextEdit() {
 
@@ -2483,7 +2496,7 @@ function updateDerivedSettings(original, derived) {
 }
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const SCHEMA_VERSION = "0.9.2";
+const SCHEMA_VERSION = "0.9.4";
 
 function ModelHeader() {
 
@@ -3682,164 +3695,301 @@ getContract(pin) {
 
 };
 
+const PRIMITIVE_TYPES = new Set(['string', 'number', 'boolean', 'object', 'array', 'integer']);
+
 const McpHandling = {
 
 makeMcpToolString(root) {
 
-    // first get the tools
-    const mcpTools = this.generateToolSpecs();
+    const mcpSpec = this.generateMcpSpec(root);
 
-    // check
-    if (mcpTools.length == 0) return null
+    if (mcpSpec.tools.length === 0) return null
 
-    // make a header
-    const today = new Date();
     const sHeader =    '// ------------------------------------------------------------------'
-                    +`\n// MCP tool file for model: ${root.name}`
-                    +`\n// Creation date ${today.toLocaleString()}`
+                    +`\n// MCP tool file for model: ${root?.name || ''}`
+                    +`\n// Creation date ${new Date().toLocaleString()}`
                     +'\n// ------------------------------------------------------------------\n'
-                    +'\nexport const mcpTools = ';
+                    +'\nexport const mcpSpec = ';
 
-    // stringify the tools array to a js literal
-    const sMcpTools = convert.objectToJsLiteral(mcpTools);
+    const sMcpSpec = convert.objectToJsLiteral(mcpSpec);
 
-    // append
-    return sHeader + sMcpTools
+    return sHeader + sMcpSpec
 },
 
-/**
- * Generate MCP-compatible tool specs in an LLM-neutral format.
- * Only handlers with `mcp: true` will be included.
- *
- * @param {Map<string, Map<string, object>>} nodeMap - Output from parseSourceMap
- * @returns {Array<object>} - Abstract tool specs
- */
+generateMcpSpec(root) {
+    return {
+        version: '1',
+        model: root?.name || '',
+        generatedAt: new Date().toISOString(),
+        tools: this.generateToolSpecs()
+    }
+},
+
 generateToolSpecs() {
-  const tools = [];
+    const tools = [];
 
-  // check
-  if (!this.sourceMap) return [];
+    if (!this.sourceMap) return tools
 
-  for (const [node, pins] of this.sourceMap.entries()) {
-    for (const [pin, meta] of pins.entries()) {
-      if (!meta.mcp) continue;
+    for (const [node, profile] of this.sourceMap.entries()) {
+        const handles = profile?.handles;
+        if (!handles || typeof handles.entries !== 'function') continue
 
-      const paramMap = new Map();
+        for (const [handlerName, meta] of handles.entries()) {
+            if (!meta?.mcp) continue
 
-      for (const param of meta.params || []) {
-        if (!param.name || typeof param.name !== 'string') continue;
+            const binding = {
+                node,
+                pin: meta.pin || this.handlerToPin(handlerName),
+                handler: meta.handler || handlerName
+            };
 
-        // handle nested destructured names that were not flattened properly
+            const source = {
+                file: meta.file,
+                line: meta.line
+            };
+
+            const config = typeof meta.mcp === 'object' ? meta.mcp : null;
+            const parameters = this.makeParameterSchema(config?.params, meta.params || []);
+            const tool = {
+                name: config?.name || meta.mcpName || binding.handler,
+                description: config?.description || meta.mcpDescription || meta.summary || `Trigger ${binding.pin} on ${node}`,
+                parameters,
+                binding
+            };
+
+            if (source.file) tool.source = source;
+            if (meta.returns) tool.returns = meta.returns;
+            if (Array.isArray(config?.audience) && config.audience.length > 0) tool.audience = config.audience;
+
+            tools.push(tool);
+        }
+    }
+
+    return tools
+},
+
+convertToOpenAITools(specOrTools) {
+    const tools = Array.isArray(specOrTools)
+        ? specOrTools
+        : (Array.isArray(specOrTools?.tools) ? specOrTools.tools : []);
+
+    return tools.map(tool => ({
+        type: 'function',
+        function: {
+            name: String(tool.name || '').replace(/\s+/g, '_'),
+            description: tool.description || '',
+            parameters: this.normalizeParameterSchema(tool.parameters)
+        }
+    }))
+},
+
+handlerToPin(handlerName) {
+    if (!handlerName || typeof handlerName !== 'string') return ''
+    const clean = handlerName.replace(/^['"]|['"]$/g, '');
+    if (!clean.startsWith('on')) return clean
+
+    const raw = clean.slice(2);
+    const words = raw.replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return ''
+
+    const iface = words[0].toLowerCase();
+    const suffix = words.slice(1).map(word => word.toLowerCase()).join('-');
+    return suffix ? `${iface}.${suffix}` : iface
+},
+
+makeParameterSchema(configParams, inferredParams) {
+    if (configParams && typeof configParams === 'object' && !Array.isArray(configParams)) {
+        return this.makeSchemaFromConfig(configParams)
+    }
+
+    return this.makeSchemaFromInferredParams(inferredParams)
+},
+
+makeSchemaFromConfig(configParams) {
+    const schema = {
+        type: 'object',
+        properties: {},
+        required: []
+    };
+
+    for (const [name, descriptor] of Object.entries(configParams)) {
+        const propSchema = this.makeConfigPropertySchema(descriptor);
+        if (!propSchema) continue
+
+        schema.properties[name] = propSchema;
+        if (descriptor?.required) {
+            schema.required.push(name);
+        }
+    }
+
+    return schema
+},
+
+makeConfigPropertySchema(descriptor) {
+    if (!descriptor || typeof descriptor !== 'object' || Array.isArray(descriptor)) {
+        const fallbackType = this.normalizeSchemaType(descriptor);
+        return fallbackType ? {type: fallbackType} : null
+    }
+
+    const type = this.normalizeSchemaType(descriptor.type);
+    const schema = {
+        type: type || 'string'
+    };
+
+    if (descriptor.description) schema.description = descriptor.description;
+    if (typeof descriptor.min === 'number') schema.minimum = descriptor.min;
+    if (typeof descriptor.max === 'number') schema.maximum = descriptor.max;
+    if (typeof descriptor.default !== 'undefined') schema.default = descriptor.default;
+    if (descriptor.unit) schema.unit = descriptor.unit;
+
+    if (schema.type === 'object' && descriptor.properties && typeof descriptor.properties === 'object') {
+        const nested = this.makeSchemaFromConfig(descriptor.properties);
+        schema.properties = nested.properties;
+        if (nested.required.length > 0) schema.required = nested.required;
+    }
+
+    if (schema.type === 'array' && descriptor.items && typeof descriptor.items === 'object') {
+        const itemSchema = this.makeConfigPropertySchema(descriptor.items);
+        if (itemSchema) schema.items = itemSchema;
+    }
+
+    return schema
+},
+
+makeSchemaFromInferredParams(params) {
+    const schema = {
+        type: 'object',
+        properties: {},
+        required: []
+    };
+
+    const paramMap = new Map();
+
+    for (const param of params || []) {
+        if (!param?.name || typeof param.name !== 'string') continue
+
+        const normalizedType = this.normalizeSchemaType(param.type);
+        const required = !param.optional;
+
         if (param.name.startsWith('{') && param.name.endsWith('}')) {
-          const raw = param.name.slice(1, -1).split(',').map(p => p.trim());
-          for (const sub of raw) {
-            paramMap.set(sub, {
-              name: sub,
-              type: 'string', // fallback type if not known
-              description: ''
-            });
-          }
-          continue;
+            const raw = param.name.slice(1, -1).split(',').map(part => part.trim()).filter(Boolean);
+            for (const sub of raw) {
+                paramMap.set(sub, {
+                    type: 'string',
+                    description: ''
+                });
+                schema.required.push(sub);
+            }
+            continue
         }
 
         const nameParts = param.name.split('.');
         if (nameParts.length === 1) {
-          // top-level parameter
-          if (!paramMap.has(param.name)) paramMap.set(param.name, { ...param });
-        } else {
-          const [parent, child] = nameParts;
-          let container = paramMap.get(parent);
-          if (!container) {
+            if (!paramMap.has(param.name)) {
+                paramMap.set(param.name, {
+                    type: normalizedType || 'string',
+                    description: param.description || ''
+                });
+            }
+            if (required) schema.required.push(param.name);
+            continue
+        }
+
+        const [parent, child] = nameParts;
+        let container = paramMap.get(parent);
+        if (!container) {
             container = {
-              name: parent,
-              type: 'object',
-              description: '',
-              properties: [],
-              required: []
+                type: 'object',
+                properties: {},
+                required: []
             };
             paramMap.set(parent, container);
-          }
-          container.properties.push({
-            name: child,
-            type: param.type,
-            description: param.description || ''
-          });
-          if (!container.required.includes(child)) {
-            container.required.push(child);
-          }
         }
-      }
 
-      const tool = {
-        name: meta.mcpName || `${pin} @ ${node}`,
-        description: meta.mcpDescription || meta.summary || `Trigger ${pin} on ${node}`,
-        parameters: Array.from(paramMap.values()),
-        returns: meta.returns || '',
-        node,
-        pin,
-        handler: meta.handler,
-        file: meta.file,
-        line: meta.line
-      };
-
-      tools.push(tool);
+        container.properties[child] = {
+            type: normalizedType || 'string',
+            description: param.description || ''
+        };
+        if (required && !container.required.includes(child)) {
+            container.required.push(child);
+        }
+        if (required) schema.required.push(parent);
     }
-  }
 
-  return tools;
+    for (const [name, propSchema] of paramMap.entries()) {
+        schema.properties[name] = propSchema;
+    }
+
+    schema.required = Array.from(new Set(schema.required));
+    return schema
 },
 
-/**
- * Convert an abstract MCP toolspec to OpenAI-compatible format.
- *
- * @param {Array<object>} tools - Output from generateToolSpecs()
- * @returns {Array<object>} - OpenAI tool spec array
- */
-convertToOpenAITools(tools) {
-  return tools.map(tool => {
-    const schema = {
-      type: 'object',
-      properties: {},
-      required: []
-    };
-
-    for (const param of tool.parameters) {
-      const { name, type, description, properties, required } = param;
-
-      if (!name || !type) continue;
-
-      const propSchema = { type, description: description || '' };
-
-      if (type === 'object' && properties) {
-        propSchema.properties = {};
-        propSchema.required = required || [];
-
-        for (const sub of properties) {
-          propSchema.properties[sub.name] = {
-            type: sub.type,
-            description: sub.description || ''
-          };
+normalizeParameterSchema(schema) {
+    if (schema?.type === 'object' && schema.properties && typeof schema.properties === 'object') {
+        const properties = {};
+        for (const [name, descriptor] of Object.entries(schema.properties)) {
+            properties[name] = this.normalizePropertySchema(descriptor);
         }
-      }
 
-      schema.properties[name] = propSchema;
-      schema.required.push(name);
+        const normalized = {
+            type: 'object',
+            properties
+        };
+
+        if (Array.isArray(schema.required) && schema.required.length > 0) {
+            normalized.required = Array.from(new Set(schema.required));
+        }
+
+        return normalized
     }
 
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: schema
-      }
-    };
-  });
+    return {type: 'object', properties: {}, required: []}
+},
+
+normalizePropertySchema(descriptor) {
+    if (!descriptor || typeof descriptor !== 'object') {
+        return {type: 'string'}
+    }
+
+    const type = this.normalizeSchemaType(descriptor.type) || 'string';
+    const normalized = {type};
+
+    if (descriptor.description) normalized.description = descriptor.description;
+    if (typeof descriptor.minimum === 'number') normalized.minimum = descriptor.minimum;
+    if (typeof descriptor.maximum === 'number') normalized.maximum = descriptor.maximum;
+    if (typeof descriptor.default !== 'undefined') normalized.default = descriptor.default;
+    if (descriptor.unit) normalized.unit = descriptor.unit;
+
+    if (type === 'object' && descriptor.properties && typeof descriptor.properties === 'object') {
+        normalized.properties = {};
+        for (const [name, nested] of Object.entries(descriptor.properties)) {
+            normalized.properties[name] = this.normalizePropertySchema(nested);
+        }
+        if (Array.isArray(descriptor.required) && descriptor.required.length > 0) {
+            normalized.required = Array.from(new Set(descriptor.required));
+        }
+    }
+
+    if (type === 'array' && descriptor.items) {
+        normalized.items = this.normalizePropertySchema(descriptor.items);
+    }
+
+    return normalized
+},
+
+normalizeSchemaType(type) {
+    if (!type || typeof type !== 'string') return null
+
+    const lower = type.toLowerCase();
+    if (PRIMITIVE_TYPES.has(lower)) return lower
+    if (lower === 'int') return 'integer'
+    if (lower === 'float') return 'number'
+    if (lower.endsWith('[]')) return 'array'
+    if (lower.includes('array')) return 'array'
+    if (lower.includes('object')) return 'object'
+
+    return null
 }
-
-
-
-
 
 };
 
@@ -4923,6 +5073,7 @@ const messageHandling = {
             pos: { x: 25, y: 25 },
             onColor(rgb) {
                 header.style.adapt(rgb);
+                //header.style.adaptinteractive(rgb);
                 redraw();
             },
             ok(runtime) {
@@ -7372,15 +7523,15 @@ function unGroup() {
 }
 
 const noLink$1 = [
+    {text: 'profile',           char: 'p',  icon: 'info', state: 'disabled', action: showProfile },    
     {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput$1,},
     {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput$1,},
-    {text: 'new interface',     char: 'p',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName$1,},
+    {text: 'new interface',     char: 'f',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName$1,},
     {text: 'new request',       char: 'q',  icon: 'switch_left',        state: 'enabled',        action: newRequest$1,    },
     {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply$1,    },
     {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch$1,    },
     {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
     {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
-    {text: 'profile',                       icon: 'info', state: 'disabled', action: showProfile },    
     {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
     {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
     {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
@@ -8354,20 +8505,6 @@ const selectionHandling = {
         }
     },
 
-    // The clipboard has been copied already, now we set the links
-    xxlinkToClipboardNodes(clipboard, model) {
-
-        // the nodes in the clipboard and the selection are copies - we set them as links
-        const L = clipboard.selection.nodes.length;
-
-        // check - should match ...
-        if (L != this.selection.nodes.length) return
-
-        for(let i=0; i<L; i++) {
-            this.selection.nodes[i].setLink(model, clipboard.selection.nodes[i].name );
-        }
-    },
-
     // note that the selection is a stored previous selection, not the current one !
     removeSelection(selection) {
 
@@ -9055,6 +9192,7 @@ function canProceed(view) {
 
 // The table with the <ctrl> + key combinations
 const justKeyTable = {
+
     // add input
     i: (view) => {
         //check
@@ -9122,13 +9260,27 @@ const justKeyTable = {
     },
 
     // add ifName
-    p: (view) => {
+    f: (view) => {
         //check
         const [ok, node, pos] = canProceed(view);
         if (!ok) return;
 
         // add an input pin where the click happened
         editor.doEdit('newInterfaceName', { view, node, pos });
+    },
+
+    // show the profile
+    p: (view) => {
+
+        // find the pin selected
+        const pin = view.selection.getSelectedWidget();
+
+        if (!pin.is.pin) return
+
+        editor.doEdit('showProfile', {
+            pin,
+            pos: { x: pin.rect.x, y: pin.rect.y },
+        });
     },
 
     // add a label
@@ -9256,12 +9408,18 @@ const justKeyTable = {
     },
 
     ArrowDown: (view) => {
-        const below = view.selection.widgetBelow();
+
+        const current = view.selection.getSelectedWidget();
+        if (!current) return
+        const below = view.selection.widgetBelow(current);
         if (below) view.selection.switchToWidget(below);
     },
 
     ArrowUp: (view) => {
-        const above = view.selection.widgetAbove();
+
+        const current = view.selection.getSelectedWidget();
+        if (!current) return
+        const above = view.selection.widgetAbove(current);
         if (above) view.selection.switchToWidget(above);
     },
 
@@ -13671,12 +13829,6 @@ pinAreaDrag: {
                 ? editor.doc.model.getInputPinProfile(pin)
                 : editor.doc.model.getOutputPinProfile(pin);
 
-            // check
-            // if (!profile) {
-            //     console.log(`NO PROFILE ${pin.name}`);
-            //     // return;
-            // }
-
             // show the profile
             editor.tx.send('pin profile', {
                 pos,
@@ -17008,7 +17160,8 @@ function Pad(rect, proxy, uid=null) {
         leftText: proxy.is.left,
         hoverOk: false,
         hoverNok: false,
-        beingEdited: false
+        beingEdited: false,
+        placed: false
     };
 
     // set the text
@@ -17230,12 +17383,16 @@ Pad.prototype = {
     },
 
     makeRaw() {
-        return {
+        const raw = {
             wid: this.proxy.wid,
             text: this.text,
             left: this.is.leftText,
             rect: this.rect
-        }
+        };
+
+        if (this.is.placed) raw.placed = true;
+
+        return raw
     },
 
     // unzip() {
@@ -18539,8 +18696,6 @@ makeRaw() {
     return  raw
 },
 
-
-
 acceptChanges() {
 
     // save the widgets to remove
@@ -19283,7 +19438,10 @@ const jsonHandling$1 = {
         }
 
         // If there are nodes that have to be placed do it here
-        if (this.nodes) this.placeUnplacedNodes(raw.connections);
+        if (this.nodes) {
+            this.placeNodesColumnFirst(raw.connections);
+            this.checkPadOverlap();
+        }
 
         // cook the connections inside this group node - retuns an array of {from, to, status} - from/to are pins or pads
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
@@ -19319,76 +19477,10 @@ const jsonHandling$1 = {
             for (const route of routes) this.findRouteInConx(route, conx);
 
             // create the routes for the connections that were not found
-            this.createRoutes(conx);
+            this.createNewRoutes(conx);
         }
     },
 
-    // Place the node as the root node in a view
-    placeRoot() {
-        // The root is not a container - make some extra margins
-        const place = style.placement;
-
-        // move the node to its location
-        this.look.moveTo( place.marginLeft , place.marginTop);
-
-        // set the flag
-        this.is.placed = true;
-    },
-
-    // places all unplaced nodes according to a grid
-    placeUnplacedNodes(rawConnections) {
-
-        const unplaced = this.nodes.filter(node => node?.look && !node.is.placed);
-        if (!unplaced.length) return
-
-        const place = style.placement;
-        const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
-        const spacing = place.spacing;
-        const tolerance = place.tolerance;
-
-        const degree = new Map();
-        for (const raw of rawConnections ?? []) {
-            const src = raw.src ?? raw.from;
-            const dst = raw.dst ?? raw.to;
-            if (!src?.node || !dst?.node) continue
-            degree.set(src.node, (degree.get(src.node) ?? 0) + 1);
-            degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1);
-        }
-
-        const placedNodes = this.nodes.filter(node => node?.look && node.is.placed);
-        const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing});
-        const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
-
-        const order = unplaced.slice().sort((a, b) => {
-            const da = degree.get(a.name) ?? 0;
-            const db = degree.get(b.name) ?? 0;
-            return db - da
-        });
-
-        for (let i = 0; i < order.length; i++) {
-            const node = order[i];
-            const col = i % place.nodesPerRow;
-            const columnX = marginLeft + col * place.colStep;
-
-            let y = place.marginTop;
-            for (const other of placedNodes) {
-                const ox = other.look.rect.x;
-                if (Math.abs(ox - columnX) <= tolerance) {
-                    const bottom = other.look.rect.y + other.look.rect.h;
-                    if (bottom + spacing > y) y = bottom + spacing;
-                }
-            }
-
-            let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h};
-            while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
-                candidate.y += spacing;
-            }
-
-            node.look.moveTo(candidate.x, candidate.y);
-            node.is.placed = true;
-            placedNodes.push(node);
-        }
-    },
 
     // rawPad exists, but might be incomplete
     cookPad(proxy, rawPad) {
@@ -19404,6 +19496,7 @@ const jsonHandling$1 = {
 
         // set the direction of the text
         newPad.is.leftText = rawPad.left;
+        newPad.is.placed = !!rawPad.placed;
 
         // save the pad in the proxy
         proxy.pad = newPad;
@@ -19572,6 +19665,485 @@ const jsonHandling$1 = {
     // }
 };
 
+const NodePlacement = {
+
+// Place the node as the root node in a view
+placeRoot() {
+    // The root is not a container - make some extra margins
+    const place = style.placement;
+
+    // move the node to its location
+    this.look.moveTo( place.marginLeft , place.marginTop);
+
+    // set the flag
+    this.is.placed = true;
+},
+
+// places all unplaced nodes according to a grid
+placeNodesRowFirst(rawConnections) {
+
+    const unplaced = this.nodes.filter(node => node?.look && !node.is.placed);
+    if (!unplaced.length) return
+
+    const place = style.placement;
+    const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
+    const spacing = place.spacing;
+    const tolerance = place.tolerance;
+
+    const degree = new Map();
+    for (const raw of rawConnections ?? []) {
+        const src = raw.src ?? raw.from;
+        const dst = raw.dst ?? raw.to;
+        if (!src?.node || !dst?.node) continue
+        degree.set(src.node, (degree.get(src.node) ?? 0) + 1);
+        degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1);
+    }
+
+    const placedNodes = this.nodes.filter(node => node?.look && node.is.placed);
+    const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing});
+    const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
+
+    const order = unplaced.slice().sort((a, b) => {
+        const da = degree.get(a.name) ?? 0;
+        const db = degree.get(b.name) ?? 0;
+        return db - da
+    });
+
+    for (let i = 0; i < order.length; i++) {
+        const node = order[i];
+        const col = i % place.nodesPerRow;
+        const columnX = marginLeft + col * place.colStep;
+
+        let y = place.marginTop;
+        for (const other of placedNodes) {
+            const ox = other.look.rect.x;
+            if (Math.abs(ox - columnX) <= tolerance) {
+                const bottom = other.look.rect.y + other.look.rect.h;
+                if (bottom + spacing > y) y = bottom + spacing;
+            }
+        }
+
+        let candidate = {x: columnX, y, w: node.look.rect.w, h: node.look.rect.h};
+        while (placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect)))) {
+            candidate.y += spacing;
+        }
+
+        node.look.moveTo(candidate.x, candidate.y);
+        node.is.placed = true;
+        placedNodes.push(node);
+    }
+},
+
+// places all unplaced nodes using a center-first column policy.
+// Disconnected components are placed as separate vertical blocks.
+// Degree-1 nodes may be placed one column farther out as leaf satellites.
+placeNodesColumnFirst(rawConnections) {
+
+    const unplaced = this.nodes.filter(node => node?.look && !node.is.placed);
+    if (!unplaced.length) return
+
+    const place = style.placement;
+    const marginLeft = this.pads.length ? place.marginLeftPads : place.marginLeft;
+    const spacing = place.spacing;
+    const tolerance = place.tolerance;
+
+    const degree = new Map();
+    const adjacency = new Map();
+    const padAffinity = new Map();
+    const addEdge = (a, b) => {
+        degree.set(a, (degree.get(a) ?? 0) + 1);
+        degree.set(b, (degree.get(b) ?? 0) + 1);
+
+        if (!adjacency.has(a)) adjacency.set(a, new Map());
+        if (!adjacency.has(b)) adjacency.set(b, new Map());
+
+        const ab = adjacency.get(a);
+        const ba = adjacency.get(b);
+        ab.set(b, (ab.get(b) ?? 0) + 1);
+        ba.set(a, (ba.get(a) ?? 0) + 1);
+    };
+
+    const addPadAffinity = (nodeName, leftSide) => {
+        if (!nodeName) return
+        const rec = padAffinity.get(nodeName) ?? {left: 0, right: 0};
+        leftSide ? rec.left++ : rec.right++;
+        padAffinity.set(nodeName, rec);
+    };
+
+    const findPadSide = endPoint => {
+        if (!endPoint?.pad) return null
+
+        let pad = null;
+        if (endPoint.wid != null) pad = this.pads.find(p => p?.proxy?.wid === endPoint.wid);
+        if (!pad) pad = this.pads.find(p => p?.proxy?.name === endPoint.pad);
+        if (!pad) return null
+
+        return !!pad.is.leftText
+    };
+
+    for (const raw of rawConnections ?? []) {
+        const src = raw.src ?? raw.from;
+        const dst = raw.dst ?? raw.to;
+
+        if (src?.node && dst?.node) {
+            if (src.node === dst.node) continue
+            addEdge(src.node, dst.node);
+            continue
+        }
+
+        if (src?.node && dst?.pad) {
+            const leftSide = findPadSide(dst);
+            if (leftSide != null) addPadAffinity(src.node, leftSide);
+            continue
+        }
+
+        if (src?.pad && dst?.node) {
+            const leftSide = findPadSide(src);
+            if (leftSide != null) addPadAffinity(dst.node, leftSide);
+        }
+    }
+
+    const byName = new Map(unplaced.map(node => [node.name, node]));
+    const remaining = new Set(unplaced.map(node => node.name));
+    const columnCount = 5;
+    const outerLeftCol = 0;
+    const leftCol = 1;
+    const centerCol = 2;
+    const rightCol = 3;
+    const outerRightCol = 4;
+
+    const compareByDegree = (a, b) => {
+        const da = degree.get(a) ?? 0;
+        const db = degree.get(b) ?? 0;
+        if (db !== da) return db - da
+        return a.localeCompare(b)
+    };
+
+    const compareNeighbor = (center, a, b) => {
+        const wa = adjacency.get(center)?.get(a) ?? 0;
+        const wb = adjacency.get(center)?.get(b) ?? 0;
+        if (wb !== wa) return wb - wa
+        return compareByDegree(a, b)
+    };
+    const padSideScore = (name, side) => {
+        const rec = padAffinity.get(name);
+        if (!rec) return 0
+        return side === 'left' ? rec.left - rec.right : rec.right - rec.left
+    };
+    const neighborCount = name => adjacency.get(name)?.size ?? 0;
+    const isLeaf = name => neighborCount(name) === 1;
+
+    const takeBestFromSet = (set, compareFn) => {
+        let best = null;
+        for (const name of set) {
+            if (!best || compareFn(name, best) < 0) best = name;
+        }
+        if (!best) return null
+        set.delete(best);
+        return best
+    };
+
+    const placedNodes = this.nodes.filter(node => node?.look && node.is.placed);
+    const expand = rect => ({x: rect.x - spacing, y: rect.y - spacing, w: rect.w + 2 * spacing, h: rect.h + 2 * spacing});
+    const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
+    const coreLeftX = marginLeft;
+    const xByColumn = [
+        coreLeftX - place.colStep,
+        coreLeftX,
+        coreLeftX + place.colStep,
+        coreLeftX + 2 * place.colStep,
+        coreLeftX + 3 * place.colStep
+    ];
+
+    // Start below any already placed node occupying one of the target columns.
+    let y = place.marginTop;
+    for (const other of placedNodes) {
+        const ox = other.look.rect.x;
+        if (xByColumn.some(x => Math.abs(ox - x) <= tolerance)) {
+            const bottom = other.look.rect.y + other.look.rect.h;
+            if (bottom + spacing > y) y = bottom + spacing;
+        }
+    }
+
+    const rows = [];
+
+    const takeBestCenter = () => {
+        const nonLeaf = new Set([...remaining].filter(name => !isLeaf(name)));
+        if (nonLeaf.size) return takeBestFromSet(nonLeaf, compareByDegree)
+        return takeBestFromSet(remaining, compareByDegree)
+    };
+
+    const takeBestCoreNeighbor = center => {
+        const candidates = new Set(
+            [...remaining].filter(name => !isLeaf(name) && (adjacency.get(center)?.has(name)))
+        );
+        if (candidates.size) {
+            const chosen = takeBestFromSet(candidates, (a, b) => compareNeighbor(center, a, b));
+            remaining.delete(chosen);
+            return chosen
+        }
+
+        const fallback = new Set(
+            [...remaining].filter(name => adjacency.get(center)?.has(name))
+        );
+        if (fallback.size) {
+            const chosen = takeBestFromSet(fallback, (a, b) => compareNeighbor(center, a, b));
+            remaining.delete(chosen);
+            return chosen
+        }
+
+        return null
+    };
+
+    const takeLeafForSlot = (anchors) => {
+        let best = null;
+        for (const name of remaining) {
+            if (!isLeaf(name)) continue
+            const onlyNeighbor = adjacency.get(name)?.keys()?.next()?.value;
+            if (!anchors.includes(onlyNeighbor)) continue
+            if (!best || compareByDegree(name, best) < 0) best = name;
+        }
+        if (!best) return null
+        remaining.delete(best);
+        return best
+    };
+
+    const takeLeafForCenter = center => {
+        let best = null;
+        for (const name of remaining) {
+            if (!isLeaf(name)) continue
+            const onlyNeighbor = adjacency.get(name)?.keys()?.next()?.value;
+            if (onlyNeighbor !== center) continue
+            if (!best || compareByDegree(name, best) < 0) best = name;
+        }
+        if (!best) return null
+        remaining.delete(best);
+        return best
+    };
+
+    while (remaining.size) {
+        const satelliteRow = Array(columnCount).fill(null);
+        let satelliteCenter = null;
+        for (let i = rows.length - 1; i >= 0; i--) {
+            const priorCenter = rows[i][centerCol];
+            if (!priorCenter) continue
+
+            const leftLeaf = takeLeafForCenter(priorCenter);
+            const rightLeaf = takeLeafForCenter(priorCenter);
+            if (!leftLeaf && !rightLeaf) continue
+
+            satelliteCenter = priorCenter;
+            satelliteRow[outerLeftCol] = leftLeaf;
+            satelliteRow[outerRightCol] = rightLeaf;
+            break
+        }
+        if (satelliteCenter) {
+            rows.push(satelliteRow);
+            continue
+        }
+
+        const center = takeBestCenter();
+        if (!center) break
+        remaining.delete(center);
+
+        const row = Array(columnCount).fill(null);
+        row[centerCol] = center;
+
+        row[leftCol] = takeBestCoreNeighbor(center);
+        row[rightCol] = takeBestCoreNeighbor(center);
+
+        // If we have two side candidates, assign them to left/right to better match pad-heavy sides.
+        if (row[leftCol] && row[rightCol]) {
+            const keepScore = padSideScore(row[leftCol], 'left') + padSideScore(row[rightCol], 'right');
+            const swapScore = padSideScore(row[leftCol], 'right') + padSideScore(row[rightCol], 'left');
+            if (swapScore > keepScore) [row[leftCol], row[rightCol]] = [row[rightCol], row[leftCol]];
+        }
+
+        // Prefer leaves attached to side nodes, otherwise center-attached leaves.
+        row[outerLeftCol] = takeLeafForSlot([row[leftCol], center].filter(Boolean));
+        row[outerRightCol] = takeLeafForSlot([row[rightCol], center].filter(Boolean));
+
+        // Queue extra center-attached leaves by keeping them in `remaining`.
+        // They will be emitted as satellite rows before the next new center is chosen.
+
+        rows.push(row);
+    }
+
+    // Normalize sparse rows so "holes" prefer the center column.
+    // This avoids visual patterns like [left + center] or [center only].
+    const normalizedRows = [];
+    const pendingSingles = [];
+
+    for (const row of rows) {
+        const hasOuter = !!row[outerLeftCol] || !!row[outerRightCol];
+        const hasLeft = !!row[leftCol];
+        const hasCenter = !!row[centerCol];
+        const hasRight = !!row[rightCol];
+
+        // Keep satellite rows and richer rows as-is.
+        if (hasOuter) {
+            normalizedRows.push(row);
+            continue
+        }
+
+        // Convert [left + center] -> [left + right]
+        if (hasLeft && hasCenter && !hasRight) {
+            row[rightCol] = row[centerCol];
+            row[centerCol] = null;
+            normalizedRows.push(row);
+            continue
+        }
+
+        // Convert [center + right] -> [left + right]
+        if (!hasLeft && hasCenter && hasRight) {
+            row[leftCol] = row[centerCol];
+            row[centerCol] = null;
+            normalizedRows.push(row);
+            continue
+        }
+
+        // Queue [center only] rows and repack them as side-only rows.
+        if (!hasLeft && hasCenter && !hasRight) {
+            pendingSingles.push(row[centerCol]);
+            continue
+        }
+
+        normalizedRows.push(row);
+    }
+
+    const takePendingSingle = side => {
+        if (!pendingSingles.length) return null
+        let bestIndex = 0;
+        for (let i = 1; i < pendingSingles.length; i++) {
+            const a = pendingSingles[i];
+            const b = pendingSingles[bestIndex];
+            const sa = padSideScore(a, side);
+            const sb = padSideScore(b, side);
+            if (sa !== sb) {
+                if (sa > sb) bestIndex = i;
+                continue
+            }
+            if (compareByDegree(a, b) < 0) bestIndex = i;
+        }
+        return pendingSingles.splice(bestIndex, 1)[0] ?? null
+    };
+
+    while (pendingSingles.length) {
+        const row = Array(columnCount).fill(null);
+        row[leftCol] = takePendingSingle('left');
+        row[rightCol] = takePendingSingle('right');
+        normalizedRows.push(row);
+    }
+
+    for (const row of normalizedRows) {
+        const rowNodes = row
+            .map((name, col) => name ? {node: byName.get(name), col} : null)
+            .filter(item => item?.node);
+
+        if (!rowNodes.length) continue
+
+        let candidates = rowNodes.map(({node, col}) => ({
+            node,
+            x: xByColumn[col],
+            y,
+            w: node.look.rect.w,
+            h: node.look.rect.h
+        }));
+
+        while (candidates.some(candidate => placedNodes.some(other => overlap(expand(candidate), expand(other.look.rect))))) {
+            y += spacing;
+            candidates = rowNodes.map(({node, col}) => ({
+                node,
+                x: xByColumn[col],
+                y,
+                w: node.look.rect.w,
+                h: node.look.rect.h
+            }));
+        }
+
+        let rowBottom = y;
+        for (const candidate of candidates) {
+            candidate.node.look.moveTo(candidate.x, candidate.y);
+            candidate.node.is.placed = true;
+            placedNodes.push(candidate.node);
+
+            const bottom = candidate.y + candidate.node.look.rect.h;
+            if (bottom > rowBottom) rowBottom = bottom;
+        }
+
+        y = rowBottom + spacing;
+    }
+},
+
+// Pads are cooked before child nodes are auto-placed. After placement, pad rectangles
+// can end up in the node field. Push non-fixed pads into left/right pad gutters
+// outside the node area (x only), while respecting explicit pad placement.
+checkPadOverlap() {
+
+    if (!this.pads?.length || !this.nodes?.length) return
+
+    const pads = this.pads.filter(pad => pad?.rect);
+    const nodes = this.nodes.filter(node => node?.look?.rect);
+    if (!pads.length || !nodes.length) return
+
+    const gap = style.placement.padGutterGap ?? Math.max(style.pad.wMargin + 2, Math.floor(style.placement.spacing / 3));
+    const overlap = (a, b) => !((a.x + a.w <= b.x) || (a.x >= b.x + b.w) || (a.y + a.h <= b.y) || (a.y >= b.y + b.h));
+    const minNodeX = Math.min(...nodes.map(node => node.look.rect.x));
+    const maxNodeX = Math.max(...nodes.map(node => node.look.rect.x + node.look.rect.w));
+    const leftAnchor = minNodeX - gap;
+    const rightAnchor = maxNodeX + gap;
+
+    for (const pad of pads) {
+        if (pad.is?.placed) continue
+
+        // First push the pad into the side gutter (outside the node field).
+        if (pad.is.leftText) {
+            const targetX = leftAnchor - pad.rect.w;
+            if (pad.rect.x > targetX) pad.rect.x = targetX;
+        }
+        else {
+            const targetX = rightAnchor;
+            if (pad.rect.x < targetX) pad.rect.x = targetX;
+        }
+
+        let guard = 0;
+        let moved = false;
+
+        while (guard++ < 20) {
+            const hits = nodes.filter(node => overlap(pad.rect, node.look.rect));
+            if (!hits.length) break
+
+            if (pad.is.leftText) {
+                let xNew = pad.rect.x;
+                for (const node of hits) {
+                    const rc = node.look.rect;
+                    const candidate = rc.x - pad.rect.w - gap;
+                    if (candidate < xNew) xNew = candidate;
+                }
+                if (xNew === pad.rect.x) break
+                pad.rect.x = xNew;
+            }
+            else {
+                let xNew = pad.rect.x;
+                for (const node of hits) {
+                    const rc = node.look.rect;
+                    const candidate = rc.x + rc.w + gap;
+                    if (candidate > xNew) xNew = candidate;
+                }
+                if (xNew === pad.rect.x) break
+                pad.rect.x = xNew;
+            }
+
+            moved = true;
+        }
+
+        // Routes are not cooked yet when this runs during cook(), but keep this safe
+        // if the function is reused later.
+        if (moved && pad.routes?.length) pad.adjustRoutes();
+    }
+},
+};
+
 const proxyHandling = {
 
     // build the proxy widget array based on the current (outside) connections and proxy indicators
@@ -19734,9 +20306,6 @@ const proxyHandling = {
  
         // create the pad
         const pad = new Pad(rect, proxy);
-
-        // add a new UID to the pad (when loading a file the doc has not been set yet !)
-        editor.doc?.UID.generate(pad);
  
         // save
         this.pads.push(pad);     
@@ -20054,7 +20623,7 @@ const conxHandling = {
         }
     },
 
-    createRoutes(conx) {
+    createNewRoutes(conx) {
 
         // check
         if (! conx?.length) return
@@ -20407,7 +20976,7 @@ const groupFunctions = {
     }
 
 };
-Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling$1, conxHandling);
+Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling$1, NodePlacement, conxHandling);
 
 const jsonHandling = {
 
@@ -20798,6 +21367,166 @@ Factory.prototype = {
 
 const routeDrawing = {
 
+    // Returns true when the connector point is on the left side of the widget.
+    // For pads, `leftText` means the text is on the left and the bullet/connector is on the right.
+    connectorOnLeft(widget) {
+        if (!widget?.is) return false
+        if (widget.is.pad) return !widget.is.leftText
+        if (typeof widget.is.left === 'boolean') return widget.is.left
+        if (typeof widget.is.leftText === 'boolean') return widget.is.leftText
+        return false
+    },
+
+    ownerNode(widget) {
+        if (!widget) return null
+        if (widget.node) return widget.node
+        if (widget.proxy?.node) return widget.proxy.node
+        if (widget.bus?.node) return widget.bus.node
+        return null
+    },
+
+    // For autoroute collision on endpoint legs, pads belong to the enclosing group and
+    // are allowed to route inside that group. Only real node-owned widgets (pins/tacks)
+    // should reject routes that cut through their own node body.
+    endpointBlockRect(widget) {
+        if (!widget?.is) return null
+        if (widget.is.pad) return null
+        const node = this.ownerNode(widget);
+        return node?.look?.rect ?? null
+    },
+
+    routeCutsEndpointBody(wire, rc, allowSegmentIndex) {
+        if (!rc || !wire || wire.length < 2) return false
+        for (let i = 0; i < wire.length - 1; i++) {
+            if (i === allowSegmentIndex) continue
+            if (cutsRectangle(wire[i], wire[i + 1], rc)) return true
+        }
+        return false
+    },
+
+    // Collect orthogonal segments from already routed connections so autoroute can
+    // prefer less crowded lanes. Routes are deduplicated because the same route can
+    // be reachable from multiple widgets.
+    collectRouteSegments(nodes=[]) {
+        const routes = new Set();
+        const segments = [];
+
+        for (const node of nodes ?? []) {
+            const widgets = node?.look?.widgets ?? [];
+            for (const widget of widgets) {
+                if (!widget?.routes?.length) continue
+                for (const route of widget.routes) {
+                    if (!route || route === this || routes.has(route) || route.wire.length < 2) continue
+                    routes.add(route);
+
+                    for (let i = 0; i < route.wire.length - 1; i++) {
+                        const a = route.wire[i];
+                        const b = route.wire[i + 1];
+                        if (a.x === b.x) {
+                            segments.push({dir:'v', x: a.x, y1: Math.min(a.y, b.y), y2: Math.max(a.y, b.y)});
+                        }
+                        else if (a.y === b.y) {
+                            segments.push({dir:'h', y: a.y, x1: Math.min(a.x, b.x), x2: Math.max(a.x, b.x)});
+                        }
+                    }
+                }
+            }
+        }
+
+        return segments
+    },
+
+    rangeOverlap(a1, a2, b1, b2) {
+        return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1))
+    },
+
+    quantizeLane(value, step = 1) {
+        const s = Math.max(1, step || 1);
+        return Math.round(value / s) * s
+    },
+
+    collectLaneUsage(segments, xStep = 5, yStep = 5) {
+        const vertical = new Map();
+        const horizontal = new Map();
+
+        for (const seg of segments ?? []) {
+            if (seg.dir === 'v') {
+                const key = this.quantizeLane(seg.x, xStep);
+                vertical.set(key, (vertical.get(key) ?? 0) + 1);
+            }
+            else if (seg.dir === 'h') {
+                const key = this.quantizeLane(seg.y, yStep);
+                horizontal.set(key, (horizontal.get(key) ?? 0) + 1);
+            }
+        }
+
+        return {vertical, horizontal}
+    },
+
+    laneRegistryPenaltyVertical(x, laneUsage, laneStep = 5) {
+        if (!laneUsage?.vertical) return 0
+        const key = this.quantizeLane(x, laneStep);
+        let penalty = (laneUsage.vertical.get(key) ?? 0) * 120;
+
+        const left = key - laneStep;
+        const right = key + laneStep;
+        penalty += (laneUsage.vertical.get(left) ?? 0) * 25;
+        penalty += (laneUsage.vertical.get(right) ?? 0) * 25;
+
+        return penalty
+    },
+
+    laneRegistryPenaltyHorizontal(y, laneUsage, laneStep = 5) {
+        if (!laneUsage?.horizontal) return 0
+        const key = this.quantizeLane(y, laneStep);
+        let penalty = (laneUsage.horizontal.get(key) ?? 0) * 120;
+
+        const up = key - laneStep;
+        const down = key + laneStep;
+        penalty += (laneUsage.horizontal.get(up) ?? 0) * 25;
+        penalty += (laneUsage.horizontal.get(down) ?? 0) * 25;
+
+        return penalty
+    },
+
+    lanePenaltyVertical(x, y1, y2, segments, laneStep = 5) {
+        let penalty = 0;
+        const yy1 = Math.min(y1, y2);
+        const yy2 = Math.max(y1, y2);
+
+        for (const seg of segments) {
+            if (seg.dir !== 'v') continue
+            const overlap = this.rangeOverlap(yy1, yy2, seg.y1, seg.y2);
+            if (overlap <= 0) continue
+
+            const dx = Math.abs(seg.x - x);
+            if (dx < 1) penalty += 1000 + overlap;
+            else if (dx < laneStep) penalty += 200 + overlap;
+            else if (dx < laneStep * 2) penalty += 20;
+        }
+
+        return penalty
+    },
+
+    lanePenaltyHorizontal(y, x1, x2, segments, laneStep = 5) {
+        let penalty = 0;
+        const xx1 = Math.min(x1, x2);
+        const xx2 = Math.max(x1, x2);
+
+        for (const seg of segments) {
+            if (seg.dir !== 'h') continue
+            const overlap = this.rangeOverlap(xx1, xx2, seg.x1, seg.x2);
+            if (overlap <= 0) continue
+
+            const dy = Math.abs(seg.y - y);
+            if (dy < 1) penalty += 1000 + overlap;
+            else if (dy < laneStep) penalty += 200 + overlap;
+            else if (dy < laneStep * 2) penalty += 20;
+        }
+
+        return penalty
+    },
+
     // draw freely with x/y segments
     // we always assume that the route is extended at the last point (i.e. the to widget !)
     drawXY(next) {
@@ -20908,33 +21637,48 @@ const routeDrawing = {
         const dpx = style.autoroute.xDelta;
         const mg = style.autoroute.xMargin;
 
-        const frc = from.node.look.rect;
-        const trc = to.node.look.rect;
+        const fromNode = this.ownerNode(from);
+        const toNode = this.ownerNode(to);
+        const frc = fromNode?.look?.rect;
+        const trc = toNode?.look?.rect;
+        if (!frc || !trc) return this.fourPointRoute(nodes)
         let yMid = f.y + (frc.h/4 + trc.h/4);
+
+        const fromLeft = this.connectorOnLeft(from);
+        const toLeft = this.connectorOnLeft(to);
 
         const fRank = from.rank();
         const fRankValue = yMid < f.y ? fRank.up : fRank.down;
-        const xBase1 = from.is.left ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue;
+        const xBase1 = fromLeft ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue;
 
         const tRank = to.rank();
         const tRankValue = yMid < t.y ? tRank.up : tRank.down;
-        const xBase2 = to.is.left ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue;
+        const xBase2 = toLeft ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue;
 
         let x1 = xBase1;
         let x2 = xBase2;
 
-        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== fromNode && n !== toNode);
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
         const expandY = style.autoroute.yDelta;
+        const routeSegments = this.collectRouteSegments(nodes);
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, expandY);
 
         const buildWire = () => {
             wire.length = 0;
-            wire.push(f);
-            wire.push({x:x1, y:f.y});
-            wire.push({x:x1, y:yMid});
-            wire.push({x:x2, y:yMid});
-            wire.push({x:x2, y:t.y});
-            wire.push(t);
+        wire.push(f);
+        wire.push({x:x1, y:f.y});
+        wire.push({x:x1, y:yMid});
+        wire.push({x:x2, y:yMid});
+        wire.push({x:x2, y:t.y});
+        wire.push(t);
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from);
+        const toRc = this.endpointBlockRect(to);
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
         };
 
         const firstHorizontalCut = () => {
@@ -20960,6 +21704,36 @@ const routeDrawing = {
             guard++;
         }
 
+        // If multiple y lanes are available, prefer the less crowded horizontal lane.
+        if (!hit && routeSegments.length) {
+            const yBase = yMid;
+            const yCandidates = [0, 1, -1, 2, -2, 3, -3].map(step => yBase + step * expandY);
+            let bestY = yMid;
+            let bestScore = Infinity;
+
+            for (const candidateY of yCandidates) {
+                const p1 = {x:x1, y:candidateY};
+                const p2 = {x:x2, y:candidateY};
+                if (blockers.some(node => segmentCuts(p1, p2, node.look.rect))) continue
+
+                const score =
+                    this.lanePenaltyVertical(x1, f.y, candidateY, routeSegments, dpx) +
+                    this.lanePenaltyHorizontal(candidateY, x1, x2, routeSegments, expandY) +
+                    this.lanePenaltyVertical(x2, candidateY, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyHorizontal(candidateY, laneUsage, expandY) +
+                    this.laneRegistryPenaltyVertical(x1, laneUsage, dpx) +
+                    this.laneRegistryPenaltyVertical(x2, laneUsage, dpx);
+
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestY = candidateY;
+                }
+            }
+
+            yMid = bestY;
+            buildWire();
+        }
+
         return true
     },
 
@@ -20979,15 +21753,17 @@ const routeDrawing = {
         const margin = style.look.dxCopy;
         const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
         const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
+        const routeSegments = this.collectRouteSegments(nodes);
 
         // choose the x for the vertical leg (xNew):
         // - prefer the middle when pins face each other with no node overlap in x
         // - otherwise, push the vertical leg away from the "from" side
         const dpx = style.autoroute.xDelta;
         const mg = style.autoroute.xMargin;
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, style.autoroute.yDelta);
         const isBusRoute = from.is?.tack || to.is?.tack;
-        let fromLeft = from.is?.left ?? from.is?.leftText ?? false;
-        let toLeft = to.is?.left ?? to.is?.leftText ?? false;
+        let fromLeft = this.connectorOnLeft(from);
+        let toLeft = this.connectorOnLeft(to);
         if (isBusRoute) {
             // For bus connections, infer "facing" by relative position to avoid routing past the bus.
             fromLeft = f.x > t.x;
@@ -21036,12 +21812,42 @@ const routeDrawing = {
                 if (!tryClearX(candidate)) { xNew = candidate; break }
             }
         }
+
+        // Prefer a less crowded vertical lane when several valid lanes exist.
+        if (routeSegments.length) {
+            const xBase = xNew;
+            const shifts = [0, dpx, -dpx, dpx*2, -dpx*2, margin, -margin];
+            let bestX = xNew;
+            let bestScore = Infinity;
+
+            for (const dx of shifts) {
+                const candidate = enforceShapeRule(xBase + dx);
+                if (tryClearX(candidate)) continue
+
+                const score =
+                    this.lanePenaltyVertical(candidate, f.y, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyVertical(candidate, laneUsage, dpx);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestX = candidate;
+                }
+            }
+
+            xNew = bestX;
+        }
         
         // build a 4-point orthogonal wire: horizontal, vertical, horizontal
         wire.push(f);
         wire.push({ x: xNew, y: f.y});
         wire.push({ x: xNew, y: t.y});
         wire.push(t);
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from);
+        const toRc = this.endpointBlockRect(to);
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
 
         // check for collisions with other nodes; if any, signal failure
         for (let i=0; i<wire.length-1; i++) {
@@ -21185,7 +21991,9 @@ const routeDrawing = {
 
             case 'PIN-PAD':
             case 'PAD-PIN':
-                this.fourPointRoute(nodes);
+                
+               // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
                 break
 
             case 'PIN-BUS':
@@ -25308,6 +26116,7 @@ let topLevelClass = null;
 let nodeMap = null;
 let filePath = null;
 let nodeAliases = new Map();
+let mcpRegistry = new Map();
 
 let knownIdentifiers = new Set();
 
@@ -25321,6 +26130,7 @@ function findHandlers(sourceFile, _filePath, _nodeMap) {
     nodeMap = _nodeMap;
     filePath = _filePath;
     nodeAliases = new Map();
+    mcpRegistry = collectMcpRegistry(sourceFile);
     knownIdentifiers = collectKnownIdentifiers(sourceFile);
 
     // Check all the functions in the sourcefile - typically generator functions
@@ -25366,8 +26176,9 @@ function findHandlers(sourceFile, _filePath, _nodeMap) {
             collect(name, params, line, jsdoc);
         }
 
+        const isExportedMcpRegistry = name === 'mcp' && statement?.isExported?.();
         const objectLiteral = resolveObjectLiteralExpression(init);
-        if (objectLiteral) {
+        if (objectLiteral && !isExportedMcpRegistry) {
             collectObjectLiteralHandlers(objectLiteral);
         }
     });
@@ -25375,8 +26186,10 @@ function findHandlers(sourceFile, _filePath, _nodeMap) {
     // check all the classes in the file
     sourceFile.getClasses().forEach(cls => {
 
-        // get the name of the node
-        const nodeName = cls.getName?.() || topLevelClass;
+        // Prefer explicit @node tags on the class so source-map keys match model node names.
+        const classJsdoc = getFullJsDoc(cls);
+        const classContext = applyNodeTag(classJsdoc.tags?.find(t => t.tagName === 'node')?.comment);
+        const nodeName = classContext?.nodeName || currentNode || cls.getName?.() || topLevelClass;
 
         // check all the methods
         cls.getMethods().forEach(method => {
@@ -25528,6 +26341,7 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
     const pinTag = jsdoc.tags?.find(t => t.tagName === 'pin')?.comment;
     const nodeTag = jsdoc.tags?.find(t => t.tagName === 'node')?.comment;
     const mcpTag = jsdoc.tags?.find(t => t.tagName === 'mcp')?.comment ?? null;
+    const mcpConfig = mcpRegistry.get(cleanHandler) ?? null;
 
     if (nodeTag) {
         const context = applyNodeTag(nodeTag);
@@ -25545,14 +26359,20 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
         }
         else pin = pinTag.trim();
     }
-    else if (!node) {
+    else {
 
         // no explicit tag - try these...
-        node = currentNode || topLevelClass || null;
+        if (!node) node = currentNode || topLevelClass || null;
 
         // deduct the pin name from the handler name
         if (cleanHandler.startsWith('on')) {
-            pin = cleanHandler.slice(2).replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+            const raw = cleanHandler.slice(2);
+            const words = raw.replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/).filter(Boolean);
+            if (words.length) {
+                const iface = words[0].toLowerCase();
+                const suffix = words.slice(1).map(w => w.toLowerCase()).join('-');
+                pin = suffix ? `${iface}.${suffix}` : iface;
+            }
         } else if (cleanHandler.startsWith('->')) {
             pin = cleanHandler.slice(2).trim();
         }
@@ -25577,7 +26397,10 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
     };
 
     // extract the data from an mcp tag if present
-    if (mcpTag !== null) {
+    if (mcpConfig) {
+        handlerData.mcp = mcpConfig;
+    }
+    else if (mcpTag !== null) {
         handlerData.mcp = true;
         if (mcpTag.includes('name:') || mcpTag.includes('description:')) {
             const nameMatch = /name:\s*\"?([^\"]+)\"?/.exec(mcpTag);
@@ -25667,7 +26490,7 @@ function describeParam(p, docTags = {}) {
                 }
             }
 
-            const type = tsType || doc.type || 'string';
+            const type = tsType || doc.type || 'any';
             const description = doc.description || '';
             return { name: subName, type, description };
         });
@@ -25679,7 +26502,7 @@ function describeParam(p, docTags = {}) {
 
     return {
         name,
-        type: doc.type || tsType || 'string',
+        type: doc.type || tsType || 'any',
         description: doc.description || '',
     };
 }
@@ -25991,6 +26814,123 @@ function collectKnownIdentifiers(sourceFile) {
     return identifiers;
 }
 
+function collectMcpRegistry(sourceFile) {
+    const registry = new Map();
+    if (!sourceFile || typeof sourceFile.getVariableDeclarations !== 'function') return registry;
+
+    const declarations = sourceFile.getVariableDeclarations().filter(decl => decl.getName?.() === 'mcp');
+    for (const decl of declarations) {
+        const statement = decl.getFirstAncestorByKind?.(SyntaxKind.VariableStatement);
+        if (!statement || !statement.isExported?.()) continue;
+
+        const literal = resolveObjectLiteralExpression(decl.getInitializer?.());
+        if (!literal) continue;
+
+        literal.getProperties().forEach(prop => {
+            const handlerName = prop.getName?.();
+            if (!handlerName) return;
+
+            const entryLiteral = getObjectLiteralPropertyValue(prop);
+            if (!entryLiteral) return;
+
+            const entry = parseLiteralObject(entryLiteral);
+            if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+                registry.set(handlerName.replace(/^['"]|['"]$/g, ''), entry);
+            }
+        });
+    }
+
+    return registry;
+}
+
+function getObjectLiteralPropertyValue(prop) {
+    if (!prop || typeof prop.getKind !== 'function') return null;
+
+    if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+        return resolveObjectLiteralExpression(prop.getInitializer?.());
+    }
+
+    if (prop.getKind() === SyntaxKind.ShorthandPropertyAssignment) {
+        const name = prop.getName?.();
+        const decl = findDeclarationByName(prop, name);
+        if (decl?.isKind?.(SyntaxKind.VariableDeclaration)) {
+            return resolveObjectLiteralExpression(decl.getInitializer?.());
+        }
+    }
+
+    return null;
+}
+
+function parseLiteralObject(objectLiteral) {
+    const result = {};
+
+    objectLiteral.getProperties().forEach(prop => {
+        const key = prop.getName?.();
+        if (!key) return;
+
+        if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+            const value = parseLiteralValue(prop.getInitializer?.());
+            if (value !== undefined) {
+                result[key] = value;
+            }
+        }
+    });
+
+    return result;
+}
+
+function parseLiteralArray(arrayLiteral) {
+    const items = [];
+
+    arrayLiteral.getElements().forEach(el => {
+        const value = parseLiteralValue(el);
+        if (value !== undefined) {
+            items.push(value);
+        }
+    });
+
+    return items;
+}
+
+function parseLiteralValue(node) {
+    if (!node || typeof node.getKind !== 'function') return undefined;
+
+    if (node.isKind?.(SyntaxKind.ParenthesizedExpression)) {
+        return parseLiteralValue(node.getExpression?.());
+    }
+
+    if (node.isKind?.(SyntaxKind.AsExpression)
+        || node.isKind?.(SyntaxKind.TypeAssertionExpression)
+        || node.isKind?.(SyntaxKind.SatisfiesExpression)
+        || node.isKind?.(SyntaxKind.NonNullExpression)
+    ) {
+        return parseLiteralValue(node.getExpression?.());
+    }
+
+    if (node.isKind?.(SyntaxKind.StringLiteral) || node.isKind?.(SyntaxKind.NoSubstitutionTemplateLiteral)) {
+        return node.getLiteralText();
+    }
+
+    if (node.isKind?.(SyntaxKind.NumericLiteral)) {
+        return Number(node.getText());
+    }
+
+    if (node.isKind?.(SyntaxKind.TrueKeyword)) return true;
+    if (node.isKind?.(SyntaxKind.FalseKeyword)) return false;
+    if (node.isKind?.(SyntaxKind.NullKeyword)) return null;
+
+    const objectLiteral = resolveObjectLiteralExpression(node);
+    if (objectLiteral) {
+        return parseLiteralObject(objectLiteral);
+    }
+
+    if (node.isKind?.(SyntaxKind.ArrayLiteralExpression)) {
+        return parseLiteralArray(node);
+    }
+
+    return undefined;
+}
+
 /**
  * Finds tx.send or this.tx.send calls and maps them to their node context.
  * 
@@ -26131,8 +27071,8 @@ function getEnclosingHandlerName(callExpression) {
     return null;
 }
 
-const require = createRequire(import.meta.url);
-const pckg = require('../../package.json');
+const require$1 = createRequire(import.meta.url);
+const pckg = require$1('../../package.json');
 const PROFILE_VERSION = pckg.version;
 
 // The main function for the profile tool
@@ -26176,6 +27116,10 @@ async function profile(argv = process.argv.slice(2)) {
     // Create model object
     const model = new ModelBlueprint(arl);
 
+    // Load raw model and types for contract checks.
+    await model.getRaw();
+    model.preCook();
+
     // create a model compile object - we do not need a uid generator
     const compiler = new ModelCompiler(null);
 
@@ -26218,6 +27162,11 @@ async function profile(argv = process.argv.slice(2)) {
         rxtx.push(...nodeArray);
     }
 
+    // Compare handler parameter types with blueprint contracts.
+    const contractIndex = buildContractIndex(model.raw?.root);
+    const typeMap = model.vmbluTypes || {};
+    applyTypeChecks(rxtx, contractIndex, typeMap);
+
     // Assemble the output file path
     // (outPath was resolved earlier based on CLI arguments)
 
@@ -26231,6 +27180,169 @@ async function profile(argv = process.argv.slice(2)) {
     // Persist the structured documentation with its header so downstream tools can validate against the schema.
     fs$1.writeFileSync(outPath, JSON.stringify(output, null, 2));
     console.log(`Documentation written to ${outPath}`);
+}
+
+const TYPECHECK_DEBUG = process.env.VMBLU_PROFILE_TYPECHECK_DEBUG === '1';
+
+function buildContractIndex(root) {
+    const index = new Map();
+    if (!root) return index;
+
+    const visit = (node) => {
+        if (!node?.name) return;
+        if (!index.has(node.name)) index.set(node.name, new Map());
+
+        const pinMap = index.get(node.name);
+        const interfaces = Array.isArray(node.interfaces) ? node.interfaces : [];
+        for (const iface of interfaces) {
+            const pins = Array.isArray(iface.pins) ? iface.pins : [];
+            for (const pin of pins) {
+                if (pin?.name) pinMap.set(pin.name, pin);
+            }
+        }
+
+        if (node.kind === 'group' && Array.isArray(node.nodes)) {
+            node.nodes.forEach(visit);
+        }
+    };
+
+    visit(root);
+    return index;
+}
+
+function applyTypeChecks(entries, contractIndex, typeMap) {
+    if (!Array.isArray(entries)) return;
+
+    for (const entry of entries) {
+        const pinMap = contractIndex.get(entry.node);
+        if (!pinMap) {
+            if (TYPECHECK_DEBUG && entry.node === 'MessageHistory') {
+                console.log('[typecheck-debug] no pinMap for node', entry.node);
+            }
+            continue;
+        }
+
+        for (const handle of entry.handles || []) {
+            const pinName = handle?.pin || derivePinFromHandler(handle?.handler);
+            if (!handle?.pin && pinName) {
+                handle.pin = pinName;
+            }
+            if (!pinName) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] no pinName for handler', handle.handler);
+                }
+                continue;
+            }
+            const pin = pinMap.get(pinName);
+            if (!pin || (pin.kind !== 'input' && pin.kind !== 'reply')) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] pin not found or wrong kind', { pinName, pinKind: pin?.kind });
+                }
+                continue;
+            }
+
+            const expectedType = getExpectedPayloadType(pin);
+            if (!expectedType) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] no expectedType', { pinName });
+                }
+                continue;
+            }
+
+            const errors = checkHandleAgainstType(handle, expectedType, typeMap);
+            if (errors.length) {
+                handle.typeErrors = errors;
+            }
+            if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                console.log('[typecheck-debug]', {
+                    node: entry.node,
+                    handler: handle.handler,
+                    pinName,
+                    expectedType,
+                    params: handle.params,
+                    errors
+                });
+            }
+        }
+    }
+}
+
+function getExpectedPayloadType(pin) {
+    const payload = pin?.contract?.payload;
+    if (!payload) return null;
+    if (typeof payload === 'string') return payload;
+    if (payload && typeof payload === 'object') {
+        return payload.request || payload.reply || null;
+    }
+    return null;
+}
+
+function checkHandleAgainstType(handle, expectedType, typeMap) {
+    const errors = [];
+    const params = Array.isArray(handle.params) ? handle.params : [];
+
+    if (params.length === 0) return errors;
+
+    const typeDef = typeMap?.[expectedType];
+    const fields = typeDef?.fields || null;
+    const firstParam = params.length === 1 ? params[0] : null;
+    const firstParamType = firstParam?.type || 'any';
+    const firstParamName = firstParam?.name || '';
+
+    // single-parameter handlers are valid for plain payload contracts
+    if (firstParam && !fields) {
+        if (!typesCompatible(firstParamType, expectedType)) {
+            errors.push(`typeWarning: expected ${expectedType} but got ${firstParamType}`);
+        }
+        return errors;
+    }
+
+    // structured payload contracts can legitimately arrive as one "payload" object parameter.
+    if (firstParam && fields) {
+        if (typesCompatible(firstParamType, expectedType) || firstParamName === 'payload') {
+            return errors;
+        }
+    }
+
+    if (!fields) {
+        errors.push(`typeWarning: expected ${expectedType} but handler uses destructured params`);
+        return errors;
+    }
+
+    for (const param of params) {
+        const expectedField = fields?.[param.name]?.vmbluType;
+        if (!expectedField) {
+            errors.push(`typeWarning: unexpected field "${param.name}"`);
+            continue;
+        }
+        const actual = param.type || 'any';
+        if (!typesCompatible(actual, expectedField)) {
+            errors.push(`typeWarning: ${param.name} expected ${expectedField} but got ${actual}`);
+        }
+    }
+
+    return errors;
+}
+
+function typesCompatible(actual, expected) {
+    if (!actual) return false;
+    if (expected === 'any') return actual === 'any';
+    if (actual === 'any') return false;
+    return actual === expected;
+}
+
+function derivePinFromHandler(handlerName) {
+    if (!handlerName || typeof handlerName !== 'string') return null;
+    if (handlerName.startsWith('->')) return handlerName.slice(2).trim();
+    if (!handlerName.startsWith('on')) return null;
+
+    const raw = handlerName.slice(2);
+    if (!raw) return null;
+    const words = raw.replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/);
+    if (!words.length) return null;
+    const interfaceName = words[0].toLowerCase();
+    const suffix = words.slice(1).map(w => w.toLowerCase()).join('-');
+    return suffix ? `${interfaceName}.${suffix}` : interfaceName;
 }
 
 function normalizePathValue(value) {
