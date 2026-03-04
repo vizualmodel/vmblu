@@ -74,6 +74,24 @@
       margin: 0 0 0 1rem;
   }
 
+  .type-status {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.3rem;
+  }
+  .type-status p {
+      font-family: var(--fFixed);
+      font-size: 0.7rem;
+      white-space: pre-wrap;
+      margin: 0 0 0 1rem;
+  }
+  .type-ok {
+      color: #25b325;
+  }
+  .type-warning {
+      color: #d08a00;
+  }
+
   .prompt {
       display: flex;
       flex-direction: column;
@@ -103,6 +121,16 @@
       {#each profile.params as { type, name, description }}
         <p>{name} ({type}) {description}</p>
       {/each}
+    </div>
+
+    <div class="type-status">
+      {#if profile.typeErrors?.length}
+        {#each profile.typeErrors as msg}
+          <p class="type-warning">{msg}</p>
+        {/each}
+      {:else}
+        <p class="type-ok">contract match</p>
+      {/if}
     </div>
 
     <div class="prompt">

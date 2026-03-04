@@ -13,7 +13,7 @@ export default defineConfig({
       emitCss: true,
     }),
     string({
-      include: ['**/*.vmblu', '**/*.txt'], // Added support for .txt
+      include: ['**/*.blu', '**/*.txt'], // Added support for .txt
     }),
   ],
   build: {

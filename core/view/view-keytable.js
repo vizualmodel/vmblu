@@ -22,6 +22,7 @@ function canProceed(view) {
 
 // The table with the <ctrl> + key combinations
 export const justKeyTable = {
+
     // add input
     i: (view) => {
         //check
@@ -89,13 +90,27 @@ export const justKeyTable = {
     },
 
     // add ifName
-    p: (view) => {
+    f: (view) => {
         //check
         const [ok, node, pos] = canProceed(view);
         if (!ok) return;
 
         // add an input pin where the click happened
         editor.doEdit('newInterfaceName', { view, node, pos });
+    },
+
+    // show the profile
+    p: (view) => {
+
+        // find the pin selected
+        const pin = view.selection.getSelectedWidget()
+
+        if (!pin.is.pin) return
+
+        editor.doEdit('showProfile', {
+            pin,
+            pos: { x: pin.rect.x, y: pin.rect.y },
+        });
     },
 
     // add a label
@@ -223,12 +238,18 @@ export const justKeyTable = {
     },
 
     ArrowDown: (view) => {
-        const below = view.selection.widgetBelow();
+
+        const current = view.selection.getSelectedWidget()
+        if (!current) return
+        const below = view.selection.widgetBelow(current);
         if (below) view.selection.switchToWidget(below);
     },
 
     ArrowUp: (view) => {
-        const above = view.selection.widgetAbove();
+
+        const current = view.selection.getSelectedWidget()
+        if (!current) return
+        const above = view.selection.widgetAbove(current);
         if (above) view.selection.switchToWidget(above);
     },
 

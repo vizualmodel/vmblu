@@ -6,10 +6,16 @@ This folder contains the CLI commands that are available for vmblu.
 ```txt
 vmblu/
   cli/                      # your CLI source
+    agent/                  # skills for an agent
+      CODEX/
+      CLAUDE/
     bin/
       vmblu.js              # discovers and adds commands
     commands/
       init/
+      agent/
+      make-app/
+      make-test/
       profile/
       migrate/
     templates/
@@ -17,8 +23,10 @@ vmblu/
         blueprint.schema.json
         blueprint.annex.md
         vizual.schema.json
-        system-prompt.md
         profile.schema.json
+        system-prompt.project.md
+        system-prompt.dev.md
+        system-prompt.test.md
     package.json
     README.md
     LICENSE.txt
@@ -39,6 +47,7 @@ vmblu --help
 vmblu init --help
 ```
 ### Publish & use
+
 ```bash
 npm publish --access public
 ```

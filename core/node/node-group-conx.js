@@ -257,7 +257,7 @@ export const conxHandling = {
         }
     },
 
-    createRoutes(conx) {
+    createNewRoutes(conx) {
 
         // check
         if (! conx?.length) return

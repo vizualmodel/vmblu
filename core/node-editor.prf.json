@@ -1,6 +1,6 @@
 {
   "version": "0.4.2",
-  "generatedAt": "2026-02-04T09:28:36.255Z",
+  "generatedAt": "2026-02-07T16:34:10.986Z",
   "entries": [
     {
       "node": "document manager",
@@ -584,12 +584,12 @@
         {
           "pin": "pin profile",
           "file": "view/redox-widget.js",
-          "line": 224
+          "line": 218
         },
         {
           "pin": "open source file",
           "file": "view/redox-widget.js",
-          "line": 238
+          "line": 232
         }
       ]
     }

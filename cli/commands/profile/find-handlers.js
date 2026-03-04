@@ -12,6 +12,7 @@ export let topLevelClass = null;
 let nodeMap = null;
 let filePath = null;
 export let nodeAliases = new Map();
+let mcpRegistry = new Map();
 
 let knownIdentifiers = new Set();
 
@@ -25,6 +26,7 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
     nodeMap = _nodeMap;
     filePath = _filePath;
     nodeAliases = new Map();
+    mcpRegistry = collectMcpRegistry(sourceFile);
     knownIdentifiers = collectKnownIdentifiers(sourceFile);
 
     // Check all the functions in the sourcefile - typically generator functions
@@ -70,8 +72,9 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
             collect(name, params, line, jsdoc);
         }
 
+        const isExportedMcpRegistry = name === 'mcp' && isExportedDeclaration(decl, statement);
         const objectLiteral = resolveObjectLiteralExpression(init);
-        if (objectLiteral) {
+        if (objectLiteral && !isExportedMcpRegistry) {
             collectObjectLiteralHandlers(objectLiteral);
         }
     });
@@ -79,8 +82,10 @@ export function findHandlers(sourceFile, _filePath, _nodeMap) {
     // check all the classes in the file
     sourceFile.getClasses().forEach(cls => {
 
-        // get the name of the node
-        const nodeName = cls.getName?.() || topLevelClass;
+        // Prefer explicit @node tags on the class so source-map keys match model node names.
+        const classJsdoc = getFullJsDoc(cls);
+        const classContext = applyNodeTag(classJsdoc.tags?.find(t => t.tagName === 'node')?.comment);
+        const nodeName = classContext?.nodeName || currentNode || cls.getName?.() || topLevelClass;
 
         // check all the methods
         cls.getMethods().forEach(method => {
@@ -232,6 +237,7 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
     const pinTag = jsdoc.tags?.find(t => t.tagName === 'pin')?.comment;
     const nodeTag = jsdoc.tags?.find(t => t.tagName === 'node')?.comment;
     const mcpTag = jsdoc.tags?.find(t => t.tagName === 'mcp')?.comment ?? null;
+    const mcpConfig = mcpRegistry.get(cleanHandler) ?? null;
 
     if (nodeTag) {
         const context = applyNodeTag(nodeTag);
@@ -249,14 +255,20 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
         }
         else pin = pinTag.trim();
     }
-    else if (!node) {
+    else {
 
         // no explicit tag - try these...
-        node = currentNode || topLevelClass || null;
+        if (!node) node = currentNode || topLevelClass || null;
 
         // deduct the pin name from the handler name
         if (cleanHandler.startsWith('on')) {
-            pin = cleanHandler.slice(2).replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+            const raw = cleanHandler.slice(2);
+            const words = raw.replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/).filter(Boolean);
+            if (words.length) {
+                const iface = words[0].toLowerCase();
+                const suffix = words.slice(1).map(w => w.toLowerCase()).join('-');
+                pin = suffix ? `${iface}.${suffix}` : iface;
+            }
         } else if (cleanHandler.startsWith('->')) {
             pin = cleanHandler.slice(2).trim();
         }
@@ -281,7 +293,10 @@ function collect(rawName, params, line, jsdoc = {}, defaultNode = null) {
     };
 
     // extract the data from an mcp tag if present
-    if (mcpTag !== null) {
+    if (mcpConfig) {
+        handlerData.mcp = mcpConfig;
+    }
+    else if (mcpTag !== null) {
         handlerData.mcp = true;
         if (mcpTag.includes('name:') || mcpTag.includes('description:')) {
             const nameMatch = /name:\s*\"?([^\"]+)\"?/.exec(mcpTag);
@@ -371,7 +386,7 @@ function describeParam(p, docTags = {}) {
                 }
             }
 
-            const type = tsType || doc.type || 'string';
+            const type = tsType || doc.type || 'any';
             const description = doc.description || '';
             return { name: subName, type, description };
         });
@@ -383,7 +398,7 @@ function describeParam(p, docTags = {}) {
 
     return {
         name,
-        type: doc.type || tsType || 'string',
+        type: doc.type || tsType || 'any',
         description: doc.description || '',
     };
 }
@@ -693,4 +708,134 @@ function collectKnownIdentifiers(sourceFile) {
     });
 
     return identifiers;
+}
+
+function collectMcpRegistry(sourceFile) {
+    const registry = new Map();
+    if (!sourceFile || typeof sourceFile.getVariableDeclarations !== 'function') return registry;
+
+    const declarations = sourceFile.getVariableDeclarations().filter(decl => decl.getName?.() === 'mcp');
+    for (const decl of declarations) {
+        const statement = decl.getFirstAncestorByKind?.(SyntaxKind.VariableStatement);
+        if (!isExportedDeclaration(decl, statement)) continue;
+
+        const literal = resolveObjectLiteralExpression(decl.getInitializer?.());
+        if (!literal) continue;
+
+        literal.getProperties().forEach(prop => {
+            const handlerName = prop.getName?.();
+            if (!handlerName) return;
+
+            const entryLiteral = getObjectLiteralPropertyValue(prop);
+            if (!entryLiteral) return;
+
+            const entry = parseLiteralObject(entryLiteral);
+            if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+                registry.set(handlerName.replace(/^['"]|['"]$/g, ''), entry);
+            }
+        });
+    }
+
+    return registry;
+}
+
+function getObjectLiteralPropertyValue(prop) {
+    if (!prop || typeof prop.getKind !== 'function') return null;
+
+    if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+        return resolveObjectLiteralExpression(prop.getInitializer?.());
+    }
+
+    if (prop.getKind() === SyntaxKind.ShorthandPropertyAssignment) {
+        const name = prop.getName?.();
+        const decl = findDeclarationByName(prop, name);
+        if (decl?.isKind?.(SyntaxKind.VariableDeclaration)) {
+            return resolveObjectLiteralExpression(decl.getInitializer?.());
+        }
+    }
+
+    return null;
+}
+
+function parseLiteralObject(objectLiteral) {
+    const result = {};
+
+    objectLiteral.getProperties().forEach(prop => {
+        const key = prop.getName?.();
+        if (!key) return;
+
+        if (prop.getKind() === SyntaxKind.PropertyAssignment) {
+            const value = parseLiteralValue(prop.getInitializer?.());
+            if (value !== undefined) {
+                result[key] = value;
+            }
+        }
+    });
+
+    return result;
+}
+
+function parseLiteralArray(arrayLiteral) {
+    const items = [];
+
+    arrayLiteral.getElements().forEach(el => {
+        const value = parseLiteralValue(el);
+        if (value !== undefined) {
+            items.push(value);
+        }
+    });
+
+    return items;
+}
+
+function parseLiteralValue(node) {
+    if (!node || typeof node.getKind !== 'function') return undefined;
+
+    if (node.isKind?.(SyntaxKind.ParenthesizedExpression)) {
+        return parseLiteralValue(node.getExpression?.());
+    }
+
+    if (node.isKind?.(SyntaxKind.AsExpression)
+        || node.isKind?.(SyntaxKind.TypeAssertionExpression)
+        || node.isKind?.(SyntaxKind.SatisfiesExpression)
+        || node.isKind?.(SyntaxKind.NonNullExpression)
+    ) {
+        return parseLiteralValue(node.getExpression?.());
+    }
+
+    if (node.isKind?.(SyntaxKind.StringLiteral) || node.isKind?.(SyntaxKind.NoSubstitutionTemplateLiteral)) {
+        return node.getLiteralText();
+    }
+
+    if (node.isKind?.(SyntaxKind.NumericLiteral)) {
+        return Number(node.getText());
+    }
+
+    if (node.isKind?.(SyntaxKind.TrueKeyword)) return true;
+    if (node.isKind?.(SyntaxKind.FalseKeyword)) return false;
+    if (node.isKind?.(SyntaxKind.NullKeyword)) return null;
+
+    const objectLiteral = resolveObjectLiteralExpression(node);
+    if (objectLiteral) {
+        return parseLiteralObject(objectLiteral);
+    }
+
+    if (node.isKind?.(SyntaxKind.ArrayLiteralExpression)) {
+        return parseLiteralArray(node);
+    }
+
+    return undefined;
+}
+
+function isExportedDeclaration(decl, statement) {
+    if (statement?.isExported?.()) return true;
+    if (decl?.isExported?.()) return true;
+
+    const stmtText = statement?.getText?.() || '';
+    if (typeof stmtText === 'string' && stmtText.trim().startsWith('export ')) return true;
+
+    const declText = decl?.getText?.() || '';
+    if (typeof declText === 'string' && /\bexport\b/.test(declText)) return true;
+
+    return false;
 }

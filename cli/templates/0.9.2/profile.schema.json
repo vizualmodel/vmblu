@@ -41,6 +41,10 @@
         "params": {
           "type": "array",
           "items": { "$ref": "#/$defs/Param" }
+        },
+        "typeErrors": {
+          "type": "array",
+          "items": { "type": "string" }
         }
       }
     },

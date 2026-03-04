@@ -34,10 +34,10 @@ function getProfileModule() {
 
 async function loadProfileModule() {
   try {
-    return await import(bundleUrl);
+    return await import(sourceUrl);
   } catch (err) {
     if (isModuleNotFound(err)) {
-      return import(sourceUrl);
+      return import(bundleUrl);
     }
     throw err;
   }

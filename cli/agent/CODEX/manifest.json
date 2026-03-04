@@ -1,0 +1,16 @@
+{
+  "id": "codex",
+  "displayName": "Codex",
+  "install": {
+    "files": [
+      {
+        "from": "SKILL.md",
+        "toHomeRelative": ".codex/skills/vmblu/SKILL.md"
+      },
+      {
+        "from": "openai.yaml",
+        "toHomeRelative": ".codex/skills/vmblu/agents/openai.yaml"
+      }
+    ]
+  }
+}

@@ -866,6 +866,24 @@ textarea.svelte-ikhghf {
       margin: 0 0 0 1rem;
   }
 
+  .type-status.svelte-1k779on {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.3rem;
+  }
+  .type-status.svelte-1k779on p:where(.svelte-1k779on) {
+      font-family: var(--fFixed);
+      font-size: 0.7rem;
+      white-space: pre-wrap;
+      margin: 0 0 0 1rem;
+  }
+  .type-ok.svelte-1k779on {
+      color: #25b325;
+  }
+  .type-warning.svelte-1k779on {
+      color: #d08a00;
+  }
+
   .prompt.svelte-1k779on {
       display: flex;
       flex-direction: column;
@@ -916,6 +934,12 @@ textarea.svelte-ikhghf {
     display: flex;
     flex-direction: column;
     margin-bottom: 0.5rem;
+    --c-field: #f0fc44;
+    --c-type: #44a3fc;
+    --c-summary: #9bb3c7;
+    --c-kind: #7cc8ff;
+    --c-header: #f0fc44;
+    --c-punct: #6f8191;
   }
 
   .role.svelte-1ie22kd {
@@ -925,8 +949,11 @@ textarea.svelte-ikhghf {
   }
   .role.svelte-1ie22kd p:where(.svelte-1ie22kd) {
     font-family: var(--fFixed);
-    font-size: 0.7rem;
-    color: #f0fc44;
+    font-size: 0.8rem;
+    color: #000000;
+    background: rgb(201, 201, 201);
+    /* padding: 0.3 0 0.2 0rem; */
+    padding:0.1rem;
     margin: 0 0 0 0rem;
   }
 
@@ -938,15 +965,38 @@ textarea.svelte-ikhghf {
     margin: 0 0 0 1rem;
   }
 
+  .line.svelte-1ie22kd {
+    display: flex;
+    flex-wrap: wrap;
+    font-family: var(--fFixed);
+    font-size: 0.7rem;
+    white-space: pre-wrap;
+    margin: 0 0 0.1rem 0;
+    padding-left: calc(var(--indent, 0) * 1rem);
+  }
+  .line.header.svelte-1ie22kd {
+    color: var(--c-header);
+    margin-top: 0.2rem;
+  }
+  .part.field.svelte-1ie22kd { color: var(--c-field); }
+  .part.type.svelte-1ie22kd { color: var(--c-type); }
+  .part.summary.svelte-1ie22kd { color: var(--c-summary); }
+  .part.kind.svelte-1ie22kd { color: var(--c-kind); }
+  .part.punct.svelte-1ie22kd { color: var(--c-punct); }
+
 
 .pin.svelte-11yhn9u {
     display: flex;
     flex-direction: row;
 }
+
 .pin.svelte-11yhn9u p:where(.svelte-11yhn9u) {
     font-family: var(--fFixed);
     font-size: 0.8rem;
-    color: #f0fc44;
+    color: #000000;
+    background: rgb(201, 201, 201);
+    padding:0.1rem;
+    margin: 0 0 0.1 0rem;
 }
 
 

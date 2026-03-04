@@ -1,6 +1,6 @@
 {
-  "version": "0.4.1",
-  "generatedAt": "2026-01-29T11:59:16.081Z",
+  "version": "0.4.3",
+  "generatedAt": "2026-02-18T10:23:50.139Z",
   "entries": [
     {
       "node": "document manager",
@@ -19,6 +19,9 @@
               "type": "ARL",
               "description": "- The ARL of the selected document."
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but got ARL"
           ]
         },
         {
@@ -35,6 +38,9 @@
               "type": "ARL",
               "description": "- ARL for the new document to be created."
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but got ARL"
           ]
         },
         {
@@ -56,6 +62,9 @@
               "type": "string",
               "description": ""
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but handler uses destructured params"
           ]
         },
         {
@@ -72,6 +81,9 @@
               "type": "object",
               "description": "- the event"
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but got object"
           ]
         },
         {
@@ -118,6 +130,9 @@
               "type": "string",
               "description": "- Name of the tab to close."
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but got string"
           ]
         }
       ],
@@ -173,7 +188,7 @@
       "node": "editor",
       "handles": [
         {
-          "pin": null,
+          "pin": "set.document",
           "handler": "onSetDocument",
           "file": "../core/editor/editor-message.js",
           "line": 10,
@@ -189,7 +204,7 @@
           ]
         },
         {
-          "pin": "get document",
+          "pin": "get.document",
           "handler": "onGetDocument",
           "file": "../core/editor/editor-message.js",
           "line": 39,
@@ -199,7 +214,7 @@
           "params": []
         },
         {
-          "pin": "show settings",
+          "pin": "show.settings",
           "handler": "onShowSettings",
           "file": "../core/editor/editor-message.js",
           "line": 44,
@@ -209,30 +224,30 @@
           "params": []
         },
         {
-          "pin": "sync links",
+          "pin": "sync.links",
           "handler": "onSyncLinks",
           "file": "../core/editor/editor-message.js",
-          "line": 80,
+          "line": 81,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "reload model",
+          "pin": "reload.model",
           "handler": "onReloadModel",
           "file": "../core/editor/editor-message.js",
-          "line": 85,
+          "line": 86,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "sync model",
+          "pin": "sync.model",
           "handler": "onSyncModel",
           "file": "../core/editor/editor-message.js",
-          "line": 94,
+          "line": 95,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -242,37 +257,37 @@
           "pin": "recalibrate",
           "handler": "onRecalibrate",
           "file": "../core/editor/editor-message.js",
-          "line": 97,
+          "line": 98,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "grid on off",
+          "pin": "grid.on-off",
           "handler": "onGridOnOff",
           "file": "../core/editor/editor-message.js",
-          "line": 105,
+          "line": 106,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "accept changes",
+          "pin": "accept.changes",
           "handler": "onAcceptChanges",
           "file": "../core/editor/editor-message.js",
-          "line": 116,
+          "line": 117,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "size change",
+          "pin": "size.change",
           "handler": "onSizeChange",
           "file": "../core/editor/editor-message.js",
-          "line": 127,
+          "line": 128,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -285,10 +300,10 @@
           ]
         },
         {
-          "pin": "make lib",
+          "pin": "make.lib",
           "handler": "onMakeLib",
           "file": "../core/editor/editor-message.js",
-          "line": 165,
+          "line": 166,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -301,10 +316,10 @@
           ]
         },
         {
-          "pin": "make app",
+          "pin": "make.app",
           "handler": "onMakeApp",
           "file": "../core/editor/editor-message.js",
-          "line": 190,
+          "line": 191,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -317,76 +332,76 @@
           ]
         },
         {
-          "pin": "run app",
+          "pin": "run.app",
           "handler": "onRunApp",
           "file": "../core/editor/editor-message.js",
-          "line": 219,
+          "line": 220,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "run app in iframe",
+          "pin": "run.app-in-iframe",
           "handler": "onRunAppInIframe",
           "file": "../core/editor/editor-message.js",
-          "line": 231,
+          "line": 232,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "pin profile",
+          "pin": "pin.profile",
           "handler": "onPinProfile",
           "file": "../core/editor/editor-message.js",
-          "line": 251,
+          "line": 252,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "selected node",
+          "pin": "selected.node",
           "handler": "onSelectedNode",
           "file": "../core/editor/editor-message.js",
-          "line": 254,
+          "line": 255,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": [
             {
               "name": "model",
-              "type": "string",
+              "type": "any",
               "description": ""
             },
             {
               "name": "nodePath",
-              "type": "string",
+              "type": "any",
               "description": ""
             },
             {
               "name": "xyLocal",
-              "type": "string",
+              "type": "any",
               "description": ""
             }
           ]
         },
         {
-          "pin": "save point set",
+          "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../core/editor/editor-message.js",
-          "line": 268,
+          "line": 269,
           "summary": "",
           "returns": "",
           "examples": [],
           "params": []
         },
         {
-          "pin": "save point back",
+          "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../core/editor/editor-message.js",
-          "line": 299,
+          "line": 301,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -412,37 +427,37 @@
         {
           "pin": "show lib path",
           "file": "../core/editor/editor-message.js",
-          "line": 181
+          "line": 182
         },
         {
           "pin": "show app path",
           "file": "../core/editor/editor-message.js",
-          "line": 209
+          "line": 210
         },
         {
           "pin": "run",
           "file": "../core/editor/editor-message.js",
-          "line": 224
+          "line": 225
         },
         {
           "pin": "run",
           "file": "../core/editor/editor-message.js",
-          "line": 235
+          "line": 236
         },
         {
           "pin": "iframe",
           "file": "../core/editor/editor-message.js",
-          "line": 244
+          "line": 245
         },
         {
           "pin": "save point confirm",
           "file": "../core/editor/editor-message.js",
-          "line": 277
+          "line": 278
         },
         {
           "pin": "save point confirm",
           "file": "../core/editor/editor-message.js",
-          "line": 309
+          "line": 311
         }
       ]
     },
@@ -460,14 +475,17 @@
           "params": [
             {
               "name": "model",
-              "type": "string",
+              "type": "any",
               "description": ""
             },
             {
               "name": "selection",
-              "type": "string",
+              "type": "any",
               "description": ""
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but handler uses destructured params"
           ]
         },
         {
@@ -518,6 +536,16 @@
           "pin": "switch",
           "file": "../core/model/clipboard.js",
           "line": 69
+        },
+        {
+          "pin": "remote",
+          "file": "../core/model/clipboard.js",
+          "line": 98
+        },
+        {
+          "pin": "remote",
+          "file": "../core/model/clipboard.js",
+          "line": 127
         }
       ]
     },
@@ -584,12 +612,12 @@
         {
           "pin": "pin profile",
           "file": "../core/view/redox-widget.js",
-          "line": 224
+          "line": 218
         },
         {
           "pin": "open source file",
           "file": "../core/view/redox-widget.js",
-          "line": 238
+          "line": 232
         }
       ]
     }

@@ -1,6 +1,6 @@
 {
   "version": "0.4.2",
-  "generatedAt": "2026-02-07T10:57:20.347Z",
+  "generatedAt": "2026-02-07T15:56:44.036Z",
   "entries": [
     {
       "node": "message broker",
@@ -781,12 +781,12 @@
         {
           "pin": "pin profile",
           "file": "../../core/view/redox-widget.js",
-          "line": 224
+          "line": 218
         },
         {
           "pin": "open source file",
           "file": "../../core/view/redox-widget.js",
-          "line": 238
+          "line": 232
         }
       ]
     }

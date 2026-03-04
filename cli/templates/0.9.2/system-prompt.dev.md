@@ -41,7 +41,7 @@ When the vmblu editor is used, two additional derived files are created:
 `<model-name>.src.prf`
 
 `llm/` contains prompts and schemas required for LLM interaction with vmblu projects.
-`nodes/` conventionally contains node source code (projects may deviate).
+`nodes/` conventionally contains node source code.
 
 If the profile file is missing or stale, regenerate it using `vmblu profile`.
 
@@ -51,7 +51,10 @@ All code must be part of a node, there can be no code outside of a node context.
 
 Simple nodes can be a single file inside the nodes/ folder, but multi-file nodes should have their own folder. The name of the folder is the name of the node in that case.
 
-Write well structured code and write sufficient comments that make the intention of the code clear. Example:
+When writing a message handler, always add a JSDoc `@param` tag for each handler parameter (use vmblu type names when possible).
+When sending a message (e.g., `tx.send`), prefer annotating the payload with a JSDoc `@type` using the vmblu type name to make payloads self-describing.
+
+Write well structured code and write comments that make the intention of the code clear. Example:
 
 ```js
    // create the new node - make it the same type as the linked node

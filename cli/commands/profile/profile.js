@@ -65,6 +65,10 @@ export async function profile(argv = process.argv.slice(2)) {
     // Create model object
     const model = new ModelBlueprint(arl);
 
+    // Load raw model and types for contract checks.
+    await model.getRaw();
+    model.preCook();
+
     // create a model compile object - we do not need a uid generator
     const compiler = new ModelCompiler(null);
 
@@ -107,6 +111,11 @@ export async function profile(argv = process.argv.slice(2)) {
         rxtx.push(...nodeArray)
     }
 
+    // Compare handler parameter types with blueprint contracts.
+    const contractIndex = buildContractIndex(model.raw?.root);
+    const typeMap = model.vmbluTypes || {};
+    applyTypeChecks(rxtx, contractIndex, typeMap);
+
     // Assemble the output file path
     // (outPath was resolved earlier based on CLI arguments)
 
@@ -120,6 +129,169 @@ export async function profile(argv = process.argv.slice(2)) {
     // Persist the structured documentation with its header so downstream tools can validate against the schema.
     fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
     console.log(`Documentation written to ${outPath}`);
+}
+
+const TYPECHECK_DEBUG = process.env.VMBLU_PROFILE_TYPECHECK_DEBUG === '1';
+
+function buildContractIndex(root) {
+    const index = new Map();
+    if (!root) return index;
+
+    const visit = (node) => {
+        if (!node?.name) return;
+        if (!index.has(node.name)) index.set(node.name, new Map());
+
+        const pinMap = index.get(node.name);
+        const interfaces = Array.isArray(node.interfaces) ? node.interfaces : [];
+        for (const iface of interfaces) {
+            const pins = Array.isArray(iface.pins) ? iface.pins : [];
+            for (const pin of pins) {
+                if (pin?.name) pinMap.set(pin.name, pin);
+            }
+        }
+
+        if (node.kind === 'group' && Array.isArray(node.nodes)) {
+            node.nodes.forEach(visit);
+        }
+    };
+
+    visit(root);
+    return index;
+}
+
+function applyTypeChecks(entries, contractIndex, typeMap) {
+    if (!Array.isArray(entries)) return;
+
+    for (const entry of entries) {
+        const pinMap = contractIndex.get(entry.node);
+        if (!pinMap) {
+            if (TYPECHECK_DEBUG && entry.node === 'MessageHistory') {
+                console.log('[typecheck-debug] no pinMap for node', entry.node);
+            }
+            continue;
+        }
+
+        for (const handle of entry.handles || []) {
+            const pinName = handle?.pin || derivePinFromHandler(handle?.handler);
+            if (!handle?.pin && pinName) {
+                handle.pin = pinName;
+            }
+            if (!pinName) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] no pinName for handler', handle.handler);
+                }
+                continue;
+            }
+            const pin = pinMap.get(pinName);
+            if (!pin || (pin.kind !== 'input' && pin.kind !== 'reply')) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] pin not found or wrong kind', { pinName, pinKind: pin?.kind });
+                }
+                continue;
+            }
+
+            const expectedType = getExpectedPayloadType(pin);
+            if (!expectedType) {
+                if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                    console.log('[typecheck-debug] no expectedType', { pinName });
+                }
+                continue;
+            }
+
+            const errors = checkHandleAgainstType(handle, expectedType, typeMap);
+            if (errors.length) {
+                handle.typeErrors = errors;
+            }
+            if (TYPECHECK_DEBUG && entry.node === 'MessageHistory' && handle.handler === 'onUiActivate') {
+                console.log('[typecheck-debug]', {
+                    node: entry.node,
+                    handler: handle.handler,
+                    pinName,
+                    expectedType,
+                    params: handle.params,
+                    errors
+                });
+            }
+        }
+    }
+}
+
+function getExpectedPayloadType(pin) {
+    const payload = pin?.contract?.payload;
+    if (!payload) return null;
+    if (typeof payload === 'string') return payload;
+    if (payload && typeof payload === 'object') {
+        return payload.request || payload.reply || null;
+    }
+    return null;
+}
+
+function checkHandleAgainstType(handle, expectedType, typeMap) {
+    const errors = [];
+    const params = Array.isArray(handle.params) ? handle.params : [];
+
+    if (params.length === 0) return errors;
+
+    const typeDef = typeMap?.[expectedType];
+    const fields = typeDef?.fields || null;
+    const firstParam = params.length === 1 ? params[0] : null;
+    const firstParamType = firstParam?.type || 'any';
+    const firstParamName = firstParam?.name || '';
+
+    // single-parameter handlers are valid for plain payload contracts
+    if (firstParam && !fields) {
+        if (!typesCompatible(firstParamType, expectedType)) {
+            errors.push(`typeWarning: expected ${expectedType} but got ${firstParamType}`);
+        }
+        return errors;
+    }
+
+    // structured payload contracts can legitimately arrive as one "payload" object parameter.
+    if (firstParam && fields) {
+        if (typesCompatible(firstParamType, expectedType) || firstParamName === 'payload') {
+            return errors;
+        }
+    }
+
+    if (!fields) {
+        errors.push(`typeWarning: expected ${expectedType} but handler uses destructured params`);
+        return errors;
+    }
+
+    for (const param of params) {
+        const expectedField = fields?.[param.name]?.vmbluType;
+        if (!expectedField) {
+            errors.push(`typeWarning: unexpected field "${param.name}"`);
+            continue;
+        }
+        const actual = param.type || 'any';
+        if (!typesCompatible(actual, expectedField)) {
+            errors.push(`typeWarning: ${param.name} expected ${expectedField} but got ${actual}`);
+        }
+    }
+
+    return errors;
+}
+
+function typesCompatible(actual, expected) {
+    if (!actual) return false;
+    if (expected === 'any') return actual === 'any';
+    if (actual === 'any') return false;
+    return actual === expected;
+}
+
+function derivePinFromHandler(handlerName) {
+    if (!handlerName || typeof handlerName !== 'string') return null;
+    if (handlerName.startsWith('->')) return handlerName.slice(2).trim();
+    if (!handlerName.startsWith('on')) return null;
+
+    const raw = handlerName.slice(2);
+    if (!raw) return null;
+    const words = raw.replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/);
+    if (!words.length) return null;
+    const interfaceName = words[0].toLowerCase();
+    const suffix = words.slice(1).map(w => w.toLowerCase()).join('-');
+    return suffix ? `${interfaceName}.${suffix}` : interfaceName;
 }
 
 function normalizePathValue(value) {

@@ -40,7 +40,7 @@ export async function makePackageJson({
       "@vizualmodel/vmblu-runtime": "^0.1.0"
     },
     devDependencies : {
-      "@vizualmodel/vmblu-cli": "^0.3.3",
+      "@vizualmodel/vmblu-cli": "^0.4.3",
       "typescript": "^5.9.3",
       "vite": "^7.1.12",
       // "ts-morph": "^26.0.0",

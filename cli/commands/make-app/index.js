@@ -51,6 +51,7 @@ export const handler = async (argv) => {
   // Build the model root via the compiler.
   const arl = new ARL(modelPath);
   const model = new ModelBlueprint(arl);
+  await model.handleSourceMap();
   const compiler = new ModelCompiler(new UIDGenerator());
 
   // Compile the model into a root node.
@@ -106,3 +107,4 @@ function parseCliArgs(argvInput) {
 
   return result;
 }
+

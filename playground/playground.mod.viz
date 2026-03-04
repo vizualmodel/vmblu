@@ -1,6 +1,6 @@
 {
   "header": {
-    "schema": "0.9.1",
+    "version": "no version",
     "utc": "2025-12-16T09:49:03.571Z",
     "style": "#291f32"
   },
@@ -10,7 +10,7 @@
     "rect": "x 1061 y 0 w 115 h 26",
     "view": {
       "state": "open",
-      "rect": "x 0 y 0 w 1668 h 1326",
+      "rect": "x 0 y 0 w 1526 h 1326",
       "transform": "sx 1.000 sy 1.000 dx -105.469 dy 164.331"
     },
     "nodes": [
@@ -196,7 +196,7 @@
         "view": {
           "state": "open",
           "rect": "x 197 y -41 w 2619 h 1168",
-          "transform": "sx 1.005 sy 1.005 dx 27.775 dy -57.289"
+          "transform": "sx 1.005 sy 1.005 dx -160.225 dy -30.289"
         },
         "interfaces": [
           {

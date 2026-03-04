@@ -166,8 +166,8 @@ export const proxyHandling = {
         // create the pad
         const pad = new Pad(rect, proxy)
 
-        // add a new UID to the pad (when loading a file the doc has not been set yet !)
-        editor.doc?.UID.generate(pad)
+        // In headless CLI flows (e.g. make-app), the editor singleton may be absent.
+        editor?.doc?.UID?.generate?.(pad)
  
         // save
         this.pads.push(pad)     

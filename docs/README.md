@@ -1,17 +1,15 @@
 ![logo](./assets/vmblu-header.png)
 
-**vmblu** is a tool that makes the architecture of your software explicit and easy to navigate — by humans *and* LLMs. 
-
 Modern LLMs make it easy to “vibe code”. But as your app grows, features break, code bloat creeps in and the big picture fades.
-
-**vmblu** fixes that by making your *architecture* **structured, visual, and AI-native**.
 
 With **vmblu**, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■   What is vmblu?</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞  What is vmblu?</b></span><br>
 
-**vmblu** is a combination of a graphical editor, file format specs and prompts for building software as a **network of message-passing nodes** in collaboration with an LLM.
+**vmblu** is a combination of a graphical editor, file formats and context for building complex software in with an coding agent (LLM).
+
+**vmblu** is for developers who understand that AI changes how software is built — and who want architecture that keeps AI correct, safe, and observable.
 
 It’s:
 
@@ -22,29 +20,12 @@ It’s:
 
 The **vmblu model** is not documentation, it is the actual system.
 
----
-<span style="font-size:1.4em; color:#0066ff;"><b>■ The Editor</b></span><br>
-
-The **vmblu editor** lets the human and the LLM work together on the architecture of a system:
-
-- Create and connect nodes visually  
-- Define message I/O via **pins**  
-- Group subsystems into **group nodes**  
-- Reuse components via **linked nodes** or **standard libraries**  
-- Jump from the architecture file into the source code details instantly  
-
-**vmblu** achieves clean connectivity by using
-
-- **Busbars** — broadcast to all connected nodes  
-- **Cables** — selective point-to-point  
-- **Filters** — dynamic dispatch
-
-The following is a screenshot from an application in vmblu:
+Screenshot from an application in vmblu:
 
 ![example of a vmblu model](./assets/vmblu-screenshot.png)
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■ AI-native by design</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞ AI-native by design</span></b><br>
 
 **vmblu** was designed to let LLMs do the work, but to keep the human in the driver seat.
 
@@ -53,7 +34,7 @@ The following is a screenshot from an application in vmblu:
 - **vmblu** can generate an [MCP](https://github.com/modelcontext) tools file to call into a running system allowing to have an instant AI-based user interface at a granular level for your application.
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■ AI generated code poses new challenges</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞ AI generated code poses new challenges</b></span><br>
 
 When code is written or co-written by LLMs, the nature of risk changes. LLMs make far fewer syntax errors or trivial logic mistakes than human developers, but
 the bigger challenges are:
@@ -64,7 +45,7 @@ the bigger challenges are:
 **vmblu** gives you the tool you need to address these new challenges. Working from an explicit, shared architecture allows you to understand and test your system in the age of AI.
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■ For developers</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞ For developers</b></span><br>
 
 **vmblu** is a tool targeted at developers whose role is changing with the arrival of powerful AI.
 
@@ -76,7 +57,7 @@ the bigger challenges are:
 - Live reconfiguration and testing  
 - AI collaboration through structure-aware tools  
 
-Migrating an application to a **vmblu** based design is also not complicated. The vmblu editor itself is now a vmblu application.
+Migrating an application to a **vmblu** based design is not complicated. The vmblu editor itself is a vmblu application.
 
 **Message-based architectures** — the foundation of vmblu — bring their own advantages:
 
@@ -97,16 +78,16 @@ The tool will further evolve to address the new possibilities and challenges in 
 💬 Found something? Please open an issue or discussion on [GitHub](https://github.com/vizualmodel/vmblu/issues).
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■ Quick start</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞  Quick start</b></span><br>
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/)  
 - Add the runtime and cli with: `npm install @vizualmodel/vmblu-runtime @vizualmodel/vmblu-cli`  
 - Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
 
 ---
-<span style="font-size:1.4em; color:#0066ff;"><b>■ Contribute</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞  Contribute</b></span><br>
 
-We welcome contributions from everyone! Here are the best ways to connect with us:
+We welcome contributions ! Here are the best ways to connect with us:
 
 * **Public Discussions & Questions:** If you have an idea, a general question, or need support, please start a topic in our **[Discussions Tab]** (link to your repo's Discussions tab).
 * **Actionable Work:** Found a bug or want to implement a feature? Check the **[Issues Tab]** to see what's being worked on.
@@ -114,7 +95,7 @@ We welcome contributions from everyone! Here are the best ways to connect with u
 
 Read our full Contribution Guide here [Contribute](./CONTRIBUTE.md)
 
-<span style="font-size:1.4em; color:#0066ff;"><b>■ Open source</b></span><br>
+<span style="font-size:1.4em; color:#0066ff;"><b>▞ Open source</b></span><br>
 
 * **vmblu** is and will remain open source
 * **vmblu** is licensed under the [Apache License 2.0](./LICENSE.txt).

@@ -64,6 +64,7 @@ export const messageHandling = {
             pos: { x: 25, y: 25 },
             onColor(rgb) {
                 header.style.adapt(rgb);
+                //header.style.adaptinteractive(rgb);
                 redraw();
             },
             ok(runtime) {

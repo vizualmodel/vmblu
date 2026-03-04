@@ -1,6 +1,6 @@
 {
   "header": {
-    "schema": "0.9.1",
+    "version": "no version",
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
@@ -36,28 +36,32 @@
                 "name": "open document",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "set document",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "get document",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "reply document",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -69,28 +73,32 @@
                 "name": "sync links",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "reload model",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "new edit",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "open js file",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -102,28 +110,32 @@
                 "name": "floating menu",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "canvas",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "canvas resize",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -135,28 +147,32 @@
                 "name": "clipboard local",
                 "kind": "request",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "clipboard remote",
                 "kind": "reply",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "clipboard switched",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "clipboard switch",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -180,14 +196,16 @@
                 "name": "context menu",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -209,14 +227,16 @@
                 "name": "path",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -238,7 +258,8 @@
                 "name": "div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -250,63 +271,72 @@
                 "name": "sync",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "accept changes",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "recalibrate",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "grid on-off",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "set save point",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "back to save point",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "make lib",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "make app",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -384,14 +414,16 @@
                 "name": "text",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -413,14 +445,16 @@
                 "name": "json",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -442,14 +476,16 @@
                 "name": "name and path",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -471,14 +507,16 @@
                 "name": "show",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -496,28 +534,32 @@
                 "name": "select node",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "node",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "switch library",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -540,49 +582,56 @@
                     "name": "selected node",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "show",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "build table",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "remove file",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "add file",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "get path",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "modal div",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   }
                 ]
@@ -604,28 +653,32 @@
                     "name": "switch library",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "build table",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "remove file",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "add file",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   }
                 ]
@@ -648,14 +701,16 @@
                     "name": "path",
                     "kind": "input",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   },
                   {
                     "name": "modal div",
                     "kind": "output",
                     "contract": {
-                      "role": "follower"
+                      "role": "follower",
+                      "payload": "any"
                     }
                   }
                 ]
@@ -766,14 +821,16 @@
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -797,42 +854,48 @@
                 "name": "switch",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "switched",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "remote",
                 "kind": "request",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "local",
                 "kind": "reply",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "get",
                 "kind": "reply",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "set",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -856,42 +919,48 @@
                 "name": "accept changes",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "sync links",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "reload model",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "recalibrate",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "grid on-off",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show settings",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -903,21 +972,24 @@
                 "name": "open document",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "set document",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "document settings",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -929,21 +1001,24 @@
                 "name": "save point set",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "save point back",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "save point confirm",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -955,7 +1030,8 @@
                 "name": "new edit",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -967,14 +1043,16 @@
                 "name": "make lib",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show lib path",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -986,42 +1064,48 @@
                 "name": "make app",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show app path",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "run app",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "run app in iframe",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "run",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "open source file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1033,7 +1117,8 @@
                 "name": "show context menu",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1045,14 +1130,16 @@
                 "name": "runtime settings",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "settings",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1064,21 +1151,24 @@
                 "name": "show link",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show filter",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "show factory",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1090,14 +1180,16 @@
                 "name": "node comment",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "pin profile",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1109,14 +1201,16 @@
                 "name": "clipboard get",
                 "kind": "request",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "clipboard set",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1128,28 +1222,32 @@
                 "name": "select node",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "selected node",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "change library",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "add lib file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1161,14 +1259,16 @@
                 "name": "canvas",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "size change",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1190,14 +1290,16 @@
                 "name": "show",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1219,14 +1321,16 @@
                 "name": "show",
                 "kind": "input",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
-                  "role": "follower"
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
