@@ -327,7 +327,7 @@
                         "kind": "dock",
                         "name": "sun",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "star"
                         },
                         "interfaces": [
@@ -450,7 +450,7 @@
                         "kind": "dock",
                         "name": "mercury",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet"
                         },
                         "interfaces": [
@@ -580,7 +580,7 @@
                         "kind": "dock",
                         "name": "mars",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet"
                         },
                         "interfaces": [
@@ -710,7 +710,7 @@
                         "kind": "dock",
                         "name": "saturn",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet with rings"
                         },
                         "interfaces": [
@@ -841,7 +841,7 @@
                         "kind": "dock",
                         "name": "uranus",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet"
                         },
                         "interfaces": [
@@ -971,7 +971,7 @@
                         "kind": "dock",
                         "name": "neptune",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet"
                         },
                         "interfaces": [
@@ -1101,7 +1101,7 @@
                         "kind": "dock",
                         "name": "venus",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "planet"
                         },
                         "interfaces": [
@@ -1382,7 +1382,7 @@
                                 "kind": "dock",
                                 "name": "earth",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "planet"
                                 },
                                 "interfaces": [
@@ -1512,7 +1512,7 @@
                                 "kind": "dock",
                                 "name": "the moon",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "moon"
                                 },
                                 "interfaces": [
@@ -2049,7 +2049,7 @@
                                 "kind": "dock",
                                 "name": "jupiter",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "planet"
                                 },
                                 "interfaces": [
@@ -2179,7 +2179,7 @@
                                 "kind": "dock",
                                 "name": "Io",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "moon"
                                 },
                                 "interfaces": [
@@ -2293,7 +2293,7 @@
                                 "kind": "dock",
                                 "name": "Europa",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "moon"
                                 },
                                 "interfaces": [
@@ -2407,7 +2407,7 @@
                                 "kind": "dock",
                                 "name": "Callisto",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "moon"
                                 },
                                 "interfaces": [
@@ -2521,7 +2521,7 @@
                                 "kind": "dock",
                                 "name": "Ganymede",
                                 "link": {
-                                    "path": "./",
+                                    "path": "",
                                     "node": "moon"
                                 },
                                 "interfaces": [

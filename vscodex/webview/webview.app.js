@@ -1,98 +1,262 @@
 // ------------------------------------------------------------------
-// Model: webview
-// Path: webview.app.js
-// Creation date 1/23/2026, 1:56:32 PM
+// Model: 
+// Path: /vscodex/webview/webview.app.js
+// Creation date 3/27/2026, 10:56:44 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
 import * as VMBLU from "../../runtime/src/scaffold.js"
 
+
 //Imports
 import { MessageBroker } from './message-broker.js'
-import { ContextMenuFactory,
-		 PathRequestFactory,
-		 VscodeSideMenuFactory,
-		 TextBlockFactory,
+import { ViewManager } from '../../core/nodes/view-manager/view-manager.js'
+import { ModelManager } from '../../core/nodes/model-manager/model-manager.js'
+import { Clipboard } from '../../core/nodes/clipboard/clipboard.js'
+import { PathRequestFactory,
 		 JsonInputFactory,
 		 NameAndPathFactory,
 		 PinProfileFactory,
-		 NodeSelectorFactory,
+		 TextBlockFactory,
 		 DocumentSettingsFactory,
+		 ContextMenuFactory,
+		 RuntimeSettingsFactory,
 		 ConfirmBox,
-		 RuntimeSettingsFactory } from '../../ui/index.js'
-import { LibraryManager,
-		 Clipboard,
-		 EditorFactory } from '../../core/index.js'
+		 VscodeSideMenuFactory } from '../../ui-svelte/index.js'
 
 //The runtime nodes
 const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker", 
-	uid: "gOYl", 
+	uid: "dnEn", 
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
 		"-> reply document",
 		"-> new edit",
 		"-> open js file",
-		"-> floating menu",
 		"-> canvas",
+		"-> floating menu",
 		"-> modal div",
-		"=> clipboard remote",
-		"-> clipboard switch"
+		"=> clipboard.remote",
+		"-> clipboard.switch"
 		],
 	outputs: [
-		"set document -> set document @ editor (ufkp)",
+		`set document -> [ 
+			"top level view @ view manager (pJwL)",
+			"model.set @ model manager (geCz)" ]`,
 		"get document -> ()",
-		"sync links -> sync links @ editor (ufkp)",
-		"reload model -> reload model @ editor (ufkp)",
-		"canvas resize -> size change @ editor (ufkp)",
-		"clipboard local => local @ clipboard (zlzo)",
-		"clipboard switched -> switched @ clipboard (zlzo)"
+		"reload model -> ()",
+		"sync links -> sync links @ model manager (geCz)",
+		"canvas resize -> size change @ view manager (pJwL)",
+		"clipboard.local => local @ clipboard (PbnE)",
+		"clipboard.switched -> switched @ clipboard (PbnE)"
 		]
 	},
-	//________________________________________________CONTEXT MENU
+	//________________________________________________VIEW MANAGER
 	{
-	name: "context menu", 
-	uid: "vitM", 
-	factory: ContextMenuFactory,
+	name: "view manager", 
+	uid: "pJwL", 
+	factory: ViewManager,
 	inputs: [
-		"-> context menu"
+		"-> redox.done",
+		"-> root",
+		"-> recalibrate",
+		"-> top level view",
+		"-> grid on-off",
+		"-> size change"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
+		"redox.doit -> redox.doit @ model manager (geCz)",
+		"redox.undo -> redox.undo @ model manager (geCz)",
+		"redox.redo -> redox.redo @ model manager (geCz)",
+		"canvas -> canvas @ message broker (dnEn)",
+		"node settings (sx) -> json @ node settings (cGCm)",
+		"runtime settings (dx) -> show @ runtime settings (glFX)",
+		"node prompt -> text @ text block (wKUF)",
+		"context menu -> context menu @ context menu (lIYM)",
+		"name and path -> name and path @ name and path (vbLi)",
+		"open model -> open document @ message broker (dnEn)",
+		"open source file -> open js file @ message broker (dnEn)",
+		"clipboard.get => get @ clipboard (PbnE)",
+		"clipboard.set -> set @ clipboard (PbnE)"
+		]
+	},
+	//_______________________________________________MODEL MANAGER
+	{
+	name: "model manager", 
+	uid: "geCz", 
+	factory: ModelManager,
+	inputs: [
+		"-> sync links",
+		"-> accept changes",
+		"-> show settings",
+		"-> make app",
+		"-> make lib",
+		"-> reload model",
+		"-> save point.set",
+		"-> save point.back",
+		"-> model.save",
+		"-> model.set",
+		"-> redox.doit",
+		"-> redox.undo",
+		"-> redox.redo"
+		],
+	outputs: [
+		"save point.confirm -> show @ confirm box (ZeXe)",
+		"open source file -> open js file @ message broker (dnEn)",
+		"open model -> ()",
+		"model.root -> root @ view manager (pJwL)",
+		"model.header -> show @ doc settings (pUUK)",
+		`redox.done -> [ 
+			"redox.done @ view manager (pJwL)",
+			"new edit @ message broker (dnEn)" ]`,
+		"pin profile -> show @ pin profile (YNfS)",
+		"get path -> path @ path request (XLbp)"
+		]
+	},
+	//___________________________________________________CLIPBOARD
+	{
+	name: "clipboard", 
+	uid: "PbnE", 
+	factory: Clipboard,
+	inputs: [
+		"-> set",
+		"=> get",
+		"=> local",
+		"-> switched"
+		],
+	outputs: [
+		"remote => clipboard.remote @ message broker (dnEn)",
+		"switch -> clipboard.switch @ message broker (dnEn)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "wehE", 
+	uid: "XLbp", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
+		"modal div -> modal div @ message broker (dnEn)"
 		]
 	},
-	//___________________________________________________SIDE MENU
+	//_______________________________________________NODE SETTINGS
 	{
-	name: "side menu", 
-	uid: "ceVw", 
+	name: "node settings", 
+	uid: "cGCm", 
+	factory: JsonInputFactory,
+	inputs: [
+		"-> json"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//_______________________________________________NAME AND PATH
+	{
+	name: "name and path", 
+	uid: "vbLi", 
+	factory: NameAndPathFactory,
+	inputs: [
+		"-> name and path"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//_________________________________________________PIN PROFILE
+	{
+	name: "pin profile", 
+	uid: "YNfS", 
+	factory: PinProfileFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//__________________________________________________TEXT BLOCK
+	{
+	name: "text block", 
+	uid: "wKUF", 
+	factory: TextBlockFactory,
+	inputs: [
+		"-> text"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//________________________________________________DOC SETTINGS
+	{
+	name: "doc settings", 
+	uid: "pUUK", 
+	factory: DocumentSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//________________________________________________CONTEXT MENU
+	{
+	name: "context menu", 
+	uid: "lIYM", 
+	factory: ContextMenuFactory,
+	inputs: [
+		"-> context menu"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//____________________________________________RUNTIME SETTINGS
+	{
+	name: "runtime settings", 
+	uid: "glFX", 
+	factory: RuntimeSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//_________________________________________________CONFIRM BOX
+	{
+	name: "confirm box", 
+	uid: "ZeXe", 
+	factory: ConfirmBox,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (dnEn)"
+		]
+	},
+	//____________________________________________VSCODE SIDE MENU
+	{
+	name: "vscode side menu", 
+	uid: "FFfM", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (gOYl)",
-		"sync -> sync links @ editor (ufkp)",
-		"accept changes -> accept changes @ editor (ufkp)",
-		"recalibrate -> recalibrate @ editor (ufkp)",
-		"grid on-off -> grid on-off @ editor (ufkp)",
-		"show settings -> show settings @ editor (ufkp)",
-		"set save point -> save point set @ editor (ufkp)",
-		"back to save point -> save point back @ editor (ufkp)",
-		"make lib -> make lib @ editor (ufkp)",
-		"make app -> make app @ editor (ufkp)"
+		"div -> floating menu @ message broker (dnEn)",
+		"sync -> sync links @ model manager (geCz)",
+		"accept changes -> accept changes @ model manager (geCz)",
+		"show settings -> show settings @ model manager (geCz)",
+		"make app -> make app @ model manager (geCz)",
+		"make lib -> make lib @ model manager (geCz)",
+		"set save point -> save point.set @ model manager (geCz)",
+		"back to save point -> save point.back @ model manager (geCz)",
+		"recalibrate -> recalibrate @ view manager (pJwL)",
+		"grid on-off -> grid on-off @ view manager (pJwL)"
 		],
 	sx:	[
 		    {
@@ -149,196 +313,6 @@ const nodeList = [
 		        "message": "show settings",
 		        "help": "Settings"
 		    }
-		]
-	},
-	//__________________________________________________TEXT BLOCK
-	{
-	name: "text block", 
-	uid: "GQyT", 
-	factory: TextBlockFactory,
-	inputs: [
-		"-> text"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//_______________________________________________NODE SETTINGS
-	{
-	name: "node settings", 
-	uid: "JiRc", 
-	factory: JsonInputFactory,
-	inputs: [
-		"-> json"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//_______________________________________________NAME AND PATH
-	{
-	name: "name and path", 
-	uid: "gTBc", 
-	factory: NameAndPathFactory,
-	inputs: [
-		"-> name and path"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//____________________________________________PROFILE SETTINGS
-	{
-	name: "profile settings", 
-	uid: "YEDD", 
-	factory: PinProfileFactory,
-	inputs: [
-		"-> show"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//_______________________________________________NODE SELECTOR
-	{
-	name: "node selector", 
-	uid: "ztSv", 
-	factory: NodeSelectorFactory,
-	inputs: [
-		"-> show",
-		"-> build table"
-		],
-	outputs: [
-		"selected node -> selected node @ editor (ufkp)",
-		"remove file -> remove file @ library manager (wOum)",
-		"add file -> add file @ library manager (wOum)",
-		"get path -> path @ path request (tNqP)",
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//_____________________________________________LIBRARY MANAGER
-	{
-	name: "library manager", 
-	uid: "wOum", 
-	factory: LibraryManager,
-	inputs: [
-		"-> switch library",
-		"-> remove file",
-		"-> add file"
-		],
-	outputs: [
-		"build table -> build table @ node selector (ztSv)"
-		]
-	},
-	//________________________________________________PATH REQUEST
-	{
-	name: "path request", 
-	uid: "tNqP", 
-	factory: PathRequestFactory,
-	inputs: [
-		"-> path"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//________________________________________________DOC SETTINGS
-	{
-	name: "doc settings", 
-	uid: "SYpQ", 
-	factory: DocumentSettingsFactory,
-	inputs: [
-		"-> show"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//___________________________________________________CLIPBOARD
-	{
-	name: "clipboard", 
-	uid: "zlzo", 
-	factory: Clipboard,
-	inputs: [
-		"-> switched",
-		"=> local",
-		"=> get",
-		"-> set"
-		],
-	outputs: [
-		"switch -> clipboard switch @ message broker (gOYl)",
-		"remote => clipboard remote @ message broker (gOYl)"
-		]
-	},
-	//______________________________________________________EDITOR
-	{
-	name: "editor", 
-	uid: "ufkp", 
-	factory: EditorFactory,
-	inputs: [
-		"-> accept changes",
-		"-> sync links",
-		"-> reload model",
-		"-> recalibrate",
-		"-> grid on-off",
-		"-> show settings",
-		"-> set document",
-		"-> save point set",
-		"-> save point back",
-		"-> make lib",
-		"-> make app",
-		"-> run app",
-		"-> run app in iframe",
-		"-> selected node",
-		"-> size change"
-		],
-	outputs: [
-		"open document -> open document @ message broker (gOYl)",
-		"document settings -> show @ doc settings (SYpQ)",
-		"save point confirm -> show @ confirm box (gNdb)",
-		"new edit -> new edit @ message broker (gOYl)",
-		"show lib path -> path @ path request (wehE)",
-		"show app path -> path @ path request (wehE)",
-		"run -> ()",
-		"open source file -> open js file @ message broker (gOYl)",
-		"show context menu -> context menu @ context menu (vitM)",
-		"runtime settings -> show @ runtime settings (JRLW)",
-		"settings -> json @ node settings (JiRc)",
-		"show link -> name and path @ name and path (gTBc)",
-		"show filter -> name and path @ name and path (gTBc)",
-		"show factory -> name and path @ name and path (gTBc)",
-		"node comment -> text @ text block (GQyT)",
-		"pin profile -> show @ profile settings (YEDD)",
-		"clipboard get => get @ clipboard (zlzo)",
-		"clipboard set -> set @ clipboard (zlzo)",
-		"select node -> show @ node selector (ztSv)",
-		"change library -> switch library @ library manager (wOum)",
-		"add lib file -> ()",
-		"canvas -> canvas @ message broker (gOYl)"
-		]
-	},
-	//_________________________________________________CONFIRM BOX
-	{
-	name: "confirm box", 
-	uid: "gNdb", 
-	factory: ConfirmBox,
-	inputs: [
-		"-> show"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
-		]
-	},
-	//____________________________________________RUNTIME SETTINGS
-	{
-	name: "runtime settings", 
-	uid: "JRLW", 
-	factory: RuntimeSettingsFactory,
-	inputs: [
-		"-> show"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (gOYl)"
 		]
 	},
 ]

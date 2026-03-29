@@ -2,10 +2,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ModelBlueprint, ModelCompiler } from '../../../core/model/index.js';
-import { ARL } from '../../../core/arl/arl-node.js';
-import { UIDGenerator } from '../../../core/document/uid-generator.js';
-import { normalizeSeparators } from '../../../core/arl/path.js';
+import { ModelBlueprint, ModelCompiler, UIDGenerator } from '../../../core/types/model/index.js';
+import { ARL } from '../../../core/types/arl/arl-node.js';
+import { normalizeSeparators } from '../../../core/types/arl/path.js';
 
 export const command = 'make-test <model-file>';
 export const describe = 'Generate test app files from a model';

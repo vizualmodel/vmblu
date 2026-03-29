@@ -26,7 +26,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 	};
 
 	// flags for the document
-	public flags = documentFlags.LOGVSCODE;
+	public flags = 0;
 
 	// event emitter for edits
 	private readonly _didEdit = new vscode.EventEmitter<SomeEdit>;

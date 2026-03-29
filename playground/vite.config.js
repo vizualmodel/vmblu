@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import string from 'vite-plugin-string';
 
 const production = process.env.NODE_ENV === 'production';
 
@@ -12,38 +11,20 @@ export default defineConfig({
       },
       emitCss: true,
     }),
-    string({
-      include: ['**/*.blu', '**/*.txt'], // Added support for .txt
-    }),
   ],
   build: {
-    sourcemap: true, // !production,
-    minify: production ? 'esbuild' : false, // Use esbuild for faster builds
-    emptyOutDir: false, // Clean output directory before building
-    outDir: './out', // Set the output directory
+    sourcemap: true,
+    minify: production ? 'esbuild' : false,
+    emptyOutDir: false,
+    outDir: './out',
     rollupOptions: {
       input: 'playground.app.js',
       output: {
         format: 'es',
-        entryFileNames: '[name]-bundle.js', // Remove hash
-        chunkFileNames: '[name]-chunk.js', // Remove hash
-        assetFileNames: '[name]-bundle.[ext]', // Remove hash
+        entryFileNames: '[name]-bundle.js',
+        chunkFileNames: '[name]-chunk.js',
+        assetFileNames: '[name]-bundle.[ext]',
       },
     },
   },
-  resolve: {
-    alias: {
-      '@': '/src', // Optional alias
-    },
-  },
-  server: {
-    watch: {
-      clearScreen: true,
-    },
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost'
-    },
-  },
-  publicDir: '../public', 
 });

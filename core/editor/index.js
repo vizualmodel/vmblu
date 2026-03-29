@@ -1,1 +1,0 @@
-export {EditorFactory, editor} from './editor.js'

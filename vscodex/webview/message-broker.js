@@ -6,7 +6,7 @@
 // ------------------------------------------------------------------
 
 import {adaptARL, vscode} from './arl-adapter.js'
-import {ARL} from '../../core/arl/index.js'
+import {ARL, Path} from '../../core/types/arl/index.js'
 import {adaptConsole} from './console-adapter.js'
 import {messageBrokerVscode} from './message-broker-vscode.js'
 import {messageBrokerWebview} from './message-broker-webview.js'
@@ -28,7 +28,7 @@ export function MessageBroker(tx, sx) {
 	this.activeDoc = null
 
 	// the document flags set by the vscode document
-	this.documentFlags = 0x0
+	this.documentFlags = LOGVSCODE//0x0
 
 	// the resize id
 	this.resizing = 0
@@ -62,21 +62,19 @@ MessageBroker.prototype = {
 
 	// resolves a uri string to an arl
 	makeArl(uri) {
-		
-		// get the filename from the uri
-		let lastSlash = uri.lastIndexOf('/')
 
-		// make a userPath from the uri - take the last name
-		const userPath = (lastSlash < 0) ? uri : uri.slice(lastSlash+1)
-
-		// make an arl
-		const arl = new ARL(userPath)
-
-		// set the url for the document
-		arl.url = uri
-
-		// done
-		return arl
+		try {
+			const url = new URL(uri)
+			const arl = new ARL(Path.normalizeSeparators(decodeURIComponent(url.pathname)))
+			arl.url = uri
+			return arl
+		}
+		catch {
+			const normalized = Path.normalizeSeparators(uri)
+			const arl = new ARL(normalized)
+			arl.url = uri
+			return arl
+		}
 	},
 }
 Object.assign(  MessageBroker.prototype, messageBrokerWebview, messageBrokerVscode);

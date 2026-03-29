@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 
 // Native
 import fs from 'fs';
@@ -10,9 +10,9 @@ import ts from 'typescript';
 import { Project } from 'ts-morph';
 
 // vmblu
-import { ModelBlueprint, ModelCompiler } from '../../../core/model/index.js';
-import { ARL } from '../../../core/arl/arl-node.js'
-import { normalizeSeparators } from '../../../core/arl/path.js';
+import { ModelBlueprint, ModelCompiler } from '../../../core/types/model/index.js';
+import { ARL } from '../../../core/types/arl/arl-node.js'
+import { normalizeSeparators } from '../../../core/types/arl/path.js';
 
 // profile tool
 import {findHandlers} from './find-handlers.js'
@@ -72,11 +72,8 @@ export async function profile(argv = process.argv.slice(2)) {
     // create a model compile object - we do not need a uid generator
     const compiler = new ModelCompiler(null);
 
-    // get all the factories that are refernced in the model and submodels
-    await compiler.getFactoriesAndModels(model);
-
-    // extract the factories
-    const factories = compiler.factories.map.values();
+    // get all the factories that are referenced in the model and linked submodels
+    const factories = (await compiler.getFactories(model)).map.values();
 
     // setup the ts-morph project with the factory files
     const project = setupProject(factories)

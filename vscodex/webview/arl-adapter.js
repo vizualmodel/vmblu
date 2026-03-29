@@ -1,12 +1,6 @@
 /* eslint-disable no-undef */
 // import arl to change some of the functions
-import {ARL, Path} from '../../core/arl/index.js';
-
-// *************************************************************************************
-// In the case of vscode extension, the url is the string path for the arl !! 
-// It is **not** a uri structure 
-// the string is converted from and to uri by using vscode.parse(uri) / uri.toString()
-// *************************************************************************************
+import {ARL, Path} from '../../core/types/arl/index.js';
 
 export const vscode = acquireVsCodeApi();
 let rqKey = 1;
@@ -24,66 +18,60 @@ export function adaptARL() {
 // The list of methods that need to be changed...
 const vscodeARLmethods = {
 
-	// set the user path as ./last
 	absolute(url) {
+		const asString = typeof url === 'string' ? url : String(url);
+		let locator = asString;
+		try {
+			locator = Path.normalizeSeparators(decodeURIComponent(new URL(asString).pathname));
+		}
+		catch {}
 
-		// find the last slash
-		const slash = url.lastIndexOf('/');
-
-		// make the userpath
-		this.userPath = slash >= 0 ? '.' + url.slice(slash) : url;
-
-		// set the url
+		this._locator = locator;
 		this.url = url;
 
-		// return the arl
 		return this;
 	},
 
 	// resolves a userpath wrt this arl - returns a new arl
 	resolve(userPath) {
 
-		// if the filepath has backslashes it is a native windows format that has to be adapted
-		if (userPath.indexOf('\\') > -1) return this.nativeWindows(userPath);
+		const normalizedPath = Path.normalizeSeparators(userPath);
+		if (!normalizedPath?.length) return this.copy();
 
-		// make a new arl
-		const arl = new ARL(userPath);
+		// absolute native windows path
+		if (/^[a-zA-Z]:\//.test(normalizedPath)) return this.nativeWindows(normalizedPath);
 
-		// make the url from this url and the user path
-		arl.url = Path.absolute(userPath, this.url);
+		// absolute uri or rooted path
+		if (Path.getKind(normalizedPath) === Path.Kind.Absolute) {
+			if (/^[a-zA-Z]+:\/\//.test(normalizedPath)) return new ARL(normalizedPath).absolute(normalizedPath);
 
+			const arl = new ARL(normalizedPath);
+			arl.url = this.makeFileUri(normalizedPath);
+			return arl;
+		}
 
-		// done
+		// relative path: resolve against the current uri
+		if (!this.url) return null;
+
+		const url = new URL(normalizedPath, this.url).toString();
+		const arl = new ARL(Path.absolute(normalizedPath, this.getPath()));
+		arl.url = url;
+
 		return arl;
 	},
 
 	// absolute native windows format (mainly from the documentation)
 	nativeWindows(windowsPath) {
 
-		// change backslashes to forward slashes
-		windowsPath = Path.normalizeSeparators(windowsPath);
-
-		// change the ':' to '%3A'
-		if (windowsPath.indexOf(':') > -1) windowsPath = windowsPath.replace(/:/g,'%3A');
-
-		// find the last slash
-		const slash = windowsPath.lastIndexOf('/');
-
-		// make the userpath
-		const userPath = slash >= 0 ? '.' + windowsPath.slice(slash) : url;
-
-		// create a url
-		const arl = new ARL(userPath);
-
-		// and set the url
-		arl.url = 'file:///' + windowsPath;
-
+		const normalizedPath = Path.normalizeSeparators(windowsPath);
+		const arl = new ARL(normalizedPath);
+		arl.url = this.makeFileUri(normalizedPath);
 		return arl;
 	},
 
 	// two arl are equal if the url are equal
 	equals(arl) {
-		return this.url && arl.url ? (this.url == arl.url) : false;
+		return !!(this.url && arl?.url && (this.url === arl.url));
 	},
 
 	// returns true if both files are in the same directory
@@ -99,14 +87,30 @@ const vscodeARLmethods = {
 
 	// returns a copy of this arl
 	copy() {
-		const arl = new ARL(this.userPath);
-		arl.url = this.url.slice();
+		const arl = new ARL(this._locator);
+		arl.url = this.url ? this.url.slice() : null;
 		return arl;
 	},
 
 	// returns the full path of the vscode uri
 	getFullPath() {
-		return this.url;
+		if (this.url) {
+			try {
+				return Path.normalizeSeparators(decodeURIComponent(new URL(this.url).pathname));
+			}
+			catch {}
+		}
+		return this._locator;
+	},
+
+	getPath() {
+		return this._locator;
+	},
+
+	makeFileUri(filePath) {
+		const normalizedPath = Path.normalizeSeparators(filePath);
+		const prefixed = normalizedPath.startsWith('/') ? normalizedPath : '/' + normalizedPath;
+		return 'file://' + encodeURI(prefixed);
 	},
 
 	// for get we use the access to the filesystem that we have at the vscode-side - therefore we send a message
@@ -148,4 +152,3 @@ const vscodeARLmethods = {
 		return promise;
 	}
 };
-

@@ -14,7 +14,7 @@
         "vx": "cd ./vscodex && npm run vx",
         "rt": "cd ./runtime && npm run build",
         "cli": "cd ./cli && npm run build",
-        "ui": "cd ./ui && npm run build"
+        "ui": "cd ./ui-svelte && npm run build"
     },
     "devDependencies": {
         "@eslint/js": "^9.36.0",
@@ -22,7 +22,7 @@
         "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
-        "@sveltejs/vite-plugin-svelte": "^2.5.3",
+        "@sveltejs/vite-plugin-svelte": "^5.0.3",
         "@vscode/vsce": "^3.7.0",
         "eslint": "^9.36.0",
         "eslint-config-prettier": "^10.1.8",
@@ -32,9 +32,9 @@
         "rollup-plugin-css-only": "^4.5.2",
         "rollup-plugin-string": "^3.0.0",
         "rollup-plugin-svelte": "^7.1.6",
-        "svelte": "^4.2.19",
+        "svelte": "^5.0.0",
         "tsup": "^8.5.0",
-        "vite": "^4.0.0",
+        "vite": "^6.0.0",
         "vite-plugin-string": "^1.2.3"
     },
     "dependencies": {

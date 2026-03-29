@@ -1,0 +1,150 @@
+{
+  "version": "0.4.5",
+  "generatedAt": "2026-03-05T21:49:51.565Z",
+  "entries": [
+    {
+      "node": "McpClientOpenAI",
+      "handles": [
+        {
+          "pin": "handle.key",
+          "handler": "onHandleKey",
+          "file": "mcp-client-in-browser.js",
+          "line": 47,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "new.prompt",
+          "handler": "onNewPrompt",
+          "file": "mcp-client-in-browser.js",
+          "line": 185,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "prompt",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "tool.result",
+          "handler": "onToolResult",
+          "file": "mcp-client-in-browser.js",
+          "line": 271,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "result",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "get manifest",
+          "file": "mcp-client-in-browser.js",
+          "line": 21
+        },
+        {
+          "pin": "get tools",
+          "file": "mcp-client-in-browser.js",
+          "line": 24
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 191
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 219
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 237
+        },
+        {
+          "pin": "call tool",
+          "file": "mcp-client-in-browser.js",
+          "line": 256
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "node": "McpServerInBrowser",
+      "handles": [
+        {
+          "pin": "get.manifest",
+          "handler": "onGetManifest",
+          "file": "mcp-server-in-browser.js",
+          "line": 49,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "get.tools",
+          "handler": "onGetTools",
+          "file": "mcp-server-in-browser.js",
+          "line": 63,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "call.tool",
+          "handler": "onCallTool",
+          "file": "mcp-server-in-browser.js",
+          "line": 72,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "msg",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "tool result",
+          "file": "mcp-server-in-browser.js",
+          "line": 80
+        }
+      ]
+    }
+  ]
+}

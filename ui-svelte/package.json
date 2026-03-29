@@ -1,0 +1,10 @@
+{
+  "name": "ui-svelte",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ui-svelte.js",
+  "type" : "module",
+  "scripts": {
+    "build": "rollup -c"
+  }
+}

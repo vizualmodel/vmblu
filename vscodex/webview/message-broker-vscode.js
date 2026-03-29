@@ -2,8 +2,8 @@
 /* eslint-disable semi */
 
 // the event handler for messages coming from vs code
-import {Document} from '../../core/document/document.js';
-import {Path} from '../../core/arl'
+import {Document} from '../../core/nodes/document-manager/document.js';
+import {Path} from '../../core/types/arl/index.js'
 import {promiseMap, vscode} from './arl-adapter.js';
 
 // defined in document-model.js
@@ -32,27 +32,17 @@ export const messageBrokerVscode = {
 				// create the new document
 				this.activeDoc = new Document(arl)
 
-				// check if the document has to be created
-				this.activeDoc.load()
-				.then( () => {
+				// set as the active document
+				this.tx.send('set document', this.activeDoc)
 
-					// set as the active document
-					this.tx.send('set document', this.activeDoc)
+				// write to the output file (= same name as model file but with .prf added before extension)
+				const outFilename = Path.getSplit(arl.getPath()).name + '.src.prf'
 
-					// write to the output file (= same name as model file but with .prf added before extension)
-					const outFilename = Path.getSplit(arl.userPath).name + '.src.prf'
+				// Make the output file name
+				const outFile = arl.resolve(outFilename)
 
-					// Make the output file name
-					const outFile = arl.resolve(outFilename)
-
-					// also request to start the source code and model watchers
-					vscode.postMessage({verb:'start watchers', model: arl, outFile})
-				})
-				.catch( error => {
-
-					// show a popup message
-					console.error(`*** Could not open main document ${message.uri} ${error}`)            
-				})
+				// also request to start the source code and model watchers
+				vscode.postMessage({verb:'start watchers', model: arl, outFile})
 
 				// done
 				return;
@@ -66,20 +56,20 @@ export const messageBrokerVscode = {
 				// create the new document
 				this.activeDoc = new Document(arl)
 
-				// init the root for this new document
-				this.activeDoc.view.initRoot(Path.nameOnly(arl.userPath))		
-				
-				// save the new document
-				this.activeDoc.save()
-				.then( () => {
+				// seed an empty raw model so the kernel side can compile an editable empty document
+				this.activeDoc.model.raw = {
+					header: {
+						version: 'no version',
+					},
+					root: {
+						kind: 'group',
+						name: '',
+						nodes: [],
+					},
+				}
 
-					// set as the active document
-					this.tx.send('set document', this.activeDoc)
-				})
-				.catch( error => {
-					// show a popup message
-					console.error(`*** Could not create main document ${message.uri} ${error}`)            
-				})
+				// set as the active document
+				this.tx.send('set document', this.activeDoc)
 
 				return;
 			}
@@ -87,15 +77,10 @@ export const messageBrokerVscode = {
 			// a file needs to be saved - if no uri is given, the current file is used
 			case 'save request' : {
 
-				// The uri that is passed is a complete uri
-				if (message.uri) {
-					// save the document under a different name
-					await this.activeDoc.saveAs(message.uri)
-				}
-				else {
-					// save the active document
-					await this.activeDoc.save()
-				}
+				const path = message.uri ? this.makeArl(message.uri).getPath() : null
+
+				// delegate saving to the kernel model manager
+				this.tx.send('model.save', {path})
 
 				// vscode could be waiting for the save !
 				vscode.postMessage({verb:'file saved'})
@@ -119,8 +104,9 @@ export const messageBrokerVscode = {
 			}
 
 			case 'source doc' : {
-			
-				this.activeDoc.model.sourceMap = this.activeDoc.model.parseSourceMap(message.rawSourceDoc) 
+				
+				this.activeDoc.model.sourceProfile = this.activeDoc.model.parseSourceProfile(message.rawSourceDoc)
+				this.activeDoc.model.sourceProfileOrigin = 'host'
 				return
 			}
 
@@ -128,7 +114,7 @@ export const messageBrokerVscode = {
 			case 'clipboard switched' : {
 
 				// send a message to the editor to inform the editor
-				this.tx.send('clipboard switched')
+				this.tx.send('clipboard.switched')
 				return
 			}
 
@@ -136,7 +122,7 @@ export const messageBrokerVscode = {
 			case 'clipboard local' : {
 
 				// request the internal clipboard
-				this.tx.request('clipboard local', this.activeDoc)
+				this.tx.request('clipboard.local', this.activeDoc)
 				.then(({json}) => {
 
 					// and transfer the json to vscode
