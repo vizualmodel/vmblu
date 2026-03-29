@@ -182,9 +182,9 @@ export class SourceDocWatcher {
       if (result.stderr) cout(`vmblu profile stderr: ${result.stderr}`);
       try {
         const jsonText = await fs.readFile(outPath, 'utf8');
-        const sourceMap = JSON.parse(jsonText);
-        //cout(`[SourceDocWatcher] Loaded profile output (${sourceMap.entries?.length ?? 0} entries) from ${outPath}`);
-        this.customerAction(sourceMap);
+        const sourceProfile = JSON.parse(jsonText);
+        //cout(`[SourceDocWatcher] Loaded profile output (${sourceProfile.entries?.length ?? 0} entries) from ${outPath}`);
+        this.customerAction(sourceProfile);
       } catch (err) {
         cout(`Failed to read vmblu profile output ${err}`);
       }
@@ -358,4 +358,3 @@ export class SourceDocWatcher {
     );
   }
 }
-

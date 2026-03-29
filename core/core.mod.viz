@@ -1,0 +1,326 @@
+{
+  "header": {
+    "version": "no version",
+    "utc": "2026-03-09T17:56:39.260Z",
+    "style": "#7da2d8"
+  },
+  "root": {
+    "kind": "group",
+    "name": "node-editor",
+    "rect": "x 90 y 30 w 150 h 26",
+    "view": {
+      "state": "open",
+      "rect": "x 0 y 0 w 1464 h 1326",
+      "transform": "sx 1.000 sy 1.000 dx -25.000 dy 124.000"
+    },
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "library manager",
+        "rect": "x 1138 y -17 w 165 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(12 R)add file",
+              "(13 R)remove file",
+              "(14 R)switch library",
+              "(15 R)build table"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "document manager",
+        "rect": "x 123 y -9 w 180 h 326",
+        "interfaces": [
+          {
+            "interface": "(28) doc",
+            "pins": [
+              "(29 R)doc.selected",
+              "(30 R)doc.new",
+              "(31 R)doc.renamed",
+              "(32 R)doc.deleted",
+              "(33 R)doc.get",
+              "(34 R)doc.set active",
+              "(35 R)doc.open"
+            ]
+          },
+          {
+            "interface": "(36) file",
+            "pins": [
+              "(37 R)file.save as",
+              "(38 R)file.save",
+              "(39 R)file.save as filename",
+              "(40 R)file.save all"
+            ]
+          },
+          {
+            "interface": "(41) tab",
+            "pins": [
+              "(42 R)tab.request to close",
+              "(43 R)tab.request to select",
+              "(44 R)tab.select",
+              "(45 R)tab.remove",
+              "(46 R)tab.new",
+              "(47 R)tab.rename"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "clipboard",
+        "rect": "x 915 y -14 w 165 h 116",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(13 R)switch",
+              "(14 R)switched",
+              "(15 R)remote",
+              "(16 R)local",
+              "(17 R)set",
+              "(18 R)get"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "select node",
+        "rect": "x 90 y 1377 w 150 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(11 R)select node",
+              "(12 R)node",
+              "(13 R)switch library",
+              "(14 R)modal div"
+            ]
+          }
+        ],
+        "pads": [
+          "(11 R)x 1020 y 23 w 81 h 15|select node",
+          "(12 R)x 1020 y 53 w 52 h 15|node",
+          "(13 R)x 1020 y 83 w 88 h 15|switch library",
+          "(14 R)x 1020 y 113 w 73 h 15|modal div"
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "node selector",
+            "rect": "x 510 y 45 w 150 h 131",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)selected node",
+                  "(2 R)show",
+                  "(1 L)build table",
+                  "(6 L)remove file",
+                  "(5 L)add file",
+                  "(4 R)get path",
+                  "(7 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "library manager",
+            "rect": "x 210 y 30 w 150 h 86",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(14 R)switch library",
+                  "(15 R)build table",
+                  "(13 R)remove file",
+                  "(12 R)add file"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "path request",
+            "rect": "x 810 y 45 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)path",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          }
+        ],
+        "routes": [
+          {
+            "from": "(pin 3) selected node @ node selector",
+            "to": "(pad 12) node",
+            "wire": "x 85.0 y 58.0 x 250.0 y -70.0 x 25.0"
+          },
+          {
+            "from": "(pin 6) remove file @ node selector",
+            "to": "(pin 13) remove file @ library manager",
+            "wire": "x -75.0 y -30.0 x -75.0"
+          },
+          {
+            "from": "(pin 5) add file @ node selector",
+            "to": "(pin 12) add file @ library manager",
+            "wire": "x -55.0 y -30.0 x -95.0"
+          },
+          {
+            "from": "(pin 4) get path @ node selector",
+            "to": "(pin 1) path @ path request",
+            "wire": "x 65.0 y -75.0 x 85.0"
+          },
+          {
+            "from": "(pin 7) modal div @ node selector",
+            "to": "(pad 14) modal div",
+            "wire": "x 105.0 y -42.0 x 255.0"
+          },
+          {
+            "from": "(pin 15) build table @ library manager",
+            "to": "(pin 1) build table @ node selector",
+            "wire": "x 55.0 y 30.0 x 95.0"
+          },
+          {
+            "from": "(pin 2) modal div @ path request",
+            "to": "(pad 14) modal div",
+            "wire": "x 15.0 y 33.0 x 45.0"
+          },
+          {
+            "from": "(pad 11) select node",
+            "to": "(pin 2) show @ node selector",
+            "wire": "x -25.0 y 73.0 x -260.0 y -16.0 x -75.0"
+          },
+          {
+            "from": "(pad 13) switch library",
+            "to": "(pin 14) switch library @ library manager",
+            "wire": "x -25.0 y 103.0 x -580.0 y -136.0 x -55.0"
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "view manager",
+        "rect": "x 415 y -8 w 165 h 401",
+        "interfaces": [
+          {
+            "interface": "(36) setup",
+            "pins": [
+              "(37 R)canvas",
+              "(38 R)size change",
+              "(39 R)top level view",
+              "(22 R)root"
+            ]
+          },
+          {
+            "interface": "(40) visuals",
+            "pins": [
+              "(41 R)recalibrate",
+              "(42 R)grid on-off"
+            ]
+          },
+          {
+            "interface": "(43) clipboard",
+            "pins": [
+              "(44 R)clipboard.get",
+              "(45 R)clipboard.set"
+            ]
+          },
+          {
+            "interface": "(46) ui",
+            "pins": [
+              "(47 R)name and path",
+              "(48 R)context menu",
+              "(23 R)node prompt",
+              "(24 R)runtime settings (dx)",
+              "(25 R)node settings (sx)"
+            ]
+          },
+          {
+            "interface": "(49) files",
+            "pins": [
+              "(26 R)open source file",
+              "(28 R)open model"
+            ]
+          },
+          {
+            "interface": "(50) redox",
+            "pins": [
+              "(17 R)redox.doit",
+              "(18 R)redox.undo",
+              "(19 R)redox.redo",
+              "(21 R)redox.done"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "model manager",
+        "rect": "x 676 y -11 w 165 h 431",
+        "interfaces": [
+          {
+            "interface": "(72) actions",
+            "pins": [
+              "(73 R)accept changes",
+              "(74 R)reload model",
+              "(75 R)sync links",
+              "(76 R)show settings",
+              "(53 R)make app",
+              "(54 R)make lib"
+            ]
+          },
+          {
+            "interface": "(77) model",
+            "pins": [
+              "(78 R)model.set",
+              "(79 R)model.header",
+              "(60 R)model.root",
+              "(64 R)model.save"
+            ]
+          },
+          {
+            "interface": "(80) save point",
+            "pins": [
+              "(81 R)save point.set",
+              "(82 R)save point.back",
+              "(63 R)save point.confirm"
+            ]
+          },
+          {
+            "interface": "(83) info",
+            "pins": [
+              "(84 R)pin profile",
+              "(59 R)get path"
+            ]
+          },
+          {
+            "interface": "(85) redox",
+            "pins": [
+              "(56 R)redox.doit",
+              "(57 R)redox.undo",
+              "(58 R)redox.redo",
+              "(86 R)redox.done"
+            ]
+          },
+          {
+            "interface": "(87) files",
+            "pins": [
+              "(88 R)open source file",
+              "(62 R)open model"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

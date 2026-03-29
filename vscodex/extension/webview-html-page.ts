@@ -24,6 +24,7 @@ export function makeHtmlPage(csp:string, app:vscode.Uri, css:vscode.Uri, icons:v
 			display: block !important;
 			justify-content: flex-start !important;
 			align-items: flex-start !important;
+			background: var(--vscode-editor-background);
 		}
 		</style>
 		<script nonce="${nonce}" type='module' src=${app}></script>

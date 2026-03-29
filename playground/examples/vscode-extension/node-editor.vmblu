@@ -880,7 +880,7 @@
                         "kind": "dock",
                         "name": "library manager",
                         "link": {
-                            "path": "./",
+                            "path": "",
                             "node": "library manager"
                         },
                         "interfaces": [

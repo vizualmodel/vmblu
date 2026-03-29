@@ -9,14 +9,14 @@ export const messageBrokerWebview = {
 	/** @node message broker */
 
 	// request vscode to open a new nodemesh document
-	"-> open document"(arl) {
+	onOpenDocument(arl) {
 
 		// send a message to the vscode side
 		vscode.postMessage({verb:'open document', arl})
 	},
 
     // the canvas div that has to be added 
-    "-> canvas"(canvas) {
+    onCanvas(canvas) {
 
 		// set the theme
 		document.documentElement.className = "dark" + " common"
@@ -58,45 +58,45 @@ export const messageBrokerWebview = {
 		window.addEventListener("resize", onResize, { passive: true });
     },
 
-	"-> modal div"(modalDiv) {
+	onModalDiv(modalDiv) {
 
 		// add the div to the document body
 		document.body.append(modalDiv)
 	},
 
-	"-> floating menu"(menuDiv) {
+	onFloatingMenu(menuDiv) {
 
 		// add the floating menu to the document body
 		document.body.append(menuDiv)
 	},
 
 	// the editor signals that it is now the owner of the active clipboard
-	"-> clipboard switch"() {
+	onClipboardSwitch() {
 	
 		// intercept the clipboard message
 		vscode.postMessage({verb: 'clipboard switch'})
 	},
 
 	// the editor has sends the content of its clipboard
-	"-> clipboard local"({json}) {
+	onClipboardLocal({json}) {
 		// request the vscod extension to forward the internal clipboard
 		vscode.postMessage({verb: 'clipboard local', json})
 	},
 
 	// The editor requests the content of the external clipboard
-	"-> clipboard remote"() {
+	onClipboardRemote() {
 
 		// request the external clipboard
 		vscode.postMessage({verb: 'clipboard remote'})
 	},
 
-	"-> new edit"(edit) {
+	onNewEdit(edit) {
 
 		// signal vscode about the edit
 		vscode.postMessage({verb: 'report edit', edit: edit?.verb ?? 'unspecified'})
 	},
 
-	"-> open js file"({arl, line}) {
+	onOpenJsFile({arl, line}) {
 
 		console.log('OPEN SOURCE ', arl)
 

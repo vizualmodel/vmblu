@@ -2,11 +2,10 @@
 set -euo pipefail
 
 SOURCE_DIR=${SOURCE_DIR:-c:/dev/vmblu}
-DEST_DIR_DEFAULT=${DEST_DIR_DEFAULT:-c:/dev/backups}
 
 usage() {
-  echo "Usage: $0 [destination_directory]" >&2
-  echo "Creates a timestamped archive of $SOURCE_DIR excluding any node_modules directories." >&2
+  echo "Usage: $0 <drive_letter>" >&2
+  echo "Copies $SOURCE_DIR to <drive_letter>:/vmblu excluding all node_modules directories." >&2
 }
 
 if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
@@ -14,12 +13,16 @@ if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
   exit 0
 fi
 
-if [[ $# -gt 1 ]]; then
+if [[ $# -ne 1 ]]; then
   usage
   exit 1
 fi
 
-DEST_DIR=${1:-$DEST_DIR_DEFAULT}
+DRIVE_LETTER=${1%:}
+if [[ ! $DRIVE_LETTER =~ ^[A-Za-z]$ ]]; then
+  echo "Drive letter must be a single letter, for example: D" >&2
+  exit 1
+fi
 
 convert_path() {
   local path=$1
@@ -40,7 +43,10 @@ to_windows() {
 }
 
 SOURCE_POSIX=$(convert_path "$SOURCE_DIR")
-DEST_POSIX=$(convert_path "$DEST_DIR")
+DEST_ROOT_POSIX=$(convert_path "${DRIVE_LETTER^^}:/")
+DEST_POSIX="${DEST_ROOT_POSIX%/}/vmblu"
+SOURCE_WIN=$(to_windows "$SOURCE_POSIX")
+DEST_WIN=$(to_windows "$DEST_POSIX")
 
 case "$DEST_POSIX/" in
   "$SOURCE_POSIX"/*)
@@ -49,18 +55,44 @@ case "$DEST_POSIX/" in
     ;;
 esac
 
-mkdir -p "$DEST_POSIX"
+mkdir -p "$DEST_ROOT_POSIX"
 
-parent_dir=$(dirname "$SOURCE_POSIX")
-base_name=$(basename "$SOURCE_POSIX")
+echo "Copying $SOURCE_WIN to $DEST_WIN..."
 
-timestamp=$(date +%Y%m%d-%H%M%S)
-archive_name="vmblu-backup-$timestamp.tar.gz"
-archive_path="$DEST_POSIX/$archive_name"
+if command -v robocopy >/dev/null 2>&1; then
+  spinner='|/-\'
+  log_file=$(mktemp)
+  trap 'rm -f "$log_file"' EXIT
 
-tar -czf "$archive_path" \
-  --exclude='node_modules' \
-  --exclude='*/node_modules' \
-  -C "$parent_dir" "$base_name"
+  powershell.exe -NoProfile -Command \
+    "& { Robocopy.exe '$SOURCE_WIN' '$DEST_WIN' /E /R:1 /W:1 /MT:16 /XD node_modules /XJ /NFL /NDL /NJH /NJS /NP *> '$log_file'; exit \$LASTEXITCODE }" &
+  robo_pid=$!
+  spin_index=0
 
-echo "Created backup: $(to_windows "$archive_path")"
+  while kill -0 "$robo_pid" 2>/dev/null; do
+    spin_char=${spinner:spin_index:1}
+    printf 'Progress: %s\r' "$spin_char"
+    spin_index=$(((spin_index + 1) % 4))
+    sleep 0.2
+  done
+
+  set +e
+  wait "$robo_pid"
+  robo_status=$?
+  set -e
+
+  if (( robo_status >= 8 )); then
+    cat "$log_file" >&2
+    exit "$robo_status"
+  fi
+
+  printf 'Progress: done\n'
+else
+  tar -cf - \
+    --exclude='node_modules' \
+    --exclude='*/node_modules' \
+    -C "$(dirname "$SOURCE_POSIX")" "$(basename "$SOURCE_POSIX")" |
+    tar -xf - -C "$DEST_ROOT_POSIX"
+fi
+
+echo "Copied vmblu to $DEST_WIN"

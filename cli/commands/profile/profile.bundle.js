@@ -8497,7 +8497,7 @@ const selectionHandling = {
             while( this.root.hasDuplicate(pasted) && counter < 999) {
 
                 // put a number after the name
-                const newName = convert.addNumber(pasted.name, counter++);
+                const newName = convert.addNumber(pasted.name, ++counter);
 
                 // change the name
                 pasted.updateName(newName);

@@ -2,10 +2,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ModelBlueprint, ModelCompiler } from '../../../core/model/index.js';
-import { ARL } from '../../../core/arl/arl-node.js';
-import { normalizeSeparators } from '../../../core/arl/path.js';
-import { UIDGenerator } from '../../../core/document/uid-generator.js';
+import { ModelBlueprint, ModelCompiler, UIDGenerator } from '../../../core/types/model/index.js';
+import { ARL } from '../../../core/types/arl/arl-node.js';
+import { normalizeSeparators } from '../../../core/types/arl/path.js';
 
 export const command = 'make-app <model-file>';
 export const describe = 'Generate an application JS file from a model';
@@ -51,7 +50,7 @@ export const handler = async (argv) => {
   // Build the model root via the compiler.
   const arl = new ARL(modelPath);
   const model = new ModelBlueprint(arl);
-  await model.handleSourceMap();
+  await model.handleSourceProfile();
   const compiler = new ModelCompiler(new UIDGenerator());
 
   // Compile the model into a root node.
@@ -107,4 +106,3 @@ function parseCliArgs(argvInput) {
 
   return result;
 }
-

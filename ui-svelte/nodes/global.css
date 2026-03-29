@@ -1,0 +1,11 @@
+:root {
+  --ui-font-family: "Verdana", "Geneva", sans-serif;
+  --ui-text-color: black;
+  --ui-bg-color: white;
+}
+
+body {
+  font-family: var(--ui-font-family);
+  color: var(--ui-text-color);
+  background-color: var(--ui-bg-color);
+}
