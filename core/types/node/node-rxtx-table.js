@@ -75,9 +75,6 @@ rxtxBuildTxTable() {
     // and buses with routers
     if (this.is.group) {
 
-        // do the buses that have a filter first
-        for(const bus of this.buses) if (bus.hasFilter()) bus.rxtxBuildRxTxTable();
-
         // then the nodes
         for (const node of this.nodes) node.rxtxBuildTxTable()
 
@@ -119,10 +116,8 @@ rxtxBuildTxTable() {
             if (dst.is.pin) {
                 dst.is.proxy ? dst.pad?.makeConxList(dstList) : dstList.push(dst)
             }
-            // if a bus has a filter propagation stops 
             else if (dst.is.tack) {
-                dst.bus.hasFilter() ?  dstList.push(dst) : dst.makeConxList(dstList)
-                //dst.bus.hasFilter() ?  dstList.push(dst) : dst.bus.makeConxList(widget, dstList)
+                dst.makeConxList(dstList)
             }
             else if (dst.is.pad) {
                 dst.proxy.makeConxList(dstList)

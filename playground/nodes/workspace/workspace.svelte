@@ -3,7 +3,7 @@ import FolderFileDiv from './folder-file.svelte'
 import {onMount} from 'svelte'
 import {WSFolder, WSFileSystem} from './ws-folder'
 import {WSFile} from './ws-file'
-import {ARL, LARL} from '../../../core/types/arl/index.js'
+import {ARL, LARL, Path} from '../../../core/types/arl/index.js'
 
 // The props for the workspace
 // tx is an object that allows the workspace to send messages to other components
@@ -37,6 +37,7 @@ onMount(async () => {
 
     // get the remote file system
     getRemoteFS()
+
 })
 
 function setVisibilityHandler() {
@@ -57,6 +58,12 @@ export const handlers = {
      onDomAddModalDiv(modalDiv) {
 
         mainDiv.append(modalDiv)
+    },
+
+    async onFolderGet({startFolder, path = ''}) {
+
+        const content = await getFolderContent(startFolder, path)
+        tx.reply(content)
     },
 
     onFileSavedAs(arl) {},
@@ -181,6 +188,111 @@ function toggleLocalFS() {
     localFS.root.is.expanded ? localFS.collapse() : localFS.expand();
 
     remoteFS = remoteFS
+}
+
+function getFolderPath(folder) {
+    return Path.normalizeSeparators(folder?.arl?.fullPath ?? folder?.arl?.getPath?.() ?? '')
+}
+
+function getRootFolder(folder) {
+    let current = folder ?? null
+    while (current?.parent?.parent) current = current.parent
+    return current
+}
+
+function getStartRoot(ref) {
+    const fileTree = ref?.fileTree ?? ref?.arl?.fileTree ?? null
+    if (fileTree) return getRootFolder(fileTree)
+
+    if (ref?.handle || ref?.arl?.handle) return localFS?.root ?? null
+
+    return null
+}
+
+function getStartFolderPath(ref) {
+    if (!ref) return ''
+    if (typeof ref.getFullPath === 'function') return Path.normalizeSeparators(ref.getFullPath())
+    if (typeof ref.fullPath === 'string') return Path.normalizeSeparators(ref.fullPath)
+    if (typeof ref.getPath === 'function') return Path.normalizeSeparators(ref.getPath())
+    if (typeof ref.path === 'string') return Path.normalizeSeparators(ref.path)
+    if (typeof ref.arl?.getFullPath === 'function') return Path.normalizeSeparators(ref.arl.getFullPath())
+    if (typeof ref.arl?.fullPath === 'string') return Path.normalizeSeparators(ref.arl.fullPath)
+    if (typeof ref.arl?.getPath === 'function') return Path.normalizeSeparators(ref.arl.getPath())
+    return ''
+}
+
+function dirname(path) {
+    const normalized = Path.normalizeSeparators(path ?? '')
+    if (!normalized) return ''
+    const slash = normalized.lastIndexOf('/')
+    if (slash < 0) return ''
+    if (slash === 0) return '/'
+    return normalized.slice(0, slash)
+}
+
+function resolveRequestPath(startFolder, relativePath = '') {
+    const startRoot = getStartRoot(startFolder)
+    const startPath = getStartFolderPath(startFolder)
+    let baseDir = dirname(startPath)
+
+    if (!baseDir?.length && startPath?.length && startRoot) {
+        baseDir = getFolderPath(startRoot) || '/'
+    }
+
+    if (!relativePath?.length) return baseDir
+
+    if (!baseDir?.length) return Path.normalizeSeparators(relativePath)
+
+    return Path.absolute(relativePath, `${baseDir}/x`)
+}
+
+function getWorkspaceRoots() {
+    return [remoteFS?.root, localFS?.root].filter(Boolean)
+}
+
+function pickRoot(targetPath) {
+    const normalized = Path.normalizeSeparators(targetPath ?? '')
+    const roots = getWorkspaceRoots()
+
+    return roots
+        .sort((a, b) => getFolderPath(b).length - getFolderPath(a).length)
+        .find((root) => {
+            const rootPath = getFolderPath(root)
+            return normalized === rootPath || normalized.startsWith(rootPath + '/') || rootPath === '/'
+        }) ?? null
+}
+
+async function findFolder(root, targetPath) {
+
+    if (!root) return null
+
+    const rootPath = getFolderPath(root)
+    const normalized = Path.normalizeSeparators(targetPath ?? '')
+    const relative = rootPath === '/' ? normalized : normalized.slice(rootPath.length)
+    const segments = relative.split('/').filter(Boolean)
+    let folder = root
+
+    for (const segment of segments) {
+        if (folder.is?.stale) await folder.update()
+        folder = folder.folders.find((entry) => entry.name === segment) ?? null
+        if (!folder) return null
+    }
+
+    if (folder?.is?.stale) await folder.update()
+    return folder
+}
+
+async function getFolderContent(startFolder, relativePath) {
+    
+    const targetPath = resolveRequestPath(startFolder, relativePath)
+    if (!targetPath?.length) return {folders: [], files: []}
+
+    const root = getStartRoot(startFolder) ?? pickRoot(targetPath)
+    const folder = await findFolder(root, targetPath)
+
+    return folder
+        ? {folders: folder.folders.map((entry) => entry.name), files: folder.files.map((entry) => entry.name)}
+        : {folders: [], files: []}
 }
 
 </script>

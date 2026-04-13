@@ -108,25 +108,11 @@ rxtxPinBus() {
         // now make the source list 
         pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin) 
 
-        // if the bus has a router save the pins this tack is connected to, and set the connections to the tack
-        if (tack.bus.hasFilter()) {
-
-            // add the incoming to the table for the bus
-            tack.bus.rxtxAddRxTack(tack)
-
-            // and do a full connect to the bus
-            this.fullConnect(srcList,[tack])
-        }
-
-        // and do a full connect between source and destination list
-        else {
-
-            // make the list of destinations connected to this bus for this pin
-            tack.makeConxList(dstList)
-            
-            // and do a full connect
-            this.fullConnect(srcList, dstList)
-        }
+        // make the list of destinations connected to this bus for this pin
+        tack.makeConxList(dstList)
+        
+        // and do a full connect
+        this.fullConnect(srcList, dstList)
     }
 
     // left 
@@ -135,19 +121,11 @@ rxtxPinBus() {
         // now make the inlist
         pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin)
 
-        if (tack.bus.hasFilter()) {
+        // make the list of outputs of connected to this bus
+        tack.makeConxList(srcList)
 
-            // add the destination for this tack
-            tack.bus.rxtxAddTxTack(tack, dstList)
-        }
-        else {
-
-            // make the list of outputs of connected to this bus
-            tack.makeConxList(srcList)
-
-            // and do a full connect between source and destination list
-            this.fullConnect(srcList, dstList)
-        }
+        // and do a full connect between source and destination list
+        this.fullConnect(srcList, dstList)
     }
 },
 
@@ -168,40 +146,22 @@ rxtxPadBus() {
 
         pad.proxy.makeConxList(srcList)
 
-        if (tack.bus.hasFilter()) {
+        // find the connections from the tack
+        tack.makeConxList(dstList)
 
-            // add the tack to the table
-            tack.bus.rxtxAddRxTack(tack)
-
-            // and do a full connect to the bus tack only
-            this.fullConnect(srcList,[tack])            
-        }
-        else {
-
-            // find the connections from the tack
-            tack.makeConxList(dstList)
-
-            // and do a full connect
-            this.fullConnect(srcList, dstList)
-        }
+        // and do a full connect
+        this.fullConnect(srcList, dstList)
     }
     // from bus to pad
     if (arrow.left) {
 
         pad.proxy.makeConxList(dstList)
 
-        if (tack.bus.hasFilter()) {
+        // find the incoming connections on the bus that lead to the pad 
+        tack.makeConxList(srcList)
 
-            // save the destinations for this tack
-            tack.bus.rxtxAddTxTack(tack, dstList)
-        }
-        else {
-            // find the incoming connections on the bus that lead to the pad 
-            tack.makeConxList(srcList)
-
-            // and do a full connect
-            this.fullConnect(srcList, dstList)
-        }
+        // and do a full connect
+        this.fullConnect(srcList, dstList)
     }
 },
 
@@ -304,40 +264,24 @@ rxtxPinBusDisconnect() {
         // now make the output list 
         pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin)   
 
-        if (tack.bus.hasFilter()) {
+        // make the list of inputs connected to this bus of the same name
+        tack.makeConxList(dstList)
 
-            tack.bus.rxtxRemoveRxTack(tack)
-
-            this.fullDisconnect(srcList, [tack])
-        }
-        else {
-
-            // make the list of inputs connected to this bus of the same name
-            tack.makeConxList(dstList)
-
-            // and do a full disconnect 
-            this.fullDisconnect(srcList, dstList)
-        }
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList)
     }
 
     // left 
     if (arrow.left) {
 
-        if (tack.bus.hasFilter()) {
+        // make the list of outputs of the same name connected to this bus
+        tack.makeConxList(srcList)
 
-            tack.bus.rxtxRemoveTxTack(tack)
+        // now make the inlist
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin)
 
-        } else {
-
-            // make the list of outputs of the same name connected to this bus
-            tack.makeConxList(srcList)
-
-            // now make the inlist
-            pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin)
-
-            // and do a full disconnect 
-            this.fullDisconnect(srcList, dstList)
-        }
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList)
     }
 },
 
@@ -356,33 +300,14 @@ rxtxPadBusDisconnect() {
     if (arrow.right) {
 
         pad.proxy.makeConxList(srcList)
-
-        if (tack.bus.hasFilter()) {
-
-            tack.bus.rxtxRemoveRxTack(tack)
-
-            this.fullDisconnect(srcList, [tack])
-        }
-        // and do a full disconnect 
-        else {
-
-            tack.makeConxList(dstList)
-
-            this.fullDisconnect(srcList, dstList)
-        }
+        tack.makeConxList(dstList)
+        this.fullDisconnect(srcList, dstList)
     }
     if (arrow.left) {
 
-        if (tack.bus.hasFilter()) {
-
-            tack.bus.rxtxRemoveTxTack(tack)
-        }
-        else {
-
-            tack.makeConxList(srcList)
-            pad.proxy.makeConxList(dstList)
-            this.fullDisconnect(srcList, dstList)
-        }
+        tack.makeConxList(srcList)
+        pad.proxy.makeConxList(dstList)
+        this.fullDisconnect(srcList, dstList)
     }
 },
 

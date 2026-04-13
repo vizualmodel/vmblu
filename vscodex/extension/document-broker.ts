@@ -227,6 +227,77 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			return;
 		}
 
+		case 'folder.get': {
+
+			const normalizePath = (value: string) => (value ?? '').replace(/\\/g, '/').replace(/\/+/g, '/');
+			const toUri = (ref: any): vscode.Uri | null => {
+				if (!ref) return null;
+				if (typeof ref === 'string') return vscode.Uri.parse(ref);
+				if (typeof ref.url === 'string') return vscode.Uri.parse(ref.url);
+				return this.makeUri(ref);
+			};
+			const toDirectoryUri = async (ref: any): Promise<vscode.Uri | null> => {
+				const uri = toUri(ref);
+				if (!uri) return null;
+
+				try {
+					const stat = await vscode.workspace.fs.stat(uri);
+					if (stat.type & vscode.FileType.Directory) return uri;
+				}
+				catch {}
+
+				const dirPath = path.posix.dirname(uri.path);
+				return uri.with({path: dirPath});
+			};
+			const resolveDirUri = (base: vscode.Uri, segments: string[]) => {
+				const stack = base.path.split('/').filter(Boolean);
+				for (const segment of segments) {
+					if (!segment || segment === '.') continue;
+					if (segment === '..') {
+						if (!stack.length) return null;
+						stack.pop();
+						continue;
+					}
+					stack.push(segment);
+				}
+				return base.with({path: '/' + stack.join('/')});
+			};
+
+			const startDirUri = await toDirectoryUri(message.startFolder);
+			if (!startDirUri) {
+				broker.postMessage({verb:'folder.get.result', rqKey: message.rqKey, content: {folders: [], files: []}});
+				return;
+			}
+
+			const normalized = normalizePath(message.path ?? '');
+			const dirSegments = normalized.split('/').filter(Boolean);
+			const targetDirUri = resolveDirUri(startDirUri, dirSegments);
+
+			if (!targetDirUri) {
+				broker.postMessage({verb:'folder.get.result', rqKey: message.rqKey, content: {folders: [], files: []}});
+				return;
+			}
+
+			try {
+				const entries = await vscode.workspace.fs.readDirectory(targetDirUri);
+				const folders = entries
+					.filter(([, type]) => Boolean(type & vscode.FileType.Directory))
+					.map(([name]) => name)
+					.sort((a, b) => a.localeCompare(b));
+				const files = entries
+					.filter(([, type]) => Boolean(type & vscode.FileType.File))
+					.map(([name]) => name)
+					.sort((a, b) => a.localeCompare(b));
+
+				broker.postMessage({verb:'folder.get.result', rqKey: message.rqKey, content: {folders, files}});
+			}
+			catch {
+				broker.postMessage({verb:'folder.get.result', rqKey: message.rqKey, content: {folders: [], files: []}});
+			}
+
+			return;
+		}
+
 		// console messages
 		case 'console log': {
 

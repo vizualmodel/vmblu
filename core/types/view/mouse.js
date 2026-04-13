@@ -55,7 +55,6 @@ export const mouseHandling = {
         const hit = this.hit;
 
         // if there is an active selection we check if it was hit
-        //if ( this.selection.what == selex.freeRect || this.selection.what == selex.multiNode) {
         if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
             [hit.what, hit.selection, hit.node] = this.selection.hitTest(xyLocal)
             if (hit.what != zap.nothing) return 
@@ -123,8 +122,7 @@ export const mouseHandling = {
             case zap.ifName:
 
                 // check
-                if (!hit.node) return
-                if (hit.node.cannotBeModified()) return this.blinkToWarn(hit.node)
+                if (hit.node?.cannotBeModified()) return this.blinkToWarn(hit.node)
 
                 // ok
                 widget = hit.lookWidget
@@ -148,6 +146,17 @@ export const mouseHandling = {
 
             case zap.tack:
                 widget = hit.tack
+                break;
+
+            case zap.selection:
+                if (this.selection.what == selex.ifArea) {
+
+                    // check
+                    if (hit.node?.cannotBeModified()) return this.blinkToWarn(hit.node)
+
+                    // ok
+                    widget = hit.lookWidget
+                }
                 break;
         }
 

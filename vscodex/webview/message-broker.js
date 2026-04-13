@@ -76,5 +76,28 @@ MessageBroker.prototype = {
 			return arl
 		}
 	},
+
+	// make an arl for the profile file
+	getSourceProfile(arl) {
+		
+		// write to the output file (= same name as model file but with .prf added before extension)
+		const outFilename = Path.getSplit(arl.getPath()).name + '.src.prf'
+
+		// Make the output file name
+		return arl.resolve(outFilename)
+	},
+
+	getEmptyRawModel() {
+
+		return 	{
+				header: { 
+					version: 'no version' 
+				},
+				root: { kind: 'group', 
+						name: '', 
+						nodes: [] 
+					},
+			}
+	}
 }
 Object.assign(  MessageBroker.prototype, messageBrokerWebview, messageBrokerVscode);

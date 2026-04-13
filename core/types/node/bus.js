@@ -23,13 +23,8 @@ export function Bus(name, from, uid = null) {
         selected: false,
         hoverOk: false,
         hoverNok : false,
-        highLighted: false,
-        cable: false,
-        filter: false
+        highLighted: false
     }
-
-    // the filter is a factory.
-    this.filter = null
 
     // incoming connections
     this.rxTable = []
@@ -152,6 +147,7 @@ Bus.prototype = {
             // the precision in pixels
             const d = 5
 
+
             // horizontal
             if (a.y == b.y) {
                 if ((y > a.y - d) && (y < a.y + d))
@@ -163,7 +159,6 @@ Bus.prototype = {
                     if (((y >= a.y) && (y <= b.y)) || ((y >= b.y) && (y <= a.y))) return i+1
             }
         }
-
         // no hit
         return 0
     },
@@ -334,54 +329,5 @@ Bus.prototype = {
             tacks[i].route.restoreWire(copy[i].track)
         }
     },
-
-    hasFilter(){
-        return this.is.filter
-    },
-
-    // returns the arl to be used to get to the source for the filter
-    getFilterArl(jslib, link, localIndex) {
-
-        // if there is a link and the link is a library - take that
-        if ( link?.model?.is.lib ) return link.model.getArl()
-
-        // if there is a current lib (ie a lib where a group was defined) use that
-        if (jslib) return jslib.arl
-
-        // if the factory arl has been set explicitely, use that
-        if (this.filter.arl) return this.filter.arl
-
-        // if the link is a json file, the source can be found via the index file in the directory of that model
-        if (link?.model) return link.model.getArl().resolve('index.js')
-            
-        // else we assume the source can be locacted by using the index.js file in the model directory
-        return localIndex
-    },
-
-    getFilter(srcImports, lib, link) {
-
-       // for a source node find the arl to be used for the source - or take the ./index.js file in the directory of the model
-       const filterArl = this.getFilterArl(lib, link, srcImports[0].arl)
-
-       // check if the factoryname is already in use somewhere and use an alias if necessary - else just use the name
-       const filterSpec = this.filter.duplicate(srcImports, filterArl) ? `${this.filter.fName} as ${this.filter.alias}` : this.filter.fName
-
-       // see if the arl is already in the list
-       const found = srcImports.find( srcImport => srcImport.arl.equals(filterArl))
-
-       // if we have the file, add the item there if..
-       if (found) {
-
-           // ..it is not already in the list..
-           const item = found.items.find( item => item == filterSpec)
-
-           // ..if not add it to the list
-           if (!item) found.items.push(filterSpec)
-       }
-       else {
-           // add the file and put the first item on the list
-           srcImports.push({arl:filterArl, items:[filterSpec]})
-       }        
-    }
 }
 Object.assign(Bus.prototype, busConnect, busJsonHandling, busDrawing)

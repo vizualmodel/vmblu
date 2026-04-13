@@ -122,9 +122,6 @@ const BusLabelFunctions = {
                         : state.highLighted ? st.cHighLighted
                         : st.cNormal
 
-        // draw a filter symbol next to the label if required
-        if (this.bus.is.filter) shape.filterSymbol(ctx, rc.x - st.wFilter, rc.y - st.wFilter, st.wFilter, cLabel)
-
         // draw the label
         this.is.horizontal  ? shape.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
                             : shape.vCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)

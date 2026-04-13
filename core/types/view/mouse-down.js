@@ -333,13 +333,17 @@ export const mouseDownHandling = {
 
                     case NONE:{
                         // save the pad
-                        state.pad = hit.pad
+                        const pad = state.pad = hit.pad
 
                         // if we drag the pad, make sure it is the to-widget in the routes
-                        hit.pad.checkRoutesDirection()
+                        pad.checkRoutesDirection()
 
                         // highlight the pad routes
-                        hit.pad.highLightRoutes()
+                        pad.highLightRoutes()
+
+                        this.state.modo.pos.x = pad.rect.x
+                        this.state.modo.pos.y = pad.rect.y
+                        this.state.modo.wires = pad.copyWires()
 
                         this.state.modo.pos.x = pad.rect.x
                         this.state.modo.pos.y = pad.rect.y

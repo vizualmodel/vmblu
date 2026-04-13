@@ -7,6 +7,7 @@ import {routeHandling} from './node-routes.js'
 import {compareHandling} from './node-compare.js'
 import {Look} from './look.js'
 import {zap} from '../view/index.js'
+import {normalizeRuntimeSettings} from '../../../runtime/src/runtime-settings.js'
 
 // The node in a nodegraph
 export function Node (look=null, name=null, uid=null) {
@@ -200,9 +201,6 @@ Node.prototype = {
     // cooks the elements that are common to group and source nodes
     cookCommon(raw, modcom) {
 
-        // If there is no editor part, add the skeleton
-        // if (!raw.editor) raw.editor = {rect: null}
-
         // the rectangle as specified in the file - if any
         const rc = raw.rect ? raw.rect : {x:0, y:0, w:0, h:0}
 
@@ -231,7 +229,7 @@ Node.prototype = {
         if (raw.sx) this.sx = raw.sx
 
         // check if the node has dynamics
-        if (raw.dx) this.dx = raw.dx
+        if (raw.dx) this.dx = normalizeRuntimeSettings(raw.dx)
     },
 
     // used for nodes that have been copied

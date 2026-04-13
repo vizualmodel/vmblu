@@ -50,16 +50,19 @@ getExt() {
 },
 
 getName() {
-    // for repo:/dir1/dir2 we use dir2
-    const slash = this._locator.lastIndexOf('/')
-    if (slash > 0) return this._locator.slice(slash+1)
+    // for /dir1/dir2 and repo:/dir1/dir2 we use dir2
+    const normalized = this._locator.endsWith('/') && this._locator.length > 1
+        ? this._locator.slice(0, -1)
+        : this._locator
+    const slash = normalized.lastIndexOf('/')
+    if (slash >= 0) return normalized.slice(slash + 1)
 
     // for repo: we use repo
-    const colon = this._locator.indexOf(':') 
-    if (colon > 0) return this._locator.slice(0, colon) 
+    const colon = normalized.indexOf(':') 
+    if (colon > 0) return normalized.slice(0, colon) 
     
     // otherwise just use the path
-    return this._locator
+    return normalized
 },
 
 setFileSystem(fileTree, fullPath){

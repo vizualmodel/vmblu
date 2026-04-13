@@ -1,7 +1,7 @@
 <script>
 import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
-import LabelInputField from '../../fragments/label-input-field.svelte'
+import PathInputField from '../../fragments/path-input-field.svelte'
 
 export let tx//, sx
 
@@ -15,6 +15,17 @@ let box = {
 }
 // local copies of the 
 let _path, _regex
+let _startFolder = null
+let _fileExtensions = ''
+
+async function getFolder(path = '') {
+    try {
+        return await tx.request('folder.get', {startFolder: _startFolder, path})
+    }
+    catch {
+        return {folders: [], files: []}
+    }
+}
 
 function checkPath(str) {
                 
@@ -32,7 +43,7 @@ onMount( () => {
 export const handlers = {
 
     // The uid is the uid of the node for which the popup is opened
-    "-> path"({title, path, pos, ok, cancel}) {
+    "-> path"({title, path, pos, ok, cancel, startFolder = null, fileExtensions = ''}) {
 
         // The box 
         box.title = title,
@@ -42,6 +53,8 @@ export const handlers = {
 
         // the path field
         _path = path
+        _startFolder = startFolder
+        _fileExtensions = fileExtensions
 
         // show the popup
         box.show()
@@ -52,6 +65,5 @@ export const handlers = {
 <style>
 </style>
 <PopupBox box={box}>
-    <LabelInputField label="Path :" style="width: 2rem;" bind:input={_path} check={checkPath} />
+    <PathInputField label="Path :" style="width: 2rem;" bind:input={_path} check={checkPath} getFolder={getFolder} fileExtensions={_fileExtensions} />
 </PopupBox>
-

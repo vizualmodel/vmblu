@@ -2,7 +2,7 @@
 /* eslint-disable semi */
 
 // Message handlers for messages coming from the other nodes...
-import {vscode} from './arl-adapter.js'
+import {requestVsCode, vscode} from './arl-adapter.js'
 
 export const messageBrokerWebview = {
 
@@ -101,5 +101,15 @@ export const messageBrokerWebview = {
 		console.log('OPEN SOURCE ', arl)
 
 		vscode.postMessage({verb:'open source', arl, line})
+	},
+
+	async onFolderGet({startFolder, path = ''}) {
+		try {
+			const content = await requestVsCode('folder.get', {startFolder, path})
+			this.tx.reply(content ?? {folders: [], files: []})
+		}
+		catch {
+			this.tx.reply({folders: [], files: []})
+		}
 	},
 };

@@ -19,6 +19,7 @@ export const nodeClickHandling = {
             title:  'Export to link' ,
             name: node.name,
             path:  '', 
+            startFolder: null,
             pos:    pos,
             ok: (newName, userPath) => doEdit(tx,'saveToLink',{node, newName, userPath}),
             cancel:()=>{}
@@ -42,6 +43,7 @@ export const nodeClickHandling = {
             title: 'Set link' ,
             name: linkName,
             path: linkPath,
+            startFolder: refArl,
             pos: pos,
             ok: (newName,newPath)=> {
 
@@ -89,6 +91,7 @@ export const nodeClickHandling = {
                 tx.send("name and path",{ title: 'Factory for ' + node.name, 
                                         name: factoryName,
                                         path: factoryPath,
+                                        startFolder: refArl,
                                         pos: newPos,
                                         ok: (newName,newPath) => {
 

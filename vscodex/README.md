@@ -1,31 +1,29 @@
 
 ![vmblu header](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-header.png)
 
-Modern LLMs make it easy to “vibe code”. But as your app grows, features break, code bloat creeps in and the big picture fades. 
+Modern LLMs make it easy to “vibe code”. But as your app grows, features break, code bloat creeps in and the big picture fades. It is hard to find out what exactly is going on in a non-trivial application.
 
 **vmblu** fixes that by making your architecture *structured, visual, and AI-native*. With vmblu, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
 ## `▞   What is vmblu?`
 
-**vmblu** is for developers who understand that AI changes how software is built — and who want architecture that keeps AI correct, safe, and observable.
-
-**vmblu** is a graphical editor, format spec and tool set, for building software as a **network of message-passing nodes**. **vmblu** makes the architecture of your software explicit and easier to navigate and understand — by humans and LLMs.
+**vmblu** is a format spec and tool set, for building trusted, maintainable software with AI. **vmblu** makes the architecture of your software explicit and easier to navigate and understand — by humans and LLMs. With **vmblu** architecture comes first.
 
 **vmblu** is 
 - **AI-native** - LLMs can design the architecture, write the code and interact with the running system.
 - A **visual modeler** - makes your architecture explicit and navigable  
-- A **runnable scaffold** - models execute via the vmblu runtime  
+- A **runnable scaffold** - vmblu nodes communicate via messages. The vmblu runtime that takes care of message switching between nodes and blocks unauthorised behaviour.
 - **Framework-agnostic** - use any stack or package, from JS/TS to Svelte or Three.js  
 
-The **vmblu model** is not documentation, it is the actual system.
+The **vmblu model** is not documentation, it is the actual system. The graphical **vmblu** model lets you understand and reason about the architecture. The **vmblu** runtime keeps the application safe.
 
 ## `▞   vmblu is for developers`
 
 - **vmblu** is a tool targeted at developers whose role is changing with the arrival of powerful AI.
 - **vmblu** is for building real, complex systems. It is an excellent foundation to build agentic systems. 
-- **Message-based architectures** — the foundation of vmblu — bring their own advantages.
-- **Migrating** an application to a **vmblu** based design is not complicated. The vmblu editor itself is now a vmblu application.
-- **vmblu** is currently at version 0.0.30, with version 1.0.0 planned in the first quarter of the year (2026). It is in good shape, but expect updates.
+- **Message-based architectures** — the foundation of vmblu — enable this.
+
+**vmblu** is currently at version 0.x.y, with version 1.0.0 planned in the second quarter of the year (2026). It is in good shape, but expect updates.
 
 ## `▞   Quick start`
 

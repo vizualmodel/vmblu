@@ -41,8 +41,8 @@ export const ProxyFunctions = {
             // bus link
             else if (other.is.tack) {
 
-                // check if the bus is actually a router
-                other.bus.hasFilter() ?  list.push(other) : other.makeConxList(list)
+                // build the conx list
+                other.makeConxList(list)
             }
         }
     },

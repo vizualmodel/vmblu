@@ -15,6 +15,8 @@ export const documentFlags = {
 // Define the vmblu document model
 export class VmbluDocument implements vscode.CustomDocument {
 
+	private static readonly AUTOSAVE_DELAY_MS = 1000;
+
 	public readonly uri: vscode.Uri;
 	readonly backupId: string | undefined;
 
@@ -43,6 +45,9 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	// The disposable (event listeners) for this document
 	public disposables: vscode.Disposable[] = [];
+	private autosaveTimer: NodeJS.Timeout | null = null;
+	private saveInFlight: Promise<void> | null = null;
+	private autosavePending = false;
 
 	// The constructor for our document
 	constructor(uri: vscode.Uri,backupId: string | undefined) {
@@ -134,6 +139,11 @@ export class VmbluDocument implements vscode.CustomDocument {
 		// check
 		if ( ! this.disposables) return;
 
+		if (this.autosaveTimer) {
+			clearTimeout(this.autosaveTimer);
+			this.autosaveTimer = null;
+		}
+
 		// clear all the disposables
 		for( const item of this.disposables) item.dispose?.();
 		this.disposables.length = 0;
@@ -163,6 +173,9 @@ export class VmbluDocument implements vscode.CustomDocument {
 		this._didEdit.fire( {	label: edit,
 								undo: ()=>{},
 								redo: ()=>{} });
+
+		// persist edits through vmblu using a short debounce window
+		this.scheduleAutoSave();
 	}
 
 	// Method to call when handling the clipboard
@@ -176,11 +189,58 @@ export class VmbluDocument implements vscode.CustomDocument {
 	async save(cancellation: vscode.CancellationToken): Promise<void> {
 
 		// do a save as but with the current file name
-		await this.saveAs(null, cancellation);
+		await this.runSave(null, cancellation);
 	}
 
 	// Called by VS Code when the user saves the document to a new location.
 	async saveAs(targetResource: vscode.Uri | null , cancellation: vscode.CancellationToken): Promise<void> {
+
+		await this.runSave(targetResource, cancellation);
+	}
+
+	private scheduleAutoSave() {
+		if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+		this.autosaveTimer = setTimeout(() => {
+			this.autosaveTimer = null;
+			void this.autoSave();
+		}, VmbluDocument.AUTOSAVE_DELAY_MS);
+	}
+
+	private async autoSave(): Promise<void> {
+		try {
+			await this.runSave(null, undefined, true);
+		}
+		catch (error) {
+			cout(`Autosave failed for "${this.uri.path}": ${error}`);
+		}
+	}
+
+	private async runSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken, isAutoSave = false): Promise<void> {
+		if (this.saveInFlight) {
+			if (isAutoSave) {
+				this.autosavePending = true;
+				return;
+			}
+			await this.saveInFlight;
+		}
+
+		const savePromise = this.performSave(targetResource, cancellation);
+		this.saveInFlight = savePromise;
+
+		try {
+			await savePromise;
+		}
+		finally {
+			this.saveInFlight = null;
+			if (this.autosavePending) {
+				this.autosavePending = false;
+				this.scheduleAutoSave();
+			}
+		}
+	}
+
+	private async performSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken): Promise<void> {
+		if (cancellation?.isCancellationRequested) return;
 
 		// The webview where we will ask for the file data
 		const broker = this.panel.webview;
@@ -210,24 +270,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	// my own internal save function
 	async straightSave() {
-
-		// The webview where we will ask for the file data
-		const broker = this.panel.webview;
-
-		// Let the model watcher suppress the change notification for this local save
-		this.modelWatcher?.setLocalSave?.();
-
-		// make a promise to wait for...
-		this.wait.promise = new Promise( (resolve, reject) => {
-			this.wait.resolve = resolve;
-			this.wait.reject = reject;
-		});
-
-		// request the current document
-		broker.postMessage({verb:'save request', uri: null});
-
-		// wait for the result (see the message handler onMessage)
-		return this.wait.promise;		
+		return this.runSave(null);
 	}
 
 	// Called by VS Code to backup the edited document.

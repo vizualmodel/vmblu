@@ -1,3 +1,5 @@
+import {cloneRuntimeSettings, isDefaultRuntimeSettings} from '../../../runtime/src/runtime-settings.js'
+
 export const redoxNode = {
 
 newGroupNode: {
@@ -284,30 +286,6 @@ nodeDrag: {
     }
 },
 
-// I THINK THIS IS OBSOLETE !!!!
-updateProfiles: {
-    doit({node}) {
-
-        // profiles can only be updated for source nodes
-        if (node.is.group) return
-
-        // there must be a factory
-        if (!node.factory.arl) return
-    
-        // import and analyze
-        node.factory.arl.jsImport()
-        .then ( (module) => {
-            node.analyzeFactory(module)
-        })    
-    },
-    undo({}) {
-
-    },
-    redo({}){
-        
-    }
-},
-
 changeNodeSettings: {
     doit({node, sx}) {
         if (JSON.stringify(sx) !== JSON.stringify(node.sx)) node.sx = sx
@@ -321,11 +299,13 @@ changeNodeSettings: {
 changeNodeDynamics: {
     doit({node, dx}) {
 
-        // if the node.dx is null and the values are default - don't save
-        if (!node.dx) {
-        }
+        const nextDx = cloneRuntimeSettings(dx)
 
-        if (JSON.stringify(dx) !== JSON.stringify(node.dx)) node.dx = dx
+        // don't save an empty runtime settings object
+        const normalizedNodeDx = node.dx ? cloneRuntimeSettings(node.dx) : null
+        const saveDx = isDefaultRuntimeSettings(nextDx) ? null : nextDx
+
+        if (JSON.stringify(saveDx) !== JSON.stringify(normalizedNodeDx)) node.dx = saveDx
 
     },
     undo({}) {

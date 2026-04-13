@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'fs/promises';
 
 const pkgUrl = new URL('../package.json', import.meta.url);
-const outputUrl = new URL('../../core/model/schema-version.js', import.meta.url);
+const outputUrl = new URL('../../core/types/model/schema-version.js', import.meta.url);
 
 const pkgText = await readFile(pkgUrl, 'utf8');
 const pkg = JSON.parse(pkgText);

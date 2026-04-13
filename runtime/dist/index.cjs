@@ -2,10 +2,10 @@ var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __name = (target2, value) => __defProp(target2, "name", { value, configurable: true });
-var __export = (target2, all) => {
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
   for (var name in all)
-    __defProp(target2, name, { get: all[name], enumerable: true });
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -137,9 +137,7 @@ ResolveQueue.prototype = {
 // src/target.js
 var HIX_HANDLER = 0;
 var HIX_REPLY = 268435456;
-var HIX_ROUTER = 536870912;
 var HIX_TYPE_MASK = 4026531840;
-var HIX_MASK = 268435455;
 function Target(uid, pin, channel = false) {
   this.uid = uid;
   this.actor = null;
@@ -185,29 +183,12 @@ var convert = {
       let matches = targetString.match(regex);
       const targetStringArray = matches ? matches.map((str2) => str2.slice(1, -1).replace(/\\"/g, '"')) : [];
       const rawTargets = [];
-      for (const target2 of targetStringArray) {
-        const rawTarget = convert.stringToTarget(target2);
+      for (const target of targetStringArray) {
+        const rawTarget = convert.stringToTarget(target);
         if (rawTarget) rawTargets.push(rawTarget);
       }
       return { output, channel, targets: rawTargets };
     }
-  },
-  // This function is used for the routertable
-  stringToScope(str) {
-    let colon = str.indexOf(":");
-    if (colon < 0) return null;
-    const selector = str.slice(0, colon).trim();
-    const scope = str.slice(colon + 1).trim();
-    if (selector.length == 0 || scope.length == 0) return null;
-    const regex = /"(?:\\.|[^"\\])*"/g;
-    let matches = scope.match(regex);
-    const targetStringArray = matches ? matches.map((str2) => str2.slice(1, -1).replace(/\\"/g, '"')) : [];
-    const rawTargets = [];
-    for (const target2 of targetStringArray) {
-      const rawTarget = convert.stringToTarget(target2);
-      if (rawTarget) rawTargets.push(rawTarget);
-    }
-    return { selector, scope: rawTargets };
   },
   // format: pin name @ node name (uid)
   stringToTarget(str) {
@@ -239,13 +220,11 @@ var rtFlags = {
 var LOGMSG = rtFlags.LOGMSG;
 function Runtime() {
   this.actors = [];
-  this.timer = 0;
-  this.minDelay = 0;
-  this.maxDelay = 100;
-  this.scheduleDelay = this.minDelay;
+  this.receiveTimer = 0;
+  this.idleTimer = 0;
+  this.receiveDelay = 0;
+  this.idleDelay = 100;
   this.idleCount = 0;
-  this.idleTreshold = 100;
-  this.slow = false;
   this.msgCount = 0;
   this.startTime = null;
   this.qOut = [];
@@ -254,36 +233,64 @@ function Runtime() {
 }
 __name(Runtime, "Runtime");
 Runtime.prototype = {
+  clearReceiveTimer() {
+    clearTimeout(this.receiveTimer);
+    this.receiveTimer = 0;
+  },
+  clearIdleTimer() {
+    clearTimeout(this.idleTimer);
+    this.idleTimer = 0;
+  },
+  scheduleReceive() {
+    if (this.receiveTimer) return;
+    this.clearIdleTimer();
+    this.receiveTimer = setTimeout(() => {
+      this.receiveTimer = 0;
+      this.receive();
+    }, this.receiveDelay);
+  },
+  scheduleIdleCheck() {
+    if (this.idleTimer || this.receiveTimer || this.qOut.length) return;
+    this.idleTimer = setTimeout(() => {
+      this.idleTimer = 0;
+      this.idle();
+    }, this.idleDelay);
+  },
   // start the runtime
   start() {
-    clearTimeout(this.timer);
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
     this.qOut = [];
     this.qIn = [];
     this.msgCount = 0;
+    this.idleCount = 0;
     for (const actor of this.actors) actor.makeCell();
     this.startTime = Date.now();
-    this.timer = setTimeout(this.receive.bind(this), this.scheduleDelay);
+    this.scheduleIdleCheck();
   },
   // stop the timer, clear the queues and reset the cells
   stop() {
-    clearTimeout(this.timer);
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
     this.msgCount = 0;
+    this.idleCount = 0;
     this.actors.forEach((actor) => actor.cell = null);
     this.qOut = [];
     this.qIn = [];
   },
   halt() {
-    clearTimeout(this.timer);
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
   },
   continue() {
-    this.timer = setTimeout(this.receive.bind(this), this.scheduleDelay);
+    if (this.qOut.length) this.scheduleReceive();
+    else this.scheduleIdleCheck();
   },
   switch() {
     const temp = this.qIn;
     this.qIn = this.qOut;
     this.qOut = temp;
     this.qOut.length = 0;
-    if (this.slow) this.goFast();
   },
   idle() {
     this.idleCount++;
@@ -293,16 +300,7 @@ Runtime.prototype = {
       const min = (now - this.startTime) / 6e4;
       console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`);
     }
-    if (!this.slow && this.idleCount > this.idleTreshold) this.goSlow();
-  },
-  goFast() {
-    this.scheduleDelay = this.minDelay;
-    this.idleCount = 0;
-    this.slow = false;
-  },
-  goSlow() {
-    this.scheduleDelay = this.maxDelay;
-    this.slow = true;
+    this.scheduleIdleCheck();
   },
   // returns a promise that is immediately rejected
   reject(reason) {
@@ -310,40 +308,47 @@ Runtime.prototype = {
       reject(new Error(reason));
     });
   },
+  logMessage(msg) {
+    console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`);
+  },
+  logReqReply(msg, what) {
+    console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`);
+  },
+  logNotConnected(nodeName, pinName) {
+    console.log(`${nodeName}[${pinName}] : not connected.`);
+  },
   // send the message to all the targets = schedule the execution of the handler
-  sendTo(targets, source, pin, param) {
-    if (targets.length < 1) return 0;
-    if (source.flags & LOGMSG) console.log(`${source.name} -> ${pin}`);
+  sendTo(tx, source, param) {
+    if (tx.targets.length < 1) {
+      if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
+      return 0;
+    }
     ++this.msgCount;
-    for (const target2 of targets)
-      this.qOut.push({
-        from: source.uid,
-        txRef: 0,
-        dest: target2.actor,
-        rxRef: 0,
-        hix: target2.hix,
-        pin,
-        param
-      });
-    return targets.length;
+    const log = source.flags & LOGMSG;
+    for (const target of tx.targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+      if (log) this.logMessage(this.qOut.at(-1));
+    }
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+    return tx.targets.length;
   },
   // requests data from the target(s) - returns a thenable - either a promise or a promisehandler !
-  requestFrom(targets, source, pin, param, timeout) {
-    if (source.flags & LOGMSG) console.log(`${source.name} => ${pin}`);
+  requestFrom(tx, source, param, timeout) {
+    if (tx.targets.length < 1) {
+      if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
+      return this.reject("Not connected");
+    }
     const txRef = ++this.msgCount;
     let channelCount = 0;
-    for (const target2 of targets) {
-      this.qOut.push({
-        from: source.uid,
-        txRef,
-        dest: target2.actor,
-        rxRef: 0,
-        hix: target2.hix,
-        pin,
-        param
-      });
-      if (target2.channel) channelCount++;
+    const log = source.flags & LOGMSG;
+    for (const target of tx.targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+      if (log) this.logReqReply(this.qOut.at(-1), "request");
+      if (target.channel) channelCount++;
     }
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
     if (channelCount == 0) return this.reject("No channel");
     return this.qResolve.addPromiseHandler(txRef, timeout, channelCount);
   },
@@ -351,46 +356,31 @@ Runtime.prototype = {
   reply(source, param) {
     var _a;
     if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return 0;
-    if (source.flags & LOGMSG) console.log(`reply to ${source.msg.pin} @ ${source.name}`);
     ++this.msgCount;
-    this.qOut.push({
-      from: source.uid,
-      txRef: 0,
-      dest: source.msg.from,
-      rxRef: source.msg.txRef,
-      hix: HIX_REPLY,
-      pin: source.msg.pin,
-      param
-    });
+    this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef: 0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+    if (source.flags & LOGMSG) this.logReqReply(this.qOut.at(-1), "reply");
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
     return 1;
   },
   next(source, param, timeout) {
     var _a;
     if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return this.reject("No target");
     const txRef = ++this.msgCount;
-    this.qOut.push({
-      from: source.uid,
-      txRef,
-      dest: target.actor,
-      rxRef: source.msg.txRef,
-      hix: HIX_REPLY,
-      pin: source.msg.pin,
-      param
-    });
+    this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
     return this.qResolve.addPromiseHandler(txRef, timeout);
   },
   receive() {
-    if (!this.qOut.length) {
-      this.idle();
-    } else {
-      this.switch();
-      this.handleReceiveQueue();
-    }
-    this.timer = setTimeout(this.receive.bind(this), this.scheduleDelay);
+    if (!this.qOut.length) return this.scheduleIdleCheck();
+    this.switch();
+    this.handleReceiveQueue();
+    if (this.qOut.length && !this.receiveTimer) this.scheduleReceive();
+    else this.scheduleIdleCheck();
   },
   // handle the messages on the receive queue
   handleReceiveQueue() {
-    var _a, _b;
     for (const msg of this.qIn) {
       const dest = msg.dest;
       switch (msg.hix & HIX_TYPE_MASK) {
@@ -398,66 +388,55 @@ Runtime.prototype = {
         case HIX_HANDLER:
           {
             dest.msg = msg;
-            if (dest.flags & LOGMSG) console.log(`${dest.name} <- ${msg.pin} (run ${dest.rxTable[msg.hix].handler.name})`);
-            dest.rxTable[msg.hix].handler.call(dest.cell, msg.param);
+            if (dest.flags & LOGMSG) this.logMessage(msg);
+            dest.rxSink[msg.hix].handler.call(dest.cell, msg.param);
           }
           break;
         // replies 
         case HIX_REPLY:
           {
-            if (dest.flags & LOGMSG) console.log(`${dest.name} <= ${msg.pin} (reply)`);
+            if (dest.flags & LOGMSG) this.logReqReply(msg, "incoming reply");
             this.qResolve.trigger(msg.rxRef, msg.param);
           }
           break;
-        // messages that have to pass through a router filter first also have a special hix
-        case HIX_ROUTER:
-          {
-            if (dest.flags & LOGMSG) console.log(`${dest.name} <- ${msg.pin} (filter via router)`);
-            const scope = msg.dest.scopeTable[msg.hix & HIX_MASK];
-            const nameList = ((_b = (_a = dest.cell).filter) == null ? void 0 : _b.call(_a, scope.targets.keys(), msg.pin, msg.param)) ?? [...scope.targets.keys()];
-            if (Array.isArray(nameList) && nameList.length > 0) {
-              this.forwardToAll(msg, nameList, scope.targets);
-            } else {
-              const actual = scope.targets.get(nameList);
-              if (actual) this.forward(msg, actual);
-            }
-          }
-          break;
       }
-    }
-  },
-  // forward a message to the actual targets of the message
-  forwardToAll(msg, nameList, targets) {
-    let channelCount = 0;
-    for (const name of nameList) {
-      const actual = targets.get(name);
-      if (actual) {
-        this.forward(msg, actual);
-        if (msg.txRef > 0 && actual.channel) channelCount++;
-      }
-    }
-    if (channelCount > 1) this.qResolve.changePromiseHandler(msg.txRef, channelCount);
-  },
-  forward(msg, actual) {
-    if ((actual.hix & HIX_TYPE_MASK) == HIX_HANDLER) {
-      actual.actor.msg = msg;
-      actual.actor.rxTable[actual.hix].handler.call(actual.actor.cell, msg.param);
-    } else if ((actual.hix & HIX_TYPE_MASK) == HIX_ROUTER) {
-      this.qOut.push({
-        from: msg.from,
-        txRef: msg.txRef,
-        dest: actual.actor,
-        rxRef: 0,
-        hix: actual.hix,
-        pin: actual.pin,
-        param: msg.param
-      });
     }
   },
   reschedule(msg) {
     this.qOut.push(msg);
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
   }
 };
+
+// src/runtime-settings.js
+var defaultWorker = /* @__PURE__ */ __name(() => ({
+  on: false,
+  path: ""
+}), "defaultWorker");
+function makeRuntimeSettings() {
+  return {
+    logMessages: false,
+    worker: defaultWorker()
+  };
+}
+__name(makeRuntimeSettings, "makeRuntimeSettings");
+function normalizeRuntimeSettings(dx = null) {
+  const defaults = makeRuntimeSettings();
+  if (!dx || typeof dx !== "object") return defaults;
+  const normalized = {
+    ...dx,
+    logMessages: !!dx.logMessages,
+    worker: {
+      ...defaults.worker,
+      ...dx.worker ?? {}
+    }
+  };
+  normalized.worker.on = !!normalized.worker.on;
+  normalized.worker.path = normalized.worker.path ?? "";
+  return normalized;
+}
+__name(normalizeRuntimeSettings, "normalizeRuntimeSettings");
 
 // src/runtime-node.js
 function RX(pin, channel = false) {
@@ -488,33 +467,32 @@ function RuntimeNode({ name, uid, factory, inputs, outputs, sx, dx }) {
   this.uid = uid;
   this.factory = factory;
   this.useNew = shouldUseNew(factory);
-  this.rxTable = [];
-  this.txTable = [];
+  this.rxSink = [];
+  this.txMap = /* @__PURE__ */ new Map();
   this.sx = sx ?? null;
-  this.dx = dx ?? null;
+  this.dx = dx ? normalizeRuntimeSettings(dx) : null;
   this.flags = 0;
   this.cell = null;
   this.msg = null;
   this.setFlags();
-  this.initRxTxTables({ inputs, outputs });
+  this.initRxTx({ inputs, outputs });
 }
 __name(RuntimeNode, "RuntimeNode");
 RuntimeNode.prototype = {
   setFlags() {
-    var _a;
-    if (!((_a = this.dx) == null ? void 0 : _a.flags)) return;
-    if (this.dx.flags.includes("LOGMSG")) this.flags |= rtFlags.LOGMSG;
+    if (!this.dx) return;
+    if (this.dx.logMessages) this.flags |= rtFlags.LOGMSG;
   },
-  initRxTxTables({ inputs, outputs }) {
+  initRxTx({ inputs, outputs }) {
     for (const inputString of inputs) {
       const input = convert.stringToInput(inputString);
-      if (input) this.rxTable.push(new RX(input.pin, input.channel));
+      if (input) this.rxSink.push(new RX(input.pin, input.channel));
     }
     for (const outputString of outputs) {
       const raw = convert.stringToOutput(outputString);
       if (!raw) continue;
       const tx = new TX(raw.output, raw.channel);
-      this.txTable.push(tx);
+      this.txMap.set(tx.pin, tx);
       for (const rawTarget of raw.targets) {
         tx.targets.push(new Target(rawTarget.uid, rawTarget.pinName, raw.channel));
       }
@@ -536,9 +514,8 @@ RuntimeNode.prototype = {
     this.addHandlersForCell();
   },
   addHandlersForCell() {
-    var _a;
     if (!this.cell) {
-      if (((_a = this.rxTable) == null ? void 0 : _a.length) > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
+      if (this.rxSink.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
       return;
     }
     const entries = Object.entries(this.cell);
@@ -553,37 +530,38 @@ RuntimeNode.prototype = {
         if (rx) rx.handler = fn;
       }
     });
-    this.rxTable.forEach((rx) => {
+    for (const rx of this.rxSink) {
       if (!rx.handler) {
         console.warn(`** NO HANDLER ** Node "${this.name}" has input pin "${rx.pin}" but no handler for it.`);
         rx.handler = missingHandler;
       }
-    });
+    }
   },
-  // given a function name, check if it corresponds to a pin in the rx table
+  // given a function name, check if it corresponds to a pin in the rx sink
   getRx(functionName) {
     if (functionName.startsWith("-> ") || functionName.startsWith("=> ")) {
       const handlerName = functionName.slice(3);
-      return this.rxTable.find((rx) => rx.pin == handlerName);
+      return this.rxSink.find((rx) => rx.pin == handlerName);
     }
-    return this.rxTable.find((rx) => convert.pinToHandler(rx.pin) == functionName);
+    for (const rx of this.rxSink) {
+      if (convert.pinToHandler(rx.pin) == functionName) return rx;
+    }
+    return null;
   },
   resolveUIDs(actors) {
-    this.txTable.forEach((tx) => {
-      tx.targets.forEach((target2) => {
-        target2.actor = actors.find((actor) => actor.uid == target2.uid);
-        if (!target2.actor) return console.error(`** ERROR ** target node ${target2.uid} in ${this.name} not found`);
-        target2.hix = target2.actor.factory ? HIX_HANDLER | target2.actor.rxTable.findIndex((rx) => rx.pin == target2.pin) : HIX_ROUTER | target2.actor.scopeTable.findIndex((scope) => scope.selector == target2.pin);
-      });
-    });
+    for (const tx of this.txMap.values()) {
+      for (const target of tx.targets) {
+        target.actor = actors.find((actor) => actor.uid == target.uid);
+        if (!target.actor) return console.error(`** ERROR ** target node ${target.uid} in ${this.name} not found`);
+        const hix = target.actor.rxSink.findIndex((rx) => rx.pin == target.pin);
+        if (hix < 0) return console.error(`** ERROR ** target pin ${target.pin} in ${target.actor.name} not found`);
+        target.hix = HIX_HANDLER | hix;
+      }
+    }
   },
-  // when sending a message find the targets for the message
-  findTargets(pin) {
-    if (!pin) return [];
-    const tx = this.txTable.find((tx2) => tx2.pin == pin);
-    if (tx) return tx.targets;
-    console.warn(`** NO OUTPUT PIN ** Node "${this.name}" pin: "${pin}"`, this.txTable);
-    return [];
+  findTx(pin) {
+    if (!pin) return null;
+    return this.txMap.get(pin) ?? null;
   },
   // return an object with the functions for the cell - done like this to avoid direct access to source !
   getTx() {
@@ -592,21 +570,25 @@ RuntimeNode.prototype = {
       // get the output pin from the message
       get pin() {
         var _a;
-        return (_a = source.msg) == null ? void 0 : _a.pin;
+        return (_a = source.msg) == null ? void 0 : _a.txPin;
       },
       // returns the local reference of the message
       send(pin, param) {
-        if (!pin) return 0;
-        const targets = source.findTargets(pin);
-        return runtime.sendTo(targets, source, pin, param);
+        if (pin) {
+          const tx = source.findTx(pin);
+          if (tx) return runtime.sendTo(tx, source, param);
+        }
+        console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+        return 0;
       },
       // sends a request and returns a promise or an array of promises
       request(pin, param, timeout = 0) {
-        if (!pin) return null;
-        const tx = source.txTable.find((tx2) => tx2.pin == pin);
-        if (tx == null ? void 0 : tx.targets.length) return runtime.requestFrom(tx.targets, source, pin, param, timeout);
-        console.warn(`** NO OUTPUT PIN ** Node "${this.name}" pin: "${pin}"`, this.txTable);
-        return runtime.reject("Not connected");
+        if (pin) {
+          const tx = source.findTx(pin);
+          if (tx) return runtime.requestFrom(tx, source, param, timeout);
+        }
+        console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+        return runtime.reject("No such output pin");
       },
       // Returns a message to the sender over the backchannel
       reply(param) {
@@ -621,119 +603,48 @@ RuntimeNode.prototype = {
         if (source.msg) runtime.reschedule(source.msg);
       },
       // you can select a destination here - message will only be sent if there is a connection to that node
-      wireless(nodeName) {
-        const node = runtime.actors.find((actor) => actor.name.toLowerCase() == nodeName.toLowerCase());
-        if (!node) {
-          console.warn(`** WIRELESS SEND TO UNKNOWN NODE ** ${nodeName}`);
-          return {
-            send(pin, param) {
-              return 0;
-            },
-            request(pin, param, timeout = 1e3) {
-              return new Promise((resolve, reject) => {
-                reject(new Error("no node"));
-              });
-            }
-          };
-        }
-        function makeTarget(pin) {
-          const L = node.rxTable.length;
-          for (let i = 0; i < L; i++) {
-            if (node.rxTable[i].pin == pin) {
-              return {
-                uid: node.uid,
-                actor: node,
-                pin,
-                channel: node.rxTable[i].channel,
-                hix: HIX_HANDLER || i
-              };
-            }
-          }
-          return null;
-        }
-        __name(makeTarget, "makeTarget");
+      select(nodeName) {
+        const _nodeName = nodeName;
         return {
-          // sends a message over a pin
+          // returns the local reference of the message
           send(pin, param) {
-            const target2 = makeTarget(pin);
-            if (!target2) {
-              console.warn(`** WIRELESS SEND TO UNKNOWN PIN ** ${nodeName} pin: ${pin}`);
-              return 0;
+            if (pin) {
+              const tx = source.findTx(pin);
+              if (tx) {
+                const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+                if (actualTarget) {
+                  const txCopy = new TX(tx.pin, tx.channel);
+                  txCopy.targets = [actualTarget];
+                  return runtime.sendTo(txCopy, source, param);
+                }
+                console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+                return 0;
+              }
             }
-            return runtime.sendTo([target2], source, pin, param);
+            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+            return 0;
           },
           // sends a request and returns a promise or an array of promises
           request(pin, param, timeout = 0) {
-            const target2 = makeTarget(pin);
-            if (!target2) {
-              console.warn(`** WIRELESS REQUEST TO UNKNOWN PIN ** ${nodeName} pin: ${pin}`);
-              return new Promise((resolve, reject) => {
-                reject(new Error("no pin"));
-              });
+            if (pin) {
+              const tx = source.findTx(pin);
+              if (tx) {
+                const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+                if (actualTarget) {
+                  const txCopy = new TX(tx.pin, tx.channel);
+                  txCopy.targets = [actualTarget];
+                  return runtime.requestFrom(txCopy, source, param, timeout);
+                }
+                console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+                return runtime.reject("selected node not connected");
+              }
             }
-            return runtime.requestFrom([target2], source, pin, param, timeout);
+            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+            return runtime.reject("No such output pin");
           }
         };
       }
     };
-  }
-};
-
-// src/runtime-filter.js
-function Scope(selector) {
-  this.selector = selector;
-  this.targets = /* @__PURE__ */ new Map();
-}
-__name(Scope, "Scope");
-function RuntimeFilter({ name, uid, filter, table }) {
-  var _a;
-  this.name = name;
-  this.uid = uid;
-  this.filter = filter;
-  this.useNew = ((_a = filter.prototype) == null ? void 0 : _a.constructor) === filter ? false : true;
-  this.scopeTable = [];
-  this.cell = null;
-  this.msg = null;
-  this.buildScopeTable(table);
-}
-__name(RuntimeFilter, "RuntimeFilter");
-RuntimeFilter.prototype = {
-  buildScopeTable(rawTable) {
-    for (const routeString of rawTable) {
-      const rawRoute = convert.stringToScope(routeString);
-      const scope = new Scope(rawRoute.selector);
-      for (const rawTarget of rawRoute.scope) {
-        const target2 = new Target(rawTarget.uid, rawTarget.pinName);
-        scope.targets.set(rawTarget.nodeName, target2);
-      }
-      this.scopeTable.push(scope);
-    }
-  },
-  resolveUIDs(actors) {
-    for (const scope of this.scopeTable) {
-      for (const target2 of scope.targets.values()) {
-        target2.actor = actors.find((actor) => actor.uid == target2.uid);
-        if (!target2.actor) return console.error(`** ERROR ** target node ${target2.uid} in ${this.name} not found`);
-        if (target2.actor.factory) {
-          target2.actor.rxTable.find((rx, index) => {
-            if (rx.pin != target2.pin) return false;
-            target2.hix = HIX_HANDLER | index;
-            target2.channel = rx.channel;
-            return true;
-          });
-        } else if (target2.actor.filter) {
-          target2.actor.scopeTable.find((scope2, index) => {
-            if (scope2.selector != target2.pin) return false;
-            target2.hix = HIX_ROUTER | index;
-            return true;
-          });
-        }
-      }
-    }
-  },
-  // create a cell for the node - pass a client runtime to that cell
-  makeCell() {
-    this.cell = this.useNew ? new this.filter() : this.filter();
   }
 };
 
@@ -743,10 +654,6 @@ function scaffold(nodeList, filterList = []) {
   runtime = new Runtime();
   for (const rawNode of nodeList) {
     const actor = new RuntimeNode(rawNode);
-    runtime.actors.push(actor);
-  }
-  for (const rawFilter of filterList) {
-    const actor = new RuntimeFilter(rawFilter);
     runtime.actors.push(actor);
   }
   runtime.actors.forEach((actor) => actor.resolveUIDs(runtime.actors));

@@ -384,26 +384,24 @@ ifName(ctx, text,color,rc) {
     ctx.fillText(text, left, y+0.75*h);
 },
 
-centerTextCursor(ctx,rc,text,pChar) {
-    let x = rc.x + rc.w/2 - ctx.measureText(text).width/2;
-    let cx = ctx.measureText(text.slice(0,pChar)).width;
-    return {x: x + cx + 1, y: rc.y}
-},
 
-leftTextCursor(ctx,text,x,y,w,h,pCursor) {
-    let cx = ctx.measureText(text.slice(0,pCursor)).width;
-    return {x: x + cx + 1, y:y}
-},
+cursorIndex(ctx, text, xStart, xWhere) {
 
-// get  the cursor position for a pin - cursor at position p is infront of character p
-rightTextCursor(ctx,text,x,y,w,h,pCursor) {
-    let cx = ctx.measureText(text.slice(0,pCursor)).width;
-    return {x: x + w - ctx.measureText(text).width + cx, y: y}
+    const width = ctx.measureText(text).width;
+
+    if (xWhere < xStart) return 0
+    if (xWhere > xStart + width) return text.length
+
+    let xHere = xStart;
+    for (let i = 0; i < text.length ; i++) {
+        if (xHere >= xWhere)  return i
+        xHere += ctx.measureText(text[i]).width;
+    }
+    return text.length
 },
 
 // draw a cursor
-cursor(ctx,x,y,w,h,cCursor) {
-
+cursorDraw(ctx,x,y,w,h,cCursor) {
     ctx.fillStyle = cCursor;
     ctx.fillRect(x,y,w,h);
 },
@@ -876,7 +874,7 @@ rcAlias(ctx, text, zone, x, y, font) {
 },
 
 // Draw the alias 
-hAlias(ctx,text,rc,cRect,font) {
+drawAlias(ctx,text,rc,cRect,font) {
 
     // change the font
     const saveFont = ctx.font;
@@ -896,21 +894,6 @@ hAlias(ctx,text,rc,cRect,font) {
 
     // set the font back
     ctx.font = saveFont;
-},
-
-cursorAlias(ctx,text,rc,pCursor, font) {
-
-    // change the font
-    const saveFont = ctx.font;
-    ctx.font = font;
-
-    // where the cursor has to go
-    let cx = ctx.measureText(text.slice(0,pCursor)).width;
-
-    // set the font back
-    ctx.font = saveFont;
-
-    return {x: rc.x + cx + 1, y: rc.y}
 },
 
 };
@@ -1384,7 +1367,6 @@ const convert = {
                 direction === "x" ? x += length : y += length;
                 wire.push({x,y});
             }
-        
             return wire;           
         }
         
@@ -1407,7 +1389,6 @@ const convert = {
                 direction === "x" ? x -= length : y -= length;
                 wire.push({x,y});
             }
-        
             return wire.reverse();          
         }
         else return []
@@ -1744,6 +1725,19 @@ const convert = {
         return factory;
     },
 
+    // transforms a name to a valid javascript camel-cased identifier, starting with an upper case letter
+    nodeToFilename: (nodeName) => {
+        if (!nodeName?.length) return ''
+
+        return nodeName
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')         // spaces become hyphens
+            .replace(/[^a-z0-9_-]/g, '')  // remove illegal filename characters
+            .replace(/-+/g, '-')          // collapse repeated hyphens
+            .replace(/^[-_.]+|[-_.]+$/g, '') // trim separator noise at the ends
+    },
+
     // skip the first part of the path name
     skipPrefix: (path) => {
         // find the second slash (path starts with a slash)
@@ -1983,7 +1977,7 @@ function StyleFactory() {
     this.std = {
         font: "normal 12px tahoma", lineCap: "round",  lineJoin: "round", lineWidth: 1.0, 
         cBackground: color.black, cLine: color.white, cFill: color.blue,
-        wCursor: 2, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
+        wCursor: 2, hCursor: 15, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
     }; 
     this.look = {
         wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5, 
@@ -2077,7 +2071,7 @@ StyleFactory.prototype = {
 
         // change the specific color
         color.setShades(rgb);
-
+        
         // shade1
         this.box.cLine = 
         this.header.cBackground = 
@@ -2139,7 +2133,8 @@ TextEdit.prototype = {
 
     // new edit
     newEdit(obj, prop, cursor=-1) {
-        this.cursor = cursor < 0 ? obj[prop].length : 0;  // place the cursor at the end
+        
+        this.cursor = cursor < 0 ? obj[prop].length : cursor;
         this.saved = obj[prop];          // save the current value
         this.obj = obj;                  // the object where there is an editable prop
         this.prop= prop;                 // the prop that needs editing
@@ -2529,6 +2524,20 @@ ModelHeader.prototype = {
         // get the runtime
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime';
     },
+
+    // copy
+    copyWithoutStyle() {
+
+        return {
+            // Set the schema version in the header
+            version: this.version = SCHEMA_VERSION,
+            created: this.created,
+            saved: this.saved,
+            utc: this.utc,
+            style: this.style.rgb,
+            runtime: this.runtime
+        }
+    }
 };
 
 // Server error
@@ -2623,8 +2632,32 @@ async function post(resource,body,mime='text/plain') {
 // regular expression for a file name and path
 // The file extension is handled separately when required
 
+// The path type that 
+const Kind = {
+    Absolute: 1,
+    Relative: 2,
+    Empty: 3,
+};
+
+function getKind(path) {
+    if (path == null || path.length == 0) return Kind.Empty
+    return isAbsolutePath(path) ? Kind.Absolute : Kind.Relative
+}
+
 function normalizeSeparators(value) {
     return (typeof value === 'string') ? value.replace(/\\/g, '/') : value
+}
+
+function getDomain(str) {
+
+    // find the first colon and the first slash
+    const colon = str.indexOf(':');
+    const slash = str.indexOf('/');
+
+    // format = domain:path - so find a colon that is not part of the path /...:... is not valid !
+    if ((colon < 0) || (slash < colon)) return null
+
+    return str.slice(0, colon)
 }
 
 function changeExt(path, newExt) {
@@ -2693,25 +2726,16 @@ function nameOnly(path) {
     return (period > slash) ? path.slice(slash+1, period) : path.slice(slash+1)
 }
 
+// Examples
+// console.log(isAbsolutePath('/users/docs'));  // Returns true
+// console.log(isAbsolutePath('users/newfile.txt'));  // Returns false
+// console.log(isAbsolutePath('https://example.com'));  // Returns true
+// console.log(isAbsolutePath('C:\\Users\\docs'));  // Returns true
+// console.log(isAbsolutePath('file:///C:/Users/docs'));  // Returns true
 
-// // returns the path as in the workspace
-// // TWO FUNCTIONS BELOW TO BE IMPROVED !!!
-// export function wsPath( arlPath) {
-//     // find the second slash (path starts with a slash)
-//     let slash = arlPath.indexOf('/', 1)
-//     return slash < 0 ? arlPath : arlPath.slice(slash)
-// }
-
-// export function arlPath( wsPath) {
-//     return '/public' + wsPath
-// }
-
-// breaks an entry into its different parts
-
-// returns the last i where the strings are the same
-function commonPart(a,b) { 
-    const max = a.length < b.length ? a.length : b.length;
-    for (let i=0;i<max;i++) { if (a[i] != b[i]) return i } 
+function isAbsolutePath(path) {
+    // Checks if the path starts with '/', 'http://', 'https://', 'file://', or a Windows drive letter
+    return /^(\/|https?:\/\/|file:\/\/\/|[a-zA-Z]:[\\/]|[\w\s-]+:\/)/.test(path);
 }
 
 // make a path relative to the reference
@@ -2723,41 +2747,93 @@ function relative(path, ref) {
     path = normalizeSeparators(path);
     ref = normalizeSeparators(ref);
 
-    // find it - but change to lowercase first
-    const common = commonPart( path,ref );
+    // empty values are returned unchanged
+    if (!path?.length || !ref?.length) return path
 
-    // find the last / going backward
-    let slash = path.lastIndexOf('/',common);
+    // do not try to relativize across different schemes / domains
+    const pathDomain = getDomain(path);
+    const refDomain = getDomain(ref);
+    if (pathDomain || refDomain) {
+        if (pathDomain !== refDomain) return path
+    }
 
-    // if nothing in common
-    if (slash < 1) return path
+    const pathRooted = path.startsWith('/');
+    const refRooted = ref.startsWith('/');
+    if (pathRooted !== refRooted) return path
 
-    // get rid of the common part
-    let newPath = path.slice(slash+1);
-    let newRef = ref.slice(slash+1);
+    // split into path components; ref is always treated as a file
+    const pathParts = path.split('/').filter(Boolean);
+    const refParts = ref.split('/').filter(Boolean);
+    const refDirParts = refParts.slice(0, -1);
 
-    // we will make a prefix
-    let prefix ='./';
+    let same = 0;
+    const max = Math.min(pathParts.length, refDirParts.length);
+    while (same < max && pathParts[same] === refDirParts[same]) same++;
 
-    // if the ref is in a subdirectory we first have to come out of that sub
-    slash = newRef.indexOf('/');
-    if ( slash > 0) {
+    const upCount = refDirParts.length - same;
+    const downParts = pathParts.slice(same);
 
-        // go up the directory chain
-        prefix = '../';
-        while ((slash = newRef.indexOf('/',slash+1)) > -1) {
+    if (upCount === 0) return './' + downParts.join('/')
 
-            // add a new step up
-            prefix += '../';
+    return '../'.repeat(upCount) + downParts.join('/')
+}
 
-            // keep it reasonable - do not get stuck in the loop
-            if (prefix.length > 100) break
+// if path starts with ./ or ../ or just name, make it into an absolute path based on the ref path.
+// the ref path is always considered to be a file 
+// The rules are as follows
+//                      /a/b/c + /d = /d
+//                      /a/b/c + ./d = /a/b/d
+//                      /a/b/c + ../d = /a/d
+//                      /a/b/c + d = /a/b/d
+function absolute(path, ref) {
+
+    path = normalizeSeparators(path);
+    ref = normalizeSeparators(ref);
+
+    // keep the original values intact while resolving
+    const target = path ?? '';
+    const reference = ref ?? '';
+
+    if (!reference.length) return target
+    if (!target.length)    return reference
+
+    // already absolute
+    if (isAbsolutePath(target) || getDomain(target)) return target
+
+    // derive the base directory from the reference (ref is a file)
+    const lastSlash = reference.lastIndexOf('/');
+    const baseDir = lastSlash < 0 ? '' : reference.slice(0, lastSlash);
+    const rooted = reference.startsWith('/');
+    const stack = baseDir ? baseDir.split('/').filter(Boolean) : [];
+    let extraUp = 0;
+
+    // split and normalize the target path components
+    const parts = target.split('/');
+    for (const part of parts) {
+
+        // ignore empty segments and current directory markers
+        if (!part || part === '.') continue
+
+        if (part === '..') {
+            if (stack.length) {
+                stack.pop();
+            } else if (!rooted) {
+                extraUp++;
+            }
+            // if rooted and nothing to pop, stay at root
+        } else {
+            stack.push(part);
         }
     }
 
-//console.log('PATH ',path, ref, '==>', prefix, '+', newPath)
+    // rebuild the path
+    let resolved = rooted ? '/' : '';
+    if (!rooted && extraUp) resolved += '../'.repeat(extraUp);
 
-    return prefix + newPath
+    resolved += stack.join('/');
+
+    // avoid returning an empty string; rooted means '/'
+    return resolved || (rooted ? '/' : '.')
 }
 
 // domain path resource are the shorthands as they appear in the workspace file 
@@ -2771,14 +2847,11 @@ function stringCheck(userPath) {
     return null;
 }
 
-// domain path resource are the shorthands as they appear in the workspace file 
-function ARL$1(userPath) {
+// domain path resource uses a canonical path plus the resolved url
+function ARL$1(path) {
 
-    const stringPath = stringCheck(userPath);
-    const normalizedPath = normalizeSeparators(stringPath ?? '');
-
-    // the reference to the ARL as entered by the user
-    this.userPath = normalizedPath;
+    const stringPath = stringCheck(path);
+    this._locator = normalizeSeparators(stringPath ?? '');
 
     // the resolved url
     this.url = null;
@@ -2786,25 +2859,20 @@ function ARL$1(userPath) {
 
 ARL$1.prototype =  {  // makes a url based on the components
 
-// The url is a full url - sets the user path as ./last
+// The url is a full url - derive the canonical path from it
 // typically used as new ARL().absolute(url)
 absolute(url) {
 
-    // find the last slash
-    const slash = url.lastIndexOf('/');
-
-    // set the user path
-    this.userPath = slash >= 0 ? '.' + url.slice(slash) : url;
-
     // generate the url
     this.url = new URL(url);
+    this._locator = this.url.pathname;
 
     // return the arl
     return this
 },
 
 toJSON() {
-    return this.userPath
+    return this._locator
 },
 
 equals(arl) {
@@ -2824,89 +2892,110 @@ sameDir(arl) {
 },
 
 getPath() {
-    return this.userPath
+    return this._locator
 },
 
 getExt() {
     // get the position of the last period
-    let n = this.userPath.lastIndexOf('.');
+    let n = this._locator.lastIndexOf('.');
 
     // get the extension of the file - if any
-    return n < 0 ? '' : this.userPath.slice(n+1)
+    return n < 0 ? '' : this._locator.slice(n+1)
 },
 
 getName() {
-    // for repo:/dir1/dir2 we use dir2
-    const slash = this.userPath.lastIndexOf('/');
-    if (slash > 0) return this.userPath.slice(slash+1)
+    // for /dir1/dir2 and repo:/dir1/dir2 we use dir2
+    const normalized = this._locator.endsWith('/') && this._locator.length > 1
+        ? this._locator.slice(0, -1)
+        : this._locator;
+    const slash = normalized.lastIndexOf('/');
+    if (slash >= 0) return normalized.slice(slash + 1)
 
     // for repo: we use repo
-    const colon = this.userPath.indexOf(':'); 
-    if (colon > 0) return this.userPath.slice(0, colon) 
+    const colon = normalized.indexOf(':'); 
+    if (colon > 0) return normalized.slice(0, colon) 
     
-    // othrewise just use the userpath
-    return this.userPath
+    // otherwise just use the path
+    return normalized
 },
 
 // The full pathname - no host and no queries
 getFullPath() {
-    return this.url ? this.url.pathname : this.userPath
+    return this.url ? this.url.pathname : this._locator
 },
 
 setWSReference(wsRef) {},
 
 // resolve a path wrt this arl - returns a new arl !
-resolve(userPath) {
+resolve(path) {
 
-    const normalizedPath = normalizeSeparators(userPath);
+    const normalizedPath = normalizeSeparators(path);
 
     // relative path: check that we have a url
     if (!this.url) {
-        console.error(`cannot resolve ${userPath} - missing reference`);
+        console.error(`cannot resolve ${path} - missing reference`);
         return null
     }
 
-    // make an arl
-    const arl = new ARL$1(normalizedPath);
-
     // and make a url that is relative to this
-    arl.url = new URL(normalizedPath, this.url);
+    const url = new URL(normalizedPath, this.url);
+    const arl = new ARL$1(url.pathname);
+    arl.url = url;
 
     // done
     return arl
 },
 
-resolve_dbg(userPath) {
+resolve_dbg(path) {
 
-    const arl = this.resolve(userPath);
-    console.log(`%cresolved: ${userPath} using ${this.userPath} to ${arl.userPath}`, 'background: #ff0; color: #00f');
+    const arl = this.resolve(path);
+    console.log(`%cresolved: ${path} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f');
     return arl
 },
 
-// make a new user path relative to this new reference - the actual url does not change
-makeRelative( ref ) {
+relativeTo(ref) {
+    return relative(this.getFullPath(), ref.getFullPath())
+},
 
-    // if the user path contains a colon, it is an absolute path - nothing to change
-    //const colon = this.userPath.indexOf(':')
-    //if (colon > 0) return
-
-    // check if the new path and the old path have a part incommon
-    let oldFullPath = this.getFullPath();
-    let refFullPath = ref.getFullPath();
-
-    // express the old full path as a reference to the new ref full path
-    this.userPath = relative(oldFullPath, refFullPath);
+makeRelative(ref) {
+    return this.relativeTo(ref)
 },
 
 copy() {
-    const arl = new ARL$1(this.userPath);
+    const arl = new ARL$1(this._locator);
     arl.url = this.url ? new URL(this.url) : null;
     return arl
 },
 
+async getMeta() {
+
+    // check
+    if (!this.validURL()) return null
+
+    const response = await get(this.url, {method: 'HEAD'});
+    const modified = response.headers.get('Last-Modified');
+    const etag = response.headers.get('ETag');
+    const contentLength = response.headers.get('Content-Length');
+    const size = contentLength == null ? null : +contentLength;
+
+    return {modified, etag, size}
+},
+
+async getStamp() {
+
+    const meta = await this.getMeta().catch(() => null);
+    if (!meta) return null
+
+    if (meta.etag) return `etag:${meta.etag}`
+
+    const modified = meta.modified ?? '';
+    const size = meta.size ?? '';
+    return (modified || size !== '') ? `modified:${modified}|size:${size}` : null
+},
+
 validURL() {
     if (!this.url) {
-        console.error(`missing url ${this.path}`);
+        console.error(`missing url ${this._locator}`);
         return false
     } 
     return true
@@ -2964,87 +3053,8 @@ async save(body) {
 // },
 
 // javascript source files can be imported
-async jsImport() {
+async jsImport() {},
 
-    // check
-    if (!this.validURL()) return null
-
-    return import(this.url)
-},
-
-// async getFolderContent(){
-
-//     const content = {
-//         files: [],
-//         folders: []
-//     }
-
-//     // get the folder - return the promise
-//     return this.getFolder()
-//     .then( raw => {
-        
-//         // convert to arls...
-//         content.files = raw.files.map(name => this.resolve(this.userPath + '/' + name)),
-//         content.folders = raw.folders.map(name => this.resolve(this.userPath + '/' + name))
-        
-//         // return result - that resolves the promise
-//         return content
-//     })
-//     .catch (error => {
-
-//         // debug
-//         console.error(error)
-
-//         // if the path was not found, fail silently else throw
-//         if (error.options?.status != '404') throw error
-
-//         // return result
-//         return content
-//     })
-// }
-
-// async post(body, mime='application/json', query=null) {
-
-//     // post the content
-//     return query ? HTTP.post(this.url+query, body, mime) :  HTTP.post(url, body, mime)
-// },
-
-// // create the folder
-// async createFolder() {
-// },
-
-// // remove the file
-// async remove() {
-
-//     // remove the folder on the server
-//     return HTTP.del(this.url)
-//     .catch( error => {
-
-//         // if the path was not found, fail silently 
-//         if (error.options.status != '404') throw error
-//     })
-// },
-
-// // rename the file 
-// rename(newName){
-
-//     // construct the url 
-//     // const url = this.makeUrl()
-
-//     // prepare the query
-//     let query = `?action=rename&new-name=${newName}`
-
-//     // request the name change - return the promise 
-//     return HTTP.post(this.url+query)
-//     .then( response => {
-
-//         // change the name
-//         this.xxxchangeFileName(newName)
-
-//         // succesful
-//         return response
-//     })
-// },
 };
 
 const RawHandling = {
@@ -3073,7 +3083,7 @@ async fetch() {
         }
         catch( error ) {
             // This ONLY catches the rejection from pBlu, the mandatory promise.
-            console.warn(`${this.blu.arl.userPath} could not be found or is not valid.`, error);
+            console.warn(`${this.blu.arl.getPath()} could not be found or is not valid.`, error);
             return {bRaw:null, vRaw:null};
         }
     }
@@ -3082,7 +3092,7 @@ async fetch() {
 
         const rawCode = await this.bundle.arl.get('text')
         .catch( error => {
-            console.error(`${this.bundle.arl.userPath} is not a valid bundle`, error);
+            console.error(`${this.bundle.arl.getPath()} is not a valid bundle`, error);
         });
 
         //check
@@ -3092,7 +3102,7 @@ async fetch() {
         const raw = this.analyzeJSLib(rawCode);
 
         // error if failed
-        if (! raw) console.error(`model not found in bundle: ${this.bundle.arl.userPath}`);
+        if (! raw) console.error(`model not found in bundle: ${this.bundle.arl.getPath()}`);
 
         // we are done 
         return {bRaw:raw, vRaw: null}
@@ -3315,6 +3325,95 @@ joinInterfaces(bNode, vNode) {
     });
 },
 
+// A function that adjusts raw references for the content from the clipboard
+handleRawPaths(imports, raw) {
+
+    // this is the raw clipboard 
+    // const target = {
+    //     origin: this.origin.getArl()?.getFullPath(),
+    //     header: this.origin.header.copyWithoutStyle(),
+    //     what: this.selection.what,
+    //     rect: this.selection.rect ? convert.rectToString(this.selection.rect) : null,
+    //     viewPath: this.selection.viewPath,
+    //     root: null,
+    //     widgets: null
+    // }
+
+    // Only in the root adjustments need to be made..
+    if (!raw.root) return;
+
+    // notation
+    const oldRef = raw.origin;
+    const newRef = this.fullPath();
+
+    // if the refs are the same - nothing to do
+    if (oldRef == newRef) return;
+
+    // recursive helper function
+    const checkPaths = (rawNode, fn) => {
+        if (rawNode.link) {
+            rawNode.link.path = fn(rawNode.link.path, true);
+            imports.push(rawNode.link.path);
+        }
+        else if (rawNode.factory) {
+            rawNode.factory.path = fn(rawNode.factory.path, false);
+        }
+        else if (rawNode.nodes) {
+            for( const subNode of rawNode.nodes) checkPaths( subNode, fn);
+        }
+    };
+
+    // helper function
+    const adjustPath = (userPath, isLink) => {
+        const absolutePath = (isLink && ! userPath?.length) ? oldRef : absolute(userPath, oldRef);
+        return relative(absolutePath, newRef)     
+    };
+
+    // check all paths recursively
+    checkPaths(raw.root, adjustPath);
+
+    // return the adjusted
+    return;
+},
+
+// A function that makes the top level nodes links
+rawAsLinks(imports, raw) {
+
+    // We need to adapt already existing links ! 
+    const oldRef = raw.origin;
+    const newRef = this.fullPath();
+console.log(newRef);
+    // we only save the origin once 
+    let saveOrigin = true;
+
+    // set all the top-level nodes as links
+    for(const rawNode of raw.root.nodes) {
+
+        // don't change nodes that are already links but we might have to adapt the link !
+        if (rawNode.kind === 'dock') {
+            if (oldRef !== newRef) {
+                const link = rawNode.link;
+                const absolutePath = (! link.path?.length) ? oldRef : absolute(link.path, oldRef);
+                link.path = relative(absolutePath, newRef);  
+                imports.push(link.path);
+            }
+        }
+        else {
+            rawNode.kind = 'dock';
+            rawNode.link = { path: raw.origin, node: rawNode.name};
+console.log(rawNode);
+            // save origin just once
+            if (saveOrigin) {
+                imports.push(raw.origin);
+                saveOrigin = false;
+            }
+        }
+    }
+
+    // return the adjusted
+    return;
+},
+
 // Finds the model text in the library file...
 analyzeJSLib(rawCode) {
 
@@ -3367,24 +3466,25 @@ analyzeJSLib(rawCode) {
 
 const ProfileHandling = {
 
-// reads the source doc file and parses it into documentation
-async handleSourceMap() {
+// reads the source profile file and parses it into documentation
+async handleSourceProfile() {
 
-    // read the source doc file
-    const rawSourceMap = await this.readSourceMap();
+    // read the source profile file
+    const rawSourceProfile = await this.readSourceProfile();
 
     // check
-    if (! rawSourceMap) return;
+    if (! rawSourceProfile) return;
 
     // parse to extract the juicy bits
-    this.sourceMap = this.parseSourceMap(rawSourceMap);        
+    this.sourceProfile = this.parseSourceProfile(rawSourceProfile);
+    this.sourceProfileOrigin = 'file';
 
     // ok
-    // console.log('** SourceMap **', this.sourceMap)
+    // console.log('** SourceProfile **', this.sourceProfile)
 },
 
-// Reads the sourceMap of the model
-async readSourceMap() {
+// Reads the source profile of the model
+async readSourceProfile() {
 
     // get the model arl
     const arl = this.getArl();
@@ -3396,10 +3496,10 @@ async readSourceMap() {
     if (!fullPath) return null
 
     // make an arl 
-    const sourceMapArl = arl.resolve(removeExt(fullPath) + '.src.prf');
+    const sourceProfileArl = arl.resolve(removeExt(fullPath) + '.src.prf');
 
     // get the file
-    return await sourceMapArl.get('json')
+    return await sourceProfileArl.get('json')
 },
 
 /**
@@ -3409,7 +3509,7 @@ async readSourceMap() {
  * @param {Array<{node: string, handlers: Array}>} docEntries
  * @returns {Map<string, Map<string, object>>} Map of nodeName -> Map of pinName -> handler metadata
  */
-parseSourceMap(raw) {
+parseSourceProfile(raw) {
 
     // check
     if (!raw.entries) return null;
@@ -3460,7 +3560,7 @@ parseSourceMap(raw) {
 /**
  * Optional helper to flatten the nested map into a plain array (useful for UI).
  */
-flattenSourceMap(nodeMap) {
+flattenSourceProfile(nodeMap) {
     const flatList = [];
     for (const [node, pins] of nodeMap.entries()) {
         for (const [pin, meta] of pins.entries()) {
@@ -3474,7 +3574,7 @@ flattenSourceMap(nodeMap) {
 getInputPinProfile(pin) {
 
     // Get the info about the handlers of the node
-    const handles = this.sourceMap?.get(pin.node.name)?.handles;
+    const handles = this.sourceProfile?.get(pin.node.name)?.handles;
 
     // check
     if (!handles) return null
@@ -3510,7 +3610,7 @@ getInputPinProfile(pin) {
 getOutputPinProfile(pin) {
 
     // Get the info about the node
-    const transmits = this.sourceMap?.get(pin.node.name)?.transmits;
+    const transmits = this.sourceProfile?.get(pin.node.name)?.transmits;
 
     //check
     if (!transmits) return null
@@ -3728,9 +3828,9 @@ generateMcpSpec(root) {
 generateToolSpecs() {
     const tools = [];
 
-    if (!this.sourceMap) return tools
+    if (!this.sourceProfile) return tools
 
-    for (const [node, profile] of this.sourceMap.entries()) {
+    for (const [node, profile] of this.sourceProfile.entries()) {
         const handles = profile?.handles;
         if (!handles || typeof handles.entries !== 'function') continue
 
@@ -3837,6 +3937,7 @@ makeConfigPropertySchema(descriptor) {
     };
 
     if (descriptor.description) schema.description = descriptor.description;
+    if (Array.isArray(descriptor.enum) && descriptor.enum.length > 0) schema.enum = Array.from(new Set(descriptor.enum.map(value => String(value))));
     if (typeof descriptor.min === 'number') schema.minimum = descriptor.min;
     if (typeof descriptor.max === 'number') schema.maximum = descriptor.max;
     if (typeof descriptor.default !== 'undefined') schema.default = descriptor.default;
@@ -3955,6 +4056,7 @@ normalizePropertySchema(descriptor) {
     const normalized = {type};
 
     if (descriptor.description) normalized.description = descriptor.description;
+    if (Array.isArray(descriptor.enum) && descriptor.enum.length > 0) normalized.enum = Array.from(new Set(descriptor.enum.map(value => String(value))));
     if (typeof descriptor.minimum === 'number') normalized.minimum = descriptor.minimum;
     if (typeof descriptor.maximum === 'number') normalized.maximum = descriptor.maximum;
     if (typeof descriptor.default !== 'undefined') normalized.default = descriptor.default;
@@ -4033,10 +4135,11 @@ const AppHandling = {
         if (!appPath) return 
 
         // save the app path in the document
-        if (this.target.application?.userPath !== appPath) {
+        const nextAppArl = this.getArl().resolve(appPath);
+        if (!this.target.application || !this.target.application.equals(nextAppArl)) {
 
             // make the app arl
-            this.target.application = this.getArl().resolve(appPath);
+            this.target.application = nextAppArl;
         }
 
         // notation
@@ -4061,7 +4164,7 @@ const AppHandling = {
         if (mcpToolString) {
 
             // get the name from the model file
-            const split = getSplit(this.getArl().userPath);
+            const split = getSplit(this.getArl().getPath());
 
             // get the arl for the mcp spec
             const mcpArl = srcArl.resolve(split.name + '.mcp.js');
@@ -4093,7 +4196,7 @@ const AppHandling = {
         const today = new Date();
         let sHeader =      '// ------------------------------------------------------------------'
                         +`\n// Model: ${node.name}`
-                        +`\n// Path: ${srcArl.url?.pathname || srcArl.userPath}`
+                        +`\n// Path: ${srcArl.getPath()}`
                         +`\n// Creation date ${today.toLocaleString()}`
                         +'\n// ------------------------------------------------------------------\n';
 
@@ -4665,9 +4768,6 @@ rxtxBuildTxTable() {
     // and buses with routers
     if (this.is.group) {
 
-        // do the buses that have a filter first
-        for(const bus of this.buses) if (bus.hasFilter()) bus.rxtxBuildRxTxTable();
-
         // then the nodes
         for (const node of this.nodes) node.rxtxBuildTxTable();
 
@@ -4709,10 +4809,8 @@ rxtxBuildTxTable() {
             if (dst.is.pin) {
                 dst.is.proxy ? dst.pad?.makeConxList(dstList) : dstList.push(dst);
             }
-            // if a bus has a filter propagation stops 
             else if (dst.is.tack) {
-                dst.bus.hasFilter() ?  dstList.push(dst) : dst.makeConxList(dstList);
-                //dst.bus.hasFilter() ?  dstList.push(dst) : dst.bus.makeConxList(widget, dstList)
+                dst.makeConxList(dstList);
             }
             else if (dst.is.pad) {
                 dst.proxy.makeConxList(dstList);
@@ -4754,4990 +4852,850 @@ rxtxRemoveFromTxTable(txWidget, rxWidget) {
 
 };
 
-const mouseHandling$1 = {
+const placePopup = (pos) => ({x: pos.x - 15, y: pos.y + 10});
+const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param});
 
-    prepare(e) {
+/**
+ * @node view manager
+ */
 
-        this.canvas.focus();
-        // no default action
-        e.preventDefault();
+const nodeClickHandling = {
 
-        // notation
-        const doc = this.doc; 
+    showExportForm(pos,tx) {
 
-        //check
-        if (!doc) return [null, null, null]
+        const node = this;
 
-        // transform the mouse coord to local coord
-        const xyLocal = doc.view.localCoord({x:e.offsetX, y:e.offsetY});
-
-        // find if we are in a view
-        return doc.view.whichView(xyLocal)
+        // send the show link path
+        tx.send("name and path",{   
+            title:  'Export to link' ,
+            name: node.name,
+            path:  '', 
+            startFolder: null,
+            pos:    pos,
+            ok: (newName, userPath) => doEdit(tx,'saveToLink',{node, newName, userPath}),
+            cancel:()=>{}
+        });
     },
 
-    // show the rightclick menu
-    onContextMenu(e) {
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
+    showLinkForm(view, pos,tx) {
 
-        // check
-        if (!view) return
+        const node = this;
 
-        // check if we have hit a view widget
-        if (widget) return // this.viewContextMenu(view,widget, e)
+        // check what path to show
+        const refArl = view?.getManager?.()?.getModel?.()?.getArl?.() ?? null;
+        const linkPath = node.link ? node.link.getPath(refArl) : '';
 
-        // execute the actions for the view
-        view.onContextMenu(xyView, e);
+        // name to show
+        const linkName = node.link ? node.link.lName : node.name;
 
-        //and redraw
-        this.redraw();
+        // send the show link path
+        tx.send("name and path",{   
+
+            title: 'Set link' ,
+            name: linkName,
+            path: linkPath,
+            startFolder: refArl,
+            pos: pos,
+            ok: (newName,newPath)=> {
+
+                // if changed 
+                if ((newName != linkName) || (newPath != linkPath)) doEdit(tx,'changeLink',{node, lName: newName, userPath: newPath});
+            },
+            open: (newName, newPath) => {
+
+                // check for changes
+                if ((newName != linkName) || (newPath != linkPath)) doEdit(tx,'changeLink',{node, lName: newName, userPath: newPath});
+
+                // open the file if the link is to an outside file !
+                const bluArl = node.link.model.getArl();
+                if (bluArl) tx.send('open model',bluArl);
+            },
+            cancel:()=>{}
+        });
     },
 
-    onMouseDown(e) {
+    iconClick(tx, view, icon, pos) {
 
-        // for mouse down we only accept the left button
-        if (e.button != 0) return
+        const node = this;
 
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
+        // move the popup a bit away from the icon
+        const newPos = placePopup(pos);
 
-        // check
-        if (!view) return
-
-        // if the view is not the activeview - switch
-        if (view != this.doc?.focus) this.switchView(view);
-
-        // if we have hit a view widget we have to handle that, otherwise pass to the view
-        widget ? this.viewMouseDown(view, widget) : view.onMouseDown(xyView, e);
-
-        //and redraw
-        this.redraw();
-    },
-
-    onMouseMove(e) {    
-
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
-
-        // check
-        if (!view) return
-
-        // check if something needs to be done about the view first
-        if (this.viewMouseMove(view, widget,{x:e.movementX, y:e.movementY})) return
-
-        // execute - only redraw if action returns true
-        if (view.onMouseMove(xyView,e)) this.redraw();
-    },
- 
-    onMouseUp(e) {
-
-        // if we are doing something with a view, just cancel that
-        if (this.state.action) return this.viewMouseUp()
-
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
-
-        // check
-        if (!view) return
-
-        // execute
-        view.onMouseUp(xyView,e);
-
-        // redraw
-        this.redraw();
-    },
-
-    onWheel(e) {
-
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
-
-        // check
-        if (!view) return
-
-        // execute
-        //view.onWheel({x:e.offsetX, y:e.offsetY},e)
-        view.onWheel(xyView,e);
-
-        // redraw
-        this.redraw();
-    },
-
-    onDblClick(e) {
-
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
-
-        // check
-        if (!view) return
-
-        // execute
-        view.onDblClick(xyView,e);
-    },
-
-    // a single click in the edit window
-    onClick(e) {
-        return
-    },
-
-    onDragOver(e) {
-        e.preventDefault();
-    },
-
-    onDrop(e) {
-
-        // prepare
-        const [view, widget, xyView] = this.prepare(e);
-
-        // check
-        if (!view) return
-
-        // drop the data - do the redraw in onDrop - async function
-        view.onDrop(xyView, e);
-    },
-
-    // viewContextMenu(view, widget, e) {
-    //     if (widget.is.viewTitle) {
-    //         viewHeaderCxMenu.prepare(view)
-    //         this.tx.send("show context menu", {menu:viewHeaderCxMenu.choices, event:e})
-    //     }
-    // },
-
-    viewMouseDown(view, widget) {
-
-        if (widget.is.icon) {
-
-            view.iconClick(widget, this);
-        }
-        else if (widget.is.border) {
-
-            this.state.view = view;
-            this.state.widget = widget;
-            this.state.action = editorDoing.viewResize;
-        }
-        else if (widget.is.viewTitle) {
+        switch (icon.type) {
     
-            // if we have hit the title bar - drag the view
-            this.state.view = view;
-            this.state.widget = widget;
-            this.state.action = editorDoing.viewDrag;
-        }
-    },
+            case 'link':
+            case 'lock':
 
-    viewWidgetHover(view, widget) {
-        if (widget.is.border) {
-            this.state.action = editorDoing.hoverBorder;
-            view.highLight();
-        }
-    },
-
-    viewMouseMove(view, widget, delta) {
-
-        switch( this.state.action ) {
-
-            case editorDoing.nothing:
-
-                if (! widget?.is.border) return false
-
-                // check the type of cursor to show
-                if ((widget.name == "top")||(widget.name == "bottom")) this.canvas.style.cursor = "ns-resize";
-                else if ((widget.name == "left")||(widget.name == "right")) this.canvas.style.cursor = "ew-resize";
-                else if (widget.name == "corner") this.canvas.style.cursor = "nw-resize";
-                else return true
-
-                this.state.action = editorDoing.hoverBorder;
-                this.state.view = view;
+                this.showLinkForm(view,newPos, tx);
                 break
 
-            case editorDoing.viewDrag:
-                this.state.view.move(delta);
-                break
+            case 'factory':
 
-            case editorDoing.viewResize:
-                this.state.view.resize(this.state.widget, delta);
-                break
+                // get the arl of the model
+                const refArl = view?.getManager?.()?.getModel?.()?.getArl?.() ?? null;
 
-            case editorDoing.hoverBorder:
+                // set the factory name and path if not available
+                const factoryName = node.factory.fName.length < 1 ? convert.nodeToFactory(node.name) : node.factory.fName;
+                const factoryPath = node.factory.arl ? node.factory.getPath(refArl) : './nodes/' + convert.nodeToFilename(node.name) + '.js';
 
-                // for the current view we keep the cursor as is - otherwise set it to pointer again
-                if ( (view != this.state.view) || (! widget?.is.border)) {
+                // show the factory
+                tx.send("name and path",{ title: 'Factory for ' + node.name, 
+                                        name: factoryName,
+                                        path: factoryPath,
+                                        startFolder: refArl,
+                                        pos: newPos,
+                                        ok: (newName,newPath) => {
 
-                    this.canvas.style.cursor = "default";
-                    this.state.action = editorDoing.nothing;
+                                            // do the edit
+                                            doEdit(tx,'changeFactory',{node,newName : newName.trim(),userPath: newPath.trim()});
+                                        },
+                                        open: async (newName, newPath) => {
+
+                                            // change the factory if anything was changed
+                                            if ((newName != factoryName )||(newPath != factoryPath))
+                                                doEdit(tx,'changeFactory',{node,newName : newName.trim(),userPath: newPath.trim()});
+
+                                            // get the current reference
+                                            const arl = node.factory.arl;
+
+                                            // open the file
+                                            if (arl) tx.send('open source file',{arl});
+                                        },
+                                        cancel:()=>{}
+                });
+                break;
+
+            case 'group':
+                
+                // the next view to show
+                let nextView = null;
+
+                // if we have a saved view
+                if (node.savedView) {
+
+                    // ..that is visible, close it and show the parent note that the savedview could still be 'raw' 
+                    if (node.savedView.viewState?.visible) {
+
+                        nextView = node.savedView.parent;
+                        if (nextView) node.savedView.closeView();
+                    }
+                    // otherwise restore the view (and cook it if necessary)
+                    else {
+                        view.restoreView(node);
+                        nextView = node.savedView;
+                    }                    
                 }
+                else  {
+                    // create a brand new subview
+                    nextView = view.newSubView(node);
+                }
+
+                // switch the focus window to next
+                //if (nextView) editor.switchFocus(nextView)
                 break
 
-            default: return false
-        }
+            case 'cog':
 
-        this.redraw();
-        return true
+                tx.send("node settings (sx)",{    title:'Settings for ' + node.name, 
+                                        pos: newPos,
+                                        json: node.sx,
+                                        ok: (sx) => doEdit(tx,"changeNodeSettings",{node, sx})
+                                    });                  
+                break     
+
+            case 'pulse':
+
+                tx.send("runtime settings (dx)",{    title:'Runtime settings for ' + node.name, 
+                                                pos: newPos,
+                                                dx: node.dx,
+                                                ok: (dx) => doEdit(tx,"changeNodeDynamics",{node, dx})
+                                            });
+                break 
+
+            case 'comment':
+
+                // save the node hit
+                tx.send("node prompt", {   header: 'Comment for ' + node.name, 
+                                            pos: newPos, 
+                                            uid: node.uid, 
+                                            text: node.prompt ?? '', 
+                                            ok: (comment)=> doEdit(tx,"changeNodeComment",{node, comment})
+                                        });
+                break        
+        }
+    
     },
 
-    viewMouseUp() {
-        // reset the state
-        // if (editorDoing.hoverBorder) this.state.view.unHighLight()
-        this.state.view = this.state.widget = null;
-        this.state.action = editorDoing.nothing;
+    iconCtrlClick(tx,view,icon, pos) {
+
+        const node = this;
+
+        switch (icon.type) {
+    
+            case 'link': 
+            case 'lock': {
+
+                // open the file if it points to an external model
+                const bluArl = node.link?.model?.getArl();
+                if (bluArl) tx.send('open model', bluArl);
+            }
+            break
+
+            case 'factory': {
+
+                // check - should not be necessary
+                if ( ! node.is.source) return
+
+                // get the current reference
+                const facArl = node.factory.arl; //?? editor.doc.resolve('./index.js')
+
+                // request to open the file
+                if (facArl) tx.send('open source file', {facArl});
+            }
+            break
+    
+            case 'group':
+                // if the node has a saved view, we show that otherwise create a new
+                node.savedView ?  view.restoreView(node) : view.newSubView(node);
+
+                // make it full screen
+                node.savedView?.big();
+                break
+        }
+    
     }
+
 };
 
-//const cursor = "\u2595"
-//const cursor = "|"
-const keyboardHandling$1 = {
-    // keyboard press
-    onKeydown(e) {
-        // if the key is processed
-        if (this.doc?.focus?.onKeydown(e)) {
-            // stop it
-            e.stopPropagation();
-            e.preventDefault();
+const collectHandling = {
 
-            // and redraw
-            this.redraw();
-        }
-    },
+// make the list of factories used by this node
+    collectFactories(factories) {
 
-    onKeyup(e) {
-        // if the key is processed
-        if (this.doc?.focus?.onKeyup(e)) {
-            // stop it
-            e.stopPropagation();
-            e.preventDefault();
+        // if the node has a link, the factory file is not local, so we do not save the factory file
+        if (this.link) return
 
-            // and redraw
-            this.redraw();
-        }
-    },
-};
+        // get the factory
+        if (this.is.source && this.factory.arl != null) {
 
-const messageHandling = {
-    /**
-     * @node editor
-     */
-
-    onSetDocument(doc) {
-        // the document can be null
-        if (!doc) {
-            this.doc = null;
-            this.redraw();
-            return;
-        }
-
-        // for a new active doucment, screen size has not yet been set
-        if (doc.view.noRect())
-            doc.view.setRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // set the document as the active document
-        this.doc = doc;
-
-        // switch the node library (it can be empty but not null)
-        this.tx.send('change library', {
-            ref: doc.model.getArl(),
-            libraries: doc.model.libraries,
-        });
-
-        // set the style for the document
-        this.setStyle();
-
-        // ..and redraw
-        this.redraw();
-    },
-
-    // reply on the get request
-    onGetDocument() {
-        // reply the active document
-        this.tx.send('reply document', this.doc);
-    },
-
-    onShowSettings() {
-
-        // check
-        if (!this.doc?.model) return 
-
-        // Get the 
-        // const rect = this.canvas.getBoundingClientRect();
-
-        // notation
-        const header = this.doc.model.header;
-        const redraw = () => this.redraw();
-
-        // save the current version of the rgb
-        const oldRgb = header.style.rgb;
-
-        // send the settings to the popup
-        this.tx.send('document settings', {
-            title: 'Document Settings',
-            path: this.doc.model.getArl()?.getFullPath() ?? '- unspecified -',
-            settings: header,
-            pos: { x: 25, y: 25 },
-            onColor(rgb) {
-                header.style.adapt(rgb);
-                //header.style.adaptinteractive(rgb);
-                redraw();
-            },
-            ok(runtime) {
-                // save the value of the runtime
-                header.runtime = runtime;
-            },
-            cancel() {
-                header.style.adapt(oldRgb);
-                redraw();
-            },
-        });
-    },
-
-    onSyncLinks() {
-        // read the document again and redraw
-        this.doc?.updateLinks().then(() => this.redraw());
-    },
-
-    onReloadModel() {
-
-        // reset the model
-        this.doc.reset();
-        
-        // load the model again...
-        this.doc.load().then(() => this.redraw());       
-    },
-
-    onSyncModel() {
-    },
-
-    onRecalibrate() {
-        // reset the transform data
-        this.doc?.view.toggleTransform();
-
-        // and redraw
-        this.redraw();
-    },
-
-    onGridOnOff() {
-        // check
-        const state = this.doc?.view?.state;
-
-        // toggle
-        if (state) state.grid = !state.grid;
-
-        // redraw
-        this.redraw();
-    },
-
-    onAcceptChanges() {
-        // check
-        if (!this.doc) return;
-
-        // loop through the nodes of the document
-        this.doc.view.root.acceptChanges();
-
-        // redraw
-        this.redraw();
-    },
-
-    onSizeChange(rect) {
-        // check if the size is given
-        if (!rect) return;
-        
-        // adjust - note that dpr will normally not change but it is possible (move to different monitor for example)
-        const dpr = rect.dpr ?? window.devicePixelRatio ?? 1;
-
-        // set the witdh and height
-        this.canvas.width = Math.round(rect.w * dpr);
-        this.canvas.height = Math.round(rect.h * dpr);
-
-        // keep CSS size in sync with the logical size
-        this.canvas.style.width = rect.w + 'px';
-        this.canvas.style.height = rect.h + 'px';
-
-        // Initialize the 2D context
-        this.ctx = this.canvas.getContext('2d');
-        const sx = this.canvas.width / rect.w;
-        const sy = this.canvas.height / rect.h;
-        this.ctx.setTransform(sx, 0, 0, sy, 0, 0);
-
-        // we have to reinit the canvas context
-        this.setStyle();
-
-        // if there is a document,
-        if (this.doc) {
-            
-            // change the size of the main view
-            this.doc.view?.setRect(0, 0, rect.w, rect.h);
-
-            // and recalculate the screen filling windows
-            this.doc.view?.redoBigRecursive();
-        }
-
-        // and redraw
-        this.redraw();
-    },
-
-    onMakeLib(e) {
-        // notation
-        const doc = this.doc;
-
-        // check
-        if (!doc?.view?.root) return;
-
-        // the position of the popup
-        const pos = { x: e.screenX, y: e.screenY };
-
-        // propose a path for the lib
-        const libPath =
-            doc.target.library?.userPath ??
-            getSplit(doc.model.getArl().userPath).name + '.lib.js';
-
-        // request the path for the save as operation
-        this.tx.send('show lib path', {
-            title: 'Make library build file...',
-            entry: libPath,
-            pos: pos,
-            ok: (libPath) => doc.toJavascriptLib(libPath),
-            cancel: () => {},
-        });
-    },
-
-    onMakeApp(e) {
-        //notation
-        const doc = this.doc;
-
-        // check that we have a model
-        if (! doc?.view?.root ) return;
-
-        // CHECK ALSO FOR doc.model.getArl() + message !
-
-        // the position of the popup
-        const pos = { x: e.screenX, y: e.screenY };
-
-        // convert to a workspace path
-        //const appPath = doc.target.application?.userPath ?? Path.changeExt(doc.model.getArl().userPath, 'js')
-        const appPath =
-            doc.target.library?.userPath ??
-            getSplit(doc.model.getArl().userPath).name + '.app.js';
-
-        // request the path for the save as operation
-        this.tx.send('show app path', {
-            title: 'Make application...',
-            path: appPath,
-            pos: pos,
-            ok: (appPath) => doc.model.makeAndSaveApp(appPath, doc.view.root),
-            //ok: (appPath) => doc.toJavascriptApp(appPath),
-            cancel: () => {},
-        });
-    },
-
-    onRunApp() {
-        // make the src and the html to run the page
-        const runable = this.doc.toJavascriptApp(null);
-
-        // request to run this
-        this.tx.send('run', {
-            mode: 'page',
-            js: runable.srcArl,
-            html: runable.htmlArl,
-        });
-    },
-
-    onRunAppInIframe() {
-        const runable = this.doc.toJavascriptApp(null);
-
-        // send out the run message
-        this.tx.send('run', {
-            mode: 'iframe',
-            js: runable.srcArl,
-            html: runable.htmlArl,
-        });
-
-        // check that we have an iframe
-        if (!this.iframe) {
-            this.iframe = document.createElement('iframe');
-            this.tx.send('iframe', this.iframe);
-        }
-
-        // set the url of the iframe
-        this.iframe.src = runable.htmlArl.url;
-    },
-
-    onPinProfile({}) {},
-
-    // group and node are just the names of the nodes
-    async onSelectedNode({ model, nodePath, xyLocal }) {
-        // find the model in the
-        const node = await this.doc.nodeFromLibrary(model, nodePath);
-
-        // check
-        if (!node) return;
-
-        // move the node to the xyLocal
-        node.look.moveTo(xyLocal.x, xyLocal.y);
-
-        // simply add the node to the active view
-        this.doEdit('nodeFromNodeLib', { view: this.doc.focus, node });
-    },
-
-    onSavePointSet({}) {
-
-        // check
-        if (!this.doc?.model) return;
-
-        // make this accessible..
-        const doc = this.doc;
-
-        //title,message, pos,ok, cancel}
-        this.tx.send('save point confirm', {
-            title: 'Confirm to set a new save point',
-            message: '',
-            pos: { x: 500, y: 100 },
-            ok: () => {
-
-                // Get the actual node to save (mostly the root...)
-                const toSave = doc.getNodeToSave();
-
-                // check
-                if (!toSave) return;
-
-                // get a model compiler for collecting factories and models
-                const modcom = new ModelCompiler(doc.UID);
-
-                // encode the root node as a string, but convert it back to json !
-                //doc.model.raw = JSON.parse(modcom.encode(toSave, doc.model));
-                doc.model.raw = modcom.encode(toSave, doc.model);
-            },
-            cancel: () => {},
-        });
-    },
-
-    onSavePointBack({}) {
-
-        // check
-        if (! this.doc?.model) return;
-
-        // make this accessible..
-        const editor = this;
-        const doc = this.doc;
-
-        //title,message, pos,ok, cancel}
-        this.tx.send('save point confirm', {
-            title: 'Confirm to go back to the previous save point',
-            message: '',
-            pos: { x: 500, y: 100 },
-            ok: async () => {
-                // just load the model again ...
-                // await doc.load()
-                doc.reCompile();
-
-                // reset the undo stack
-                doc.undoStack.reset();
-
-                // and redraw
-                editor.redraw();
-
-                // save it - it is the new reference
-                try {
-                    // save this version
-                    const text = JSON.stringify(doc.model.raw, null, 4);
-
-                    // check and save
-                    if (text) doc.model.getArl().save(text);
-                } catch (err) {
-                    console.log(
-                        `JSON stringify error: ${err}\nin 'on save point back'`
-                    );
-                }
-            },
-            cancel: () => {},
-        });
-    },
-};
-
-const zap = {
-    nothing:0,
-    node:1,
-    pin:2,
-    ifName:3,
-    icon:4,
-    header:5,
-    label:6,
-    pad:7,
-    padArrow:8,
-    route:9,
-    busSegment:10,
-    busLabel:11,
-    tack:12,
-    selection:13
-};
-
-// make a binary bit pattern for the keys that were pressed
-const NONE = 0;
-const SHIFT = 1;
-const CTRL = 2;
-const ALT = 4;
-
-// // a bit pattern for the keys that are pushed
-// export function keyMask(e) {
-
-//     let mask = NONE
-
-//     mask |= e.shiftKey ? SHIFT : 0
-//     mask |= e.ctrlKey ? CTRL : 0
-//     mask |= e.altKey ? ALT : 0
-
-//     return mask;
-// }
-
-const mouseHandling = {
-
-    // a bit pattern for the keys that are pushed
-    keyMask(e) {
-
-        let mask = NONE;
-
-        mask |= e.shiftKey ? SHIFT : 0;
-        mask |= e.ctrlKey ? CTRL : 0;
-        mask |= e.altKey ? ALT : 0;
-
-        return mask;
-    },
-
-    // checks what we have hit inside a client area of a view
-    mouseHit(xyLocal) {
-        // notation
-        const hit = this.hit;
-
-        // if there is an active selection we check if it was hit
-        //if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
-        if ( this.selection.what == selex.freeRect || this.selection.what == selex.multiNode) {
-            [hit.what, hit.selection, hit.node] = this.selection.hitTest(xyLocal);
-            if (hit.what != zap.nothing) return 
-        }
-
-        // if there is no content we can stop here
-        if(!this.root) return 
-
-        // search the nodes (in reverse - most recent nodes first)
-        const nodes = this.root.nodes;
-        for(let i=nodes.length-1; i >= 0; i--) {
-            [hit.what, hit.node, hit.lookWidget] = nodes[i].hitTest(xyLocal);
-            if (hit.what != zap.nothing) return            
-        }
-
-        // search the pads
-        for (const pad of this.root.pads) {
-            [hit.what, hit.pad] = pad.hitTest(xyLocal);
-            if (hit.what != zap.nothing) return
+            // only adds new factories
+            factories.add(this.factory);
         }
         
-        // search the buses
-        for(const bus of this.root.buses) {
-            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = bus.hitTest(xyLocal);
-            if (hit.what != zap.nothing) return
-        }
-
-        // check if we have hit a route
-        this.mouseHitRoutes(xyLocal);
+        // get the factories of the other nodes
+        if (this.is.group) for (const node of this.nodes) node.collectFactories(factories);
     },
 
-    mouseHitRoutes(xyLocal) {
+    // make the list of models this file uses as link
+    // only do this at the first level - when a model has been found we do not continue for the nodes of this model !
+    collectModels(models, mainModel = null) {
 
-        const hit = this.hit;
+        // if the node has a link
+        if (this.link) {
 
-        // search the routes of the nodes 
-        for (const node of this.root.nodes) {
-            [hit.what, hit.route, hit.routeSegment] = node.hitRoute(xyLocal);
-            if (hit.what != zap.nothing) return
+            // ...add the link to the linklist if required 
+            if (this.link.model && this.link.model !== mainModel) {
+
+                // and add it to the model list
+                models.add(this.link.model);
+            }
         }
- 
-        // search the pads
-        for (const pad of this.root.pads) {
-            [hit.what, hit.route, hit.routeSegment] = pad.hitRoute(xyLocal);
-            if (hit.what != zap.nothing) return
+        else {
+
+            // ...continue for all nodes
+            this.nodes?.forEach( node => node.collectModels(models, mainModel) );
         }
+    },
+
+    // if we save the model in a lib we only keep the links to other libs - all the rest is put in the file
+    collectModelsForLib(models, main) {
+
+        // if the node is linked to a lib that is different from the lib we are saving to, add it
+        if (this.link) {
+
+            // get the model
+            const model = this.link.model;
         
-        // search the buses
-        for(const bus of this.root.buses) {
-            [hit.what, hit.route, hit.routeSegment] = bus.hitRoute(xyLocal);
-            if (hit.what != zap.nothing) return
+            // add the model if it is not the main file (it is only added if not yet in the list)
+            if ( model &&  !model.getArl().equals(main.arl))  models.add(model);
+        }
+        else {
+            // ...continue for all nodes
+            this.nodes?.forEach( node => node.collectModelsForLib(models, main) );
         }
     },
 
-    onDblClick(xyLocal,e) {
+    // get the list of source files that need to be imported
+    collectImports(srcImports, lib=null) {
 
-        // hit was updated at the first click !
-        const hit = this.hit;
+        // for group nodes - loop through all nodes..
+        if (this.is.group) {
 
-        // check what was hit
-        switch (hit.what) {
+            // if the node comes from a library then a priori the sources will also come from that library
+            if (this.link?.model?.is.lib) lib = this.link.model;
 
-            case zap.pin:
-            case zap.ifName:
+            // continue for the nodes..
+            for(const node of this.nodes) node.collectImports(srcImports,lib);
 
-                // check
-                if (!hit.node || hit.node.cannotBeModified()) return
+            // done
+            return
+        }
 
-                // ok
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.lookWidget});
-                break;
+        // for a source node find the arl to be used for the source - or take the ./index.js file in the directory of the model
+        const srcArl = this.getSourceArl(lib) ?? srcImports[0].arl;
 
-            case zap.header: 
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.lookWidget});
-                break;
+        // check if the factoryname is already in use somewhere and use an alias if necessary - else just use the name
+        const factorySpec = this.factory.duplicate(srcImports, srcArl) ? `${this.factory.fName} as ${this.factory.alias}` : this.factory.fName;
 
-            case zap.label:
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.lookWidget});
-                break;
+        // see if the arl is already in the list
+        const found = srcImports.find( srcImport => srcImport.arl.equals(srcArl));
 
-            case zap.busLabel:
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.busLabel});
-                break;
+        // if we have the file, add the item there if..
+        if (found) {
 
-            case zap.pad:
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.pad});
-                break;
+            // ..it is not already in the list..
+            const item = found.items.find( item => item == factorySpec);
 
-            case zap.tack:
-                editor.doEdit('widgetTextEdit',{view:this, widget: hit.tack});
-                break;
+            // ..if not add it to the list
+            if (!item) found.items.push(factorySpec);
+        }
+        else {
+            // add the file and put the first item on the list
+            srcImports.push({arl:srcArl, items:[factorySpec]});
         }
     },
- 
 
-    onWheel(xy,e) {
+    // build an array of source nodes ** Recursive **
+    makeSourceLists(nodeList, filterList) {
 
-        // notation
-        const tf = this.tf;
-
-        // we change scale parameter 
-        let k = e.deltaY > 0 ? 0.9 : 1.1;
-
-        /*  xy is the position of the cursor. It should remain the same in the old and in the new transform
-
-            So if xy' is the position of the cursor in the parent window then:
-            xy = tf(xy') = tf"(xy')  or xy' = inverse tf(xy) = inverse tf"(xy)
-
-               xy*s + dx = xy*s*k + d'x  
-            => d'x = dx + xy*s - xy*s*k
-
-            note that the inverse tf here is the same as the direct tf for the canvas !
-            The canvas transforms are from xy-window to xy-screen, whereas this transform is from 
-            xy-window to the next xy-window on the stack.
-        */
-
-        // calculate the new tf dx and dy
-        tf.dx = tf.dx + xy.x*tf.sx*(1-k);
-        tf.dy = tf.dy + xy.y*tf.sy*(1-k);
-
-        // *** this was wrong ***
-        //tf.dx = xy.x*(1-k) + k*tf.dx
-        //tf.dy = xy.y*(1-k) + k*tf.dy
-
-        // also adjust the scale factors
-        tf.sx *= k;
-        tf.sy *= k;
-    },
-};
-
-const pinAreaHandling = {
-
-    // pins and interfaceNames can be selected !
-    pinAreaStart(node, pos) {
-
-        // reset
-        this.reset();
-
-        // notation
-        const rect = node.look.rect;
-
-        // save the y position
-        this.yWidget = pos.y;
-
-        // type of selection
-        this.what = selex.pinArea;
-
-        // start a pin selection - make the rectangle as wide as the look
-        this.activate(rect.x - style.pin.wOutside, pos.y, rect.w + 2*style.pin.wOutside, 0, style.selection.cRect);
-    },
-
-    pinAreaResize(node, pos) {
-
-        const lRect = node.look.rect;
-
-        if (pos.y > lRect.y && pos.y < lRect.y + lRect.h) {
-
-            // notation
-            const y = this.yWidget;
-
-            // define the selection rectangle (x and w do not change)
-            if (pos.y > y) {
-                this.rect.y = y;
-                this.rect.h = pos.y - y;
+        if (this.is.source) {
+            nodeList.push(this);
+        }
+        else {
+            // output a warning for bad links
+            if (this.link?.is.bad) {
+                console.warn(`Group node "${this.name}" is missing. ModelBlueprint "${this.link.model.getArl().getPath()}" not found`);
+            }
+            // output a warning for empty group nodes
+            else if (!this.nodes) {
+                console.warn(`Group node "${this.name}" is empty`);
             }
             else {
-                this.rect.y = pos.y;
-                this.rect.h = y - pos.y;
-            }
 
-            // highlight the pins that are selected
-            this.widgets = [];
-            const dy = style.pin.hPin/2;
-            for(const widget of node.look.widgets) {
-
-                if (widget.is.pin || widget.is.ifName) {
-
-                    if (widget.rect.y + dy > this.rect.y && widget.rect.y + dy < this.rect.y + this.rect.h) {
-                        this.widgets.push(widget);
-                        widget.is.selected = true;
-                    }
-                    else {
-                        widget.is.selected = false;
-                    }
-                }
+                // and the nodes !
+                for(const node of this.nodes) node.makeSourceLists(nodeList, filterList);
             }
         }
     },
 
-    // select the pins that are in the widgets array
-    pinAreaSelect(widgets) {
+    // checks if a factory with the same name does already exist and sets the alias if so
+    // Note that we only search once ! so if factory and _factory exist we are screwed
+    xxxduplicateFactory(srcImports, ownArl) {
 
-        if (!widgets?.length) return
+        // check for duplicates (same name in different file !)
+        const duplicate = srcImports.find( srcImport => {
 
-        // reset (not necessary ?)
-        this.widgets.length = 0;
+            // ignore the ownArl of course
+            if (srcImport.arl.equals(ownArl)) return false
 
-        // set each widget as selected
-        for (const widget of widgets) {
-            if (widget.is.pin || widget.is.ifName) {
-                this.widgets.push(widget);
-                widget.doSelect();
-            }
+            // search for 
+            return srcImport.items.find( item => item == this.factory.fName)
+        });        
+
+        // if the node exist already in a different file...
+        if (duplicate) {
+
+            // give a warning
+            console.warn(`Duplicate factory name: ${this.factory.fName} is already defined in ${duplicate.arl.getPath()}`);
+
+            // make an alias
+            this.factory.alias = '_' + this.factory.fName;
+
+            // we have a duplicate
+            return true
         }
-
-        // set a rectangle around the widgets
-        this.pinAreaRectangle();
-
-        // this is a widget selection
-        this.what = selex.pinArea;
-    },
-
-    // the pins have been sorted in the y position
-    // note that the first 'pin' is actually a ifName !
-    pinAreaRectangle() {
-
-        // check
-        if (!this.widgets.length) return;
-
-        // sort the array
-        this.widgets.sort( (a,b) => a.rect.y - b.rect.y);
-
-        // get the first and last element from the array
-        const look = this.widgets[0].node.look;
-        const first = this.widgets[0].rect;
-        const last = this.widgets.at(-1).rect;
-
-        // draw a rectangle - make the rectangle as wide as the look
-        this.activate(  look.rect.x - style.pin.wOutside, first.y, 
-                        look.rect.w + 2*style.pin.wOutside, last.y + last.h - first.y, 
-                        style.selection.cRect);
-    },
-
-    widgetsDrag(delta) {
-
-        // check
-        if (this.widgets.length == 0) return
-
-        // the node
-        const node = this.widgets[0].node;
-
-        // move the selection rectangle only in the y-direction, but stay in the node !
-        if (this.rect.y + delta.y < node.look.rect.y + style.header.hHeader ) return
-        if (this.rect.y + delta.y > node.look.rect.y + node.look.rect.h) return
-
-        // move as required
-        this.rect.y += delta.y;
-    },
-
-    interfaceSelect(node, ifName) {
-
-        // reset the selection
-        this.reset();
-
-        // find the widgets that belong to the interface
-        const ifPins = node.look.getInterface(ifName);
-
-        // select the pins
-        this.pinAreaSelect(ifPins);
-
-        // set the selection type
-        this.what = selex.ifArea;
-    },
-
-    extendPinArea(widget) {
-
-        if (this.what != selex.ifArea || widget.node != this.widgets[0].node) return
-        
-        this.widgets.push(widget);
-
-        this.pinAreaRectangle();
-    },
-
-    // adjust the selction when a widget is added
-    adjustForNewWidget(widget) {
-
-        switch(this.what) {
-
-            case selex.singleNode:
-
-                // just switch to the new widget
-                this.switchToWidget(widget);
-                break;
-
-            case selex.ifArea:
-
-                if (widget.node != this.widgets[0].node) return
-
-                if (widget.is.pin) {
-                    widget.doSelect();
-                    this.widgets.push(widget);
-                    this.pinAreaRectangle();
-                }
-                else if (widget.is.ifName) {
-
-                    // unddo the previous selection
-                    this.reset();
-
-                    // select the new interface
-                    widget.doSelect();
-                    this.widgets = [widget];
-                    this.pinAreaRectangle();                    
-                }
-                break
-        }
-    },
-
-    // adjust the selction when a widget is removed
-    adjustForRemovedWidget(widget) {
-
-        switch(this.what) {
-
-            case selex.singleNode:
-
-                // try above ...
-                const above = this.widgetAbove(widget);
-                if (above) return this.switchToWidget(above);
-
-                // if no pin is given try below
-                const below = this.widgetBelow(widget);
-                if (below) return this.switchToWidget(below);
-                break;
-
-            case selex.ifArea:
-
-                if (widget.node != this.widgets[0].node) return
-
-                if (widget.is.pin) {
-
-                    // kick the widget out
-                    const index = this.widgets.findIndex( w => w === widget);
-                    if (index != -1) this.widgets.splice(index, 1);
-
-                    // make a new selection
-                    this.pinAreaRectangle();
-                }
-                break
-        }
-    },
-
-    behind() {
-
-        // check
-        if (this.what !== selex.singleNode && this.what !== selex.ifArea) return null;
-
-        // we add new pins at the end
-        const last = this.widgets.at(-1);
-
-        // check 
-        if (last) return  {x: last.rect.x, y: last.rect.y + last.rect.h};
-
-        // it could be that the node has no pins yet !
-        return this.nodes[0] ? {x: 0, y: this.nodes[0].look.makePlace(null, 0)} : null;
-    },
-
-    whereToAdd() {
-
-        switch(this.what) {
-
-            case selex.singleNode: {
-
-                // get the selected node (only one !)
-                const node = this.getSingleNode();
-
-                // get the selected widget
-                const widget = this.getSelectedWidget();
-
-                // determine the position for the widget
-                const pos = widget  ?   {x: widget.is.left ? widget.rect.x : widget.rect.x + widget.rect.w, y: widget.rect.y + widget.rect.h} :
-                                        {x: 0, y: node.look.makePlace(null, 0)};
-
-                // done
-                return [node, pos]
-            }
-
-            case selex.pinArea: 
-            case selex.ifArea: {
-
-                const node = this.getSelectedWidget()?.node;
-                const pos = this.behind();
-                return [node, pos]
-            }
-
-            default: return [null, null]
-        }
-    },
-
-};
-
-// a constant for indicating the selection type
-const selex = {
-    nothing: 0,
-    freeRect: 1,
-    pinArea: 2,
-    ifArea: 3,
-    singleNode: 4,
-    multiNode: 5,
-};
-
-// nodes etc. selectd in the editor
-function Selection(view = null) {
-    // the rectangle
-    this.rect = { x: 0, y: 0, w: 0, h: 0 };
-
-    // when selecting widgets inside a node this is where the selection started
-    this.yWidget = 0;
-
-    // The color of the selection - can change
-    this.color = style.selection.cRect;
-
-    // the selection type
-    this.what = selex.nothing;
-
-    // the view path
-    this.viewPath = view ? view.getNamePath() : '';
-
-    // the selected elements
-    this.nodes = [];
-    this.pads = [];
-    this.buses = [];
-    this.tacks = [];
-    this.widgets = [];
-}
-Selection.prototype = {
-    render(ctx) {
-        // we only use width as a check
-        if (
-            this.what === selex.freeRect ||
-            this.what === selex.pinArea ||
-            this.what === selex.ifArea
-        ) {
-            // notation
-            const rc = this.rect;
-
-            // draw the rectangle
-            shape.roundedRect(
-                ctx,
-                rc.x,
-                rc.y,
-                rc.w,
-                rc.h,
-                style.selection.rCorner,
-                1,
-                this.color.slice(0, 7),
-                this.color
-            );
-        }
-    },
-
-    // keep viewpath and color
-    reset() {
-        // not active
-        this.what = selex.nothing;
-
-        // reset yWidget
-        this.yWidget = 0;
-
-        // unselect the pins if any
-        for (const pin of this.widgets) pin.unSelect();
-
-        // unselect the nodes if any
-        for (const node of this.nodes) node.unSelect();
-
-        // clear the selected objects
-        this.nodes.length = 0;
-        this.pads.length = 0;
-        this.buses.length = 0;
-        this.widgets.length = 0;
-        this.tacks.length = 0;
-    },
-
-    shallowCopy() {
-        const selection = new Selection();
-
-        selection.rect = { ...this.rect };
-        selection.yWidget = this.yWidget;
-        selection.color = this.color;
-        selection.what = this.what;
-        selection.viewPath = this.viewPath;
-        selection.nodes = this.nodes?.slice();
-        selection.pads = this.pads?.slice();
-        selection.buses = this.buses?.slice();
-        selection.tacks = this.tacks?.slice();
-        selection.widgets = this.widgets?.slice();
-
-        return selection;
-    },
-
-    canCancel(hit) {
-        // if we have hit a selection we cannot cancel it
-        // if we have not hit it we can cancel the rectangle selections
-        // The single node selection is not cancelled normally
-
-        return hit.what == zap.selection
-            ? false
-            : this.what === selex.freeRect ||
-                  this.what === selex.pinArea ||
-                  this.what === selex.ifArea ||
-                  this.what === selex.multiNode;
-    },
-
-    setRect(x, y, w, h) {
-        const rc = this.rect;
-
-        rc.x = x;
-        rc.y = y;
-        rc.w = w;
-        rc.h = h;
-    },
-
-    activate(x, y, w, h, color) {
-        this.setRect(x, y, w, h);
-        if (color) this.color = color;
-    },
-
-    // start a free rectangle selection
-    freeStart(where) {
-        // reset the current selection
-        this.reset();
-
-        // free rectangle selection
-        this.what = selex.freeRect;
-
-        // set the x and y value for the selection rectangle
-        this.setRect(where.x, where.y, 0, 0);
-    },
-
-    singleNode(node) {
-        // unselect other - if any
-        this.reset();
-
-        // select a single node
-        this.nodes = [node];
-
-        // set the selection type
-        this.what = selex.singleNode;
-
-        // set the rectangle
-        node.doSelect();
-    },
-
-    singleNodeAndWidget(node, pin) {
-        // unselect
-        this.reset();
-
-        // reselect
-        this.singleNode(node);
-        this.widgets = [pin];
-        pin.doSelect();
-    },
-
-    // extend an existing selection
-    extend(node) {
-
-        // if there are no nodes this is the first selection
-        if (this.nodes.length < 1) {
-            this.singleNode(node);
-            return;
-        }
-
-        // if the node is selected - unselect
-        if (this.nodes.includes(node)) {
-            // remove the node from the array
-            eject(this.nodes, node);
-
-            // unselect the node
-            node.unSelect();
-
-            // done
-            return;
-        }
-
-        // save the node
-        this.nodes.push(node);
-
-        // and set as selected
-        node.doSelect();
-
-        // multinode selection
-        this.what = selex.multiNode;
-    },
-
-    // get the single selected node
-    getSingleNode() {
-        return this.what == selex.singleNode ? this.nodes[0] : null;
-    },
-
-    getSelectedWidget() {
-        if (this.what == selex.singleNode)  return this.widgets[0];
-        if (this.what === selex.ifArea) return this.widgets[0];
-        return null;
-    },
-
-    getPinAreaNode() {
-        return (this.what === selex.pinArea || this.what === selex.ifArea) &&
-            this.widgets[0]
-            ? this.widgets[0].node
-            : null;
-    },
-
-    // switch to the selected widget
-    switchToWidget(pin) {
-
-        if (!pin) return;
-
-        // unselect the current
-        this.widgets[0]?.unSelect();
-
-        // select the new one
-        pin.doSelect();
-        this.widgets[0] = pin;
-        return;
-    },
-
-    widgetBelow(current) {
-
-        let below = null;
-        for (const widget of current.node.look.widgets) {
-            if ((widget.is.pin || widget.is.ifName) &&  widget.rect.y > current.rect.y && (!below || widget.rect.y < below.rect.y)) below = widget;
-        }
-
-        // done
-        return below;
-    },
-
-    widgetAbove(current) {
-
-        let above = null;
-        for (const widget of current.node.look.widgets) {
-            if ((widget.is.pin || widget.is.ifName) && widget.rect.y < current.rect.y && (!above || widget.rect.y > above.rect.y)) above = widget;
-        }
-
-        // done
-        return above;
-    },
-
-    // check if we have hit the selection
-    hitTest(xyLocal) {
-        // If there is a rectangle, we have a simple criterion
-        if (
-            (this.what == selex.freeRect || this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect)
-        )
-            return [zap.selection, this, null];
-
-        // multi-node or single node
-        // search the nodes (in reverse - visible node on top of another will be found first)
-        for (let i = this.nodes.length - 1; i >= 0; i--) {
-            if (inside(xyLocal, this.nodes[i].look.rect))
-                return [zap.selection, this, this.nodes[i]];
-        }
-
-        // nothing
-        return [zap.nothing, null, null];
-    },
-
-    widgetHit(xyLocal) {
-        if (!this.widgets?.length) return null;
-
-        for (const widget of this.widgets) {
-            if (
-                xyLocal.y > widget.rect.y &&
-                xyLocal.y < widget.rect.y + widget.rect.h
-            )
-                return widget;
-        }
-        return null;
-    },
-
-    setColor(color) {
-        this.color = color;
-    },
-
-    resize(dw, dh) {
-        this.rect.w += dw;
-        this.rect.h += dh;
-    },
-
-    move(delta) {
-        // move the selection rectangle
-        this.rect.x += delta.x;
-        this.rect.y += delta.y;
-    },
-
-    drag(delta) {
-        // *1* move
-
-        // move the nodes in the selection
-        for (const node of this.nodes) node.look.moveDelta(delta.x, delta.y);
-
-        // also move the pads
-        for (const pad of this.pads) pad.move(delta);
-
-        // move the buses if there are nodes in the selection
-        if (this.nodes.length > 0)
-            for (const bus of this.buses) bus.move(delta.x, delta.y);
-        // or otherwise just the bus tacks
-        else for (const tack of this.tacks) tack.slide(delta);
-
-        // move the routes that have start end end points in the selection
-
-        // *2* Route adjustments
-
-        // now we adjust the end points of the routes again
-        for (const node of this.nodes) node.look.adjustRoutes();
-
-        // adjust the routes for the pads
-        for (const pad of this.pads) pad.adjustRoutes();
-
-        // also for the buses
-        for (const bus of this.buses) bus.adjustRoutes();
-
-        // *3* move the selection rectangle
-
-        this.rect.x += delta.x;
-        this.rect.y += delta.y;
-    },
-
-    // return the top left node in the selection
-    topLeftNode() {
-        if (this.nodes.length == 0) return null;
-
-        let topleft = this.nodes[0];
-
-        for (const node of this.nodes) {
-            if (
-                node.look.rect.y < topleft.look.rect.y &&
-                node.look.rect.x < topleft.look.rect.x
-            )
-                topleft = node;
-        }
-
-        return topleft;
-    },
-
-    // make the view wider then the selection because of the added pads
-    makeViewRect() {
-        const rc = this.rect;
-
-        return {
-            x: rc.x - style.view.wExtra,
-            y: rc.y - style.view.hExtra,
-            w: rc.w + 2 * style.view.wExtra,
-            h: rc.h + 2 * style.view.hExtra,
-        };
-    },
-
-    // position the new group look as close as possible to the top left node
-    makeLookRect() {
-        const topleft = this.topLeftNode();
-        const rcSel = this.rect;
-
-        const x = topleft ? topleft.look.rect.x : rcSel.x;
-        const y = topleft ? topleft.look.rect.y : rcSel.y;
-
-        // leave w and h at 0
-        return { x, y, w: 0, h: 0 };
-    },
-
-    adjustPaths(ref) {
-        if (!this.nodes) return;
-
-        for (const node of this.nodes) node.adjustPaths(ref);
-    },
-};
-Object.assign(Selection.prototype, pinAreaHandling);
-
-const mouseMoveHandling = {
-
-    // onMouseMove returns true or false to signal if a redraw is required or not...
-    onMouseMove(xyLocal,e) {  
-
-        // also this is needed
-        let dxdyLocal = {x: e.movementX/this.tf.sx, y: e.movementY/this.tf.sy}; 
-
-        // notation
-        const state = this.state;
-
-        // do what we need to do
-        switch(state.action) {
-
-            case doing.nothing:
-                this.idleMove(xyLocal);
-                return false
-
-            case doing.panning:
-                this.tf.dx += e.movementX;
-                this.tf.dy += e.movementY;
-                return true
-
-            case doing.nodeDrag:
-                state.node.move(dxdyLocal);
-                return true
-
-            case doing.routeDraw:
-                this.drawRoute(state.route, xyLocal);
-                return true
-
-            case doing.routeDrag:
-                // move the route segment - the drag object is the route
-                state.route.moveSegment(state.routeSegment,dxdyLocal);
-                return true
-
-            case doing.selection:
-                // make the rectangle bigger/smaller
-                this.selection.resize(dxdyLocal.x, dxdyLocal.y);
-                return true
-
-            case doing.selectionDrag:
-                this.selection.drag(dxdyLocal);
-                return true
-
-            case doing.pinAreaSelect:
-                this.selection.pinAreaResize(state.node, xyLocal);
-                return true
-
-            case doing.padDrag:
-                state.pad.drag(xyLocal, dxdyLocal);
-                return true
-
-            case doing.busDraw:
-                state.bus.drawXY(xyLocal);
-                return true
-
-            case doing.busRedraw:
-                state.bus.resumeDrawXY(state.busLabel,xyLocal,dxdyLocal);
-                return true
-
-            case doing.busSegmentDrag:
-                state.bus.moveSegment(state.busSegment,dxdyLocal);
-                return true
-
-            case doing.busDrag:
-                state.bus.drag(dxdyLocal);
-                return true
-
-            case doing.tackDrag:
-                state.tack.slide(dxdyLocal);
-                return true
-
-            case doing.pinDrag:
-                state.lookWidget.drag(xyLocal);
-                return true
-
-            // OBSOLETE
-            case doing.pinAreaDrag:
-                // move the rectangle
-                // this.selection.pinAreaDrag(dxdyLocal)
-
-                // move the pins
-                // this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect)
-                return true
-
-            case doing.interfaceNameDrag:
-                state.lookWidget.drag(xyLocal);
-                return true
-
-            case doing.interfaceDrag:
-
-                // move the rectangle
-                this.selection.widgetsDrag(dxdyLocal);
-
-                // swap the widgets if necessary
-                this.selection.widgets[0].node.look.swapInterface(xyLocal, this.selection.widgets);
-                return true
-
-            case doing.pinClicked:
-
-            // for a simple pin selection we check the keys that were pressed again
-            switch(this.keyMask(e)) {
-
-                case NONE: {
-
-                    // if still inside the node - nothing to do
-                    if (inside(xyLocal, state.lookWidget.node.look.rect)) return false
-
-                    // draw a route - set the action
-                    this.stateSwitch(doing.routeDraw);
-
-                    // create a new route - only the from widget is known
-                    state.route = new Route(state.lookWidget, null);
-
-                    // this is the route we are drawing
-                    state.route.select();
-
-                    // if the pin we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.lookWidget.is.multi) state.route.setTwistedPair();
-
-                    // add the route to the widget
-                    state.lookWidget.routes.push(state.route);  
-                    
-                    // done 
-                    return true
-                }
-
-                case SHIFT:{
-
-                    // un highlight the routes
-                    state.lookWidget.unHighLightRoutes();
-
-                    // first switch the state - might end the previous selection !
-                    this.stateSwitch(doing.pinAreaSelect);
-
-                    // ..and only then start a new selection
-                    this.selection.pinAreaStart(state.node,xyLocal);
-
-                    // done 
-                    return true
-                }
-
-                case CTRL:{
-
-                    // notation
-                    const pin = state.lookWidget;
-
-                    // set the widget as selected
-                    pin.is.selected = true;
-
-                    // set state to drag the pin/proxy up and down
-                    this.stateSwitch(doing.pinDrag); 
-
-                    // save the edit
-                    editor.doEdit('pinDrag',{pin});
-
-                    // done
-                    return true
-                }
-
-                // if ctrl-shift is pushed we extrude a pad
-                case CTRL|SHIFT: {
-
-                    // if still inside the node - nothing to do
-                    if (inside(xyLocal, state.lookWidget.node.look.rect)) return false
-
-                    // un highlight the routes
-                    state.lookWidget.unHighLightRoutes();
-
-                    // do the edit
-                    editor.doEdit('extrudePad',{view: this, pos: xyLocal});
-
-                    // only switch state if the extrusion was successfull
-                    if (this.state.pad) {
-
-                        // state switch
-                        this.stateSwitch(doing.padDrag);
-
-                        // highlight the pad 
-                        for (const route of this.state.pad.routes) route.highLight();
-                    }
-                    // done
-                    return true
-                }
-            }
+        else {
+            // set the alias to null
+            this.factory.alias = null;
+
+            //no duplicate found...
             return false
-
-            case doing.interfaceNameClicked:
-
-                // if not moving do nothing
-                if ( inside(xyLocal, this.selection.widgets[0].rect)) return false;
-
-                // moving: unselect the node
-                //this.selection.nodes[0].unSelect()
-
-                // // set a selection rectangle around the selected pins
-                // this.selection.pinAreaRectangle()
-
-                // // switch to dragging the ifName
-                // this.stateSwitch(doing.interfaceDrag) 
-
-                // // notation
-                // const pins = this.selection.widgets
-
-                // // do the edit
-                // editor.doEdit('interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y})
-                return true;
-
-            case doing.padArrowClicked:
-                // if we move away from the current pin, we start drawing the route
-                if ( !inside(xyLocal, state.pad.rect)) {
-
-                    // set the action
-                    this.stateSwitch(doing.routeDraw);
-
-                    // create a new route - only the from widget is known
-                    state.route = new Route(state.pad, null);
-
-                    // if the pad we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.pad.proxy.is.multi) state.route.setTwistedPair();
-
-                    // this is the route we are drawing
-                    state.route.select();
-
-                    // add the route to the widget
-                    state.pad.routes.push(state.route);          
-                }
-                return true
-
-            default:
-                return false
         }
     },
+};
 
-    idleMove(xyLocal) {
+function Link(model, lName, pathKind = Kind.Empty) {
 
-        // if the timer is running return
-        if (this.hitTimer) return false
+    // The model 
+    this.model = model;
 
-        // launch a timer
-        // this.hitTimer = setTimeout(()=> {
-        //     this.hitTimer = 0
-        //     this.mouseHit(xyLocal)
-        // } ,100)
+    //The format of lName is node @ group1 @ group2 ...
+    this.lName = lName;
 
-        return false
+    // How this link should be written when saved
+    this.pathKind = pathKind;
+
+    this.is = {
+        bad: false,
+    };
+}
+Link.prototype = {
+
+    copy() {
+
+        const newLink = new Link(this.model, this.lName, this.pathKind);
+        return newLink
     },
 
-    drawRoute(route, xyLocal) {
+    getPath(refArl) {
 
-        // check if we have hit something with our route ...
-        this.mouseHit(xyLocal);
+        if (!this.model || this.pathKind === Kind.Empty || this.model.is.main) return ''
 
-        // the following objects have a hover-state
-        const hit = this.hit;
-        const conx =  hit.what == zap.pin ? hit.lookWidget 
-                    : hit.what == zap.pad ? hit.pad 
-                    : hit.what == zap.busSegment ? hit.bus
-                    : null;
+        const arl = this.model.getArl();
+        if (!arl) return ''
+        if (!refArl) return arl.getPath()
 
-        // give visual feedback if we hover over a connectable object
-        this.hover( conx, conx ? route.checkConxType(route.from, conx) : false );
-
-        // draw the route
-        if (conx && (conx.is.pin || conx.is.pad))
-            route.endpoint(conx);
-        else 
-            route.drawXY(xyLocal);
+        return this.pathKind === Kind.Absolute ? arl.getPath() : relative(arl.getFullPath(), refArl.getFullPath())
     },
 
-    // clear or set the hover object and set the hover state to ok or nok
-    hover(hoverOver, ok) {
+    makeRaw(refArl) {
 
-        this.hit;
-        const state = this.state;
+        // get the key for the link
+        return { path: this.getPath(refArl), node: this.lName}
+    },
+};
 
-        // most frequent case
-        if (state.hoverOver == hoverOver) return
+const linkHandling = {
+    // note that model can be null !
+    setLink(model, lName, pathKind = Kind.Empty) {
 
-        // check if we were hovering
-        if (hoverOver) {
+        // change or create a link
+        if (this.link) {
 
-            hoverOver.is.hoverOk = ok;
-            hoverOver.is.hoverNok = !ok;
+            // set the new values
+            this.link.model = model;
+            this.link.lName = lName;
+            this.link.pathKind = pathKind;
 
-            // keep or reset previous
-            if (state.hoverOver) {
-                this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
-            }
-
-            // set new
-            state.hoverOver = hoverOver;
-        } 
+            // check the link icon
+            this.link.model?.is.lib ? this.look.checkLinkIcon('lock') : this.look.checkLinkIcon('link');
+        }
         else {
-            // reset previous
-            if (state.hoverOver) {
-                this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
-                this.state.hoverOver = null;
-            }
+
+            // create the link
+            this.link = new Link(model, lName, pathKind);
+
+            // set the icon
+            model?.is.lib ? this.look.addIcon('lock') : this.look.addIcon('link');
         }
     },
 
-    stopHover() {
-        if (this.state.hoverOver) {
-            this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
-            this.state.hoverOver = null;
+    // update unlinked nodes 
+    linkUnlinked(model, pathKind, parentLName = this.link?.lName) {
+
+        if (!this.nodes || !parentLName) return
+
+        // Do this also for the nodes that do not have links yet
+        for (const node of this.nodes) {
+
+            const lName = `${node.name} @ ${parentLName}`;
+
+            if (!node.link) {
+
+                // create the link
+                node.link = new Link(model, lName, pathKind);
+
+                // set the icon
+                model?.is.lib ? node.look.addIcon('lock') : node.look.addIcon('link');
+            }
+
+            // Do the same 
+            if (node.nodes) node.linkUnlinked(model, pathKind, lName);
         }
+    },
+
+    clearLink() {
+
+        // also remove the link widget
+        this.look.removeLinkIcon();
+
+        // and we add a source or group icon for the node (addIcon removes icons that have the same place !)
+        this.is.source ? this.look.addIcon('factory') : this.look.addIcon('group');
+
+        // clear the link
+        this.link = null;
+    },
+
+    linkIsBad() {
+
+        // the link is bad
+        this.link.is.bad = true;
+
+        // show that the link is bad
+        this.look.badLinkIcon();      
+    },
+
+    linkIsGood() {
+        // the link is bad
+        this.link.is.bad = false;
+
+        // show that the link is bad
+        this.look.goodLinkIcon();
+    },
+
+    // Path strings are derived on demand from ref + arl, so compiled nodes do not need path mutation.
+    adjustPaths( newRefArl ) {
+        if (this.nodes) for( const node of this.nodes) node.adjustPaths( newRefArl );
+    },
+
+    copyLink() {
+
+        return new Link(this.link.model, this.link.lName, this.link.pathKind)
+
     }
+
 
 };
 
-const mouseDownHandling = {
+const routeHandling = {
 
-    saveHitSpot(xyLocal, e) {
+// for the undo operation of a disconnect we have to save all the routes to and from this node
+getRoutes() {
 
-        const hit = this.hit;
+    const allRoutes = [];
 
-        // save the hit coordinates
-        hit.xyLocal.x = xyLocal.x;
-        hit.xyLocal.y = xyLocal.y;
-        hit.xyScreen.x = e.x;
-        hit.xyScreen.y = e.y;
+    // save the routes to all the pins
+    for (const pin of this.look.widgets) {
+
+        // check
+        if (!pin.is.pin) continue
+
+        // make a copy of the routes
+        for (const route of pin.routes) allRoutes.push(route);
+    }
+
+    // done
+    return allRoutes
+},
+
+// for the undo operation of a disconnect we have to save all the routes to and from this node
+getAllRoutes(widgets) {
+
+    const allRoutes = [];
+
+    // save the routes to all the pins
+    for (const pin of widgets) {
+
+        // check
+        if (!pin.is.pin) continue
+
+        // make a copy of the routes
+        for (const route of pin.routes) allRoutes.push(route);
+    }
+
+    // done
+    return allRoutes
+},
+
+connect() {},
+
+disconnect() {
+    for (const widget of this.look.widgets) if (widget.is.pin) widget.disconnect();
+},
+
+disconnectPinArea(widgets) {
+    for (const widget of widgets) if (widget.is.pin) widget.disconnect();
+},
+
+isConnected() {
+
+    for (const widget of this.look.widgets) if (widget.is.pin && widget.routes.length > 0) return true
+    return false
+},
+
+// highlight all the routes
+highLight() {
+    // clear the highlight state first
+    this.is.highLighted = true;
+
+    // unhighlight the routes if the look at the other side is not highlighted
+    for(const widget of this.look.widgets) {
+
+        // only check pins that have routes
+        if (!widget.is.pin || widget.routes.length == 0) continue
+
+        for(const route of widget.routes) {
+
+            const other = route.from === widget ? route.to : route.from;
+
+            route.highLight();
+
+            if (other.is.tack) other.highLightRoutes();
+        }
+    }
+},
+
+// un-highlight all the routes
+unHighLight() {
+
+    // clear the highlight state first
+    this.is.highLighted = false;
+
+    // unhighlight the routes if the look at the other side is not highlighted
+    for(const widget of this.look.widgets) {
+
+        // only check pins that have routes
+        if (!widget.is.pin || widget.routes.length == 0) continue
+
+        for(const route of widget.routes) {
+
+            const other = route.from === widget ? route.to : route.from;
+
+            route.unHighLight();
+
+            if (other.is.tack) other.unHighLightRoutes();
+        }
+    }
+},
+
+};
+
+const compareHandling = {
+
+    // remove zombie pins and accept new or added pins
+    acceptChanges() {
+
+        // accept all the changes for this look
+        if (this.look) this.look.acceptChanges();
+
+        // .. and for all the subnodes 
+        this.nodes?.forEach( node => node.acceptChanges());
     },
 
-    onMouseDown(xyLocal, e) {
+    // compares the settings of the nodes
+    // new values are added, removed values are removed
+    // for existing entries the value is copied
+    sxUpdate(linkNode) {
+
+        // If there are no settings, just return
+        if (!linkNode.sx) return
+
+        // update the derived settings
+        this.sx = updateDerivedSettings(linkNode.sx, this.sx);
+    },
+
+    sameRelativePosition(dockLook, linkLook, lw){
+
+        // Calculate the same relative position in the dockLook look as in the linkLook look
+        return {    x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
+                    y: dockLook.rect.y + (lw.rect.y - linkLook.rect.y)}
+    },
+
+    // find the position for a new pin with a prefix: we have to make sure it is added to the correct ifName group
+    prefixPinPosition(dockLook, lw){
+
+        // get the prefix
+        const prefix = lw.getPrefix();
+
+        // find the ifName
+        const ifName = dockLook.findInterfaceName(prefix);
+
+        // find the ifName group
+        const ifPins = ifName ? dockLook.getInterface(ifName) : null;
+
+        // check
+        if (! ifPins) {
+            // this should not happen - even a new prefix will have been added (see below)
+            console.log('*** InterfaceName not found ***' + prefix + '  ' + lw.name);
+
+            // add at the end ...
+            return {
+                x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
+                y: dockLook.rect.y + dockLook.rect.h
+            }
+        }
+
+        // take the last element of the array
+        const last = ifPins.at(-1);
+
+        // add the item behind the last 
+        return {    x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
+                    y: last.rect.y + last.rect.h}
+    },
+
+    // The position is the default position in the dockLook node
+    // we put a new ifName just in front of the next ifName or at the end
+    newInterfaceNamePosition(dockLook, lw) {
+
+        // if we find no ifName add to the end
+        const newPos = {x: dockLook.rect.x, y: dockLook.rect.y + dockLook.rect.h};
+
+        // search for the first ifName below pos.y
+        for(const sep of dockLook.widgets) {
+
+            // check only interfaceNames
+            if (! sep.is.ifName) continue
+
+            // keep the order of adding stuff
+            if (sep.is.added) continue
+
+            // adapt y if the ifName is below but closer
+            if (sep.rect.y > lw.rect.y && sep.rect.y < newPos.y) newPos.y = sep.rect.y;
+        }
+
+        // done
+        return newPos
+    },
+
+    // check the pin/proxy for zombies or added pins/proxies with the linked node
+    // Note that for 'addPin' the rxtx tables or the pads will be adjusted later
+    widgetCompare( linkNode ) {
 
         // notation
-        const state = this.state;
-        const hit = this.hit;
+        const dockLook = this.look;
+        const linkLook = linkNode.look;
 
-        // save the hitspot
-        this.saveHitSpot(xyLocal, e);
+        // reset the dockLook pins - by default set all pins and interfaceNames to zombie
+        for (const dw of dockLook.widgets) {
 
-        // get the binary keys mask
-        const keys = this.keyMask(e);
-
-        // check what was hit inside the window - with ctrl-alt we just look for the routes !
-        keys === (CTRL|ALT) ?  this.mouseHitRoutes(xyLocal) : this.mouseHit(xyLocal);
-
-        // check if we need to cancel the selection
-        if (this.selection.canCancel(hit)) this.selection.reset();
-
-        // check what we have to do
-        switch(hit.what){
-
-            case zap.pin: {
-
-                switch(keys) {
-
-                    case NONE:
-                    case CTRL|SHIFT: {
-
-                        // save the widget & node
-                        state.lookWidget = hit.lookWidget;
-                        state.node = hit.node;
-
-                        // and highlight the routes
-                        hit.lookWidget.highLightRoutes();
-
-                        // new state
-                        this.stateSwitch(doing.pinClicked);
-
-                        // set the node and pin as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
-                    }
-                    break
-
-                    case SHIFT:{
-
-                        // save the node
-                        state.node = hit.node;
-
-                        // first switch the state - might end the previous selection !
-                        this.stateSwitch(doing.pinAreaSelect);
-
-                        // ..and only then start a new selection
-                        this.selection.pinAreaStart(hit.node,xyLocal);
-                    }
-                    break
-
-                    case CTRL:{
-
-                        // notation
-                        const pin = hit.lookWidget;
-
-                        // save the pin/proxy to drag..
-                        state.lookWidget = pin;
-
-                        // set the node and pin as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
-
-                        // set state to drag the pin/proxy up and down
-                        this.stateSwitch(doing.pinDrag); 
-
-                        // save the edit
-                        editor.doEdit('pinDrag',{pin});
-                    }
-                    break
-                }
+            // set pins and interfaces to zombies - they will be un-zombied as we find them.
+            if (dw.is.pin || dw.is.ifName) {
+                dw.is.added = false;
+                dw.is.zombie = true;
             }
-            break
-
-            case zap.ifName : {
-
-                switch(keys) {
-
-                    case NONE:{
-
-                        // we select the entire interface here
-                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
-
-                        // highlight the ifName group
-                        this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
-
-                        // state switch
-                        this.stateSwitch(doing.interfaceNameClicked); 
-                    }
-                    break
-
-                    case SHIFT:{
-                       // save the node
-                       state.node = hit.node;
-
-                       // first switch the state - might end the previous selection !
-                       this.stateSwitch(doing.pinAreaSelect);
-
-                       // ..and only then start a new selection
-                       this.selection.pinAreaStart(hit.node,xyLocal);
-                    }
-                    break
-
-                    case CTRL:{
-
-                        // set the node as selected
-                        // this.selection.singleNodeAndWidget(hit.node, hit.lookWidget)
-                        // we select the entire interface here
-                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
-
-                        // highlight the ifName group
-                        this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
-
-                        // set a selection rectangle around the selected pins
-                        // this.selection.pinAreaRectangle()
-
-                        // notation
-                        const pins = this.selection.widgets;
-
-                        // do the edit
-                        editor.doEdit('interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y});
-
-                        // switch to dragging the ifName
-                        this.stateSwitch(doing.interfaceDrag); 
-                    }
-                    break
-
-                    case CTRL|SHIFT:{
-                        // Save the edit
-                        editor.doEdit('interfaceNameDrag',{ifName: hit.lookWidget});
-
-                        // save the widget
-                        this.state.lookWidget = hit.lookWidget;
-
-                        // set the node as selected
-                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
-
-                        // switch to dragging the ifName
-                        this.stateSwitch(doing.interfaceNameDrag);
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.icon: {
-
-                switch(keys) {
-
-                    case NONE:
-                    case SHIFT: {
-                        // set the node as selected
-                        this.selection.singleNode(hit.node);
-
-                        // exceute the iconclick action
-                        hit.node.iconClick(this, hit.lookWidget, {x:e.clientX, y:e.clientY});
-                    }
-                    break
-
-                    case CTRL:{
-
-                        // set the node as selected
-                        this.selection.singleNode(hit.node);
-
-                        hit.node.iconCtrlClick(this, hit.lookWidget, {x:e.clientX, y:e.clientY}, editor);
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.header: {
-
-                switch(keys) {
-
-                    case NONE:
-                    case SHIFT: {
-                        // set the node as selected
-                        this.selection.singleNode(hit.node);
-
-                        // start dragging the node
-                        this.stateSwitch(doing.nodeDrag);
-                        state.node = hit.node;
-
-                        // do the edit (saves the position)
-                        editor.doEdit('nodeDrag',{view:this, node: hit.node});
-                    }
-                    break
-
-                    case CTRL:{
-
-                        // extend the current selection - set the node as selected
-                        this.selection.extend(hit.node);
-
-                        // switch to node drag
-                        this.stateSwitch(doing.selectionDrag);
-
-                        // drag the node
-                        editor.doEdit('selectionDrag',{view: this});
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.node: {
-
-                switch(keys) {
-
-                    case NONE:{
-
-                        // set the node as selected
-                        this.selection.singleNode(hit.node);
-
-                        // start dragging the node
-                        this.stateSwitch(doing.nodeDrag);
-                        state.node = hit.node;
-
-                        // do the edit (saves the position)
-                        editor.doEdit('nodeDrag',{view:this, node: hit.node});
-                    }
-                    break
-
-                    case SHIFT: {
-
-                        // save the node
-                        state.node = hit.node;
-
-                        // first switch the state - might end the previous selection !
-                        this.stateSwitch(doing.pinAreaSelect);
-
-                        // ..and only then start a new selection
-                        this.selection.pinAreaStart(hit.node,xyLocal);
-                    }
-                    break
-
-                    case CTRL:{
-
-                        // extend the current selection - set the node as selected
-                        this.selection.extend(hit.node);
-
-                        // switch to node drag
-                        this.stateSwitch(doing.selectionDrag);
-
-                        // drag the node
-                        editor.doEdit('selectionDrag',{view: this});
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.route: {
-
-                switch(keys) {
-
-                    case NONE:
-                    case CTRL|ALT:{
-
-                        // the edit will save the current track
-                        editor.doEdit('routeDrag', {route: hit.route});
-
-                        // select the route
-                        hit.route.select();
-
-                        // save & change the state
-                        this.stateSwitch(doing.routeDrag);
-                        state.route = hit.route;
-                        state.routeSegment = hit.routeSegment;
-                    }
-                    break
-
-                    case SHIFT:{
-
-                        //The old route is saved if it would need to be restored
-                        editor.doEdit('deleteRoute',{route: hit.route});
-                    
-                        // and start rerouting
-                        hit.route.resumeDrawing(hit.routeSegment, xyLocal);
-
-                        // and now select the route
-                        hit.route.select();
-
-                        // stateswitch
-                        this.stateSwitch(doing.routeDraw);
-                        state.route = hit.route;
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.pad: {
-
-                switch(keys) {
-
-                    case NONE:{
-                        // save the pad
-                        state.pad = hit.pad;
-
-                        // if we drag the pad, make sure it is the to-widget in the routes
-                        hit.pad.checkRoutesDirection();
-
-                        // highlight the pad routes
-                        hit.pad.highLightRoutes();
-
-                        // new state
-                        this.stateSwitch(doing.padDrag);
-
-                        // the edit
-                        editor.doEdit('padDrag', {pad: hit.pad});
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.padArrow: {
-
-                switch(keys) {
-
-                    case NONE:{
-
-                        // save the pad
-                        state.pad = hit.pad;
-
-                        // highlight the pad routes
-                        for (const route of hit.pad.routes) route.highLight();
-
-                        // change the state
-                        this.stateSwitch(doing.padArrowClicked);
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.selection: {
-                
-                switch(keys) {
-
-                    case NONE:{
-                        if (this.selection.what === selex.freeRect || this.selection.what === selex.multiNode){  
-                            
-                            // drag the whole selection
-                            editor.doEdit('selectionDrag', {view: this});
-                            this.stateSwitch(doing.selectionDrag);
-                        } 
-                        else if (this.selection.what === selex.ifArea) {
-
-                            // check the widget that was hit
-                            const widget = this.selection.widgetHit(xyLocal);
-
-                            if (!widget) return
-
-                            if (widget.is.ifName) {
-                                // highlight the ifName group
-                                this.selection.widgets = widget.node.look.highLightInterface(widget);
-
-                                // state switch
-                                this.stateSwitch(doing.interfaceNameClicked); 
-                            }
-                            else {  
-                                // save the widget & node
-                                state.lookWidget = widget;
-                                state.node = widget.node;
-
-                                // and highlight the routes
-                                widget.highLightRoutes();
-
-                                // new state
-                                this.stateSwitch(doing.pinClicked);
-
-                                // set the node and pin as selected
-                                this.selection.singleNodeAndWidget(widget.node, widget);
-                            }
-                        }
-                    }
-                    break
-
-                    // on shift we restart the selection
-                    case SHIFT:{
-
-                        if (hit.node) {
-                            // save the node
-                            state.node = hit.node;
-    
-                            // ..and only then start a new selection
-                            this.selection.pinAreaStart(hit.node, xyLocal);
-
-                            // first switch the state - might end the previous selection !
-                            this.stateSwitch(doing.pinAreaSelect);
-                        }
-                        else if (this.selection.what === selex.pinArea || this.selection.what === selex.ifArea) {
-    
-                            // ..and only then start a new selection
-                            this.selection.pinAreaStart(this.selection.getPinAreaNode(), xyLocal);
-
-                            // first switch the state - might end the previous selection !
-                            this.stateSwitch(doing.pinAreaSelect);
-                        }
-                        else {
-                            // ..and only then start a new selection
-                            this.selection.freeStart(xyLocal);
-
-                            // first switch the state - might end the previous selection !
-                            this.stateSwitch(doing.selection);
-                        }
-                    }
-                    break
-
-                    case CTRL:{
-
-                        switch(this.selection.what) {
-
-                            case selex.singleNode:
-                            case selex.multiNode: 
-
-                                if (hit.node) this.selection.extend(hit.node);
-
-                            break;
-
-                            case selex.ifArea:
-                                // set state to drag the pin/proxy up and down
-                                this.stateSwitch(doing.interfaceDrag); 
-
-                                // notation
-                                const pins = this.selection.widgets;
-
-                                // drag the area
-                                editor.doEdit('interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y});
-                            break;
-                        }
-
-                    }
-                    break
-
-                    case CTRL|SHIFT:{
-
-                        if (this.selection.what == selex.ifArea) {
-
-                            // check the widget that was hit
-                            const widget = this.selection.widgetHit(xyLocal);
-
-                            if (!widget) return
-
-                            if (widget.is.ifName) {
-
-                                // Save the edit
-                                editor.doEdit('interfaceNameDrag',{ifName: widget});
-
-                                // save the widget
-                                this.state.lookWidget = hit.lookWidget;
-
-                                // set the node as selected
-                                this.selection.singleNodeAndWidget(widget.node, widget);
-
-                                // switch to dragging the ifName
-                                this.stateSwitch(doing.interfaceNameDrag);
-                            }
-                        }
-                    }
-                    break
-                }
-            }
-            break
-
-            case zap.busLabel: {
-                switch(keys) {
-
-                    case NONE:{
-                        // change state
-                        this.stateSwitch(doing.busRedraw);
-                        state.bus = hit.bus;
-                        state.busLabel = hit.busLabel;
-                        state.bus.is.selected = true;
-
-                        // highlight the bus and its connections
-                        state.bus.highLight();
-
-                        // start the busdraw
-                        editor.doEdit('busDraw',{bus:hit.bus});
-                    }
-                    break
-                }
-
-
-            }
-            break
-
-            case zap.busSegment: {
-                
-                switch(keys) {
-
-                    case NONE:{
-
-                        // save state
-                        state.bus = hit.bus;
-                        state.busSegment = hit.busSegment;
-                        state.bus.is.selected = true;
-
-                        // highlight the bus and its connections
-                        hit.bus.highLight();
-
-                        // allow free movement for a single segment...
-                        if (hit.bus.singleSegment()) {
-                            this.stateSwitch(doing.busDrag); 
-                            editor.doEdit('busDrag', {bus: hit.bus}); 
-                        }
-                        else {
-                            this.stateSwitch(doing.busSegmentDrag);
-                            editor.doEdit('busSegmentDrag', {bus: hit.bus});
-                        }
-                    }
-                    break
-
-                    case SHIFT:                    break
-
-                    case CTRL:{
-
-                        // also save the bus
-                        state.bus = hit.bus;
-                        state.bus.is.selected = true;
-
-                        // change state
-                        this.stateSwitch(doing.busDrag);
-
-                        // start the drag
-                        editor.doEdit('busDrag', {bus: hit.bus});
-                    }
-                    break
-                }
-
-
-            }
-            break
-
-            case zap.tack: {
-                switch(keys) {
-
-                    case NONE:{
-
-                        // change state
-                        this.stateSwitch(doing.tackDrag);
-                        state.tack = hit.tack;
-                        state.tack.route.select();
-
-                        // start the tackdrag
-                        editor.doEdit('tackDrag', {tack: hit.tack});
-                    }
-                    break
-
-                    case SHIFT:{
-
-                        // notation
-                        const route = hit.tack.route;
-
-                        // stateswitch
-                        this.stateSwitch(doing.routeDraw);
-                        state.route = route;
-
-                        //save the old route
-                        editor.doEdit('deleteRoute',{route});
-
-                        // and start rerouting from the last segment
-                        route.resumeDrawing(route.wire.length-1, xyLocal);      
-
-                        // select the route
-                        route.select();
-                    }
-                    break
-                }
-
-
-            }
-            break
-
-            case zap.nothing: {
-
-                switch(keys) {
-
-                    case NONE:{
-
-                        // switch state
-                        this.stateSwitch(doing.panning);
-
-                        // save the current position
-                        editor.doEdit('panning', {view:this});
-                    }
-                    break
-
-                    case SHIFT:{
-
-                        // first switch the state - might end the previous selection !
-                        this.stateSwitch(doing.selection);
-
-                        // ..and only then start a new selection
-                        this.selection.freeStart(xyLocal);
-                    }
-                    break
-                }
-            }
-            break
-        }
-    },    
-
-};
-
-const mouseUpHandling = {
-
-    onMouseUp(xyLocal,e) {
-
-        // see what we have hit...
-        this.mouseHit(xyLocal);
-
-        // if we need to adjust the undo parameters...
-        let undo = null;
-
-        // check the state state
-        switch (this.state.action) {
-
-            case doing.routeDraw: 
-                // notation
-                const route = this.state.route;
-
-                // deselect the route
-                route.unSelect();
-
-                // keep the pin highlighted, but un highlight the other routes
-                route.from.unHighLightRoutes();
-
-                // no more hovering
-                this.stopHover();
-
-                // what did we hit..
-                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? null;
-
-                // complete the route or cancel it...
-                route.connect(conx) ? editor.doEdit('routeDraw',{route}) : route.popFromRoute();
-
-                break
-
-            case doing.routeDrag:
-                // check if we should combine two segments
-                this.state.route.endDrag(this.state.routeSegment);
-                this.state.route.unSelect();
-
-                // save the new situation
-                editor.getParam().newWire = this.state.route.copyWire();
-                break
-
-            case doing.selection:
-                if (this.selection.rect) this.getSelected(this.selection.rect);
-                break
-
-            case doing.selectionDrag:
-                // adjust the parameters for the undo operation
-                editor.getParam().newPos = {x: this.selection.rect.x, y: this.selection.rect.y};
-                break
-
-            case doing.pinAreaSelect:
-                break
-
-            case doing.nodeDrag: 
-                // get the node being dragged
-                const node = this.state.node;
-
-                // remove 'kinks' in the routes
-                node.look.snapRoutes();
-
-                // get the parameters
-                const param = editor.getParam();
-
-                // adjust the parameters for the undo operation
-                param.newPos = {x: node.look.rect.x, y: node.look.rect.y};
-
-                // do a node drag check - if too small remove from redox stack
-                if (blockDistance(param.oldPos, param.newPos) < style.look.smallMove) {
-
-                    // move the node back, but keep the y value to keep the 'snap' intact (?)
-                    node.move({x: param.oldPos.x - param.newPos.x, y:0});
-
-                    // don't save the edit
-                    editor.dropLastEdit();
-                }
-                break
-
-            case doing.busDraw:
-            case doing.busRedraw:
-                this.state.bus.is.selected = false;
-
-                // remove highlight
-                this.state.bus.unHighLight();
-
-                // adjust the parameters for the undo operation
-                editor.getParam().newWire = this.state.bus.copyWire();
-                break
-
-            case doing.busSegmentDrag:
-                this.state.bus.fuseSegment(this.state.busSegment);
-                this.state.bus.is.selected = false;
-
-                // remove highlight
-                this.state.bus.unHighLight();
-
-                // adjust the parameters for the undo operation
-                undo = editor.getParam();
-                undo.newWire = this.state.bus.copyWire();
-                undo.newTackWires = this.state.bus.copyTackWires();
-                break
-
-            case doing.busDrag:
-                //this.state.bus.fuseSegment(this.state.busSegment)
-                this.state.bus.is.selected = false;
-
-                // remove highlight
-                this.state.bus.unHighLight();
-
-                // adjust the parameters for the undo operation
-                undo = editor.getParam();
-                undo.newWire = this.state.bus.copyWire();
-                undo.newTackWires = this.state.bus.copyTackWires();
-                break
-
-            case doing.padDrag: 
-                // notation
-                const pad = this.state.pad;
-
-                // stop dragging
-                pad.endDrag();
-
-                // remove the highlights
-                pad.unHighLightRoutes();
-                //for (const route of pad.routes)  route.unHighLight()
-
-                // the undo verb could be an extrudePad
-                if (editor.getVerb() == 'extrudePad') break
-
-                // no, adjust the parameters
-                undo = editor.getParam();
-                undo.newPos = {x:pad.rect.x, y:pad.rect.y};
-                undo.newWires = pad.copyWires();
-                break
-
-            case doing.tackDrag:
-                // notation
-                const tack = this.state.tack;
-                tack.fuseEndSegment();
-                tack.route.unSelect();
-
-                // adjust the parameters for the undo operation
-                editor.getParam().newWire = tack.route.copyWire();
-                break
-
-            case doing.pinDrag:
-
-                // notation
-                const pin = this.state.lookWidget;
-
-                // un highlight the routes
-                this.state.lookWidget.unHighLightRoutes();
-
-                // save the new position
-                editor.getParam().newPos = {left: pin.is.left, y: pin.rect.y};
-                break
-
-            // OBSOLETE
-            case doing.pinAreaDrag:
-                // editor.getParam().newY = this.selection.widgets[0].rect.y
-                break
-
-            case doing.interfaceNameDrag: {
-
-                // notation
-                const ifName = this.state.lookWidget;
-
-                // save the new position
-                editor.getParam().newY = ifName.rect.y;
-            }
-            break
-
-            case doing.interfaceDrag: {
-
-                // notation
-                const ifName = this.selection.widgets[0];
-
-                // remove the highlights when moving away from the ifName
-                ifName?.node.look.unhighLightInterface(this.selection.widgets);
-
-                // adjust the undo parameter
-                editor.getParam().newY = ifName.rect.y;
-
-                // done - set the widget and node as selected
-                // this.selection.singleNodeAndWidget(ifName.node, ifName)
-                this.selection.interfaceSelect(ifName.node,ifName);
-            }
-            break;
-
-            case doing.interfaceNameClicked: {
-
-                // notation
-                const ifName = this.selection.widgets[0];
-
-                // remove the highlights when moving away from the ifName
-                ifName?.node.look.unhighLightInterface(this.selection.widgets);
-            }
-            break;
-
-            case doing.pinClicked:
-
-                // un highlight the pin
-                this.state.lookWidget.unHighLight();
-
-                // unhighlight the routes
-                this.state.lookWidget.unHighLightRoutes();
-                break
-
-            case doing.padArrowClicked:
-                this.state.pad.unHighLight();
-                for (const route of this.state.pad.routes) route.unHighLight();
-                break
-        }
-        // reset the state
-        this.stateSwitch(doing.nothing);
-    },
-
-};
-
-const bgCxMenu = {
-
-	choices:[
-		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
-		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
-		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
-		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
-		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
-		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
-		{text:"paste as link",	icon:"link",		char:'ctrl l',	state:"enabled", 	action:linkFromClipboard},
-		{text:"paste",			icon:"content_copy",char:'ctrl v',	state:"enabled", 	action:pasteFromClipboard},
-	],
-
-	view:null,
-	xyLocal:null,
-	xyScreen:null,
-
-	// prepare the menu list before showing it
-	prepare(view) {
-
-		this.view = view;
-		this.xyLocal = view.hit.xyLocal;
-		this.xyScreen = view.hit.xyScreen;
-	}
-};
-
-function newGroupNode() { 				   
-	editor.doEdit('newGroupNode',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal});
-}
-
-function newSourceNode() {
-	editor.doEdit('newSourceNode',{view: bgCxMenu.view,pos: bgCxMenu.xyLocal});
-}
-
-function newBus() {
-	editor.doEdit('busCreate',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal});
-}
-
-function newInputPad() {
-	editor.doEdit('padCreate', {view: bgCxMenu.view,pos: bgCxMenu.xyLocal, input:true});
-}
-
-function newOutputPad() {
-	editor.doEdit('padCreate', {view: bgCxMenu.view,pos: bgCxMenu.xyLocal, input: false});
-}
-
-function selectNode() {
-	editor.tx.send("select node", {xyScreen: bgCxMenu.xyScreen, xyLocal:bgCxMenu.xyLocal});
-}
-
-function linkFromClipboard() {
-
-	// request the clipboard - also set the target, the clipboard can come from another file
-	editor.tx.request('clipboard get',editor.doc).then( clipboard => {
-
-		// check
-		if ((clipboard.selection.what == selex.nothing) || (clipboard.selection.what == selex.pinArea)) return
-
-		// do the edit
-		editor.doEdit('linkFromClipboard',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal, clipboard});
-	});
-	//.catch( error => console.log('link from context menu: clipboard get error -> ' + error))
-}
-
-function pasteFromClipboard() {
-
-	// request the clipboard - also set the target, the clipboard can come from another file
-	editor.tx.request('clipboard get',editor.doc).then( clipboard => {
-
-		// check
-		if (clipboard.selection.what == selex.nothing || clipboard.selection.what == selex.pinArea) return
-
-		// do the edit
-		editor.doEdit('pasteFromClipboard',{view: bgCxMenu.view, pos: bgCxMenu.xyLocal, clipboard});
-	});
-	//.catch( error => console.log('paste from context menu: clipboard get error -> ' + error))
-}
-
-// click on the node
-const nodeCxMenu = {
-
-	choices: [
-		{text:"",			char:'h',	state:"enabled", action:nodeHighLight,	icon:"highlight"},
-		{text:"add label",	char:'a',	state:"enabled",action:addLabel,		icon:"sell"},
-		{text:"wider", 		char:'ctrl +',	state:"enabled", action:wider,			icon:"open_in_full"},
-		{text:"smaller",	char:'ctrl -', 	state:"enabled", action:smaller,		icon:"close_fullscreen"},
-		{text:"copy",		char:'ctrl c',state:"enabled", action:nodeToClipboard,icon:"content_copy"},
-		{text:"source to clipboard",	state:"enabled", action:sourceToClipboard,icon:"content_paste"},
-		{text:"make a test node",		state:"enabled", action:makeTestNode,icon:"done_all"},
-		{text:"",						state:"enabled", action:convertNode,	icon:"sync"},
-		{text:"cut link",				state:"enabled", action:cutLink,		icon:"link_off"},
-		{text:"get from link",			state:"enabled", action:getFromLink,	icon:"link"},
-		{text:"save to link",			state:"enabled", action:saveToLink,		icon:"add_link"},
-		{text:"ungroup",				state:"enabled", action:unGroup, 		icon:"schema",},
-		{text:"disconnect", char:'clear',state:"enabled", action:disconnectNode,icon:"power_off"},
-		{text:"delete", 	char:'del',	state:"enabled", action:deleteNode,		icon:"delete"},
-	],
-
-	view:null,
-	node:null,
-	xyLocal: null,
-
-	// prepare the menu list before showing it
-	prepare(view) {
-
-		this.view = view;
-		this.xyLocal = view.hit.xyLocal;
-		this.node = view.hit.node;
-
-		// some choices will be enable or changed
-		let choice = this.choices.find( choice => choice.action == sourceToClipboard);
-		choice.state = this.node.is.source ? "enabled" : "disabled";
-
-		choice = this.choices.find( choice => choice.action == convertNode);
-		choice.state = this.node.link ? "disabled" : "enabled";
-		choice.text = this.node.is.group ? "convert to source node" : "convert to group node";
-
-		choice = this.choices.find( choice => choice.action == nodeHighLight);
-		choice.text = this.node.is.highLighted ? "remove highlight" : "highlight routes";
-
-		choice = this.choices.find( choice => choice.action == cutLink);
-		choice.state = this.node.link ? "enabled" : "disabled";
-
-		choice = this.choices.find( choice => choice.action == saveToLink);
-		choice.state = this.node.link ? "disabled" : "enabled";
-
-		choice = this.choices.find( choice => choice.action == getFromLink);
-		choice.state = this.node.link ? "disabled" : "enabled";
-
-		choice = this.choices.find( choice => choice.action == unGroup);
-		choice.state = this.node.is.group ? "enabled" : "disabled";
-	},
-};
-
-// the actions 
-function addLabel() {
-	editor.doEdit('addLabel',{node: nodeCxMenu.node});
-}
-
-function wider() {
-	editor.doEdit('wider', {node: nodeCxMenu.node});
-}
-
-function smaller() {
-	editor.doEdit('smaller', {node: nodeCxMenu.node});
-}
-
-function nodeHighLight() {
-	editor.doEdit('nodeHighLight', {node:nodeCxMenu.node});
-}
-
-function nodeToClipboard() {
-	editor.doEdit('nodeToClipboard', {view:nodeCxMenu.view, node:nodeCxMenu.node});
-}
-
-function convertNode() {
-	editor.doEdit('convertNode',{node:nodeCxMenu.node});
-}
-
-function makeTestNode() {
-}
-
-function sourceToClipboard() {
-	editor.doEdit('sourceToClipboard',{node:nodeCxMenu.node});
-}
-
-function disconnectNode() {
-	editor.doEdit('disconnectNode',{node:nodeCxMenu.node});
-}
-
-function deleteNode() {
-	editor.doEdit('deleteNode',{node:nodeCxMenu.node});
-}
-
-// make the node local, ie break the link....
-function cutLink() {
-	editor.doEdit('cutLink',{node:nodeCxMenu.node});
-}
-
-// type in the name of a model and try to find the requested node in that model
-function getFromLink() {
-	nodeCxMenu.node.showLinkForm(nodeCxMenu.xyLocal);
-}
-
-// save the node to a file, ie change it into a link
-function saveToLink() {
-	nodeCxMenu.node.showExportForm(nodeCxMenu.xyLocal);
-}          		
-
-function unGroup() {
-	editor.doEdit('unGroup', {view: nodeCxMenu.view, node: nodeCxMenu.node});
-}
-
-const noLink$1 = [
-    {text: 'profile',           char: 'p',  icon: 'info', state: 'disabled', action: showProfile },    
-    {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput$1,},
-    {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput$1,},
-    {text: 'new interface',     char: 'f',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName$1,},
-    {text: 'new request',       char: 'q',  icon: 'switch_left',        state: 'enabled',        action: newRequest$1,    },
-    {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply$1,    },
-    {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch$1,    },
-    {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
-    {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
-    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
-    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
-    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
-    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },    
-    {text: 'delete',                        icon: 'delete', state: 'enabled', action: deletePin },
-];
-
-const withLink$1 = [
-    {text: 'profile',                      icon: 'info', state: 'disabled', action: showProfile },    
-    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
-    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
-    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
-    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },
-    ];
-
-// click on the node
-const pinCxMenu = {
-    choices: null,
-
-    view: null,
-    node: null,
-    widget: null,
-    xyLocal: null,
-    xyScreen: null,
-
-    // a specific function to turn on/off the options of the right click menu
-    prepare(view) {
-        this.view = view;
-        this.node = view.hit.node;
-        this.widget = view.hit.lookWidget;
-        this.xyLocal = view.hit.xyLocal;
-        this.xyScreen = view.hit.xyScreen;
-
-        // linked nodes hve much less options
-        if (this.node.link) {
-            // The number of options is reduced
-            this.choices = withLink$1;
-
-            // only pins can be disconnected
-            let entry = this.choices.find((c) => c.action == disconnectPin);
-            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-            // profiles are only available for pins
-            entry = this.choices.find((c) => c.action == showProfile);
-            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-            return;
         }
 
-        this.choices = noLink$1;
-
-        // only pins can be disconnected
-        let entry = this.choices.find((c) => c.action == disconnectPin);
-        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-        // swap input to output
-        entry = this.choices.find((c) => c.action == inOutSwitch$1);
-        let enable = this.widget?.is.pin && this.widget.routes.length == 0;
-        entry.state = enable ? 'enabled' : 'disabled';
-        entry.text =
-            enable && this.widget.is.input
-                ? 'change to output'
-                : 'change to input';
-
-        // switch channel on or off
-        entry = this.choices.find((c) => c.action == channelOnOff);
-        enable = this.widget?.is.pin; // && ! this.widget.is.proxy
-        entry.state = enable ? 'enabled' : 'disabled';
-        entry.text =
-            enable && this.widget.is.channel ? 'remove channel' : 'add channel';
-
-        // profiles are only available for pins
-        entry = this.choices.find((c) => c.action == showProfile);
-        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
-
-        // switch the delete action
-        entry = this.choices.find((c) => c.text == 'delete');
-        entry.action = this.widget?.is.pin
-            ? deletePin
-            : this.widget?.is.ifName
-              ? deleteInterfaceName
-              : () => {};
-
-        // check if there are pins to paste
-        entry = this.choices.find((c) => c.text == 'paste pins');
-    },
-};
-
-// is = {channel, input, request, proxy}
-function newInput$1() {
-    // set the flags
-    const is = { channel: false, input: true, proxy: pinCxMenu.node.is.group };
-    editor.doEdit('newPin', {
-        view: pinCxMenu.view,
-        node: pinCxMenu.node,
-        pos: pinCxMenu.xyLocal,
-        is,
-    });
-}
-function newOutput$1() {
-    // set the flags
-    const is = { channel: false, input: false, proxy: pinCxMenu.node.is.group };
-    editor.doEdit('newPin', {
-        view: pinCxMenu.view,
-        node: pinCxMenu.node,
-        pos: pinCxMenu.xyLocal,
-        is,
-    });
-}
-function newRequest$1() {
-    // set the flags
-    const is = { channel: true, input: false, proxy: pinCxMenu.node.is.group };
-    editor.doEdit('newPin', {
-        view: pinCxMenu.view,
-        node: pinCxMenu.node,
-        pos: pinCxMenu.xyLocal,
-        is,
-    });
-}
-function newReply$1() {
-    // set the flags
-    const is = { channel: true, input: true, proxy: pinCxMenu.node.is.group };
-    editor.doEdit('newPin', {
-        view: pinCxMenu.view,
-        node: pinCxMenu.node,
-        pos: pinCxMenu.xyLocal,
-        is,
-    });
-}
-function inOutSwitch$1() {
-    editor.doEdit('ioSwitch', { pin: pinCxMenu.widget });
-}
-function channelOnOff() {
-    editor.doEdit('channelOnOff', { pin: pinCxMenu.widget });
-}
-function disconnectPin() {
-    editor.doEdit('disconnectPin', { pin: pinCxMenu.widget });
-}
-function deletePin() {
-    editor.doEdit('deletePin', { view: pinCxMenu.view, pin: pinCxMenu.widget });
-}
-function newInterfaceName$1() {
-    editor.doEdit('newInterfaceName', {
-        view: pinCxMenu.view,
-        node: pinCxMenu.node,
-        pos: pinCxMenu.xyLocal,
-    });
-}
-function deleteInterfaceName() {
-    editor.doEdit('deleteInterfaceName', {
-        view: pinCxMenu.view,
-        ifName: pinCxMenu.widget,
-    });
-}
-function showProfile(e) {
-    editor.doEdit('showProfile', {
-        pin: pinCxMenu.widget,
-        pos: { x: pinCxMenu.xyScreen.x, y: pinCxMenu.xyScreen.y + 10 },
-    });
-}
-
-function pinsSwap$1() {
-    editor.doEdit('swapPins', {
-        node: pinCxMenu.node,
-        left: true,
-        right: true,
-    });
-}
-
-function pinsLeft$1() {
-    editor.doEdit('swapPins', {
-        node: pinCxMenu.node,
-        left: true,
-        right: false,
-    });
-}
-function pinsRight$1() {
-    editor.doEdit('swapPins', {
-        node: pinCxMenu.node,
-        left: false,
-        right: true,
-    });
-}
-function pasteWidgetsFromClipboard() {
-    // request the clipboard - also set the target, the clipboard can come from another file
-    editor.tx.request('clipboard get', editor.doc).then((clipboard) => {
-        editor.doEdit('pasteWidgetsFromClipboard', {
-            view: pinCxMenu.view,
-            clipboard,
-        });
-    });
-    //.catch( error => console.log('paste: clipboard get error -> ' + error))
-}
-
-const withLink = [
-
-	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
-	{text:"copy interface",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:ifToClipboard},
-	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
-];
-
-const noLink = [
-
-	{text:"new output",		char:'o', icon:"logout",state:"enabled", action:newOutput},
-	{text:"new input",		char:'i', icon:"login",state:"enabled", action:newInput},
-	{text:"new interface",  char:'p', icon:"drag_handle",state:"enabled", action:newInterfaceName},
-	{text:"new request",	char:'q', icon:"switch_left",state:"enabled", action:newRequest},
-	{text:"new reply",		char:'r', icon:"switch_right",state:"enabled", action:newReply},
-
-	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
-	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
-	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
-	{text:"i/o swicth",	  	          icon:"cached",state:"enabled", action:ioSwitch},
-
-	{text:"copy interface",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:ifToClipboard},
-	{text:"paste pins",		char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pastePinsFromClipboard},
-	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
-	{text:"delete",					  icon:"delete",state:"enabled", action:ifDelete},
-];
-
-// click on the node
-const ifCxMenu = {
-
-	choices: null,
-
-	view: null,
-	node: null,
-	ifWidget: null,
-	xyLocal: null,
-	xyScreen: null,
-
-	// a specific function to turn on/off the options of the right click menu
-	prepare(view) {
-
-		this.view = view;
-
-		// Get the data from the selection !
-		if (view.selection.what == selex.ifArea) {
-
-			// check - should never fail
-			const ifWidget = view.selection.widgets[0];
-			if (!ifWidget?.is.ifName) return;
-
-			this.node = ifWidget.node;
-			this.ifWidget = ifWidget;
-			this.xyLocal = view.hit.xyLocal;
-			this.xyScreen = view.hit.xyScreen;
-		}
-		// get the data from the view hit
-		else {
-			this.node = view.hit.node;
-			this.ifWidget = view.hit.lookWidget;
-			this.xyLocal = view.hit.xyLocal;
-			this.xyScreen = view.hit.xyScreen;
-		}
-
-		// set the options
-		this.choices = this.node.link ? withLink : noLink;
-
-		// check if there are pins to paste
-		const entry = this.choices.find( c => c.text == "paste pins");
-		if (entry) {
-			entry.state = "disabled";
-			editor.tx.request('clipboard get',editor.doc)
-			.then( clipboard => {
-				entry.state = (clipboard.selection.what === selex.ifArea || clipboard.selection.what === selex.pinArea) ? "enabled" : "disabled";
-			})
-			.catch( error => {});
-		}
-	}
-};
-
-// is = {channel, input, request, proxy}
-function newInput() {
-	const is = {channel: false, input: true, proxy: ifCxMenu.node.is.group};
-	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
-}
-function newOutput() {
-	const is = {channel: false, input: false, proxy: ifCxMenu.node.is.group};
-	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
-}
-function newRequest() {
-	const is = {channel: true, input: false,proxy: ifCxMenu.node.is.group};
-	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
-}
-function newReply() {
-	const is = {channel: true,input: true,proxy: ifCxMenu.node.is.group};
-	editor.doEdit('newPin',{view: ifCxMenu.view, node:ifCxMenu.node, pos:ifCxMenu.xyLocal, is});
-}
-function newInterfaceName() {
-	editor.doEdit('newInterfaceName', {view: ifCxMenu.view, node:ifCxMenu.node, pos: ifCxMenu.xyLocal});
-}
-function ioSwitch() {
-	editor.doEdit('ioSwitchPinArea', {view: ifCxMenu.view});
-}
-function ifDisconnect() {
-	editor.doEdit('disconnectPinArea', {});
-}
-function ifDelete() {
-	editor.doEdit('deletePinArea',{view: ifCxMenu.view});
-}
-
-// pin swapping
-function ifPinsSwap()  {
-	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:true, right:true});
-}
-function ifPinsLeft()  {
-	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:true, right:false});
-}
-function ifPinsRight() {
-	editor.doEdit('swapPinArea',{view:ifCxMenu.view,left:false, right:true});
-}
-
-function ifToClipboard() {
-		editor.doEdit('selectionToClipboard',{view: ifCxMenu.view});
-}
-
-// paste widgets
-function pastePinsFromClipboard()  {
-
-	// request the clipboard - also set the target, the clipboard can come from another file
-	editor.tx.request('clipboard get',editor.doc).then( clipboard => {
-
-		editor.doEdit('pasteWidgetsFromClipboard',{	view: ifCxMenu.view, clipboard});
-	})
-	.catch( error => console.log('paste: clipboard get error -> ' + error));
-}
-
-const selectFreeCxMenu = {
-
-	choices: [
-        {text:"align left",icon:"align_horizontal_left",state:"enabled",action: () => alignVertical(true)},
-        {text:"align right",icon:"align_horizontal_right",state:"enabled",action: () => alignVertical(false)},
-        {text:"align top",icon:"align_vertical_top",state:"enabled",action:() => alignHorizontal(true)},
-        {text:"distribute vertically",icon:"vertical_distribute",state:"enabled",action:spaceVertical},
-        {text:"distribute horizontally",icon:"horizontal_distribute",state:"enabled",action:spaceHorizontal},
-		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard$1},
-        {text:"group",icon:"developer_board",state:"enabled", action:group},
-        {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect$2},
-        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
-        {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
-    ],
-
-    view: null,
-	xyLocal:null,
-
-    prepare(view) {
-
-        this.view = view;
-        this.xyLocal = view.hit.local;
-    }
-};
-// align vertical we do for nodes and pads
-function alignVertical(left) {
-    editor.doEdit('alignVertical',{view: selectFreeCxMenu.view, left});
-}
-// align top we only do for nodes 
-function alignHorizontal(top) {
-    editor.doEdit('alignHorizontal',{view: selectFreeCxMenu.view, top});
-}
-function spaceVertical() {
-    editor.doEdit('spaceVertical',{view: selectFreeCxMenu.view});
-}
-function spaceHorizontal() {
-    editor.doEdit('spaceHorizontal', {view: selectFreeCxMenu.view});
-}
-function disconnect$2() {
-    editor.doEdit('disconnectSelection',{selection: selectFreeCxMenu.view.selection});
-}
-function deleteSelection() {
-    editor.doEdit('deleteSelection',{view: selectFreeCxMenu.view});
-}
-function selectionToClipboard$1() {
-    editor.doEdit('selectionToClipboard',{view: selectFreeCxMenu.view});
-}
-function group() {
-    editor.doEdit('selectionToGroup',{view: selectFreeCxMenu.view});
-}
-function autoRoute() {
-    editor.doEdit('autoRouteSelection',{view: selectFreeCxMenu.view});
-}
-
-// click on the node
-const pinAreaCxMenu = {
-
-	choices: [
-		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
-		{text:"disconnect",				  icon:"power_off",state:"enabled", action:disconnectPinArea},
-		{text:"delete",					  icon:"delete",state:"enabled", action:deletePinArea},
-		{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
-		{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
-		{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
-		{text:"in/out switch",	  	  	  icon:"cached",state:"disabled", action:inOutSwitch},
-
-	],
-
-	view: null,
-	node: null,
-	widgets: null,
-	xyLocal: null,
-	xyScreen: null,
-
-	// a specific function to turn on/off the options of the right click menu
-	prepare(view) {
-
-		this.view = view;
-		this.node = view.state.node;
-		this.widgets = view.selection.widgets;
-		this.xyLocal = view.hit.xyLocal;
-		this.xyScreen = view.hit.xyScreen;
-	},
-};
-function selectionToClipboard() {
-    editor.doEdit('selectionToClipboard',{view: pinAreaCxMenu.view});
-}
-function disconnectPinArea() {
-	editor.doEdit('disconnectPinArea', {view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets});
-}
-function deletePinArea() {
-	editor.doEdit('deletePinArea',{view: pinAreaCxMenu.view, node: pinAreaCxMenu.node, widgets: pinAreaCxMenu.widgets});
-}
-function pinsSwap()  {
-	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:true});
-}
-function pinsLeft()  {
-	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:true, right:false});
-}
-function pinsRight() {
-	editor.doEdit('swapPinArea',{view: pinAreaCxMenu.view, left:false, right:true});
-}
-function inOutSwitch() {
-	editor.doEdit('ioSwitchPinArea', {view});
-}
-
-const busCxMenu = {
-
-	choices: [
-		{icon:"highlight",text:"",state:"enabled", action:busHighLight},
-		{icon:"sell",text:"change name",state:"enabled", action:changeName$1},
-		{icon:"rss_feed",text:"",state:"enabled", action:changeFilter},
-		{icon:"timeline",text:"straight connections",state:"enabled", action:straightConnections},
-		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect$1},
-		{icon:"delete",text:"delete",state:"enabled", action:deleteBus}
-	],
-
-	view: null,
-	bus:null,
-	label:null,
-	xyLocal:null,
-
-	prepare(view) {
-
-		this.view = view;
-		this.bus = view.hit.bus;
-		this.label = view.hit.busLabel;
-		this.xyLocal = view.hit.xyScreen;
-
-		let choice = this.choices.find( choice => choice.action == busHighLight);
-		choice.text = this.bus.is.highLighted ? "remove highlight" : "highlight routes";
-
-		choice = this.choices.find( choice => choice.action == changeFilter);
-		choice.text = (this.bus.is.filter) ? "change filter" : "add filter";
-	}
-};
-
-function busHighLight() {
-	editor.doEdit('busHighlight',{bus: busCxMenu.bus});
-}
-
-function changeName$1() {
-	editor.doEdit('busChangeName', {bus: busCxMenu.bus, label: busCxMenu.busLabel});
-}
-
-function changeFilter() {
-
-	// notation
-	const bus = busCxMenu.bus;
-
-	// set the filter name and path if not available
-	const filterName = (!bus.filter || bus.filter.fName.length < 1) ? convert.nodeToFactory(bus.name) : bus.filter.fName;
-	const filterPath = bus.filter?.arl ? bus.filter.arl.userPath : '';
-
-	// show the factory
-	editor.tx.send("show filter",{ 
-
-		title: 'Filter for ' + bus.name, 
-		name: filterName,
-		path: filterPath,
-		pos: busCxMenu.xyLocal,
-		ok: (newName,newPath) => {
-
-			// do the edit
-			editor.doEdit('busChangeFilter',{bus, newName : newName.trim(), userPath: newPath.trim()});
-		},
-		open: async (newName, newPath) => {
-
-			// change if anything was changed
-			if ((newName != filterName )||(newPath != filterPath))
-				editor.doEdit('busChangeFilter',{bus, newName : newName.trim(),userPath: newPath.trim()});
-
-			// check
-			if (newName.length < 1) return
-
-			// get the current reference
-			const arl = bus.filter.arl ?? editor.doc.resolve('./index.js');
-
-			// open the file
-			tx.send('open source file',{arl});
-		},
-		trash: () => {
-			editor.doEdit('busDeleteFilter',{bus});
-		},
-		cancel:()=>{}
-	});
-
-}
-
-function straightConnections() {
-	editor.doEdit('busStraightConnections', {bus: busCxMenu.bus});
-}
-
-function disconnect$1() {
-	editor.doEdit('busDisconnect',{bus: busCxMenu.bus});
-}
-
-function deleteBus() {
-	editor.doEdit('busDelete',{bus: busCxMenu.bus});	
-}
-
-const padCxMenu = {
-
-	choices: [
-		{icon:"sell",text:"change name",state:"enabled", action:changeName},
-		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect},
-		{icon:"delete",text:"delete",state:"enabled", action:deletePad}
-	],
-
-	// to set the position where the context menu has to appear
-	view:null,
-	pad:null,
-
-	prepare(view) {
-		this.view = view;
-		this.pad = view.hit.pad;
-	}
-};
-
-function changeName() {
-	editor.doEdit('changeNamePad',{view: padCxMenu.view, pad: padCxMenu.pad});
-}
-
-function disconnect() {
-	editor.doEdit('disconnectPad',{pad: padCxMenu.pad});
-}
-
-function deletePad() {
-	editor.doEdit('deletePad',{pad: padCxMenu.pad});
-}
-
-const contextHandling = {
-    // show the rightclick menu
-    onContextMenu(xyLocal, e) {
-        // save the location
-        this.saveHitSpot(xyLocal, e);
-
-        // check what was hit inside the window !
-        this.mouseHit(xyLocal);
-
-        switch (this.hit.what) {
-            case zap.header:
-            case zap.icon:
-                {
-                    nodeCxMenu.prepare(this);
-                    editor.tx.send('show context menu', {
-                        menu: nodeCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
-
-            case zap.node:
-            case zap.pin:
-                {
-                    pinCxMenu.prepare(this);
-                    editor.tx.send('show context menu', {
-                        menu: pinCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
-
-            case zap.ifName:
-                {
-                    // we select the entire interface here
-                    this.selection.interfaceSelect(
-                        this.hit.node,
-                        this.hit.lookWidget
-                    );
-
-                    // prepare the context menu
-                    ifCxMenu.prepare(this);
-
-                    editor.tx.send('show context menu', {
-                        menu: ifCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
-
-            case zap.busSegment:
-            case zap.busLabel:
-                {
-                    busCxMenu.prepare(this);
-                    editor.tx.send('show context menu', {
-                        menu: busCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
-
-            case zap.pad:
-            case zap.padArrow:
-                {
-                    padCxMenu.prepare(this);
-                    editor.tx.send('show context menu', {
-                        menu: padCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
-
-            case zap.selection:
-                {
-                    switch (this.selection.what) {
-                        case selex.freeRect:
-                        case selex.multiNode:
-                            {
-                                selectFreeCxMenu.prepare(this);
-                                editor.tx.send('show context menu', {
-                                    menu: selectFreeCxMenu.choices,
-                                    event: e,
-                                });
-                            }
-                            break;
-
-                        case selex.ifArea:
-                            {
-                                ifCxMenu.prepare(this);
-                                editor.tx.send('show context menu', {
-                                    menu: ifCxMenu.choices,
-                                    event: e,
-                                });
-                            }
-                            break;
-
-                        case selex.pinArea:
-                            {
-                                pinAreaCxMenu.prepare(this);
-                                editor.tx.send('show context menu', {
-                                    menu: pinAreaCxMenu.choices,
-                                    event: e,
-                                });
-                            }
-                            break;
-                    }
-                }
-                break;
-
-            case zap.nothing:
-                {
-                    bgCxMenu.prepare(this);
-                    editor.tx.send('show context menu', {
-                        menu: bgCxMenu.choices,
-                        event: e,
-                    });
-                }
-                break;
+        // we make a sorted list of proxies - sort according y-value
+        // In that way new widgets will be added at the same position as in the linkLook node.
+        const linkedSorted = linkLook.widgets.slice().sort( (a,b) => a.rect.y - b.rect.y);
+
+        // we first handle the interfaceNames
+        for(const lw of linkedSorted)  {
+
+            // only interfaceNames
+            if ( ! lw.is.ifName) continue
+
+            // find the corresponding widget in the dock
+            let dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.ifName && lw.is.ifName && (dw.text == lw.text)));
+            if (dw) {
+                dw.is.zombie = false;
+                dw.wid = lw.wid;
+                continue
+            }
+
+            // let's check for a name change -> find the corresponding widget in the dock
+            dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.ifName && lw.is.ifName && (dw.wid == lw.wid)));
+            if (dw) {
+                this.dockInterfaceNameChange(dw, lw);
+                dw.is.zombie = false;
+                continue
+            }
+
+            // There is a new ifName
+            this.dockNewInterfaceName(lw);
         }
-    },
-};
 
-const nodeHandling = {
+         // now we handle the pins
+        for(const lw of linkedSorted) {
 
-    // setting a new root for a view
-    syncRoot(newRoot) {
+            if ( ! lw.is.pin ) continue
 
-        // construct the rx tx tables
-        newRoot.rxtxBuildTxTable();
+            // exactly the same
+            let dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.pin && (dw.name == lw.name) && (dw.is.input == lw.is.input) && (dw.is.channel == lw.is.channel)) );
+            if (dw) {
+                dw.is.zombie = false;
+                dw.wid = lw.wid;
+                continue
+            }
 
-        // if the root is not placed, place it
-        if (!newRoot.is.placed) newRoot.placeRoot();
+            // probably a name change - select only unprocessed pins !
+            dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.pin &&  (dw.wid == lw.wid) && (dw.is.input == lw.is.input)) );
+            if (dw) {
 
-        // set the root for the view (is always a group node !)
-        this.root = this.getContainer(newRoot);
+                this.dockPinChange(dw, lw);
+                dw.is.zombie = false;
+                continue
+            }
 
-        // If the root has a view, it is the top level view - set the saved transform for it
-        if (this.root.savedView?.tf) this.setTransform(this.root.savedView.tf);
-
-        // and now also restore the saved views if any 
-        this.restoreSubViews();
-    },
-
-    // add a 'container' group
-    getContainer(root) {
-
-        // if the root is a container set this as the root for the view - change the name if required
-        if (root.isContainer()) return root
- 
-        // the root is not a container -> create a container group node
-        const container = this.initRoot('');
-
-        // save the model root in the container
-        container.nodes.push(root);
-
-        // return the root
-        return container
-     },
-
-    // this is for when we create a new node in the editor
-    newEmptyNode(pos, source) {
-
-        // create the look for the node
-        const look = new Look( {x:pos.x,y:pos.y,w:0,h:0} );
-
-        // create the node
-        const node = source ? new SourceNode(look, '') : new GroupNode(look, '');
-
-        // get the node a UID
-        editor.doc.UID.generate(node);
-
-        // add the node to the node graph
-        this.root.addNode(node);
-
-        // set the node as selected
-        this.selection.singleNode(node);
-
-        // find the header
-        const header = node.look.widgets.find( widget => widget.is.header );
-
-        // start the name edit
-        this.beginTextEdit(header);
-
-        // we also set the hit position to the start
-        this.hit.xyLocal.y = pos.y + header.rect.h;
-
-        // done
-        return node
-    },
-
-};
-
-const selectionHandling = {
-
-    // finds nodes or routes in the selection rectangle
-    getSelected(rect) {
-
-        // notation
-        const slct = this.selection;
-
-        // check the nodes
-        for( const node of this.root.nodes) if (node.overlap(rect)) slct.nodes.push(node);
-
-        // check all pads
-        for( const pad of this.root.pads) if (pad.overlap(rect)) slct.pads.push(pad);
-
-        // check the buses and the individual tacks
-        for( const bus of this.root.buses) if (bus.overlap(rect)) {
-
-            // ..if so select the bus
-            slct.buses.push(bus);
-
-            // ...and select the tacks in the selection
-            for( const tack of bus.tacks) if (tack.overlap(rect)) slct.tacks.push(tack);
+            // we consider the pin a new pin
+            this.dockNewPin(lw, linkNode);
         }
     },
 
-    // an external widget has a connection with a node outside the selection
-    externalWidgets(nodeList) {
-
-        let widgetList = [];
-
-        // go through all the widgets of the selected nodes
-        nodeList.forEach( node => {
-            node.look.widgets.forEach( widget => {
-                widget.routes?.forEach( route => {  
-                    if ( !nodeList.includes(route.to.node) || !nodeList.includes(route.from.node)) widgetList.push(widget);
-                });
-            });
-        });
-        return widgetList
-    },
-
-    // to calculate the delta it does not matter if the copy and paste are in the same or in different views
-    // The delta is simply a value to go from one coordinate value to another
-    // cb is the clipboard
-    deltaForPaste(pos, cb) {
-
-        if (!pos) return null;
-
-        // increment the copy count
-        cb.copyCount++;
-
-        const slct = cb.selection;
-
-        const ref = (slct.what == selex.freeRect) ? slct.rect : (slct.what == selex.multiNode) ? slct.nodes[0].look.rect  : {x:0, y:0};
-
-        // if the position is the same as the reference - move the first, otherwise only move starting from 2
-        return ((ref.x == pos.x) && (ref.y == pos.y)) 
-                    ? {x: cb.copyCount * style.look.dxCopy,y: cb.copyCount * style.look.dyCopy}
-                    : {x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
-    },
-
-    // save the selection to the clipboard (no copies are made !)
-    selectionToClipboard() {
-
-        // send the selection to the clipboard manager
-        editor.tx.send('clipboard set',{model: editor.doc.model, selection: this.selection});
-    },
-        
-    // copy the clipboard to the selection - everything is copied !
-    clipboardToSelection(pos, clipboard) {
-
-        // calculate where the selection has to be pasted
-        const delta = this.deltaForPaste(pos, clipboard);
-
-        // if we have selected a node and a position inside the node, get it here (before we reset)
-        const [nodeSel, posSel] = this.selection.whereToAdd();
-
-        // initialise the selection
-        this.selection.reset();
-
-        // the selection in the clipboard
-        const cliboSelect = clipboard.selection;
-
-        // set the type of selection
-        this.selection.what = cliboSelect.what;
-
-        // copy as required
-        switch(cliboSelect.what) {
-
-            case selex.freeRect:
-            case selex.multiNode:
-
-                // copy the nodes in the clipboard
-                for (const node of cliboSelect.nodes) {
-
-                    // make a copy
-                    let newNode = node.copy();
-
-                    // move the new node to the new spot
-                    newNode.look.moveDelta(delta.x, delta.y);
-
-                    // add the node to the active view
-                    this.root.addNode(newNode);
-
-                    // add the node to the selection
-                    this.selection.nodes.push(newNode);
-                }
-
-                // we want new UIDs for the copied nodes
-                this.root.uidChangeAll(editor.doc.UID);
-
-                // for multiNode, we're done
-                if (cliboSelect.what == selex.multiNode) return
-
-                // copy the buses in the clipboard
-                for (const bus of cliboSelect.buses) {
-
-                    // make a copy
-                    let newBus = bus.copy();
-
-                    // change the uid - there are no routes to copy so this is ok 
-                    // editor.doc.UID.generate(newBus)
-
-                    // move the new node to the new spot
-                    newBus?.move(delta.x, delta.y);
-
-                    // add to the selection
-                    this.selection.buses.push(newBus);
-                }
-
-                // copy the pads - i don't think so....
-                for (const pad of cliboSelect.pads) {
-                }
-
-                // we could copy the routes that go bteween the nodes/busses in the copy ...
-
-                // check if we need to set the rectangle again...
-                if (cliboSelect.rect) {
-
-                    // notation
-                    const rc = cliboSelect.rect;
-
-                    // set the rectangle
-                    this.selection.activate(rc.x + delta.x, rc.y + delta.y, rc.w, rc.h, style.selection.cRect);
-                }
-
-                // done
-                break
-
-            case selex.singleNode: {
-
-                // make a copy
-                let newNode = cliboSelect.nodes[0]?.copy();
-
-                // we want new UIDs for the copied node(s)
-                newNode.uidChangeAll(editor.doc.UID);
-                
-                // move the new node to the new spot
-                newNode.look.moveTo(delta.x, delta.y);
-
-                // add the node to the active view
-                this.root.addNode(newNode);
-
-                // add the node to the selection
-                this.selection.nodes.push(newNode);
-
-                // select
-                newNode.doSelect();
-            }
-            break
-
-            case selex.ifArea:
-            case selex.pinArea: {
-
-                // check
-                if (!nodeSel || !posSel) return
-
-                // paste the widgets 
-                const copies = nodeSel.look.copyPinArea(cliboSelect.widgets, posSel);
-
-                // add the pads or adjust the rx/tx tables
-                nodeSel.is.source ? nodeSel.rxtxAddPinArea(copies) : nodeSel.addPads(copies);
-
-                // the selection becomes the widgets that were copied
-                this.selection.pinAreaSelect(copies);
-
-                this.selection.what = cliboSelect.what;
-            }
-            break
-        }
-    },
-
-    // The clipboard has been copied already, now we set the links
-    linkToClipboardNodes(model, viewPath) {
-        
-        // the nodes in the clipboard and the selection are copies - we set them as links
-        for (const linkedNode of this.selection.nodes) linkedNode.setLink(model, linkedNode.name + viewPath);
-    },
-
-    // The selection which has been pasted might have duplicate names...
-    checkPastedNames(n) {
-
-        // check all the nodes in the selection
-        for (const pasted of this.selection.nodes) {
-
-            // start at the number given
-            let counter = n;
-
-            // check if there is a duplicate (999 is just there to avoid endless loops)
-            while( this.root.hasDuplicate(pasted) && counter < 999) {
-
-                // put a number after the name
-                const newName = convert.addNumber(pasted.name, ++counter);
-
-                // change the name
-                pasted.updateName(newName);
-            }
-        }
-    },
-
-    // note that the selection is a stored previous selection, not the current one !
-    removeSelection(selection) {
-
-        // reset the current selection
-        this.selection.reset();
-
-        // remove all the nodes etc.
-        for (const node of selection.nodes) this.root.removeNode(node);
-        for (const bus of selection.buses) this.root.removeBus(bus);
-        for (const pad of selection.pads) this.root.removePad(pad);
-    },
-
-    // note that the selection is a stored previous selection, not the current one !
-    restoreSelection(selection) {
-
-        // restore all the nodes etc.
-        for (const node of selection.nodes) this.root.restoreNode(node);
-        for (const bus of selection.buses) this.root.restoreBus(bus);
-        for (const pad of selection.pads) this.root.restorePad(pad);
-
-        // reset the current selection
-        const sel = this.selection;
-        sel.reset();
-
-        // and put the restored nodes in the selection again
-        for (const node of selection.nodes) sel.nodes.push(node);
-        for (const bus of selection.buses) sel.buses.push(bus);
-        for (const pad of selection.pads) sel.pads.push(pad);        
-
-        const rc = selection.rect;
-        sel.activate(rc.x, rc.y, rc.w, rc.h, selection.color);
-    },
-
-
-
-    // get the node and the position where a pin must be added
-    xxxselectedNodeAndPosition() {
-
-        // get the selected node (only one !)
-        const node = this.selection.getSingleNode();
-        if (! node ) return [null, null]
-
-        // get the selected widget
-        const widget = this.selection.getSelectedWidget();
-
-        // determine the position for the widget
-        const pos = widget  ? {x: widget.is.left ? widget.rect.x : widget.rect.x + widget.rect.w, y: widget.rect.y + widget.rect.h} 
-                            : this.hit.xyLocal;
-
-        return [node, pos]
-    }
-
-};
-
-const groupHandling = {
-
-   // if the selection contains just one source node, the conversion to a group is straightforward...
-singleSourceToGroup() {
-},
-
-// transform a selection to a new group node
-selectionToGroup(UID) {
-
-    // create a new look for the new group node
-    const look = new Look(this.selection.makeLookRect());
-
-    // create a new group type
-    const newGroup = new GroupNode(look,"new group", null);
-
-    // give it a unique UID
-    UID.generate(newGroup);
-
-    // and add the new group node 
-    this.root.addNode( newGroup );
-
-    // make a new view for the node
-    const view = newGroup.savedView = this.newSubView(newGroup, this.selection.makeViewRect());
-
-    // reposition the conten of the view to 'cover' the current position
-    view.translate(-view.rect.x, -view.rect.y);
-
-    // for each of the selected nodes..
-    for(const node of this.selection.nodes) {
-        // ..add the node to the new group type 
-        newGroup.addNode(node);
-
-        //..and remove it from the root in this view
-        this.root.removeNode(node);
-    }
-    // now we add the buses and keep track of the buses that were transferred
-    const transfers = this.busTransfer(newGroup);
-
-    // create the proxies for this group type and make the interconnections inside + outside of the group
-    newGroup.addProxies(this.selection);
-
-    // for the buses that were *partially* transferred, we need to set up pads and routes to connect the two buses
-    for(const transfer of transfers) {
-        this.busInterconnect(transfer.outside, newGroup, transfer.inside);
-    }
-
-    // and return the new group
-    return newGroup
-},
-
-// some buses might have to be copied or moved completely to the group
-busTransfer(newGroup) {
-
-    const transfers=[];
-
-    for(const bus of this.selection.buses) {
-
-        // notation
-        const selNodes = this.selection.nodes;
-
-        // for connections outside of the selection
-        const outside = [];
-
-        // find the connections that go out of the selection
-        for(const tack of bus.tacks) {
-
-            // find to what the tack is connected
-            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
-
-            // if the node is not part of the selection
-            if (other.is.pin && !selNodes.includes(other.node)) outside.push(tack);
-        }
-
-        // if all connections to/from the bus are inside the selection -> just move the bus to the new node
-        if (outside.length == 0) {
-
-            // add the bus to the new group
-            newGroup.buses.push(bus);
-
-            // remove it from this group
-            this.root.removeBus(bus);
-        }
-        // otherwise duplicate the bus in the new group and remove the unnecessary connections on each bus
-        else {
-            // make an exact copy
-            const newBus = bus.copy();
-
-            // and store the *new* bus
-            newGroup.buses.push(newBus);
-
-            // distribute the tacks over both buses
-            bus.splitTacks(newBus, newGroup);
-
-            // save in the transfer list
-            transfers.push({outside: bus, inside: newBus});
-        }
-    }
-
-    return transfers
-},
-
-// The new bus inside the new group has to be connected to the bus outside
-// we filter the connections to avoid duplicates
-busInterconnect(outside, newGroup, inside) {
-
-    // a helper function to get a pin
-    function getPin(tack) {
-        const widget = tack.route.to == tack ? tack.route.from : tack.route.to;
-        return widget.is.pad ? widget.proxy : widget
-    }
-
-    // a helper function to check that two tacks are logically connected via the busses
-    function haveConnection(tack1, tack2) {
-
-        // get the actual pins
-        const pin1 = getPin(tack1);
-        const pin2 = getPin(tack2);
-
-        // compare the names
-        if (pin1.name != pin2.name) return false
-
-        // check the i/o combination
-        return (pin1.is.proxy == pin2.is.proxy) ? (pin1.is.input != pin2.is.input) : (pin1.is.input == pin2.is.input)
-    }
-
-    // Use reduce to create an object where each key is a unique tack name
-    // and the value is the first tack object found with that name
-    const uniqueTacks = inside.tacks.reduce((accumulator, currentTack) => {
-
-        // check if this connection also exists on this bus
-        const externalTack = outside.tacks.find(externalTack => {
-
-            return haveConnection(currentTack, externalTack)
-        });
-
-        // if there exists a connection
-        if (externalTack) {
-
-            // get the corresponding pin (see above)
-            const pin = getPin(externalTack);
-
-            // make a unique name to distinguish between input/output
-            const specialName = pin.name + (pin.is.input ? '>' : '<');
-
-            // save if not yet in the list
-            if (!accumulator[specialName]) accumulator[specialName] = currentTack;
-        }
-
-        // Return the accumulator for the next iteration
-        return accumulator;
-    }, {});
-
-    // add a pad for each element in unique tacks
-    for(const tack of Object.values(uniqueTacks)) {
-
-        // get the corresponding pin
-        const pin = getPin(tack);
-
-        // copy the pin as a proxy
-        const newProxy = newGroup.copyPinAsProxy(pin);
-
-        // and create the pad for the proxy
-        newGroup.addPad(newProxy);
-
-        // add a route from the proxy to the outside busbar
-        outside.makeRoute(newProxy);
-
-        // add a route from the pad to the busbar
-        inside.makeRoute(newProxy.pad);
-    }
-},
-
-// undo the previous operation
-undoSelectionToGroup(selection, newGroup, shift, allRoutes) {
-
-    // disconnect the new group
-    newGroup.disconnect();
-
-    // shift to the right spot
-    //newGroup.savedView.shiftContent(shift.dx, shift.dy)
-
-    // close the view of the 
-    newGroup.savedView.closeView();
-
-    // remove the new group
-    this.root.removeNode(newGroup);
-
-    // put the selection back
-    this.restoreSelection(selection);
-
-    // for every busbar inside the newGroup we have to transfer the tacks to the corresponding 'outside' bus !
-    for(const inside of newGroup.buses) inside.transferTacks(selection.buses);
-
-    // disconnect all the nodes
-    for (const node of selection.nodes)  node.disconnect();
-
-    // reconnect all the routes again > note that tacks op de verkeerde bus terechtkomen ???
-    for (const routes of allRoutes) 
-        for (const route of routes) route.reconnect();
-
-},
-
-// converts a group node to a collection of nodes/busses in a selection
-// Note thta this different from undoing a group operation (see above)
-// group to selection only works when there are no connections to the groupnode
-transferToSelection(group, shift) {
-
-    // we will put the nodes in a selection in the view
-    this.selection.reset();
-
-    // calculate a rectangle for the selection
-    const selRect = this.calcRect(group);
-
-    // the nodes will have to move to a new position
-    const dx = shift.dx;
-    const dy = shift.dy;
-
-    // now we can adjust the settings for the selection rectangle
-    this.selection.activate(selRect.x + dx, selRect.y + dy, selRect.w, selRect.h);
-
-    // remove all the routes that lead to pads - pads will not be copied
-    for (const pad of group.pads) pad.disconnect();
-
-    // add all the nodes to the parent node
-    for(const node of group.nodes) {
-
-        // move the look
-        node.look.moveDelta( dx, dy);
-
-        // move the routes
-        node.look.moveRoutes(dx, dy);
-
-        // move the nodes to the parent node
-        this.root.nodes.push(node);
-
-        // also add to the selection
-        this.selection.nodes.push(node);
-    }
-
-    // move the buses to the parent node as well
-    for(const bus of group.buses) {
-
-        // move the bus
-        bus.move(dx, dy);
-
-        // move the routes
-        bus.moveRoutes(dx, dy);
-
-        // save the buses at the parent node
-        this.root.buses.push(bus);
-
-        // also add to the selection
-        this.selection.buses.push(bus);
-    }
-
-    // and remove the node from this root
-    this.root.removeNode(group);
-},
-
-undoTransferToSelection(group, shift, padRoutes) {
-
-    // the nodes will have to move back
-    const dx = -shift.dx;
-    const dy = -shift.dy;
-
-    for (const node of group.nodes) {
-
-        // move the look
-        node.look.moveDelta( dx, dy);
-
-        // move the routes
-        node.look.moveRoutes(dx, dy);
-
-        // take them out of the nodes array
-        view.root.removeNode(node);
-    }
-
-    // move the buses to the parent node as well
-    for(const bus of group.buses) {
-
-        // move the bus
-        bus.move(dx, dy);
-
-        // move the routes
-        bus.moveRoutes(dx, dy);
-
-        // remove the bcakplane
-        group.removeBus(bus);
-    }
-
-    // reconnect all the pad routes
-    for(const route of padRoutes) route.reconnect();
-
-    // put the node back in the view
-    view.root.restoreNode(group);
-}
-
-
-};
-
-const alignHandling = {
-
-    // calculates the rectangle for a nice row: position, size and space between the nodes
-    calcRow(slct) {
-        // sort the array for increasing x
-        slct.sort( (a,b) => a.look.rect.x - b.look.rect.x);
-
-        // constant for minimal seperatiion
-        const minSpace = style.selection.xPadding;
-
-        // set the initial position
-        let {x,y} = {...slct[0].look.rect};
-
-        // we can also calculate the new total width
-        let last = slct.length - 1;
-        let w = slct[last].look.rect.x + slct[last].look.rect.w - slct[0].look.rect.x;
-        let h = 0;
-        let wNodes = 0;
-
-        // Find the tallest look and the total width of the looks
-        slct.forEach( node =>  {
-            h = Math.max(h, node.look.rect.h);
-            wNodes += node.look.rect.w;
-        });
-
-        // calculate the space between the looks
-        let space = (w - wNodes)/last;
-
-        // adjust if not ok
-        if (space < minSpace) {
-            space = minSpace;
-            w = wNodes + last * minSpace;
-        }
-
-        // return the results
-        return {x,y,w,h,space}
-    },
-
-    // calculate the rectangle for a nice column: position, size and space between nodes
-    calcColumn(slct) {
-        // sort for increasing y
-        slct.sort( (a,b) => a.look.rect.y - b.look.rect.y);
-
-        // constant for minimal seperation
-        const minSpace = style.selection.yPadding;
-
-        // set the initial position
-        let {x,y} = {...slct[0].look.rect};
-
-        // we can also calculate the new total height
-        let last = slct.length - 1;
-        let w = 0;
-        let h = slct[last].look.rect.y + slct[last].look.rect.h - slct[0].look.rect.y;
-        let hNodes = 0;
-
-        // get the size of the widest look and also add up all the heights 
-        slct.forEach( node =>  {
-            w = Math.max(w, node.look.rect.w);
-            hNodes += node.look.rect.h;
-        });
-
-        // calculate the space between the nodes
-        let space = (h - hNodes)/last;
-
-       // adjust if not ok
-       if (space < minSpace) {
-            space = minSpace;
-            h = hNodes + last * minSpace;
-        }
-
-        // return the results
-        return {x,y,w,h,space}
-    },
-
-    // calculates the rectangle for a list of nodes
-    calcRect(node) {
-
-        const firstRect =  node.nodes.length > 0 ? node.nodes[0].look.rect : node.pads[0].rect;
-
-        // initialize
-        const min = {x:firstRect.x, y:firstRect.y};
-        const max = {x:firstRect.x + firstRect.w, y:firstRect.y + firstRect.h};
-        let rc = null;
-        
-        // go through the list of nodes 
-        node.nodes.forEach( node => {
-
-            //notation
-            rc = node.look.rect;
-
-            // find min x and y
-            min.x = Math.min(min.x, rc.x);
-            min.y = Math.min(min.y, rc.y);
-
-            // find max x and y
-            max.x = Math.max(max.x, rc.x + rc.w);
-            max.y = Math.max(max.y, rc.y + rc.h);
-        });
-
-       // go through the list of pads
-       node.pads.forEach( pad => {
-
-            //notation
-            rc = pad.rect;
-
-            // find min x and y
-            min.x = Math.min(min.x, rc.x);
-            min.y = Math.min(min.y, rc.y);
-
-            // find max x and y
-            max.x = Math.max(max.x, rc.x + rc.w);
-            max.y = Math.max(max.y, rc.y + rc.h);
-        });
-
-        // return the rectangle
-        return {x: min.x, y: min.y, w: max.x - min.x, h: max.y - min.y}
-    },    
-
-    // Nodes Align Horizontal Deltas - calculate the x deltas to allign each node in the selection
-    nodesAlignHD(nodes, left=true) {
-
-        // the deltas
-        const deltas = [];
-
-        // calculate the column parameters
-        const col = this.calcColumn(nodes);
-
-        // calculate the deltas for each node
-        for (const node of nodes) {
-
-            // notation
-            const rc = node.look.rect;
-
-            // left or right ?
-            const dx = left ? (col.x - rc.x) : (col.x + col.w - rc.x - rc.w);
-
-            // keep track of the deltas
-            deltas.push({x:dx, y:0});
-        }
-
-        //done 
-        return deltas
-    },
-
-    // calculate the y deltas to allign each node in the selection
-    nodesAlignVD(nodes) {
-
-        // the deltas
-        const deltas = [];
-
-        // calculate the parameters for the row (x,y,w,h,space)
-        const row = this.calcRow(nodes);
-
-        // calculate the deltas for each node
-        for (const node of nodes) {
-
-            // keep track of the deltas
-            deltas.push({x:0, y: row.y - node.look.rect.y});
-        }
-
-        //done 
-        return deltas
-    },
-
-    // the vertical deltas for spacing the nodes evenly
-    nodesSpaceVD(nodes) {
-
-        // the deltas
-        const deltas = [];
-
-        // calculate the column parameters
-        const col = this.calcColumn(nodes);
-
-        // The first node starts here
-        let nextY = col.y;
-
-        for (const node of nodes) {
-
-            // notation
-            const rc = node.look.rect;
-
-            // save the delta
-            deltas.push({x:0, y: nextY - rc.y});
-
-            // calculate the next y 
-            nextY = nextY + rc.h + col.space;
-        }
-
-        // done
-        return deltas
-    },
-
-    // the vertical deltas for spacing the nodes evenly
-    nodesSpaceHD(nodes) {
-
-        // the deltas
-        const deltas = [];
-
-        // calculate the column parameters
-        const row = this.calcRow(nodes);
-
-        // The first node starts here
-        let nextX = row.x;
-
-        for (const node of nodes) {
-
-            // notation
-            const rc = node.look.rect;
-
-            // save the delta
-            deltas.push({x: nextX - rc.x, y: 0});
-
-            // calculate the next x
-            nextX = nextX + rc.w + row.space;
-        }
-
-        // done
-        return deltas
-    },
-
-    padsAlignHD(pads, left=true) {
-
-        // save all the deltas
-        const deltas = [];
-    
-        // sort the pads according to y-value
-        pads.sort( (a,b) => a.rect.y - b.rect.y);
-    
-        // the first pad is the reference pad
-        const rcRef = pads[0].rect;
-    
-        // adjust the other pads to the ref pad
-        for (const pad of pads) {
-
-            // notation
-            const rc = pad.rect;
-    
-            // calculate the delta
-            const dx = left ? (rcRef.x - rc.x) :  (rcRef.x + rcRef.w - rc.x - rc.w);
-    
-            // save the delta 
-            deltas.push({x:dx, y:0});
-        }
-
-        // done
-        return deltas
-    },
-
-    padsSpaceVD(pads) {
-
-        // the deltas
-        const deltas = [];
-
-        // sort the pads according to y-value
-        pads.sort( (a,b) => a.rect.y - b.rect.y);
-
-        // the first pad is the reference pad
-        const yStart = pads[0].rect.y;
-
-        // we also space the pads equally 
-        let dy = (pads.at(-1).rect.y - pads[0].rect.y)/(pads.length-1);
-
-        // The deltas wrt the ref pad
-        let i = 0;
-        for (const pad of pads)  deltas.push({x:0, y: yStart + (i++)*dy - pad.rect.y});
-        
-        // done
-        return deltas
-    },
-
-    // for each node there is a delta - used in undo/redo operations
-    moveNodesAndRoutes(nodes, deltas, back=false) {
-
-        // do the nodes..
-        const N = nodes.length;
-        let dx = 0;
-        let dy = 0;
-        for (let i=0; i<N; i++) {
-
-            // for the undo operation back = true
-            dx = back ? -deltas[i].x : deltas[i].x;
-            dy = back ? -deltas[i].y : deltas[i].y;            
-
-            nodes[i].look.moveDelta(dx, dy);
-            nodes[i].look.moveRoutes(dx, dy);
-        }
-        // we adjust the routes only when all nodes have been moved
-        for (let i=0; i<N; i++)  nodes[i].look.adjustRoutes();
-    },
-
-    movePadsAndRoutes(pads, deltas, back=false) {
-
-        // adjust the other pads to the ref pad
-        const P = pads.length;
-        let dx = 0;
-        let dy = 0;
-        for (let i=0; i<P; i++) {
-
-            // for the undo operation back = true
-            dx = back ? -deltas[i].x : deltas[i].x;
-            dy = back ? -deltas[i].y : deltas[i].y;
-
-            // adjust position
-            pads[i].rect.x += dx;
-            pads[i].rect.y += dy;
-
-            // also set the y position
-            pads[i].adjustRoutes();
-        }        
-    }
-};
-
-// a helper function
-function canProceed(view) {
-
-    // get the node and the position where to add
-    let [node, pos] = view.selection.whereToAdd();
-
-    // maybe we have a valid hit position
-    if (!pos) pos = view.hit.xyLocal;
-
-    // check
-    if (!node || !pos) return [false, null, null];
-
-    // check if we can modify the node
-    if (node.cannotBeModified()) return [false, null, null];
-
-    // ok
-    return [true, node, pos];
-}
-
-// The table with the <ctrl> + key combinations
-const justKeyTable = {
-
-    // add input
-    i: (view) => {
-        //check
-        const [ok, node, pos] = canProceed(view);
-        if (!ok) return;
-
-        // type of pin
-        const is = {
-            channel: false,
-            input: true,
-            proxy: node.is.group};
+    dockNewPin(lw, linkNode) {
+
+        // if the pin has a prefix it has to be added to the right prefix group !
+        // by default we put a new pin at the same relative position as in the linked node
+        const pos = (lw.pxlen != 0) ? this.prefixPinPosition(this.look, lw) : this.sameRelativePosition(this.look, linkNode.look, lw); 
 
         // add the pin
-        editor.doEdit('newPin', { view, node, pos, is });
+        const newPin = this.look.addPin(lw.name, pos, lw.is);
+
+        // copy profile and prefix length
+        //newPin.profile = lw.profile
+        newPin.pxlen = lw.pxlen;
+
+        // it is a new widget 
+        newPin.is.added = true;
     },
 
-    // add output
-    o: (view) => {
-        //check
-        const [ok, node, pos] = canProceed(view);
-        if (!ok) return;
+    dockNewInterfaceName(lw) {
 
-        const is = {
-            channel: false,
-            input: false,
-            proxy: node.is.group
-        };
+        // find the new position for a ifName (behind another ifName group !)
+        const pos = this.newInterfaceNamePosition(this.look, lw);
 
-        // add an input pin where the click happened
-        editor.doEdit('newPin', { view, node, pos, is });
-    },
-
-    // add request
-    q: (view) => {
-        //check
-        const [ok, node, pos] = canProceed(view);
-        if (!ok) return;
-
-        // type of pin
-        const is = {
-            channel: true,
-            input: false,
-            proxy: node.is.group,
-        };
-
-        // add the pin
-        editor.doEdit('newPin', { view, node, pos, is });
-    },
-
-    // add reply
-    r: (view) => {
-        //check
-        const [ok, node, pos] = canProceed(view);
-        if (!ok) return;
-
-        // type of pin
-        const is = {
-            channel: true,
-            input: true,
-            proxy: node.is.group,
-        };
-
-        // add the pin
-        editor.doEdit('newPin', { view, node, pos, is });
-    },
-
-    // add ifName
-    f: (view) => {
-        //check
-        const [ok, node, pos] = canProceed(view);
-        if (!ok) return;
-
-        // add an input pin where the click happened
-        editor.doEdit('newInterfaceName', { view, node, pos });
-    },
-
-    // show the profile
-    p: (view) => {
-
-        // find the pin selected
-        const pin = view.selection.getSelectedWidget();
-
-        if (!pin.is.pin) return
-
-        editor.doEdit('showProfile', {
-            pin,
-            pos: { x: pin.rect.x, y: pin.rect.y },
-        });
-    },
-
-    // add a label
-    a: (view) => {
-        // get the selected node (only one !)
-        const node = view.selection.getSingleNode();
-        if (!node) return;
-
-        // check if already a lable
-        const label = node.look.findLabel();
-        if (label) editor.doEdit('widgetTextEdit', { view, widget: label });
-        else editor.doEdit('addLabel', { node });
-    },
-
-    // highlight/unhighlight
-    h: (view) => {
-        // get the selected node (only one !)
-        const node = view.selection.getSingleNode();
-        if (!node) return;
-
-        // highlight/unhighlight
-        editor.doEdit('nodeHighLight', { node });
-    },
-
-    '+': (view) => {
-        const widget = view.selection.getSelectedWidget();
-
-        // check
-        if (!widget || !widget.node || widget.node.cannotBeModified()) return;
-
-        // ok
-        editor.doEdit('widgetTextEdit', { view, widget, cursor: -1 });
-    },
-
-    '-': (view) => {
-        const widget = view.selection.getSelectedWidget();
-
-        // check
-        if (!widget || !widget.node || widget.node.cannotBeModified()) return;
-
-        // start
-        editor.doEdit('widgetTextEdit', {
-            view,
-            widget,
-            cursor: 0,
-            clear: true,
-        });
-    },
-
-    // delete the selection or the single node
-    Clear: (view) => {
-        // get the selected node only if nothing else is selected
-        const node =
-            view.selection.what == selex.singleNode
-                ? view.selection.getSingleNode()
-                : null;
-
-        if (node) editor.doEdit('disconnectNode', { node });
-        else editor.doEdit('disconnectSelection', { view });
-    },
-
-    // delete the selection or the single node
-    Delete: (view) => {
-        switch (view.selection.what) {
-            case selex.nothing:
-                break;
-
-            case selex.freeRect:
-                editor.doEdit('deleteSelection', { view });
-                break;
-
-            case selex.pinArea:
-                //check if ok
-                const [ok, node, pos] = canProceed(view);
-                if (!ok) return;
-
-                editor.doEdit('deletePinArea', {
-                    view,
-                    node: view.selection.getSingleNode(),
-                    widgets: view.selection.widgets,
-                });
-                break;
-
-            case selex.singleNode:
-                // maybe there is a widget selected
-                const widget = view.selection.getSelectedWidget();
-
-                // check
-                if (!widget) {
-                    // get the node, delete and done
-                    const node = view.selection.getSingleNode();
-                    if (node) editor.doEdit('deleteNode', { node });
-                    return;
-                }
-
-                // check
-                if (widget.node.cannotBeModified()) return;
-
-                // which pin
-                if (widget.is.pin)
-                    editor.doEdit('deletePin', { view, pin: widget });
-                else if (widget.is.ifName)
-                    editor.doEdit('deleteInterfaceName', {
-                        view,
-                        ifName: widget,
-                    });
-                break;
-
-            case selex.multiNode:
-                editor.doEdit('deleteSelection', { view });
-                break;
-        }
-    },
-
-    Enter: (view) => {
-        // if there is a pin selected, we start editing the pin
-        const editable = view.selection.getSelectedWidget();
-        if (editable) {
-            // check
-            if (editable.node.cannotBeModified()) return;
-
-            // start editing
-            editor.doEdit('widgetTextEdit', { view, widget: editable });
-        }
-    },
-
-    ArrowDown: (view) => {
-
-        const current = view.selection.getSelectedWidget();
-        if (!current) return
-        const below = view.selection.widgetBelow(current);
-        if (below) view.selection.switchToWidget(below);
-    },
-
-    ArrowUp: (view) => {
-
-        const current = view.selection.getSelectedWidget();
-        if (!current) return
-        const above = view.selection.widgetAbove(current);
-        if (above) view.selection.switchToWidget(above);
-    },
-
-    // undo
-    Undo: (view) => editor.undoLastEdit(),
-
-    // redo
-    Redo: (view) => editor.redoLastEdit(),
-
-    // escape
-    Escape: (view) => {
-        view.selection.reset();
-    },
-};
-
-// The table with the <ctrl> + key combinations
-const ctrlKeyTable = {
-    // a new source node
-    s: (view) => {
-        // only do this if there is no selection
-        // if (view.selection.what != selex.nothing) return
-
-        // create a new source node
-        editor.doEdit('newSourceNode', { view, pos: view.hit.xyLocal });
-    },
-
-    // a new group node
-    g: (view) => {
-        // only do this if there is no selection
-        // if (view.selection.what != selex.nothing) return
-
-        // create a new source node
-        editor.doEdit('newGroupNode', { view, pos: view.hit.xyLocal });
-    },
-
-    // a new bus
-    b: (view) => {
-        // only do this if there is no selection
-        // if (view.selection.what != selex.nothing) return
-
-        // create a new busbar
-        editor.doEdit('busCreate', {
-            view,
-            pos: view.hit.xyLocal
-        });
-    },
-
-    // copy
-    c: (view) => {
-        editor.doEdit('selectionToClipboard', { view });
-    },
-
-    // a new input pad
-    i: (view) => {
-        editor.doEdit('padCreate', {
-            view,
-            pos: view.hit.xyLocal,
-            input: true,
-        });
-    },
-
-    // add a new output pad
-    o: (view) => {
-        editor.doEdit('padCreate', {
-            view,
-            pos: view.hit.xyLocal,
-            input: false,
-        });
-    },
-
-    // paste as link
-    l: (view) => {
-        // request the clipboard - also set the target, the clipboard can come from another file
-        editor.tx
-            .request('clipboard get', editor.doc)
-            .then((clipboard) => {
-                // get the type of selection
-                const what = clipboard.selection.what;
-
-                // if there is nothing , done
-                if (what == selex.nothing) return;
-
-                // link pin area paste operation is not defined
-                if (what == selex.pinArea) return;
-
-                // other cases do the standard link operation
-                editor.doEdit('linkFromClipboard', {
-                    view,
-                    pos: view.hit.xyLocal,
-                    clipboard,
-                });
-            })
-            .catch((error) =>
-                console.log('ctrl-l : clipboard get error -> ' + error)
-            );
-    },
-
-    // paste
-    v: (view) => {
-        // request the clipboard - also set the target, the clipboard can come from another file
-        editor.tx
-            .request('clipboard get', editor.doc)
-            .then((clipboard) => {
-                // get the type of selection
-                const what = clipboard.selection.what;
-
-                // if there is nothing , done
-                if (what == selex.nothing) return;
-
-                // The pin area paste operation is defined elsewhere..
-                if (what == selex.pinArea) {
-                    editor.doEdit('pasteWidgetsFromClipboard', {
-                        view,
-                        clipboard,
-                    });
-                    return;
-                }
-
-                // other cases do the standard paste operation
-                editor.doEdit('pasteFromClipboard', {
-                    view,
-                    pos: view.hit.xyLocal,
-                    clipboard,
-                });
-            })
-            .catch((error) =>
-                console.log('ctrl-v : clipboard get error -> ' + error)
-            );
-    },
-
-    // undo
-    z: (view) => editor.undoLastEdit(),
-
-    // redo
-    Z: (view) => editor.redoLastEdit(),
-
-    // wider
-    '+': (view) => {
-        // get the selected node (only one !)
-        const node = view.selection.getSingleNode();
-        if (!node) return;
-
-        // make wider
-        editor.doEdit('wider', { node });
-    },
-
-    // thinner
-    '-': (view) => {
-        // get the selected node (only one !)
-        const node = view.selection.getSingleNode();
-        if (!node) return;
-
-        // make wider
-        editor.doEdit('smaller', { node });
-    },
-};
-
-const keyboardHandling = {
-
-    // helper function
-    _logKey(e) {
-        let keyStr = 'Key = ';
-        if (e.ctrlKey)  keyStr += 'ctrl '; 
-        if (e.shiftKey) keyStr += 'shift ';
-        keyStr += '<'+e.key+'>';
-        console.log(keyStr);
-    },
-
-    // keyboard press - return true if key is handled
-    onKeydown(e) {
+        // add the ifName
+        const newInterfaceName = this.look.addIfName(lw.text, pos);
         
-        // select the required key-handling function
-        if (this.state.action == doing.nothing) {
-
-            // get the action
-            const action = e.ctrlKey ? ctrlKeyTable[e.key] : justKeyTable[e.key];
-
-            // check
-            if (!action) return false
-
-            // do it
-            action(this);
-
-            // done
-            return true
-        }
-        // we are doing text editing...
-        else if (this.state.action == doing.editTextField) {
-
-            // select the handler function
-            const done = ( e.key.length > 1 || e.ctrlKey) ? this.textField.handleSpecialKey?.(e) : this.textField.handleKey?.(e);
-    
-            // continue editing ?
-            if (done) this.stateSwitch(doing.nothing);
-
-            return true
-        }
-
-        else return false
+        // it is a new widget 
+        newInterfaceName.is.added = true;
     },
 
-    onKeyup(e) {
-        return false
-    },
+    // The widget is a pin but has changed (input to output is not considered a change, but a new pin !)
+    dockPinChange(dw,lw) {
 
-    beginTextEdit( object, cursor=-1, clear=false) {
+        // a channel was added or removed
+        if (lw.is.channel != dw.is.channel)  dw.is.channel = lw.is.channel;
 
-        // check if field is editable - must return the prop that will be edited
-        const prop = object.startEdit?.();
+        // a name change - if the prefix has changed it must move to the appropriate seperator group
+        if ((lw.name != dw.name)||(lw.pxlen != dw.pxlen)) {
 
-        // check
-        if (!prop) return
+            // if the widget has a prefix that is different from the current one
+            if ((lw.pxlen != 0)&&(lw.getPrefix() != dw.getPrefix())) {
 
-        // start a new edit for the prop of the object
-        this.textField.newEdit(object, prop, cursor);
+                // or the ifName text has changed or it is in the wrong ifName group
+                const pos = this.prefixPinPosition(this.look, lw);
 
-        // if clear, clear the field first
-        if (clear) this.textField.clear();
-
-        // set the status of the editor
-        this.stateSwitch(doing.editTextField);
-
-        // change the active view
-        editor.switchView(this);
-
-        // show a blinking cursor
-        this.startBlinking();
-    },
-
-    // end text edit is called from switch state !
-    endTextEdit() {
-
-        // notation
-        const state = this.state;
-        const text = this.textField;
-
-        // stop the blinking cursor
-        clearInterval( state.cursorInterval );
-
-        // check
-        if (!text) return
-
-        // notify the object of the end of the edit
-        text.obj.endEdit?.(text.saved);
-    },
-
-    // editText(e) {
-
-    //     let done = false
-
-    //     // of the special keys
-    //     if ( e.key.length > 1 || e.ctrlKey)
-    //         done = this.textField.handleSpecialKey?.(e)
-    //     else
-    //         done = this.textField.handleKey?.(e)
-
-    //     // continue editing ?
-    //     if (done) this.stateSwitch(doing.nothing)
-    // },
-
-    startBlinking() {
-
-        let lastTime = 0;
-        let on = true;
-        let keepBlinking = true;
-    
-        // time is in ms
-        const blinkFunction = (time) => {
-
-            // check the time
-            if (time - lastTime >= style.std.blinkRate) {
-
-                // execute the recursive blink function from the top !
-                keepBlinking = editor.doc.view.recursiveBlink(editor.ctx, on);
-
-                // Toggle cursor visibility
-                on = !on;
-                lastTime = time;
+                // move the pin to a different location
+                this.look.movePin(dw, pos);
             }
-    
-            // Continue the loop if we're still editing
-            if (keepBlinking) requestAnimationFrame(blinkFunction);
-        };
-    
-        // schedule the first blink function
-        requestAnimationFrame(blinkFunction);
-    },
 
-    recursiveBlink(ctx, on) {
-
-        // save the current status
-        ctx.save();
-
-        // notation
-        const tf = this.tf;
-
-        // adjust the transform for this view
-        ctx.transform(tf.sx, 0.0, 0.0, tf.sy, tf.dx, tf.dy);
-
-        // keep track of the cursor
-        let keepBlinking = false;
-
-        // draw the cursor if there is a field doing a text edit
-        if (this.state.action == doing.editTextField) {
-            keepBlinking = true;
-            const txt = this.textField;
-            txt.obj.drawCursor(ctx, txt.cursor, on);
+            // copy 
+            dw.name = lw.name;
+            dw.pxlen = lw.pxlen;
+            dw.is.multi = lw.is.multi;
         }
 
-        // check all the subviews
-        for (const view of this.views) keepBlinking = view.recursiveBlink(ctx, on) || keepBlinking;
-
-        // restore the ctx state
-        ctx.restore();
-
-        return keepBlinking
+        // profile change (silent)
+        //if (lw.is.input && lw.profile != dw.profile) dw.profile = lw.profile     
+        
+        // signal the change
+        dw.is.added = true;
     },
-    
+
+    dockInterfaceNameChange(dw, lw, linkNode) {
+
+        // change the text
+        if (lw.text == dw.text) return 
+
+        // change the text
+        dw.text = lw.text;
+        dw.is.added = true;
+
+        // change the prefixes of the pins
+        this.look.interfaceChangePrefix(dw); 
+    },
+
 };
 
 function Box(rect, node) {
@@ -9819,8 +5777,18 @@ function Header(rect, node) {
 Header.prototype = {
 
     // called when editing starts
-    startEdit() {
-         return 'title'
+    startEdit(ctx, click = null) {
+
+        const rc = this.rect;
+        const xText = rc.x + rc.w / 2 - ctx.measureText(this.title).width / 2;
+        const index = click ? shape.cursorIndex(ctx, this.title, xText, click.x) : this.title.length;
+        return { prop: 'title', index }
+    },
+
+    cursorPos(ctx, i) {
+        const rc = this.rect;
+        const xText = rc.x + rc.w / 2 - ctx.measureText(this.title).width / 2;
+        return { x: xText + ctx.measureText(this.title.slice(0, i)).width, y: rc.y }
     },
 
     endEdit(saved) {
@@ -9832,21 +5800,7 @@ Header.prototype = {
         this.node.look.headerChanged(this, saved);
 
         // check if the node name is unique 
-        editor.doc.focus.root.checkDuplicates(this.node);
-    },
-
-    // draw a blinking cursor
-    drawCursor(ctx, pChar, on) {
-
-        // calculate the cursor coord based on the character position
-        const cursor = shape.centerTextCursor(ctx, this.rect, this.title,pChar);    
-
-        // select color - on or off
-        // const color = on ? style.header.cTitle : style.header.cBackground 
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-
-        // draw the cursor
-        shape.cursor(ctx, cursor.x, cursor.y, style.std.wCursor, this.rect.h, color );
+        //editor.doc.focus.root.checkDuplicates(this.node)
     },
 
     render(ctx) {
@@ -9889,9 +5843,11 @@ Header.prototype = {
     },
 };
 
+//const SEPARATOR = ' '
+
 const pinNameHandling = {
 
-    startEdit() {
+    startEdit(ctx, click=null) {
 
         // before editing we remove the post or prefix from the name
         if (this.pxlen) {
@@ -9902,32 +5858,25 @@ const pinNameHandling = {
         // also reset the multi bit
         this.is.multi = false;
 
-        // return the field that will be edited
-        return "name"
+        if (!click) return {prop: 'name', index: this.name.length};
+
+        // the text starts here
+        const xText = this.is.left  ? this.rect.x + style.pin.wMargin 
+                                    : this.rect.x + this.rect.w - style.pin.wMargin - ctx.measureText(this.name).width;
+
+        // determine the character where the cursor has to be placed
+        const index = shape.cursorIndex(ctx, this.name,xText, click.x); 
+
+        // return the field that will be edited and the alignment
+        return {prop: 'name', index}
     },
 
-    // pChar is where the cursor has to come
-    drawCursor(ctx, pChar, on) {
-        // notation
+    // returns the cursor position for a given index in the text
+    cursorPos(ctx, i) {
         const rc = this.rect;
-        const m = style.pin.wMargin;
-
-        // relative x position of the cursor
-        const cx = ctx.measureText(this.name.slice(0, pChar)).width;
-
-        // absolute position of the cursor...
-        const xCursor = this.is.left
-            ? rc.x + m + cx
-            : rc.x + rc.w - m - ctx.measureText(this.name).width + cx;
-
-        // the color for the blink effect
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-        //const color = on ? style.pin.cConnected : style.box.cBackground
-
-        // and draw the cursor
-        shape.cursor(ctx, xCursor, rc.y, style.std.wCursor, rc.h, color);
+        return this.is.left ? {x: rc.x + style.pin.wMargin + ctx.measureText(this.name.slice(0,i)).width, y: rc.y}
+                            : {x: rc.x + rc.w - style.pin.wMargin - ctx.measureText(this.name).width + ctx.measureText(this.name.slice(0,i)).width, y: rc.y}
     },
-
 
     endEdit(saved) {
         this.checkNewName() ? this.nameChanged(saved) : this.restoreSavedName(saved);      
@@ -10030,7 +5979,7 @@ const pinNameHandling = {
     withoutPrefix() {
 
         // change a space into a subscript '+' sign
-        const space = '\u208A';
+        const smallPlus = '\u208A';
 
         if (this.pxlen == 0) {
             return this.name
@@ -10038,12 +5987,11 @@ const pinNameHandling = {
         else if (this.pxlen > 0) {
 
             let noPrefix = this.name.slice(this.pxlen);
-            return noPrefix[0] != ' ' ? noPrefix : space + noPrefix.trim()
+            return noPrefix[0] !== ' ' ? noPrefix : smallPlus + noPrefix.trim()
         }
         else if (this.pxlen < 0) {
-
-            let noPostfix = this.name.slice(0,this.pxlen-1);
-            return noPostfix.at(-1) != ' ' ? noPostfix : space + noPostfix.trim()
+            let noPostfix = this.name.slice(0,this.pxlen);
+            return noPostfix.at(-1) !== ' ' ? noPostfix : noPostfix.trim() + smallPlus
         }
     },
 
@@ -10803,8 +6751,8 @@ const ProxyFunctions = {
             // bus link
             else if (other.is.tack) {
 
-                // check if the bus is actually a router
-                other.bus.hasFilter() ?  list.push(other) : other.makeConxList(list);
+                // build the conx list
+                other.makeConxList(list);
             }
         }
     },
@@ -11070,9 +7018,6 @@ BusTack.prototype = {
                      : this.is.highLighted ? style.bus.cHighLighted
                      : style.bus.cNormal;
 
-        // put a small rectangle for a tack for router
-        if (this.bus.is.filter) shape.filterSign(ctx, this.getContactPoint(),style.bus.wCable, color);
-
         // draw the tack
         shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color);
 
@@ -11084,7 +7029,7 @@ BusTack.prototype = {
                 this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
             }
 
-            shape.hAlias(ctx, this.alias, this.rcAlias, color, style.bus.fAlias);
+            shape.drawAlias(ctx, this.alias, this.rcAlias, color, style.bus.fAlias);
         }
     },
 
@@ -11102,7 +7047,7 @@ BusTack.prototype = {
 
     // sets the route for a tack and places the tack on that route
     setRoute(route) {
-
+        
         // the route to this tack
         this.route = route;
 
@@ -11140,10 +7085,21 @@ BusTack.prototype = {
         // determine the segment of the bus
         this.segment = this.bus.hitSegment(a); 
 
-        // SHOULD NOT HAPPEN
+        // A saved route endpoint can end up a few pixels off the bus after load.
+        // In that case snap to the nearest bus segment instead of falling back
+        // to segment 1.
         if (this.segment == 0) {
-            console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus);
-            this.segment = 1;
+            const closest = closestPointOnCurve(bWire, a);
+
+            if (closest?.segment) {
+                this.segment = closest.segment;
+                a.x = closest.point.x;
+                a.y = closest.point.y;
+            }
+            else {
+                console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus);
+                this.segment = 1;
+            }
         }
 
         // the bus segment can be horizontal or vertical
@@ -11226,7 +7182,8 @@ BusTack.prototype = {
         if (this.segment == 0) return null
 
         const p = this.bus.wire[this.segment];
-        return (this.dir == 'left' || this.dir == 'right') ? {x:p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
+
+        return (this.dir == 'left' || this.dir == 'right') ? {x: p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
     },
 
 
@@ -11407,24 +7364,21 @@ BusTack.prototype = {
 
     // The text edit functions 
 
-    startEdit() {
+    startEdit(ctx, click = null) {
 
         // if we do not have an alias, set it
         if (! this.alias) this.alias = '';
 
-        // return the field that will be edited
-        return "alias"
+        // get the alias rectangle
+        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
+
+        const index = click ? shape.cursorIndex(ctx, this.alias, rc.x, click.x) : this.alias.length;
+        return { prop: 'alias', index }
     },
 
-    drawCursor(ctx, pChar, on) {
-
-        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
-        const pos = shape.cursorAlias(ctx, this.alias, rc, pChar, style.bus.fAlias);
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-        shape.cursor(ctx, pos.x, pos.y, style.std.wCursor, rc.h, color);
-
-        // force a recompute
-        this.rcAlias = null;
+    cursorPos(ctx, i) {
+        const rc = shape.rcAlias(ctx, this.alias ?? '', this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
+        return { x: rc.x + ctx.measureText((this.alias ?? '').slice(0, i)).width, y: rc.y }
     },
 
     endEdit(saved) {
@@ -11501,13 +7455,19 @@ const BusLabelFunctions = {
     },
 
     // called when the editing starts
-    startEdit() {
+    startEdit(ctx, click = null) {
 
         // set the flag
         this.is.beingEdited = true;
 
-        // return the field
-        return 'text'
+        const xText = this.rect.x + this.rect.w / 2 - ctx.measureText(this.text).width / 2;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    cursorPos(ctx, i) {
+        const xText = this.rect.x + this.rect.w / 2 - ctx.measureText(this.text).width / 2;
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: this.rect.y }
     },
 
     endEdit(saved) {
@@ -11533,16 +7493,6 @@ const BusLabelFunctions = {
         other.place();
     },
 
-    drawCursor(ctx, pChar, on) {
-        const pCursor = shape.centerTextCursor(ctx, this.rect,this.text,pChar);
-
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-
-        this.is.horizontal ?
-              shape.cursor(ctx, pCursor.x, pCursor.y, style.std.wCursor, this.rect.h,  color)
-            : shape.cursor(ctx, this.rect.x, pCursor.y + 0.75 * this.rect.w, this.rect.w, style.std.wCursor, color);
-    },
-
     render(ctx, look) {
 
         // if being edited render differently
@@ -11566,9 +7516,6 @@ const BusLabelFunctions = {
                         : state.selected || state.hoverOk ? st.cSelected 
                         : state.highLighted ? st.cHighLighted
                         : st.cNormal;
-
-        // draw a filter symbol next to the label if required
-        if (this.bus.is.filter) shape.filterSymbol(ctx, rc.x - st.wFilter, rc.y - st.wFilter, st.wFilter, cLabel);
 
         // draw the label
         this.is.horizontal  ? shape.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
@@ -11628,8 +7575,15 @@ function InterfaceName(rect, text, node) {
 InterfaceName.prototype = {
 
     // called when editing starts
-    startEdit() {
-        return 'text'
+    startEdit(ctx, click = null) {
+        const xText = this.rect.x + (this.rect.w - ctx.measureText(this.text).width) / 2;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    cursorPos(ctx, i) {
+        const xText = this.rect.x + (this.rect.w - ctx.measureText(this.text).width) / 2;
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: this.rect.y }
     },
 
     endEdit(saved) {
@@ -11639,19 +7593,6 @@ InterfaceName.prototype = {
 
         // make modifications as required (pins that use the ifName name)
         this.node.look.ifNameChanged(this, saved);
-    },
-
-    drawCursor(ctx, pChar, on) {
-
-        // where to put the cursor
-        const pos = shape.centerTextCursor(ctx,this.rect,this.text, pChar);
-
-        // select color - on or off
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-        //const color = on ? style.header.cTitle : style.header.cBackground 
-
-        // draw it
-        shape.cursor(ctx, pos.x , pos.y, style.std.wCursor, this.rect.h, color );
     },
 
     render(ctx, look) {
@@ -11758,20 +7699,21 @@ function Label(rect, text, node) {
 Label.prototype = {
 
     // called when editing starts
-    startEdit() {
-        return 'text'
+    startEdit(ctx, click = null) {
+        const xText = this.rect.x;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    cursorPos(ctx, i) {
+        return {
+            x: this.rect.x + ctx.measureText(this.text.slice(0, i)).width,
+            y: this.rect.y - 0.25 * this.rect.h
+        }
     },
 
     endEdit(saved) {
         //this.node.look.labelChanged(this, saved)
-    },
-
-    drawCursor(ctx, pChar, on) {
-        const rc = this.rect;
-        const pCursor = shape.labelCursor(ctx, this.text, rc.x,rc.y,rc.w,rc.h,pChar);
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-        //const color = on ? style.label.cNormal : style.std.cBackground
-        shape.cursor(ctx, pCursor.x, pCursor.y, style.std.wCursor, rc.h, color);
     },
 
     render(ctx, look) {
@@ -11779,14 +7721,8 @@ Label.prototype = {
         // notation
         const {x,y,w,h} = this.rect;
 
-        // change the font
-        //ctx.font = style.label.font
-
         // draw the text
         shape.labelText(ctx, this.text, style.label.font, style.label.cNormal, x, y, w, h);
-
-        // set the font back
-        //ctx.font = style.std.font
     },
 
     toJSON() {
@@ -11925,8 +7861,15 @@ function ViewTitle(rect, node) {
 // the specific title functions
 ViewTitle.prototype = {
 
-    startEdit() {
-        return 'text'
+    startEdit(ctx, click = null) {
+        const xText = this.rect.x + (this.rect.w - ctx.measureText(this.text).width) / 2;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    cursorPos(ctx, i) {
+        const xText = this.rect.x + (this.rect.w - ctx.measureText(this.text).width) / 2;
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: this.rect.y }
     },
 
     endEdit(saved) {
@@ -11947,17 +7890,9 @@ ViewTitle.prototype = {
 
         // the header rectangle
         shape.roundedHeader(ctx, rc.x,rc.y,rc.w, st.hHeader,st.rCorner, st.wLine, null, background);
-        //shape.roundedHeader(ctx, rc.x,rc.y,rc.w, st.hHeader,st.rCorner, style.header.wLine, null, background)
 
         // draw the text
         shape.centerText(ctx, this.node.name,style.view.fHeader, cTitle, rc.x, rc.y, rc.w, rc.h);
-
-        // if edited, we have to add a cursor
-        if (this.textEdit) {
-
-            let pCursor = shape.centerTextCursor(ctx, rc,this.node.name,this.textEdit.cursor);
-            shape.cursor(ctx, pCursor.x, pCursor.y, 2, rc.h, cTitle );
-        }
     }
 };
 
@@ -11987,4520 +7922,6 @@ ViewBox.prototype = {
         // draw the rectangle 
         shape.viewRect(ctx, rc.x,rc.y,rc.w, rc.h, st.rCorner, st.wLine, color, st.cBackground);
     },
-};
-
-// view functions that are independant of the content of the view
-const viewWidgetHandling = {
-
-// note that this is the *inverse* coord transformation that is used by the canvas
-// The canvas transformation goes fom window coordinates down to screen coordinates
-// With this function we transform cursor coordinates up to the window coordinates !
-localCoord(a) {  
-    const tf = this.tf;
-    return {x:(a.x - tf.dx)/tf.sx, y:(a.y - tf.dy)/tf.sy}
-},
-
-// The inverse of the above 
-inverse(a) {  
-    const tf = this.tf;
-    return {x: a.x*tf.sx + tf.dx, y: a.y*tf.sy + tf.dy}
-},
-
-// create a new view
-newSubView(node, rc=null, tf=null) {
-
-    // do we need to calculate the rectangle ?
-    rc = rc ?? this.makeViewRect(node);
-
-    // make a view
-    let view = new View(rc, node, this);
-
-    // if a transform is given, set it
-    if (tf) view.setTransform(tf);
-
-    // add the title bar etc.
-    view.addViewWidgets();
-
-    // and place the widgets
-    view.placeWidgets();
-
-    // add the view to the views
-    this.views.push(view);
-
-    // set the parent view
-    // view.parent = this
-    
-    // save the view in the (root) node 
-    node.savedView = view;
-
-    // return the new view
-    return view
-},
-
-// puts a saved view in the view list again - if not yet cooked (no root !) - cook the view first
-restoreView(node) {
-
-    // if the view is still in a raw state 
-    if (node.savedView.raw) {
-
-        // create the subview
-        node.savedView = this.newSubView(node, node.savedView.rect, node.savedView.tf);
-    }
-
-    // the view should not be in the current view
-    if (this.views.find( v => v == node.savedView)) {
-        console.error("View already in views in restore view !");
-
-        // or should we bring it to the foreground ?
-        return
-    }
-
-    // push on the view stack
-    if (this == node.savedView) {
-        console.error("Circular reference in views");
-        return
-    }
-
-    // set state to visible
-    node.savedView.viewState.visible = true;
-
-    // push the view on the views stack and set the parent
-    this.views.push(node.savedView);
-    node.savedView.parent = this;
-},
-
-closeView() {
-    // The top level view cannot be closed
-    if (!this.parent) return
-    this.viewState.visible = false;
-    if (this.parent.views) eject(this.parent.views, this);
-},
-
-// after loading a file we have to cook the views that are visible from the start
-restoreSubViews() {
-
-    // reset the views
-    this.views.length = 0;
-
-    // there should be a root with nodes
-    if ( ! this.root?.nodes) return
-
-    // check all nodes
-    for (let node of this.root.nodes) {
-
-        // check
-        if (!node.savedView || node.savedView.state == 'closed') continue
-
-        // restore it
-        node.savedView = this.newSubView(node, node.savedView.rect, node.savedView.tf);
-
-        // if a node has a visible view we have to check its nodes as well
-        node.savedView.restoreSubViews();
-    }
-},
-
-move(delta) {
-    // also adapt the tf matrix
-    this.tf.dx += delta.x;
-    this.tf.dy += delta.y;
-
-    // move the rectangle
-    this.rect.x += delta.x;
-    this.rect.y += delta.y;
-
-    // also move the widgets 
-    this.widgets?.forEach( widget => {
-        widget.rect.x += delta.x;
-        widget.rect.y += delta.y;
-    });
-},
-
-resize(border,delta) {
-
-    // notation
-    const rc = this.rect;
-
-    switch (border.name) {
-
-        case 'corner': 
-            if (rc.h + delta.y > style.view.hHeader) rc.h += delta.y;
-            if (rc.w + delta.x > style.look.wBox) rc.w += delta.x;
-            break
-
-        case 'top':
-            if (rc.h - delta.y < style.view.hHeader) return
-            rc.y += delta.y;
-            rc.h -= delta.y;
-            break
-
-        case 'bottom':
-            if (rc.h + delta.y < style.view.hHeader) return
-            rc.h += delta.y;
-            break
-
-        case 'right':
-            if (rc.w + delta.x < style.look.wBox) return 
-            rc.w += delta.x;
-            break
-
-        case 'left':
-            if (rc.w - delta.x < style.look.wBox) return
-            rc.x += delta.x;
-            rc.w -= delta.x;
-            break
-    }
-
-    // reposition the widgets
-    this.placeWidgets();
-},
-
-// check the views in reverse order - p is the position in local coordinates
-// returns the view, the widget and the local coordinate in that view
-// ** RECURSIVE **
-whichView(p) {
-
-    const hdr = style.view.hHeader;
-    const lwi = style.view.wLine;
-
-    // check the views in reverse order - the last one is on top !
-    for (let i = this.views.length-1; i>=0; i--) {
-
-        // notation
-        const view = this.views[i];
-        const rc = view.rect;
-
-        // first check if p is inside the client area of the view
-        if (((p.x >= rc.x + lwi) && (p.x <= rc.x + rc.w - lwi) && (p.y >= rc.y + hdr) && (p.y <= rc.y + rc.h - lwi))) {
-
-            // transform p to a coordinate inside this view
-            p = view.localCoord(p);
-
-            // check if the coordinate is inside a view in this view
-            return view.whichView(p)
-        }
-
-        // maybe we have hit the header or the border - we know already that we are not in the client area
-        const eps = 4;   // some epsilon - extra space around the border
-        if ((p.x < rc.x - eps) || (p.x > rc.x + rc.w + eps) || (p.y < rc.y - eps) || (p.y > rc.y + rc.h + eps)) continue
-
-        // when we arrive here it means we are in the the header or on the borders of the view
-        // check *ALL* the widgets, but skip the viewBox
-        let match = null;
-        for (const widget of view.widgets) if (inside(p,widget.rect) && !widget.is.viewBox) match = widget;
-
-        // found the *closest* match
-        if (match) return [view, match, p]
-
-        // now check if we are on the borders of the view - we return a pseudo widget !
-        if (p.x < rc.x + lwi) return [view, {is:{border:true}, name:'left'},p]
-
-        if (p.x > rc.x + rc.w - lwi)  {
-
-            return (p.y > rc.y + rc.h - 20) ? [view, {is:{border:true}, name:'corner'},p]
-                                            : [view, {is:{border:true}, name:'right'},p]
-        }
-        if (p.y < rc.y + lwi) return [view, {is:{border:true}, name:'top'},p]
-
-        if (p.y > rc.y + rc.h - lwi)  {
-
-            return (p.x > rc.x + rc.w - 20) ? [view, {is:{border:true}, name:'corner'},p]
-                                            : [view, {is:{border:true}, name:'bottom'},p]
-        }
-
-    }
-    return [this, null, p]
-},
-
-// // This function calculates the visible rectangle of the canvas
-// getVisibleCanvasRect(canvas) {
-    
-//     const viewportWidth = window.visualViewport.width; // Visible width of the webview
-//     const viewportHeight = window.visualViewport.height; // Visible height of the webview
-
-//     // Get canvas position and dimensions
-//     const rect = canvas.getBoundingClientRect();
-
-//     // Calculate the visible area within the viewport
-//     const visibleX = Math.max(0, rect.left);
-//     const visibleY = Math.max(0, rect.top);
-//     const visibleWidth = Math.min(rect.width, viewportWidth - visibleX);
-//     const visibleHeight = Math.min(rect.height, viewportHeight - visibleY);
-
-//     // Ensure values are positive
-//     return {
-//         x: visibleX,
-//         y: visibleY,
-//         width: Math.max(0, visibleWidth),
-//         height: Math.max(0, visibleHeight),
-//     };
-// },
-
-iconClick(icon, editor) {
-
-    // check the type of action for the widget
-    switch(icon.type) {
-
-        // close the view
-        case 'close': {
-
-            // for a view that is closed, we will not save the parameters to file
-            this.viewState.visible = false;
-
-            // reset the previous view parameters if coming from fullscreen
-            if (this.viewState.big) this.small();
-
-            // change focus
-            editor.switchView(this.parent);
-
-            // close the view
-            this.closeView();
-        }
-        break
-
-        // fullscreen acts as a toggle
-        case 'big': {
-            // get all the parent views
-            const parents = this.parentViewsReverse();
-
-            // switch all the parents to big
-            for(const parent of parents)  parent.big();
-
-            // and finally do the same for this view
-            this.big();
-        }
-        break
-        
-        case 'small': {
-
-            // switch to normal window size
-            this.small();
-
-            // big views inside this view are also restored
-            for(const view of this.views) if (view.viewState.big) view.small();
-        }
-        break
-
-        case 'calibrate' : {
-            this.toggleTransform();
-        }
-        break
-
-        case 'grid': {
-            this.state.grid = !this.state.grid;
-        }
-        break
-    }
-},
-
-
-
-viewToFront(frontView) {
-
-    // the new view is part of the views of the doc
-    const views = this.views;
-    const L = views.length;
-
-    // bring the view to the end of the array - so it is drawn on top
-    let index = views.indexOf(frontView);
-    let found = views[index];
-    
-    // shift the views below it one place
-    for (let i = index; i < L-1; i++) views[i] = views[i+1];
-    views[L-1] = found;
-},
-
-cloneForTab() {
-    // create a new view
-    let view = new View({x:0,y:0,w:0,h:0}, this.root, this.parent);
-
-    // position the tab content at the same place as the window was
-    view.tf.dx = this.tf.dx;
-    view.tf.dy = this.tf.dy;
-    view.tf.sx = this.tf.sx;
-    view.tf.sy = this.tf.sy;
-
-    // copy some additional content
-    view.views = this.views;
-
-    // copy the parent
-    // view.parent = this.parent
-
-    // done
-    return view
-},
-
-// note that we place the widgets in placeWidgets !
-addViewWidgets() {
-
-    // notation
-    const rc = this.rect;
-    const st = style.view;
-
-    // add the box - re-use the view rectangle...
-    this.widgets.push(new ViewBox(this.rect));
-
-    // add the title
-    if (this.root) this.widgets.push(new ViewTitle({ x:0,y: 0, w: rc.w, h: style.view.hHeader}, this.root));
-
-    // add the view icons
-    for( const iconName of ['close', 'big', 'calibrate', 'grid']) {
-
-        // create the icon
-        const icon = new Icon( { x:0, y:0, w: st.wIcon, h: st.hIcon}, iconName);
-
-        // and set its render function
-        icon.setRender();
-
-        // icons are highlighted by default, so set as non-highlighted
-        icon.is.highLighted = false;
-
-        // and save
-        this.widgets.push(icon);
-    } 
-},
-
-// place widgets is called when the view changes size or place
-placeWidgets() {
-
-    // notation
-    const rc = this.rect;
-    const st = style.view;
-
-    // The position of the first Icon
-    let xIcon = rc.x + st.xPadding;
-
-    for(const widget of this.widgets) {
-        if (widget.is.icon) {
-            // center on y
-            widget.rect.y = rc.y + (style.view.hHeader - st.hIcon)/2;
-
-            // set the x
-            widget.rect.x = xIcon;
-
-            // adjust x
-            xIcon += (st.wIcon + st.xSpacing);
-
-            // after the last view icon we add some extra space
-            // if (widget.type == 'grid') xIcon += st.xSpacing
-        }
-        else if (widget.is.viewBox) {
-            widget.rect.x = rc.x;
-            widget.rect.y = rc.y;
-            widget.rect.w = rc.w;
-            widget.rect.h = rc.h;
-        }
-        else if (widget.is.viewTitle) {
-            widget.rect.x = rc.x;
-            widget.rect.y = rc.y;
-            widget.rect.w = rc.w;
-        }
-    }
-},
-
-// toggle the transform for a single view
-toggleTransform() {
-
-    const tf = this.tf;
-    const vstf = this.viewState.tf;
-
-    // if the current transform is not the unit transform
-    if (tf.sx != 1.0) {
-
-        // save the current transform
-        this.saveTransform(this.tf);
-
-        // and switch to the unit transform
-        this.setTransform({sx:1.0, sy:1.0, dx: tf.dx, dy: tf.dy});
-
-        // recalculate all the windows that are big
-        this.redoBigRecursive(); 
-    }
-    // else we have a saved transform (i.e. it is not the unit transform)
-    else if (vstf.sx != 1.0) {
-
-        // switch to the saved transform
-        this.setTransform(vstf);
-
-        // recalculate all the windows that are big
-        this.redoBigRecursive(); 
-    }
-},
-
-// parent views - the toplevel parent will be the first entry
-parentViewsReverse() {
-
-    // put the view and the views above it in an array
-    const parents = [];
-
-    // search all parent views
-    let view = this;
-    while (view.parent) {
-        parents.push(view.parent);
-        view = view.parent;
-    }
-
-    // reverse the order of the array
-    return parents.reverse()
-},
-
-toggleBig() {
-
-    if (this.viewState.big) {
-
-        // switch to normal window size
-        this.small();
-
-        // big views inside this view are also restored
-        for(const view of this.views) if (view.viewState.big) view.toggleBig();
-    }
-    else {
-
-        // get all the parent views
-        const parents = this.parentViewsReverse();
-
-        // switch all the parents to big
-        for(const parent of parents)  parent.big();
-
-        // and finally do the same for this view
-        this.big();
-    }
-},
-
-small() {
-
-    // ok copy 
-    Object.assign( this.rect , this.viewState.rect);
-
-    // change the icon
-    this.widgets.find( icon => icon.type == 'small')?.switchType('big');
-
-    // reposition the widgets
-    this.placeWidgets();
-
-    // toggle the flag
-    this.viewState.big = false;
-},
-
-// We do not want to save the rectangle when we *redo* big (see below)
-// because we have already saved it then
-big(save=true) {
-
-    // check that the view has a parent and is not big already
-    if ( !this.parent) return
-
-    // notation
-    const prc = this.parent.rect;
-    const ptf = this.parent.tf;
-    const st = style.view;
-
-    // save the current rect
-    if (save) Object.assign(this.viewState.rect, this.rect);
-
-    // If the parent has no parent there is no header
-    const yShift = this.parent.parent ? st.hHeader : 0;
-
-    // convert the parent top left coordinates to local coordinates so that they will result 
-    // in the correct position *after* the parent tarnsform is applied !
-    this.rect.x = (prc.x - ptf.dx)/ptf.sx; 
-    this.rect.y = (prc.y + yShift - ptf.dy)/ptf.sy;
-    this.rect.w = prc.w / ptf.sx; 
-    this.rect.h = (prc.h - yShift) / ptf.sy;
-
-    // change the icon
-    this.widgets.find( icon => icon.type == 'big')?.switchType('small');
-    
-    // reposition the widgets
-    this.placeWidgets();
-
-    // set the fullscreen flag
-    this.viewState.big = true;
-},
-
-redoBigRecursive() {
-    if (this.viewState.big) this.big(false);
-    for (const view of this.views) view.redoBigRecursive();
-},
-
-/// NOT USED BELOW HERE
-
-// // recalibrate all the views
-// toggleTransformRecursive() {
-//     (this.tf.sx != 1.0) ? this.unitTransformRecursive() : this.restoreTransformRecursive();
-// },
-
-// unitTransformRecursive() {
-
-//     // save the current transform
-//     this.saveTransform(this.tf)
-
-//     // and switch to the unit transform
-//     this.setTransform({sx:1.0, sy:1.0, dx: this.tf.dx, dy: this.tf.dy})
-
-//     if (this.viewState.big) this.big()
-
-//     // repeat for all views
-//     for (const view of this.views) view.unitTransformRecursive()
-// },
-
-// restoreTransformRecursive() {
-
-//     // restore the saved transform
-//     if (this.viewState.tf.sx != 1.0) this.setTransform(this.viewState.tf);
-
-//     if (this.viewState.big) this.big()
-
-//     // repeat for all views
-//     for (const view of this.views) view.restoreTransformRecursive()
-// },
-
-// toggleViewState() {
-
-//     if (this.viewState.big) {
-
-//         // go back to the previous rectangle
-//         this.restoreViewState()
-
-//         // also restore views inside the view to their previous size
-//         for(const view of this.views) view.restoreViewState()
-//     }
-//     else {
-
-//         // get all the parent views
-//         const parents = this.parentViewsReverse()
-
-//         // switch all the parents to fullscreen
-//         for(const parent of parents) {
-//             parent.saveViewState()
-//             parent.big()
-//         }
-
-//         // and finally do the same for this view
-//         this.saveViewState()
-//         this.big()
-//     }
-// },
-
-// // note that we only save and restore the rectangle - not the transform - is more intuitive behaviuour
-// saveViewState() {
-//     // just assign the current settings
-//     Object.assign(this.viewState.rect, this.rect)
-//     Object.assign(this.viewState.tf, this.tf)
-
-//     // and validate the copy
-//     this.viewState.saved = true
-// },
-
-// restoreViewState() {
-
-//     // check that we have a valid previous
-//     if (!this.viewState.saved) return
-
-//     // we are not fullscreen anymore
-//     this.viewState.big = false
-
-//     // ok copy 
-//     Object.assign( this.rect , this.viewState.rect)
-//     Object.assign( this.tf,    this.viewState.tf)
-
-//     // we have restored the view, so we have to reposition the widgets
-//     this.placeWidgets()
-// },
-
-};
-
-const drawerFile = 'drawer/file';
-
-const dropHandling = {
-
-    async onDrop(xyParent, e) {
-
-        // no default action...
-        e.preventDefault();
-
-        // transform the parent coordinates to local ones
-        let xyLocal = this.localCoord(xyParent);
-        
-        // check what was hit
-        this.mouseHit(xyLocal);
-        //this.mouseHit(xyParent, xyLocal) // This is wrong !!!
-
-        // transfer to the view that was hit..
-        if (this.hit.view) return this.hit.view.onDrop(xyLocal, e)
-
-        // analyse the dropped data
-        const drop = this.analyseDrop(e);
-
-        // check
-        if (!drop) return
-
-        // if it can be converted to an arl...
-        const arl = new ARL$1(drop.path);
-
-// RESOLVE 
-
-        // make a model for the dropped arl
-        const model = new ModelBlueprint(arl);
-        
-        // make a compiler
-        const modcom = new ModelCompiler( editor.doc.UID );
-
-        // get the file in the drop arl
-        const newNode = await modcom.getRoot(model);
-
-        // check
-        if ( ! newNode) return null
-
-        // if the node is a container - create a new view for that
-        if (newNode.is.group && newNode.isContainer()) {
-
-            // make a reasonable rectangle for the node
-            const rect = this.makeViewRect(newNode);
-            rect.x = xyLocal.x;
-            rect.y = xyLocal.y;
-
-            // create a new view for the container
-            this.newSubView(newNode, rect);
-        }
-
-        // position the node at the drop location
-        newNode.look.moveTo(xyLocal.x, xyLocal.y);
-
-        // change the uids as required
-        newNode.uidChangeAll(editor.doc.UID);
-
-        // set the link
-        newNode.link = new Link(model, this.name);
-
-        // save on the nodes list
-        this.root.nodes.push(newNode);
-
-        // do a redraw (we do it here - async function)
-        editor.redraw();
-
-        // done
-        return newNode
-    },
-
-    analyseDrop(e) {
-
-        // convert
-        e.dataTransfer.items ? [...e.dataTransfer.items] : null;
-        const files =  e.dataTransfer.files ? [...e.dataTransfer.files] : null;
-        const types =  e.dataTransfer.types ? [...e.dataTransfer.types] : null;
-
-        //    //ITEMS
-        //    if (items?.length > 0) {
-        //         // items ifPins
-        //         items.forEach((item, i) => {
-        //             console.log('ITEM', item.kind, item)
-        //         })          
-        //     }
-
-        // FILES 
-        if (files?.length > 0) {
-            files.forEach((file, i) => {
-                // console.log('FILE:', file);
-            });
-        }
-
-        // TYPES
-        if (types?.length > 0) {
-
-            if (types.includes(drawerFile)) {
-
-                // get value and path object
-                let drop = JSON.parse(e.dataTransfer.getData(drawerFile));
-
-                // find the path
-                return drop
-            }
-        }
-
-        return null
-    },
-
-};
-
-// the ongoing action of a view
-const doing = {
-    nothing:0,
-    nodeDrag:1,
-    routeDrag:2,
-    panning:3,
-    routeDraw:4,
-    editTextField:5,
-    selection:6,
-    selectionDrag:7,
-    pinAreaSelect:8,
-    pinAreaDrag:9,
-    padDrag:10,
-    padArrowClicked: 11,
-    busDraw:12,
-    busRedraw:13,
-    busSegmentDrag:14,
-    busDrag:15,
-    tackDrag:16,
-    pinClicked:17,
-    pinDrag:18,
-    interfaceDrag: 19,
-    interfaceNameDrag: 20,
-    interfaceNameClicked: 21
-};
-
-function View(rect, node=null, parent=null) {
-
-    // the transform parameters - shift the content below the header of the view window !
-    //this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y}
-    this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y + style.view.hHeader};
-
-    // the rectangle of the view
-    this.rect = rect;
-
-    // the widgets of the view itself
-    this.widgets = [];
-
-    // the (group) root node for which this is the view
-    this.root = node;
-
-    // the parent view
-    this.parent = parent;
-
-    // a view can contain other views - the children
-    this.views = [];
-
-    // on idle we check if we have hit something every x msec
-    this.hitTimer = 0;
-
-    // the editor state inside the view - action is one of the doing values above
-    this.state = {
-        action: 0,      
-        pad: null,
-        node: null,      
-        route: null,
-        routeSegment: 0,
-        cursorInterval: null,
-        bus: null,
-        busSegment: 0,
-        busLabel: null,
-        tack: null,
-        lookWidget: null,
-        hoverOver: null,
-        highLighted: false,
-        grid: false,
-    };
-
-    // the text object that is being edited
-    this.textField = new TextEdit();
-
-    // the element on the screen that was hit - 'what' is a constant of type zap defined in mouse.js
-    this.hit = {
-        what: 0,
-        selection : null,
-        xyLocal: {x:0, y:0},
-        xyScreen: {x:0, y:0},
-        pad: null,
-        padArrow: false,
-        node: null,
-        lookWidget: null,
-        route: null,
-        routeSegment: 0,
-        bus:null,
-        busSegment: 0,
-        busLabel:null,
-        tack:null
-    };
-
-    // when selecting we keep track of the selection here
-    this.selection = new Selection(this);
-
-    // The state of the view - used to set and restore views
-    this.viewState = {
-        visible: true,
-        big: false,
-        tf:{sx:1.0, sy:1.0, dx:rect.x, dy:rect.y},
-        rect:{...rect}
-    };
-}
-View.prototype = {
-
-    makeRaw() {
-        return {
-            state: this.viewState.visible ? (this.viewState.big ? 'big':'open' ) : 'closed',
-            rect: this.viewState.big ? this.viewState.rect : this.rect,
-            tf: this.tf
-        }
-    },
-
-    stateSwitch(newAction) {
-
-        // check if we need to do something...
-        if (this.state.action == doing.editTextField) this.endTextEdit();
-
-        // switch to the new state
-        this.state.action = newAction;
-    },
-
-     // resets the view to a known state
-    reset() {
-        // reset the state
-        const state = this.state;
-        state.action = doing.nothing;
-        state.node = null;
-        state.view = null;
-        state.route = null;
-
-        // reset the selection
-        this.selection.reset();
-
-        // reset all the views contained in this view
-        this.views.forEach( view => view.reset());
-    },
-
-    // make a reasonable rectangle that contains the nodes and is positioned at the group node
-    makeViewRect(node) {
-
-        // if there are no nodes, use default values
-        let rc = {x:0,y:0,w:0,h:0};
-
-        // make the view rectangle a little bit bigger
-        const µ = 0.1;
-
-        // if there are nodes...
-        if ((node.nodes.length > 0) || (node.pads.length > 0) ) {
-
-            // make a rect that contains all nodes and pads
-            rc = this.calcRect(node);
-
-            // create some extra width
-            rc.w = rc.w + Math.floor(µ*rc.w);
-
-            // create some extra height
-            rc.h = rc.h + Math.floor(µ*rc.h);
-        }
-
-        // check
-        if (rc.w < style.view.wDefault) rc.w = style.view.wDefault;
-        if (rc.h < style.view.hDefault) rc.h = style.view.hDefault;
-
-        // position the view 
-        rc.x = node.look.rect.x;
-        rc.y = node.look.rect.y + style.view.hHeader + style.header.hHeader;
-
-        // done
-        return rc
-    },
-
-    noRect() {
-        return (this.rect.w == 0) || (this.rect.h == 0)
-    },
-
-    setRect(x,y,w,h) {
-        this.rect.x = x;
-        this.rect.y = y;
-        this.rect.w = w;
-        this.rect.h = h;
-    },
-
-    // when putting nodes in a new view, shift the nodes wrt the new origin to 'stay in place'
-    shiftContent(dx, dy) {
-
-        // the nodes
-        this.root.nodes.forEach( node => {
-
-            // move the look and the widgets
-            node.look.moveDelta(dx,dy);
-
-            // move the routes (only the routes that start at this node)
-            node.look.moveRoutes(dx,dy);
-        });
-
-        // the buses
-        this.root.buses.forEach( bus => bus.move(dx, dy));
-
-        // the pads ???
-    },
-
-    translate(dx, dy) {
-        this.tf.dx += dx;
-        this.tf.dy += dy;
-    },
-
-    resetTransform() {
-        this.tf.dx = this.rect.x;
-        this.tf.dy = this.rect.y;
-        this.tf.sx = 1.0;
-        this.tf.sy = 1.0;
-    },
-
-    setTransform(tf) {
-        this.tf.dx = tf.dx;
-        this.tf.dy = tf.dy;
-        this.tf.sx = tf.sx;
-        this.tf.sy = tf.sy;
-    },
-
-    saveTransform(tf) {
-        Object.assign(this.viewState.tf, tf);
-    },
-
-    // returns the coordinates of where the middle of the view is in local coordinates
-    middle() {
-
-        const tf = this.tf;
-        const rc = this.rect;
-
-        // the middle of the view in local coordinates 
-        return {
-            x: (rc.x + rc.w/2 - tf.dx)/tf.sx,
-            y: (rc.y + rc.h/2 - tf.dy)/tf.sy
-        }
-
-    },
-
-    initRoot(name) {
-        // create the look for the root
-        const look = new Look({x:this.rect.x + this.rect.w/2, y:this.rect.y, w:0, h:0});
-
-        // create a groupnode
-        this.root = new GroupNode(look,name);
-
-        // return the root
-        return this.root
-    },
-
-    // render the view    
-    render(ctx) {
-
-        // switch to the style of the file where the node comes from
-        const savedStyle = style.switch(this.root?.link?.model?.header?.style);
-
-        // save the current context settings
-        ctx.save();
-
-        // notation
-        const rc = this.rect;
-        const st = style.view;
-
-        // views with a parent have widgets and a clip rectangle
-        if (this.parent) {
-        
-            // draw the widgets
-            for (const widget of this.widgets) widget.render(ctx);
-        
-            // add a clip rect - but exclude the header
-            ctx.rect( rc.x + st.wLine/2 , rc.y + st.hHeader, rc.w - st.wLine, rc.h - st.hHeader);
-        
-            // set it as a clipping region
-            ctx.clip();
-        }
-
-        // set the *additional* transform for this window
-        const tf = this.tf;
-        ctx.transform(tf.sx, 0.0, 0.0, tf.sy, tf.dx, tf.dy);
-
-        // draw the grid if necessary
-        if (this.state.grid) this.drawGrid(ctx);
-
-        // render the content of the view
-        if (this.root) this.renderContent(ctx);
-
-        // if there are other views render them now
-        for(const view of this.views) view.render(ctx);
-    
-        // restore the previous settings
-        ctx.restore();
-
-        // restore the style
-        style.switch(savedStyle);
-    },
-
-    renderContent(ctx) {
-
-        // notation
-        const root = this.root;
-
-        // if there is a selection, we first render that
-        this.selection.render(ctx);    
-
-        // first draw all the routes that originate from the widget (avoids drawing routes twice)
-        for(const node of root.nodes) {
-            for(const widget of node.look.widgets) {
-                if (!widget.routes) continue
-                for(const route of widget.routes) {
-                    if (route.from == widget) route.render(ctx);
-                }
-            }
-        }
-
-        // draw all the pad routes
-        for(const pad of root.pads) {
-            for(const route of pad.routes) {
-                if (route.from == pad) route.render(ctx);
-            }
-        }
-
-        // draw all the bus routes
-        for(const bus of root.buses) {
-            for(const tack of bus.tacks) {
-                if(tack.route?.from == tack) tack.route.render(ctx);
-            }
-        }
-
-        // now render the nodes, pads and buses
-        for(const node of root.nodes) node.render(ctx);
-        for(const pad of root.pads) pad.render(ctx);
-        for(const bus of root.buses) bus.render(ctx);
-    },
-
-
-
-    highLight() {
-        this.state.highLighted = true;
-        for (const widget of this.widgets) {
-            if (widget.is.viewTitle || widget.is.viewBox || widget.is.icon) {
-                widget.is.highLighted = true;
-            }
-        }
-    },
-
-    unHighLight() {
-        this.state.highLighted = false;
-        for (const widget of this.widgets) {
-            if (widget.is.viewTitle || widget.is.viewBox || widget.is.icon) {
-                widget.is.highLighted = false;
-            }
-        }
-    },
-
-    // get the toplevel view in the stack
-    topView() {
-
-        let top = this;
-        while (top.parent) top = parent;
-        return top
-    },
-
-    drawGrid(ctx) {
-
-        const rc = this.rect;
-        const tf = this.tf;
-        const grid = style.view.grid;
-        
-        // the top-left and bottom right coordinates of the view
-        const area = {  x:(rc.x - tf.dx)/tf.sx, 
-                        y:(rc.y - tf.dy)/tf.sy,
-                        w: rc.w/tf.sx,
-                        h: rc.h/tf.sy
-                    };
-        // the grid
-        shape.grid(ctx, area.x, area.y, area.w, area.h , grid.dx, grid.dy, grid.cLine, grid.cAxis);
-    },
-
-    getNamePath() {
-
-        if (!this.parent) return ''
-
-        let view = this;
-        let namePath = '';
-
-        while (view.parent) {
-            namePath += ' @ ' + view.root.name; 
-            view = view.parent;
-        }
-
-        return namePath
-    }
-};
-
-Object.assign(View.prototype, 
-    mouseHandling, 
-    mouseDownHandling, 
-    mouseMoveHandling,
-    mouseUpHandling,
-    nodeHandling,
-    contextHandling,
-    selectionHandling, 
-    groupHandling,
-    alignHandling,
-    keyboardHandling,
-    viewWidgetHandling,
-    dropHandling);
-
-const redoxNode = {
-
-newGroupNode: {
-
-    doit({view, pos}) {
-
-        // create a new node at pos. False = group node
-        const node = view.newEmptyNode(pos, false);
-
-        // undo/redo
-        editor.saveEdit('newGroupNode',{view, node});
-    },
-    undo({view, node})    {
-
-        view.root.removeNode(node);
-
-        // ** Note that (currently) we do not remove the node from the uidmap ! **
-
-    },
-    redo({view, node})    {
-
-        view.root.addNode(node);
-    }
-},
-
-newSourceNode: {
-
-    doit({view, pos}) {
-
-        // create a new node at pos. False = group node
-        const node = view.newEmptyNode(pos, true);
-
-        // undo/redo
-        editor.saveEdit('newSourceNode',{view, node});
-    },
-    undo({view, node})    {
-
-        view.root.removeNode(node);
-
-        // ** Note that (currently) we do not remove the node from the uidmap ! **
-    },
-    redo({view, node})    {
-
-        // add the node again
-        view.root.addNode(node);
-    }
-},
-
-wider: {
-    doit({node}) {
-        node.look.wider();
-        editor.saveEdit('wider', {node});
-    },
-    undo({node})    {
-        node.look.smaller();
-    },
-    redo({node})    {
-        node.look.wider();
-    }
-},
-
-smaller: {
-    doit({node}) {
-        node.look.smaller();
-        editor.saveEdit('smaller', {node});
-    },
-    undo({node})    {
-        node.look.wider();
-    },
-    redo({node})    {
-        node.look.smaller();
-    }
-},
-
-nodeHighLight: {
-    doit({node}) {
-        node.is.highLighted ? node.unHighLight() : node.highLight();
-        //editor.saveEdit('nodeHighLight', {node})
-    },
-    undo({node})    {
-        //node.is.highLighted ? node.unHighLight() : node.highLight()
-    },
-    redo({node})    {
-        //node.is.highLighted ? node.unHighLight() : node.highLight()
-    }
-},
-
-convertNode: {
-
-    doit({node}) {
-
-        // notation
-        const view = editor.doc.focus;
-
-        // a linked node cannot be changed
-        if (node.link) return
-
-        // change the type of node
-        const convertedNode = node.switchNodeType( );
-
-        // swap the two nodes in the node tree
-        view.root.swap(node, convertedNode);
-
-        // reconstruct the tx tables
-        view.root?.rxtxBuildTxTable();
-
-        // signal the edit
-        editor.saveEdit('convertNode',{view, node, convertedNode});
-    },
-    undo({view, node, convertedNode}) {
-
-        // set the original node back
-        if (view.root.swap(convertedNode, node)) convertedNode.look.transferRoutes(node.look);
-
-        // reconstruct the tx tables
-        view.root?.rxtxBuildTxTable();
-    },
-    redo({view, node, convertedNode}) {
-
-        // set the converted node back
-        if (view.root.swap(node, convertedNode)) node.look.transferRoutes(convertedNode.look);
-
-        // reconstruct the tx tables
-        view.root?.rxtxBuildTxTable();
-    }
-},
-
-nodeToClipboard: {
-
-    doit({view, node}) {
-
-        // select the new node
-        view.selection.singleNode(node);  
-
-        // send the clipboard to the clipboard manager
-        editor.tx.send('clipboard set',{model: editor.doc.model, selection: view.selection});
-    },
-    undo(){
-    },
-    redo(){
-    }
-},
-
-sourceToClipboard: {
-
-    doit({node}) {
-        // check
-        if (! node.is.source) return
-
-        // make the body of the source
-        const body = node.makeSourceBody();
-
-        // copy the body to the clipboard
-        editor.textToExternalClipboard(body);
-    },
-    undo(){
-    },
-    redo(){
-    }
-},
-
-swapPins: {
-    
-    doit({node, left, right}) {
-        // save the pins that will be swapped
-        const swapped = [];
-
-        // find the pins that need to be swapped
-        for (let widget of node.look.widgets) {
-            if ( widget.is.pin && left  && ! widget.is.left) swapped.push(widget);
-            if ( widget.is.pin && right &&   widget.is.left) swapped.push(widget);
-        }
-
-        // do the actual swapping
-        for(const pin of swapped) pin.leftRightSwap();
-
-        // signal the edit
-        editor.saveEdit('swapPins', {swapped});
-    },
-    undo({swapped}) {
-        for(const pin of swapped) pin.leftRightSwap();
-    },
-    redo({swapped}) {
-        for(const pin of swapped) pin.leftRightSwap();
-    }
-},
-
-disconnectNode: {
-    doit({node}) {
-        // save an array ofpins and routes
-        const allRoutes = node.getRoutes();
-
-        // disconnect the node
-        node.disconnect();
-
-        // save the edit
-        editor.saveEdit('disconnectNode',{node, allRoutes});
-    },
-    undo({node, allRoutes}) {
-
-        // reconnect the routes to the pins - make a copy of the routes array, redo empties the array again !
-        for (const route of allRoutes) route.reconnect();
-    },
-    redo({node, allRoutes}) {
-
-        // redo the disconnect
-        node.disconnect();
-    }
-},
-
-deleteNode: {
-    doit({node}) {
-        // save an array ofpins and routes
-        const allRoutes = node.getRoutes();
-
-        // disconnect
-        node.disconnect();
-
-        // remove the node
-        editor.doc.focus.root.removeNode(node);
-
-        // if the node has a view, remove it from the list
-        if (node.saveView) node.savedView.closeView();
-
-        // save the edit
-        editor.saveEdit('deleteNode',{view: editor.doc.focus, node, allRoutes});
-    },
-    undo({view, node, allRoutes}) {
-
-        // add the node to the view again
-        view.root.addNode(node);
-
-        // reconnect the routes to the pins - make a copy of the routes array
-        for (const route of allRoutes) route.reconnect();
-    },
-    redo({view, node, allRoutes}) {
-
-        node.disconnect();
-
-        view.root.removeNode(node);
-    }
-},
-
-// for a node that was selected in the library we do not have to make a copy - it was created from raw
-nodeFromNodeLib: {
-    
-    doit({view, node}) {
-        // and add it to the root
-        view.root.addNode(node);
-
-        // the new node is the selected one !
-        view.state.node = node;
-
-        // select the new node
-        view.selection.singleNode(node);   
-
-        // save the edit
-        editor.saveEdit('nodeFromNodeLib',{view, node});
-    },
-    undo({view, node}){
-        view.root.removeNode(node);
-    },
-    redo({view, node}){
-        view.root.addNode(node);
-    },
-},
-
-nodeDrag: {
-    doit({view, node}) {
-
-        // save the starting position for the undo-operation
-        editor.saveEdit('nodeDrag',{node,view,oldPos:{x:node.look.rect.x, y: node.look.rect.y}, newPos:null});
-    },
-    undo({node, view, oldPos, newPos}) {
-
-        const delta = {x: oldPos.x - newPos.x, y: oldPos.y - newPos.y};
-        node.move(delta);
-        view.selection.move(delta);
-    },
-    redo({node, view, oldPos, newPos}) {
-
-        const delta = {x: newPos.x - oldPos.x, y: newPos.y - oldPos.y};
-        node.move(delta);
-        view.selection.move(delta);
-    }
-},
-
-// I THINK THIS IS OBSOLETE !!!!
-updateProfiles: {
-    doit({node}) {
-
-        // profiles can only be updated for source nodes
-        if (node.is.group) return
-
-        // there must be a factory
-        if (!node.factory.arl) return
-    
-        // import and analyze
-        node.factory.arl.jsImport()
-        .then ( (module) => {
-            node.analyzeFactory(module);
-        });    
-    },
-    undo({}) {
-
-    },
-    redo({}){
-        
-    }
-},
-
-changeNodeSettings: {
-    doit({node, sx}) {
-
-        if (JSON.stringify(sx) !== JSON.stringify(node.sx)) node.sx = sx;
-
-        editor.signalEdit('changeNodeSettings');
-    },
-    undo({}) {
-    },
-    redo({}){
-    }
-},
-
-changeNodeDynamics: {
-    doit({node, dx}) {
-
-        // if the node.dx is null and the values are default - don't save
-        if (!node.dx) ;
-
-        if (JSON.stringify(dx) !== JSON.stringify(node.dx)) node.dx = dx;
-
-        editor.signalEdit('changeNodeDynamics');
-
-    },
-    undo({}) {
-    },
-    redo({}){
-    }
-},
-
-changeNodeComment: {
-    doit({node,comment}) {
-
-        if ( !comment || comment.length == 0) {
-            node.prompt = null;
-        }
-        else if (comment !== node.prompt) {
-            node.prompt = comment;
-        }
-
-        editor.signalEdit('changeNodeComment');
-
-    },
-    undo({}) {
-    },
-    redo({}){
-    }
-}
-
-
-};
-
-const redoxLink = {
-
-cutLink: {
-
-    doit({node}) {
-
-        // check
-        if (!node.link) return
-
-        // save the current link
-        editor.saveEdit('cutLink',{node, lName: node.link.lName, userPath: node.link.model.getArl().userPath});
-
-        // and we simply set the link status
-        node.clearLink();
-
-        // now we have to adjust the user paths of the sub-nodes
-        node.adjustUserPaths(editor.doc.model.getArl());
-    },
-    undo({node, lName, userPath}) {
-
-       // check
-       if (!lName.length)
-            node.clearLink();
-        else if (userPath.length)
-            editor.doc.importFromModel(node, lName, userPath);
-        else 
-            editor.doc.makeLocalLink(node, lName);
-    },
-    redo({node, lName, userPath}) {
-
-        // and we add a source or group icon for the node (addIcon removes icons that have the same place !)
-        node.clearLink();
-
-        // change references where necessary
-        // if (node.nodes) for (const sub of node.nodes) sub.adjustUserPaths( editor.doc.model.getArl()  )
-    }
-},
-
-changeLink: {
-
-    async doit({node, lName, userPath}) {
-
-        // trim userPath
-        userPath = userPath.trim();
-
-        // trim lName and remove multiple spaces
-        lName = convert.cleanLink(lName);
-
-        // make a copy of the original node
-        const previous = node.copy();
-
-        // save the current link
-        editor.saveEdit('changeLink', {node, previous, lName, userPath});
-
-        // check
-        if (!lName.length) {
-            node.clearLink();
-        }
-        else if (userPath.length > 0) {
-            await editor.doc.importFromModel(node, lName, userPath);   
-            editor.redraw();
-        }
-        else {
-            editor.doc.makeLocalLink(node, lName);
-        }
-    },
-    undo({node, previous, lName, userPath}) {
-
-        // check the icon
-        if (!previous.link) previous.is.source ? node.look.addIcon('factory') : node.look.addIcon('group');
-
-        // fuse the node with the previous one
-        node.fuse(previous);
-    },
-    redo({node, previous, lName, userPath}){
-        
-        // get the node and fuse with the selected node..
-        if (!lName.length)
-            node.clearLink();
-        else if (userPath.length)
-            editor.doc.importFromModel(node, lName, userPath);   
-        else 
-            editor.doc.makeLocalLink(node, lName);
-    }
-},
-
-saveToLink: {
-
-    doit({node, newName, userPath}) {
-
-        // we need a path to save this node to
-        if (! userPath.length > 0) return
-
-        // export the node
-        editor.doc.exportToModel(node, newName, new ModelBlueprint( editor.doc.model.getArl().resolve(userPath)));
-    },
-    undo({}) {
-    },
-    redo({}){  
-    }
-},
-
-changeFactory: {
-
-    doit({node, newName, userPath}) {
-
-        // copy the old factory
-        const oldFactory = node.factory.clone();
-
-        // resolve the input to a new factory arl 
-        node.factory?.resolve(newName, userPath, editor.doc.model.getArl(), node.name);
-
-        // keep the old factory
-        editor.saveEdit('changeFactory',{node, oldFactory, newFactory: node.factory});
-    },
-    undo({node, oldFactory, newFactory}) {
-
-        node.factory = oldFactory;
-    },
-    redo({node, oldFactory, newFactory}){  
-
-        node.factory = newFactory;
-    }
-},
-
-};
-
-/**
- * @node editor editor
- */
-const redoxWidget = {
-    newPin: {
-        doit({ view, node, pos, is }) {
-            // we add new pins at the end of a selection if, or else we keep the pos value
-            pos = view.selection.behind() ?? pos;
-
-            // create the pin
-            const pin = node.look.addPin('', pos, is);
-
-            // add a pad or the pin to the rx / tx table
-            pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin);
-
-            // if there is a selection maybe it has to be adjusted
-            view.selection.adjustForNewWidget(pin);
-
-            // edit the name field
-            view.beginTextEdit(pin);
-
-            // store and report the new edit - here the rxtx or the pad is added !
-            editor.saveEdit('newPin', { view, pin });
-        },
-        undo({ view, pin }) {
-            // if the pin was not created (no valid name) just return
-            if (!pin || !pin.node.look.widgets.includes(pin)) return;
-
-            // the node
-            const node = pin.node;
-
-            // adjust selection before deleting the pin
-            view.selection.adjustForRemovedWidget(pin);
-
-            // remove the pin
-            node.look.removePin(pin);
-
-            // it is the last entry in the rx/tx table
-            pin.is.proxy ? node.pads.pop() : node.rxtxPopPin(pin);
-        },
-        redo({ view, pin }) {
-            // if the pin was not created (no valid name) just return
-            if (!pin || !pin.node.look.widgets.includes(pin)) return;
-
-            // the node
-            const node = pin.node;
-
-            // restore the pin to its previous place in the look
-            node.look.restorePin(pin);
-
-            // add the pin to the rx / tx table
-            pin.is.proxy ? node.addPad(pin) : node.rxtxAddPin(pin);
-
-            // switch the selected pin
-            view.selection.adjustForNewWidget(pin);
-        },
-    },
-
-    disconnectPin: {
-        doit({ pin }) {
-            // save the routes before disconnecting ...
-            const savedRoutes = pin.routes.slice();
-
-            // disconnect
-            pin.disconnect();
-
-            // store and report the new edit
-            editor.saveEdit('disconnectPin', { pin, routes: savedRoutes });
-        },
-        undo({ pin, routes }) {
-            pin.reconnect(routes);
-        },
-        redo({ pin, routes }) {
-            pin.disconnect();
-        },
-    },
-
-    deletePin: {
-        doit({ view, pin }) {
-            // save the routes
-            const pinRoutes = pin.routes.slice();
-
-            // also for the pad if applicable
-            const padRoutes = pin.is.proxy ? pin.pad.routes.slice() : null;
-
-            // save the edit *before* the delete !
-            editor.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes });
-
-            // adjust selection before deleting the pin
-            view.selection.adjustForRemovedWidget(pin);
-
-            // disconnect
-            pin.disconnect();
-
-            // delete the pin in the node
-            pin.node.look.removePin(pin);
-
-            // if proxy remove pad
-            if (pin.is.proxy) {
-                pin.pad.disconnect();
-
-                pin.node.removePad(pin.pad);
-            }
-            // if not remove from rx table
-            else pin.node.rxtxRemovePin(pin);
-        },
-        undo({ view, pin, pinRoutes, padRoutes }) {
-            // copy the routes (redo destroys the array - we want to keep it on the undo stack !)
-            const copyRoutes = pinRoutes.slice();
-
-            // put the pin back
-            pin.node.look.restorePin(pin);
-
-            // if there is a selection maybe it has to be adjusted
-            view.selection.adjustForNewWidget(pin);
-
-            // reconnect the routes to the pin
-            pin.reconnect(copyRoutes);
-
-            // reconnect the routes to the pad
-            if (pin.is.proxy) {
-                // first add the pad again ?
-
-                // reconnect the routes
-                pin.pad.reconnect(padRoutes);
-            }
-        },
-
-        redo({ view, pin, pinRoutes, padRoutes }) {
-            // first disconnect
-            pin.disconnect();
-
-            // adjust selection before deleting the pin
-            view.selection.adjustForRemovedWidget(pin);
-
-            // remove the pin
-            pin.node.look.removePin(pin);
-        },
-    },
-
-    // change the pin from an input type to an output type
-    ioSwitch: {
-        doit({ pin }) {
-            if (pin.ioSwitch()) editor.saveEdit('ioSwitch', pin);
-        },
-        undo({ pin }) {
-            pin.ioSwitch();
-        },
-        redo({ pin }) {
-            pin.ioSwitch();
-        },
-    },
-
-    // change the pin from an input type to an output type
-    channelOnOff: {
-        doit({ pin }) {
-            if (pin.channelOnOff()) editor.saveEdit('channelOnOff', pin);
-        },
-        undo({ pin }) {
-            pin.channelOnOff();
-        },
-        redo({ pin }) {
-            pin.channelOnOff();
-        },
-    },
-
-    pinDrag: {
-        doit({ pin }) {
-            // just save the current position
-            editor.saveEdit('pinDrag', {
-                pin,
-                oldPos: { left: pin.is.left, y: pin.rect.y },
-                newPos: null,
-            });
-        },
-        undo({ pin, oldPos, newPos }) {
-            pin.moveTo(oldPos.left, oldPos.y);
-        },
-        redo({ pin, oldPos, newPos }) {
-            pin.moveTo(newPos.left, newPos.y);
-        },
-    },
-
-    /*
-pinAreaDrag: {
-
-    doit(view) {
-
-        // The widgets that are being dragged
-        const widgets = view.selection.widgets
-
-        // get the current y-position of the selected widgets
-        editor.saveEdit('pinAreaDrag', {widgets, oldY:widgets[0].rect.y, newY:widgets[0].rect.y})
-    },
-    undo({widgets, oldY, newY}) {
-    },
-    redo({widgets, oldY, newY}) {
-    }
-},
-*/
-    showProfile: {
-        doit({ pin, pos }) {
-            // check that we have a model
-            if (!editor.doc?.model) return;
-
-            // get the contract for the pin
-            const contract = editor.doc.model.getContract(pin);
-
-            // get the pin profile (can be a single profile or an array !)
-            const profile = pin.is.input
-                ? editor.doc.model.getInputPinProfile(pin)
-                : editor.doc.model.getOutputPinProfile(pin);
-
-            // show the profile
-            editor.tx.send('pin profile', {
-                pos,
-                pin,
-                contract,
-                profile,
-
-                // The function that is called when clicking the handler name
-                open(loc) {
-                    //const arl = new ARL(loc.file)
-
-                    // resolve the file name with the model name
-                    const arl = editor.doc.model.getArl().resolve(loc.file);
-
-                    // request to open the source file
-                    editor.tx.send('open source file', { arl, line: loc.line });
-                },
-            });
-        },
-
-        undo() {},
-        redo() {},
-    },
-
-    addLabel: {
-        doit({ node }) {
-            // find the label of the look or add an empty one
-            let label =
-                node.look.widgets.find((widget) => widget.is.label) ??
-                node.look.addLabel('');
-
-            // start editing the field - parameters = object - must have the edit ifPins !
-            editor.doc?.focus?.beginTextEdit(label);
-
-            // signal the edit
-            editor.saveEdit('addLabel', { node, label });
-        },
-        undo({ node, label }) {
-            node.look.removeLabel();
-        },
-        redo({ node, label }) {
-            node.look.restoreLabel(label);
-        },
-    },
-
-    widgetTextEdit: {
-        doit({ view, widget, cursor, clear }) {
-            // check if field is editable - must return the prop that will be edited
-            const prop = widget.startEdit?.();
-
-            // check
-            if (!prop) return;
-
-            // save the old value
-            editor.saveEdit('widgetTextEdit', {
-                widget,
-                prop,
-                oldText: widget[prop],
-                newText: '',
-            });
-
-            // keyboard handling etc is done here
-            view.beginTextEdit(widget, cursor, clear ?? false);
-        },
-        undo({ widget, prop, oldText, newText }) {
-            /*
-        better is to call simply undoTextEdit
-        ======================================
-
-        widget.undoTextEdit(oldText)
-        */
-
-            // save the new text now also !
-            newText = widget[prop];
-            editor.getParam().newText = newText;
-            widget[prop] = oldText;
-
-            // signal the widget that the value has changed
-            widget.endEdit(newText);
-        },
-        redo({ widget, prop, oldText, newText }) {
-            widget[prop] = newText;
-
-            widget.endEdit(oldText);
-        },
-    },
-};
-
-/**
- * @node editor editor
- */
-const redoxInterface = {
-    newInterfaceName: {
-        doit({ view, node, pos }) {
-            // get the position behind the selection, if any
-            pos = view.selection.behind() ?? pos;
-
-            // make a new ifName and put it in edit mode
-            let ifName = node.look.addIfName('', pos);
-
-            // set the field in edit mode
-            view.beginTextEdit(ifName);
-
-            // switch the selected pin
-            view.selection.adjustForNewWidget(ifName);
-
-            // store and report the new edit
-            editor.saveEdit('newInterfaceName', { ifName });
-        },
-        undo({ ifName }) {
-            ifName.node.look.removeInterfaceName(ifName);
-        },
-        redo({ ifName }) {
-            ifName.node.look.restoreInterfaceName(ifName);
-        },
-    },
-
-    deleteInterfaceName: {
-        doit({ view, ifName }) {
-            // switch the selected pin
-            view.selection.adjustForRemovedWidget(ifName);
-
-            // show the full names of the ifName group
-            const pxlenArray = ifName.node.look.showPrefixes(ifName);
-
-            // remove the pin
-            ifName.node.look.removeInterfaceName(ifName);
-
-            // store and report the new edit
-            editor.saveEdit('deleteInterfaceName', {
-                view,
-                ifName,
-                pxlenArray,
-            });
-        },
-        undo({ view, ifName, pxlenArray }) {
-            // restore the ifName
-            ifName.node.look.restoreInterfaceName(ifName);
-
-            // restore the prefixes
-            ifName.node.look.hidePrefixes(ifName, pxlenArray);
-
-            // switch the selection
-            view.selection.switchToWidget(ifName);
-        },
-        redo({ view, ifName, pxlenArray }) {
-            // switch the selection
-            view.selection.switchToWidget();
-
-            // show the full names of the ifName group
-            ifName.node.look.showPrefixes(ifName);
-
-            // remove the ifName
-            ifName.node.look.removeInterfaceName(ifName);
-        },
-    },
-
-    interfaceDrag: {
-        doit({ group, oldY, newY }) {
-            // just save the parameters...
-            editor.saveEdit('interfaceDrag', { group, oldY, newY });
-        },
-        undo({ group, oldY, newY }) {
-            const dy = oldY - newY;
-            const node = group[0].node;
-            node.look.groupMove(group, dy);
-        },
-
-        redo({ group, oldY, newY }) {
-            const dy = newY - oldY;
-            const node = group[0].node;
-            node.look.groupMove(group, dy);
-        },
-    },
-
-    interfaceNameDrag: {
-        doit({ ifName }) {
-            // just save the parameters
-            editor.saveEdit('interfaceNameDrag', {
-                ifName,
-                oldY: ifName.rect.y,
-                newY: ifName.rect.y,
-            });
-        },
-        undo({ ifName, oldY, newY }) {
-            ifName.moveTo(oldY);
-        },
-        redo({ ifName, oldY, newY }) {
-            ifName.moveTo(newY);
-        },
-    },
-
-    // deleteInterface: {
-    //     doit({ ifName }) {
-    //         editor.saveEdit('deleteInterface');
-    //     },
-    //     undo({ ifName, oldY, newY }) {
-    //         ifName.moveTo(oldY);
-    //     },
-    //     redo({ ifName, oldY, newY }) {
-    //         ifName.moveTo(newY);
-    //     },
-    // },
-};
-
-const redoxRoute = {
-
-routeDrag: {
-
-    doit({route}) {
-        // save the edit
-        editor.saveEdit('routeDrag', {  route, oldWire: route.copyWire(), newWire: null} );
-    },
-    undo({route, oldWire, newWire}) {
-        route.restoreWire(oldWire);
-    },
-    redo({route, oldWire, newWire}) {
-        route.restoreWire(newWire);
-    }
-},
-
-routeDraw: {
-
-    // the edit is called when the route is completed 
-    doit({route}) {
-        editor.saveEdit('routeDraw',{route, newRoute:route.clone()});
-
-        // check if the route has to be displayed as a twisted pair
-        route.checkTwistedPair();
-
-        // check if the route can be used or not
-    },
-
-    // The old route is actually a copy but with the original from/to and points
-    undo({route, newRoute}) {
-
-        // disconnect the route
-        route.disconnect();
-    },
-
-    redo({route, newRoute}) {
-
-        // check if there is a new route
-        if (newRoute) route.connectFromClone(newRoute);
-    }
-},
-
-deleteRoute: {
-
-    // The edit is called at the start of the redraw - newRoute is added when the route is completed
-    doit({route}) {
-
-        editor.saveEdit('deleteRoute',{route, oldRoute:route.clone()});
-
-        // disconnect the route
-        route.disconnect();
-
-        // remove the route at both endpoints
-        route.remove();
-    },
-
-    // The old route is actually a clone with the original from/to and points
-    undo({route, oldRoute}) {
-
-        // check if there was an old route
-        if (oldRoute) route.connectFromClone(oldRoute);
-    },
-
-    redo({route, oldRoute}) {
-
-        // disconnect the old route
-        route.disconnect();
-
-        // check if there is a new route
-        route.remove();
-    }
-},
-
-};
-
-const redoxBus = {
-
-busHighlight: {
-    doit({bus}) {
-        bus.is.highLighted ? bus.unHighLight() : bus.highLight();
-        editor.saveEdit('busHighLight', {bus});
-    },
-    undo({bus})    {
-        bus.is.highLighted ? bus.unHighLight() : bus.highLight();
-    },
-    redo({bus})    {
-        bus.is.highLighted ? bus.unHighLight() : bus.highLight();
-    }
-},
-
-busCreate: {
-
-    doit({view, pos}) {
-        view.state.bus = view.root.addBus("", pos);
-        editor.saveEdit('busCreate',{node:view.root, bus: view.state.bus});
-    },
-    undo({node, bus}) {
-        node.removeBus(bus);
-    },
-    redo({node, bus}) {
-        node.restoreBus(bus);
-    }
-},
-
-busChangeName: {
-
-    doit({bus, label}){
-
-        // save the bus in the state
-        editor.doc.focus.state.bus = bus;
-
-        // set the bus as selected
-        bus.selected = true;
-
-        // if no label selected, take the start label
-        if (!label) label = bus.startLabel;
-
-        // start editing the field
-        editor.doc.focus.beginTextEdit(label);
-
-        // save the edit
-        editor.saveEdit('busChangeName',{label, oldName: label.text, newName:null});
-    },
-    undo({label, oldName, newName}){
-        editor.getParam().newName = label.text;
-        label.setText(oldName);
-    },
-    redo({label, oldName, newName}){
-        label.setText(newName);
-    },
-
-},
-
-busDeleteRouter: {
-
-    doit({bus}) {
-        // save the edit
-        editor.saveEdit('busDeleteRouter', {bus});
-
-        // disconnect the bus from the filter
-        bus.is.filter = false;
-    },
-    undo({bus}) {
-        bus.is.filter = true;
-    },
-    redo({bus}) {
-        bus.is.filter = false;
-    }    
-},
-
-busChangeRouter: {
-
-    doit({bus, newName, userPath}) {
-
-        // copy the old factory
-        const oldRouter = bus.filter ? bus.filter.clone() : null;
-
-        // resolve the input to a new factory arl 
-        if (!bus.filter) bus.filter = new Factory();
-        bus.filter.resolve(newName, userPath, editor.doc.model.getArl(), bus.name);
-
-        // set the filter bit
-        bus.is.filter = true;
-
-        // keep the old factory
-        editor.saveEdit('busChangeRouter',{bus, oldRouter, newRouter: bus.filter});
-
-    },
-    undo({bus, oldRouter, newRouter}) {
-        bus.filter = oldRouter;
-    },
-    redo({bus, oldRouter, newRouter}) {
-        bus.filter = newRouter;
-    }    
-},
-
-busStraightConnections: {
-
-    doit({bus}) {
-
-        const wireArray = [];
-
-        // save the wires of the bus tacks
-        for(const tack of bus.tacks) wireArray.push({   tack, 
-                                                        oldPos:{x: tack.rect.x, y: tack.rect.y}, 
-                                                        wire: tack.route.copyWire()});
-
-        // save
-        editor.saveEdit('busStraightConnections',{bus, wireArray});
-
-        bus.straightConnections();
-    },
-    undo({bus, wireArray}) {
-
-        for (const entry of wireArray) {
-
-            const tack = entry.tack;
-
-            tack.pos.x = entry.oldPos.x;
-            tack.pos.y = entry.oldPos.y;
-            tack.route.restoreWire(entry.wire);
-        }
-
-    },
-    redo({bus, wireArray}) {
-        bus.straightConnections();
-    }
-},
-
-busDisconnect: {
-
-    doit({bus}) {
-        // save the edit
-        editor.saveEdit('busDisconnect', {bus, tacks: bus.tacks.slice()});
-
-        // disconnect all the routes to the bus
-        bus.disconnect();
-    },
-    undo({bus, tacks}) {
-        bus.reconnect(tacks.slice());
-    },
-    redo({bus, tacks}) {
-        bus.disconnect();
-    }    
-},
-
-busDelete: {
-
-    doit({bus}) {
-        // save the edit
-        editor.saveEdit('busDelete', {node: editor.doc.focus.root, bus, tacks:bus.tacks.slice()});
-
-        // delete the bus
-        editor.doc.focus.root.deleteBus(bus);
-    },
-
-    undo({node, bus, tacks}) {
-        node.restoreBus(bus);
-        bus.reconnect(tacks.slice());
-    },
-    redo({node, bus, tacks}) {
-        bus.disconnect();
-        node.removeBus(bus);
-    }    
-},
-
-busDraw: {
-
-    doit({bus}) {
-        // save the edit for undo/redo
-        editor.saveEdit('busDraw',{bus,oldWire: bus.copyWire(),newWire: null});
-    },
-    undo({bus, oldWire, newWire}) {
-        bus.restoreWire(oldWire);
-        bus.startLabel.place();
-        bus.endLabel.place();
-    },
-    redo({bus, oldWire, newWire}) {
-        bus.restoreWire(newWire);
-        bus.startLabel.place();
-        bus.endLabel.place();
-    }
-},
-
-busSegmentDrag: {
-
-    doit({bus}) {
-
-        // save the edit for undo/redo
-        editor.saveEdit('busSegmentDrag',{  bus,
-            oldWire: bus.copyWire(),
-            newWire: null,
-            oldTackWires: bus.copyTackWires(),
-            newTackWires: null
-        });
-    },
-
-    undo({bus, oldWire, newWire, oldTackWires, newTackWires }) {
-
-        bus.restoreWire(oldWire);
-        bus.restoreTackWires(oldTackWires);
-        bus.startLabel.place();
-        bus.endLabel.place();
-        bus.placeTacks();
-    },
-    redo({bus, oldWire, newWire, oldTackWires, newTackWires }) {
-
-        bus.restoreWire(newWire);
-        bus.restoreTackWires(newTackWires);
-        bus.startLabel.place();
-        bus.endLabel.place();
-        bus.placeTacks();
-    }
-},
-
-busDrag: {
-
-    doit({bus}) {
-
-        // save the edit for undo/redo
-        editor.saveEdit('busDrag',{  bus,
-            oldWire: bus.copyWire(),
-            newWire: null,
-            oldTackWires: bus.copyTackWires(),
-            newTackWires: null
-        });
-    },
-    undo({bus, oldWire, newWire, oldTackWires, newTackWires }) {
-
-        bus.restoreWire(oldWire);
-        bus.restoreTackWires(oldTackWires);
-        bus.startLabel.place();
-        bus.endLabel.place();
-        bus.placeTacks();
-    },
-    redo({bus, oldWire, newWire, oldTackWires, newTackWires }) {
-
-        bus.restoreWire(newWire);
-        bus.restoreTackWires(newTackWires);
-        bus.startLabel.place();
-        bus.endLabel.place();
-        bus.placeTacks();
-    }
-},
-
-tackDrag: {
-
-    doit({tack}) {
-        // save the edit for undo/redo
-        editor.saveEdit('tackDrag',{tack,oldWire: tack.route.copyWire(), newWire: null});       
-    },
-    undo({tack, oldWire, newWire}) {
-        tack.route.restoreWire(oldWire);
-        tack.orient();
-    },
-    redo({tack, oldWire, newWire}) {
-        tack.route.restoreWire(newWire);
-        tack.orient();
-    }
-},
-};
-
-const redoxPad = {
-
-padCreate: {
-
-    doit({view, pos, input}) {
-
-        // check
-        if (!view.root) return
-
-        // set the status
-        const is = {
-            input,
-            left : pos.x < view.middle().x
-        };
-
-        // add a pin to the node
-        let proxy = view.root.look.addPin('', pos, is);
-
-        // determine the rectangle for the pad widget
-        const rect = proxy.makePadRect({x:pos.x, y:pos.y- style.pad.hPad/2});
-
-        // create the pad
-        const pad = new Pad(rect, proxy);
-
-        // !! if left we shift over the calculated width !!
-        if (is.left) pad.rect.x -= pad.rect.w;
-
-        // and save the pad
-        view.root.pads.push(pad); 
-
-        // give the pad a UID
-        editor.doc.UID.generate(pad);
-
-        // start editing the pad name
-        view.beginTextEdit(pad);
-
-        // save the editor action
-        editor.saveEdit('padCreate', {view, pad});
-    },
-
-    undo({view, pad}) {
-
-        // it could be that the pad has not been created because the name was not ok
-        if (! view.root.pads.includes(pad)) return
-
-        pad.disconnect();
-
-        view.root.removePad(pad); 
-
-        pad.proxy.disconnect();
-
-        view.root.look.removePin(pad.proxy);
-    },
-
-    redo({view, pad}) {
-
-        // it could be that the pad has not been created because the name was not ok
-        if (! view.root.pads.includes(pad)) return
-
-        view.root.restorePad(pad);
-        view.root.look.restorePin(pad.proxy);
-    }
-
-},
-
-changeNamePad: {
-
-    doit({view, pad}) {
-        // check
-        if (!pad?.proxy) return
-
-        //save the edit
-        editor.saveEdit('changeNamePad',{pad, oldName: pad.text, newName: null});
-
-        // start editing the field
-        view.beginTextEdit(pad);
-    },
-    undo({pad, oldName, newName}) {
-        // save the new name
-        editor.getParam().newName = pad.text;
-
-        // notation
-        const node = pad.proxy.node;
-
-        // if the newname is '', then the pad has been removed > restore pad and pin !
-        if (pad.text.length == 0) {
-            node.restorePad(pad);
-            node.look.restorePin(pad.proxy);
-        }
-        // reset the old name
-        pad.proxy.name = oldName;
-        pad.nameChange(oldName);
-    },
-    redo({pad, oldName, newName}) {
-
-        // notation
-        const node = pad.proxy.node;
-
-        if (!newName || newName.length == 0) {
-            // remove the pad
-            node.removePad(pad);
-
-            // remove the proxy - there should be no more routes connected to the widget !!!
-            node.look.removePin(pad.proxy);
-
-            // done
-            return
-        }
-        // set the new name again
-        pad.proxy.name = newName;
-        pad.nameChange(newName);
-    }
-},
-
-disconnectPad: {
-
-    doit({pad}) {
-        // save the edit *before* disconnecting
-        editor.saveEdit('disconnectPad',{pad, routes: pad.routes.slice()});
-
-        // disconnect all the routes to the pad
-        pad.disconnect();
-    },
-    undo({pad, routes}) {
-        pad.reconnect(routes.slice());
-    },
-    redo({pad, routes}) {
-        pad.disconnect();
-    }
-},
-
-deletePad: {
-
-    doit({pad}) {
-        // save the edit *before* disconnecting
-        editor.saveEdit('deletePad',{pad, routes: pad.routes.slice()});
-
-        // notation
-        const node = editor.doc.focus.root;
-
-        pad.disconnect();
-
-        node.removePad(pad);
-
-        pad.proxy.disconnect();
-
-        node.look.removePin(pad.proxy);
-    },
-    undo({pad, routes}) {
-
-        const node = pad.proxy.node;
-        node.restorePad(pad);
-        node.look.restorePin(pad.proxy);
-        pad.reconnect(routes.slice());
-    },
-    redo({pad, routes}) {
-
-        pad.disconnect();
-        pad.proxy.node.removePad(pad);
-        pad.proxy.disconnect();
-        pad.proxy.node.look.removePin(pad.proxy);
-    }
-},
-
-extrudePad: {
-
-    doit({view, pos}) {
-
-        // the pin that we want to extrude
-        const pin = view.hit.lookWidget;
-        
-        // if we have hit a pin and the pin is not yet a proxy in the root 
-        if (!pin.is.pin) return
-
-        // we create a new proxy in the parent (i.e. the root node)
-        const is = {...pin.is};
-
-        // but it is a proxy
-        is.proxy = true;
-
-        // create the proxy
-        const proxy = view.root.look.addPin(pin.name, pos, is);
-
-        // get the rect for the pad
-        const rect = pin.makePadRect(pos);
-
-        // create the pad
-        const pad = new Pad(rect, proxy);
-
-        // give the pad a uid
-        editor.doc.UID.generate(pad);
-
-        // place the pad
-        pad.place();
-
-        // create a short connection to the actual widget
-        pad.shortConnection(pin);
-
-        // ..save the edit
-        editor.saveEdit('extrudePad',{pad, routes: pad.routes.slice()});
-
-        // and save the pad
-        view.root.pads.push(pad); 
-
-        // and update the state
-        view.state.pad = pad;
-    },
-    undo({pad, routes}) {
-        pad.disconnect();
-        pad.proxy.node.removePad(pad);
-    },
-    redo({pad, routes}) {
-        const node = pad.proxy.node;
-        node.restorePad(pad);
-        node.look.restorePin(pad.proxy);    
-        pad.reconnect(routes.slice());    
-    }
-},
-
-padDrag: {
-
-    doit({pad}) {
-        // save the route points for the undo-operation
-        editor.saveEdit('padDrag',{ pad,
-                                    oldPos:{x:pad.rect.x, y:pad.rect.y}, 
-                                    oldWires: pad.copyWires(), 
-                                    newPos:null,
-                                    newWires:null});
-    },
-
-    undo({pad, oldPos, oldWires, newPos, newWires}) {
-
-        const delta = {x: oldPos.x - newPos.x, y: oldPos.y - newPos.y};
-        pad.move(delta);
-        pad.restoreWires(oldWires);
-    },
-    redo({pad, oldPos, oldWires, newPos, newWires}) {
-
-        const delta = {x: newPos.x - oldPos.x, y: newPos.y - oldPos.y};
-        pad.move(delta);
-        pad.restoreWires(newWires);
-    }
-}
-
-};
-
-const redoxSelect = {
-
-alignVertical: {
-
-    doit({view, left}) {
-
-        // notation
-        const nodes = view.selection.nodes;
-        const pads = view.selection.pads;
-        let deltaNodes = [];
-        let deltaPads = [];
-
-        // more then one node selected ?
-        if (nodes.length > 1) {
-
-            // calculate the horizontal (x) displacements
-            deltaNodes = view.nodesAlignHD(nodes, left);
-
-            // now move the nodes and the routes
-            view.moveNodesAndRoutes(nodes, deltaNodes);
-        }
-
-        // more then one pad selected ?
-        if (pads.length > 1) {
-
-            // calculate the delta for every pad
-            deltaPads = view.padsAlignHD(pads, left);
-
-            // move the pad
-            view.movePadsAndRoutes(pads, deltaPads);
-        }
-
-        // save the edit
-        editor.saveEdit('alignVertical', {view, nodes, deltaNodes, pads, deltaPads});        
-    },
-    undo({view, nodes, deltaNodes, pads, deltaPads}) {
-
-        // back = true
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, true);
-        if (deltaPads.length > 0) view.movePadsAndRoutes(pads, deltaPads, true);
-    },
-    redo({view, nodes, deltaNodes, pads, deltaPads}) {
-
-        // back = false
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, false);
-        if (deltaPads.length > 0) view.movePadsAndRoutes(pads, deltaPads, false);
-    }  
-},
-
-spaceVertical: {
-
-    doit({view}) {
-
-        // notation
-        const nodes = view.selection.nodes;
-        const pads = view.selection.pads;
-        let deltaNodes = [];
-        let deltaPads = [];
-
-        // more then one node selected ?
-        if (nodes.length > 1) {
-
-            // calculate the horizontal (x) displacements
-            deltaNodes = view.nodesSpaceVD(nodes);
-
-            // now move the nodes and the routes
-            view.moveNodesAndRoutes(nodes, deltaNodes);
-        }
-
-        // more then one pad selected ?
-        if (pads.length > 1) {
-
-            // calculate the delta for every pad
-            deltaPads = view.padsSpaceVD(pads);
-
-            // move the pad
-            view.movePadsAndRoutes(pads, deltaPads);
-        }
-
-        // save the edit
-        editor.saveEdit('spaceVertical', {view, nodes, deltaNodes, pads, deltaPads});        
-    },
-    undo({view, nodes, deltaNodes, pads, deltaPads}) {
-
-        // back = true
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, true);
-        if (deltaPads.length > 0) view.movePadsAndRoutes(pads, deltaPads, true);
-    },
-    redo({view, nodes, deltaNodes, pads, deltaPads}) {
-
-        // back = false
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, false);
-        if (deltaPads.length > 0) view.movePadsAndRoutes(pads, deltaPads, false);
-    }  
-},
-
-alignHorizontal: {
-
-    doit({view,top}) {
-        // notation
-        const nodes = view.selection.nodes;
-
-        // check
-        if (nodes.length < 2) return
-    
-        // calculate the dy displacements
-        const deltaNodes = view.nodesAlignVD(nodes);
-    
-        // and move nodes and routes
-        view.moveNodesAndRoutes(nodes, deltaNodes);
-    
-        // save the edit
-        editor.saveEdit('alignHorizontal', {view, nodes, deltaNodes});
-    },
-    undo({view, nodes, deltaNodes}) {
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, true);
-    },
-    redo({view, nodes, deltaNodes}) {
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, false);
-    }  
-},
-
-spaceHorizontal: {
-
-    doit({view}) {
-        const nodes = view.selection.nodes;
-
-        if (nodes.length < 2) return
-    
-        // calculate the horizontal (x) displacements
-        const deltaNodes = view.nodesSpaceHD(nodes, left);
-    
-        // now move the nodes and the routes
-        view.moveNodesAndRoutes(nodes, deltaNodes);
-    
-        // save the edit
-        editor.saveEdit('spaceHorizontal', {view, nodes, deltaNodes});
-    },
-    undo({view, nodes, deltaNodes}) {
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, true);
-    },
-    redo({view, nodes, deltaNodes}) {
-        if (deltaNodes.length > 0) view.moveNodesAndRoutes(nodes, deltaNodes, false);
-    }  
-},
-
-selectionDrag: {
-
-    doit({view}){
-        // make a shallow copy
-        const selection = view.selection.shallowCopy();
-        const oldPos = {x:selection.rect.x, y: selection.rect.y};
-
-        // save the selection
-        editor.saveEdit('selectionDrag', {  view, selection, oldPos: oldPos,newPos: null });
-    },
-    undo({view, selection, oldPos, newPos}) {
-
-        // drag the selection (remember: it is a copy !)
-        selection.drag({x: oldPos.x-newPos.x, y: oldPos.y - newPos.y});
-
-        // also set the *original* rectangle to the initial position
-        view.selection.setRect(oldPos.x, oldPos.y, selection.rect.w, selection.rect.h);
-    },
-    redo({view, selection, oldPos, newPos}) {
-
-        // drag the selection again (remember it is a copy)
-        selection.drag({x: newPos.x-oldPos.x, y: newPos.y - oldPos.y});
-
-        // set the *original* rectangle to the new position
-        view.selection.setRect(newPos.x, newPos.y, selection.rect.w, selection.rect.h);
-    }
-
-},
-
-disconnectSelection: {
-
-    doit({selection}) {
-        // an array of arrays to save the routes of each node
-        const allRoutes = [];
-        
-        // disconnect all nodes in the selection
-        for (const node of selection.nodes) {
-
-            // save the routes first !
-            allRoutes.push(node.getRoutes());
-
-            // disconnect
-            node.disconnect();
-        }
-
-        // save the edit
-        editor.saveEdit('disconnectSelection', {selection: selection.shallowCopy(), allRoutes });
-    },
-    // nota that allRoutes is an array of arrays - one for each node !
-    undo({selection, allRoutes}) {
-
-        for (const routes of allRoutes) {
-            for (const route of routes) {
-                route.reconnect();
-            }
-        }
-    },
-    redo({selection, allRoutes}) {
-        for (const node of selection.nodes) node.disconnect();
-    }
-},
-
-deleteSelection: {
-
-    doit({view}) {
-
-        // an array of arrays to save the routes of each node
-        const allRoutes = [];
-
-        // notation
-        const selection = view.selection;
-            
-        // disconnect all nodes in the selection
-        for (const node of selection.nodes) {
-
-            // save the routes
-            allRoutes.push(node.getRoutes());
-
-            // disconnect
-            node.disconnect();
-
-            // disconnect and remove
-            view.root.removeNode(node);
-        }
-
-        // remove the pads
-        for (const pad of selection.pads) {
-
-            // disconnect pad
-            pad.disconnect();
-
-            // remove pad
-            view.root.removePad(pad);
-
-            // disconnect pin
-            pad.proxy.disconnect();
-
-            // remove pin
-            view.root.look.removePin(pad.proxy);
-        }
-
-        // remove the buses in the selection, but only the ones that have no connections anymore
-        for (const bus of selection.buses) {
-
-            // check
-            if (bus.tacks.length != 0) continue
-
-            // remove the bus
-            view.root.removeBus(bus);
-        }
-
-        // save the edit
-        editor.saveEdit('deleteSelection', {view, selection: selection.shallowCopy(),allRoutes });
-
-        // clean up the selection
-        selection.reset();
-
-        // change the state
-        view.stateSwitch(doing.nothing);
-    },
-
-    // nota that allRoutes is an array of arrays - one for each node !
-    undo({view, selection, allRoutes}) {
-
-        // add all the nodes again
-        for (const node of selection.nodes) view.root.addNode(node);
-
-        // add all the pads again
-        for (const pad of selection.pads) {
-
-            const node = pad.proxy.node;
-            node.restorePad(pad);
-            node.look.restorePin(pad.proxy);
-        }
-
-        // add the buses again
-        for (const bus of selection.buses) {
-
-            // only the buses without connections were removed
-            if (bus.tacks.length != 0) continue
-
-            // remove the bus
-            view.root.restoreBus(bus);
-        }
-
-        // add all the routes again
-        for (const routes of allRoutes) {
-            for (const route of routes) {
-                route.reconnect();
-            }
-        }
-    },
-
-    redo({view, selection, allRoutes}) {
-        
-        // disconnect all nodes in the selection
-        for (const node of selection.nodes) {
-
-            // disconnect
-            node.disconnect();
-
-            // disconnect and remove
-            view.root.removeNode(node);
-        }
-
-        // remove the pads
-        for (const pad of selection.pads) {
-
-            // disconnect
-            pad.disconnect();
-
-            // remove
-            view.root.removePad(pad);
-
-            // disconnect pin
-            pad.proxy.disconnect();
-
-            // remove pin
-            view.root.look.removePin(pad.proxy);
-        }
-
-        // remove the buses in the selection, but only the ones that have no connections anymore
-        for (const bus of selection.buses) {
-
-            // check
-            if (bus.tacks.length != 0) continue
-
-            // remove the bus
-            view.root.removeBus(bus);
-        }
-    }
-},
-
-selectionToClipboard: {
-
-    doit({view}){
-
-        // copy the selection to the clipboard of the editor
-        view.selectionToClipboard();
-    },
-    undo(){},
-    redo(){}
-},
-
-pasteFromClipboard: {
-
-    doit({view, pos, clipboard}){
-
-        // copy the clipboard to the view and to the selection at the position
-        view.clipboardToSelection(pos, clipboard);
-
-        // Change the factory and link paths if the selection is copied from a different directory
-        if ( ! editor.doc.model.getArl().sameDir(clipboard.origin.arl) ) clipboard.selection.adjustPaths( editor.doc.model.getArl() );
-
-        // change the names of the copied nodes if duplicates
-        view.checkPastedNames(clipboard.copyCount);
-
-        // save the edit
-        editor.saveEdit('pasteFromClipboard', {view, selection: view.selection.shallowCopy()});
-    },
-    undo({view, selection}){
-        view.removeSelection(selection);
-    },
-    redo({view, selection}){
-        view.restoreSelection(selection);
-    },
-},
-
-linkFromClipboard: {
-
-    doit({view, pos, clipboard}){
-
-        // also set the relative path for the model
-        clipboard.origin.arl.makeRelative(editor.doc.model.getArl());
-
-        // copy the clipboard to the view and to the selection
-        view.clipboardToSelection(pos, clipboard);
-
-        // the nodes are links
-        view.linkToClipboardNodes(clipboard.origin, clipboard.selection.viewPath);
-
-        // change the names of the copied nodes if duplicates
-        view.checkPastedNames(clipboard.copyCount);
-
-        // save the edit
-        editor.saveEdit('linkFromClipboard', {view, selection: view.selection.shallowCopy()});
-    },
-    undo({view, selection}){
-        view.removeSelection(selection);
-    },
-    redo({view, selection}){
-        view.restoreSelection(selection);
-    },
-},
-
-selectionToGroup: {
-
-    doit({view}){
-
-        // notation
-        const selection = view.selection;
-
-        // if there are no nodes there is nothing to group
-        if (selection.nodes.length == 0) return
-
-        // an array of arrays to save the routes of each node
-        const allRoutes = [];
-
-        // save all the routes of the nodes that will be transferred
-        for (const node of selection.nodes)  allRoutes.push(node.getRoutes());
-        
-        // make a new group with the selection
-        const newGroup = view.selectionToGroup(editor.doc.UID);
-
-        // save the shift that was done
-        const shift = {dx: newGroup.savedView.rect.x, dy: newGroup.savedView.rect.y};
-
-        // save the edit
-        editor.saveEdit('selectionToGroup', {view, selection: selection.shallowCopy(), newGroup, shift, allRoutes});
-
-        // remove the selection (also changes the state)
-        selection.reset();
-
-        // change the state
-        view.stateSwitch(doing.nothing);
-
-        // rebuild the tx table ?
-    },
-    undo({view, selection, newGroup, shift, allRoutes}){
-
-        view.undoSelectionToGroup(selection, newGroup, shift, allRoutes);
-    },
-    redo({view, selection, newGroup, allRoutes}){
-
-        // // make a new group with the selection
-        // const newGroup = view.selectionToGroup()
-
-        // // remove the selection (also changes the state)
-        // view.selection.reset()
-
-        // // change the state
-        // view.stateSwitch(doing.nothing)
-    }
-},
-
-// ungroup only works if the node that has to be ungrouped has no external connections
-unGroup: {
-
-    doit({view, node}){
-
-        // check
-        if (!node.is.group || node.isConnected()) return
-
-        // routes to pads will be removed, so we save those
-        const padRoutes = [];
-        for(const pad of node.pads) for(const route of pad.routes) padRoutes.push(route);
-
-        // the nodes and busses have to be moved to the equivalent position in this view
-        const shift = {dx: view.rect.x, dy:view.rect.y};
-
-        // save the undo parameters
-        editor.saveEdit('unGroup',{view, node, shift, padRoutes});
-
-        // move the nodes and busses to the view
-        view.transferToSelection(node, shift);
-    },
-    undo({view, node, shift, padRoutes}){
-
-        view.undoTransferToSelection(node, shift, padRoutes);
-    },
-    redo({view, node, shift, padRoutes}){
-
-    }
-},
-
-// MAKE UNDO POSSIBLE !
-autoRouteSelection: {
-
-    doit({view}){
-
-        if (! view?.root) return
-
-        const nodes = view.selection.nodes;
-        if (nodes.length < 2) return
-
-        const routes = view.root.getInternalRoutes(nodes);
-
-        for (const route of routes) route.autoRoute( view.root.nodes );
-    },
-    undo(){},
-    redo(){}
-
-}
-
-};
-
-const redoxPinArea = {
-
-disconnectPinArea: {
-
-    doit({view,node, widgets}) {
-        // save an array of pins and routes
-        const allRoutes = node.getAllRoutes(widgets);
-
-        // disconnect the node
-        node.disconnectPinArea(widgets);
-
-        // save the edit
-        editor.saveEdit('disconnectPinArea',{node, widgets: widgets.slice(), allRoutes});
-    },
-    undo({node, widgets, allRoutes}) {
-
-        // reconnect the routes to the pins - make a copy of the routes array, redo empties the array again !
-        for (const route of allRoutes) route.reconnect();
-    },
-    redo({node, widgets, allRoutes}) {
-
-        // redo the disconnect
-        node.disconnectPinArea(widgets);
-    }
-},
-
-deletePinArea: {
-
-    doit({view,node, widgets}) {
-
-        // save an array of pins and routes
-        const allRoutes = node.getAllRoutes(widgets);
-
-        // save the edit
-        editor.saveEdit('deletePinArea',{view, node, widgets: widgets.slice(), allRoutes});
-
-        // disconnect
-        node.disconnectPinArea(widgets);
-
-        // remove the widgets
-        node.look.deletePinArea(widgets);
-    },
-    undo({view, node, widgets, allRoutes}) {
-
-        // the position
-        const first = widgets[0];
-        const pos = {x: first.rect.x, y: first.rect.y};
-
-        // add the widgets back
-        node.look.copyPinArea(widgets, pos);
-
-        // add the pads or the adjust the rx/tx tables
-        node.is.source ? node.rxtxAddPinArea(widgets) : node.addPads(widgets);
-
-        // reconnect the routes to the pins - make a copy of the routes array
-        for (const route of allRoutes) route.reconnect();
-    },
-    redo({view, node, widgets, allRoutes}) {
-
-        node.disconnectPinArea(widgets);
-        node.look.deletePinArea(widgets);
-    }
-},
-
-swapPinArea: {
-
-    doit({view, left, right}){
-
-        // check
-        if (! view.selection.widgets?.length) return
-
-        // save the pins that will be swapped
-        const swapped = [];
-
-        // find the pins that need to be swapped
-        for (let widget of view.selection.widgets) {
-            if ( widget.is.pin && left  && ! widget.is.left) swapped.push(widget);
-            if ( widget.is.pin && right &&   widget.is.left) swapped.push(widget);
-        }
-
-        // do the actual swapping
-        for(const pin of swapped) pin.leftRightSwap();
-
-        // signal the edit
-        editor.saveEdit('swapPinArea', {swapped});
-    },
-    undo({swapped}) {
-        for(const pin of swapped) pin.leftRightSwap();
-    },
-    redo({swapped}) {
-        for(const pin of swapped) pin.leftRightSwap();
-    }
-},
-
-pasteWidgetsFromClipboard: {
-
-    doit({view, clipboard}){
-
-        // check that the clipboard contains a pin area selection
-        if (clipboard.selection.what != selex.pinArea && clipboard.selection.what != selex.ifArea) return
-
-        // get the single node and widget
-        const [node, pos] = view.selection.whereToAdd();
-
-        // check
-        if (!node || node.cannotBeModified()) return
-
-        // get the widgets from the clipboard
-        view.clipboardToSelection(pos,clipboard);
-
-        // save the edit
-        editor.saveEdit('pasteWidgetsFromClipboard', {view, node, widgets: view.selection.widgets.slice(), pos});
-    },
-    undo({view,node, widgets, pos}) {
-
-        // delete the transferred widgets again...
-        if (widgets) node.look.deletePinArea(widgets);
-
-        // reset the selection
-        view.selection.reset();
-    },
-    redo({view, node, widgets, pos}) {
-
-        // bring the widgets back
-        const copies = node.look.copyPinArea(widgets, pos);
-
-        // add the pads or the adjust the rx/tx tables
-        node.is.source ? node.rxtxAddPinArea(widgets) : node.addPads(widgets);
-
-        // set as selected
-        view.selection.pinAreaSelect(copies);
-
-        // change the widgets
-        widgets.splice(0, widgets.length, ...copies);
-    }
-},
-
-pinAreaToMulti: {
-
-    doit({view,widgets}) {
-        editor.saveEdit('pinAreaToMulti',{view, widgets});
-    },
-    undo({view, widgets}) {
-    },
-    redo() {}
-},
-
-multiToPinArea: {
-
-    doit({view,pin}) {
-        editor.saveEdit('multiToPinArea',{view, pin});
-    },
-    undo({view, pin}) {
-    },
-    redo() {}
-},
-
-ioSwitchPinArea: {
-
-    doit({view}) {
-
-        // check
-        if (!view.selection.widgets.length) return
-
-        // we switch all the selected widgets to
-        const switched = [];
-        
-        // note that a switch only happens when a pin is not connected !
-        for (const pin of view.selection.widgets) {
-            if (pin.is.pin && pin.ioSwitch()) switched.push(pin);
-        }
-
-        // check fro switches...
-        if (switched.length) editor.saveEdit('ioSwitchPinArea',{view, switched});
-    },
-    undo({view, switched}) {
-
-        for (const pin of switched) pin.ioSwitch();
-    },
-    redo() {}
-}
-
-};
-
-const redoxView = {
-
-panning: {
-
-    doit({view}){
-    },
-    undo({}) {
-    },
-    redo({}) {
-    }
-},
-
-xxpanning: {
-
-    doit({view}){
-
-        editor.saveEdit('panning', {view, oldTf: {...view.tf}, newTf: {...view.tf}});
-    },
-    undo({view, oldTf, newTf}) {
-
-        // save the current values
-        newTf.dx = view.tf.dx;
-        newTf.dy = view.tf.dy;
-
-        // restore the old values
-        view.tf.dx = oldTf.dx;
-        view.tf.dy = oldTf.dy;
-    },
-    redo({view, oldTf, newTf}) {
-
-        // set the new values
-        view.tf.dx = newTf.dx;
-        view.tf.dy = newTf.dy;
-    }
-},
-
-zooming: {
-
-    doit({view}){
-    },
-    undo({}) {
-    },
-    redo({}) {
-    }
-}
-
-
-};
-
-// we call this redox - oxydation / reduction 
-const redox = {};
-Object.assign(redox, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxBus, redoxPad, redoxSelect, redoxPinArea, redoxView);
-
-const undoRedoHandling = {
-
-    // Execute a requested edit
-    doEdit(verb, param) {
-
-        // execute doit
-        redox[verb].doit(param);
-
-        // refresh the editor
-        this.redraw();
-    },
-
-    // save the edit for later undo/redo
-    saveEdit(verb, param) {
-
-        // push the edit on the undo-stack
-        this.doc.undoStack.push({verb, param});
-
-        // signal that a new edit has been done
-        this.tx.send("new edit",{verb});
-
-        // the model is out of sync with the file and with the raw json
-        this.doc.model.is.dirty = true;
-    },
-
-    // just signal the edit to force a save 
-    signalEdit(verb) {
-        this.tx.send("new edit",{verb});
-    },
-
-    // send a message without saving
-    send(msg, param) {
-
-        this.tx.send(msg,param);
-    },
-
-    // get the parameters of the edit
-    getParam() {
-        return this.doc.undoStack.last()?.param ?? {}
-    },
-
-    // get the verb of the edit
-    getVerb() {
-        return this.doc.undoStack.last()?.verb
-    },
-
-    // undo the last edit
-    undoLastEdit() {
-
-        // pop the action from the stack
-        const action = this.doc.undoStack.back();
-
-        console.log('undo ',action ? action.verb : '-nothing-');
-
-        // check
-        if (!action) return
-
-        // execute
-        redox[action.verb].undo(action.param);
-    },
-
-    // redo the last edit
-    redoLastEdit() {
-
-        // get the current action
-        const action = this.doc.undoStack.forward();
-
-        console.log('redo ',action ? action.verb : '-nothing-');
-
-        //check
-        if (!action) return
-
-        // execute
-        redox[action.verb].redo(action.param);
-    },
-
-    dropLastEdit() {
-        this.doc.undoStack.back();
-    },
-
-
-
-};
-
-let editor;
-
-// state for the editor
-const editorDoing = {
-    nothing: 0,
-    viewResize: 1,
-    viewDrag: 2,
-    hoverBorder: 3
-};
-
-// The Editor function
-function Editor() {
-
-    // The canvas and context
-    this.canvas = null;
-    this.ctx = null;
-
-    // the active document
-    this.doc = null;
-
-    // The state of the editor (see possible actions above)     *** Not to be confused with the state of the view ! ***
-    this.state = {
-        view:null,
-        widget: null,
-        action: editorDoing.nothing,
-    };
-
-    // the transmit function and sender
-    this.tx = null;
-
-    // the settings
-    this.sx = null;
-
-    // true if we have already launched requestAnimationFrame
-    this.waitingForFrame = false;
-}
-Editor.prototype = {
-
-    setup() {
-        // create the canvas
-        this.canvas = document.createElement("canvas");
-
-        // make the canvas focusable
-        this.canvas.setAttribute('tabindex', '0');
-
-        // but avoid the focus outline around it
-        this.canvas.style.outline = 'none';
-
-        // create a context
-        this.ctx = this.canvas.getContext('2d');
-
-        // set some values that will rarely change
-        this.setStyle();
-        
-        // add the event handlers
-        this.addEventHandlers();
-
-        // set the background
-        this.clear();
-    },
-
-    getCanvasContext() {
-        return this.ctx
-    },
-
-    addEventHandlers() {
-
-        // add the keyboard handlers to the document
-        document.addEventListener('keydown', (e)=> this.onKeydown(e) );
-        document.addEventListener('keyup', (e) => this.onKeyup(e) );
-
-        // add mouse related event listeners to the canvas
-        this.canvas.addEventListener('mousedown',(e)=>this.onMouseDown(e));
-        this.canvas.addEventListener('mouseup',(e)=>this.onMouseUp(e));
-        this.canvas.addEventListener('mousemove',(e)=>this.onMouseMove(e));
-        this.canvas.addEventListener('mousewheel',(e)=>this.onWheel(e));
-        this.canvas.addEventListener('contextmenu',(e)=>this.onContextMenu(e));
-        this.canvas.addEventListener('click',(e)=>this.onClick(e));
-        this.canvas.addEventListener('dblclick',(e)=>this.onDblClick(e));
-        this.canvas.addEventListener('dragover',(e)=>this.onDragOver(e));
-        this.canvas.addEventListener('drop',(e)=>this.onDrop(e));
-
-        // not reliable
-        //this.canvas.addEventListener('keydown', (e)=> this.onKeydown(e) )
-        //this.canvas.addEventListener('keyup', (e) => this.onKeyup(e) )
-
-        // just for testing
-        // this.canvas.addEventListener('focus', () => console.log('Canvas is focused'));
-        // this.canvas.addEventListener('blur', () => console.log('Canvas lost focus'));
-    },
-
-    // clear the screen
-    clear() { 
-        this.ctx.fillStyle = style.std.cBackground;
-        this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-    },
-
-    switchView(view) {
-
-        if (!view) return
- 
-        // notation
-        const doc = this.doc;
-
-        // only switch if view is different
-        if (view == doc.focus) return;
-
-        // change the apperance
-        doc.focus.unHighLight();
-
-        // set the view in focus
-        doc.focus = view;
-
-        // change the apperance
-        doc.focus.highLight();
-
-        // and bring the view to the front in the parent view
-        doc.focus.parent?.viewToFront(doc.focus);
-    },
-
-    // set some style values that will rarely change
-    setStyle() {
-
-        // if we have doc we set the style specified in the doc
-        if (this.doc) style.switch(this.doc.model.header?.style);
-
-        // also set the standard ctx values 
-        const ctx = this.ctx;
-        const std = style.std;
-
-        ctx.font = std.font;
-        ctx.strokeStyle = std.cLine;
-        ctx.fillStyle = std.cFill;
-        ctx.lineCap = std.lineCap;
-        ctx.lineJoin = std.lineJoin;
-        ctx.lineWidth = std.lineWidth;
-    },
-
-    redraw() {
-
-        // if we are already waiting for a frame, nothing to do
-        if (this.waitingForFrame) return;
-
-        // change to waiting status
-        this.waitingForFrame = true;
-
-        // launch request
-        window.requestAnimationFrame( ()=> {
-
-            // clear and redraw
-            this.clear();
-
-            // render the document
-            this.doc?.view.render(this.ctx); 
-            
-            // ready for new redraw requests
-            this.waitingForFrame = false;
-        });
-    },
-
-    changeCursor(cursor) {
-        editor.canvas.style.cursor = cursor;
-    },
-
-    // to calculate the delta it does not matter if the copy and paste are in the same or in different views
-    // The delta is simply a value to go from one coordinate value to another
-    // cb is the clipboard
-    xxdeltaForPaste(pos, cb) {
-
-        const slct = cb.selection;
-
-        // get the reference to calculate the delta
-        const ref = slct.rect ? slct.rect : 
-                    slct.nodes?.length > 0 ? slct.nodes[0].look.rect : 
-                    slct.pads?.length > 0  ? slct.pads[0].rect : 
-                    {x:0, y:0};
-
-        // increment the copy count
-        cb.copyCount++;
-        
-        // if the position is the same as the reference - move the first, otherwise only move starting from 2
-        if ((ref.x == pos.x) && (ref.y == pos.y)) 
-
-            return {    x: cb.copyCount * style.look.dxCopy, 
-                        y: cb.copyCount * style.look.dyCopy}
-        else 
-            return {    x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, 
-                        y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
-    },
-
-    // to calculate the delta it does not matter if the copy and paste are in the same or in different views
-    // The delta is simply a value to go from one coordinate value to another
-    // cb is the clipboard
-    xxxdeltaForPaste(pos, cb) {
-
-        // get the reference to calculate the delta
-        const ref = cb.rect ? cb.rect : 
-                    cb.root.nodes.length > 0 ? cb.root.nodes[0].look.rect : 
-                    cb.root.pads.length > 0  ? cb.root.pads[0].rect : 
-                    {x:0, y:0};
-
-        // increment the copy count
-        cb.copyCount++;
-        
-        // if the position is the same as the reference - move the first, otherwise only move starting from 2
-        if ((ref.x == pos.x) && (ref.y == pos.y)) 
-
-            return {    x: cb.copyCount * style.look.dxCopy, 
-                        y: cb.copyCount * style.look.dyCopy}
-        else 
-            return {    x: pos.x - ref.x + (cb.copyCount-1) * style.look.dxCopy, 
-                        y: pos.y - ref.y + (cb.copyCount-1) * style.look.dyCopy }
-    },
-
-    // this is to copy to the external windows clipboard
-    textToExternalClipboard(text) {
-
-        const blob = new Blob([text], { type: "text/plain" });
-        const data = [new ClipboardItem({ ["text/plain"]: blob })];
-        navigator.clipboard.write(data);
-    },
-};
-Object.assign(Editor.prototype, mouseHandling$1, keyboardHandling$1, messageHandling, undoRedoHandling);
-
-/**
- * @node editor editor
- */
-
-function placePopup(pos) {
-    return {x: pos.x - 15, y:pos.y + 10}
-}
-
-const nodeClickHandling = {
-
-    showExportForm(pos) {
-
-        const node = this;
-
-        // send the show link path
-        editor.tx.send("show link",{   
-            title:  'Export to link' ,
-            name: node.name,
-            path:  '', 
-            pos:    pos,
-            ok: (newName, userPath) => editor.doEdit('saveToLink',{node, newName, userPath}),
-            cancel:()=>{}
-        });
-    },
-
-    showLinkForm(pos) {
-
-        const node = this;
-
-        // check what path to show - show no path if from the main model
-        const linkPath = (node.link && (node.link.model != editor.doc?.model)) ? node.link.model?.blu.arl.userPath : '';
-
-        // name to show
-        const linkName = node.link ? node.link.lName : node.name;
-
-        // send the show link path
-        editor.tx.send("show link",{   
-
-            title: 'Set link' ,
-            name: linkName,
-            path: linkPath,
-            pos: pos,
-            ok: (newName,newPath)=> {
-
-                // if changed 
-                if ((newName != linkName) || (newPath != linkPath))
-                    editor.doEdit('changeLink',{node, lName: newName, userPath: newPath});
-            },
-            open: (newName, newPath) => {
-
-                // check for changes
-                if ((newName != linkName) || (newPath != linkPath))
-                    editor.doEdit('changeLink',{node, lName: newName, userPath: newPath});
-
-                // open the file if the link is to an outside file !
-                if (node.link.model?.blu.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.getArl());
-            },
-            cancel:()=>{}
-        });
-    },
-
-    iconClick(view, icon, pos) {
-
-        const node = this;
-
-        // move the popup a bit away from the icon
-        const newPos = placePopup(pos);
-
-        switch (icon.type) {
-    
-            case 'link':
-            case 'lock':
-
-                this.showLinkForm(newPos);
-                break
-
-            case 'factory':
-
-                // set the factory name and path if not available
-                const factoryName = node.factory.fName.length < 1 ? convert.nodeToFactory(node.name) : node.factory.fName;
-                const factoryPath = node.factory.arl ? node.factory.arl.userPath : '';
-
-                // show the factory
-                editor.tx.send("show factory",{ title: 'Factory for ' + node.name, 
-                                        name: factoryName,
-                                        path: factoryPath,
-                                        pos: newPos,
-                                        ok: (newName,newPath) => {
-
-                                            // do the edit
-                                            editor.doEdit('changeFactory',{node,newName : newName.trim(),userPath: newPath.trim()});
-                                        },
-                                        open: async (newName, newPath) => {
-
-                                            // change the factory if anything was changed
-                                            if ((newName != factoryName )||(newPath != factoryPath))
-                                                editor.doEdit('changeFactory',{node,newName : newName.trim(),userPath: newPath.trim()});
-
-                                            // get the current reference
-                                            const arl = node.factory.arl ?? editor.doc.resolve('./index.js');
-
-                                            // open the file
-                                            editor.tx.send('open source file',{arl});
-                                        },
-                                        cancel:()=>{}
-                });
-                break;
-
-            case 'group':
-                
-                // the next view to show
-                let nextView = null;
-
-                // if we have a saved view
-                if (node.savedView) {
-
-                    // ..that is visible, close it and show the parent note that the savedview could still be 'raw' 
-                    if (node.savedView.viewState?.visible) {
-
-                        nextView = node.savedView.parent;
-                        if (nextView) node.savedView.closeView();
-                    }
-                    // otherwise restore the view (and cook it if necessary)
-                    else {
-                        view.restoreView(node);
-                        nextView = node.savedView;
-                    }                    
-                }
-                else  {
-                    // create a brand new subview
-                    nextView = view.newSubView(node);
-                }
-
-                // switch the focus window to next
-                if (nextView) editor.switchView(nextView);
-                break
-
-            case 'cog':
-
-                editor.tx.send("settings",{    title:'Settings for ' + node.name, 
-                                        pos: newPos,
-                                        json: node.sx,
-                                        ok: (sx) => editor.doEdit("changeNodeSettings",{node, sx})
-                                    });                  
-                break     
-
-            case 'pulse':
-
-                editor.tx.send("runtime settings",{    title:'Runtime settings for ' + node.name, 
-                                                pos: newPos,
-                                                dx: node.dx,
-                                                ok: (dx) => editor.doEdit("changeNodeDynamics",{node, dx})
-                                            });
-                break 
-
-            case 'comment':
-
-                // save the node hit
-                editor.tx.send("node comment", {   header: 'Comment for ' + node.name, 
-                                            pos: newPos, 
-                                            uid: node.uid, 
-                                            text: node.prompt ?? '', 
-                                            ok: (comment)=> editor.doEdit("changeNodeComment",{node, comment})
-                                        });
-                break        
-        }
-    
-    },
-
-    iconCtrlClick(view,icon, pos) {
-
-        const node = this;
-
-        switch (icon.type) {
-    
-            case 'link': 
-            case 'lock': {
-
-                // open the file if it points to an external model
-                if (node.link?.model?.blu.arl && (node.link.model != editor.doc?.model)) editor.tx.send('open document',node.link.model.getArl());
-            }
-            break
-
-            case 'factory': {
-
-                // check - should not be necessary
-                if ( ! node.is.source) return
-
-                // get the current reference
-                const arl = node.factory.arl ?? editor.doc.resolve('./index.js');
-
-                // request to open the file
-                if (arl) editor.tx.send("open source file", {arl});
-            }
-            break
-    
-            case 'group':
-                // if the node has a saved view, we show that otherwise create a new
-                node.savedView ?  view.restoreView(node) : view.newSubView(node);
-
-                // make it full screen
-                node.savedView?.big();
-                break
-        }
-    
-    }
-
-};
-
-const collectHandling = {
-
-// make the list of factories used by this node
-    collectFactories(factories) {
-
-        // if the node has a link, the factory file is not local, so we do not save the factory file
-        if (this.link) return
-
-        // get the factory
-        if (this.is.source && this.factory.arl != null) {
-
-            // only adds new factories
-            factories.add(this.factory);
-        }
-        
-        // get the factories of the other nodes
-        if (this.is.group) for (const node of this.nodes) node.collectFactories(factories);
-    },
-
-    // make the list of models this file uses as link
-    // only do this at the first level - when a model has been found we do not continue for the nodes of this model !
-    collectModels(models) {
-
-        // if the node has a link
-        if (this.link) {
-
-            // ...add the link to the linklist if required 
-            if (this.link.model && !this.link.model.is.main) {
-
-                // and add it to the model list
-                models.add(this.link.model);
-            }
-        }
-        else {
-
-            // ...continue for all nodes
-            this.nodes?.forEach( node => node.collectModels(models) );
-        }
-    },
-
-    // if we save the model in a lib we only keep the links to other libs - all the rest is put in the file
-    collectModelsForLib(models, main) {
-
-        // if the node is linked to a lib that is different from the lib we are saving to, add it
-        if (this.link) {
-
-            // get the model
-            const model = this.link.model;
-        
-            // add the model if it is not the main file (it is only added if not yet in the list)
-            if ( model &&  !model.getArl().equals(main.arl))  models.add(model);
-        }
-        else {
-            // ...continue for all nodes
-            this.nodes?.forEach( node => node.collectModelsForLib(models, main) );
-        }
-    },
-
-    // get the list of source files that need to be imported
-    collectImports(srcImports, lib=null) {
-
-        // for group nodes - loop through all nodes..
-        if (this.is.group) {
-
-            // if the node comes from a library then a priori the sources will also come from that library
-            if (this.link?.model?.is.lib) lib = this.link.model;
-
-            // continue for the nodes..
-            for(const node of this.nodes) node.collectImports(srcImports,lib);
-
-            // also collect the routers (if any)
-            for (const bus of this.buses) if (bus.hasFilter()) bus.getFilter(srcImports, lib, this.link);
-
-            // done
-            return
-        }
-
-        // for a source node find the arl to be used for the source - or take the ./index.js file in the directory of the model
-        const srcArl = this.getSourceArl(lib) ?? srcImports[0].arl;
-
-        // check if the factoryname is already in use somewhere and use an alias if necessary - else just use the name
-        const factorySpec = this.factory.duplicate(srcImports, srcArl) ? `${this.factory.fName} as ${this.factory.alias}` : this.factory.fName;
-
-        // see if the arl is already in the list
-        const found = srcImports.find( srcImport => srcImport.arl.equals(srcArl));
-
-        // if we have the file, add the item there if..
-        if (found) {
-
-            // ..it is not already in the list..
-            const item = found.items.find( item => item == factorySpec);
-
-            // ..if not add it to the list
-            if (!item) found.items.push(factorySpec);
-        }
-        else {
-            // add the file and put the first item on the list
-            srcImports.push({arl:srcArl, items:[factorySpec]});
-        }
-    },
-
-    // build an array of source nodes ** Recursive **
-    makeSourceLists(nodeList, filterList) {
-
-        if (this.is.source) {
-            nodeList.push(this);
-        }
-        else {
-            // output a warning for bad links
-            if (this.link?.is.bad) {
-                console.warn(`Group node "${this.name}" is missing. ModelBlueprint "${this.link.model.getArl().userPath}" not found`);
-            }
-            // output a warning for empty group nodes
-            else if (!this.nodes) {
-                console.warn(`Group node "${this.name}" is empty`);
-            }
-            else {
-
-                // add the buses with a router to the array !
-                for(const bus of this.buses) {
-                    if (bus.is.filter) filterList.push(bus);
-                }
-
-                // and the nodes !
-                for(const node of this.nodes) node.makeSourceLists(nodeList, filterList);
-            }
-        }
-    },
-
-    // checks if a factory with the same name does already exist and sets the alias if so
-    // Note that we only search once ! so if factory and _factory exist we are screwed
-    xxxduplicateFactory(srcImports, ownArl) {
-
-        // check for duplicates (same name in different file !)
-        const duplicate = srcImports.find( srcImport => {
-
-            // ignore the ownArl of course
-            if (srcImport.arl.equals(ownArl)) return false
-
-            // search for 
-            return srcImport.items.find( item => item == this.factory.fName)
-        });        
-
-        // if the node exist already in a different file...
-        if (duplicate) {
-
-            // give a warning
-            console.warn(`Duplicate factory name: ${this.factory.fName} is already defined in ${duplicate.arl.userPath}`);
-
-            // make an alias
-            this.factory.alias = '_' + this.factory.fName;
-
-            // we have a duplicate
-            return true
-        }
-        else {
-            // set the alias to null
-            this.factory.alias = null;
-
-            //no duplicate found...
-            return false
-        }
-    },
-};
-
-function Link(model, lName) {
-
-    this.model = model;
-
-    //The format of lName is node @ group1 @ group2 ...
-    this.lName = lName;
-
-    this.is = {
-        bad: false,
-    };
-}
-Link.prototype = {
-
-    copy() {
-
-        const newLink = new Link(this.model, this.lName);
-        return newLink
-    },
-
-    makeRaw() {
-
-        // get the key for the link
-        const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './';
-        return { path, node: this.lName}
-    },
-
-    // toJSON() {
-
-    //     // get the key for the link
-    //     const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './'
-
-    //     return { path, node: this.lName}
-    // },
-
-    // unzip() {
-
-    //     // get the key for the link
-    //     const path = (this.model && !this.model.is.main) ? this.model.getArl().userPath : './'
-
-    //     return {
-    //         blu: { path, node: this.lName},
-    //         viz: null
-    //     }
-
-    // }
-};
-
-const linkHandling = {
-    // note that model can be null !
-    setLink(model, lName) {
-
-        // change or create a link
-        if (this.link) {
-
-            // set the new values
-            this.link.model = model;
-            this.link.lName = lName;
-
-            // check the link icon
-            this.link.model?.is.lib ? this.look.checkLinkIcon('lock') : this.look.checkLinkIcon('link');
-        }
-        else {
-
-            // create the link
-            this.link = new Link(model, lName);
-
-            // set the icon
-            model?.is.lib ? this.look.addIcon('lock') : this.look.addIcon('link');
-        }
-    },
-
-    clearLink() {
-
-        // also remove the link widget
-        this.look.removeLinkIcon();
-
-        // and we add a source or group icon for the node (addIcon removes icons that have the same place !)
-        this.is.source ? this.look.addIcon('factory') : this.look.addIcon('group');
-
-        // clear the link
-        this.link = null;
-    },
-
-    linkIsBad() {
-
-        // the link is bad
-        this.link.is.bad = true;
-
-        // show that the link is bad
-        this.look.badLinkIcon();      
-    },
-
-    linkIsGood() {
-        // the link is bad
-        this.link.is.bad = false;
-
-        // show that the link is bad
-        this.look.goodLinkIcon();
-    },
-
-    // change the filenames to filenames relative to the filename of the view (document)
-    adjustPaths( newRefArl ) {
-
-        // if the node has a link ...change the link - we do not change the subnodes ! 
-        if (this.link) {
-
-            this.link.model.getArl().makeRelative( newRefArl );
-        }
-
-        // if the node is a source node, change the factory arl if any
-        else if (this.factory?.arl) {
-            this.factory.arl.makeRelative( newRefArl );
-        }
-
-        // there is no link - look at the subnodes
-        else if (this.nodes) for( const node of this.nodes) node.adjustPaths( newRefArl );
-    },
-};
-
-const routeHandling = {
-
-// for the undo operation of a disconnect we have to save all the routes to and from this node
-getRoutes() {
-
-    const allRoutes = [];
-
-    // save the routes to all the pins
-    for (const pin of this.look.widgets) {
-
-        // check
-        if (!pin.is.pin) continue
-
-        // make a copy of the routes
-        for (const route of pin.routes) allRoutes.push(route);
-    }
-
-    // done
-    return allRoutes
-},
-
-// for the undo operation of a disconnect we have to save all the routes to and from this node
-getAllRoutes(widgets) {
-
-    const allRoutes = [];
-
-    // save the routes to all the pins
-    for (const pin of widgets) {
-
-        // check
-        if (!pin.is.pin) continue
-
-        // make a copy of the routes
-        for (const route of pin.routes) allRoutes.push(route);
-    }
-
-    // done
-    return allRoutes
-},
-
-connect() {},
-
-disconnect() {
-    for (const widget of this.look.widgets) if (widget.is.pin) widget.disconnect();
-},
-
-disconnectPinArea(widgets) {
-    for (const widget of widgets) if (widget.is.pin) widget.disconnect();
-},
-
-isConnected() {
-
-    for (const widget of this.look.widgets) if (widget.is.pin && widget.routes.length > 0) return true
-    return false
-},
-
-// highlight all the routes
-highLight() {
-    // clear the highlight state first
-    this.is.highLighted = true;
-
-    // unhighlight the routes if the look at the other side is not highlighted
-    for(const widget of this.look.widgets) {
-
-        // only check pins that have routes
-        if (!widget.is.pin || widget.routes.length == 0) continue
-
-        for(const route of widget.routes) {
-
-            const other = route.from === widget ? route.to : route.from;
-
-            route.highLight();
-
-            if (other.is.tack) other.highLightRoutes();
-        }
-    }
-},
-
-// un-highlight all the routes
-unHighLight() {
-
-    // clear the highlight state first
-    this.is.highLighted = false;
-
-    // unhighlight the routes if the look at the other side is not highlighted
-    for(const widget of this.look.widgets) {
-
-        // only check pins that have routes
-        if (!widget.is.pin || widget.routes.length == 0) continue
-
-        for(const route of widget.routes) {
-
-            const other = route.from === widget ? route.to : route.from;
-
-            route.unHighLight();
-
-            if (other.is.tack) other.unHighLightRoutes();
-        }
-    }
-},
-
-};
-
-const compareHandling = {
-
-    // remove zombie pins and accept new or added pins
-    acceptChanges() {
-
-        // accept all the changes for this look
-        if (this.look) this.look.acceptChanges();
-
-        // .. and for all the subnodes 
-        this.nodes?.forEach( node => node.acceptChanges());
-    },
-
-    // compares the settings of the nodes
-    // new values are added, removed values are removed
-    // for existing entries the value is copied
-    sxUpdate(linkNode) {
-
-        // If there are no settings, just return
-        if (!linkNode.sx) return
-
-        // update the derived settings
-        this.sx = updateDerivedSettings(linkNode.sx, this.sx);
-    },
-
-    sameRelativePosition(dockLook, linkLook, lw){
-
-        // Calculate the same relative position in the dockLook look as in the linkLook look
-        return {    x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
-                    y: dockLook.rect.y + (lw.rect.y - linkLook.rect.y)}
-    },
-
-    // find the position for a new pin with a prefix: we have to make sure it is added to the correct ifName group
-    prefixPinPosition(dockLook, lw){
-
-        // get the prefix
-        const prefix = lw.getPrefix();
-
-        // find the ifName
-        const ifName = dockLook.findInterfaceName(prefix);
-
-        // find the ifName group
-        const ifPins = ifName ? dockLook.getInterface(ifName) : null;
-
-        // check
-        if (! ifPins) {
-            // this should not happen - even a new prefix will have been added (see below)
-            console.log('*** InterfaceName not found ***' + prefix + '  ' + lw.name);
-
-            // add at the end ...
-            return {
-                x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
-                y: dockLook.rect.y + dockLook.rect.h
-            }
-        }
-
-        // take the last element of the array
-        const last = ifPins.at(-1);
-
-        // add the item behind the last 
-        return {    x: lw.is.left ? dockLook.rect.x : dockLook.rect.x + dockLook.rect.w, 
-                    y: last.rect.y + last.rect.h}
-    },
-
-    // The position is the default position in the dockLook node
-    // we put a new ifName just in front of the next ifName or at the end
-    newInterfaceNamePosition(dockLook, lw) {
-
-        // if we find no ifName add to the end
-        const newPos = {x: dockLook.rect.x, y: dockLook.rect.y + dockLook.rect.h};
-
-        // search for the first ifName below pos.y
-        for(const sep of dockLook.widgets) {
-
-            // check only interfaceNames
-            if (! sep.is.ifName) continue
-
-            // keep the order of adding stuff
-            if (sep.is.added) continue
-
-            // adapt y if the ifName is below but closer
-            if (sep.rect.y > lw.rect.y && sep.rect.y < newPos.y) newPos.y = sep.rect.y;
-        }
-
-        // done
-        return newPos
-    },
-
-    // check the pin/proxy for zombies or added pins/proxies with the linked node
-    // Note that for 'addPin' the rxtx tables or the pads will be adjusted later
-    widgetCompare( linkNode ) {
-
-        // notation
-        const dockLook = this.look;
-        const linkLook = linkNode.look;
-
-        // reset the dockLook pins - by default set all pins and interfaceNames to zombie
-        for (const dw of dockLook.widgets) {
-
-            // set pins and interfaces to zombies - they will be un-zombied as we find them.
-            if (dw.is.pin || dw.is.ifName) {
-                dw.is.added = false;
-                dw.is.zombie = true;
-            }
-        }
-
-        // we make a sorted list of proxies - sort according y-value
-        // In that way new widgets will be added at the same position as in the linkLook node.
-        const linkedSorted = linkLook.widgets.slice().sort( (a,b) => a.rect.y - b.rect.y);
-
-        // we first handle the interfaceNames
-        for(const lw of linkedSorted)  {
-
-            // only interfaceNames
-            if ( ! lw.is.ifName) continue
-
-            // find the corresponding widget in the dock
-            let dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.ifName && lw.is.ifName && (dw.text == lw.text)));
-            if (dw) {
-                dw.is.zombie = false;
-                dw.wid = lw.wid;
-                continue
-            }
-
-            // let's check for a name change -> find the corresponding widget in the dock
-            dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.ifName && lw.is.ifName && (dw.wid == lw.wid)));
-            if (dw) {
-                this.dockInterfaceNameChange(dw, lw);
-                dw.is.zombie = false;
-                continue
-            }
-
-            // There is a new ifName
-            this.dockNewInterfaceName(lw);
-        }
-
-         // now we handle the pins
-        for(const lw of linkedSorted) {
-
-            if ( ! lw.is.pin ) continue
-
-            // exactly the same
-            let dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.pin && (dw.name == lw.name) && (dw.is.input == lw.is.input) && (dw.is.channel == lw.is.channel)) );
-            if (dw) {
-                dw.is.zombie = false;
-                dw.wid = lw.wid;
-                continue
-            }
-
-            // probably a name change - select only unprocessed pins !
-            dw = dockLook.widgets.find( dw => (dw.is.zombie && dw.is.pin &&  (dw.wid == lw.wid) && (dw.is.input == lw.is.input)) );
-            if (dw) {
-
-                this.dockPinChange(dw, lw);
-                dw.is.zombie = false;
-                continue
-            }
-
-            // we consider the pin a new pin
-            this.dockNewPin(lw, linkNode);
-        }
-    },
-
-    dockNewPin(lw, linkNode) {
-
-        // if the pin has a prefix it has to be added to the right prefix group !
-        // by default we put a new pin at the same relative position as in the linked node
-        const pos = (lw.pxlen != 0) ? this.prefixPinPosition(this.look, lw) : this.sameRelativePosition(this.look, linkNode.look, lw); 
-
-        // add the pin
-        const newPin = this.look.addPin(lw.name, pos, lw.is);
-
-        // copy profile and prefix length
-        //newPin.profile = lw.profile
-        newPin.pxlen = lw.pxlen;
-
-        // it is a new widget 
-        newPin.is.added = true;
-    },
-
-    dockNewInterfaceName(lw) {
-
-        // find the new position for a ifName (behind another ifName group !)
-        const pos = this.newInterfaceNamePosition(this.look, lw);
-
-        // add the ifName
-        const newInterfaceName = this.look.addIfName(lw.text, pos);
-        
-        // it is a new widget 
-        newInterfaceName.is.added = true;
-    },
-
-    // The widget is a pin but has changed (input to output is not considered a change, but a new pin !)
-    dockPinChange(dw,lw) {
-
-        // a channel was added or removed
-        if (lw.is.channel != dw.is.channel)  dw.is.channel = lw.is.channel;
-
-        // a name change - if the prefix has changed it must move to the appropriate seperator group
-        if ((lw.name != dw.name)||(lw.pxlen != dw.pxlen)) {
-
-            // if the widget has a prefix that is different from the current one
-            if ((lw.pxlen != 0)&&(lw.getPrefix() != dw.getPrefix())) {
-
-                // or the ifName text has changed or it is in the wrong ifName group
-                const pos = this.prefixPinPosition(this.look, lw);
-
-                // move the pin to a different location
-                this.look.movePin(dw, pos);
-            }
-
-            // copy 
-            dw.name = lw.name;
-            dw.pxlen = lw.pxlen;
-            dw.is.multi = lw.is.multi;
-        }
-
-        // profile change (silent)
-        //if (lw.is.input && lw.profile != dw.profile) dw.profile = lw.profile     
-        
-        // signal the change
-        dw.is.added = true;
-    },
-
-    dockInterfaceNameChange(dw, lw, linkNode) {
-
-        // change the text
-        if (lw.text == dw.text) return 
-
-        // change the text
-        dw.text = lw.text;
-        dw.is.added = true;
-
-        // change the prefixes of the pins
-        this.look.interfaceChangePrefix(dw); 
-    },
-
 };
 
 const widgetHandling = {
@@ -16745,757 +8166,6 @@ const widgetHandling = {
     },
 };
 
-const padRouteFunctions = {
-
-    adjustRoutes() {
-        for(const route of this.routes) route.adjust();
-    },
-
-    routeToPin(pin) {
-
-        // create a route between the pin and this pad
-        let route = new Route(pin, this);
-
-        // make a simple route between the two pins
-        route.fourPointRoute();
-
-        // save the route
-        this.routes.push(route);
-
-        // also in the pin
-        pin.routes.push(route);
-    },
-
-    shortConnection(actual) {
-
-        // create a route between the actual widget and this pad
-        let route = new Route(actual, this);
-
-        // make a simple route between the two pins
-        route.twoPointRoute();
-
-        // save the route
-        this.routes.push(route);
-
-        // also in the actual
-        actual.routes.push(route);
-    },    
-
-    canConnect(widget) {
-
-        // inputs connect to inputs and outputs to outputs !
-        if (widget.is.pin) {
-
-            // the proxy and the widget mùust both be inputs or outputs
-            if (this.proxy.is.input != widget.is.input) return false
-
-            // if the widget is a channel, then the proxy must be a channel also
-            if (widget.is.channel && !this.proxy.is.channel) return false
-
-            // if the widget is a multi
-            if ((widget.is.multi || this.proxy.is.multi) && (!widget.hasMultiOverlap(this.proxy))) return false
-        }
-
-        // no duplicates
-        if (this.routes.find( route => (route.from == widget)||(route.to == widget))) return false
-
-        return true
-    },
-
-    // disconnect all routes to and from a pad
-    disconnect() {
-
-        // make a copy of the routes - the pad.routes array will be modified during this proc
-        const routes = this.routes.slice();    
-
-        // go through all the routes
-        for (const route of routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // a pad can be connected to a pin or bus
-            other.is.pin ? route.rxtxPinPadDisconnect() : route.rxtxPadBusDisconnect();
-
-            // remove the route at both ends
-            route.remove();
-        }
-    },
-
-    reconnect(routes) {
-
-        this.routes = routes;
-
-        for(const route of routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // a pad can be attached to a pin or a bus
-            if (other.is.pin) other.routes.push(route);
-            else other.bus.push(other);
-        }
-    },
-
-    // before dragging the pad we want to make sure the pad is the to widget
-    checkRoutesDirection() {
-        this.routes.forEach( route => { if (route.from == this) route.reverse(); });
-    },
-
-    drag(next, delta) {
-
-        // if there are routes ...
-        if (this.routes.length > 0) {
-
-            // get the last two points of the first route
-            const wire = this.routes[0].wire;
-
-            // get the first or last points of the route
-            const [a, b] = this.routes[0].from == this ?  [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
-
-            // calculate the next position
-            const realNext = a.y == b.y ? {x: a.x + delta.x, y: next.y} : {x: next.x, y: a.y + delta.y};
-
-            // add a new point to the routes
-            for (const route of this.routes) route.drawXY( realNext ); 
-
-            // check if we have to switch the left/right text position
-            if (a.y == b.y) this.is.leftText = (a.x < b.x);
-
-            // notation
-            const rc = this.rect;
-
-            // y position is independent of left/right
-            rc.y = a.y - rc.h/2;
-
-            //x depends on left right
-            rc.x = this.is.leftText ? a.x - rc.w : a.x; 
-        }
-        else {
-            // just move the pad
-            this.rect.x += delta.x;
-            this.rect.y += delta.y;           
-        }
-    },
-
-    xdrag(next, delta) {
-
-        // if there are routes ...
-        if (this.routes.length > 0) {
-
-            // get the last two points of the first route
-            const wire = this.routes[0].wire;
-
-            // get the last two points of the wire
-            if (wire.length > 0) {
-                const last = wire.at(-1);
-                const prev = wire.at(-2);
-
-                // use the direction to calculate a new value for the next point
-                next = prev.y == last.y ? {x: last.x + delta.x, y: next.y} : {x: next.x, y: last.y + delta.y};
-            }
-
-            // add a new point to the routes
-            for (const route of this.routes) route.drawXY( next ); 
-
-            // place the pad again
-            this.place();
-        }
-        else {
-            // just move the pad
-            this.rect.x += delta.x;
-            this.rect.y += delta.y;           
-        }
-    },
-
-    endDrag() {
-        //if (this.routes.length == 1) this.routes[0].endpoint(this)
-        this.routes.forEach( route => route.endpoint(this));
-    },
-
-    slide(delta) {
-
-        // all the routes are attached horizontally
-        this.routes.forEach( route => {
-
-            // notation
-            const p = route.wire;
-
-            // to slide a route it must have at least three segments
-            // make a copy of teh wire ! Points in the point array are overwritten !
-            if (p.length == 2) {
-                //route.addTwoSegments({...p[0]},{...p[1]})
-                route.fourPointRoute();
-            }
-
-            // notation
-            const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
-
-            // move the segment
-            a.y += delta.y;
-            b.y += delta.y;
-        });
-        // finally move the pad
-        this.rect.y += delta.y;
-    },
-
-    fuseEndSegment() {
-
-        // only one route can fuse
-        let fusedRoute = null;
-        let dy = 0;
-
-        // all the routes are attached horizontally
-        for (const route of this.routes) {
-        // this.routes.forEach( route => {
-
-            // at least three segments required
-            if (route.wire.length < 4) continue
-
-            // notation
-            const p = route.wire;
-            const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
-
-            // check if we can fuse segments 
-            if (Math.abs(c.y - b.y) < style.route.tooClose) {
-                dy = c.y - a.y;
-                a.y = c.y;
-                front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
-                fusedRoute = route;
-                break
-            }
-        }
-
-        // if we have fused we will move all the routes and pad 
-        if (fusedRoute) {
-            for (const route of this.routes) {
-            //this.routes.forEach( route => {
-
-                // the fused route is already ok
-                if (route == fusedRoute) continue
-
-                // notation
-                const p = route.wire;
-                const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
-
-                // move the segment
-                a.y += dy;
-                b.y += dy;
-            }
-            // finally move the pad
-            this.rect.y += dy;
-        }
-    },
-
-    // when we copy the pad-pin routes, we already have copied all the nodes so we can set both ends of the route correctly
-    // we use the uid that was also copied as the search element - the final uid is set after calling this routine
-    copyPadPinRoutes(pad, root) {
-
-        // copy the routes
-        for(const route of pad.routes) {
-
-            // get the other widget
-            const other = route.from == pad ? route.to : route.from;
-
-            // only routes to/from pins are considered
-            if (!other.is.pin) continue
-
-            // clone the route
-            const clone = route.clone();
-
-            // the pad - part of the route can be set
-            clone.to == pad ?  clone.to = this : clone.from = this;
-
-            // and save the cloned route
-            this.routes.push(clone);
-
-            // now find the node for the 'other'
-            const node = root.nodes.find( node => node.uid == other.node.uid);
-
-            // find the pin in that node
-            const pin = node.look.findPin(other.name, other.is.input);
-
-            // set the other part of the route
-            clone.from == this ? clone.to = pin : clone.from = pin;
-
-            // also save the new route in the pin
-            pin.routes.push(clone);
-        }
-    },
-
-    // remove a route from the routes array
-    removeRoute(route) {
-
-        eject(this.routes, route);
-    },
-
-    // copy the routes for the undo operation (see redox)
-    copyWires() {
-
-        const wires = [];
-        for (const route of this.routes) wires.push(route.copyWire());
-        return wires
-    },
-
-    restoreWires(wires) {
-
-        const L = this.routes.length;
-        for(let i = 0; i < L; i++) this.routes[i].restoreWire(wires[i]);
-    },
-
-    highLightRoutes() {
-
-        // highlight the connections of the pqd
-        for (const route of this.routes) {
-
-            // check the other part of the route - note that it might be missing during a disconnect operation !
-            const other = route.from == this ? route.to : route.from;
-
-            //check
-            if (!other) continue
-
-            // filter multis
-            if (other.is.pin) {
-
-                // filter unconnected multis
-                if (!this.areConnected(other)) continue
-                    
-                // ok - highlight the route
-                route.highLight();
-            }
-
-            // if the other is a bustack also highlight the routes that go via the bus
-            if (other.is.tack) other.highLightRoutes();
-        }
-    },
-
-    unHighLightRoutes() {
-
-        // highlight the connections of the pin
-        for (const route of this.routes) {
-
-            //unhighlight the route
-            route.unHighLight();
-
-            // check the other part of the route - note that it might be missing during a disconnect operation !
-            const other = route.from == this ? route.to : route.from;
-
-            // check
-            if (!other) continue
-
-            // check the 
-            //if (other.is.proxy) other.pad.unHighLightRoutes()
-
-            // if the other is a bustack also highlight the routes that go via the bus
-            if (other?.is.tack) other.unHighLightRoutes();
-        }
-    },
-
-    checkRouteUsage() {
-
-        // reset all the routes to used
-        for(const route of this.routes) route.is.notUsed = false;
-
-        // get the proxy for this pad
-        const proxy = this.proxy;
-
-        // check the routes
-        for(const route of this.routes) {
-
-            // get the other side of the route
-            const other = route.from == this ? route.to : route.from;
-
-            // multi messages can only connect to multimessages
-            if (other.is.pin) {
-                if ((other.is.multi || proxy.is.multi) && !proxy.hasMultiOverlap(other)) route.is.notUsed = true;
-            }
-            // else if (other.is.pad){
-            //     if ((proxy.is.multi || other.proxy.is.multi) && !proxy.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
-            // } 
-            else if (other.is.tack) {
-
-                // check all the bus routes
-                let found = false;
-                for(const tack of other.bus.tacks) {
-
-                    // skip 
-                    if (tack == other) continue
-
-                    // get the pin or pad at the other end 
-                    const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to;
-
-                    // it could be that the route was not used
-                    if (other.bus.areConnected(this, busWidget)) {
-                        tack.route.is.notUsed = false;
-                        found = true;
-                    }
-                }
-                // if we have not found one connection..
-                if (!found) route.is.notUsed = true;
-            }
-        }
-    },
-
-    rank() {
-        return {up:1, down:1}
-    }
-
-};
-
-function Pad(rect, proxy, uid=null) {
-
-    // unique id
-    this.uid = uid;
-
-    // constructor chaining
-    this.rect = {...rect}; 
-
-    // set h if necessary - we will set w when the pad is rendered
-    // this.rect.h = rect.h > 0 ? rect.h : style.pad.hPad
-
-    this.is = {
-        pad: true,
-        selected: false,
-        highLighted: false,
-        leftText: proxy.is.left,
-        hoverOk: false,
-        hoverNok: false,
-        beingEdited: false,
-        placed: false
-    };
-
-    // set the text
-    this.text = proxy.name;
-
-    // the widget on the look
-    this.proxy = proxy;
-
-    // the routes to the pad (inside the group!)
-    this.routes = [];
-}
-Pad.prototype = {
-
-    copy() {
-        return new Pad(this.rect, this.proxy, this.uid)
-    },
-
-    render(ctx, look) {
-        
-        // notation
-        let st = style.pad;
-        const rc = this.rect;
-        const proxy = this.proxy;
-
-        // use a different color for selected pads
-        const cPad =  this.is.hoverNok ? st.cBad : st.cBackground;
-
-        // the text and arrow color change when connected
-        let cText =     this.is.highLighted ? st.cHighLighted
-                        : this.is.selected || this.is.hoverOk ? st.cSelected
-                        : this.routes?.length > 0 ? st.cConnected 
-                        : st.cText;
-
-        // color of the arrow
-        const cArrow = cText;
-        
-        // the y position of the arrow
-        let yArrow = rc.y+(st.hPad - st.wArrow)/2;
-
-        // when being edited we recalculate the width of the rectangle
-        if (this.is.beingEdited) {
-            rc.w = style.pad.wExtra + ctx.measureText(this.text).width;
-            this.place();
-        }
-
-        // render the pin  - note that x and y give the center of the triangle
-        if (this.is.leftText) {
-
-            // the x-position of the arrow
-            const xArrow =  rc.x + rc.w - st.rBullet/2 - st.hArrow; 
-
-            // draw a rectangle and a circle
-            shape.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
-
-            if (proxy.is.channel) {
-                // draw a triangle
-                proxy.is.input  ? shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
-            }
-            else {
-                // draw a triangle
-                proxy.is.input  ? shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
-            }
-
-            // write the text in the rectangle
-            proxy.is.multi  ? shape.leftTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
-                            : shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
-        }
-        else {
-            // The x-position of the arrow
-            const xArrow = rc.x + st.rBullet/2;
-
-            // draw the rectangle and the bullet
-            shape.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
-
-            if (proxy.is.channel) {
-                // draw a triangle
-                proxy.is.input  ? shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
-            }
-            else {
-                // draw a triangle
-                proxy.is.input  ? shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
-            }
-
-            // write the text in the rectangle
-            proxy.is.multi  ? shape.rightTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
-                            : shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
-        }
-    },
-
-    drawCursor(ctx, pChar,on) {
-        // notation
-        const rc = this.rect;
-
-        // relative x position of the cursor
-        const cx = ctx.measureText(this.text.slice(0,pChar)).width;
-
-        // absolute position of the cursor...
-        const xCursor = this.is.leftText ? rc.x + cx + style.pad.wMargin: rc.x + rc.w - ctx.measureText(this.text).width + cx;
-
-        // the color for the blink effect
-        //const color = on ? style.pad.cText : style.pad.cBackground
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
-
-        // and draw the cursor
-        shape.cursor(ctx, xCursor, rc.y, style.std.wCursor, rc.h, color); 
-    },
-
-    // returns the center of the pad bullet
-    center() {
-        const rc = this.rect;
-        return this.is.leftText     ? {x: rc.x + rc.w ,  y: rc.y + rc.h/2} 
-                                    : {x: rc.x ,         y: rc.y + rc.h/2}
-    },
-
-    // place the widget so that the center is on pos
-    place() {
-        // take the first route
-        const route = this.routes[0];
-
-        // check
-        if ( ! route?.wire.length ) return
-
-        // get the first or last point of the route
-        const [pa, pb] = route.from == this ?  [route.wire[0], route.wire[1]] : [route.wire.at(-1), route.wire.at(-2)];
-
-        // check
-        this.is.leftText = (pa.x < pb.x);
-
-        // notation
-        const rc = this.rect;
-
-        // y position is independent of left/right
-        rc.y = pa.y - rc.h/2;
-
-        //x depends on left right
-        rc.x = this.is.leftText ? pa.x - rc.w : pa.x; 
-    },
-
-    // the edit functions
-    startEdit() {
-        this.is.beingEdited = true;
-        return 'text'
-    },
-
-    getWidth() {
-        const proxy = this.proxy;
-        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
-    },
-
-    endEdit(saved) {
-
-        // notation
-        const proxy = this.proxy;
-
-        // no more editing
-        this.is.beingEdited = false;
-
-        // if the name has not zero length...
-        if (this.text.length > 0) {
-
-            // set the name of the proxy
-            proxy.name = this.text;
-
-            // check the name and reset if not ok
-            if ( ! proxy.checkNewName()) {
-                proxy.name = this.text = saved;
-                return
-            }
-
-            // the name might have changed (multi)
-            this.text = proxy.name;
-
-            // check for route usage
-            this.checkRouteUsage();
-
-            // recalculate the width of the pad
-            this.rect.w = this.getWidth();
-            //this.place()
-
-            // done
-            return
-        }
-
-        // zero length : The pin can only be removed if there are no routes
-        if (proxy.routes.length == 0) {
-
-            // remove the proxy
-            proxy.node.look.removePin(proxy);
-
-            // and remove the pad
-            proxy.node.removePad(this);
-
-            // done
-            return
-        }
-
-        // restore the old name
-        this.text = saved;
-    },
-
-    // the name of the proxy has changed - length of the pad must also change
-    nameChange( newName ) {
-        // change
-        this.text = newName;
-
-        // force a recalculation of the rectangle
-        this.rect.w = this.getWidth();
-    },
-
-    overlap(rect) {
-        const rc = this.rect;
-
-        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
-        return true
-    },
-
-    makeRaw() {
-        const raw = {
-            wid: this.proxy.wid,
-            text: this.text,
-            left: this.is.leftText,
-            rect: this.rect
-        };
-
-        if (this.is.placed) raw.placed = true;
-
-        return raw
-    },
-
-    // unzip() {
-
-    //     return {
-    //         blu: null,
-    //         viz: convert.padToString(this)
-    //     }
-    // },
-
-    moveTo(x,y) {
-
-        this.rect.x = x;
-        this.rect.y = y;
-
-        this.adjustRoutes();
-    },
-
-    move(delta) {
-
-        this.rect.x += delta.x;
-        this.rect.y += delta.y;
-
-        //this.adjustRoutes()
-    },
-
-    // checks if the widget and the pad are logically connected
-    // we only have to filter unconnected multis
-    areConnected(widget) {
-
-        if (widget.is.pin) {
-            // only when the proxy is a multi, it functions as a filter
-            if (this.proxy.is.multi && !widget.hasMultiOverlap(this.proxy)) return false
-        }
-
-        return true
-    },
-
-    makeConxList(list) {
-
-        for(const route of this.routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // check if connected
-            if ( ! this.areConnected(other)) continue
-
-            // if the actual is also a proxy, take it to the next level, else save in list
-            if (other.is.pin) {
-                other.is.proxy ?  other.pad?.makeConxList(list) : list.push( other );
-            }
-            // get all the connections to the bus that can reach the pad
-            else if (other.is.tack) {
-
-                // If the bus has a router, just add the tack to the list
-                if (other.bus.hasFilter()) list.push(other);
-
-                // otherwise continue to complete the list
-                else other.makeConxList(list);
-            }
-        }
-    },
-
-    highLight() {
-        this.is.highLighted = true;
-    },
-
-    unHighLight() {
-        this.is.highLighted = false;
-    },
-
-    hitTest(pos) {
-
-        // check if we have hit the rectangle
-        if (! inside(pos, this.rect))  return [zap.nothing, null]
-
-        // we have hit the pad - check if we have hit the arrow (left or right)
-        if (this.is.leftText) {
-            return (pos.x > this.rect.x + this.rect.w - 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
-        }
-        else {
-            return (pos.x < this.rect.x + 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
-        }
-    },
-
-    hitRoute(pos) {
-
-        let segment = 0;
-
-        // go through all the routes..
-        for (const route of this.routes) {
-
-            // only routes from this pad
-            if ((route.from == this)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
-        }
-        // nothing
-        return [zap.nothing, null, 0]
-    }
-
-};
-Object.assign(  Pad.prototype, padRouteFunctions);
-
 const widgetLifecycle = {
 
 addHeader() {
@@ -17651,7 +8321,7 @@ restoreInterfaceName( ifName) {
     this.addWidget(ifName);
 },
 
-copyPinArea(widgets, pos) {
+copyWidgetsToPinArea(widgets, pos) {
 
     // check
     if (!widgets || widgets.length == 0) return null
@@ -17676,9 +8346,6 @@ copyPinArea(widgets, pos) {
             // add the pin at the requested position
             const pin = this.addPin(widget.name,where, widget.is);
 
-            // add a pad or add to the rxtx tables
-            // if (pin.is.proxy) this.addPad(pin) //: this.node.rxtxAddPin(pin)
-
             // copy and check the prefix length
             if (widget.pxlen) {
                 pin.pxlen = widget.pxlen;
@@ -17694,7 +8361,7 @@ copyPinArea(widgets, pos) {
         else if (widget.is.ifName) {
 
             // check if it exists
-            if (this.findInterfaceName(widget.text)) continue
+            if (this.findInterfaceName(widget.text)) continue;
 
             // add the ifName
             const ifName = this.addIfName(widget.text, where);
@@ -17707,6 +8374,95 @@ copyPinArea(widgets, pos) {
         }
     }
     return copies
+},
+
+
+restoreWidgetsToPinArea(widgets, pos) {
+
+    // check
+    if (!widgets || widgets.length == 0) return null
+
+    // copy the intial y-position
+    ({...pos});
+
+    // the array of the copies
+    const copies = [];
+
+    // go through all the widgets
+    for(const widget of widgets) {
+
+        if (widget.is.pin) { 
+            this.restorePin(widget);
+        }
+        else if (widget.is.ifName) {
+            this.restoreInterfaceName(widget);
+        }
+    }
+    return copies
+},
+
+
+rawWidgetsToPinArea(rawWidgets, pos) {
+
+    // check
+    if (!rawWidgets || rawWidgets.length == 0) return null
+
+    // copy the intial y-position
+    const where = {...pos};
+
+    // the array of the copies
+    const widgets = [];
+
+    // the state of the pin
+    const is = {
+        input: false,
+        left: false,
+        channel: false,
+        proxy: false,
+        multi: false,
+        zombie: false
+    };
+
+    // go through all the widgets
+    for(const raw of rawWidgets) {
+
+        if (raw.name) {
+
+            // if the pin exists already, we do not copy
+            if (this.findPin(raw.name, raw.kind )) continue;
+
+            // set the state bits
+            is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
+            is.left = raw.left ?? false;
+            is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
+            is.multi = convert.isMulti(raw.name);
+            is.proxy = this.node.is.group;
+
+            // add the pin at the requested position
+            const pin = this.addPin(raw.name,where, is);
+
+            // the next position
+            where.y = pin.rect.y + pin.rect.h;
+
+            // save
+            widgets.push(pin);
+        }
+        else if (raw.interface) {
+
+            // check if it exists
+            if (this.findInterfaceName(raw.interface)) continue;
+
+            // add the ifName
+            const ifName = this.addIfName(raw.interface, where);
+
+            // the next position
+            where.y = ifName.rect.y + ifName.rect.h;
+
+            // save
+            widgets.push(ifName);
+        }
+    }
+    return widgets
 },
 
 deletePinArea(widgets) {
@@ -18156,103 +8912,6 @@ const iconHandling = {
         const icon = this.widgets.find(w => w.is.icon && w.type == 'link');
         if (icon) eject(this.widgets,icon);
     },
-
-    blinkToWarn() {
-
-        // time is in ms
-        const blinkFunction = (time) => {
-
-            // check the time
-            if (time - lastTime >= blinkRate) {
-
-                // change the color
-                box.is.alarm = !box.is.alarm;
-                icon.is.alarm = !icon.is.alarm;
-
-                // redraw
-                editor.redraw();
-                
-                // save the time
-                lastTime = time;
-
-                // increment count
-                count++;
-            }
-    
-            // Continue for the number of blinks requested
-            if (count < maxBlinks) {
-                requestAnimationFrame(blinkFunction);
-            }
-            else {
-                box.is.alarm = false;
-                icon.is.alarm = false;
-                editor.redraw();
-            }
-        };
-
-        const box = this.widgets.find(w => w.is.box );
-        const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'));
-
-        if (!box) return
-
-        const maxBlinks = style.icon.nBlinks * 2;
-        const blinkRate = style.icon.blinkRate;
-
-        let count = 0;
-        let lastTime = 0;
-    
-        // schedule the first blink function
-        requestAnimationFrame(blinkFunction);
-    },
-
-    xblinkToWarn() {
-
-        // time is in ms
-        const blinkFunction = (time) => {
-
-            // check the time
-            if (time - lastTime >= blinkRate) {
-
-                // change the color
-                icon.is.highLighted = !icon.is.highLighted;
-                header.is.highLighted = !header.is.highLighted;
-
-                // redraw
-                editor.redraw();
-
-                // save the time
-                lastTime = time;
-
-                // increment count
-                count++;
-            }
-    
-            // Continue for the number of blinks requested
-            if (count < maxBlinks) {
-                requestAnimationFrame(blinkFunction);
-            }
-            else {
-                icon.is.highLighted = false;
-                header.is.highLighted = false;
-                editor.redraw();
-            }
-        };
-
-        const icon = this.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'));
-        const header = this.widgets.find( w => w.is.header);
-
-        if (!icon || !header) return
-
-        const maxBlinks = style.icon.nBlinks * 2;
-        const blinkRate = style.icon.blinkRate;
-
-        let count = 0;
-        let lastTime = 0;
-    
-        // schedule the first blink function
-        requestAnimationFrame(blinkFunction);
-    },
-
 };
 
 const moveHandling = {
@@ -18646,7 +9305,7 @@ makeRaw() {
         if (w.is.label) {
             raw.rect.y += w.rect.h;
             raw.rect.h -= w.rect.h;        
-            raw.label = w;
+            raw.label = w.text;
             continue
         }
 
@@ -18770,14 +9429,26 @@ cook( raw ) {
         }
     }
 
-    // get the highest wid value
-    for (const widget of this.widgets) if (widget.wid && (widget.wid > this.widGenerator)) this.widGenerator = widget.wid;
+    // get the wid value for the generator and assign a wid to 0 values
+    this.handleWid();
+},
 
-    // if there are widgets with a wid of zero, correct this and set these widgets as new
-    for (const widget of this.widgets) if (widget.wid && (widget.wid == 0)) {
-        widget.wid = this.generateWid();
-        widget.is.added = true;
+handleWid() {
+    const setWid = [];
+
+    // get the highest wid value
+    for (const widget of this.widgets) {
+
+        // only pins and ifNames have wids
+        if ( !(widget.is.pin || widget.is.ifName)) continue
+        
+        // check if zero
+        if (!widget.wid) setWid.push(widget);
+        else if (widget.wid > this.widGenerator) this.widGenerator = widget.wid;
     }
+
+    // set a value for all zero wids
+    for (const widget of setWid) widget.wid = this.generateWid();
 },
 
 cookPin(raw) {
@@ -18802,8 +9473,7 @@ cookPin(raw) {
     // proxy or pure pin
     is.proxy = this.node.is.group;
 
-    // set the y-position to zero - widget will be placed correctly
-    //const newPin = this.addPin(raw.name, 0, is)
+    // set the y-position to NaN - widget will be placed correctly
     const newPin = this.addPin(raw.name, {x:0, y:NaN}, is);
 
     // set the contract
@@ -18847,6 +9517,27 @@ cookInterface(raw) {
 
 //import {Route} from './index.js'
 
+// used for measuring text
+function makeMeasureContext() {
+    if (typeof OffscreenCanvas !== 'undefined') {
+        return new OffscreenCanvas(1, 1).getContext('2d')
+    }
+
+    if (typeof document !== 'undefined') {
+        return document.createElement('canvas').getContext('2d')
+    }
+
+    // Node-side fallback for CLI usage where no DOM/canvas is available.
+    return {
+        font: '',
+        measureText(text = '') {
+            return {width: String(text).length * 8}
+        }
+    }
+}
+
+const ctxOffscreen = makeMeasureContext();
+
 // the look node determines how a node looks... 
 function Look (rect) {
 
@@ -18857,7 +9548,7 @@ function Look (rect) {
     // the node for which this look is created
     this.node = null;
 
-    // note that a widget id is never 0 !
+    // wid generator 
     this.widGenerator = 0;
 
     // the list of node widgets
@@ -18927,17 +9618,29 @@ Look.prototype = {
     },
 
     getTextWidth(str, multi=false) {
-        {
-            const text = str ?? '';
-            const baseWidth = style.pin.wChar;
-            
-            if (!multi) return text.length * baseWidth
 
-            const [pre, middle, post] = convert.getPreMiddlePost(text);
-            const normalWidth = (pre.length + post.length + 2) * baseWidth;
-            const multiWidth = middle.length * baseWidth;
-            return normalWidth + multiWidth
-        }
+        return multi ? this.getMultiTextWidth(str) : ctxOffscreen.measureText(str).width
+    },
+
+    getMultiTextWidth(str) {
+        // cut the text in three parts 
+        const [pre, middle, post] = convert.getPreMiddlePost(str);
+
+        // measure pre and post
+        let width = ctxOffscreen.measureText(pre + '[').width + ctxOffscreen.measureText(']'+ post).width;
+
+        // change font
+        const savedFont = ctxOffscreen.font;
+        ctxOffscreen.font = style.pin.fMulti;
+
+        // measure the multi text
+        width += ctxOffscreen.measureText(middle).width;
+
+        // restore the font
+        ctxOffscreen.font = savedFont;
+
+        // done
+        return width
     },
 
     wider(delta=0) {
@@ -18999,6 +9702,5512 @@ Object.assign(  Look.prototype,
                 moveHandling, 
                 copyHandling,
                 jsonHandling$2);
+
+const zap = {
+    nothing:0,
+    node:1,
+    pin:2,
+    ifName:3,
+    icon:4,
+    header:5,
+    label:6,
+    pad:7,
+    padArrow:8,
+    route:9,
+    busSegment:10,
+    busLabel:11,
+    tack:12,
+    selection:13
+};
+
+// make a binary bit pattern for the keys that were pressed
+const NONE = 0;
+const SHIFT = 1;
+const CTRL = 2;
+const ALT = 4;
+
+// // a bit pattern for the keys that are pushed
+// export function keyMask(e) {
+
+//     let mask = NONE
+
+//     mask |= e.shiftKey ? SHIFT : 0
+//     mask |= e.ctrlKey ? CTRL : 0
+//     mask |= e.altKey ? ALT : 0
+
+//     return mask;
+// }
+
+const mouseHandling = {
+
+    // a bit pattern for the keys that are pushed
+    keyMask(e) {
+
+        let mask = NONE;
+
+        mask |= e.shiftKey ? SHIFT : 0;
+        mask |= e.ctrlKey ? CTRL : 0;
+        mask |= e.altKey ? ALT : 0;
+
+        return mask;
+    },
+
+    // checks what we have hit inside a client area of a view
+    mouseHit(xyLocal) {
+        // notation
+        const hit = this.hit;
+
+        // if there is an active selection we check if it was hit
+        if ( this.selection.what != selex.nothing && this.selection.what != selex.singleNode) {
+            [hit.what, hit.selection, hit.node] = this.selection.hitTest(xyLocal);
+            if (hit.what != zap.nothing) return 
+        }
+
+        // if there is no content we can stop here
+        if(!this.root) return 
+
+        // search the nodes (in reverse - most recent nodes first)
+        const nodes = this.root.nodes;
+        for(let i=nodes.length-1; i >= 0; i--) {
+            [hit.what, hit.node, hit.lookWidget] = nodes[i].hitTest(xyLocal);
+            if (hit.what != zap.nothing) return            
+        }
+
+        // search the pads
+        for (const pad of this.root.pads) {
+            [hit.what, hit.pad] = pad.hitTest(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+        
+        // search the buses
+        for(const bus of this.root.buses) {
+            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = bus.hitTest(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+
+        // check if we have hit a route
+        this.mouseHitRoutes(xyLocal);
+    },
+
+    mouseHitRoutes(xyLocal) {
+
+        const hit = this.hit;
+
+        // search the routes of the nodes 
+        for (const node of this.root.nodes) {
+            [hit.what, hit.route, hit.routeSegment] = node.hitRoute(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+ 
+        // search the pads
+        for (const pad of this.root.pads) {
+            [hit.what, hit.route, hit.routeSegment] = pad.hitRoute(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+        
+        // search the buses
+        for(const bus of this.root.buses) {
+            [hit.what, hit.route, hit.routeSegment] = bus.hitRoute(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+    },
+
+    onDblClick(xyLocal,e,tx) {
+
+        // hit was updated at the first click !
+        const hit = this.hit;
+        let widget = null;
+
+        // check what was hit
+        switch (hit.what) {
+
+            case zap.pin:
+            case zap.ifName:
+
+                // check
+                if (hit.node?.cannotBeModified()) return this.blinkToWarn(hit.node)
+
+                // ok
+                widget = hit.lookWidget;
+                break;
+
+            case zap.header: 
+                widget = hit.lookWidget;
+                break;
+
+            case zap.label:
+                widget = hit.lookWidget;
+                break;
+
+            case zap.busLabel:
+                widget = hit.busLabel;
+                break;
+
+            case zap.pad:
+                widget = hit.pad;
+                break;
+
+            case zap.tack:
+                widget = hit.tack;
+                break;
+
+            case zap.selection:
+                if (this.selection.what == selex.ifArea) {
+
+                    // check
+                    if (hit.node?.cannotBeModified()) return this.blinkToWarn(hit.node)
+
+                    // ok
+                    widget = hit.lookWidget;
+                }
+                break;
+        }
+
+        if (widget) this.doEdit(tx,'widgetTextEdit',{view: this, widget, click: xyLocal});
+    },
+ 
+
+    onWheel(xy,e) {
+
+        // notation
+        const tf = this.tf;
+
+        // we change scale parameter 
+        let k = e.deltaY > 0 ? 0.9 : 1.1;
+
+        /*  xy is the position of the cursor. It should remain the same in the old and in the new transform
+
+            So if xy' is the position of the cursor in the parent window then:
+            xy = tf(xy') = tf"(xy')  or xy' = inverse tf(xy) = inverse tf"(xy)
+
+               xy*s + dx = xy*s*k + d'x  
+            => d'x = dx + xy*s - xy*s*k
+
+            note that the inverse tf here is the same as the direct tf for the canvas !
+            The canvas transforms are from xy-window to xy-screen, whereas this transform is from 
+            xy-window to the next xy-window on the stack.
+        */
+
+        // calculate the new tf dx and dy
+        tf.dx = tf.dx + xy.x*tf.sx*(1-k);
+        tf.dy = tf.dy + xy.y*tf.sy*(1-k);
+
+        // *** this was wrong ***
+        //tf.dx = xy.x*(1-k) + k*tf.dx
+        //tf.dy = xy.y*(1-k) + k*tf.dy
+
+        // also adjust the scale factors
+        tf.sx *= k;
+        tf.sy *= k;
+    },
+};
+
+const pinAreaHandling = {
+
+    // pins and interfaceNames can be selected !
+    pinAreaStart(node, pos) {
+
+        // reset
+        this.reset();
+
+        // notation
+        const rect = node.look.rect;
+
+        // save the y position
+        this.yWidget = pos.y;
+
+        // type of selection
+        this.what = selex.pinArea;
+
+        // start a pin selection - make the rectangle as wide as the look
+        this.activate(rect.x - style.pin.wOutside, pos.y, rect.w + 2*style.pin.wOutside, 0, style.selection.cRect);
+    },
+
+    pinAreaResize(node, pos) {
+
+        const lRect = node.look.rect;
+
+        if (pos.y > lRect.y && pos.y < lRect.y + lRect.h) {
+
+            // notation
+            const y = this.yWidget;
+
+            // define the selection rectangle (x and w do not change)
+            if (pos.y > y) {
+                this.rect.y = y;
+                this.rect.h = pos.y - y;
+            }
+            else {
+                this.rect.y = pos.y;
+                this.rect.h = y - pos.y;
+            }
+
+            // highlight the pins that are selected
+            this.widgets = [];
+            const dy = style.pin.hPin/2;
+            for(const widget of node.look.widgets) {
+
+                if (widget.is.pin || widget.is.ifName) {
+
+                    if (widget.rect.y + dy > this.rect.y && widget.rect.y + dy < this.rect.y + this.rect.h) {
+                        this.widgets.push(widget);
+                        widget.is.selected = true;
+                    }
+                    else {
+                        widget.is.selected = false;
+                    }
+                }
+            }
+        }
+    },
+
+    // select the pins that are in the widgets array
+    pinAreaSelect(widgets) {
+
+        if (!widgets?.length) return
+
+        // reset (not necessary ?)
+        this.widgets.length = 0;
+
+        // set each widget as selected
+        for (const widget of widgets) {
+            if (widget.is.pin || widget.is.ifName) {
+                this.widgets.push(widget);
+                widget.doSelect();
+            }
+        }
+
+        // set a rectangle around the widgets
+        this.pinAreaRectangle();
+
+        // this is a widget selection
+        this.what = selex.pinArea;
+    },
+
+    // the pins have been sorted in the y position
+    // note that the first 'pin' is actually a ifName !
+    pinAreaRectangle() {
+
+        // check
+        if (!this.widgets.length) return;
+
+        // sort the array
+        this.widgets.sort( (a,b) => a.rect.y - b.rect.y);
+
+        // get the first and last element from the array
+        const look = this.widgets[0].node.look;
+        const first = this.widgets[0].rect;
+        const last = this.widgets.at(-1).rect;
+
+        // draw a rectangle - make the rectangle as wide as the look
+        this.activate(  look.rect.x - style.pin.wOutside, first.y, 
+                        look.rect.w + 2*style.pin.wOutside, last.y + last.h - first.y, 
+                        style.selection.cRect);
+    },
+
+    widgetsDrag(delta) {
+
+        // check
+        if (this.widgets.length == 0) return
+
+        // the node
+        const node = this.widgets[0].node;
+
+        // move the selection rectangle only in the y-direction, but stay in the node !
+        if (this.rect.y + delta.y < node.look.rect.y + style.header.hHeader ) return
+        if (this.rect.y + delta.y > node.look.rect.y + node.look.rect.h) return
+
+        // move as required
+        this.rect.y += delta.y;
+    },
+
+    interfaceSelect(node, ifName) {
+
+        // reset the selection
+        this.reset();
+
+        // find the widgets that belong to the interface
+        const ifPins = node.look.getInterface(ifName);
+
+        // select the pins
+        this.pinAreaSelect(ifPins);
+
+        // set the selection type
+        this.what = selex.ifArea;
+    },
+
+    extendPinArea(widget) {
+
+        if (this.what != selex.ifArea || widget.node != this.widgets[0].node) return
+        
+        this.widgets.push(widget);
+
+        this.pinAreaRectangle();
+    },
+
+    // adjust the selction when a widget is added
+    adjustForNewWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // just switch to the new widget
+                this.switchToWidget(widget);
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+                    widget.doSelect();
+                    this.widgets.push(widget);
+                    this.pinAreaRectangle();
+                }
+                else if (widget.is.ifName) {
+
+                    // unddo the previous selection
+                    this.reset();
+
+                    // select the new interface
+                    widget.doSelect();
+                    this.widgets = [widget];
+                    this.pinAreaRectangle();                    
+                }
+                break
+        }
+    },
+
+    // adjust the selction when a widget is removed
+    adjustForRemovedWidget(widget) {
+
+        switch(this.what) {
+
+            case selex.singleNode:
+
+                // try above ...
+                const above = this.widgetAbove(widget);
+                if (above) return this.switchToWidget(above);
+
+                // if no pin is given try below
+                const below = this.widgetBelow(widget);
+                if (below) return this.switchToWidget(below);
+                break;
+
+            case selex.ifArea:
+
+                if (widget.node != this.widgets[0].node) return
+
+                if (widget.is.pin) {
+
+                    // kick the widget out
+                    const index = this.widgets.findIndex( w => w === widget);
+                    if (index != -1) this.widgets.splice(index, 1);
+
+                    // make a new selection
+                    this.pinAreaRectangle();
+                }
+                break
+        }
+    },
+
+    behind() {
+
+        // check
+        if (this.what !== selex.singleNode && this.what !== selex.ifArea) return null;
+
+        // we add new pins at the end
+        const last = this.widgets.at(-1);
+
+        // check 
+        if (last) return  {x: last.rect.x, y: last.rect.y + last.rect.h};
+
+        // it could be that the node has no pins yet !
+        return this.nodes[0] ? {x: 0, y: this.nodes[0].look.makePlace(null, 0)} : null;
+    },
+
+    whereToAdd() {
+
+        switch(this.what) {
+
+            case selex.singleNode: {
+
+                // get the selected node (only one !)
+                const node = this.getSingleNode();
+
+                // get the selected widget
+                const widget = this.getSelectedWidget();
+
+                // determine the position for the widget
+                const pos = widget  ?   {x: widget.is.left ? widget.rect.x : widget.rect.x + widget.rect.w, y: widget.rect.y + widget.rect.h} :
+                                        {x: 0, y: node.look.makePlace(null, 0)};
+
+                // done
+                return {node, pos}
+            }
+
+            case selex.pinArea: 
+            case selex.ifArea: {
+
+                const node = this.getSelectedWidget()?.node;
+                const pos = this.behind();
+                return {node, pos}
+            }
+
+            default: return {node: null, pos: null}
+        }
+    },
+
+};
+
+// a constant for indicating the selection type
+const selex = {
+    nothing: 0,
+    freeRect: 1,
+    pinArea: 2,
+    ifArea: 3,
+    singleNode: 4,
+    multiNode: 5,
+};
+
+// nodes etc. selectd in the editor
+function Selection(view = null) {
+    // the rectangle
+    this.rect = { x: 0, y: 0, w: 0, h: 0 };
+
+    // when selecting widgets inside a node this is where the selection started
+    this.yWidget = 0;
+
+    // The color of the selection - can change
+    this.color = style.selection.cRect;
+
+    // the selection type
+    this.what = selex.nothing;
+
+    // the view path
+    this.viewPath = view ? view.getNamePath() : '';
+
+    // The id of the last paste and the nr of times pasted
+    this.paste = {
+        count: 0,
+        uid: '',
+        pos: {x:0, y:0}
+    };
+
+    // the selected elements
+    this.nodes = [];
+    this.pads = [];
+    this.buses = [];
+    this.tacks = [];
+    this.widgets = [];
+}
+Selection.prototype = {
+    render(ctx) {
+        // we only use width as a check
+        if (this.what === selex.freeRect ||this.what === selex.pinArea ||this.what === selex.ifArea) {
+            // notation
+            const rc = this.rect;
+
+            // draw the rectangle
+            shape.roundedRect( ctx,rc.x,rc.y,rc.w,rc.h,style.selection.rCorner,1,this.color.slice(0, 7),this.color);
+        }
+    },
+
+    // keep viewpath and color
+    reset() {
+        // not active
+        this.what = selex.nothing;
+
+        // reset yWidget
+        this.yWidget = 0;
+
+        // unselect the pins if any
+        for (const pin of this.widgets) pin.unSelect();
+
+        // unselect the nodes if any
+        for (const node of this.nodes) node.unSelect();
+
+        // clear the selected objects
+        this.nodes.length = 0;
+        this.pads.length = 0;
+        this.buses.length = 0;
+        this.widgets.length = 0;
+        this.tacks.length = 0;
+    },
+
+    shallowCopy() {
+        const selection = new Selection();
+
+        selection.rect = { ...this.rect };
+        selection.yWidget = this.yWidget;
+        selection.color = this.color;
+        selection.what = this.what;
+        selection.viewPath = this.viewPath;
+        selection.nodes = this.nodes?.slice();
+        selection.pads = this.pads?.slice();
+        selection.buses = this.buses?.slice();
+        selection.tacks = this.tacks?.slice();
+        selection.widgets = this.widgets?.slice();
+
+        return selection;
+    },
+
+    canCancel(hit) {
+        // if we have hit a selection we cannot cancel it
+        // if we have not hit it we can cancel the rectangle selections
+        // The single node selection is not cancelled normally
+
+        return hit.what == zap.selection
+            ? false
+            : this.what === selex.freeRect ||this.what === selex.pinArea ||this.what === selex.ifArea || this.what === selex.multiNode;
+    },
+
+    setRect(x, y, w, h) {
+        const rc = this.rect;
+
+        rc.x = x;
+        rc.y = y;
+        rc.w = w;
+        rc.h = h;
+    },
+
+    activate(x, y, w, h, color) {
+        this.setRect(x, y, w, h);
+        if (color) this.color = color;
+    },
+
+    // start a free rectangle selection
+    freeStart(where) {
+        // reset the current selection
+        this.reset();
+
+        // free rectangle selection
+        this.what = selex.freeRect;
+
+        // set the x and y value for the selection rectangle
+        this.setRect(where.x, where.y, 0, 0);
+    },
+
+    isNodeSelection() {
+        return this.what === selex.singleNode || this.what === selex.multiNode;
+    },
+
+    isPinSelection() {
+        return this.what === selex.pinArea || this.what === selex.ifArea;
+    },
+
+    singleNode(node) {
+        // unselect other - if any
+        this.reset();
+
+        // select a single node
+        this.nodes = [node];
+
+        // set the selection type
+        this.what = selex.singleNode;
+
+        // set the rectangle
+        node.doSelect();
+    },
+
+    singleNodeAndWidget(node, pin) {
+        // unselect
+        this.reset();
+
+        // reselect
+        this.singleNode(node);
+        this.widgets = [pin];
+        pin.doSelect();
+    },
+
+    // extend an existing selection
+    extend(node) {
+
+        // if there are no nodes this is the first selection
+        if (this.nodes.length < 1) {
+            this.singleNode(node);
+            return;
+        }
+
+        // if the node is selected - unselect
+        if (this.nodes.includes(node)) {
+            // remove the node from the array
+            eject(this.nodes, node);
+
+            // unselect the node
+            node.unSelect();
+
+            // done
+            return;
+        }
+
+        // save the node
+        this.nodes.push(node);
+
+        // and set as selected
+        node.doSelect();
+
+        // multinode selection
+        this.what = selex.multiNode;
+    },
+
+    // get the single selected node
+    getSingleNode() {
+        return this.what == selex.singleNode ? this.nodes[0] : null;
+    },
+
+    getSelectedWidget() {
+        if (this.what == selex.singleNode)  return this.widgets[0];
+        if (this.what === selex.ifArea) return this.widgets[0];
+        return null;
+    },
+
+    getPinAreaNode() {
+        return (this.what === selex.pinArea || this.what === selex.ifArea) &&
+            this.widgets[0]
+            ? this.widgets[0].node
+            : null;
+    },
+
+    // switch to the selected widget
+    switchToWidget(pin) {
+
+        if (!pin) return;
+
+        // unselect the current
+        this.widgets[0]?.unSelect();
+
+        // select the new one
+        pin.doSelect();
+        this.widgets[0] = pin;
+        return;
+    },
+
+    widgetBelow(current) {
+
+        let below = null;
+        for (const widget of current.node.look.widgets) {
+            if ((widget.is.pin || widget.is.ifName) &&  widget.rect.y > current.rect.y && (!below || widget.rect.y < below.rect.y)) below = widget;
+        }
+
+        // done
+        return below;
+    },
+
+    widgetAbove(current) {
+
+        let above = null;
+        for (const widget of current.node.look.widgets) {
+            if ((widget.is.pin || widget.is.ifName) && widget.rect.y < current.rect.y && (!above || widget.rect.y > above.rect.y)) above = widget;
+        }
+
+        // done
+        return above;
+    },
+
+    // check if we have hit the selection
+    hitTest(xyLocal) {
+
+        // If there is a rectangle, we have a simple criterion
+        if ( (this.what == selex.freeRect) && inside(xyLocal, this.rect)) {
+
+            // maybe we hit a node 
+            let node = null;
+            for (let i = this.nodes.length - 1; i >= 0; i--) {
+                if (inside(xyLocal, this.nodes[i].look.rect)) {
+                    node = this.nodes[i];
+                    break;
+                }
+            }
+
+            return [zap.selection, this, node];
+        }
+
+        else if ( (this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect))
+            return [zap.selection, this, this.getPinAreaNode()];
+
+        // multi-node or single node search the nodes (in reverse - visible node on top of another will be found first)
+        for (let i = this.nodes.length - 1; i >= 0; i--) {
+            if (inside(xyLocal, this.nodes[i].look.rect)) return [zap.selection, this, this.nodes[i]];
+        }
+
+        // nothing
+        return [zap.nothing, null, null];
+    },
+
+    widgetHit(xyLocal) {
+        if (!this.widgets?.length) return null;
+
+        for (const widget of this.widgets) {
+            if (
+                xyLocal.y > widget.rect.y &&
+                xyLocal.y < widget.rect.y + widget.rect.h
+            )
+                return widget;
+        }
+        return null;
+    },
+
+    setColor(color) {
+        this.color = color;
+    },
+
+    resize(dw, dh) {
+        this.rect.w += dw;
+        this.rect.h += dh;
+    },
+
+    move(delta) {
+        // move the selection rectangle
+        this.rect.x += delta.x;
+        this.rect.y += delta.y;
+    },
+
+    drag(delta) {
+        // *1* move
+
+        // move the nodes in the selection
+        for (const node of this.nodes) node.look.moveDelta(delta.x, delta.y);
+
+        // also move the pads
+        for (const pad of this.pads) pad.move(delta);
+
+        // move the buses if there are nodes in the selection
+        if (this.nodes.length > 0)
+            for (const bus of this.buses) bus.move(delta.x, delta.y);
+        // or otherwise just the bus tacks
+        else for (const tack of this.tacks) tack.slide(delta);
+
+        // move the routes that have start end end points in the selection
+
+        // *2* Route adjustments
+
+        // now we adjust the end points of the routes again
+        for (const node of this.nodes) node.look.adjustRoutes();
+
+        // adjust the routes for the pads
+        for (const pad of this.pads) pad.adjustRoutes();
+
+        // also for the buses
+        for (const bus of this.buses) bus.adjustRoutes();
+
+        // *3* move the selection rectangle
+
+        this.rect.x += delta.x;
+        this.rect.y += delta.y;
+    },
+
+    // return the top left node in the selection
+    topLeftNode() {
+        if (this.nodes.length == 0) return null;
+
+        let topleft = this.nodes[0];
+
+        for (const node of this.nodes) {
+            if (
+                node.look.rect.y < topleft.look.rect.y &&
+                node.look.rect.x < topleft.look.rect.x
+            )
+                topleft = node;
+        }
+
+        return topleft;
+    },
+
+    // make the view wider then the selection because of the added pads
+    makeViewRect() {
+        const rc = this.rect;
+
+        return {
+            x: rc.x - style.view.wExtra,
+            y: rc.y - style.view.hExtra,
+            w: rc.w + 2 * style.view.wExtra,
+            h: rc.h + 2 * style.view.hExtra,
+        };
+    },
+
+    // position the new group look as close as possible to the top left node
+    makeLookRect() {
+        const topleft = this.topLeftNode();
+        const rcSel = this.rect;
+
+        const x = topleft ? topleft.look.rect.x : rcSel.x;
+        const y = topleft ? topleft.look.rect.y : rcSel.y;
+
+        // leave w and h at 0
+        return { x, y, w: 0, h: 0 };
+    },
+
+    adjustPaths(ref) {
+        if (!this.nodes) return;
+
+        for (const node of this.nodes) node.adjustPaths(ref);
+    },
+
+    pastePos(uid, pos) {
+
+        const paste = this.paste;
+
+        // if we paste at a different location count is zero
+        if (paste.pos.x != pos.x && paste.pos.y != pos.y) {
+            paste.count = 0;
+        }
+        else {
+            paste.count = uid === paste.uid ? paste.count + 1 : 0;
+        }
+        paste.uid = uid;
+        paste.pos.x = pos.x;
+        paste.pos.y = pos.y;
+
+        return {x: pos.x + paste.count * style.look.dxCopy,y: pos.y + paste.count * style.look.dyCopy}
+    }
+};
+Object.assign(Selection.prototype, pinAreaHandling);
+
+const mouseMoveHandling = {
+
+    // onMouseMove returns true or false to signal if a redraw is required or not...
+    onMouseMove(xyLocal,e, tx) {  
+
+        // also this is needed
+        let dxdyLocal = {x: e.movementX/this.tf.sx, y: e.movementY/this.tf.sy}; 
+
+        // notation
+        const state = this.state;
+
+        // do what we need to do
+        switch(state.action) {
+
+            case doing.nothing:
+                this.idleMove(xyLocal);
+                return false
+
+            case doing.panning:
+                this.tf.dx += e.movementX;
+                this.tf.dy += e.movementY;
+                return true
+
+            case doing.nodeDrag:
+                state.node.move(dxdyLocal);
+                return true
+
+            case doing.routeDraw:
+                this.drawRoute(state.route, xyLocal);
+                return true
+
+            case doing.routeDrag:
+                // move the route segment - the drag object is the route
+                state.route.moveSegment(state.routeSegment,dxdyLocal);
+                return true
+
+            case doing.selection:
+                // make the rectangle bigger/smaller
+                this.selection.resize(dxdyLocal.x, dxdyLocal.y);
+                return true
+
+            case doing.selectionDrag:
+                this.selection.drag(dxdyLocal);
+                return true
+
+            case doing.pinAreaSelect:
+                this.selection.pinAreaResize(state.node, xyLocal);
+                return true
+
+            case doing.padDrag:
+                state.pad.drag(xyLocal, dxdyLocal);
+                return true
+
+            case doing.busDraw:
+                state.bus.drawXY(xyLocal);
+                return true
+
+            case doing.busRedraw:
+                state.bus.resumeDrawXY(state.busLabel,xyLocal,dxdyLocal);
+                return true
+
+            case doing.busSegmentDrag:
+                state.bus.moveSegment(state.busSegment,dxdyLocal);
+                return true
+
+            case doing.busDrag:
+                state.bus.drag(dxdyLocal);
+                return true
+
+            case doing.tackDrag:
+                state.tack.slide(dxdyLocal);
+                return true
+
+            case doing.pinDrag:
+                state.lookWidget.drag(xyLocal);
+                return true
+
+            // OBSOLETE
+            case doing.pinAreaDrag:
+                // move the rectangle
+                // this.selection.pinAreaDrag(dxdyLocal)
+
+                // move the pins
+                // this.selection.getPinAreaNode().look.dragPinArea(this.selection.widgets, this.selection.rect)
+                return true
+
+            case doing.interfaceNameDrag:
+                state.lookWidget.drag(xyLocal);
+                return true
+
+            case doing.interfaceDrag:
+
+                // move the rectangle
+                this.selection.widgetsDrag(dxdyLocal);
+
+                // swap the widgets if necessary
+                this.selection.widgets[0].node.look.swapInterface(xyLocal, this.selection.widgets);
+                return true
+
+            case doing.pinClicked:
+
+            // for a simple pin selection we check the keys that were pressed again
+            switch(this.keyMask(e)) {
+
+                case NONE: {
+
+                    // if still inside the node - nothing to do
+                    if (inside(xyLocal, state.lookWidget.node.look.rect)) return false
+
+                    // draw a route - set the action
+                    this.stateSwitch(doing.routeDraw);
+
+                    // create a new route - only the from widget is known
+                    state.route = new Route(state.lookWidget, null);
+
+                    // this is the route we are drawing
+                    state.route.select();
+
+                    // if the pin we are starting from is a multi message pin, set the route as a twisted pair
+                    if (state.lookWidget.is.multi) state.route.setTwistedPair();
+
+                    // add the route to the widget
+                    state.lookWidget.routes.push(state.route);  
+                    
+                    // done 
+                    return true
+                }
+
+                case SHIFT:{
+
+                    // un highlight the routes
+                    state.lookWidget.unHighLightRoutes();
+
+                    // first switch the state - might end the previous selection !
+                    this.stateSwitch(doing.pinAreaSelect);
+
+                    // ..and only then start a new selection
+                    this.selection.pinAreaStart(state.node,xyLocal);
+
+                    // done 
+                    return true
+                }
+
+                case CTRL:{
+
+                    // notation
+                    const pin = state.lookWidget;
+
+                    // set the widget as selected
+                    pin.is.selected = true;
+
+                    // set state to drag the pin/proxy up and down
+                    this.stateSwitch(doing.pinDrag); 
+
+                    // save the edit
+                    this.doEdit(tx,'pinDrag',{pin});
+
+                    // done
+                    return true
+                }
+
+                // if ctrl-shift is pushed we extrude a pad
+                case CTRL|SHIFT: {
+
+                    // if still inside the node - nothing to do
+                    if (inside(xyLocal, state.lookWidget.node.look.rect)) return false
+
+                    // un highlight the routes
+                    state.lookWidget.unHighLightRoutes();
+
+                    // do the edit
+                    this.doEdit(tx,'extrudePad',{view: this, pos: xyLocal});
+
+                    // state switch
+                    this.stateSwitch(doing.padDrag);
+                    
+                    // done
+                    return true
+                }
+            }
+            return false
+
+            case doing.interfaceNameClicked:
+
+                // if not moving do nothing
+                if ( inside(xyLocal, this.selection.widgets[0].rect)) return false;
+
+                // moving: unselect the node
+                //this.selection.nodes[0].unSelect()
+
+                // // set a selection rectangle around the selected pins
+                // this.selection.pinAreaRectangle()
+
+                // // switch to dragging the ifName
+                // this.stateSwitch(doing.interfaceDrag) 
+
+                // // notation
+                // const pins = this.selection.widgets
+
+                // // do the edit
+                // this.doEdit(tx,'interfaceDrag',{ group: pins.slice(), oldY: pins[0].rect.y, newY: pins[0].rect.y})
+                return true;
+
+            case doing.padArrowClicked:
+                // if we move away from the current pin, we start drawing the route
+                if ( !inside(xyLocal, state.pad.rect)) {
+
+                    // set the action
+                    this.stateSwitch(doing.routeDraw);
+
+                    // create a new route - only the from widget is known
+                    state.route = new Route(state.pad, null);
+
+                    // if the pad we are starting from is a multi message pin, set the route as a twisted pair
+                    if (state.pad.proxy.is.multi) state.route.setTwistedPair();
+
+                    // this is the route we are drawing
+                    state.route.select();
+
+                    // add the route to the widget
+                    state.pad.routes.push(state.route);          
+                }
+                return true
+
+            default:
+                return false
+        }
+    },
+
+    idleMove(xyLocal) {
+
+        // if the timer is running return
+        if (this.hitTimer) return false
+
+        // launch a timer
+        // this.hitTimer = setTimeout(()=> {
+        //     this.hitTimer = 0
+        //     this.mouseHit(xyLocal)
+        // } ,100)
+
+        return false
+    },
+
+    drawRoute(route, xyLocal) {
+
+        // check if we have hit something with our route ...
+        this.mouseHit(xyLocal);
+
+        // the following objects have a hover-state
+        const hit = this.hit;
+        const conx =  hit.what == zap.pin ? hit.lookWidget 
+                    : hit.what == zap.pad ? hit.pad 
+                    : hit.what == zap.busSegment ? hit.bus
+                    : null;
+
+        // give visual feedback if we hover over a connectable object
+        this.hover( conx, conx ? route.checkConxType(route.from, conx) : false );
+
+        // draw the route
+        if (conx && (conx.is.pin || conx.is.pad))
+            route.endpoint(conx);
+        else 
+            route.drawXY(xyLocal);
+    },
+
+    // clear or set the hover object and set the hover state to ok or nok
+    hover(hoverOver, ok) {
+
+        this.hit;
+        const state = this.state;
+
+        // most frequent case
+        if (state.hoverOver == hoverOver) return
+
+        // check if we were hovering
+        if (hoverOver) {
+
+            hoverOver.is.hoverOk = ok;
+            hoverOver.is.hoverNok = !ok;
+
+            // keep or reset previous
+            if (state.hoverOver) {
+                this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
+            }
+
+            // set new
+            state.hoverOver = hoverOver;
+        } 
+        else {
+            // reset previous
+            if (state.hoverOver) {
+                this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
+                this.state.hoverOver = null;
+            }
+        }
+    },
+
+    stopHover() {
+        if (this.state.hoverOver) {
+            this.state.hoverOver.is.hoverOk = this.state.hoverOver.is.hoverNok = false;
+            this.state.hoverOver = null;
+        }
+    }
+
+};
+
+const mouseDownHandling = {
+
+    saveHitSpot(xyLocal, e) {
+
+        const hit = this.hit;
+
+        // save the hit coordinates
+        hit.xyLocal.x = xyLocal.x;
+        hit.xyLocal.y = xyLocal.y;
+        hit.xyScreen.x = e.x;
+        hit.xyScreen.y = e.y;
+    },
+
+    onMouseDown(xyLocal, e, tx) {
+
+        // notation
+        const state = this.state;
+        const hit = this.hit;
+
+        // save the hitspot
+        this.saveHitSpot(xyLocal, e);
+
+        // get the binary keys mask
+        const keys = this.keyMask(e);
+
+        // check what was hit inside the window - with ctrl-alt we just look for the routes !
+        keys === (CTRL|ALT) ?  this.mouseHitRoutes(xyLocal) : this.mouseHit(xyLocal);
+
+        // check if we need to cancel the selection
+        if (this.selection.canCancel(hit)) this.selection.reset();
+
+        // check what we have to do
+        switch(hit.what){
+
+            case zap.pin: {
+
+                switch(keys) {
+
+                    case NONE:
+                    case CTRL|SHIFT: {
+
+                        // save the widget & node
+                        state.lookWidget = hit.lookWidget;
+                        state.node = hit.node;
+
+                        // and highlight the routes
+                        hit.lookWidget.highLightRoutes();
+
+                        // new state
+                        this.stateSwitch(doing.pinClicked);
+
+                        // set the node and pin as selected
+                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
+                    }
+                    break
+
+                    case SHIFT:{
+
+                        // save the node
+                        state.node = hit.node;
+
+                        // first switch the state - might end the previous selection !
+                        this.stateSwitch(doing.pinAreaSelect);
+
+                        // ..and only then start a new selection
+                        this.selection.pinAreaStart(hit.node,xyLocal);
+                    }
+                    break
+
+                    case CTRL:{
+
+                        // notation
+                        const pin = hit.lookWidget;
+
+                        // save the pin/proxy to drag..
+                        state.lookWidget = pin;
+
+                        // set the node and pin as selected
+                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
+
+                        // set state to drag the pin/proxy up and down
+                        this.stateSwitch(doing.pinDrag); 
+
+                        // save the edit
+                        this.state.modo.left = pin.is.left;
+                        this.state.modo.pos.y = pin.rect.y;
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.ifName : {
+
+                switch(keys) {
+
+                    case NONE:{
+
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
+
+                        // highlight the ifName group
+                        this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
+
+                        // state switch
+                        this.stateSwitch(doing.interfaceNameClicked); 
+                    }
+                    break
+
+                    case SHIFT:{
+                       // save the node
+                       state.node = hit.node;
+
+                       // first switch the state - might end the previous selection !
+                       this.stateSwitch(doing.pinAreaSelect);
+
+                       // ..and only then start a new selection
+                       this.selection.pinAreaStart(hit.node,xyLocal);
+                    }
+                    break
+
+                    case CTRL:{
+
+                        // we select the entire interface here
+                        this.selection.interfaceSelect(hit.node,hit.lookWidget);
+
+                        // highlight the ifName group
+                        this.selection.widgets = hit.node.look.highLightInterface(hit.lookWidget);
+
+                        // notation
+                        const pins = this.selection.widgets;
+
+                        // save the mouse down position
+                        this.state.modo.y = pins[0].rect.y;
+
+                        // switch to dragging the ifName
+                        this.stateSwitch(doing.interfaceDrag); 
+                    }
+                    break
+
+                    case CTRL|SHIFT:{
+
+                        // save the widget and its current position
+                        this.state.lookWidget = hit.lookWidget;
+                        this.state.modo.y = hit.lookWidget.rect.y;
+
+                        // set the node as selected
+                        this.selection.singleNodeAndWidget(hit.node, hit.lookWidget);
+
+                        // switch to dragging the ifName
+                        this.stateSwitch(doing.interfaceNameDrag);
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.icon: {
+
+                switch(keys) {
+
+                    case NONE:
+                    case SHIFT: {
+                        // set the node as selected
+                        this.selection.singleNode(hit.node);
+
+                        // exceute the iconclick action
+                        hit.node.iconClick(tx, this, hit.lookWidget, {x:e.clientX, y:e.clientY});
+                    }
+                    break
+
+                    case CTRL:{
+
+                        // set the node as selected
+                        this.selection.singleNode(hit.node);
+
+                        hit.node.iconCtrlClick(tx,this, hit.lookWidget, {x:e.clientX, y:e.clientY});
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.header: {
+
+                switch(keys) {
+
+                    case NONE:
+                    case SHIFT: {
+                        // set the node as selected
+                        this.selection.singleNode(hit.node);
+
+                        // start dragging the node
+                        this.stateSwitch(doing.nodeDrag);
+                        state.node = hit.node;
+
+                        state.modo.pos.x = hit.node.look.rect.x;
+                        state.modo.pos.y = hit.node.look.rect.y;
+                    }
+                    break
+
+                    case CTRL:{
+
+                        // extend the current selection - set the node as selected
+                        this.selection.extend(hit.node);
+
+                        // switch to node drag
+                        this.stateSwitch(doing.selectionDrag);
+
+                        // save the mouse down position
+                        this.state.modo.pos.x = this.selection.rect.x;
+                        this.state.modo.pos.y = this.selection.rect.y;
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.node: {
+
+                switch(keys) {
+
+                    case NONE:{
+
+                        // set the node as selected
+                        this.selection.singleNode(hit.node);
+
+                        // start dragging the node
+                        this.stateSwitch(doing.nodeDrag);
+                        state.node = hit.node;
+
+                        // save the mouse down position
+                        state.modo.pos.x = hit.node.look.rect.x;
+                        state.modo.pos.y = hit.node.look.rect.y;
+                    }
+                    break
+
+                    case SHIFT: {
+
+                        // save the node
+                        state.node = hit.node;
+
+                        // first switch the state - might end the previous selection !
+                        this.stateSwitch(doing.pinAreaSelect);
+
+                        // ..and only then start a new selection
+                        this.selection.pinAreaStart(hit.node,xyLocal);
+                    }
+                    break
+
+                    case CTRL:{
+
+                        // extend the current selection - set the node as selected
+                        this.selection.extend(hit.node);
+
+                        // save the mouse down position
+                        this.state.modo.pos.x = this.selection.rect.x;
+                        this.state.modo.pos.y = this.selection.rect.y;
+
+                        // switch to node drag
+                        this.stateSwitch(doing.selectionDrag);
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.route: {
+
+                switch(keys) {
+
+                    case NONE:
+                    case CTRL|ALT:{
+
+                        // save the wire
+                        this.state.modo.wire = hit.route.copyWire();
+
+                        // select the route
+                        hit.route.select();
+
+                        // save & change the state
+                        this.stateSwitch(doing.routeDrag);
+                        state.route = hit.route;
+                        state.routeSegment = hit.routeSegment;
+                    }
+                    break
+
+                    case SHIFT:{
+
+                        //The mouse down route is deleted but saved if it would need to be restored
+                        this.doEdit(tx,'deleteRoute',{route: hit.route, oldRoute: hit.route.clone()});
+                    
+                        // and start rerouting
+                        hit.route.resumeDrawing(hit.routeSegment, xyLocal);
+
+                        // and now select the route
+                        hit.route.select();
+
+                        // stateswitch
+                        this.stateSwitch(doing.routeDraw);
+                        state.route = hit.route;
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.pad: {
+
+                switch(keys) {
+
+                    case NONE:{
+                        // save the pad
+                        const pad = state.pad = hit.pad;
+
+                        // if we drag the pad, make sure it is the to-widget in the routes
+                        pad.checkRoutesDirection();
+
+                        // highlight the pad routes
+                        pad.highLightRoutes();
+
+                        this.state.modo.pos.x = pad.rect.x;
+                        this.state.modo.pos.y = pad.rect.y;
+                        this.state.modo.wires = pad.copyWires();
+
+                        // new state
+                        this.stateSwitch(doing.padDrag);
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.padArrow: {
+
+                switch(keys) {
+
+                    case NONE:{
+
+                        // save the pad
+                        state.pad = hit.pad;
+
+                        // highlight the pad routes
+                        for (const route of hit.pad.routes) route.highLight();
+
+                        // change the state
+                        this.stateSwitch(doing.padArrowClicked);
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.selection: {
+                
+                switch(keys) {
+
+                    case NONE:{
+                        if (this.selection.what === selex.freeRect || this.selection.what === selex.multiNode){  
+                            
+                            // save the mouse down position
+                            this.state.modo.pos.x = this.selection.rect.x;
+                            this.state.modo.pos.y = this.selection.rect.y;
+                            this.stateSwitch(doing.selectionDrag);
+                        } 
+                        else if (this.selection.what === selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal);
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+                                // highlight the ifName group
+                                this.selection.widgets = widget.node.look.highLightInterface(widget);
+
+                                // state switch
+                                this.stateSwitch(doing.interfaceNameClicked); 
+                            }
+                            else {  
+                                // save the widget & node
+                                state.lookWidget = widget;
+                                state.node = widget.node;
+
+                                // and highlight the routes
+                                widget.highLightRoutes();
+
+                                // new state
+                                this.stateSwitch(doing.pinClicked);
+
+                                // set the node and pin as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget);
+                            }
+                        }
+                    }
+                    break
+
+                    // on shift we restart the selection
+                    case SHIFT:{
+
+                        if (hit.node) {
+                            // save the node
+                            state.node = hit.node;
+    
+                            // ..and only then start a new selection
+                            this.selection.pinAreaStart(hit.node, xyLocal);
+
+                            // first switch the state - might end the previous selection !
+                            this.stateSwitch(doing.pinAreaSelect);
+                        }
+                        else if (this.selection.isPinSelection()) {
+    
+                            // ..and only then start a new selection
+                            this.selection.pinAreaStart(this.selection.getPinAreaNode(), xyLocal);
+
+                            // first switch the state - might end the previous selection !
+                            this.stateSwitch(doing.pinAreaSelect);
+                        }
+                        else {
+                            // ..and only then start a new selection
+                            this.selection.freeStart(xyLocal);
+
+                            // first switch the state - might end the previous selection !
+                            this.stateSwitch(doing.selection);
+                        }
+                    }
+                    break
+
+                    case CTRL:{
+
+                        switch(this.selection.what) {
+
+                            case selex.singleNode:
+                            case selex.multiNode: 
+
+                                if (hit.node) this.selection.extend(hit.node);
+
+                            break;
+
+                            case selex.ifArea:
+
+                                // save the mouse down position
+                                this.state.modo.y = this.selection.widgets[0].rect.y;
+
+                                // set state to drag the pin/proxy up and down
+                                this.stateSwitch(doing.interfaceDrag); 
+                            break;
+                        }
+
+                    }
+                    break
+
+                    case CTRL|SHIFT:{
+
+                        if (this.selection.what == selex.ifArea) {
+
+                            // check the widget that was hit
+                            const widget = this.selection.widgetHit(xyLocal);
+
+                            if (!widget) return
+
+                            if (widget.is.ifName) {
+
+                                // save the widget
+                                this.state.lookWidget = widget;
+
+                                // save the mouse down position
+                                this.state.modo.y = widget.rect.y;
+
+                                // set the node as selected
+                                this.selection.singleNodeAndWidget(widget.node, widget);
+
+                                // switch to dragging the ifName
+                                this.stateSwitch(doing.interfaceNameDrag);
+                            }
+                        }
+                    }
+                    break
+                }
+            }
+            break
+
+            case zap.busLabel: {
+                switch(keys) {
+
+                    case NONE:{
+ 
+                        state.bus = hit.bus;
+                        state.busLabel = hit.busLabel;
+                        state.bus.is.selected = true;
+
+                        // highlight the bus and its connections
+                        state.bus.highLight();
+
+                        // save the current wire
+                        state.modo.wire = hit.bus.copyWire();
+
+                        // change state
+                        this.stateSwitch(doing.busRedraw);
+                    }
+                    break
+                }
+
+
+            }
+            break
+
+            case zap.busSegment: {
+                
+                switch(keys) {
+
+                    case NONE:{
+
+                        // save state
+                        state.bus = hit.bus;
+                        state.busSegment = hit.busSegment;
+                        state.bus.is.selected = true;
+
+                        // highlight the bus and its connections
+                        hit.bus.highLight();
+
+                        // allow free movement for a single segment...
+                        if (hit.bus.singleSegment()) {
+
+                            state.modo.wire = hit.bus.copyWire();
+                            state.modo.wires = hit.bus.copyTackWires();
+                            this.stateSwitch(doing.busDrag); 
+                        }
+                        else {
+                            state.modo.wire = hit.bus.copyWire();
+                            state.modo.wires = hit.bus.copyTackWires();
+                            this.stateSwitch(doing.busSegmentDrag);
+                        }
+                    }
+                    break
+
+                    case SHIFT:                    break
+
+                    case CTRL:{
+
+                        state.bus = hit.bus;
+                        state.bus.is.selected = true;
+                        state.modo.wire = hit.bus.copyWire();
+                        state.modo.wires = hit.bus.copyTackWires();
+                        this.stateSwitch(doing.busDrag);
+                    }
+                    break
+                }
+
+
+            }
+            break
+
+            case zap.tack: {
+                switch(keys) {
+
+                    case NONE:{
+
+                        state.tack = hit.tack;
+                        state.tack.route.select();
+                        state.modo.wire = hit.tack.route.copyWire();
+                        this.stateSwitch(doing.tackDrag);
+                    }
+                    break
+
+                    case SHIFT:{
+
+                        // notation
+                        const route = hit.tack.route;
+
+                        // stateswitch
+                        state.route = route;
+
+                        //delete the mouse down route
+                        this.doEdit(tx,'deleteRoute',{route, oldRoute: route.clone()});
+
+                        // and start rerouting from the last segment
+                        route.resumeDrawing(route.wire.length-1, xyLocal);      
+
+                        // select the route
+                        route.select();
+                        this.stateSwitch(doing.routeDraw);
+                    }
+                    break
+                }
+
+
+            }
+            break
+
+            case zap.nothing: {
+
+                switch(keys) {
+
+                    case NONE:{
+
+                        // switch state
+                        this.stateSwitch(doing.panning);
+
+                        // save the current position
+                        this.doEdit(tx,'panning', {view:this});
+                    }
+                    break
+
+                    case SHIFT:{
+
+                        // first switch the state - might end the previous selection !
+                        this.stateSwitch(doing.selection);
+
+                        // ..and only then start a new selection
+                        this.selection.freeStart(xyLocal);
+                    }
+                    break
+
+                    case CTRL:                    break
+
+                    case CTRL|SHIFT:{
+
+                        //create a new *cable* bus (will set state.bus)
+                        this.doEdit(tx,'busCreate',{view: this, pos: xyLocal});
+                    }
+                    break
+                }
+            }
+            break
+        }
+    },    
+
+};
+
+const mouseUpHandling = {
+
+    onMouseUp(xyLocal,e, tx) {
+
+        // see what we have hit...
+        this.mouseHit(xyLocal);
+
+        // if we need to adjust the undo parameters...
+        const state = this.state;
+        let bus = null;
+
+        // check the state state
+        switch (state.action) {
+
+            case doing.routeDraw: 
+                // notation
+                const route = state.route;
+
+                // deselect the route
+                route.unSelect();
+
+                // keep the pin highlighted, but un highlight the other routes
+                route.from.unHighLightRoutes();
+
+                // no more hovering
+                this.stopHover();
+
+                // what did we hit..
+                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? null;
+
+                // complete the route or cancel it...
+                route.connect(conx) ? this.doEdit(tx,'routeDraw',{route}) : route.popFromRoute();
+
+                break
+
+            case doing.routeDrag:
+                // check if we should combine two segments
+                state.route.endDrag(state.routeSegment);
+                state.route.unSelect();
+                this.doEdit(tx,'routeDrag', {route: this.hit.route, oldWire:state.modo.wire, newWire:state.route.copyWire()});
+                break
+
+            case doing.selection:
+                if (this.selection.rect) this.getSelected(this.selection.rect);
+                break
+
+            case doing.selectionDrag:
+                this.doEdit(tx,'selectionDrag',{view: this, oldPos: state.modo.pos, newPos:{x: this.selection.rect.x, y: this.selection.rect.y}});
+                break
+
+            case doing.pinAreaSelect:
+                break
+
+            case doing.nodeDrag: 
+                // get the node being dragged
+                const node = state.node;
+
+                const oldPos = state.modo.pos;
+                const newPos = {x: node.look.rect.x, y: node.look.rect.y};
+
+                // remove 'kinks' in the routes
+                node.look.snapRoutes();
+
+                if (blockDistance(oldPos, newPos) < style.look.smallMove) 
+                    // move the node back, but keep the y value to keep the 'snap' intact (?)
+                    node.move({x: oldPos.x - newPos.x, y:0});
+                else 
+                    this.doEdit(tx,'nodeDrag',{view:this, node, oldPos, newPos});
+
+                break
+
+            case doing.busDraw:
+            case doing.busRedraw:
+
+                bus = state.bus;
+                bus.is.selected = false;
+                bus.unHighLight();
+                this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()});
+                break
+
+            case doing.busSegmentDrag:
+
+                bus = state.bus;
+                bus.fuseSegment(state.busSegment);
+                bus.is.selected = false;
+                bus.unHighLight();
+                this.doEdit(tx,'busSegmentDrag', {bus, oldWire: state.modo.wire, oldWires: state.modo.wires, newWire: bus.copyWire(), newTackWires: bus.copyTackWires()});
+                break
+
+            case doing.busDrag:
+
+                bus = state.bus;
+                bus.is.selected = false;
+
+                // remove highlight
+                state.bus.unHighLight();
+                this.doEdit(tx,'busDrag', {bus, oldWire: state.modo.wire, oldWires: state.modo.wires, newWire: bus.copyWire(), newTackWires: bus.copyTackWires()});
+
+                break
+
+            case doing.padDrag: 
+                // notation
+                const pad = state.pad;
+
+                // stop dragging
+                pad.endDrag();
+                pad.unHighLightRoutes();
+
+                this.doEdit(tx,'padDrag', {pad, oldPos: state.modo.pos, oldWires: state.modo.wires, newPos:{x:pad.rect.x, y:pad.rect.y}, newWires: pad.copyWires()});
+                break
+
+            case doing.tackDrag:
+                // notation
+                const tack = state.tack;
+                tack.fuseEndSegment();
+                tack.route.unSelect();
+
+                this.doEdit(tx,'tackDrag', {tack: hit.tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()});
+                break
+
+            case doing.pinDrag:
+
+                // notation
+                const pin = state.lookWidget;
+
+                // un highlight the routes
+                state.lookWidget.unHighLightRoutes();
+
+                // confirm the change
+                this.doEdit(tx,'pinDrag',{pin, oldY: state.modo.y, oldLeft: state.modo.left});
+                break
+
+            // OBSOLETE
+            case doing.pinAreaDrag:
+                break
+
+            case doing.interfaceNameDrag: {
+                this.doEdit(tx,'interfaceNameDrag',{ifName: state.lookWidget, oldY: state.modo.y, newY: state.lookWidget.rect.y});
+            }
+            break
+
+            case doing.interfaceDrag: {
+
+                // notation
+                const ifName = this.selection.widgets[0];
+
+                // remove the highlights when moving away from the ifName
+                ifName?.node.look.unhighLightInterface(this.selection.widgets);
+
+                this.doEdit(tx,'interfaceDrag',{group:this.selection.widgets.slice(), oldY:state.modo.y, newY:ifName.rect.y});
+
+                // done - set the widget and node as selected
+                this.selection.interfaceSelect(ifName.node,ifName);
+            }
+            break;
+
+            case doing.interfaceNameClicked: {
+
+                // notation
+                const ifName = this.selection.widgets[0];
+
+                // remove the highlights when moving away from the ifName
+                ifName?.node.look.unhighLightInterface(this.selection.widgets);
+            }
+            break;
+
+            case doing.pinClicked:
+
+                // un highlight the pin
+                state.lookWidget.unHighLight();
+
+                // unhighlight the routes
+                state.lookWidget.unHighLightRoutes();
+                break
+
+            case doing.padArrowClicked:
+                state.pad.unHighLight();
+                for (const route of state.pad.routes) route.unHighLight();
+                break
+        }
+        // reset the state
+        this.stateSwitch(doing.nothing);
+    },
+
+};
+
+// The context menu
+const cm$7 = {
+
+	choices:[
+		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
+		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
+		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
+		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
+		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
+		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
+		{text:"paste as link",	icon:"link",		char:'ctrl l',	state:"enabled", 	action:linkFromClipboard},
+		{text:"paste",			icon:"content_copy",char:'ctrl v',	state:"enabled", 	action:pasteFromClipboard},
+	],
+
+	view:null,
+	tx: null,
+	xyLocal:null,
+	xyScreen:null,
+
+	// prepare the menu list before showing it
+	prepare(view, tx) {
+
+		this.view = view;
+		this.tx = tx;
+		this.xyLocal = view.hit.xyLocal;
+		this.xyScreen = view.hit.xyScreen;
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	}
+};
+
+const bgCxMenu = cm$7;
+
+
+function newGroupNode() { 				   
+	cm$7.doEdit('newGroupNode',{view: cm$7.view, pos: cm$7.xyLocal});
+}
+
+function newSourceNode() {
+	cm$7.doEdit('newSourceNode',{view: cm$7.view,pos: cm$7.xyLocal});
+}
+
+function newBus() {
+	cm$7.doEdit('busCreate',{view: cm$7.view, pos: cm$7.xyLocal});
+}
+
+function newInputPad() {
+	cm$7.doEdit('padCreate', {view: cm$7.view,pos: cm$7.xyLocal, input:true});
+}
+
+function newOutputPad() {
+	cm$7.doEdit('padCreate', {view: cm$7.view,pos: cm$7.xyLocal, input: false});
+}
+
+function selectNode() {
+	cm$7.tx.send("select node", {xyScreen: cm$7.xyScreen, xyLocal:cm$7.xyLocal});
+}
+
+function linkFromClipboard() {
+
+	// request the clipboard - also set the target, the clipboard can come from another file
+	cm$7.tx.request('clipboard.get').then( ({raw}) => {
+
+		// do the edit
+		cm$7.doEdit('pasteFromClipboard',{view: cm$7.view, pos: cm$7.xyLocal, raw, asLink: true});
+	});
+	//.catch( error => console.log('link from context menu: clipboard.get error -> ' + error))
+}
+
+function pasteFromClipboard() {
+
+	// request the clipboard - also set the target, the clipboard can come from another file
+	cm$7.tx.request('clipboard.get').then( ({raw}) => {
+
+		// do the edit
+		cm$7.doEdit('pasteFromClipboard',{view: cm$7.view, pos: cm$7.xyLocal, raw, asLink: false});
+	});
+	//.catch( error => console.log('paste from context menu: clipboard.get error -> ' + error))
+}
+
+const cm$6 = {
+
+	choices: [
+		{text:"",			char:'h',	state:"enabled", action:nodeHighLight,	icon:"highlight"},
+		{text:"add label",	char:'a',	state:"enabled",action:addLabel,		icon:"sell"},
+		{text:"wider", 		char:'ctrl +',	state:"enabled", action:wider,			icon:"open_in_full"},
+		{text:"smaller",	char:'ctrl -', 	state:"enabled", action:smaller,		icon:"close_fullscreen"},
+		{text:"copy",		char:'ctrl c',state:"enabled", action:nodeToClipboard,icon:"content_copy"},
+    	{text:"paste pins",char: 'ctrl v',state: 'enabled', action: pasteWidgetsFromClipboard$2,  icon: 'content_copy'},    
+		{text:"source to clipboard",	state:"enabled", action:sourceToClipboard,icon:"content_paste"},
+		{text:"make a test node",		state:"enabled", action:makeTestNode,icon:"done_all"},
+		{text:"",						state:"enabled", action:convertNode,	icon:"sync"},
+		{text:"cut link",				state:"enabled", action:cutLink,		icon:"link_off"},
+		{text:"get from link",			state:"enabled", action:getFromLink,	icon:"link"},
+		{text:"save to link",			state:"enabled", action:saveToLink,		icon:"add_link"},
+		{text:"ungroup",				state:"enabled", action:unGroup, 		icon:"schema",},
+		{text:"disconnect", char:'clear',state:"enabled", action:disconnectNode,icon:"power_off"},
+		{text:"delete", 	char:'del',	state:"enabled", action:deleteNode,		icon:"delete"},
+	],
+
+	view:null,
+	tx: null,
+	node:null,
+	xyLocal: null,
+
+	// prepare the menu list before showing it
+	prepare(view, tx) {
+
+		this.view = view;
+		this.tx = tx;
+		this.xyLocal = view.hit.xyLocal;
+		this.node = view.hit.node;
+
+		// some choices will be enable or changed
+		let choice = this.choices.find( choice => choice.action == sourceToClipboard);
+		choice.state = this.node.is.source ? "enabled" : "disabled";
+
+		choice = this.choices.find( choice => choice.action == convertNode);
+		choice.state = this.node.link ? "disabled" : "enabled";
+		choice.text = this.node.is.group ? "convert to source node" : "convert to group node";
+
+		choice = this.choices.find( choice => choice.action == nodeHighLight);
+		choice.text = this.node.is.highLighted ? "remove highlight" : "highlight routes";
+
+		choice = this.choices.find( choice => choice.action == cutLink);
+		choice.state = this.node.link ? "enabled" : "disabled";
+
+		choice = this.choices.find( choice => choice.action == saveToLink);
+		choice.state = this.node.link ? "disabled" : "enabled";
+
+		choice = this.choices.find( choice => choice.action == getFromLink);
+		choice.state = this.node.link ? "disabled" : "enabled";
+
+		choice = this.choices.find( choice => choice.action == pasteWidgetsFromClipboard$2);
+		choice.state = this.node.link ? "disabled" : "enabled";
+
+		choice = this.choices.find( choice => choice.action == unGroup);
+		choice.state = this.node.is.group ? "enabled" : "disabled";
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	}
+};
+const nodeCxMenu = cm$6;
+
+
+// the actions 
+function addLabel() {
+	cm$6.doEdit('addLabel',{view: cm$6.view, node: cm$6.node});
+}
+
+function wider() {
+	cm$6.doEdit('wider', {node: cm$6.node});
+}
+
+function smaller() {
+	cm$6.doEdit('smaller', {node: cm$6.node});
+}
+
+function nodeHighLight() {
+	cm$6.doEdit('nodeHighLight', {node: cm$6.node});
+}
+
+function nodeToClipboard() {
+	cm$6.doEdit('nodeToClipboard', {view: cm$6.view, node: cm$6.node});
+}
+
+function convertNode() {
+	cm$6.doEdit('convertNode',{view: cm$6.view, node: cm$6.node});
+}
+
+function makeTestNode() {
+}
+
+function sourceToClipboard() {
+	cm$6.doEdit('sourceToClipboard',{node: cm$6.node});
+}
+
+function disconnectNode() {
+	cm$6.doEdit('disconnectNode',{node: cm$6.node});
+}
+
+function deleteNode() {
+	cm$6.doEdit('deleteNode',{view: cm$6.view, node: cm$6.node});
+}
+
+// make the node local, ie break the link....
+function cutLink() {
+	cm$6.doEdit('cutLink',{node: cm$6.node});
+}
+
+// type in the name of a model and try to find the requested node in that model
+function getFromLink() {
+	cm$6.node.showLinkForm(cm$6.xyLocal,cm$6.tx);
+}
+
+// save the node to a file, ie change it into a link
+function saveToLink() {
+	cm$6.node.showExportForm(cm$6.xyLocal,cm$6.tx);
+}          		
+
+function unGroup() {
+	cm$6.doEdit('unGroup', {view: cm$6.view, node: cm$6.node});
+}
+
+function pasteWidgetsFromClipboard$2() {
+    // request the clipboard - also set the target, the clipboard can come from another file
+    cm$6.tx.request('clipboard.get', cm$6.doc).then(({raw}) => {
+        cm$6.doEdit('pasteWidgetsFromClipboard', {view: cm$6.view, raw});
+    });
+    //.catch( error => console.log('paste: clipboard get error -> ' + error))
+}
+
+const noLink$1 = [
+    {text: 'profile',           char: 'p',  icon: 'info', state: 'disabled', action: showProfile },    
+    {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput$1,},
+    {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput$1,},
+    {text: 'new interface',     char: 'f',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName$1,},
+    {text: 'new request',       char: 'q',  icon: 'switch_left',        state: 'enabled',        action: newRequest$1,    },
+    {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply$1,    },
+    {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch$1,    },
+    {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
+    {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard$1,    },    
+    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
+    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
+    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
+    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },    
+    {text: 'delete',                        icon: 'delete', state: 'enabled', action: deletePin },
+];
+
+const withLink$1 = [
+    {text: 'profile',                      icon: 'info', state: 'disabled', action: showProfile },    
+    {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap$1,    },    
+    {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft$1,    },    
+    {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight$1,    },    
+    {text: 'disconnect',                    icon: 'power_off',        state: 'disabled',        action: disconnectPin,    },
+    ];
+
+// click on the node
+const cm$5 = {
+    choices: null,
+
+    view: null,
+    tx: null,
+    node: null,
+    widget: null,
+    xyLocal: null,
+    xyScreen: null,
+
+    // a specific function to turn on/off the options of the right click menu
+    prepare(view, tx) {
+        this.view = view;
+        this.tx = tx;
+        this.node = view.hit.node;
+        this.widget = view.hit.lookWidget;
+        this.xyLocal = view.hit.xyLocal;
+        this.xyScreen = view.hit.xyScreen;
+
+        // linked nodes hve much less options
+        if (this.node.link) {
+            // The number of options is reduced
+            this.choices = withLink$1;
+
+            // only pins can be disconnected
+            let entry = this.choices.find((c) => c.action == disconnectPin);
+            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+            // profiles are only available for pins
+            entry = this.choices.find((c) => c.action == showProfile);
+            entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+            return;
+        }
+
+        this.choices = noLink$1;
+
+        // only pins can be disconnected
+        let entry = this.choices.find((c) => c.action == disconnectPin);
+        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+        // swap input to output
+        entry = this.choices.find((c) => c.action == inOutSwitch$1);
+        let enable = this.widget?.is.pin && this.widget.routes.length == 0;
+        entry.state = enable ? 'enabled' : 'disabled';
+        entry.text =
+            enable && this.widget.is.input
+                ? 'change to output'
+                : 'change to input';
+
+        // switch channel on or off
+        entry = this.choices.find((c) => c.action == channelOnOff);
+        enable = this.widget?.is.pin; // && ! this.widget.is.proxy
+        entry.state = enable ? 'enabled' : 'disabled';
+        entry.text =
+            enable && this.widget.is.channel ? 'remove channel' : 'add channel';
+
+        // profiles are only available for pins
+        entry = this.choices.find((c) => c.action == showProfile);
+        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled';
+
+        // switch the delete action
+        entry = this.choices.find((c) => c.text == 'delete');
+        entry.action = this.widget?.is.pin
+            ? deletePin
+            : this.widget?.is.ifName
+              ? deleteInterfaceName
+              : () => {};
+
+        // check if there are pins to paste
+        entry = this.choices.find((c) => c.text == 'paste pins');
+    },
+
+    doEdit(verb, param) {
+        this.tx.send('redox.doit',{verb, param});
+    },
+};
+
+const pinCxMenu = cm$5;
+
+
+// is = {channel, input, request, proxy}
+function newInput$1() {
+    // set the flags
+    const is = { channel: false, input: true, proxy: cm$5.node.is.group };
+    cm$5.doEdit('newPin', {
+        view: cm$5.view,
+        node: cm$5.node,
+        pos: cm$5.xyLocal,
+        is,
+    });
+}
+function newOutput$1() {
+    // set the flags
+    const is = { channel: false, input: false, proxy: cm$5.node.is.group };
+    cm$5.doEdit('newPin', {
+        view: cm$5.view,
+        node: cm$5.node,
+        pos: cm$5.xyLocal,
+        is,
+    });
+}
+function newRequest$1() {
+    // set the flags
+    const is = { channel: true, input: false, proxy: cm$5.node.is.group };
+    cm$5.doEdit('newPin', {
+        view: cm$5.view,
+        node: cm$5.node,
+        pos: cm$5.xyLocal,
+        is,
+    });
+}
+function newReply$1() {
+    // set the flags
+    const is = { channel: true, input: true, proxy: cm$5.node.is.group };
+    cm$5.doEdit('newPin', {
+        view: cm$5.view,
+        node: cm$5.node,
+        pos: cm$5.xyLocal,
+        is,
+    });
+}
+function inOutSwitch$1() {
+    cm$5.doEdit('ioSwitch', { pin: cm$5.widget });
+}
+function channelOnOff() {
+    cm$5.doEdit('channelOnOff', { pin: cm$5.widget });
+}
+function disconnectPin() {
+    cm$5.doEdit('disconnectPin', { pin: cm$5.widget });
+}
+function deletePin() {
+    cm$5.doEdit('deletePin', { view: cm$5.view, pin: cm$5.widget });
+}
+function newInterfaceName$1() {
+    cm$5.doEdit('newInterfaceName', {
+        view: cm$5.view,
+        node: cm$5.node,
+        pos: cm$5.xyLocal,
+    });
+}
+function deleteInterfaceName() {
+    cm$5.doEdit('deleteInterfaceName', {
+        view: cm$5.view,
+        ifName: cm$5.widget,
+    });
+}
+function showProfile(e) {
+    cm$5.doEdit('showProfile', {
+        pin: cm$5.widget,
+        pos: { x: cm$5.xyScreen.x, y: cm$5.xyScreen.y + 10 },
+    });
+}
+
+function pinsSwap$1() {
+    cm$5.doEdit('swapPins', {
+        node: cm$5.node,
+        left: true,
+        right: true,
+    });
+}
+
+function pinsLeft$1() {
+    cm$5.doEdit('swapPins', {
+        node: cm$5.node,
+        left: true,
+        right: false,
+    });
+}
+function pinsRight$1() {
+    cm$5.doEdit('swapPins', {
+        node: cm$5.node,
+        left: false,
+        right: true,
+    });
+}
+function pasteWidgetsFromClipboard$1() {
+    // request the clipboard - also set the target, the clipboard can come from another file
+    cm$5.tx.request('clipboard.get', cm$5.doc).then(({raw}) => {
+        cm$5.doEdit('pasteWidgetsFromClipboard', {view: cm$5.view, raw});
+    });
+    //.catch( error => console.log('paste: clipboard get error -> ' + error))
+}
+
+const withLink = [
+
+	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
+	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
+	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
+	{text:"copy pins",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:widgetsToClipboard},
+	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
+];
+
+const noLink = [
+
+	{text:"new output",		char:'o', icon:"logout",state:"enabled", action:newOutput},
+	{text:"new input",		char:'i', icon:"login",state:"enabled", action:newInput},
+	{text:"new interface",  char:'p', icon:"drag_handle",state:"enabled", action:newInterfaceName},
+	{text:"new request",	char:'q', icon:"switch_left",state:"enabled", action:newRequest},
+	{text:"new reply",		char:'r', icon:"switch_right",state:"enabled", action:newReply},
+
+	{text:"left/right swap",          icon:"swap_horiz",state:"enabled", action:ifPinsSwap},
+	{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:ifPinsLeft},
+	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
+	{text:"i/o swicth",	  	          icon:"cached",state:"enabled", action:ioSwitch},
+
+	{text:"copy pins",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:widgetsToClipboard},
+	{text:"paste pins",	char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pasteWidgetsFromClipboard},
+	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
+	{text:"delete",					  icon:"delete",state:"enabled", action:ifDelete},
+];
+
+// click on the node
+const cm$4 = {
+
+	choices: null,
+
+	view: null,
+	tx: null,
+	node: null,
+	ifWidget: null,
+	xyLocal: null,
+	xyScreen: null,
+
+	// a specific function to turn on/off the options of the right click menu
+	prepare(view, tx) {
+
+		this.view = view;
+		this.tx = tx;
+
+		// Get the data from the selection !
+		if (view.selection.what == selex.ifArea) {
+
+			// check - should never fail
+			const ifWidget = view.selection.widgets[0];
+			if (!ifWidget?.is.ifName) return;
+
+			this.node = ifWidget.node;
+			this.ifWidget = ifWidget;
+			this.xyLocal = view.hit.xyLocal;
+			this.xyScreen = view.hit.xyScreen;
+		}
+		// get the data from the view hit
+		else {
+			this.node = view.hit.node;
+			this.ifWidget = view.hit.lookWidget;
+			this.xyLocal = view.hit.xyLocal;
+			this.xyScreen = view.hit.xyScreen;
+		}
+
+		// set the options
+		this.choices = this.node.link ? withLink : noLink;
+
+		// check if there are pins to paste
+		const entry = this.choices.find( c => c.text == "paste pins");
+		if (entry) {
+			entry.state = "disabled";
+			this.tx.request('clipboard.get', cm$4.doc)
+			.then( clipboard => {
+				entry.state = clipboard.selection.isPinSelection() ? "enabled" : "disabled";
+			})
+			.catch( error => {});
+		}
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	},
+};
+
+const ifCxMenu = cm$4;
+
+
+// is = {channel, input, request, proxy}
+function newInput() {
+	const is = {channel: false, input: true, proxy: cm$4.node.is.group};
+	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+}
+function newOutput() {
+	const is = {channel: false, input: false, proxy: cm$4.node.is.group};
+	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+}
+function newRequest() {
+	const is = {channel: true, input: false, proxy: cm$4.node.is.group};
+	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+}
+function newReply() {
+	const is = {channel: true, input: true, proxy: cm$4.node.is.group};
+	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+}
+function newInterfaceName() {
+	cm$4.doEdit('newInterfaceName', {view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal});
+}
+function ioSwitch() {
+	cm$4.doEdit('ioSwitchPinArea', {view: cm$4.view});
+}
+function ifDisconnect() {
+	cm$4.doEdit('disconnectPinArea', {});
+}
+function ifDelete() {
+	cm$4.doEdit('deletePinArea',{view: cm$4.view});
+}
+
+// pin swapping
+function ifPinsSwap()  {
+	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:true, right:true});
+}
+function ifPinsLeft()  {
+	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:true, right:false});
+}
+function ifPinsRight() {
+	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:false, right:true});
+}
+
+function widgetsToClipboard() {
+
+	// sends the selection to the local clipboard node
+	cm$4.view.selectionToClipboard(cm$4.tx);
+}
+
+// paste widgets
+function pasteWidgetsFromClipboard()  {
+
+	// request the clipboard - also set the target, the clipboard can come from another file
+	cm$4.tx.request('clipboard.get').then( ({raw}) => {
+
+		cm$4.doEdit('pasteWidgetsFromClipboard',{view: cm$4.view, raw});
+	})
+	.catch( error => console.log('paste: clipboard get error -> ' + error));
+}
+
+const cm$3 = {
+
+	choices: [
+        {text:"align left",icon:"align_horizontal_left",state:"enabled",action: () => alignVertical(true)},
+        {text:"align right",icon:"align_horizontal_right",state:"enabled",action: () => alignVertical(false)},
+        {text:"align top",icon:"align_vertical_top",state:"enabled",action:() => alignHorizontal(true)},
+        {text:"distribute vertically",icon:"vertical_distribute",state:"enabled",action:spaceVertical},
+        {text:"distribute horizontally",icon:"horizontal_distribute",state:"enabled",action:spaceHorizontal},
+		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard$1},
+        {text:"group",icon:"developer_board",state:"enabled", action:group},
+        {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect$2},
+        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
+        {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
+    ],
+
+    view: null,
+	tx: null,
+	xyLocal:null,
+
+    prepare(view, tx) {
+
+        this.view = view;
+        this.tx = tx;
+        this.xyLocal = view.hit.local;
+    },
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+    }
+};
+
+const selectFreeCxMenu = cm$3;
+
+// align vertical we do for nodes and pads
+function alignVertical(left) {
+    cm$3.doEdit('alignVertical',{view: cm$3.view, left});
+}
+// align top we only do for nodes 
+function alignHorizontal(top) {
+    cm$3.doEdit('alignHorizontal',{view: cm$3.view, top});
+}
+function spaceVertical() {
+    cm$3.doEdit('spaceVertical',{view: cm$3.view});
+}
+function spaceHorizontal() {
+    cm$3.doEdit('spaceHorizontal', {view: cm$3.view});
+}
+function disconnect$2() {
+    cm$3.doEdit('disconnectSelection',{selection: cm$3.view.selection});
+}
+function deleteSelection() {
+    cm$3.doEdit('deleteSelection',{view: cm$3.view});
+}
+function selectionToClipboard$1() {
+    cm$3.view.selectionToClipboard(cm$3.tx);
+}
+function group() {
+    cm$3.doEdit('selectionToGroup',{view: cm$3.view});
+}
+function autoRoute() {
+    cm$3.doEdit('autoRouteSelection',{view: cm$3.view});
+}
+
+const cm$2 = {
+
+	choices: [
+		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
+		{text:"disconnect",				  icon:"power_off",state:"enabled", action:disconnectPinArea},
+		{text:"delete",					  icon:"delete",state:"enabled", action:deletePinArea},
+		{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
+		{text:"all pins left",			  icon:"arrow_back",state:"enabled", action:pinsLeft},
+		{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:pinsRight},
+		{text:"in/out switch",	  	  	  icon:"cached",state:"disabled", action:inOutSwitch},
+
+	],
+
+	view: null,
+	tx: null,
+	node: null,
+	widgets: null,
+	xyLocal: null,
+	xyScreen: null,
+
+	// a specific function to turn on/off the options of the right click menu
+	prepare(view, tx) {
+
+		this.view = view;
+		this.tx = tx;
+		this.node = view.state.node;
+		this.widgets = view.selection.widgets;
+		this.xyLocal = view.hit.xyLocal;
+		this.xyScreen = view.hit.xyScreen;
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	}
+};
+
+const pinAreaCxMenu = cm$2;
+
+
+function selectionToClipboard() {
+	
+	cm$2.view.selectionToClipboard(cm$2.tx);
+}
+function disconnectPinArea() {
+	cm$2.doEdit('disconnectPinArea', {view: cm$2.view, node: cm$2.node, widgets: cm$2.widgets});
+}
+function deletePinArea() {
+	cm$2.doEdit('deletePinArea',{view: cm$2.view, node: cm$2.node, widgets: cm$2.widgets});
+}
+function pinsSwap()  {
+	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:true, right:true});
+}
+function pinsLeft()  {
+	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:true, right:false});
+}
+function pinsRight() {
+	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:false, right:true});
+}
+function inOutSwitch() {
+	cm$2.doEdit('ioSwitchPinArea', {view: cm$2.view});
+}
+
+const cm$1 = {
+
+	choices: [
+		{icon:"highlight",text:"",state:"enabled", action:busHighLight},
+		{icon:"sell",text:"change name",state:"enabled", action:changeName$1},
+		{icon:"timeline",text:"straight connections",state:"enabled", action:straightConnections},
+		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect$1},
+		{icon:"delete",text:"delete",state:"enabled", action:deleteBus}
+	],
+
+	view: null,
+	tx: null,
+	bus:null,
+	label:null,
+	xyLocal:null,
+
+	prepare(view,tx) {
+
+		this.view = view;
+		this.tx = tx;
+		this.bus = view.hit.bus;
+		this.label = view.hit.busLabel;
+		this.xyLocal = view.hit.xyScreen;
+
+		let choice = this.choices.find( choice => choice.action == busHighLight);
+		choice.text = this.bus.is.highLighted ? "remove highlight" : "highlight routes";
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	}
+};
+
+const busCxMenu = cm$1;
+
+
+function busHighLight() {
+	cm$1.doEdit('busHighlight',{bus: cm$1.bus});
+}
+
+function changeName$1() {
+	cm$1.doEdit('busChangeName', {view: cm$1.view, bus: cm$1.bus, label: cm$1.label});
+}
+
+function straightConnections() {
+	cm$1.doEdit('busStraightConnections', {bus: cm$1.bus});
+}
+
+function disconnect$1() {
+	cm$1.doEdit('busDisconnect',{bus: cm$1.bus});
+}
+
+function deleteBus() {
+	cm$1.doEdit('busDelete',{view: cm$1.view, bus: cm$1.bus});	
+}
+
+const cm = {
+
+	choices: [
+		{icon:"sell",text:"change name",state:"enabled", action:changeName},
+		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect},
+		{icon:"delete",text:"delete",state:"enabled", action:deletePad}
+	],
+
+	// to set the position where the context menu has to appear
+	view:null,
+	tx: null,
+	pad:null,
+
+	prepare(view, tx) {
+		this.view = view;
+		this.tx = tx;
+		this.pad = view.hit.pad;
+	},
+
+	doEdit(verb, param) {
+		this.tx.send('redox.doit',{verb, param});
+	}
+};
+const padCxMenu = cm;
+
+function changeName() {
+	cm.doEdit('changeNamePad',{view: cm.view, pad: cm.pad});
+}
+
+function disconnect() {
+	cm.doEdit('disconnectPad',{pad: cm.pad});
+}
+
+function deletePad() {
+	cm.doEdit('deletePad',{view: cm.view, pad: cm.pad});
+}
+
+const contextHandling = {
+
+    // show the rightclick cxMenu
+    onContextMenu(xyLocal, e, tx=null) {
+
+        // the context menu
+        let cxMenu = null;
+
+        // save the location
+        this.saveHitSpot(xyLocal, e);
+
+        // check what was hit inside the window !
+        this.mouseHit(xyLocal);
+
+        switch (this.hit.what) {
+            
+            case zap.header:
+            case zap.icon:
+                cxMenu = nodeCxMenu;
+            break;
+
+            case zap.node:
+            case zap.pin:
+                cxMenu = pinCxMenu;
+            break;
+
+            case zap.ifName: {
+                // we select the entire interface here
+                this.selection.interfaceSelect(
+                    this.hit.node,
+                    this.hit.lookWidget
+                );
+
+                // prepare the context cxMenu
+                cxMenu = ifCxMenu;
+            }
+            break;
+
+            case zap.busSegment:
+            case zap.busLabel:
+                cxMenu = busCxMenu;
+            break;
+
+            case zap.pad:
+            case zap.padArrow:
+                cxMenu = padCxMenu;
+            break;
+
+            case zap.selection: {
+                switch (this.selection.what) {
+                    case selex.freeRect:
+                    case selex.multiNode:
+                        cxMenu = selectFreeCxMenu;
+                    break;
+
+                    case selex.ifArea:
+                        cxMenu = ifCxMenu;
+                    break;
+
+                    case selex.pinArea:
+                        cxMenu = pinAreaCxMenu;
+                    break;
+                }
+            }
+            break;
+
+            case zap.nothing:
+                cxMenu = bgCxMenu;
+            break;
+        }
+
+        // check
+        if (!cxMenu) return
+
+        // prepare the cxMenu
+        cxMenu.prepare(this, tx);
+
+        // and show it
+        tx.send('context menu',{ menu: cxMenu.choices, event: e });
+    },
+};
+
+const nodeHandling = {
+
+    // setting a new root for a view
+    syncRoot(newRoot) {
+
+        // construct the rx tx tables
+        newRoot.rxtxBuildTxTable();
+
+        // if the root is not placed, place it
+        if (!newRoot.is.placed) newRoot.placeRoot();
+
+        // set the root for the view (is always a group node !)
+        this.root = newRoot;
+
+        // If the root has a view, it is the top level view - set the saved transform for it
+        if (this.root.savedView?.tf) this.setTransform(this.root.savedView.tf);
+
+        // and now also restore the saved views if any 
+        this.restoreSubViews();
+    },
+
+    // add a 'container' group
+    // getContainer(root) {
+
+    //     // if the root is a container set this as the root for the view - change the name if required
+    //     if (root.isContainer()) return root
+ 
+    //     // the root is not a container -> create a container group node
+    //     const container = this.initRoot('')
+
+    //     // save the model root in the container
+    //     container.nodes.push(root)
+
+    //     // return the root
+    //     return container
+    //  },
+
+    // this is for when we create a new node in the editor
+    newEmptyNode(pos, source) {
+
+        // create the look for the node
+        const look = new Look( {x:pos.x,y:pos.y,w:0,h:0} );
+
+        // create the node
+        const node = source ? new SourceNode(look, '') : new GroupNode(look, '');
+
+        // get the node a UID
+        // editor.doc.UID.generate(node)
+
+        // add the node to the node graph
+        this.root.addNode(node);
+
+        // set the node as selected
+        this.selection.singleNode(node);
+
+        // find the header
+        const header = node.look.widgets.find( widget => widget.is.header );
+
+        // start the name edit
+        this.beginTextEdit(header);
+
+        // we also set the hit position to the start
+        this.hit.xyLocal.y = pos.y + header.rect.h;
+
+        // done
+        return node
+    },
+
+    blinkToWarn(node) {
+
+        // get the view manager
+        const manager = this.getManager();
+
+        const box = node.look.widgets.find(w => w.is.box );
+        const icon = node.look.widgets.find(w => w.is.icon && (w.type == 'link' || w.type == 'lock'));
+
+        if (!box) return
+
+        const maxBlinks = style.icon.nBlinks * 2;
+        const blinkRate = style.icon.blinkRate;
+
+        let count = 0;
+        let lastTime = 0;
+
+        // time is in ms
+        const blinkFunction = (time) => {
+
+            // check the time
+            if (time - lastTime >= blinkRate) {
+
+                // change the color
+                box.is.alarm = !box.is.alarm;
+                icon.is.alarm = !icon.is.alarm;
+
+                // redraw
+                manager.redraw();
+                
+                // save the time
+                lastTime = time;
+
+                // increment count
+                count++;
+            }
+    
+            // Continue for the number of blinks requested
+            if (count < maxBlinks) {
+                requestAnimationFrame(blinkFunction);
+            }
+            else {
+                box.is.alarm = false;
+                icon.is.alarm = false;
+                manager.redraw();
+            }
+        };
+    
+        // schedule the first blink function
+        requestAnimationFrame(blinkFunction);
+    },
+
+};
+
+const selectionHandling = {
+
+    // finds nodes or routes in the selection rectangle
+    getSelected(rect) {
+
+        // notation
+        const slct = this.selection;
+
+        // check the nodes
+        for( const node of this.root.nodes) if (node.overlap(rect)) slct.nodes.push(node);
+
+        // check all pads
+        for( const pad of this.root.pads) if (pad.overlap(rect)) slct.pads.push(pad);
+
+        // check the buses and the individual tacks
+        for( const bus of this.root.buses) if (bus.overlap(rect)) {
+
+            // ..if so select the bus
+            slct.buses.push(bus);
+
+            // ...and select the tacks in the selection
+            for( const tack of bus.tacks) if (tack.overlap(rect)) slct.tacks.push(tack);
+        }
+    },
+
+    // an external widget has a connection with a node outside the selection
+    externalWidgets(nodeList) {
+
+        let widgetList = [];
+
+        // go through all the widgets of the selected nodes
+        nodeList.forEach( node => {
+            node.look.widgets.forEach( widget => {
+                widget.routes?.forEach( route => {  
+                    if ( !nodeList.includes(route.to.node) || !nodeList.includes(route.from.node)) widgetList.push(widget);
+                });
+            });
+        });
+        return widgetList
+    },
+
+
+    // if we are copying the same uid, we 
+    deltaForPaste(pos, raw) {
+
+        // the position where to paste
+        const here = this.selection.pastePos(raw.uid, pos);
+
+        // if the position is the same as the reference - move the first, otherwise only move starting from 2
+        return {x: here.x - raw.rect.x, y: here.y - raw.rect.y}
+    },
+
+    // save the selection to the clipboard (no copies are made !)
+    selectionToClipboard(tx) {
+
+        // get the model from which we take the selection
+        const model = this.getManager()?.getModel();
+
+        // check
+        if (!model) return
+
+        // send the selection to the clipboard
+        tx.send('clipboard.set',{model, selection:this.selection});
+    },
+
+    // The raw clipboard was compiled into a model 'root'
+    clipboardToSelection(pos, where, content) {
+
+        // calculate where the selection has to be pasted
+        const delta = pos ? this.deltaForPaste(pos, content.raw) : {x:0, y:0};
+
+        // initialise the selection
+        this.selection.reset();
+
+        // and set the type of selection
+        this.selection.what = content.raw.what;
+
+        const pasteNode = (node, delta) => {
+            node.look.moveDelta(delta.x, delta.y);
+            node.look.moveRoutes(delta.x, delta.y);
+            this.root.addNode(node);
+            this.selection.nodes.push(node);
+        };
+        const pasteBus = (bus, delta) => {
+            bus.move(delta.x, delta.y);
+            this.selection.buses.push(bus);           
+        };
+
+        // copy as required
+        switch(content.raw.what) {
+
+            case selex.freeRect:
+
+               // paste
+                for (const node of content.root.nodes) pasteNode(node, delta);
+                for (const bus of content.root.buses) pasteBus(bus, delta);
+                for (const pad of content.root.pads) {}
+
+                // notation
+                const rc = content.raw.rect;
+
+                // set the rectangle
+                this.selection.activate(rc.x + delta.x, rc.y + delta.y, rc.w, rc.h, style.selection.cRect);
+            break
+
+            case selex.multiNode:
+
+                // copy the nodes in the clipboard
+                for (const node of content.root.nodes) {
+                    pasteNode(node, delta);
+                    node.doSelect();
+                }
+
+                // select the pasted nodes
+                break
+
+            case selex.singleNode: {
+
+                // paste the node
+                pasteNode(content.root.nodes[0], delta);
+                content.root.nodes[0].doSelect();
+            }
+            break
+
+            case selex.ifArea:
+            case selex.pinArea: {
+
+                // check
+                if (!where) return
+
+                // add the widgets
+                const widgets = where.node.look.rawWidgetsToPinArea(content.raw.widgets, where.pos);
+
+                // add the pads or adjust the rx/tx tables
+                where.node.is.source ? where.node.rxtxAddPinArea(widgets) : where.node.addPads(widgets);
+
+                // the selection becomes the widgets that were copied
+                this.selection.pinAreaSelect(widgets);
+            }
+            break
+
+        }
+    },
+
+    // The selection which has been pasted might have duplicate names...
+    checkPastedNames(n) {
+
+        // check all the nodes in the selection
+        for (const pasted of this.selection.nodes) {
+
+            // start at the number given
+            let counter = n;
+
+            // check if there is a duplicate (999 is just there to avoid endless loops)
+            while( this.root.hasDuplicate(pasted) && counter < 999) {
+
+                // put a number after the name
+                const newName = convert.addNumber(pasted.name, counter++);
+
+                // change the name
+                pasted.updateName(newName);
+            }
+        }
+    },
+
+    // note that the selection is a stored previous selection, not the current one !
+    removeSelection(selection) {
+
+        // reset the current selection
+        this.selection.reset();
+
+        // remove all the nodes etc.
+        for (const node of selection.nodes) this.root.removeNode(node);
+        for (const bus of selection.buses) this.root.removeBus(bus);
+        for (const pad of selection.pads) this.root.removePad(pad);
+    },
+
+    // note that the selection is a stored previous selection, not the current one !
+    restoreSelection(selection) {
+
+        // restore all the nodes etc.
+        for (const node of selection.nodes) this.root.restoreNode(node);
+        for (const bus of selection.buses) this.root.restoreBus(bus);
+        for (const pad of selection.pads) this.root.restorePad(pad);
+
+        // reset the current selection
+        const sel = this.selection;
+        sel.reset();
+
+        // and put the restored nodes in the selection again
+        for (const node of selection.nodes) sel.nodes.push(node);
+        for (const bus of selection.buses) sel.buses.push(bus);
+        for (const pad of selection.pads) sel.pads.push(pad);        
+
+        const rc = selection.rect;
+        sel.activate(rc.x, rc.y, rc.w, rc.h, selection.color);
+    },
+
+};
+
+const groupHandling = {
+
+   // if the selection contains just one source node, the conversion to a group is straightforward...
+singleSourceToGroup() {
+},
+
+// transform a selection to a new group node
+selectionToGroup(UID) {
+
+    // create a new look for the new group node
+    const look = new Look(this.selection.makeLookRect());
+
+    // create a new group type
+    const newGroup = new GroupNode(look,"new group", null);
+
+    // give it a unique UID
+    UID.generate(newGroup);
+
+    // and add the new group node 
+    this.root.addNode( newGroup );
+
+    // make a new view for the node
+    const view = newGroup.savedView = this.newSubView(newGroup, this.selection.makeViewRect());
+
+    // reposition the conten of the view to 'cover' the current position
+    view.translate(-view.rect.x, -view.rect.y);
+
+    // for each of the selected nodes..
+    for(const node of this.selection.nodes) {
+        // ..add the node to the new group type 
+        newGroup.addNode(node);
+
+        //..and remove it from the root in this view
+        this.root.removeNode(node);
+    }
+    // now we add the buses and keep track of the buses that were transferred
+    const transfers = this.busTransfer(newGroup);
+
+    // create the proxies for this group type and make the interconnections inside + outside of the group
+    newGroup.addProxies(this.selection);
+
+    // for the buses that were *partially* transferred, we need to set up pads and routes to connect the two buses
+    for(const transfer of transfers) {
+        this.busInterconnect(transfer.outside, newGroup, transfer.inside);
+    }
+
+    // and return the new group
+    return newGroup
+},
+
+// some buses might have to be copied or moved completely to the group
+busTransfer(newGroup) {
+
+    const transfers=[];
+
+    for(const bus of this.selection.buses) {
+
+        // notation
+        const selNodes = this.selection.nodes;
+
+        // for connections outside of the selection
+        const outside = [];
+
+        // find the connections that go out of the selection
+        for(const tack of bus.tacks) {
+
+            // find to what the tack is connected
+            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
+
+            // if the node is not part of the selection
+            if (other.is.pin && !selNodes.includes(other.node)) outside.push(tack);
+        }
+
+        // if all connections to/from the bus are inside the selection -> just move the bus to the new node
+        if (outside.length == 0) {
+
+            // add the bus to the new group
+            newGroup.buses.push(bus);
+
+            // remove it from this group
+            this.root.removeBus(bus);
+        }
+        // otherwise duplicate the bus in the new group and remove the unnecessary connections on each bus
+        else {
+            // make an exact copy
+            const newBus = bus.copy();
+
+            // and store the *new* bus
+            newGroup.buses.push(newBus);
+
+            // distribute the tacks over both buses
+            bus.splitTacks(newBus, newGroup);
+
+            // save in the transfer list
+            transfers.push({outside: bus, inside: newBus});
+        }
+    }
+
+    return transfers
+},
+
+// The new bus inside the new group has to be connected to the bus outside
+// we filter the connections to avoid duplicates
+busInterconnect(outside, newGroup, inside) {
+
+    // a helper function to get a pin
+    function getPin(tack) {
+        const widget = tack.route.to == tack ? tack.route.from : tack.route.to;
+        return widget.is.pad ? widget.proxy : widget
+    }
+
+    // a helper function to check that two tacks are logically connected via the busses
+    function haveConnection(tack1, tack2) {
+
+        // get the actual pins
+        const pin1 = getPin(tack1);
+        const pin2 = getPin(tack2);
+
+        // compare the names
+        if (pin1.name != pin2.name) return false
+
+        // check the i/o combination
+        return (pin1.is.proxy == pin2.is.proxy) ? (pin1.is.input != pin2.is.input) : (pin1.is.input == pin2.is.input)
+    }
+
+    // Use reduce to create an object where each key is a unique tack name
+    // and the value is the first tack object found with that name
+    const uniqueTacks = inside.tacks.reduce((accumulator, currentTack) => {
+
+        // check if this connection also exists on this bus
+        const externalTack = outside.tacks.find(externalTack => {
+
+            return haveConnection(currentTack, externalTack)
+        });
+
+        // if there exists a connection
+        if (externalTack) {
+
+            // get the corresponding pin (see above)
+            const pin = getPin(externalTack);
+
+            // make a unique name to distinguish between input/output
+            const specialName = pin.name + (pin.is.input ? '>' : '<');
+
+            // save if not yet in the list
+            if (!accumulator[specialName]) accumulator[specialName] = currentTack;
+        }
+
+        // Return the accumulator for the next iteration
+        return accumulator;
+    }, {});
+
+    // add a pad for each element in unique tacks
+    for(const tack of Object.values(uniqueTacks)) {
+
+        // get the corresponding pin
+        const pin = getPin(tack);
+
+        // copy the pin as a proxy
+        const newProxy = newGroup.copyPinAsProxy(pin);
+
+        // and create the pad for the proxy
+        newGroup.addPad(newProxy);
+
+        // add a route from the proxy to the outside busbar
+        outside.makeRoute(newProxy);
+
+        // add a route from the pad to the busbar
+        inside.makeRoute(newProxy.pad);
+    }
+},
+
+// undo the previous operation
+undoSelectionToGroup(selection, newGroup, shift, allRoutes) {
+
+    // disconnect the new group
+    newGroup.disconnect();
+
+    // shift to the right spot
+    //newGroup.savedView.shiftContent(shift.dx, shift.dy)
+
+    // close the view of the 
+    newGroup.savedView.closeView();
+
+    // remove the new group
+    this.root.removeNode(newGroup);
+
+    // put the selection back
+    this.restoreSelection(selection);
+
+    // for every busbar inside the newGroup we have to transfer the tacks to the corresponding 'outside' bus !
+    for(const inside of newGroup.buses) inside.transferTacks(selection.buses);
+
+    // disconnect all the nodes
+    for (const node of selection.nodes)  node.disconnect();
+
+    // reconnect all the routes again > note that tacks op de verkeerde bus terechtkomen ???
+    for (const routes of allRoutes) 
+        for (const route of routes) route.reconnect();
+
+},
+
+// converts a group node to a collection of nodes/busses in a selection
+// Note thta this different from undoing a group operation (see above)
+// group to selection only works when there are no connections to the groupnode
+transferToSelection(group, shift) {
+
+    // we will put the nodes in a selection in the view
+    this.selection.reset();
+
+    // calculate a rectangle for the selection
+    const selRect = this.calcRect(group);
+
+    // the nodes will have to move to a new position
+    const dx = shift.dx;
+    const dy = shift.dy;
+
+    // now we can adjust the settings for the selection rectangle
+    this.selection.activate(selRect.x + dx, selRect.y + dy, selRect.w, selRect.h);
+
+    // remove all the routes that lead to pads - pads will not be copied
+    for (const pad of group.pads) pad.disconnect();
+
+    // add all the nodes to the parent node
+    for(const node of group.nodes) {
+
+        // move the look
+        node.look.moveDelta( dx, dy);
+
+        // move the routes
+        node.look.moveRoutes(dx, dy);
+
+        // move the nodes to the parent node
+        this.root.nodes.push(node);
+
+        // also add to the selection
+        this.selection.nodes.push(node);
+    }
+
+    // move the buses to the parent node as well
+    for(const bus of group.buses) {
+
+        // move the bus
+        bus.move(dx, dy);
+
+        // move the routes
+        bus.moveRoutes(dx, dy);
+
+        // save the buses at the parent node
+        this.root.buses.push(bus);
+
+        // also add to the selection
+        this.selection.buses.push(bus);
+    }
+
+    // and remove the node from this root
+    this.root.removeNode(group);
+},
+
+undoTransferToSelection(group, shift, padRoutes) {
+
+    // the nodes will have to move back
+    const dx = -shift.dx;
+    const dy = -shift.dy;
+
+    for (const node of group.nodes) {
+
+        // move the look
+        node.look.moveDelta( dx, dy);
+
+        // move the routes
+        node.look.moveRoutes(dx, dy);
+
+        // take them out of the nodes array
+        view.root.removeNode(node);
+    }
+
+    // move the buses to the parent node as well
+    for(const bus of group.buses) {
+
+        // move the bus
+        bus.move(dx, dy);
+
+        // move the routes
+        bus.moveRoutes(dx, dy);
+
+        // remove the bcakplane
+        group.removeBus(bus);
+    }
+
+    // reconnect all the pad routes
+    for(const route of padRoutes) route.reconnect();
+
+    // put the node back in the view
+    view.root.restoreNode(group);
+}
+
+
+};
+
+const alignHandling = {
+
+    // calculates the rectangle for a nice row: position, size and space between the nodes
+    calcRow(slct) {
+        // sort the array for increasing x
+        slct.sort( (a,b) => a.look.rect.x - b.look.rect.x);
+
+        // constant for minimal seperatiion
+        const minSpace = style.selection.xPadding;
+
+        // set the initial position
+        let {x,y} = {...slct[0].look.rect};
+
+        // we can also calculate the new total width
+        let last = slct.length - 1;
+        let w = slct[last].look.rect.x + slct[last].look.rect.w - slct[0].look.rect.x;
+        let h = 0;
+        let wNodes = 0;
+
+        // Find the tallest look and the total width of the looks
+        slct.forEach( node =>  {
+            h = Math.max(h, node.look.rect.h);
+            wNodes += node.look.rect.w;
+        });
+
+        // calculate the space between the looks
+        let space = (w - wNodes)/last;
+
+        // adjust if not ok
+        if (space < minSpace) {
+            space = minSpace;
+            w = wNodes + last * minSpace;
+        }
+
+        // return the results
+        return {x,y,w,h,space}
+    },
+
+    // calculate the rectangle for a nice column: position, size and space between nodes
+    calcColumn(slct) {
+        // sort for increasing y
+        slct.sort( (a,b) => a.look.rect.y - b.look.rect.y);
+
+        // constant for minimal seperation
+        const minSpace = style.selection.yPadding;
+
+        // set the initial position
+        let {x,y} = {...slct[0].look.rect};
+
+        // we can also calculate the new total height
+        let last = slct.length - 1;
+        let w = 0;
+        let h = slct[last].look.rect.y + slct[last].look.rect.h - slct[0].look.rect.y;
+        let hNodes = 0;
+
+        // get the size of the widest look and also add up all the heights 
+        slct.forEach( node =>  {
+            w = Math.max(w, node.look.rect.w);
+            hNodes += node.look.rect.h;
+        });
+
+        // calculate the space between the nodes
+        let space = (h - hNodes)/last;
+
+       // adjust if not ok
+       if (space < minSpace) {
+            space = minSpace;
+            h = hNodes + last * minSpace;
+        }
+
+        // return the results
+        return {x,y,w,h,space}
+    },
+
+    // calculates the rectangle for a list of nodes
+    calcRect(node) {
+
+        const firstRect =  node.nodes.length > 0 ? node.nodes[0].look.rect : node.pads[0].rect;
+
+        // initialize
+        const min = {x:firstRect.x, y:firstRect.y};
+        const max = {x:firstRect.x + firstRect.w, y:firstRect.y + firstRect.h};
+        let rc = null;
+        
+        // go through the list of nodes 
+        node.nodes.forEach( node => {
+
+            //notation
+            rc = node.look.rect;
+
+            // find min x and y
+            min.x = Math.min(min.x, rc.x);
+            min.y = Math.min(min.y, rc.y);
+
+            // find max x and y
+            max.x = Math.max(max.x, rc.x + rc.w);
+            max.y = Math.max(max.y, rc.y + rc.h);
+        });
+
+       // go through the list of pads
+       node.pads.forEach( pad => {
+
+            //notation
+            rc = pad.rect;
+
+            // find min x and y
+            min.x = Math.min(min.x, rc.x);
+            min.y = Math.min(min.y, rc.y);
+
+            // find max x and y
+            max.x = Math.max(max.x, rc.x + rc.w);
+            max.y = Math.max(max.y, rc.y + rc.h);
+        });
+
+        // return the rectangle
+        return {x: min.x, y: min.y, w: max.x - min.x, h: max.y - min.y}
+    },    
+
+    // Nodes Align Horizontal Deltas - calculate the x deltas to allign each node in the selection
+    nodesAlignHD(nodes, left=true) {
+
+        // the deltas
+        const deltas = [];
+
+        // calculate the column parameters
+        const col = this.calcColumn(nodes);
+
+        // calculate the deltas for each node
+        for (const node of nodes) {
+
+            // notation
+            const rc = node.look.rect;
+
+            // left or right ?
+            const dx = left ? (col.x - rc.x) : (col.x + col.w - rc.x - rc.w);
+
+            // keep track of the deltas
+            deltas.push({x:dx, y:0});
+        }
+
+        //done 
+        return deltas
+    },
+
+    // calculate the y deltas to allign each node in the selection
+    nodesAlignVD(nodes) {
+
+        // the deltas
+        const deltas = [];
+
+        // calculate the parameters for the row (x,y,w,h,space)
+        const row = this.calcRow(nodes);
+
+        // calculate the deltas for each node
+        for (const node of nodes) {
+
+            // keep track of the deltas
+            deltas.push({x:0, y: row.y - node.look.rect.y});
+        }
+
+        //done 
+        return deltas
+    },
+
+    // the vertical deltas for spacing the nodes evenly
+    nodesSpaceVD(nodes) {
+
+        // the deltas
+        const deltas = [];
+
+        // calculate the column parameters
+        const col = this.calcColumn(nodes);
+
+        // The first node starts here
+        let nextY = col.y;
+
+        for (const node of nodes) {
+
+            // notation
+            const rc = node.look.rect;
+
+            // save the delta
+            deltas.push({x:0, y: nextY - rc.y});
+
+            // calculate the next y 
+            nextY = nextY + rc.h + col.space;
+        }
+
+        // done
+        return deltas
+    },
+
+    // the vertical deltas for spacing the nodes evenly
+    nodesSpaceHD(nodes) {
+
+        // the deltas
+        const deltas = [];
+
+        // calculate the column parameters
+        const row = this.calcRow(nodes);
+
+        // The first node starts here
+        let nextX = row.x;
+
+        for (const node of nodes) {
+
+            // notation
+            const rc = node.look.rect;
+
+            // save the delta
+            deltas.push({x: nextX - rc.x, y: 0});
+
+            // calculate the next x
+            nextX = nextX + rc.w + row.space;
+        }
+
+        // done
+        return deltas
+    },
+
+    padsAlignHD(pads, left=true) {
+
+        // save all the deltas
+        const deltas = [];
+    
+        // sort the pads according to y-value
+        pads.sort( (a,b) => a.rect.y - b.rect.y);
+    
+        // the first pad is the reference pad
+        const rcRef = pads[0].rect;
+    
+        // adjust the other pads to the ref pad
+        for (const pad of pads) {
+
+            // notation
+            const rc = pad.rect;
+    
+            // calculate the delta
+            const dx = left ? (rcRef.x - rc.x) :  (rcRef.x + rcRef.w - rc.x - rc.w);
+    
+            // save the delta 
+            deltas.push({x:dx, y:0});
+        }
+
+        // done
+        return deltas
+    },
+
+    padsSpaceVD(pads) {
+
+        // the deltas
+        const deltas = [];
+
+        // sort the pads according to y-value
+        pads.sort( (a,b) => a.rect.y - b.rect.y);
+
+        // the first pad is the reference pad
+        const yStart = pads[0].rect.y;
+
+        // we also space the pads equally 
+        let dy = (pads.at(-1).rect.y - pads[0].rect.y)/(pads.length-1);
+
+        // The deltas wrt the ref pad
+        let i = 0;
+        for (const pad of pads)  deltas.push({x:0, y: yStart + (i++)*dy - pad.rect.y});
+        
+        // done
+        return deltas
+    },
+
+    // for each node there is a delta - used in undo/redo operations
+    moveNodesAndRoutes(nodes, deltas, back=false) {
+
+        // do the nodes..
+        const N = nodes.length;
+        let dx = 0;
+        let dy = 0;
+        for (let i=0; i<N; i++) {
+
+            // for the undo operation back = true
+            dx = back ? -deltas[i].x : deltas[i].x;
+            dy = back ? -deltas[i].y : deltas[i].y;            
+
+            nodes[i].look.moveDelta(dx, dy);
+            nodes[i].look.moveRoutes(dx, dy);
+        }
+        // we adjust the routes only when all nodes have been moved
+        for (let i=0; i<N; i++)  nodes[i].look.adjustRoutes();
+    },
+
+    movePadsAndRoutes(pads, deltas, back=false) {
+
+        // adjust the other pads to the ref pad
+        const P = pads.length;
+        let dx = 0;
+        let dy = 0;
+        for (let i=0; i<P; i++) {
+
+            // for the undo operation back = true
+            dx = back ? -deltas[i].x : deltas[i].x;
+            dy = back ? -deltas[i].y : deltas[i].y;
+
+            // adjust position
+            pads[i].rect.x += dx;
+            pads[i].rect.y += dy;
+
+            // also set the y position
+            pads[i].adjustRoutes();
+        }        
+    }
+};
+
+// a helper function
+function canProceed(view) {
+
+    // get the node and the position where to add
+    let where = view.selection.whereToAdd();
+
+    // check
+    if (!where) return [false, null, null];
+
+    // maybe we have a valid hit position
+    if (!where.pos) pos = view.hit.xyLocal;
+
+    // check if we can modify the node
+    if (where.node.cannotBeModified()) {
+        this.blinkToWarn(where.node);
+        return [false, null, null];
+    }
+
+    // ok
+    return [true, where.node, where.pos];
+}
+
+// The table with the <ctrl> + key combinations
+const justKeyTable = {
+
+    // add input
+    i: (view,tx) => {
+        //check
+        const [ok, node, pos] = canProceed(view);
+        if (!ok) return;
+
+        // type of pin
+        const is = {
+            channel: false,
+            input: true,
+            proxy: node.is.group};
+
+        // add the pin
+        view.doEdit(tx,'newPin', { view, node, pos, is });
+    },
+
+    // add output
+    o: (view,tx) => {
+        //check
+        const [ok, node, pos] = canProceed(view);
+        if (!ok) return;
+
+        const is = {
+            channel: false,
+            input: false,
+            proxy: node.is.group
+        };
+
+        // add an input pin where the click happened
+        view.doEdit(tx,'newPin', { view, node, pos, is });
+    },
+
+    // add request
+    q: (view,tx) => {
+        //check
+        const [ok, node, pos] = canProceed(view);
+        if (!ok) return;
+
+        // type of pin
+        const is = {
+            channel: true,
+            input: false,
+            proxy: node.is.group,
+        };
+
+        // add the pin
+        view.doEdit(tx,'newPin', { view, node, pos, is });
+    },
+
+    // add reply
+    r: (view,tx) => {
+        //check
+        const [ok, node, pos] = canProceed(view);
+        if (!ok) return;
+
+        // type of pin
+        const is = {
+            channel: true,
+            input: true,
+            proxy: node.is.group,
+        };
+
+        // add the pin
+        view.doEdit(tx,'newPin', { view, node, pos, is });
+    },
+
+    // add ifName
+    f: (view,tx) => {
+        //check
+        const [ok, node, pos] = canProceed(view);
+        if (!ok) return;
+
+        // add an input pin where the click happened
+        view.doEdit(tx,'newInterfaceName', { view, node, pos });
+    },
+
+    // show the profile
+    p: (view,tx) => {
+
+        // find the pin selected
+        const pin = view.selection.getSelectedWidget();
+
+        if (!pin.is.pin) return
+
+        view.doEdit(tx,'showProfile', {
+            pin,
+            pos: { x: pin.rect.x, y: pin.rect.y },
+        });
+    },
+
+    // add a label
+    a: (view,tx) => {
+        // get the selected node (only one !)
+        const node = view.selection.getSingleNode();
+        if (!node) return;
+
+        // check if already a lable
+        const label = node.look.findLabel();
+        if (label) view.doEdit(tx,'widgetTextEdit', { view, widget: label });
+        else view.doEdit(tx,'addLabel', { view, node });
+    },
+
+    // highlight/unhighlight
+    h: (view,tx) => {
+        // get the selected node (only one !)
+        const node = view.selection.getSingleNode();
+        if (!node) return;
+
+        // highlight/unhighlight
+        view.doEdit(tx,'nodeHighLight', { node });
+    },
+
+    '+': (view,tx) => {
+        const widget = view.selection.getSelectedWidget();
+
+        // check
+        if (!widget || !widget.node ) return;
+        if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
+
+        // ok
+        view.doEdit(tx,'widgetTextEdit', {view, widget});
+    },
+
+    '-': (view,tx) => {
+        const widget = view.selection.getSelectedWidget();
+
+        // check
+        if (!widget || !widget.node ) return;
+        if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
+
+        // start
+        view.doEdit(tx,'widgetTextEdit', {view,widget,clear: true});
+    },
+
+    // delete the selection or the single node
+    Clear: (view,tx) => {
+        // get the selected node only if nothing else is selected
+        const node =
+            view.selection.what == selex.singleNode
+                ? view.selection.getSingleNode()
+                : null;
+
+        if (node) view.doEdit(tx,'disconnectNode', { node });
+        else view.doEdit(tx,'disconnectSelection', { view });
+    },
+
+    // delete the selection or the single node
+    Delete: (view,tx) => {
+        switch (view.selection.what) {
+            case selex.nothing:
+                break;
+
+            case selex.freeRect:
+                view.doEdit(tx,'deleteSelection', { view });
+                break;
+
+            case selex.pinArea:
+                //check if ok
+                const [ok, node, pos] = canProceed(view);
+                if (!ok) return;
+
+                view.doEdit(tx,'deletePinArea', {
+                    view,
+                    node: view.selection.getSingleNode(),
+                    widgets: view.selection.widgets,
+                });
+                break;
+
+            case selex.singleNode:
+                // maybe there is a widget selected
+                const widget = view.selection.getSelectedWidget();
+
+                // check
+                if (!widget) {
+                    // get the node, delete and done
+                    const node = view.selection.getSingleNode();
+                    if (node) view.doEdit(tx,'deleteNode', { view, node });
+                    return;
+                }
+
+                // check
+                if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node);
+
+                // which pin
+                if (widget.is.pin)
+                    view.doEdit(tx,'deletePin', { view, pin: widget });
+                else if (widget.is.ifName)
+                    view.doEdit(tx,'deleteInterfaceName', {
+                        view,
+                        ifName: widget,
+                    });
+                break;
+
+            case selex.multiNode:
+                view.doEdit(tx,'deleteSelection', { view });
+                break;
+        }
+    },
+
+    Enter: (view,tx) => {
+        // if there is a pin selected, we start editing the pin
+        const editable = view.selection.getSelectedWidget();
+        if (editable) {
+            // check
+            if (editable.node.cannotBeModified()) return view.blinkToWarn(editable.node)
+
+            // start editing
+            view.doEdit(tx,'widgetTextEdit', { view, widget: editable });
+        }
+    },
+
+    ArrowDown: (view,tx) => {
+
+        const current = view.selection.getSelectedWidget();
+        if (!current) return
+        const below = view.selection.widgetBelow(current);
+        if (below) view.selection.switchToWidget(below);
+    },
+
+    ArrowUp: (view,tx) => {
+
+        const current = view.selection.getSelectedWidget();
+        if (!current) return
+        const above = view.selection.widgetAbove(current);
+        if (above) view.selection.switchToWidget(above);
+    },
+
+    // undo
+    Undo: (view,tx) => tx.send('redox.undo'),
+
+    // redo
+    Redo: (view,tx) => tx.send('redox.redo'),
+
+    // escape
+    Escape: (view,tx) => {
+        view.selection.reset();
+    },
+};
+
+// The table with the <ctrl> + key combinations
+const ctrlKeyTable = {
+    // a new source node
+    s: (view,tx) => {
+        // only do this if there is no selection
+        // if (view.selection.what != selex.nothing) return
+
+        // create a new source node
+        view.doEdit(tx,'newSourceNode', { view, pos: view.hit.xyLocal });
+    },
+
+    // a new group node
+    g: (view,tx) => {
+        // only do this if there is no selection
+        // if (view.selection.what != selex.nothing) return
+
+        // create a new source node
+        view.doEdit(tx,'newGroupNode', { view, pos: view.hit.xyLocal });
+    },
+
+    // a new bus
+    b: (view,tx) => {
+        // only do this if there is no selection
+        // if (view.selection.what != selex.nothing) return
+
+        // create a new busbar
+        view.doEdit(tx,'busCreate', { view,pos: view.hit.xyLocal});
+    },
+
+    // copy
+    c: (view,tx) => {
+        view.selectionToClipboard(tx);
+    },
+
+    // a new input pad
+    i: (view,tx) => {
+        view.doEdit(tx,'padCreate', {view,pos: view.hit.xyLocal,input: true,
+        });
+    },
+
+    // add a new output pad
+    o: (view,tx) => {
+        view.doEdit(tx,'padCreate', {view,pos: view.hit.xyLocal,input: false,});
+    },
+
+    // paste as link
+    l: (view,tx) => {
+
+        // request the clipboard - also set the target, the clipboard can come from another file
+        tx.request('clipboard.get')
+        .then(({raw}) => {
+            // other cases do the standard link operation
+            view.doEdit(tx,'pasteFromClipboard', { view,pos: view.hit.xyLocal,raw, asLink: true});
+        })
+        .catch((error) =>
+            console.log('ctrl-l : clipboard get error -> ' + error)
+        );
+    },
+
+    // paste
+    v: (view,tx) => {
+        // request the clipboard - also set the target, the clipboard can come from another file
+        tx.request('clipboard.get')
+        .then(({raw}) => {
+            
+            // other cases do the standard paste operation
+            view.doEdit(tx,'pasteFromClipboard', {view,pos: view.hit.xyLocal, raw, asLink: false});
+        })
+        .catch((error) =>
+            console.log('ctrl-v : clipboard get error -> ' + error)
+        );
+    },
+
+    // undo
+    z: (view,tx) => tx.send('redox.undo'),
+
+    // redo
+    Z: (view,tx) => tx.send('redox.redo'),
+
+    // wider
+    '+': (view,tx) => {
+        // get the selected node (only one !)
+        const node = view.selection.getSingleNode();
+        if (!node) return;
+
+        // make wider
+        view.doEdit(tx,'wider', { node });
+    },
+
+    // thinner
+    '-': (view,tx) => {
+        // get the selected node (only one !)
+        const node = view.selection.getSingleNode();
+        if (!node) return;
+
+        // make wider
+        view.doEdit(tx,'smaller', { node });
+    },
+};
+
+const keyboardHandling = {
+
+    // helper function
+    _logKey(e) {
+        let keyStr = 'Key = ';
+        if (e.ctrlKey)  keyStr += 'ctrl '; 
+        if (e.shiftKey) keyStr += 'shift ';
+        keyStr += '<'+e.key+'>';
+        console.log(keyStr);
+    },
+
+    // keyboard press - return true if key is handled
+    onKeydown(e,tx) {
+        
+        // select the required key-handling function
+        if (this.state.action == doing.nothing) {
+
+            // get the action
+            const action = e.ctrlKey ? ctrlKeyTable[e.key] : justKeyTable[e.key];
+
+            // check
+            if (!action) return false
+
+            // do it
+            action(this,tx);
+
+            // done
+            return true
+        }
+        // we are doing text editing...
+        else if (this.state.action == doing.editTextField) {
+
+            // select the handler function
+            const done = ( e.key.length > 1 || e.ctrlKey) ? this.textField.handleSpecialKey?.(e) : this.textField.handleKey?.(e);
+    
+            // continue editing ?
+            if (done) this.stateSwitch(doing.nothing);
+
+            return true
+        }
+
+        else return false
+    },
+
+    onKeyup(e,tx) {
+        return false
+    },
+
+    beginTextEdit( object, xyLocal = null, clear=false) {
+
+        const manager = this.getManager();
+        const ctx = manager?.getCanvasContext();
+        if (!ctx) return
+
+        // check if field is editable - must return the prop that will be edited
+        const {prop, index} = object.startEdit?.(ctx, xyLocal);
+
+        // check
+        if (!prop) return
+
+        // start a new edit for the prop of the object
+        this.textField.newEdit(object, prop, index);
+
+        // if clear, clear the field first
+        if (clear)  this.textField.clear();
+
+        // set the status
+        this.stateSwitch(doing.editTextField);
+
+        // change the active view
+        manager.switchFocus(this);
+
+        // show a blinking cursor
+        this.startBlinking(ctx);
+    },
+
+    // end text edit is called from switch state !
+    endTextEdit() {
+
+        // notation
+        const state = this.state;
+        const text = this.textField;
+
+        // stop the blinking cursor
+        clearInterval( state.cursorInterval );
+
+        // check
+        if (!text) return
+
+        // notify the object of the end of the edit
+        text.obj.endEdit?.(text.saved);
+    },
+
+    startBlinking(ctx) {
+
+        let lastTime = 0;
+        let on = true;
+        let keepBlinking = true;
+    
+        // time is in ms
+        const blinkFunction = (time) => {
+
+            // check the time
+            if (time - lastTime >= style.std.blinkRate) {
+
+                // execute the recursive blink function from the top !
+                keepBlinking = this.blink(ctx, on);
+
+                // Toggle cursor visibility
+                on = !on;
+                lastTime = time;
+            }
+    
+            // Continue the loop if we're still editing
+            if (keepBlinking) requestAnimationFrame(blinkFunction);
+        };
+    
+        // schedule the first blink function
+        requestAnimationFrame(blinkFunction);
+    },
+
+    blink(ctx, on) {
+
+        // if the editing has stopped, we can stop blinking
+        if (this.state.action !== doing.editTextField)  return false   
+        
+        // notation
+        const field = this.textField;
+
+        // save the current status
+        ctx.save();
+
+        // use the same accumulated content transform as normal view rendering
+        this.applyContentTransform(ctx);
+
+        // get the cursor x position
+        const cursor = field.obj.cursorPos?.(ctx, field.cursor) ?? {x:0, y:0};
+
+        // get the color
+        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff;
+
+        // draw the cursor
+        shape.cursorDraw(ctx, cursor.x, cursor.y, style.std.wCursor, style.std.hCursor, color );
+
+        // restore the ctx state
+        ctx.restore();
+
+        // keep blinking
+        return true
+    },    
+};
+
+// view functions that are independant of the content of the view
+const viewWidgetHandling = {
+
+// note that this is the *inverse* coord transformation that is used by the canvas
+// The canvas transformation goes fom window coordinates down to screen coordinates
+// With this function we transform cursor coordinates up to the window coordinates !
+localCoord(a) {  
+    const tf = this.tf;
+    return {x:(a.x - tf.dx)/tf.sx, y:(a.y - tf.dy)/tf.sy}
+},
+
+// The inverse of the above 
+inverse(a) {  
+    const tf = this.tf;
+    return {x: a.x*tf.sx + tf.dx, y: a.y*tf.sy + tf.dy}
+},
+
+// create a new view
+newSubView(node, rc=null, tf=null) {
+
+    // do we need to calculate the rectangle ?
+    rc = rc ?? this.makeViewRect(node);
+
+    // make a view
+    let view = new View(rc, node, this);
+
+    // if a transform is given, set it
+    if (tf) view.setTransform(tf);
+
+    // add the title bar etc.
+    view.addViewWidgets();
+
+    // and place the widgets
+    view.placeWidgets();
+
+    // add the view to the views
+    this.views.push(view);
+
+    // set the parent view
+    // view.parent = this
+    
+    // save the view in the (root) node 
+    node.savedView = view;
+
+    // return the new view
+    return view
+},
+
+// puts a saved view in the view list again - if not yet cooked (no root !) - cook the view first
+restoreView(node) {
+
+    // if the view is still in a raw state 
+    if (node.savedView.raw) {
+
+        // create the subview
+        node.savedView = this.newSubView(node, node.savedView.rect, node.savedView.tf);
+    }
+
+    // the view should not be in the current view
+    if (this.views.find( v => v == node.savedView)) {
+        console.error("View already in views in restore view !");
+
+        // or should we bring it to the foreground ?
+        return
+    }
+
+    // push on the view stack
+    if (this == node.savedView) {
+        console.error("Circular reference in views");
+        return
+    }
+
+    // set state to visible
+    node.savedView.viewState.visible = true;
+
+    // push the view on the views stack and set the parent
+    this.views.push(node.savedView);
+    node.savedView.parent = this;
+},
+
+closeView() {
+    // The top level view cannot be closed
+    if (!this.parent) return
+    this.viewState.visible = false;
+    if (this.parent.views) eject(this.parent.views, this);
+},
+
+// after loading a file we have to cook the views that are visible from the start
+restoreSubViews() {
+
+    // reset the views
+    this.views.length = 0;
+
+    // there should be a root with nodes
+    if ( ! this.root?.nodes) return
+
+    // check all nodes
+    for (let node of this.root.nodes) {
+
+        // check
+        if (!node.savedView || node.savedView.state == 'closed') continue
+
+        // restore it
+        node.savedView = this.newSubView(node, node.savedView.rect, node.savedView.tf);
+
+        // if a node has a visible view we have to check its nodes as well
+        node.savedView.restoreSubViews();
+    }
+},
+
+move(delta) {
+    // also adapt the tf matrix
+    this.tf.dx += delta.x;
+    this.tf.dy += delta.y;
+
+    // move the rectangle
+    this.rect.x += delta.x;
+    this.rect.y += delta.y;
+
+    // also move the widgets 
+    this.widgets?.forEach( widget => {
+        widget.rect.x += delta.x;
+        widget.rect.y += delta.y;
+    });
+},
+
+resize(border,delta) {
+
+    // notation
+    const rc = this.rect;
+
+    switch (border.name) {
+
+        case 'corner': 
+            if (rc.h + delta.y > style.view.hHeader) rc.h += delta.y;
+            if (rc.w + delta.x > style.look.wBox) rc.w += delta.x;
+            break
+
+        case 'top':
+            if (rc.h - delta.y < style.view.hHeader) return
+            rc.y += delta.y;
+            rc.h -= delta.y;
+            break
+
+        case 'bottom':
+            if (rc.h + delta.y < style.view.hHeader) return
+            rc.h += delta.y;
+            break
+
+        case 'right':
+            if (rc.w + delta.x < style.look.wBox) return 
+            rc.w += delta.x;
+            break
+
+        case 'left':
+            if (rc.w - delta.x < style.look.wBox) return
+            rc.x += delta.x;
+            rc.w -= delta.x;
+            break
+    }
+
+    // reposition the widgets
+    this.placeWidgets();
+},
+
+// check the views in reverse order - p is the position in local coordinates
+// returns the view, the widget and the local coordinate in that view
+// ** RECURSIVE **
+whichView(p) {
+
+    const hdr = style.view.hHeader;
+    const lwi = style.view.wLine;
+
+    // check the views in reverse order - the last one is on top !
+    for (let i = this.views.length-1; i>=0; i--) {
+
+        // notation
+        const view = this.views[i];
+        const rc = view.rect;
+
+        // first check if p is inside the client area of the view
+        if (((p.x >= rc.x + lwi) && (p.x <= rc.x + rc.w - lwi) && (p.y >= rc.y + hdr) && (p.y <= rc.y + rc.h - lwi))) {
+
+            // transform p to a coordinate inside this view
+            p = view.localCoord(p);
+
+            // check if the coordinate is inside a view in this view
+            return view.whichView(p)
+        }
+
+        // maybe we have hit the header or the border - we know already that we are not in the client area
+        const eps = 4;   // some epsilon - extra space around the border
+        if ((p.x < rc.x - eps) || (p.x > rc.x + rc.w + eps) || (p.y < rc.y - eps) || (p.y > rc.y + rc.h + eps)) continue
+
+        // when we arrive here it means we are in the the header or on the borders of the view
+        // check *ALL* the widgets, but skip the viewBox
+        let match = null;
+        for (const widget of view.widgets) if (inside(p,widget.rect) && !widget.is.viewBox) match = widget;
+
+        // found the *closest* match
+        if (match) return [view, match, p]
+
+        // now check if we are on the borders of the view - we return a pseudo widget !
+        if (p.x < rc.x + lwi) return [view, {is:{border:true}, name:'left'},p]
+
+        if (p.x > rc.x + rc.w - lwi)  {
+
+            return (p.y > rc.y + rc.h - 20) ? [view, {is:{border:true}, name:'corner'},p]
+                                            : [view, {is:{border:true}, name:'right'},p]
+        }
+        if (p.y < rc.y + lwi) return [view, {is:{border:true}, name:'top'},p]
+
+        if (p.y > rc.y + rc.h - lwi)  {
+
+            return (p.x > rc.x + rc.w - 20) ? [view, {is:{border:true}, name:'corner'},p]
+                                            : [view, {is:{border:true}, name:'bottom'},p]
+        }
+
+    }
+    return [this, null, p]
+},
+
+// // This function calculates the visible rectangle of the canvas
+// getVisibleCanvasRect(canvas) {
+    
+//     const viewportWidth = window.visualViewport.width; // Visible width of the webview
+//     const viewportHeight = window.visualViewport.height; // Visible height of the webview
+
+//     // Get canvas position and dimensions
+//     const rect = canvas.getBoundingClientRect();
+
+//     // Calculate the visible area within the viewport
+//     const visibleX = Math.max(0, rect.left);
+//     const visibleY = Math.max(0, rect.top);
+//     const visibleWidth = Math.min(rect.width, viewportWidth - visibleX);
+//     const visibleHeight = Math.min(rect.height, viewportHeight - visibleY);
+
+//     // Ensure values are positive
+//     return {
+//         x: visibleX,
+//         y: visibleY,
+//         width: Math.max(0, visibleWidth),
+//         height: Math.max(0, visibleHeight),
+//     };
+// },
+
+iconClick(icon, vm) {
+
+    // check the type of action for the widget
+    switch(icon.type) {
+
+        // close the view
+        case 'close': {
+
+            // for a view that is closed, we will not save the parameters to file
+            this.viewState.visible = false;
+
+            // reset the previous view parameters if coming from fullscreen
+            if (this.viewState.big) this.small();
+
+            // change focus
+            vm.switchFocus(this.parent);
+
+            // close the view
+            this.closeView();
+        }
+        break
+
+        // fullscreen acts as a toggle
+        case 'big': {
+            // get all the parent views
+            const parents = this.parentViewsReverse();
+
+            // switch all the parents to big
+            for(const parent of parents)  parent.big();
+
+            // and finally do the same for this view
+            this.big();
+        }
+        break
+        
+        case 'small': {
+
+            // switch to normal window size
+            this.small();
+
+            // big views inside this view are also restored
+            for(const view of this.views) if (view.viewState.big) view.small();
+        }
+        break
+
+        case 'calibrate' : {
+            this.toggleTransform();
+        }
+        break
+
+        case 'grid': {
+            this.state.grid = !this.state.grid;
+        }
+        break
+    }
+},
+
+
+
+viewToFront(frontView) {
+
+    // the new view is part of the views of the doc
+    const views = this.views;
+    const L = views.length;
+
+    // bring the view to the end of the array - so it is drawn on top
+    let index = views.indexOf(frontView);
+    let found = views[index];
+    
+    // shift the views below it one place
+    for (let i = index; i < L-1; i++) views[i] = views[i+1];
+    views[L-1] = found;
+},
+
+cloneForTab() {
+    // create a new view
+    let view = new View({x:0,y:0,w:0,h:0}, this.root, this.parent);
+
+    // position the tab content at the same place as the window was
+    view.tf.dx = this.tf.dx;
+    view.tf.dy = this.tf.dy;
+    view.tf.sx = this.tf.sx;
+    view.tf.sy = this.tf.sy;
+
+    // copy some additional content
+    view.views = this.views;
+
+    // copy the parent
+    // view.parent = this.parent
+
+    // done
+    return view
+},
+
+// note that we place the widgets in placeWidgets !
+addViewWidgets() {
+
+    // notation
+    const rc = this.rect;
+    const st = style.view;
+
+    // add the box - re-use the view rectangle...
+    this.widgets.push(new ViewBox(this.rect));
+
+    // add the title
+    if (this.root) this.widgets.push(new ViewTitle({ x:0,y: 0, w: rc.w, h: style.view.hHeader}, this.root));
+
+    // add the view icons
+    for( const iconName of ['close', 'big', 'calibrate', 'grid']) {
+
+        // create the icon
+        const icon = new Icon( { x:0, y:0, w: st.wIcon, h: st.hIcon}, iconName);
+
+        // and set its render function
+        icon.setRender();
+
+        // icons are highlighted by default, so set as non-highlighted
+        icon.is.highLighted = false;
+
+        // and save
+        this.widgets.push(icon);
+    } 
+},
+
+// place widgets is called when the view changes size or place
+placeWidgets() {
+
+    // notation
+    const rc = this.rect;
+    const st = style.view;
+
+    // The position of the first Icon
+    let xIcon = rc.x + st.xPadding;
+
+    for(const widget of this.widgets) {
+        if (widget.is.icon) {
+            // center on y
+            widget.rect.y = rc.y + (style.view.hHeader - st.hIcon)/2;
+
+            // set the x
+            widget.rect.x = xIcon;
+
+            // adjust x
+            xIcon += (st.wIcon + st.xSpacing);
+
+            // after the last view icon we add some extra space
+            // if (widget.type == 'grid') xIcon += st.xSpacing
+        }
+        else if (widget.is.viewBox) {
+            widget.rect.x = rc.x;
+            widget.rect.y = rc.y;
+            widget.rect.w = rc.w;
+            widget.rect.h = rc.h;
+        }
+        else if (widget.is.viewTitle) {
+            widget.rect.x = rc.x;
+            widget.rect.y = rc.y;
+            widget.rect.w = rc.w;
+        }
+    }
+},
+
+// toggle the transform for a single view
+toggleTransform() {
+
+    const tf = this.tf;
+    const vstf = this.viewState.tf;
+
+    // if the current transform is not the unit transform
+    if (tf.sx != 1.0) {
+
+        // save the current transform
+        this.saveTransform(this.tf);
+
+        // and switch to the unit transform
+        this.setTransform({sx:1.0, sy:1.0, dx: tf.dx, dy: tf.dy});
+
+        // recalculate all the windows that are big
+        this.redoBigRecursive(); 
+    }
+    // else we have a saved transform (i.e. it is not the unit transform)
+    else if (vstf.sx != 1.0) {
+
+        // switch to the saved transform
+        this.setTransform(vstf);
+
+        // recalculate all the windows that are big
+        this.redoBigRecursive(); 
+    }
+},
+
+// parent views - the toplevel parent will be the first entry
+parentViewsReverse() {
+
+    // put the view and the views above it in an array
+    const parents = [];
+
+    // search all parent views
+    let view = this;
+    while (view.parent) {
+        parents.push(view.parent);
+        view = view.parent;
+    }
+
+    // reverse the order of the array
+    return parents.reverse()
+},
+
+toggleBig() {
+
+    if (this.viewState.big) {
+
+        // switch to normal window size
+        this.small();
+
+        // big views inside this view are also restored
+        for(const view of this.views) if (view.viewState.big) view.toggleBig();
+    }
+    else {
+
+        // get all the parent views
+        const parents = this.parentViewsReverse();
+
+        // switch all the parents to big
+        for(const parent of parents)  parent.big();
+
+        // and finally do the same for this view
+        this.big();
+    }
+},
+
+small() {
+
+    // ok copy 
+    Object.assign( this.rect , this.viewState.rect);
+
+    // change the icon
+    this.widgets.find( icon => icon.type == 'small')?.switchType('big');
+
+    // reposition the widgets
+    this.placeWidgets();
+
+    // toggle the flag
+    this.viewState.big = false;
+},
+
+// We do not want to save the rectangle when we *redo* big (see below)
+// because we have already saved it then
+big(save=true) {
+
+    // check that the view has a parent and is not big already
+    if ( !this.parent) return
+
+    // notation
+    const prc = this.parent.rect;
+    const ptf = this.parent.tf;
+    const st = style.view;
+
+    // save the current rect
+    if (save) Object.assign(this.viewState.rect, this.rect);
+
+    // If the parent has no parent there is no header
+    const yShift = this.parent.parent ? st.hHeader : 0;
+
+    // convert the parent top left coordinates to local coordinates so that they will result 
+    // in the correct position *after* the parent tarnsform is applied !
+    this.rect.x = (prc.x - ptf.dx)/ptf.sx; 
+    this.rect.y = (prc.y + yShift - ptf.dy)/ptf.sy;
+    this.rect.w = prc.w / ptf.sx; 
+    this.rect.h = (prc.h - yShift) / ptf.sy;
+
+    // change the icon
+    this.widgets.find( icon => icon.type == 'big')?.switchType('small');
+    
+    // reposition the widgets
+    this.placeWidgets();
+
+    // set the fullscreen flag
+    this.viewState.big = true;
+},
+
+redoBigRecursive() {
+    if (this.viewState.big) this.big(false);
+    for (const view of this.views) view.redoBigRecursive();
+},
+
+/// NOT USED BELOW HERE
+
+// // recalibrate all the views
+// toggleTransformRecursive() {
+//     (this.tf.sx != 1.0) ? this.unitTransformRecursive() : this.restoreTransformRecursive();
+// },
+
+// unitTransformRecursive() {
+
+//     // save the current transform
+//     this.saveTransform(this.tf)
+
+//     // and switch to the unit transform
+//     this.setTransform({sx:1.0, sy:1.0, dx: this.tf.dx, dy: this.tf.dy})
+
+//     if (this.viewState.big) this.big()
+
+//     // repeat for all views
+//     for (const view of this.views) view.unitTransformRecursive()
+// },
+
+// restoreTransformRecursive() {
+
+//     // restore the saved transform
+//     if (this.viewState.tf.sx != 1.0) this.setTransform(this.viewState.tf);
+
+//     if (this.viewState.big) this.big()
+
+//     // repeat for all views
+//     for (const view of this.views) view.restoreTransformRecursive()
+// },
+
+// toggleViewState() {
+
+//     if (this.viewState.big) {
+
+//         // go back to the previous rectangle
+//         this.restoreViewState()
+
+//         // also restore views inside the view to their previous size
+//         for(const view of this.views) view.restoreViewState()
+//     }
+//     else {
+
+//         // get all the parent views
+//         const parents = this.parentViewsReverse()
+
+//         // switch all the parents to fullscreen
+//         for(const parent of parents) {
+//             parent.saveViewState()
+//             parent.big()
+//         }
+
+//         // and finally do the same for this view
+//         this.saveViewState()
+//         this.big()
+//     }
+// },
+
+// // note that we only save and restore the rectangle - not the transform - is more intuitive behaviuour
+// saveViewState() {
+//     // just assign the current settings
+//     Object.assign(this.viewState.rect, this.rect)
+//     Object.assign(this.viewState.tf, this.tf)
+
+//     // and validate the copy
+//     this.viewState.saved = true
+// },
+
+// restoreViewState() {
+
+//     // check that we have a valid previous
+//     if (!this.viewState.saved) return
+
+//     // we are not fullscreen anymore
+//     this.viewState.big = false
+
+//     // ok copy 
+//     Object.assign( this.rect , this.viewState.rect)
+//     Object.assign( this.tf,    this.viewState.tf)
+
+//     // we have restored the view, so we have to reposition the widgets
+//     this.placeWidgets()
+// },
+
+};
+
+const drawerFile = 'drawer/file';
+
+const dropHandling = {
+
+    async onDrop(xyParent, e) {
+
+        // no default action...
+        e.preventDefault();
+
+        // transform the parent coordinates to local ones
+        let xyLocal = this.localCoord(xyParent);
+        
+        // check what was hit
+        this.mouseHit(xyLocal);
+
+        // transfer to the view that was hit..
+        if (this.hit.view) return this.hit.view.onDrop(xyLocal, e)
+
+        // analyse the dropped data
+        const drop = this.analyseDrop(e);
+
+        // check
+        if (!drop) return
+
+        // if it can be converted to an arl...
+        const arl = new ARL$1(drop.path);
+
+// RESOLVE 
+
+        // make a model for the dropped arl
+        const model = new ModelBlueprint(arl);
+        
+        // make a compiler
+        const modcom = new ModelCompiler();
+
+        // get the file in the drop arl
+        const newNode = await modcom.getRoot(model);
+
+        // check
+        if ( ! newNode) return null
+
+        // if the node is a container - create a new view for that
+        if (newNode.is.group && newNode.isContainer()) {
+
+            // make a reasonable rectangle for the node
+            const rect = this.makeViewRect(newNode);
+            rect.x = xyLocal.x;
+            rect.y = xyLocal.y;
+
+            // create a new view for the container
+            this.newSubView(newNode, rect);
+        }
+
+        // position the node at the drop location
+        newNode.look.moveTo(xyLocal.x, xyLocal.y);
+
+        // set the link
+        newNode.link = new Link(model, this.name);
+
+        // save on the nodes list
+        this.root.nodes.push(newNode);
+
+        // done
+        return newNode
+    },
+
+    analyseDrop(e) {
+
+        // convert
+        e.dataTransfer.items ? [...e.dataTransfer.items] : null;
+        const files =  e.dataTransfer.files ? [...e.dataTransfer.files] : null;
+        const types =  e.dataTransfer.types ? [...e.dataTransfer.types] : null;
+
+        //    //ITEMS
+        //    if (items?.length > 0) {
+        //         // items ifPins
+        //         items.forEach((item, i) => {
+        //             console.log('ITEM', item.kind, item)
+        //         })          
+        //     }
+
+        // FILES 
+        if (files?.length > 0) {
+            files.forEach((file, i) => {
+                // console.log('FILE:', file);
+            });
+        }
+
+        // TYPES
+        if (types?.length > 0) {
+
+            if (types.includes(drawerFile)) {
+
+                // get value and path object
+                let drop = JSON.parse(e.dataTransfer.getData(drawerFile));
+
+                // find the path
+                return drop
+            }
+        }
+
+        return null
+    },
+
+};
+
+// the ongoing action of a view
+const doing = {
+    nothing:0,
+    nodeDrag:1,
+    routeDrag:2,
+    panning:3,
+    routeDraw:4,
+    editTextField:5,
+    selection:6,
+    selectionDrag:7,
+    pinAreaSelect:8,
+    pinAreaDrag:9,
+    padDrag:10,
+    padArrowClicked: 11,
+    busDraw:12,
+    busRedraw:13,
+    busSegmentDrag:14,
+    busDrag:15,
+    tackDrag:16,
+    pinClicked:17,
+    pinDrag:18,
+    interfaceDrag: 19,
+    interfaceNameDrag: 20,
+    interfaceNameClicked: 21
+};
+
+function View(rect, node=null, parent=null) {
+
+    // the transform parameters - shift the content below the header of the view window !
+    //this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y}
+    this.tf = {sx:1.0, sy: 1.0, dx:rect.x, dy:rect.y + style.view.hHeader};
+
+    // the rectangle of the view
+    this.rect = rect;
+
+    // the widgets of the view itself
+    this.widgets = [];
+
+    // the (group) root node for which this is the view
+    this.root = node;
+
+    // the parent view
+    this.parent = parent;
+
+    // The view manager is only set in the top level view
+    this.manager = null;
+
+    // a view can contain other views - the children
+    this.views = [];
+
+    // on idle we check if we have hit something every x msec
+    this.hitTimer = 0;
+
+    // the editor state inside the view - action is one of the doing values above
+    this.state = {
+        
+        action: 0,      
+        pad: null,
+        node: null,      
+        route: null,
+        routeSegment: 0,
+        cursorInterval: null,
+        bus: null,
+        busSegment: 0,
+        busLabel: null,
+        tack: null,
+        lookWidget: null,
+        hoverOver: null,
+        highLighted: false,
+        grid: false,
+
+        // here we save values at mouse down - redox.doit is typically sent at mouse up
+        modo: {
+            y:0,
+            pos:{x:0, y:0},
+            left:true,
+            wire:null,
+            wires:null,
+        }
+    };
+
+    // the text object that is being edited
+    this.textField = new TextEdit();
+
+    // the element on the screen that was hit - 'what' is a constant of type zap defined in mouse.js
+    this.hit = {
+        what: 0,
+        selection : null,
+        xyLocal: {x:0, y:0},
+        xyScreen: {x:0, y:0},
+        pad: null,
+        padArrow: false,
+        node: null,
+        lookWidget: null,
+        route: null,
+        routeSegment: 0,
+        bus:null,
+        busSegment: 0,
+        busLabel:null,
+        tack:null
+    };
+
+    // when selecting we keep track of the selection here
+    this.selection = new Selection(this);
+
+    // The state of the view - used to set and restore views
+    this.viewState = {
+        visible: true,
+        big: false,
+        tf:{sx:1.0, sy:1.0, dx:rect.x, dy:rect.y},
+        rect:{...rect}
+    };
+
+}
+View.prototype = {
+
+    makeRaw() {
+        return {
+            state: this.viewState.visible ? (this.viewState.big ? 'big':'open' ) : 'closed',
+            rect: this.viewState.big ? this.viewState.rect : this.rect,
+            tf: this.tf
+        }
+    },
+
+    stateSwitch(newAction) {
+
+        // check if we need to do something...
+        if (this.state.action == doing.editTextField) this.endTextEdit();
+
+        // switch to the new state
+        this.state.action = newAction;
+    },
+
+     // resets the view to a known state
+    reset() {
+        // reset the state
+        const state = this.state;
+        state.action = doing.nothing;
+        state.node = null;
+        state.view = null;
+        state.route = null;
+
+        // reset the selection
+        this.selection.reset();
+
+        // reset all the views contained in this view
+        this.views.forEach( view => view.reset());
+    },
+
+    // make a reasonable rectangle that contains the nodes and is positioned at the group node
+    makeViewRect(node) {
+
+        // if there are no nodes, use default values
+        let rc = {x:0,y:0,w:0,h:0};
+
+        // make the view rectangle a little bit bigger
+        const µ = 0.1;
+
+        // if there are nodes...
+        if ((node.nodes.length > 0) || (node.pads.length > 0) ) {
+
+            // make a rect that contains all nodes and pads
+            rc = this.calcRect(node);
+
+            // create some extra width
+            rc.w = rc.w + Math.floor(µ*rc.w);
+
+            // create some extra height
+            rc.h = rc.h + Math.floor(µ*rc.h);
+        }
+
+        // check
+        if (rc.w < style.view.wDefault) rc.w = style.view.wDefault;
+        if (rc.h < style.view.hDefault) rc.h = style.view.hDefault;
+
+        // position the view 
+        rc.x = node.look.rect.x;
+        rc.y = node.look.rect.y + style.view.hHeader + style.header.hHeader;
+
+        // done
+        return rc
+    },
+
+    noRect() {
+        return (this.rect.w == 0) || (this.rect.h == 0)
+    },
+
+    setRect(x,y,w,h) {
+        this.rect.x = x;
+        this.rect.y = y;
+        this.rect.w = w;
+        this.rect.h = h;
+    },
+
+	doEdit: (tx, verb, param) => tx.send('redox.doit',{verb, param}),
+
+    // when putting nodes in a new view, shift the nodes wrt the new origin to 'stay in place'
+    shiftContent(dx, dy) {
+
+        // the nodes
+        this.root.nodes.forEach( node => {
+
+            // move the look and the widgets
+            node.look.moveDelta(dx,dy);
+
+            // move the routes (only the routes that start at this node)
+            node.look.moveRoutes(dx,dy);
+        });
+
+        // the buses
+        this.root.buses.forEach( bus => bus.move(dx, dy));
+
+        // the pads ???
+    },
+
+    translate(dx, dy) {
+        this.tf.dx += dx;
+        this.tf.dy += dy;
+    },
+
+    resetTransform() {
+        this.tf.dx = this.rect.x;
+        this.tf.dy = this.rect.y;
+        this.tf.sx = 1.0;
+        this.tf.sy = 1.0;
+    },
+
+    setTransform(tf) {
+        this.tf.dx = tf.dx;
+        this.tf.dy = tf.dy;
+        this.tf.sx = tf.sx;
+        this.tf.sy = tf.sy;
+    },
+
+    saveTransform(tf) {
+        Object.assign(this.viewState.tf, tf);
+    },
+
+    // returns the coordinates of where the middle of the view is in local coordinates
+    middle() {
+
+        const tf = this.tf;
+        const rc = this.rect;
+
+        // the middle of the view in local coordinates 
+        return {
+            x: (rc.x + rc.w/2 - tf.dx)/tf.sx,
+            y: (rc.y + rc.h/2 - tf.dy)/tf.sy
+        }
+
+    },
+
+    initRoot(name) {
+        // create the look for the root
+        const look = new Look({x:this.rect.x + this.rect.w/2, y:this.rect.y, w:0, h:0});
+
+        // create a groupnode
+        this.root = new GroupNode(look,name);
+
+        // return the root
+        return this.root
+    },
+
+    // render the view    
+    render(ctx) {
+
+        // switch to the style of the file where the node comes from
+        const savedStyle = style.switch(this.root?.link?.model?.header?.style);
+
+        // save the current context settings
+        ctx.save();
+
+        // notation
+        const rc = this.rect;
+        const st = style.view;
+
+        // views with a parent have widgets and a clip rectangle
+        if (this.parent) {
+        
+            // draw the widgets
+            for (const widget of this.widgets) widget.render(ctx);
+        
+            // add a clip rect - but exclude the header
+            ctx.rect( rc.x + st.wLine/2 , rc.y + st.hHeader, rc.w - st.wLine, rc.h - st.hHeader);
+        
+            // set it as a clipping region
+            ctx.clip();
+        }
+
+        // set the *additional* transform for this window
+        const tf = this.tf;
+        ctx.transform(tf.sx, 0.0, 0.0, tf.sy, tf.dx, tf.dy);
+
+        // draw the grid if necessary
+        if (this.state.grid) this.drawGrid(ctx);
+
+        // render the content of the view
+        if (this.root) this.renderContent(ctx);
+
+        // if there are other views render them now
+        for(const view of this.views) view.render(ctx);
+    
+        // restore the previous settings
+        ctx.restore();
+
+        // restore the style
+        style.switch(savedStyle);
+    },
+
+    applyContentTransform(ctx) {
+
+        const chain = [];
+        let view = this;
+
+        while (view) {
+            chain.push(view);
+            view = view.parent;
+        }
+
+        chain.reverse();
+
+        for (const item of chain) {
+            const tf = item.tf;
+            ctx.transform(tf.sx, 0.0, 0.0, tf.sy, tf.dx, tf.dy);
+        }
+    },
+
+    renderContent(ctx) {
+
+        // notation
+        const root = this.root;
+
+        // if there is a selection, we first render that
+        this.selection.render(ctx);    
+
+        // first draw all the routes that originate from the widget (avoids drawing routes twice)
+        for(const node of root.nodes) {
+            for(const widget of node.look.widgets) {
+                if (!widget.routes) continue
+                for(const route of widget.routes) {
+                    if (route.from == widget) route.render(ctx);
+                }
+            }
+        }
+
+        // draw all the pad routes
+        for(const pad of root.pads) {
+            for(const route of pad.routes) {
+                if (route.from == pad) route.render(ctx);
+            }
+        }
+
+        // draw all the bus routes
+        for(const bus of root.buses) {
+            for(const tack of bus.tacks) {
+                if(tack.route?.from == tack) tack.route.render(ctx);
+            }
+        }
+
+        // now render the nodes, pads and buses
+        for(const node of root.nodes) node.render(ctx);
+        for(const pad of root.pads) pad.render(ctx);
+        for(const bus of root.buses) bus.render(ctx);
+    },
+
+
+
+    highLight() {
+        this.state.highLighted = true;
+        for (const widget of this.widgets) {
+            if (widget.is.viewTitle || widget.is.viewBox || widget.is.icon) {
+                widget.is.highLighted = true;
+            }
+        }
+    },
+
+    unHighLight() {
+        this.state.highLighted = false;
+        for (const widget of this.widgets) {
+            if (widget.is.viewTitle || widget.is.viewBox || widget.is.icon) {
+                widget.is.highLighted = false;
+            }
+        }
+    },
+
+    // get the toplevel view in the stack
+    getManager() {
+
+        let view = this;
+        while (view) {
+            if (view.manager) return view.manager
+            view = view.parent;
+        }
+        return null
+    },
+
+    drawGrid(ctx) {
+
+        const rc = this.rect;
+        const tf = this.tf;
+        const grid = style.view.grid;
+        
+        // the top-left and bottom right coordinates of the view
+        const area = {  x:(rc.x - tf.dx)/tf.sx, 
+                        y:(rc.y - tf.dy)/tf.sy,
+                        w: rc.w/tf.sx,
+                        h: rc.h/tf.sy
+                    };
+        // the grid
+        shape.grid(ctx, area.x, area.y, area.w, area.h , grid.dx, grid.dy, grid.cLine, grid.cAxis);
+    },
+
+    getNamePath() {
+
+        if (!this.parent) return ''
+
+        let view = this;
+        let namePath = '';
+
+        while (view.parent) {
+            namePath += ' @ ' + view.root.name; 
+            view = view.parent;
+        }
+
+        return namePath
+    }
+};
+
+Object.assign(View.prototype, 
+    mouseHandling, 
+    mouseDownHandling, 
+    mouseMoveHandling,
+    mouseUpHandling,
+    nodeHandling,
+    contextHandling,
+    selectionHandling, 
+    groupHandling,
+    alignHandling,
+    keyboardHandling,
+    viewWidgetHandling,
+    dropHandling);
+
+const defaultWorker = () => ({
+    on: false,
+    path: '',
+});
+
+function makeRuntimeSettings() {
+    return {
+        logMessages: false,
+        worker: defaultWorker(),
+    }
+}
+
+function normalizeRuntimeSettings(dx = null) {
+
+    const defaults = makeRuntimeSettings();
+
+    if (!dx || typeof dx !== 'object') return defaults
+
+    const normalized = {
+        ...dx,
+        logMessages: !!dx.logMessages,
+        worker: {
+            ...defaults.worker,
+            ...(dx.worker ?? {}),
+        }
+    };
+
+    normalized.worker.on = !!normalized.worker.on;
+    normalized.worker.path = normalized.worker.path ?? '';
+
+    return normalized
+}
 
 // The node in a nodegraph
 function Node (look=null, name=null, uid=null) {
@@ -19071,18 +15280,7 @@ Node.prototype = {
         return null
     },
 
-    // // recursively find a node with a given uid
-    // findByUID(uid) {
-
-    //     if (this.uid == uid) return this
-    //     if (this.nodes) {
-    //         let found = null
-    //         for (const node of this.nodes) if (found = node.findByUID(uid)) return found
-    //     }
-    //     return null
-    // },
-
-    // find the parent of a node starting from this node
+     // find the parent of a node starting from this node
     findParent(nodeToFind) {
         let parent = this;
         if (this.nodes) {
@@ -19203,9 +15401,6 @@ Node.prototype = {
     // cooks the elements that are common to group and source nodes
     cookCommon(raw, modcom) {
 
-        // If there is no editor part, add the skeleton
-        // if (!raw.editor) raw.editor = {rect: null}
-
         // the rectangle as specified in the file - if any
         const rc = raw.rect ? raw.rect : {x:0, y:0, w:0, h:0};
 
@@ -19234,7 +15429,7 @@ Node.prototype = {
         if (raw.sx) this.sx = raw.sx;
 
         // check if the node has dynamics
-        if (raw.dx) this.dx = raw.dx;
+        if (raw.dx) this.dx = normalizeRuntimeSettings(raw.dx);
     },
 
     // used for nodes that have been copied
@@ -19321,17 +15516,10 @@ Node.prototype = {
         return ((this.look.rect.x == newNode.look.rect.x) && (this.look.rect.y == newNode.look.rect.y)) 
     },
 
-    // will highlight the link symbol for about a second if the node has a link and cannot be modified
     cannotBeModified() {
 
         // if the node has no link it can be modified
-        if (this.link == null) return false
-
-        // show a blinking link icon
-        this.look.blinkToWarn();
-
-        // cannot be modified !
-        return true
+        return (this.link != null) 
     },
 
     // changes the type of node from group to source or vice-versa
@@ -19343,6 +15531,9 @@ Node.prototype = {
 
         // swap the nodes and transfer the routes
         this.look.transferRoutes(newNode.look);
+
+        // if there is a link keep the link
+        if (this.link) newNode.link = this.copyLink();
 
         // return the new node
         return newNode
@@ -19360,10 +15551,10 @@ Object.assign(  Node.prototype,
 
 const jsonHandling$1 = {
 
-    makeRaw() {
+    makeRaw(refArl) {
        
         // separate function for links
-        if (this.link) return this.makeRawDock()
+        if (this.link) return this.makeRawDock(refArl)
 
         // get the look to save
         const {label, rect, interfaces} = this.look  ? this.look.makeRaw() : {label: null, rect:null, interfaces:[]}; 
@@ -19378,7 +15569,7 @@ const jsonHandling$1 = {
         if (this.dx) raw.dx = this.dx;
 
         // The nodes
-        if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw());
+        if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw(refArl));
 
         // get the routes and connections inside this group node
         const [routes, conx] = this.getRoutesAndConnections();
@@ -19390,7 +15581,7 @@ const jsonHandling$1 = {
         if (this.pads.length) raw.pads = this.pads.map( pad => pad.makeRaw());
 
         // the buses
-        if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw());
+        if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw(refArl));
 
         // save the routes (they are already in the raw format)
         if (routes.length) raw.routes = routes;
@@ -19399,13 +15590,13 @@ const jsonHandling$1 = {
         return raw
     },
 
-    makeRawDock() {
+    makeRawDock(refArl) {
 
         // get the look to save
         const {label, rect, interfaces} = this.look  ? this.look.makeRaw() : {label: null, rect:null, interfaces:[]}; 
 
         // The basis of raw
-        const raw = { kind: "dock", name: this.name, link: this.link.makeRaw(), rect }; 
+        const raw = { kind: "dock", name: this.name, link: this.link.makeRaw(refArl), rect }; 
 
         // add if present
         if (label) raw.label = label;
@@ -19562,7 +15753,7 @@ const jsonHandling$1 = {
 
                 // try to find by name or by wid (name could have changed !)
                 let pin = node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.name === endPoint.pin) );
-                if (!pin) node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.wid === endPoint.wid) );
+                if (!pin) pin = node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.wid === endPoint.wid) );
 
                 // done
                 return pin
@@ -19573,7 +15764,7 @@ const jsonHandling$1 = {
 
             // find by name or wid
             let pad = this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.name === endPoint.pad) );
-            if (!pad) this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.wid === endPoint.wid) );
+            if (!pad) pad = this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.wid === endPoint.wid) );
 
             // done
             return pad
@@ -20306,6 +16497,9 @@ const proxyHandling = {
  
         // create the pad
         const pad = new Pad(rect, proxy);
+
+        // In headless CLI flows (e.g. make-app), the editor singleton may be absent.
+        // editor?.doc?.UID?.generate?.(pad)
  
         // save
         this.pads.push(pad);     
@@ -20978,15 +17172,125 @@ const groupFunctions = {
 };
 Object.assign(GroupNode.prototype,  Node.prototype, groupFunctions, proxyHandling,jsonHandling$1, NodePlacement, conxHandling);
 
+function normalizeFactoryPath(path) {
+
+    if (!path || path.length == 0) return {pathKind: Kind.Empty, path: './index.js'}
+
+    let normalized = path.trim();
+    if (normalized.at(-1) === '/') normalized += 'index.js';
+    else if (normalized.lastIndexOf('.js') < 0) normalized += '.js';
+
+    const pathKind = getKind(normalized);
+    return {pathKind, path: normalized}
+}
+
+// name is the name of the javascript generator function
+function Factory (name = null) {
+
+    // the name of the factory
+    this.fName = name ?? '';
+
+    // sometimes we will need an alias for the factory name to avoid name clashes
+    this.alias = null;
+
+    // optionally - the file where the factory can be found
+    this.arl = null;
+
+    // How this factory path should be written when saved
+    this.pathKind = Kind.Empty;
+}
+Factory.prototype = {
+
+    getPath(refArl) {
+
+        if (!this.arl || this.pathKind === Kind.Empty) return './index.js'
+        if (!refArl) return this.arl.getPath()
+
+        return this.pathKind === Kind.Absolute ? this.arl.getPath() : relative(this.arl.getFullPath(), refArl.getFullPath())
+    },
+
+    makeRaw(refArl) {
+        return  {   
+            path: this.getPath(refArl), 
+            function: this.fName
+        }
+    },
+
+    copy(from) {
+        this.fName = from.fName;
+        this.alias = from.alias;
+        this.pathKind = from.pathKind;
+        this.arl = from.arl ? from.arl.copy() : null;
+        //this.key = from.key
+    },
+
+    clone() {
+        const clone = new Factory();
+        clone.copy(this);
+        return clone
+    },
+
+    resolve(newName, path, refArl, fallBack=null) {
+
+        // check the name - if no name use the node name
+        if (!newName || newName.length == 0) {
+            if (!fallBack || fallBack.length == 0) return
+            newName = fallBack;
+        }
+
+        // change the name if required
+        if (newName !== this.fName) this.fName = newName;
+
+        const normalized = normalizeFactoryPath(path);
+        this.pathKind = normalized.pathKind;
+        this.arl = refArl.resolve(normalized.path);
+    },
+
+    // checks if a factory with the same name does already exist and sets the alias if so
+    // Note that we only search once ! so if factory and _factory exist we are screwed
+    duplicate(srcImports, ownArl) {
+
+        // check for duplicates (same name in different file !)
+        const duplicate = srcImports.find( srcImport => {
+
+            // ignore the ownArl of course
+            if (srcImport.arl.equals(ownArl)) return false
+
+            // search for 
+            return srcImport.items.find( item => item == this.fName)
+        });        
+
+        // if the node exist already in a different file...
+        if (duplicate) {
+
+            // give a warning
+            console.warn(`Duplicate factory name: ${this.fName} is already defined in ${duplicate.arl.getPath()}`);
+
+            // make an alias
+            this.alias = '_' + this.fName;
+
+            // we have a duplicate
+            return true
+        }
+        else {
+            // set the alias to null
+            this.alias = null;
+
+            //no duplicate found...
+            return false
+        }
+    },
+};
+
 const jsonHandling = {
 
-    makeRaw() {
+    makeRaw(refArl) {
         // get the pins 
         const {rect, label, interfaces} = this.look.makeRaw();
    
         // save as dock or source
-        const raw = this.link   ? { kind: "dock", name: this.name, link: this.link.makeRaw(), rect } 
-                                : { kind: "source", name: this.name, factory: this.factory.makeRaw(), rect };
+        const raw = this.link   ? { kind: "dock", name: this.name, link: this.link.makeRaw(refArl), rect } 
+                                : { kind: "source", name: this.name, factory: this.factory.makeRaw(refArl), rect };
 
         // add if present
         if (label) raw.label = label;
@@ -21006,8 +17310,7 @@ const jsonHandling = {
         this.widgetCompare(linkedNode);
 
         // copy the factory
-        this.factory.fName = linkedNode.factory.fName;
-        this.factory.arl = linkedNode.factory.arl ? linkedNode.factory.arl.copy() : null;
+        this.factory.copy(linkedNode.factory);
 
         // fuse the settings
         this.sxUpdate(linkedNode);
@@ -21026,20 +17329,21 @@ const jsonHandling = {
         this.cookCommon(raw, modcom);
 
         // add the factory
+        const current = modcom.getCurrentModel();
+
         if (raw.factory) {
 
-            // get the main and the current model
-            const main = modcom.getMainModel();
-            const current = modcom.getCurrentModel();
-
-            // transform the factory file relative to the main model file
-            if (raw.factory.path) {
-                this.factory.arl = current.getArl()?.resolve( raw.factory.path );
-                if (main != current) this.factory.arl.makeRelative(main.getArl());
-            }
+            // keep the reference style and resolve to a canonical arl
+            const normalized = normalizeFactoryPath(raw.factory.path ?? './index.js');
+            this.factory.pathKind = normalized.pathKind;
+            this.factory.arl = current.getArl()?.resolve(normalized.path);
 
             // set or overwrite the name
             this.factory.fName = raw.factory.function;
+        }
+        else {
+            this.factory.pathKind = Kind.Empty;
+            this.factory.arl = current.getArl()?.resolve('./index.js');
         }
 
         // and set up the rx tx tables
@@ -21246,122 +17550,6 @@ const sourceFunctions = {
 
 };
 Object.assign(SourceNode.prototype, Node.prototype, sourceFunctions, jsonHandling);
-
-// name is the name of the javascript generator function
-function Factory (name = null) {
-
-    // the name of the factory
-    this.fName = name ?? '';
-
-    // optionally - the file where the factory can be found
-    this.arl = null;
-
-    // sometimes we will need an alias for the factory name to avoid name clashes
-    this.alias = null;
-}
-Factory.prototype = {
-
-    // toJSON() {
-    //     return  {   
-    //         path: this.arl?.userPath ?? "./index.js", 
-    //         function: this.fName
-    //     }
-    // },
-
-    // unzip() {
-    //     return  { blu: {    path: this.arl?.userPath ?? "./index.js", 
-    //                         function: this.fName },
-    //               viz: null }        
-    // },
-
-    makeRaw() {
-        return  {   
-            path: this.arl?.userPath ?? "./index.js", 
-            function: this.fName
-        }
-    },
-
-    copy(from) {
-        this.fName = from.fName;
-        this.alias = from.alias;
-        this.arl = from.arl ? from.arl.copy() : null;
-        //this.key = from.key
-    },
-
-    clone() {
-        const clone = new Factory();
-        clone.copy(this);
-        return clone
-    },
-
-    resolve(newName, userPath, refArl, fallBack=null) {
-
-        // check the name - if no name use the node name
-        if (!newName || newName.length == 0) {
-            if (!fallBack || fallBack.length == 0) return
-            newName = fallBack;
-        }
-
-        // change the name if required
-        if (newName !== this.fName) this.fName = newName;
-
-        // check if the path changed
-        if ((this.arl == null) && (!userPath || userPath.length == 0)) return
-        if (this.arl?.userPath === userPath) return
-
-        // check
-        if (!userPath || userPath.length == 0 ) {
-            this.arl = null;
-            return
-        }
-        
-        // check for completions 
-        if (userPath.at(-1) === '/') {
-            userPath = userPath + 'index.js';
-        }
-        else if (userPath.lastIndexOf('.js') < 0) {
-            userPath = userPath + '.js';
-        }
-        
-        // resolve 
-        this.arl = refArl.resolve(userPath);
-    },
-
-    // checks if a factory with the same name does already exist and sets the alias if so
-    // Note that we only search once ! so if factory and _factory exist we are screwed
-    duplicate(srcImports, ownArl) {
-
-        // check for duplicates (same name in different file !)
-        const duplicate = srcImports.find( srcImport => {
-
-            // ignore the ownArl of course
-            if (srcImport.arl.equals(ownArl)) return false
-
-            // search for 
-            return srcImport.items.find( item => item == this.fName)
-        });        
-
-        // if the node exist already in a different file...
-        if (duplicate) {
-
-            // give a warning
-            console.warn(`Duplicate factory name: ${this.fName} is already defined in ${duplicate.arl.userPath}`);
-
-            // make an alias
-            this.alias = '_' + this.fName;
-
-            // we have a duplicate
-            return true
-        }
-        else {
-            // set the alias to null
-            this.alias = null;
-
-            //no duplicate found...
-            return false
-        }
-    },
-};
 
 // the route used for a connection between an output and an input
 
@@ -22369,51 +18557,6 @@ const routeMoving = {
         p[last-1].y = b.y;
     },
 
-    xxxxadjustFourPointRoute(a,b) {
-
-        // notation
-        const tooClose = style.route.tooClose;
-        const [p0, p1, p2, p3] = this.wire;
-
-        // the new middle is the old middle by default
-        let mx = p1.x;
-
-        // we keep the form of the curve - a z curve remains a z curve, a c curve remains a c curve
-
-        // The vertical is to the right
-        if (p1.x > p0.x && p1.x > p3.x) {
-
-            if (p1.x - a.x < tooClose) mx = a.x + tooClose;
-            else if (p1.x - b.x < tooClose) mx = b.x + tooClose;
-        }
-        // The vertical is to the left
-        else if (p1.x < p0.x && p1.x < p3.x) {
-            if (a.x - p1.x  < tooClose) mx = a.x - tooClose;
-            else if (b.x - p1.x < tooClose) mx = b.x - tooClose;
-        }
-        // the vertical is between a and b
-        else {
-            // the previous length and the new length
-            const pL = p3.x - p0.x;
-            const nL = b.x - a.x;
-
-            // calculate the middle x
-            mx =   nL == 0 ? a.x 
-                 : pL == 0 ? (a.x + b.x)/2
-                 : a.x + (p1.x - p0.x) * nL / pL;            
-        }
-
-        // adjust the points
-        p0.x = a.x;
-        p0.y = a.y;
-        p1.y = a.y;
-        p1.x = mx;
-        p2.x = mx;
-        p2.y = b.y;
-        p3.x = b.x;
-        p3.y = b.y;
-    },
-
     makeTwoSegments(a, b) {
 
         // notation
@@ -22782,25 +18925,11 @@ rxtxPinBus() {
         // now make the source list 
         pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin); 
 
-        // if the bus has a router save the pins this tack is connected to, and set the connections to the tack
-        if (tack.bus.hasFilter()) {
-
-            // add the incoming to the table for the bus
-            tack.bus.rxtxAddRxTack(tack);
-
-            // and do a full connect to the bus
-            this.fullConnect(srcList,[tack]);
-        }
-
-        // and do a full connect between source and destination list
-        else {
-
-            // make the list of destinations connected to this bus for this pin
-            tack.makeConxList(dstList);
-            
-            // and do a full connect
-            this.fullConnect(srcList, dstList);
-        }
+        // make the list of destinations connected to this bus for this pin
+        tack.makeConxList(dstList);
+        
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
     }
 
     // left 
@@ -22809,19 +18938,11 @@ rxtxPinBus() {
         // now make the inlist
         pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
 
-        if (tack.bus.hasFilter()) {
+        // make the list of outputs of connected to this bus
+        tack.makeConxList(srcList);
 
-            // add the destination for this tack
-            tack.bus.rxtxAddTxTack(tack, dstList);
-        }
-        else {
-
-            // make the list of outputs of connected to this bus
-            tack.makeConxList(srcList);
-
-            // and do a full connect between source and destination list
-            this.fullConnect(srcList, dstList);
-        }
+        // and do a full connect between source and destination list
+        this.fullConnect(srcList, dstList);
     }
 },
 
@@ -22842,40 +18963,22 @@ rxtxPadBus() {
 
         pad.proxy.makeConxList(srcList);
 
-        if (tack.bus.hasFilter()) {
+        // find the connections from the tack
+        tack.makeConxList(dstList);
 
-            // add the tack to the table
-            tack.bus.rxtxAddRxTack(tack);
-
-            // and do a full connect to the bus tack only
-            this.fullConnect(srcList,[tack]);            
-        }
-        else {
-
-            // find the connections from the tack
-            tack.makeConxList(dstList);
-
-            // and do a full connect
-            this.fullConnect(srcList, dstList);
-        }
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
     }
     // from bus to pad
     if (arrow.left) {
 
         pad.proxy.makeConxList(dstList);
 
-        if (tack.bus.hasFilter()) {
+        // find the incoming connections on the bus that lead to the pad 
+        tack.makeConxList(srcList);
 
-            // save the destinations for this tack
-            tack.bus.rxtxAddTxTack(tack, dstList);
-        }
-        else {
-            // find the incoming connections on the bus that lead to the pad 
-            tack.makeConxList(srcList);
-
-            // and do a full connect
-            this.fullConnect(srcList, dstList);
-        }
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
     }
 },
 
@@ -22978,40 +19081,24 @@ rxtxPinBusDisconnect() {
         // now make the output list 
         pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);   
 
-        if (tack.bus.hasFilter()) {
+        // make the list of inputs connected to this bus of the same name
+        tack.makeConxList(dstList);
 
-            tack.bus.rxtxRemoveRxTack(tack);
-
-            this.fullDisconnect(srcList, [tack]);
-        }
-        else {
-
-            // make the list of inputs connected to this bus of the same name
-            tack.makeConxList(dstList);
-
-            // and do a full disconnect 
-            this.fullDisconnect(srcList, dstList);
-        }
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList);
     }
 
     // left 
     if (arrow.left) {
 
-        if (tack.bus.hasFilter()) {
+        // make the list of outputs of the same name connected to this bus
+        tack.makeConxList(srcList);
 
-            tack.bus.rxtxRemoveTxTack(tack);
+        // now make the inlist
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
 
-        } else {
-
-            // make the list of outputs of the same name connected to this bus
-            tack.makeConxList(srcList);
-
-            // now make the inlist
-            pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
-
-            // and do a full disconnect 
-            this.fullDisconnect(srcList, dstList);
-        }
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList);
     }
 },
 
@@ -23030,33 +19117,14 @@ rxtxPadBusDisconnect() {
     if (arrow.right) {
 
         pad.proxy.makeConxList(srcList);
-
-        if (tack.bus.hasFilter()) {
-
-            tack.bus.rxtxRemoveRxTack(tack);
-
-            this.fullDisconnect(srcList, [tack]);
-        }
-        // and do a full disconnect 
-        else {
-
-            tack.makeConxList(dstList);
-
-            this.fullDisconnect(srcList, dstList);
-        }
+        tack.makeConxList(dstList);
+        this.fullDisconnect(srcList, dstList);
     }
     if (arrow.left) {
 
-        if (tack.bus.hasFilter()) {
-
-            tack.bus.rxtxRemoveTxTack(tack);
-        }
-        else {
-
-            tack.makeConxList(srcList);
-            pad.proxy.makeConxList(dstList);
-            this.fullDisconnect(srcList, dstList);
-        }
+        tack.makeConxList(srcList);
+        pad.proxy.makeConxList(dstList);
+        this.fullDisconnect(srcList, dstList);
     }
 },
 
@@ -23353,6 +19421,750 @@ Route.prototype = {
 };
 Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling);
 
+const padRouteFunctions = {
+
+    adjustRoutes() {
+        for(const route of this.routes) route.adjust();
+    },
+
+    routeToPin(pin) {
+
+        // create a route between the pin and this pad
+        let route = new Route(pin, this);
+
+        // make a simple route between the two pins
+        route.fourPointRoute();
+
+        // save the route
+        this.routes.push(route);
+
+        // also in the pin
+        pin.routes.push(route);
+    },
+
+    shortConnection(actual) {
+
+        // create a route between the actual widget and this pad
+        let route = new Route(actual, this);
+
+        // make a simple route between the two pins
+        route.twoPointRoute();
+
+        // save the route
+        this.routes.push(route);
+
+        // also in the actual
+        actual.routes.push(route);
+    },    
+
+    canConnect(widget) {
+
+        // inputs connect to inputs and outputs to outputs !
+        if (widget.is.pin) {
+
+            // the proxy and the widget mùust both be inputs or outputs
+            if (this.proxy.is.input != widget.is.input) return false
+
+            // if the widget is a channel, then the proxy must be a channel also
+            if (widget.is.channel && !this.proxy.is.channel) return false
+
+            // if the widget is a multi
+            if ((widget.is.multi || this.proxy.is.multi) && (!widget.hasMultiOverlap(this.proxy))) return false
+        }
+
+        // no duplicates
+        if (this.routes.find( route => (route.from == widget)||(route.to == widget))) return false
+
+        return true
+    },
+
+    // disconnect all routes to and from a pad
+    disconnect() {
+
+        // make a copy of the routes - the pad.routes array will be modified during this proc
+        const routes = this.routes.slice();    
+
+        // go through all the routes
+        for (const route of routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // a pad can be connected to a pin or bus
+            other.is.pin ? route.rxtxPinPadDisconnect() : route.rxtxPadBusDisconnect();
+
+            // remove the route at both ends
+            route.remove();
+        }
+    },
+
+    reconnect(routes) {
+
+        this.routes = routes;
+
+        for(const route of routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // a pad can be attached to a pin or a bus
+            if (other.is.pin) other.routes.push(route);
+            else other.bus.push(other);
+        }
+    },
+
+    // before dragging the pad we want to make sure the pad is the to widget
+    checkRoutesDirection() {
+        this.routes.forEach( route => { if (route.from == this) route.reverse(); });
+    },
+
+    drag(next, delta) {
+
+        // if there are routes ...
+        if (this.routes.length > 0) {
+
+            // get the last two points of the first route
+            const wire = this.routes[0].wire;
+
+            // get the first or last points of the route
+            const [a, b] = this.routes[0].from == this ?  [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
+
+            // calculate the next position
+            const realNext = a.y == b.y ? {x: a.x + delta.x, y: next.y} : {x: next.x, y: a.y + delta.y};
+
+            // add a new point to the routes
+            for (const route of this.routes) route.drawXY( realNext ); 
+
+            // check if we have to switch the left/right text position
+            if (a.y == b.y) this.is.leftText = (a.x < b.x);
+
+            // notation
+            const rc = this.rect;
+
+            // y position is independent of left/right
+            rc.y = a.y - rc.h/2;
+
+            //x depends on left right
+            rc.x = this.is.leftText ? a.x - rc.w : a.x; 
+        }
+        else {
+            // just move the pad
+            this.rect.x += delta.x;
+            this.rect.y += delta.y;           
+        }
+    },
+
+    xdrag(next, delta) {
+
+        // if there are routes ...
+        if (this.routes.length > 0) {
+
+            // get the last two points of the first route
+            const wire = this.routes[0].wire;
+
+            // get the last two points of the wire
+            if (wire.length > 0) {
+                const last = wire.at(-1);
+                const prev = wire.at(-2);
+
+                // use the direction to calculate a new value for the next point
+                next = prev.y == last.y ? {x: last.x + delta.x, y: next.y} : {x: next.x, y: last.y + delta.y};
+            }
+
+            // add a new point to the routes
+            for (const route of this.routes) route.drawXY( next ); 
+
+            // place the pad again
+            this.place();
+        }
+        else {
+            // just move the pad
+            this.rect.x += delta.x;
+            this.rect.y += delta.y;           
+        }
+    },
+
+    endDrag() {
+        //if (this.routes.length == 1) this.routes[0].endpoint(this)
+        this.routes.forEach( route => route.endpoint(this));
+    },
+
+    slide(delta) {
+
+        // all the routes are attached horizontally
+        this.routes.forEach( route => {
+
+            // notation
+            const p = route.wire;
+
+            // to slide a route it must have at least three segments
+            // make a copy of teh wire ! Points in the point array are overwritten !
+            if (p.length == 2) {
+                //route.addTwoSegments({...p[0]},{...p[1]})
+                route.fourPointRoute();
+            }
+
+            // notation
+            const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
+
+            // move the segment
+            a.y += delta.y;
+            b.y += delta.y;
+        });
+        // finally move the pad
+        this.rect.y += delta.y;
+    },
+
+    fuseEndSegment() {
+
+        // only one route can fuse
+        let fusedRoute = null;
+        let dy = 0;
+
+        // all the routes are attached horizontally
+        for (const route of this.routes) {
+        // this.routes.forEach( route => {
+
+            // at least three segments required
+            if (route.wire.length < 4) continue
+
+            // notation
+            const p = route.wire;
+            const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
+
+            // check if we can fuse segments 
+            if (Math.abs(c.y - b.y) < style.route.tooClose) {
+                dy = c.y - a.y;
+                a.y = c.y;
+                front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
+                fusedRoute = route;
+                break
+            }
+        }
+
+        // if we have fused we will move all the routes and pad 
+        if (fusedRoute) {
+            for (const route of this.routes) {
+            //this.routes.forEach( route => {
+
+                // the fused route is already ok
+                if (route == fusedRoute) continue
+
+                // notation
+                const p = route.wire;
+                const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
+
+                // move the segment
+                a.y += dy;
+                b.y += dy;
+            }
+            // finally move the pad
+            this.rect.y += dy;
+        }
+    },
+
+    // when we copy the pad-pin routes, we already have copied all the nodes so we can set both ends of the route correctly
+    // we use the uid that was also copied as the search element - the final uid is set after calling this routine
+    copyPadPinRoutes(pad, root) {
+
+        // copy the routes
+        for(const route of pad.routes) {
+
+            // get the other widget
+            const other = route.from == pad ? route.to : route.from;
+
+            // only routes to/from pins are considered
+            if (!other.is.pin) continue
+
+            // clone the route
+            const clone = route.clone();
+
+            // the pad - part of the route can be set
+            clone.to == pad ?  clone.to = this : clone.from = this;
+
+            // and save the cloned route
+            this.routes.push(clone);
+
+            // now find the node for the 'other'
+            const node = root.nodes.find( node => node.uid == other.node.uid);
+
+            // find the pin in that node
+            const pin = node.look.findPin(other.name, other.is.input);
+
+            // set the other part of the route
+            clone.from == this ? clone.to = pin : clone.from = pin;
+
+            // also save the new route in the pin
+            pin.routes.push(clone);
+        }
+    },
+
+    // remove a route from the routes array
+    removeRoute(route) {
+
+        eject(this.routes, route);
+    },
+
+    // copy the routes for the undo operation (see redox)
+    copyWires() {
+
+        const wires = [];
+        for (const route of this.routes) wires.push(route.copyWire());
+        return wires
+    },
+
+    restoreWires(wires) {
+
+        const L = this.routes.length;
+        for(let i = 0; i < L; i++) this.routes[i].restoreWire(wires[i]);
+    },
+
+    highLightRoutes() {
+
+        // highlight the connections of the pqd
+        for (const route of this.routes) {
+
+            // check the other part of the route - note that it might be missing during a disconnect operation !
+            const other = route.from == this ? route.to : route.from;
+
+            //check
+            if (!other) continue
+
+            // filter multis
+            if (other.is.pin) {
+
+                // filter unconnected multis
+                if (!this.areConnected(other)) continue
+                    
+                // ok - highlight the route
+                route.highLight();
+            }
+
+            // if the other is a bustack also highlight the routes that go via the bus
+            if (other.is.tack) other.highLightRoutes();
+        }
+    },
+
+    unHighLightRoutes() {
+
+        // highlight the connections of the pin
+        for (const route of this.routes) {
+
+            //unhighlight the route
+            route.unHighLight();
+
+            // check the other part of the route - note that it might be missing during a disconnect operation !
+            const other = route.from == this ? route.to : route.from;
+
+            // check
+            if (!other) continue
+
+            // check the 
+            //if (other.is.proxy) other.pad.unHighLightRoutes()
+
+            // if the other is a bustack also highlight the routes that go via the bus
+            if (other?.is.tack) other.unHighLightRoutes();
+        }
+    },
+
+    checkRouteUsage() {
+
+        // reset all the routes to used
+        for(const route of this.routes) route.is.notUsed = false;
+
+        // get the proxy for this pad
+        const proxy = this.proxy;
+
+        // check the routes
+        for(const route of this.routes) {
+
+            // get the other side of the route
+            const other = route.from == this ? route.to : route.from;
+
+            // multi messages can only connect to multimessages
+            if (other.is.pin) {
+                if ((other.is.multi || proxy.is.multi) && !proxy.hasMultiOverlap(other)) route.is.notUsed = true;
+            }
+            // else if (other.is.pad){
+            //     if ((proxy.is.multi || other.proxy.is.multi) && !proxy.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
+            // } 
+            else if (other.is.tack) {
+
+                // check all the bus routes
+                let found = false;
+                for(const tack of other.bus.tacks) {
+
+                    // skip 
+                    if (tack == other) continue
+
+                    // get the pin or pad at the other end 
+                    const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to;
+
+                    // it could be that the route was not used
+                    if (other.bus.areConnected(this, busWidget)) {
+                        tack.route.is.notUsed = false;
+                        found = true;
+                    }
+                }
+                // if we have not found one connection..
+                if (!found) route.is.notUsed = true;
+            }
+        }
+    },
+
+    rank() {
+        return {up:1, down:1}
+    }
+
+};
+
+function Pad(rect, proxy, uid=null) {
+
+    // unique id
+    this.uid = uid;
+
+    // constructor chaining
+    this.rect = {...rect}; 
+
+    // set h if necessary - we will set w when the pad is rendered
+    // this.rect.h = rect.h > 0 ? rect.h : style.pad.hPad
+
+    this.is = {
+        pad: true,
+        selected: false,
+        highLighted: false,
+        leftText: proxy.is.left,
+        hoverOk: false,
+        hoverNok: false,
+        beingEdited: false,
+        placed: false
+    };
+
+    // set the text
+    this.text = proxy.name;
+
+    // the widget on the look
+    this.proxy = proxy;
+
+    // the routes to the pad (inside the group!)
+    this.routes = [];
+}
+Pad.prototype = {
+
+    copy() {
+        return new Pad(this.rect, this.proxy, this.uid)
+    },
+
+    render(ctx, look) {
+        
+        // notation
+        let st = style.pad;
+        const rc = this.rect;
+        const proxy = this.proxy;
+
+        // use a different color for selected pads
+        const cPad =  this.is.hoverNok ? st.cBad : st.cBackground;
+
+        // the text and arrow color change when connected
+        let cText =     this.is.highLighted ? st.cHighLighted
+                        : this.is.selected || this.is.hoverOk ? st.cSelected
+                        : this.routes?.length > 0 ? st.cConnected 
+                        : st.cText;
+
+        // color of the arrow
+        const cArrow = cText;
+        
+        // the y position of the arrow
+        let yArrow = rc.y+(st.hPad - st.wArrow)/2;
+
+        // when being edited we recalculate the width of the rectangle
+        if (this.is.beingEdited) {
+            rc.w = style.pad.wExtra + ctx.measureText(this.text).width;
+            this.place();
+        }
+
+        // render the pin  - note that x and y give the center of the triangle
+        if (this.is.leftText) {
+
+            // the x-position of the arrow
+            const xArrow =  rc.x + rc.w - st.rBullet/2 - st.hArrow; 
+
+            // draw a rectangle and a circle
+            shape.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+
+            if (proxy.is.channel) {
+                // draw a triangle
+                proxy.is.input  ? shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+            }
+            else {
+                // draw a triangle
+                proxy.is.input  ? shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+            }
+
+            // write the text in the rectangle
+            proxy.is.multi  ? shape.leftTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
+                            : shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
+        }
+        else {
+            // The x-position of the arrow
+            const xArrow = rc.x + st.rBullet/2;
+
+            // draw the rectangle and the bullet
+            shape.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+
+            if (proxy.is.channel) {
+                // draw a triangle
+                proxy.is.input  ? shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+            }
+            else {
+                // draw a triangle
+                proxy.is.input  ? shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+            }
+
+            // write the text in the rectangle
+            proxy.is.multi  ? shape.rightTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
+                            : shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
+        }
+    },
+
+    cursorPos(ctx, i) {
+        const rc = this.rect;
+        const xText = this.is.leftText
+            ? rc.x + style.pad.wMargin
+            : rc.x + rc.w - ctx.measureText(this.text).width;
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: rc.y }
+    },
+
+    // returns the center of the pad bullet
+    center() {
+        const rc = this.rect;
+        return this.is.leftText     ? {x: rc.x + rc.w ,  y: rc.y + rc.h/2} 
+                                    : {x: rc.x ,         y: rc.y + rc.h/2}
+    },
+
+    // place the widget so that the center is on pos
+    place() {
+        // take the first route
+        const route = this.routes[0];
+
+        // check
+        if ( ! route?.wire.length ) return
+
+        // get the first or last point of the route
+        const [pa, pb] = route.from == this ?  [route.wire[0], route.wire[1]] : [route.wire.at(-1), route.wire.at(-2)];
+
+        // check
+        this.is.leftText = (pa.x < pb.x);
+
+        // notation
+        const rc = this.rect;
+
+        // y position is independent of left/right
+        rc.y = pa.y - rc.h/2;
+
+        //x depends on left right
+        rc.x = this.is.leftText ? pa.x - rc.w : pa.x; 
+    },
+
+    // the edit functions
+    startEdit(ctx, click = null) {
+
+        this.is.beingEdited = true;
+
+        const xText = this.is.leftText
+            ? this.rect.x + style.pad.wMargin
+            : this.rect.x + this.rect.w - ctx.measureText(this.text).width;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    getWidth() {
+        const proxy = this.proxy;
+        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
+    },
+
+    endEdit(saved) {
+
+        // notation
+        const proxy = this.proxy;
+
+        // no more editing
+        this.is.beingEdited = false;
+
+        // if the name has not zero length...
+        if (this.text.length > 0) {
+
+            // set the name of the proxy
+            proxy.name = this.text;
+
+            // check the name and reset if not ok
+            if ( ! proxy.checkNewName()) {
+                proxy.name = this.text = saved;
+                return
+            }
+
+            // the name might have changed (multi)
+            this.text = proxy.name;
+
+            // check for route usage
+            this.checkRouteUsage();
+
+            // recalculate the width of the pad
+            this.rect.w = this.getWidth();
+            //this.place()
+
+            // done
+            return
+        }
+
+        // zero length : The pin can only be removed if there are no routes
+        if (proxy.routes.length == 0) {
+
+            // remove the proxy
+            proxy.node.look.removePin(proxy);
+
+            // and remove the pad
+            proxy.node.removePad(this);
+
+            // done
+            return
+        }
+
+        // restore the old name
+        this.text = saved;
+    },
+
+    // the name of the proxy has changed - length of the pad must also change
+    nameChange( newName ) {
+        // change
+        this.text = newName;
+
+        // force a recalculation of the rectangle
+        this.rect.w = this.getWidth();
+    },
+
+    overlap(rect) {
+        const rc = this.rect;
+
+        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
+        return true
+    },
+
+    makeRaw() {
+        const raw = {
+            wid: this.proxy.wid,
+            text: this.text,
+            left: this.is.leftText,
+            rect: this.rect
+        };
+
+        if (this.is.placed) raw.placed = true;
+
+        return raw
+    },
+
+    // unzip() {
+
+    //     return {
+    //         blu: null,
+    //         viz: convert.padToString(this)
+    //     }
+    // },
+
+    moveTo(x,y) {
+
+        this.rect.x = x;
+        this.rect.y = y;
+
+        this.adjustRoutes();
+    },
+
+    move(delta) {
+
+        this.rect.x += delta.x;
+        this.rect.y += delta.y;
+
+        //this.adjustRoutes()
+    },
+
+    // checks if the widget and the pad are logically connected
+    // we only have to filter unconnected multis
+    areConnected(widget) {
+
+        if (widget.is.pin) {
+            // only when the proxy is a multi, it functions as a filter
+            if (this.proxy.is.multi && !widget.hasMultiOverlap(this.proxy)) return false
+        }
+
+        return true
+    },
+
+    makeConxList(list) {
+
+        for(const route of this.routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // check if connected
+            if ( ! this.areConnected(other)) continue
+
+            // if the actual is also a proxy, take it to the next level, else save in list
+            if (other.is.pin) {
+                other.is.proxy ?  other.pad?.makeConxList(list) : list.push( other );
+            }
+            // get all the connections to the bus that can reach the pad
+            else if (other.is.tack) {
+
+                // continue to complete the list
+                other.makeConxList(list);
+            }
+        }
+    },
+
+    highLight() {
+        this.is.highLighted = true;
+    },
+
+    unHighLight() {
+        this.is.highLighted = false;
+    },
+
+    hitTest(pos) {
+
+        // check if we have hit the rectangle
+        if (! inside(pos, this.rect))  return [zap.nothing, null]
+
+        // we have hit the pad - check if we have hit the arrow (left or right)
+        if (this.is.leftText) {
+            return (pos.x > this.rect.x + this.rect.w - 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+        }
+        else {
+            return (pos.x < this.rect.x + 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+        }
+    },
+
+    hitRoute(pos) {
+
+        let segment = 0;
+
+        // go through all the routes..
+        for (const route of this.routes) {
+
+            // only routes from this pad
+            if ((route.from == this)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
+        }
+        // nothing
+        return [zap.nothing, null, 0]
+    }
+
+};
+Object.assign(  Pad.prototype, padRouteFunctions);
+
 // a bus groups a number of connections
 
 const busConnect = {
@@ -23539,14 +20351,11 @@ const busConnect = {
 
 const busJsonHandling = {
 
-makeRaw() {
+makeRaw(refArl) {
 
     const json = {
         name: this.name
     };
-
-    // save the filter if applicable
-    if (this.is.filter && this.filter) json.filter = this.filter;
 
     // the wire
     json.start = convert.pointToString(this.wire[0]);
@@ -23561,24 +20370,6 @@ cook(raw, modcom) {
     
     // set the name
     this.name = raw.name;
-
-    // check for a filter
-    if (raw.filter) {
-
-        // get the main and the current model
-        const main = modcom.getMainModel();
-        const current = modcom.getCurrentModel();
-
-        // create the filter
-        this.filter = new Factory(raw.filter.function);
-        this.is.filter = true;
-
-        // transform the factory file relative to the main model file
-        if (raw.filter.path) {
-            this.filter.arl = current.getArl().resolve( raw.filter.path );
-            if (main != current) this.filter.arl.makeRelative(main.getArl());
-        }
-    }
 
     // save the path and labels for this bus
     this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire);
@@ -23952,13 +20743,8 @@ function Bus(name, from, uid = null) {
         selected: false,
         hoverOk: false,
         hoverNok : false,
-        highLighted: false,
-        cable: false,
-        filter: false
+        highLighted: false
     };
-
-    // the filter is a factory.
-    this.filter = null;
 
     // incoming connections
     this.rxTable = [];
@@ -24081,6 +20867,7 @@ Bus.prototype = {
             // the precision in pixels
             const d = 5;
 
+
             // horizontal
             if (a.y == b.y) {
                 if ((y > a.y - d) && (y < a.y + d))
@@ -24092,7 +20879,6 @@ Bus.prototype = {
                     if (((y >= a.y) && (y <= b.y)) || ((y >= b.y) && (y <= a.y))) return i+1
             }
         }
-
         // no hit
         return 0
     },
@@ -24263,55 +21049,6 @@ Bus.prototype = {
             tacks[i].route.restoreWire(copy[i].track);
         }
     },
-
-    hasFilter(){
-        return this.is.filter
-    },
-
-    // returns the arl to be used to get to the source for the filter
-    getFilterArl(jslib, link, localIndex) {
-
-        // if there is a link and the link is a library - take that
-        if ( link?.model?.is.lib ) return link.model.getArl()
-
-        // if there is a current lib (ie a lib where a group was defined) use that
-        if (jslib) return jslib.arl
-
-        // if the factory arl has been set explicitely, use that
-        if (this.filter.arl) return this.filter.arl
-
-        // if the link is a json file, the source can be found via the index file in the directory of that model
-        if (link?.model) return link.model.getArl().resolve('index.js')
-            
-        // else we assume the source can be locacted by using the index.js file in the model directory
-        return localIndex
-    },
-
-    getFilter(srcImports, lib, link) {
-
-       // for a source node find the arl to be used for the source - or take the ./index.js file in the directory of the model
-       const filterArl = this.getFilterArl(lib, link, srcImports[0].arl);
-
-       // check if the factoryname is already in use somewhere and use an alias if necessary - else just use the name
-       const filterSpec = this.filter.duplicate(srcImports, filterArl) ? `${this.filter.fName} as ${this.filter.alias}` : this.filter.fName;
-
-       // see if the arl is already in the list
-       const found = srcImports.find( srcImport => srcImport.arl.equals(filterArl));
-
-       // if we have the file, add the item there if..
-       if (found) {
-
-           // ..it is not already in the list..
-           const item = found.items.find( item => item == filterSpec);
-
-           // ..if not add it to the list
-           if (!item) found.items.push(filterSpec);
-       }
-       else {
-           // add the file and put the first item on the list
-           srcImports.push({arl:filterArl, items:[filterSpec]});
-       }        
-    }
 };
 Object.assign(Bus.prototype, busConnect, busJsonHandling, busDrawing);
 
@@ -24334,7 +21071,7 @@ const TestHandling = {
 
     makeTestArl(testFolder) {
         const arl = this.getArl();
-        const modelName = nameOnly(arl.userPath);
+        const modelName = nameOnly(arl.getPath());
         const split$1 = split(modelName);
         return arl.resolve(testFolder + '/' + split$1.name + '.tst.blu')
     },
@@ -24410,7 +21147,6 @@ const TestHandling = {
 
         // copy the model, but make it relative to this model !
         const refModel = this.copy();
-        refModel.getArl().makeRelative(refArl);
 
 
         let yDelta = Y.headroom;
@@ -24427,11 +21163,8 @@ const TestHandling = {
                 if (w.is.pin && !w.is.left) w.leftRightSwap();
             }
 
-            // make the factory relative (maybe not necessary..)
-            if (nut.factory?.arl) nut.factory.arl.makeRelative( refArl );
-
             // make the nut a linked node
-            nut.setLink(refModel, nut.name);
+            nut.setLink(refModel, nut.name, Kind.Relative);
 
             // add
             root.nodes.push(nut);
@@ -24561,7 +21294,7 @@ const TestHandling = {
         const testModel = new ModelBlueprint(testArl);
 
         // save the test model
-        const compiler = new ModelCompiler();
+        const compiler = new ModelCompiler(this.UID, null);
 
         // Use the compiler to encode the model to a raw jason structure
         testModel.raw = compiler.encode(testRoot, testModel);
@@ -24581,10 +21314,11 @@ const LibHandling = {
         const modelArl = this.getArl();
         
         // save the app path in the document
-        if (this.target.library?.userPath !== libPath) {
+        const nextLibArl = modelArl.resolve(libPath);
+        if (!this.target.library || !this.target.library.equals(nextLibArl)) {
 
             // make the app arl
-            this.target.library = modelArl.resolve(libPath);
+            this.target.library = nextLibArl;
         }
 
         // notation
@@ -24613,14 +21347,14 @@ const LibHandling = {
         node.collectImports(imports);
 
         // make a javascript compliant name
-        const jsRootName = convert.nodeToFactory(nameOnly(libArl.userPath));
+        const jsRootName = convert.nodeToFactory(nameOnly(libArl.getPath()));
 
         // The header
         const today = new Date();
         const sHeader =    '// ------------------------------------------------------------------'
                         +`\n// Lib: ${jsRootName}`
-                        +`\n// Model File: ${modelArl.userPath}`
-                        +`\n// Lib   File: ${libArl.userPath}`
+                        +`\n// Model File: ${modelArl.getPath()}`
+                        +`\n// Lib   File: ${libArl.getPath()}`
                         +`\n// Creation date ${today.toLocaleString()}`
                         +'\n// ------------------------------------------------------------------';
 
@@ -24628,7 +21362,7 @@ const LibHandling = {
         const sImports = '\n\n//Export' + this.JSImportExportString(imports,'\nexport ', libArl); 
 
         // derive the name for finding the 
-        const modelFile = './' + fileName(modelArl.userPath);
+        const modelFile = './' + fileName(modelArl.getPath());
 
         // import/export the model that was saved - MAIN PATH IS WRONG
         const sModel =   `\n\n// The model\nimport ${jsRootName} from '${modelFile}'`+`\nexport {${jsRootName}}`;
@@ -24679,11 +21413,21 @@ function ModelBlueprint(arl) {
     // The types that are used in message contracts in this model
     this.vmbluTypes = null;
 
-    // the model in the resource - json, but must still be cooked
+    // the model in the resource - raw json, but must still be cooked
     this.raw = null;
 
-    // the map of the source code for the model, organised per node and pin (it is a map of maps)
-    this.sourceMap = null;
+    // the compiled model
+    this.root = null;
+
+    // the save point - raw json
+    this.savePoint = null;
+
+    // A freshness stamp for the backing file(s)
+    this.stamp = null;
+
+    // profile data extracted from source files, organised per node and pin
+    this.sourceProfile = null;
+    this.sourceProfileOrigin = null;
 
     // now analyze the file type and set the arls
     this.analyzeArl(arl);
@@ -24712,7 +21456,7 @@ ModelBlueprint.prototype = {
         if(!arl) return
 
         // split the name in name, kind and ext
-        const split$1 = split(arl.userPath);
+        const split$1 = split(arl.getPath());
 
         // check the extension
         if (split$1.ext === '.blu') {
@@ -24732,16 +21476,12 @@ ModelBlueprint.prototype = {
 
         if (! path?.length) return false;
 
-        const split$1 = split(arl.userPath);
+        const split$1 = split(path);
 
-        if (split$1.ext === '.blu') {
-            bluPath = path;
-            vizPath = split$1.name + split$1.kind + '.viz';
-        }
-        else {
-            bluPath = path + '.blu';
-            vizPath = path + '.viz';
-        }
+        if (!split$1.kind) split$1.kind = '.mod';
+
+        bluPath = split$1.name + split$1.kind + '.blu';
+        vizPath = split$1.name + split$1.kind + '.viz';
 
         this.blu.arl = this.blu.arl.resolve(bluPath);
         this.viz.arl = this.viz.arl.resolve(vizPath);
@@ -24751,6 +21491,10 @@ ModelBlueprint.prototype = {
 
     makeKey() {
         //this.key = convert.djb2(this.vmblu.arl.getFullPath())
+    },
+
+    isFresh() {
+        return this.blu.is.fresh || this.viz.is.fresh
     },
 
     copy() {
@@ -24764,74 +21508,97 @@ ModelBlueprint.prototype = {
         // copy header(full) and raw(ref)
         newModel.header = {...this.header};
         newModel.raw = this.raw;
+        newModel.stamp = this.stamp;
 
         return newModel
     },
 
     setRaw(newRaw) {
         this.raw = newRaw;
+        this.stamp = null;
         this.blu.is.dirty = false;
         this.viz.is.dirty = false;
     },
 
     reset() {
         this.raw = null;
+        this.stamp = null;
         this.blu.is.dirty = false;
         this.blu.is.fresh = false;
         this.viz.is.dirty = false;
         this.viz.is.fresh = false;
         this.libraries.reset();
         this.vmbluTypes = null;
+        this.sourceProfile = null;
+        this.sourceProfileOrigin = null;
     },
 
     findRawNode(lName) {
 
-        const root = this.raw?.root;
-        if (!root) return null;
+        const errorMessage = (str) => {
+            console.log(str);
+            return null
+        };
+
+        if (!lName) return null
+
+        const rawRoot = this.raw?.root;
+        if (! rawRoot) return errorMessage('Model has no root');
 
         // split and reverse
-        const parts = convert.splitLink(lName); // name @ group1 @ group2 => now: ['group2', 'group1', 'name']
+        const compound = lName.indexOf('@');
 
-        // if there is just one name (no group names) look in all groups...
-        if (parts.length == 1) {
-            if (lName == root.name) return root
-            return root.nodes ? this.findRawRecursive(root.nodes, lName) : null;
-        }
+        // simple name or compound name
+        const found = (compound < 0) ? this.findRawRecursive(rawRoot, lName) : this.findRawInHierarchy(rawRoot, lName);
 
-        // we use the group names
-        let search = root;
-
-        // walk through the parts of the name...
-        for (const name of parts) {
-
-            search = search.nodes?.find(n => name === n.name);
-            if (!search) return null;
-        }
-
-        return search;
+        return found ? found : errorMessage(`Node '${lName}' not found in model ${this.fullPath()}`);
     },
 
     // find a node recursively in the raw nodes - we do a breadth first search!
-    findRawRecursive(nodes, name) {
+    findRawRecursive(rawRoot, lName) {
+
+        // check the rawRoot first
+        if (rawRoot.name == lName) return rawRoot
+
+        if (!rawRoot.nodes) return
 
         // first search in the list of nodes
-        for (const rawNode of nodes) {
+        for (const rawNode of rawRoot.nodes) {
             // get the name
-            if (name == rawNode.name) return rawNode
+            if (lName == rawNode.name) return rawNode
         }
 
         // now look in the subnodes for each node
-        for (const rawNode of nodes) {
+        for (const rawNode of rawRoot.nodes) {
 
             // check if the node is a group node
             if (rawNode.kind == 'group' && rawNode.nodes.length > 0) {
 
                 // if there are sub-nodes, maybe the node is there ?
-                const found = this.findRawRecursive(rawNode.nodes, name);
+                const found = this.findRawRecursive(rawNode, lName);
                 if (found) return found
             }
         }
         return null
+    },
+
+    // we use the compound name of the node
+    findRawInHierarchy(root, lName) {
+
+        // name @ group1 @ group2
+        const parts = convert.splitLink(lName); // name @ group1 @ group2 => now: ['group2', 'group1', 'name']
+
+        // start in the root and
+        let search = root;
+
+        // ..walk through the parts of the name...
+        for (const name of parts) {
+            search = search.nodes?.find(n => name === n.name);
+            if (!search) return null;
+        }
+
+        // found
+        return search;       
     },
 
     setSelectable() {
@@ -24843,6 +21610,16 @@ ModelBlueprint.prototype = {
         this.header.cook(this.getArl(), this.raw.header);
         const rawTypes = this.raw?.types;
         this.vmbluTypes = typeof rawTypes === 'string' ? JSON.parse(rawTypes) : rawTypes ?? null;
+    },
+
+    async readStamp() {
+
+        if (this.bundle.arl) return this.bundle.arl.getStamp()
+
+        const bluStamp = await this.blu.arl?.getStamp?.().catch(() => null);
+        const vizStamp = await this.viz.arl?.getStamp?.().catch(() => null);
+
+        return `blu:${bluStamp ?? '-'}|viz:${vizStamp ?? '-'}`
     },
 
     // cookLibraries(arlRef, rawLibs) {
@@ -25017,7 +21794,8 @@ FactoryMap.prototype = {
             if (!rawFactory.path) continue
 
             // the factories have to be resolved wrt the file that contains them
-            const arl = modelArl.resolve(rawFactory.path);
+            const normalized = normalizeFactoryPath(rawFactory.path);
+            const arl = modelArl.resolve(normalized.path);
 
             // get the full path of the factory
             const fullPath = arl.getFullPath();
@@ -25030,6 +21808,7 @@ FactoryMap.prototype = {
 
             // save the arl
             factory.arl = arl;
+            factory.pathKind = normalized.pathKind;
 
             // and add the factory
             this.map.set(fullPath, factory);
@@ -25062,195 +21841,144 @@ FactoryMap.prototype = {
 
 };
 
-// the blu file and the viz file are combind into a single format that is stored in blu version of node
-// the viz part might have to be converted from a compact string to a raw json structure.
-// The raw does not contain compact representations 
-
 const CompilerMapHandling = {
-    
-// recursive function to load a model and all dependencies of a model - only loads a model file if it is not yet loaded
-async getFactoriesAndModels(model) {
 
-    // get the arl of the model
-    const arl = model.getArl();
+async ensureModelCurrent(model) {
 
-    // check if the model is in the model map
-    if (this.models.contains(arl)) return;
+    if (!model) return false
 
-    // add the model to the model map
-    this.models.add(model);
-
-    // load the model only if not loaded yet (I don't think this is possible though...)
-    if ( ! model.raw ) {
-
-        // get the raw model
-        if (! await model.getRaw()) return
-
-        // prepare the model 
+    if (model.is.main && model.raw) {
         model.preCook();
+        if (model.sourceProfileOrigin !== 'host') {
+            await model.handleSourceProfile().catch(() => {});
+        }
+        model.stamp = await model.readStamp().catch(() => null);
+        return true
     }
 
-    // if the model is from a bundle, we're done
-    if (model.isBundle() ) return
+    const stamp = await model.readStamp().catch(() => null);
+    const needsReload = !model.raw || !stamp || !model.stamp || (stamp !== model.stamp);
 
-    // get the factories of the model
-    if (model.raw.factories?.length > 0) this.factories.cook( model );
-
-    // add the libraries but ONLY for the main model
-    if (model.is.main && model.raw.libraries)  model.libraries.cook(arl, model.raw.libraries);
-
-    // check if there are external models referenced
-    if (! (model.raw.imports?.length > 0)) return
-
-    // get the new models in this file - returns an array of new models (ie. not yet in the model map - size can be 0)
-    const newModels = this.models.newModels( model.blu.arl, model.raw.imports);
-
-    // check
-    if (newModels.length > 0) {
-
-        // use an array of promise
-        const pList = [];
-
-        // and now get the content for each of the models used in the file
-        for (const newModel of newModels) pList.push( this.getFactoriesAndModels(newModel) );
-
-        // wait for all...
-        await Promise.all(pList);
+    if (!needsReload) {
+        model.blu.is.fresh = false;
+        model.viz.is.fresh = false;
+        return true
     }
+
+    // we need to reload
+    if (!await model.getRaw()) return false
+    if (!model.raw) return false
+
+    model.preCook();
+    if (model.sourceProfileOrigin !== 'host') {
+        await model.handleSourceProfile().catch(() => {});
+    }
+    model.stamp = stamp ?? await model.readStamp().catch(() => null);
+    return true
 },
 
+// This function will only get models that are not yet read or that need to be updated.
+async refreshRaw(model) {
 
-// update the model and factory maps
-async updateFactoriesAndModels() {
+    const arl = model?.getArl?.();
+    if (!arl) return
 
-    // make a copy of the current model map
-    const oldModels = this.models.valuesArray(); 
+    // do we know the model already
+    const knownModel = this.models.findArl(arl);
 
-    // reset the map
-    this.models.reset();
+    // take the model found or the model that is new
+    const activeModel = knownModel ?? model;
 
-    // The list with promises
+    // load or reload
+    if (!await this.ensureModelCurrent(activeModel)) return
+
+    // if the model is valid and new, store it...
+    if (!knownModel) this.models.add(activeModel);
+
+    // bundels have no links anymore !
+    if (activeModel.isBundle()) return
+
+    // Now handle the imports
+    await this.addImports(activeModel, activeModel.raw.imports);
+},
+
+async addImports(model, imports) {
+
+    // const imports = activeModel.raw.imports
+    if (!(imports?.length > 0)) return;
+
     const pList = [];
-
-    // load the dependencies for the models that have changed
-    for (const model of oldModels) {
-
-        //the main model is always ok
-        if (model.is.main) continue
-
-        // if the model is in the model map, it is for sure the most recent one !
-        if (this.models.contains(model.getArl())) continue
-
-        // load the model
-        if (!await model.getRaw()) continue
-
-        // check
-        if (!model.raw) continue
-
-        // check if there was a time change
-        if (model.header.utc !== model.raw.header.utc) {
-
-            model.preCook();
-
-console.log(`-SYNC- newer version of '${model.getArl().userPath}'`);
-
-            // sync the model
-            pList.push( this.getFactoriesAndModels(model));
-        }
-        else {
-            // add the model
-            this.models.add(model); 
-            
-            // change the freshness
-            model.is.fresh = false;
-        }
+    for (const rawModel of imports) {
+        const linkedArl = model.blu.arl.resolve(rawModel);
+        if (!linkedArl) continue
+        const linkedModel = this.models.findArl(linkedArl) ?? new ModelBlueprint(linkedArl);
+        pList.push(this.refreshRaw(linkedModel));
     }
 
-    // wait for all...
     await Promise.all(pList);
 },
 
-//  // Finds the model text in the library file...
-// analyzeJSLib(rawCode) {
+async getFactories(model) {
 
-//     // find the libname in the code
-//     let start = rawCode.indexOf('"{\\n')
-//     let end = rawCode.indexOf('\\n}";', start)
+    await this.refreshRaw(model);
 
-//     // check
-//     if (start < 0 || end < 0) return null
+    const factories = new FactoryMap();
+    const visited = new Set();
 
-//     // get the part between starting and ending bracket
-//     let rawText = rawCode.slice(start+1,end+3)
+    const collect = (linkedModel) => {
+        if (!linkedModel?.raw) return
 
-//     // allocate an array for the resulting text
-//     const cleanArray = new Array(rawText.length)
-//     let iClean = 0
-//     let iRaw = 0
+        const fullPath = linkedModel.fullPath();
+        if (!fullPath || visited.has(fullPath)) return
+        visited.add(fullPath);
 
-//     // remove all the scape sequences
-//     while (iRaw < rawText.length) {
+        if (linkedModel.raw.factories?.length > 0) factories.cook(linkedModel);
 
-//         // get the first character
-//         const char1 = rawText.charAt(iRaw++)
+        if (linkedModel.isBundle()) return
 
-//         // if not a backslash, just copy
-//         if (char1 != '\\') {
-//             cleanArray[iClean++] = char1
-//         }
-//         else {
+        for (const rawImport of linkedModel.raw.imports ?? []) {
+            const linkedArl = linkedModel.blu.arl.resolve(rawImport);
+            const importedModel = linkedArl ? this.models.findArl(linkedArl) : null;
+            if (importedModel) collect(importedModel);
+        }
+    };
 
-//             // get the character that has been escaped 
-//             const char2 = rawText.charAt(iRaw++)
-
-//             // handle the different escape sequences
-//             if (char2 == 'n') 
-//                 cleanArray[iClean++] = '\n'
-//             else if (char2 == '"') 
-//                 cleanArray[iClean++] = '"'
-//         }
-//     }
-
-//     // combine all characters into a new string
-//     const cleanText = cleanArray.join('')
-
-//     // and parse
-//     return JSON.parse(cleanText)
-// },
+    collect(model);
+    return factories
+},
 
 };
 
-function ModelCompiler( UID, options = {} ) {
+function ModelCompiler( UID, models ) {
 
-    // All the models referenced in the model files 
-    this.models = new ModelMap();
-
-    // All the factories referenced in the model files
-    this.factories = new FactoryMap();
+    // Loaded models can be shared by a model manager
+    this.models = models ?? new ModelMap();
 
     // the model stack is used when reading files - it prevents circular references
     this.stack = [];
 
     // set the uid generator (if any)
     this.UID = UID;
+
 }
 ModelCompiler.prototype = {
 
 // reset the compiler - keep the UID
 reset() {
-
-    // reset the factory map
-    this.factories.reset();
-
-    // reset
-    this.models.reset();
-
     // reset the stack
     this.stack.length = 0;
 },
 
 resetFresh() {
-    for (const model of this.models.map.values()) model.is.fresh = false;
+    for (const model of this.models.map.values()) {
+        model.blu.is.fresh = false;
+        model.viz.is.fresh = false;
+    }
+},
+
+hasFresh() {
+    for(const model of this.models.map.values()) if ( model.blu.is.fresh || model.viz.is.fresh ) return true;
+    return false
 },
 
 // some functions that manipulate the stack - returns false if the node is already on the stack !
@@ -25262,12 +21990,9 @@ pushCurrentNode(model, rawNode) {
     // if the uid is already on the stack, this means that there is a risk of an inifinte loop in the construction of the node
     const L = this.stack.length;
 
-    // check if the uid is already on the stack
+    // check if the node to compile is already on the stack
     if (L > 1) for (let i=0; i<L-1; i++) {
         if ( this.stack[i].nodeName === nodeName && this.stack[i].model === model) {
-
-            //console.log(nodeName, model.getArl().userPath)
-
             return false
         }
     }
@@ -25305,46 +22030,36 @@ async findOrAddModel(arl) {
     model = new ModelBlueprint(arl);
 
     // load the model and its dependencies
-    await this.getFactoriesAndModels(model);
+    await this.refreshRaw(model);
 
     // done
     return model
-},
-
-// gets the root node of main
-async getRoot(model) {
-
-    // load the model and its dependencies
-    await this.getFactoriesAndModels(model);
-
-    // build the model
-    const root = this.compileNode(model, null);
-
-    // done
-    return root
 },
 
 // returns a node - or null - based on the name and the model
 // the models have been loaded already
 compileNode(model, lName) {
 
-    if (!model) {
-        console.log(`No model for node '${lName}' `);
-        return null
-    }
-    
+    if (!model) return null;
+
     // find the node in the model
-    const rawNode =  lName ? model.findRawNode(lName) : model.raw?.root;
+    const rawNode =  model?.findRawNode(lName);
+
+    if (!rawNode) return null;
+
+    return this.compileRawNode(model, rawNode)
+},
+
+// returns a node - or null - based on the name and the model
+// the models have been loaded already
+compileRawNode(model, rawNode) {
 
     // check 
-    if (!rawNode) {
-        console.log(`Node '${lName}' not found in model ${model.fullPath()}`);
-        return null
-    }
+    if (!rawNode) return null
 
     // check for an infinite loop
     if (!this.pushCurrentNode(model, rawNode)) {
-        console.log(`infinite loop for  '${lName}' in model ${model.fullPath()} `);
+        console.log(`infinite loop for  '${rawNode.name}' in model ${model.fullPath()} `);
         return null
     }
 
@@ -25374,23 +22089,27 @@ localNode(raw) {
     return newNode
 },
 
+
 // get and cook a linked node
 linkedNode(raw) {
 
     // get the key and the name of the linked node
-    const [path, lName] = [raw.link.path, raw.link.node];
+    const [path, lName] = [normalizeSeparators(raw.link.path), raw.link.node];
 
     // get the fullpath of the node
     const currentModel = this.getCurrentModel();
 
-    // if there is no file key, it means that the linked node comes from the current file !
-    const model = (path == null || path === './') ? currentModel : this.models.get(currentModel.getArl().resolve(path).getFullPath());
+    // check the type of path
+    const pathKind = getKind(path);
+
+    // find the model where the link comes from
+    let model = pathKind === Kind.Empty ? currentModel : this.models.get(currentModel.getArl().resolve(path).getFullPath());
 
     // get the node from the link
     const linkedNode = this.compileNode(model, lName);
 
     // check if ok
-    const newNode = linkedNode ? this.goodLink(raw, lName, model, linkedNode) : this.badLink(raw, lName, model);
+    const newNode = linkedNode ? this.goodLink(raw, lName, model, linkedNode, pathKind) : this.badLink(raw, lName, model, pathKind);
 
     // generate UIDS
     newNode.setUIDS(this.UID);
@@ -25399,7 +22118,8 @@ linkedNode(raw) {
     return newNode
 },
 
-goodLink(raw, lName, model, linkedNode) {
+
+goodLink(raw, lName, model, linkedNode, pathKind) {
 
     // create the new node - make it the same type as the linked node
     const dock = linkedNode.is.source ? new SourceNode( null, raw.name) : new GroupNode( null, raw.name);
@@ -25408,7 +22128,10 @@ goodLink(raw, lName, model, linkedNode) {
     dock.cook(raw, this);
 
     // set the link (after cooking!)
-    dock.setLink(model, lName);
+    dock.setLink(model, lName, pathKind);
+
+    // and give unlinked nodes in the subtree also a link
+    dock.linkUnlinked(model, pathKind);
 
     // and now fuse the two nodes to highlight the differences 
     dock.fuse(linkedNode);
@@ -25418,7 +22141,7 @@ goodLink(raw, lName, model, linkedNode) {
 },
 
 // if we did not find the model, create the node as it was stored - show that the link is bad
-badLink(raw, lName, model) {
+badLink(raw, lName, model, pathKind) {
 
     // create the node as a source node
     const dock = new SourceNode( null, raw.name);
@@ -25427,7 +22150,7 @@ badLink(raw, lName, model) {
     dock.cook(raw, this);
 
     // set the link - even if it is bad (after cooking!)
-    dock.setLink(model, lName);
+    dock.setLink(model, lName, pathKind);
 
     // set the link as bad
     dock.linkIsBad();
@@ -25437,24 +22160,37 @@ badLink(raw, lName, model) {
 },
 
 // update all the nodes that have a link
-updateLinkedNode(node) {
+updateLinkedNode(root, node) {
 
-    //console.log(`${node.name} => ${node.link ? (node.link.model.is.fresh ? 'update' : 'no update') : 'no link'}`)
+    // check
+    if (!node) return false
 
-    // if there is a link but the link is bad, bail out
-    if (node.link && node.link.is.bad) return
+    const link = node.link;
+    const isFresh = !!(link?.model && (link.model.blu.is.fresh || link.model.viz.is.fresh));
+    const mustRetry = !!(link?.is.bad || isFresh);
 
     // if raw has been updated (i.e. is fresh), recompile the node
-    if (node.link && node.link.model.is.fresh) {
+    if (mustRetry) {
 
         // get the node
-        const newNode = this.compileNode(node.link.model, node.link.lName);
+        const newNode = link?.model ? this.compileNode(link.model, link.lName) : null;
 
         // check
         if (!newNode) {
             node.linkIsBad();
-            return
+
+            // remove stale imported internals for broken linked groups
+            if (node.is.group) {
+                node.nodes = [];
+                node.buses = [];
+                node.pads = [];
+                node.rxtxBuildTxTable();
+            }
+            return true
         }
+
+        // the link is valid again
+        if (node.link?.is.bad) node.linkIsGood();
         
         // maybe we have to change the type of node..
         if (!node.compatible(newNode)) {
@@ -25463,7 +22199,7 @@ updateLinkedNode(node) {
             const otherType = node.switchNodeType();
 
             // replace the node by the other type node
-            this.view.root.swap(node, otherType);
+            root.swap(node, otherType);
 
             // change
             node = otherType;
@@ -25476,11 +22212,13 @@ updateLinkedNode(node) {
         node.rxtxBuildTxTable();
 
         // if the node was updated we are done
-        return
+        return true
     }
 
     // for group nodes check the subnodes...
-    if (node.nodes) for(const subNode of node.nodes) this.updateLinkedNode(subNode);
+    let changed = false;
+    if (node.nodes) for (const subNode of node.nodes) changed = this.updateLinkedNode(root, subNode) || changed;
+    return changed
 },
 
 // serialize the node 
@@ -25488,11 +22226,7 @@ encode(node, model) {
 
    if (!node) return null
 
-    // get the factories
-    node.collectFactories(this.factories);
-
-    // get the imports
-    node.collectModels(this.models);
+    const {models, factories} = this.collectDependencies(node, model);
 
     // the object to encode
     const raw = {
@@ -25500,390 +22234,40 @@ encode(node, model) {
     };
 
     // add the models, factories and libraries
-    if (this.models?.size() > 0) raw.imports = this.models.all( model => model.blu.arl.userPath);
-    if (this.factories?.size() > 0) raw.factories = this.factories.all(  factory => ({   path: factory.arl?.userPath ?? "./index.js", function: factory.fName }));
-    if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => lib.blu.arl.userPath);
+    if (models.size() > 0) raw.imports = models.all( linkedModel => relative(linkedModel.blu.arl.getFullPath(), model.getArl().getFullPath()));
+    if (factories.size() > 0) raw.factories = factories.all( factory => factory.makeRaw(model.getArl()));
+    if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => relative(lib.blu.arl.getFullPath(), model.getArl().getFullPath()));
 
     // add the types
     if (model.vmbluTypes) raw.types = model.vmbluTypes;
 
     // set the root
-    raw.root = node.makeRaw();
-
-    // now split the result in two parts
-    // const split = this.splitRaw(raw)
-
-    // and return raw and the stringified results
-    // return {raw,
-    //         blu: JSON.stringify(split.blu,null,2),
-    //         viz: JSON.stringify(split.viz,null,2)}
+    raw.root = node.makeRaw(model.getArl());
 
     return raw
+},
+
+collectDependencies(node, mainModel) {
+
+    const models = new ModelMap();
+    const factories = new FactoryMap();
+
+    node.collectFactories(factories);
+    node.collectModels(models, mainModel);
+
+    return {models, factories}
 },
 
 };
 
 Object.assign(ModelCompiler.prototype, CompilerMapHandling);
 
-/**
- * @node clipboard
- */
+function ARL(filePath) {
 
-const ClipboardRawCook = {
-
-
-    makeRaw(target) {
-
-        // const target = {
-
-        //     origin: this.origin.arl.getFullPath(),
-        //     header: this.origin.header,
-        //     what: this.selection.what,
-        //     rect: this.selection.rect ? convert.rectToString(this.selection.rect) : null,
-        //     viewPath: this.selection.viewPath,
-        //
-        //     root: null,
-        //     imports: null,
-        //     factories: null,
-        //
-        //     widgets: null
-        // }
-
-        // If there are only widgets selected...
-        if (target.what == selex.ifArea || target.what == selex.pinArea) {
-            target.widgets = target.widgets.map( widget => widget.makeRaw());
-            return target
-        }
-
-        // convert the header style
-        target.header.style = target.header.style.rgb;
-
-        // We have to encode the root
-        target.root = target.root.makeRaw();
-
-        // done
-        return target
-    },
-
-    // For a remote clipboard, we cook the raw (json) clipboard 
-    async cook(raw, modcom) {
-
-        // we have to have at least the document the clipboard is coming from
-        if ( ! raw.origin) return false
-
-        // reset the clipboard
-        this.resetContent();
-
-        // now we have to resolve the user path to an absolute path
-        const arl = new ARL$1().absolute(raw.origin);
-
-        // create the model
-        this.origin = new ModelBlueprint(arl);
-
-        // set the raw field - this is what will be cooked
-        this.origin.raw = raw;
-
-        // also cook the header
-        if (raw.header) this.origin.header.cook(arl, raw.header);
-
-        // get a selection
-        this.selection = new Selection();
-
-        // set the viewPath
-        this.selection.viewPath = raw.viewPath;
-
-        // also get the rectangle if any
-        if (raw.rect) this.selection.rect = convert.stringToRect(raw.rect);
-
-        // the type of content in the selection
-        this.selection.what = +raw.what;
-
-        switch(this.selection.what) {
-
-            case selex.freeRect:
-            case selex.multiNode:
-            case selex.singleNode: {
-
-                // reset the model compiler
-                modcom.reset();
-
-                // cook the clipboard
-                const root = await modcom.getRoot(this.origin);
-
-                // check
-                if (!root) return false
-
-                // copy
-                this.selection.nodes = root.nodes?.slice();
-                this.selection.pads = root.pads?.slice();
-                this.selection.buses = root.buses?.slice();
-            }
-            return true
-
-            case selex.ifArea:
-            case selex.pinArea: {
-
-                // we need a look and a node to convert the widgets
-                const look = new Look({x:0, y:0, w:0, h:0});
-                new GroupNode(look);
-
-                // // convert all the widgets
-                // for(const strWidget of raw.widgets) {
-
-                //     // convert
-                //     const widget = look.cookWidget(node,strWidget)
-
-                //     // check and save
-                //     if (widget) this.selection.widgets.push(widget)
-                // }
-
-                // new version
-
-                this.selection.widgets = raw.widgets.map( w => {
-                    return w.interface ? look.cookInterface(w) : look.cookPin(w)
-                });
-
-            }
-            return true
-
-            default: 
-            return false;
-        }
-    },
-};
-
-// ------------------------------------------------------------------
-// Source node: Clipboard
-// Creation date 4/22/2024, 5:20:28 PM
-// ------------------------------------------------------------------
-
-/**
- * @node clipboard
- */
-
-//Constructor for clipboard manager
-function Clipboard(tx, sx) {
-
-    // save the transmitter
-    this.tx = tx;
-
-    // If not local, the clipboard must be requested from other editors - always start with false
-    this.local = false;
-
-    // The source of the clipboard
-    this.origin = null;
-
-    // the selection for the clipboard
-    this.selection = null;
-    
-    // keeps track of the nr of copies when pasting to make sure copies do not overlap
-    this.copyCount = 0;
-}
-
-Clipboard.prototype = {
-
-    // resets the content of the clipboard
-    resetContent() {
-        this.local = false;
-        this.origin = null;
-        this.selection = null;
-        this.copyCount = 0;
-    },
-
-	// Output pins of the node
-	sends: [
-		'switch',
-		'remote',
-		'local'
-	],
-
- 	// Sets the clipboard to a local selection
-	onSet({model, selection}) {
-
-        // check
-        if (!model || !selection) return
-
-        // reset the clipboard
-        this.resetContent();
-
-        // set local
-        this.local = true;
-
-        // set the origin of the clipboard
-        this.origin = model.copy();
-
-        // copy the selection
-        this.selection = selection.shallowCopy();
-
-        // notify other possible editors
-        this.tx.send('switch');
-    },
-
-    async onGet(doc) {
-
-        // if the clipboard is the local one ...
-        if ( this.local ) {
-
-            // ...just return the local clipboard
-            //this.tx.reply(this)
-
-            const json = this.onLocal(doc);
-
-            // parse the json 
-            const raw = JSON.parse(json);
-
-            // check
-            if (!raw) return
-
-            //cook the clipboard - reuse the save compiler
-            await this.cook(raw, doc.savecom);
-
-            // send the clipboard to the editor
-            this.tx.reply(this);
-
-            return
-        }
-
-        // otherwise request the remote clipboard
-        this.tx.request('remote')
-        .then( async ({json}) => {
-
-            // parse the json 
-            const raw = JSON.parse(json);
-
-            // check
-            if (!raw) return
-
-            //cook the clipboard - reuse the save compiler
-            await this.cook(raw, doc.savecom);
-
-            // send the clipboard to the editor
-            this.tx.reply(this);
-        })
-        .catch(error => console.log(`Clipboard manager -> remote : ${error}`));
-    },
-
-    xonGet(doc) {
-
-        // if the clipboard is the local one ...
-        if ( this.local ) {
-
-            // ...just return the local clipboard
-            this.tx.reply(this);
-            return
-        }
-
-        // otherwise request the remote clipboard
-        this.tx.request('remote')
-        .then( async ({json}) => {
-
-            // parse the json 
-            const raw = JSON.parse(json);
-
-            // check
-            if (!raw) return
-
-            //cook the clipboard - reuse the save compiler
-            await this.cook(raw, doc.savecom);
-
-            // send the clipboard to the editor
-            this.tx.reply(this);
-        })
-        .catch(error => console.log(`Clipboard manager -> remote : ${error}`));
-    },
-
-
-    onSwitched() {
-
-        // indicate that the clipboard is remote now
-        this.local = false;
-    },
-
-    // request to get the local clipboard of this editor as a json structure
-    onLocal(doc) {
-
-        // strange request if the clipboard is not local...
-        if (! this.local ) {
-            console.log('Warning: clipboard is not local !');
-            return
-        }
-
-        // the object to convert and save - for the origin we save the full path 
-        const target = {
-            origin: this.origin.getArl()?.getFullPath(),
-            header: this.origin.header,
-            what: this.selection.what,
-            rect: this.selection.rect ? convert.rectToString(this.selection.rect) : null,
-            viewPath: this.selection.viewPath,
-            imports: null,
-            factories: null,
-            root: null,
-            widgets: null
-        };
-
-        switch(this.selection.what) {
-
-            case selex.ifArea:
-            case selex.pinArea:{
-                target.widgets = this.selection.widgets;
-            }
-            break
-
-            case selex.freeRect:
-            case selex.multiNode:
-            case selex.singleNode: {
-
-                // get the compiler
-                const modcom = doc.savecom;
-
-                // reset the model compiler
-                modcom.reset();
-
-                // set the root 
-                target.root = new GroupNode(null, 'clipboard', null),
-
-                // set the target
-                target.root.nodes = this.selection.nodes.slice();
-                target.root.buses = this.selection.buses.slice();
-                target.root.pads = this.selection.pads.slice();
-
-                // assemble the models and the factories
-                target.root.collectFactories(modcom.factories);
-                target.factories = modcom.factories;
-
-                target.root.collectModels(modcom.models);
-                target.imports = modcom.models;
-            }
-            break
-
-            default:
-                console.log(`unrecognized ${this.selection.what} in clipboard.js`);
-                break;
-        }
-
-        // make the raw version of the target 
-        const raw = this.makeRaw(target);
-
-        // stringify the target
-        const json =  JSON.stringify(raw,null,4);
-        
-        // and send a reply
-        // this.tx.reply({json})
-        return json
-    },
-
-
-
-}; // clipboard manager.prototype
-Object.assign(Clipboard.prototype, ClipboardRawCook);
-
-function ARL(userPath) {
-
-    const stringPath = stringCheck(userPath);
+    const stringPath = stringCheck(filePath);
     const normalizedPath = normalizeSeparators(stringPath ?? '');
 
-    // the reference to the ARL as entered by the user
-    this.userPath = normalizedPath;
+    this._locator = normalizedPath;
 
     // the resolved url
     this.url = stringPath ? normalizeSeparators(path.resolve(stringPath)) : null;
@@ -25895,11 +22279,11 @@ ARL.prototype =  {  // makes a url based on the components
 // typically used as new ARL().absolute(url)
 absolute(url) {
 
-    this.url = path.resolve(this.userPath);
+    this.url = path.resolve(this._locator);
 },
 
 toJSON() {
-    return this.userPath
+    return this._locator
 },
 
 equals(arl) {
@@ -25919,41 +22303,44 @@ sameDir(arl) {
 },
 
 getPath() {
-    return this.userPath
+    return this._locator
 },
 
 getExt() {
     // get the position of the last period
-    let n = this.userPath.lastIndexOf('.');
+    let n = this._locator.lastIndexOf('.');
 
     // get the extension of the file - if any
-    return n < 0 ? '' : this.userPath.slice(n+1)
+    return n < 0 ? '' : this._locator.slice(n+1)
 },
 
 getName() {
-    // for repo:/dir1/dir2 we use dir2
-    const slash = this.userPath.lastIndexOf('/');
-    if (slash > 0) return this.userPath.slice(slash+1)
+    // for /dir1/dir2 and repo:/dir1/dir2 we use dir2
+    const normalized = this._locator.endsWith('/') && this._locator.length > 1
+        ? this._locator.slice(0, -1)
+        : this._locator;
+    const slash = normalized.lastIndexOf('/');
+    if (slash >= 0) return normalized.slice(slash + 1)
 
     // for repo: we use repo
-    const colon = this.userPath.indexOf(':'); 
-    if (colon > 0) return this.userPath.slice(0, colon) 
+    const colon = normalized.indexOf(':'); 
+    if (colon > 0) return normalized.slice(0, colon) 
     
     // othrewise just use the userpath
-    return this.userPath
+    return normalized
 },
 
 // The full pathname - no host and no queries
 getFullPath() {
-    return this.url ? this.url : this.userPath
+    return this.url ? this.url : this._locator
 },
 
 setWSReference(wsRef) {},
 
 // resolve a path wrt this arl - returns a new arl !
-resolve(userPath) {
+resolve(filePath) {
 
-    const stringPath = stringCheck(userPath);
+    const stringPath = stringCheck(filePath);
     if (!stringPath) return null;
 
     const normalizedPath = normalizeSeparators(stringPath);
@@ -25966,7 +22353,7 @@ resolve(userPath) {
 
     // relative path: check that we have a url
     if (!this.url) {
-        console.error(`cannot resolve ${userPath} - missing reference`);
+        console.error(`cannot resolve ${filePath} - missing reference`);
         return null
     }
 
@@ -25981,37 +22368,30 @@ resolve(userPath) {
     return arl
 },
 
-resolve_dbg(userPath) {
+resolve_dbg(filePath) {
 
-    const arl = this.resolve(userPath);
-    console.log(`%cresolved: ${userPath} using ${this.userPath} to ${arl.userPath}`, 'background: #ff0; color: #00f');
+    const arl = this.resolve(filePath);
+    console.log(`%cresolved: ${filePath} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f');
     return arl
 },
 
-// make a new user path relative to this new reference - the actual url does not change
-makeRelative( ref ) {
+relativeTo(ref) {
+    return relative(this.getFullPath(), ref.getFullPath())
+},
 
-    // if the user path contains a colon, it is an absolute path - nothing to change
-    //const colon = this.userPath.indexOf(':')
-    //if (colon > 0) return
-
-    // check if the new path and the old path have a part incommon
-    let oldFullPath = this.getFullPath();
-    let refFullPath = ref.getFullPath();
-
-    // express the old full path as a reference to the new ref full path
-    this.userPath = relative(oldFullPath, refFullPath);
+makeRelative(ref) {
+    return this.relativeTo(ref)
 },
 
 copy() {
-    const arl = new ARL(this.userPath);
+    const arl = new ARL(this._locator);
     arl.url = this.url;
     return arl
 },
 
 validURL() {
     if (!this.url) {
-        console.error(`missing url ${this.path}`);
+        console.error(`missing url ${this._locator}`);
         return false
     } 
     return true
@@ -26064,11 +22444,6 @@ async save(body) {
 
 // javascript source files can be imported
 async jsImport() {
-
-    // check
-    if (!this.validURL()) return null
-
-    return import(this.url)
 },
 
 // async getFolderContent(){
@@ -26176,7 +22551,7 @@ function findHandlers(sourceFile, _filePath, _nodeMap) {
             collect(name, params, line, jsdoc);
         }
 
-        const isExportedMcpRegistry = name === 'mcp' && statement?.isExported?.();
+        const isExportedMcpRegistry = name === 'mcp' && isExportedDeclaration(decl, statement);
         const objectLiteral = resolveObjectLiteralExpression(init);
         if (objectLiteral && !isExportedMcpRegistry) {
             collectObjectLiteralHandlers(objectLiteral);
@@ -26821,7 +23196,7 @@ function collectMcpRegistry(sourceFile) {
     const declarations = sourceFile.getVariableDeclarations().filter(decl => decl.getName?.() === 'mcp');
     for (const decl of declarations) {
         const statement = decl.getFirstAncestorByKind?.(SyntaxKind.VariableStatement);
-        if (!statement || !statement.isExported?.()) continue;
+        if (!isExportedDeclaration(decl, statement)) continue;
 
         const literal = resolveObjectLiteralExpression(decl.getInitializer?.());
         if (!literal) continue;
@@ -26929,6 +23304,19 @@ function parseLiteralValue(node) {
     }
 
     return undefined;
+}
+
+function isExportedDeclaration(decl, statement) {
+    if (statement?.isExported?.()) return true;
+    if (decl?.isExported?.()) return true;
+
+    const stmtText = statement?.getText?.() || '';
+    if (typeof stmtText === 'string' && stmtText.trim().startsWith('export ')) return true;
+
+    const declText = decl?.getText?.() || '';
+    if (typeof declText === 'string' && /\bexport\b/.test(declText)) return true;
+
+    return false;
 }
 
 /**
@@ -27123,11 +23511,8 @@ async function profile(argv = process.argv.slice(2)) {
     // create a model compile object - we do not need a uid generator
     const compiler = new ModelCompiler(null);
 
-    // get all the factories that are refernced in the model and submodels
-    await compiler.getFactoriesAndModels(model);
-
-    // extract the factories
-    const factories = compiler.factories.map.values();
+    // get all the factories that are referenced in the model and linked submodels
+    const factories = (await compiler.getFactories(model)).map.values();
 
     // setup the ts-morph project with the factory files
     const project = setupProject(factories);

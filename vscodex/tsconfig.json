@@ -20,6 +20,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["es2020"],
+    "types": ["node"],
     "rootDir": "extension",
     "outDir": "out/extension",
     "sourceMap": true,

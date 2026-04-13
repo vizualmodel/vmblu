@@ -35,11 +35,8 @@ export const messageBrokerVscode = {
 				// set as the active document
 				this.tx.send('set document', this.activeDoc)
 
-				// write to the output file (= same name as model file but with .prf added before extension)
-				const outFilename = Path.getSplit(arl.getPath()).name + '.src.prf'
-
-				// Make the output file name
-				const outFile = arl.resolve(outFilename)
+				// get the arl for the sourceProfile
+				const outFile = this.getSourceProfile(arl)
 
 				// also request to start the source code and model watchers
 				vscode.postMessage({verb:'start watchers', model: arl, outFile})
@@ -57,19 +54,16 @@ export const messageBrokerVscode = {
 				this.activeDoc = new Document(arl)
 
 				// seed an empty raw model so the kernel side can compile an editable empty document
-				this.activeDoc.model.raw = {
-					header: {
-						version: 'no version',
-					},
-					root: {
-						kind: 'group',
-						name: '',
-						nodes: [],
-					},
-				}
+				this.activeDoc.model.raw = this.getEmptyRawModel()
 
 				// set as the active document
 				this.tx.send('set document', this.activeDoc)
+
+				// get the arl for the sourceProfile
+				const outFile = this.getSourceProfile(arl)
+
+				// also request to start the source code and model watchers
+				vscode.postMessage({verb:'start watchers', model: arl, outFile})
 
 				return;
 			}
@@ -98,7 +92,6 @@ export const messageBrokerVscode = {
 
 			// an llm has changed the model - reread from file
 			case 'model changed' : {
-
 				this.tx.send('reload model')
 				return
 			}
@@ -177,6 +170,16 @@ export const messageBrokerVscode = {
 				promiseMap.delete(message.rqKey)
 
 				// done
+				return
+			}
+
+			case 'folder.get.result': {
+
+				const resolve = promiseMap.get(message.rqKey)
+				if (!resolve) return
+
+				resolve(message.content ?? {folders: [], files: []})
+				promiseMap.delete(message.rqKey)
 				return
 			}
 

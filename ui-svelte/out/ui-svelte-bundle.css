@@ -525,7 +525,7 @@ i.icon.svelte-1st5yi2:active {
 }
 
 
-.menu.svelte-13h6ctb {
+.menu.svelte-1c44ark {
 
     --bgMenu: transparent;
     --cIcon: #0fb2e4;
@@ -535,29 +535,30 @@ i.icon.svelte-1st5yi2:active {
 
     display:flex;
     position: absolute;
+    z-index: 10;
     top:0px;
     left:32px;
     flex-direction:column;
     background:var(--bgMenu);
     margin: 2rem 0 0 3px;
 }
-.menu-item.svelte-13h6ctb {
+.menu-item.svelte-1c44ark {
     background:transparent;
     position:relative;
 }
-i.icon.svelte-13h6ctb {
+i.icon.svelte-1c44ark {
     /* color: var(--cIcon); */
     margin-bottom:-0.2rem;
     font-size: 1.2rem;
 }
-i.icon.svelte-13h6ctb:hover {
+i.icon.svelte-1c44ark:hover {
     color:var(--cTooltip);
     cursor:pointer;
 }
-i.icon.svelte-13h6ctb:active {
+i.icon.svelte-1c44ark:active {
     transform: translateY(2px);
 }
-.menu-item.svelte-13h6ctb .tooltip:where(.svelte-13h6ctb) {
+.menu-item.svelte-1c44ark .tooltip:where(.svelte-1c44ark) {
     position: absolute;
     z-index: 2;
     visibility: hidden;
@@ -575,7 +576,7 @@ i.icon.svelte-13h6ctb:active {
     margin-left: 2rem;
 }
 
-.menu-item.svelte-13h6ctb:hover .tooltip:where(.svelte-13h6ctb) {
+.menu-item.svelte-1c44ark:hover .tooltip:where(.svelte-1c44ark) {
     visibility: visible;
 }
 
@@ -722,12 +723,43 @@ input.svelte-w2c0k9:hover {
 }
 
 
-input.svelte-z24rrd {
-    background: transparent;
+input.svelte-kvi95y {
+    --checkbox-bg: #2b2b2b; 
+    --checkbox-bg-hover: #1f4d8a; 
+    --checkbox-border: #555; 
+    --checkbox-checked-bg: #8ab4f8; 
+    --checkbox-check: #111;
+
+    appearance: none;
+    -webkit-appearance: none;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid var(--checkbox-border, #666);
+    border-radius: 0.4rem;
+    background: var(--checkbox-bg, #2a2a2a);
 	margin-right: 0.5rem;
+    cursor: pointer;
+    position: relative;
 }
-input.svelte-z24rrd:focus {
-    background: transparent;
+input.svelte-kvi95y:hover,
+input.svelte-kvi95y:focus {
+    background: var(--checkbox-bg-hover, var(--checkbox-bg, #333));
+    outline: none;
+}
+input.svelte-kvi95y:checked {
+    background: var(--checkbox-checked-bg, #8ab4f8);
+    border-color: var(--checkbox-checked-border, var(--checkbox-checked-bg, #8ab4f8));
+}
+input.svelte-kvi95y:checked::after {
+    content: '';
+    position: absolute;
+    left: 0.2rem;
+    top: 0rem;
+    width: 0.2rem;
+    height: 0.4rem;
+    border: solid var(--checkbox-check, #111);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 
@@ -1063,6 +1095,95 @@ input.svelte-dgsivs:hover {
 }
 input.svelte-dgsivs:focus {
     background: var(--bgFieldFocus);
+}
+
+
+.input-field.svelte-1kcgyk9 {
+    --fontBase: arial, helvetica, sans-serif;
+    --fontFixed: "courier new";
+    --sLabel: 0.7rem;
+    --sInput: 0.85rem;
+    --cLabel: #eee;
+    --bgField: #000;
+    --bgFieldFocus: #222;
+    --cField: #ccc;
+    display: flex;
+    align-items: center;
+    background: transparent;
+}
+
+label.svelte-1kcgyk9 {
+    font-family: var(--fontBase);
+    color: var(--cLabel);
+    font-size: var(--sLabel);
+    background: transparent;
+}
+
+input.svelte-1kcgyk9 {
+    background: var(--bgField);
+    color: var(--cField);
+    font-family: var(--fontFixed);
+    font-size: var(--sInput);
+    width: auto;
+    min-width: 20rem;
+    max-width: 100%;
+    margin-left: 1rem;
+    cursor: text;
+    outline: none;
+    border: none;
+}
+
+input.svelte-1kcgyk9:hover {
+    background: var(--bgFieldFocus);
+}
+
+input.svelte-1kcgyk9:focus {
+    background: var(--bgFieldFocus);
+}
+
+.suggestions.svelte-1kcgyk9 {
+    position: fixed;
+    max-height: 14rem;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0.2rem 0;
+    background: rgba(20, 20, 20, 0.97);
+    border: 1px solid #4a4a4a;
+    border-radius: 0.35rem;
+    z-index: 10;
+}
+
+.suggestions.svelte-1kcgyk9 li:where(.svelte-1kcgyk9) {
+    font-family: var(--fontFixed);
+    font-size: 0.76rem;
+    line-height: 1.15;
+    color: #ccc;
+    padding: 0.18rem 0.55rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.suggestions.svelte-1kcgyk9 li.active:where(.svelte-1kcgyk9),
+.suggestions.svelte-1kcgyk9 li:where(.svelte-1kcgyk9):hover {
+    background: #222;
+}
+
+.kind.svelte-1kcgyk9 {
+    color: #e2c64e;
+    font-size: 0.95rem;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.name.svelte-1kcgyk9 {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 

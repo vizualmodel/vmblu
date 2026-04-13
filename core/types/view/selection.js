@@ -249,12 +249,26 @@ Selection.prototype = {
 
     // check if we have hit the selection
     hitTest(xyLocal) {
-        // If there is a rectangle, we have a simple criterion
-        if ( (this.what == selex.freeRect || this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect))
-            return [zap.selection, this, null];
 
-        // multi-node or single node
-        // search the nodes (in reverse - visible node on top of another will be found first)
+        // If there is a rectangle, we have a simple criterion
+        if ( (this.what == selex.freeRect) && inside(xyLocal, this.rect)) {
+
+            // maybe we hit a node 
+            let node = null
+            for (let i = this.nodes.length - 1; i >= 0; i--) {
+                if (inside(xyLocal, this.nodes[i].look.rect)) {
+                    node = this.nodes[i];
+                    break;
+                }
+            }
+
+            return [zap.selection, this, node];
+        }
+
+        else if ( (this.what == selex.pinArea || this.what == selex.ifArea) && inside(xyLocal, this.rect))
+            return [zap.selection, this, this.getPinAreaNode()];
+
+        // multi-node or single node search the nodes (in reverse - visible node on top of another will be found first)
         for (let i = this.nodes.length - 1; i >= 0; i--) {
             if (inside(xyLocal, this.nodes[i].look.rect)) return [zap.selection, this, this.nodes[i]];
         }

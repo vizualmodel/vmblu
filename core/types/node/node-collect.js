@@ -68,9 +68,6 @@ export const collectHandling = {
             // continue for the nodes..
             for(const node of this.nodes) node.collectImports(srcImports,lib)
 
-            // also collect the routers (if any)
-            for (const bus of this.buses) if (bus.hasFilter()) bus.getFilter(srcImports, lib, this.link);
-
             // done
             return
         }
@@ -115,11 +112,6 @@ export const collectHandling = {
                 console.warn(`Group node "${this.name}" is empty`)
             }
             else {
-
-                // add the buses with a router to the array !
-                for(const bus of this.buses) {
-                    if (bus.is.filter) filterList.push(bus)
-                }
 
                 // and the nodes !
                 for(const node of this.nodes) node.makeSourceLists(nodeList, filterList)
