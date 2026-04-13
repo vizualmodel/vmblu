@@ -205,7 +205,7 @@ export const jsonHandling = {
 
                 // try to find by name or by wid (name could have changed !)
                 let pin = node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.name === endPoint.pin) )
-                if (!pin) node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.wid === endPoint.wid) )
+                if (!pin) pin = node.look.widgets.find( widget => widget.is.pin && (widget.is.input == input) && (widget.wid === endPoint.wid) )
 
                 // done
                 return pin
@@ -216,7 +216,7 @@ export const jsonHandling = {
 
             // find by name or wid
             let pad = this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.name === endPoint.pad) )
-            if (!pad) this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.wid === endPoint.wid) )
+            if (!pad) pad = this.pads.find( pad => (pad.proxy.is.input == input)&&(pad.proxy.wid === endPoint.wid) )
 
             // done
             return pad

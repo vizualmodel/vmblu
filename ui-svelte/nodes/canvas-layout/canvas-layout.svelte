@@ -41,19 +41,19 @@ function todo_setTheme(theme) {
 
 export const handlers = {
 
-	"-> menu"(div) {
+	onMenu(div) {
 		const menuBox = pageContent.querySelector("#menu-box")?.append(div)
 	},
 
-	"-> tab ribbon"(div) {
+	onTabRibbon(div) {
 		const tabBox = pageContent.querySelector("#tab-box")?.append(div)
 	},
 
-	"-> workspace"(div) {
+	onWorkspace(div) {
 		const leftBox = pageContent.querySelector("#left-box")?.append(div)
 	},
 
-	"-> canvas"(canvas) {
+	onCanvas(canvas) {
 
 		const centerBox = pageContent.querySelector("#center-box")?.append(canvas)
 
@@ -65,7 +65,7 @@ export const handlers = {
 		tx.send("canvas size change",{rect:{x:0, y:0, w:canvas.width, h:canvas.height}})
 	},
 
-	"-> modal div"(div) {
+	onModalDiv(div) {
 		const contextMenu = pageContent.querySelector("#center-box")?.append(div)
 	}
 }

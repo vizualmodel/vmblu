@@ -203,6 +203,7 @@ export class SourceDocWatcher {
   private async resolveVmbluExecutable(): Promise<string> {
     //const binNames = process.platform === 'win32' ? ['vmblu.cmd', 'vmblu.exe', 'vmblu'] : ['vmblu'];
     const binNames = process.platform === 'win32' ? ['vmblu.cmd'] : ['vmblu'];
+    const localCliRelativePath = path.join('cli', 'bin', 'vmblu.js');
     const searchRoots = this.collectVmbluSearchRoots(); // search close to the workspace first
     const rootsKey = JSON.stringify(Array.from(searchRoots).sort());
     //cout(`[SourceDocWatcher] Resolving vmblu CLI. Search roots: ${searchRoots.join(' | ')}`);
@@ -220,6 +221,20 @@ export class SourceDocWatcher {
     this.vmbluPreArgs = [];
 
     for (const root of searchRoots) {
+      const localCli = path.join(root, localCliRelativePath);
+      try {
+        await fs.access(localCli);
+        this.vmbluExecutable = process.execPath;
+        this.vmbluPreArgs = [localCli];
+        this.vmbluExecutableSource = 'local';
+        this.vmbluMissingNotified = false;
+        this.vmbluExecutableRootsKey = rootsKey;
+        cout(`[SourceDocWatcher] Using vmblu CLI at ${localCli}`);
+        return this.vmbluExecutable;
+      } catch {
+        // continue search
+      }
+
       const binDir = path.join(root, 'node_modules', '.bin');
       for (const name of binNames) {
         const candidate = path.join(binDir, name);
@@ -259,7 +274,7 @@ export class SourceDocWatcher {
   // execute using whatever command/preArgs resolution currently active
   private async runVmbluWithCurrentResolution(baseArgs: string[], options: ExecFileOptions): Promise<{ stderr?: string }> {
     const vmbluBin = await this.resolveVmbluExecutable();
-    const spawnArgs = [...baseArgs];
+    const spawnArgs = [...this.vmbluPreArgs, ...baseArgs];
     if (process.platform === 'win32' && vmbluBin.toLowerCase().endsWith('.cmd')) {
       const comspec = process.env.COMSPEC || 'cmd.exe';
       return this.execVmblu(comspec, ['/c', vmbluBin, ...spawnArgs], options);

@@ -160,6 +160,20 @@
                       "role": "follower",
                       "payload": "DomElement"
                     }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
+                    "contract": {
+                      "role": "follower",
+                      "payload": {
+                        "request": {
+                          "request": "AnyPayload",
+                          "reply": "AnyPayload"
+                        },
+                        "reply": "AnyPayload"
+                      }
+                    }
                   }
                 ]
               }
@@ -385,6 +399,20 @@
                     "contract": {
                       "role": "follower",
                       "payload": "DomElement"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
+                    "contract": {
+                      "role": "follower",
+                      "payload": {
+                        "request": {
+                          "request": "AnyPayload",
+                          "reply": "AnyPayload"
+                        },
+                        "reply": "AnyPayload"
+                      }
                     }
                   }
                 ]

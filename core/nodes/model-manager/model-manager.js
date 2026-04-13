@@ -44,6 +44,13 @@ export function ModelManager(tx, sx) {
 }
 ModelManager.prototype = {
 
+    setMainFlag(model) {
+
+        // reset the main flag
+        for (const cachedModel of this.models.map.values()) cachedModel.is.main = false
+        model.is.main = true
+    },
+
     async onModelSet(doc) {
 
         const model = doc?.model ?? null;
@@ -52,13 +59,15 @@ ModelManager.prototype = {
 
         this.model = model
 
-        for (const cachedModel of this.models.map.values()) cachedModel.is.main = false
-        model.is.main = true
+        // rest the main flag
+        this.setMainFlag(model)
 
         await this.modcom.refreshRaw(model)
 
+        // set a save point if there is none yet
         if (!model.savePoint) model.savePoint = model.raw
 
+        // recompile or set the root
         if (!model.root || this.modcom.hasFresh()) {
             this.reCompile(model.raw)
         }
@@ -152,20 +161,32 @@ ModelManager.prototype = {
     },
 
     async onSyncLinks() {
+        await this.refreshModel({verb: 'sync links'})
+    },
+
+    async onReloadModel() {
+        await this.refreshModel({verb: 'reload model', forceReloadMain: true, reloadLibraries: true})
+    },
+
+    async refreshModel({verb = 'sync links', forceReloadMain = false, reloadLibraries = false} = {}) {
 
         // if there is no model, nothing to do
         if (!this.model) return
 
-        // notation
         const model = this.model
 
-        // set the main bits
-        for (const cachedModel of this.models.map.values()) cachedModel.is.main = false
-        model.is.main = true
+        // reset the main flag on all cached models
+        this.setMainFlag(model)
+
+        // reset the main flag to force reading the main model
+        if (forceReloadMain) model.is.main = false
 
         // check the models imported by this main model
         await this.modcom.refreshRaw(model)
-        
+
+        // restore the normal main-model state for subsequent operations
+        if (forceReloadMain) model.is.main = true
+
         // check if anything has changed
         if (!this.modcom.hasFresh()) return
 
@@ -174,14 +195,14 @@ ModelManager.prototype = {
             this.reCompile(model.raw)
         }
         else if (this.modcom.updateLinkedNode(model.root, model.root)) {
-            this.tx.send('redox.done', {verb: 'sync links'})
+            this.tx.send('redox.done', {verb})
         }
 
-        // reset the fresh bits
+        // rest the fresh flags
         this.modcom.resetFresh()
-    },
 
-    onReloadModel() {
+        // check if libraries need to be reloaded
+        if (reloadLibraries) model.libraries?.load()
     },
 
     onSyncModel() {
@@ -229,6 +250,7 @@ ModelManager.prototype = {
         this.tx.send('get path', {
             title: 'Make application...',
             path: appPath,
+            startFolder: this.model.getArl(),
             pos: pos,
             ok: (appPath) => this.model.makeAndSaveApp(appPath, this.model.root),
             cancel: () => {},

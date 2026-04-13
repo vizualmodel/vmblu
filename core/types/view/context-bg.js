@@ -69,7 +69,7 @@ function linkFromClipboard() {
 		// do the edit
 		cm.doEdit('pasteFromClipboard',{view: cm.view, pos: cm.xyLocal, raw, asLink: true})
 	})
-	//.catch( error => console.log('link from context menu: clipboard get error -> ' + error))
+	//.catch( error => console.log('link from context menu: clipboard.get error -> ' + error))
 }
 
 function pasteFromClipboard() {
@@ -80,5 +80,5 @@ function pasteFromClipboard() {
 		// do the edit
 		cm.doEdit('pasteFromClipboard',{view: cm.view, pos: cm.xyLocal, raw, asLink: false})
 	})
-	//.catch( error => console.log('paste from context menu: clipboard get error -> ' + error))
+	//.catch( error => console.log('paste from context menu: clipboard.get error -> ' + error))
 }

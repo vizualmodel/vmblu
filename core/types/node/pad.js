@@ -304,11 +304,8 @@ Pad.prototype = {
             // get all the connections to the bus that can reach the pad
             else if (other.is.tack) {
 
-                // If the bus has a router, just add the tack to the list
-                if (other.bus.hasFilter()) list.push(other)
-
-                // otherwise continue to complete the list
-                else other.makeConxList(list)
+                // continue to complete the list
+                other.makeConxList(list)
             }
         }
     },

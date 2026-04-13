@@ -38,8 +38,8 @@
         "vite-plugin-string": "^1.2.3"
     },
     "dependencies": {
-        "@vizualmodel/vmblu-cli": "^0.4.4",
-        "@vizualmodel/vmblu-runtime": "^0.1.1",
+        "@vizualmodel/vmblu-cli": "^0.5.2",
+        "@vizualmodel/vmblu-runtime": "^0.2.0",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     }

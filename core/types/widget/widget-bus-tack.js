@@ -1,4 +1,4 @@
-import {shape,convert,style} from '../util/index.js'
+import {shape,convert,style,closestPointOnCurve} from '../util/index.js'
 import {TackConnectHandling} from './widget-bus-tack-connect.js'
 
 // an in out symbol is a triangle 
@@ -46,9 +46,6 @@ BusTack.prototype = {
                      : this.is.highLighted ? style.bus.cHighLighted
                      : style.bus.cNormal
 
-        // put a small rectangle for a tack for router
-        if (this.bus.is.filter) shape.filterSign(ctx, this.getContactPoint(),style.bus.wCable, color)
-
         // draw the tack
         shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color)
 
@@ -78,7 +75,7 @@ BusTack.prototype = {
 
     // sets the route for a tack and places the tack on that route
     setRoute(route) {
-
+        
         // the route to this tack
         this.route = route
 
@@ -116,10 +113,21 @@ BusTack.prototype = {
         // determine the segment of the bus
         this.segment = this.bus.hitSegment(a) 
 
-        // SHOULD NOT HAPPEN
+        // A saved route endpoint can end up a few pixels off the bus after load.
+        // In that case snap to the nearest bus segment instead of falling back
+        // to segment 1.
         if (this.segment == 0) {
-            console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus)
-            this.segment = 1
+            const closest = closestPointOnCurve(bWire, a)
+
+            if (closest?.segment) {
+                this.segment = closest.segment
+                a.x = closest.point.x
+                a.y = closest.point.y
+            }
+            else {
+                console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus)
+                this.segment = 1
+            }
         }
 
         // the bus segment can be horizontal or vertical
@@ -202,7 +210,8 @@ BusTack.prototype = {
         if (this.segment == 0) return null
 
         const p = this.bus.wire[this.segment]
-        return (this.dir == 'left' || this.dir == 'right') ? {x:p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
+
+        return (this.dir == 'left' || this.dir == 'right') ? {x: p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
     },
 
 

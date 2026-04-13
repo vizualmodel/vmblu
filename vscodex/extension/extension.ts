@@ -177,10 +177,6 @@ export class VmbluEditorProvider implements vscode.CustomEditorProvider<VmbluDoc
 
 				// send a visible message - will sync the document
 				e.webviewPanel.webview.postMessage({verb:'visible'});
-			} else {
-
-				// save the document that is going away
-				document.straightSave();
 			}
 		});
 

@@ -200,6 +200,10 @@ extrudePad: {
         // create a short connection to the actual widget
         pad.shortConnection(pin)
 
+        // show the route color
+        for (const route of pad.routes) route.highLight();
+        pad.highLight()
+
         // ..save the edit
         this.saveEdit('extrudePad',{pad, routes: pad.routes.slice()})
 

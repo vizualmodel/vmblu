@@ -4005,6 +4005,22 @@ function to_class(value) {
 }
 
 /**
+ * @param {Element} dom
+ * @param {string} class_name
+ * @param {boolean} value
+ * @returns {void}
+ */
+function toggle_class(dom, class_name, value) {
+	if (value) {
+		if (dom.classList.contains(class_name)) return;
+		dom.classList.add(class_name);
+	} else {
+		if (!dom.classList.contains(class_name)) return;
+		dom.classList.remove(class_name);
+	}
+}
+
+/**
  * Listen to the given event, and then instantiate a global form reset listener if not already done,
  * to notify all bindings when the form is reset
  * @param {HTMLElement} element
@@ -4198,6 +4214,23 @@ function bind_this(element_or_component = {}, update, get_value, get_parts) {
 	});
 
 	return element_or_component;
+}
+
+/** @import { ActionReturn } from 'svelte/action' */
+
+/**
+ * Substitute for the `preventDefault` event modifier
+ * @deprecated
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
+ * @returns {(event: Event, ...args: unknown[]) => void}
+ */
+function preventDefault(fn) {
+	return function (...args) {
+		var event = /** @type {Event} */ (args[0]);
+		event.preventDefault();
+		// @ts-ignore
+		return fn?.apply(this, args);
+	};
 }
 
 /** @import { ComponentContextLegacy } from '#client' */
@@ -4594,7 +4627,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$j = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$k = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -4636,7 +4669,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$j();
+	var div_1 = root$k();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -4656,7 +4689,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$i = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$j = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -4684,16 +4717,16 @@ function Canvas_layout($$anchor, $$props) {
 	}
 
 	const handlers = {
-		"-> menu"(div) {
+		onMenu(div) {
 			get(pageContent).querySelector("#menu-box")?.append(div);
 		},
-		"-> tab ribbon"(div) {
+		onTabRibbon(div) {
 			get(pageContent).querySelector("#tab-box")?.append(div);
 		},
-		"-> workspace"(div) {
+		onWorkspace(div) {
 			get(pageContent).querySelector("#left-box")?.append(div);
 		},
-		"-> canvas"(canvas) {
+		onCanvas(canvas) {
 			get(pageContent).querySelector("#center-box")?.append(canvas);
 
 			// note that the context of a canvas gets reset when the size changes !
@@ -4710,14 +4743,14 @@ function Canvas_layout($$anchor, $$props) {
 				}
 			});
 		},
-		"-> modal div"(div) {
+		onModalDiv(div) {
 			get(pageContent).querySelector("#center-box")?.append(div);
 		}
 	};
 
 	init();
 
-	var div_1 = root$i();
+	var div_1 = root$j();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -4725,7 +4758,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$h = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$i = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -4977,7 +5010,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$h();
+	var div_1 = root$i();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -5014,7 +5047,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$g = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$h = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -5178,13 +5211,13 @@ function Column_main($$anchor, $$props) {
 			get(mainArea).replaceChildren(div);
 			div.width = Math.floor(get(mainArea).clientWidth);
 			div.height = Math.floor(get(mainArea).clientHeight);
-			sendMainAreaSize();
+			scheduleMainAreaNotification(); //sendMainAreaSize()
 		}
 	};
 
 	init();
 
-	var div_1 = root$g();
+	var div_1 = root$h();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -5206,10 +5239,74 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$d = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$f = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$e = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$g = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8),
+		sx = prop($$props, "sx", 8);
+
+	onMount(() => {
+		// send the div
+		tx().send("div", get(menuDiv));
+	});
+
+	let menuDiv = mutable_state(null);
+	let symbols = mutable_state(sx() ?? []);
+
+	const handlers = {
+		"-> set menu"(newSymbols) {
+			set(symbols, newSymbols);
+		}
+	};
+
+	function menuClick(e) {
+		// get the clicked symbol
+		const index = e.target.getAttribute("data-index");
+
+		// send the corresponding message
+		tx().send(get(symbols)[index].message, e);
+	}
+
+	function keydown() {}
+	init();
+
+	var div = root$g();
+
+	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
+
+	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
+		var div_1 = root_1$e();
+		var i = child(div_1);
+
+		set_attribute(i, "data-index", index);
+
+		var text = child(i);
+
+		var div_2 = sibling(i, 2);
+		var text_1 = child(div_2);
+
+		template_effect(() => {
+			set_text(text, get(symbol).name);
+			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
+			set_text(text_1, get(symbol).help);
+		});
+
+		event("click", i, menuClick);
+		event("keydown", i, keydown);
+		append($$anchor, div_1);
+	});
+	append($$anchor, div);
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_1$d = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$f = template(`<div class="menu svelte-1st5yi2"></div>`);
+
+function Side_menu($$anchor, $$props) {
 	push($$props, false);
 
 	let tx = prop($$props, "tx", 8),
@@ -5270,73 +5367,9 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$c = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$e = template(`<div class="menu svelte-1st5yi2"></div>`);
-
-function Side_menu($$anchor, $$props) {
-	push($$props, false);
-
-	let tx = prop($$props, "tx", 8),
-		sx = prop($$props, "sx", 8);
-
-	onMount(() => {
-		// send the div
-		tx().send("div", get(menuDiv));
-	});
-
-	let menuDiv = mutable_state(null);
-	let symbols = mutable_state(sx() ?? []);
-
-	const handlers = {
-		"-> set menu"(newSymbols) {
-			set(symbols, newSymbols);
-		}
-	};
-
-	function menuClick(e) {
-		// get the clicked symbol
-		const index = e.target.getAttribute("data-index");
-
-		// send the corresponding message
-		tx().send(get(symbols)[index].message, e);
-	}
-
-	function keydown() {}
-	init();
-
-	var div = root$e();
-
-	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
-
-	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$c();
-		var i = child(div_1);
-
-		set_attribute(i, "data-index", index);
-
-		var text = child(i);
-
-		var div_2 = sibling(i, 2);
-		var text_1 = child(div_2);
-
-		template_effect(() => {
-			set_text(text, get(symbol).name);
-			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
-			set_text(text_1, get(symbol).help);
-		});
-
-		event("click", i, menuClick);
-		event("keydown", i, keydown);
-		append($$anchor, div_1);
-	});
-	append($$anchor, div);
-	bind_prop($$props, "handlers", handlers);
-	return pop({ handlers });
-}
-
-var root_2$4 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$5 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root_3$4 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$d = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root$e = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -5395,7 +5428,7 @@ function Tab_ribbon($$anchor, $$props) {
 		const index = e.target.getAttribute("data-index");
 
 		if (index < 0 || index >= get(ribbon).tabs.length) return;
-		tx().send("tab request to select", get(ribbon).tabs[index]);
+		tx().send("tab.request to select", get(ribbon).tabs[index]);
 	}
 
 	function onClose(e) {
@@ -5406,13 +5439,13 @@ function Tab_ribbon($$anchor, $$props) {
 		const index = e.target.parentNode.getAttribute("data-index");
 
 		if (index < 0 || index >= get(ribbon).tabs.length) return;
-		tx().send("tab request to close", get(ribbon).tabs[index]);
+		tx().send("tab.request to close", get(ribbon).tabs[index]);
 	}
 
 	function onKeydown(e) {}
 	init();
 
-	var div = root$d();
+	var div = root$e();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -5424,7 +5457,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$4();
+				var div_1 = root_2$5();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -5476,8 +5509,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$b = template(`<div class="menu-item svelte-13h6ctb"><i class="material-icons-outlined icon svelte-13h6ctb"> </i> <div class="tooltip svelte-13h6ctb"> </div></div>`);
-var root$c = template(`<div class="menu svelte-13h6ctb"></div>`);
+var root_1$c = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
+var root$d = template(`<div class="menu svelte-1c44ark"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -5495,7 +5528,7 @@ function Vscode_side_menu($$anchor, $$props) {
 	});
 
 	const handlers = {
-		"-> set menu"(newSymbols) {
+		"onSetMenu"(newSymbols) {
 			set(symbols, newSymbols);
 		}
 	};
@@ -5509,12 +5542,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$c();
+	var div = root$d();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$b();
+		var div_1 = root_1$c();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5634,10 +5667,10 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$a = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$3 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_1$b = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$4 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
 var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
-var root$b = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
+var root$c = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
 	push($$props, false);
@@ -5730,7 +5763,7 @@ function Popup_box($$anchor, $$props) {
 
 	init();
 
-	var div = root$b();
+	var div = root$c();
 
 	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
 
@@ -5741,7 +5774,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$a();
+		var i_2 = root_1$b();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -5751,7 +5784,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$3();
+		var i_3 = root_2$4();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -5790,22 +5823,22 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root$a = template(`<div class="same-line svelte-nv80og"><!></div>`);
+var root$b = template(`<div class="same-line svelte-nv80og"><!></div>`);
 
 function Same_line($$anchor, $$props) {
-	var div = root$a();
+	var div = root$b();
 	var node = child(div);
 
 	slot(node, $$props, "default", {});
 	append($$anchor, div);
 }
 
-var root$9 = template(`<label class="label svelte-1w9b525"> </label>`);
+var root$a = template(`<label class="label svelte-1w9b525"> </label>`);
 
 function Label($$anchor, $$props) {
 	let text = prop($$props, "text", 8);
 	let style = prop($$props, "style", 8);
-	var label = root$9();
+	var label = root$a();
 	var text_1 = child(label);
 
 	template_effect(() => {
@@ -5816,7 +5849,7 @@ function Label($$anchor, $$props) {
 	append($$anchor, label);
 }
 
-var root$8 = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
+var root$9 = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
 
 function Text_field($$anchor, $$props) {
 	push($$props, false);
@@ -5850,7 +5883,7 @@ function Text_field($$anchor, $$props) {
 
 	init();
 
-	var input_1 = root$8();
+	var input_1 = root$9();
 
 	bind_this(input_1, ($$value) => set(input, $$value), () => get(input));
 	template_effect(() => set_attribute(input_1, "style", style() ? style() : ''));
@@ -5860,7 +5893,7 @@ function Text_field($$anchor, $$props) {
 	pop();
 }
 
-var root$7 = template(`<input type="checkbox" class="svelte-z24rrd">`);
+var root$8 = template(`<input type="checkbox" class="svelte-kvi95y">`);
 
 function Checkbox($$anchor, $$props) {
 	push($$props, false);
@@ -5869,26 +5902,61 @@ function Checkbox($$anchor, $$props) {
 	let on = prop($$props, "on", 12);
 	let onToggle = prop($$props, "onToggle", 8);
 
-	onMount(() => {});
-
 	// call the on color function if requested
-	function onInput(e) {
+	function onInput() {
 		onToggle()?.(on());
 	}
 
 	init();
 
-	var input = root$7();
+	var input = root$8();
 	template_effect(() => set_attribute(input, "style", style() ? style() : ''));
 	bind_checked(input, on);
-	event("input", input, onInput);
+	event("change", input, onInput);
 	append($$anchor, input);
 	pop();
 }
 
-var root_2$2 = template(`<!> <!>`, 1);
+const defaultWorker = () => ({
+    on: false,
+    path: '',
+});
+
+function makeRuntimeSettings() {
+    return {
+        logMessages: false,
+        worker: defaultWorker(),
+    }
+}
+
+function normalizeRuntimeSettings(dx = null) {
+
+    const defaults = makeRuntimeSettings();
+
+    if (!dx || typeof dx !== 'object') return defaults
+
+    const normalized = {
+        ...dx,
+        logMessages: !!dx.logMessages,
+        worker: {
+            ...defaults.worker,
+            ...(dx.worker ?? {}),
+        }
+    };
+
+    normalized.worker.on = !!normalized.worker.on;
+    normalized.worker.path = normalized.worker.path ?? '';
+
+    return normalized
+}
+
+function cloneRuntimeSettings(dx = null) {
+    return normalizeRuntimeSettings(dx)
+}
+
+var root_2$3 = template(`<!> <!>`, 1);
 var root_3$2 = template(`<!> <!> <!>`, 1);
-var root_1$9 = template(`<!> <!>`, 1);
+var root_1$a = template(`<!> <!>`, 1);
 
 function Runtime_settings($$anchor, $$props) {
 	push($$props, false);
@@ -5909,14 +5977,10 @@ function Runtime_settings($$anchor, $$props) {
 		cancel: null
 	});
 
-	// set the defauult value 
-	const localRx = mutable_state({
-		logMessages: false,
-		worker: { on: false, path: '' }
-	});
+	let localDx = mutable_state(makeRuntimeSettings());
 
 	const handlers = {
-		"-> show"({ title, pos, rx, ok, cancel }) {
+		onShow({ title, pos, dx, ok, cancel }) {
 			// The box 
 			(
 				mutate(box, get(box).title = title),
@@ -5924,23 +5988,18 @@ function Runtime_settings($$anchor, $$props) {
 			);
 
 			// if there is a callback, call it
-			mutate(box, get(box).ok = (e) => {
+			mutate(box, get(box).ok = () => {
 				if (!ok) return;
 				// call ok with the local rx
-				ok(get(localRx));
+				ok(cloneRuntimeSettings(get(localDx)));
 			});
 
 			mutate(box, get(box).cancel = () => {
 				cancel?.();
 			});
 
-			// Copy the settings if any
-			if (rx) {
-				mutate(localRx, get(localRx).logMessages = rx.logMessages);
-				mutate(localRx, get(localRx).worker.on = rx.worker.on);
-				mutate(localRx, get(localRx).worker.path = rx.worker.path);
-			}
-
+			// Copy the settings while keeping Svelte reactivity
+			set(localDx, cloneRuntimeSettings(dx));
 			// and show
 			get(box).show(get(box).pos);
 		}
@@ -5954,19 +6013,23 @@ function Runtime_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$9();
+			var fragment_1 = root_1$a();
 			var node = first_child(fragment_1);
 
 			Same_line(node, {
 				children: ($$anchor, $$slotProps) => {
-					var fragment_2 = root_2$2();
+					var fragment_2 = root_2$3();
 					var node_1 = first_child(fragment_2);
 
 					Checkbox(node_1, {
 						get on() {
-							return get(localRx).logMessages;
+							return get(localDx).logMessages;
 						},
-						onToggle
+						set on($$value) {
+							mutate(localDx, get(localDx).logMessages = $$value);
+						},
+						onToggle,
+						$$legacy: true
 					});
 
 					var node_2 = sibling(node_1, 2);
@@ -5985,9 +6048,14 @@ function Runtime_settings($$anchor, $$props) {
 					var node_4 = first_child(fragment_3);
 
 					Checkbox(node_4, {
-						get field() {
-							return get(localRx).worker.on;
-						}
+						get on() {
+							return get(localDx).worker.on;
+						},
+						set on($$value) {
+							mutate(localDx, get(localDx).worker.on = $$value);
+						},
+						style: "",
+						$$legacy: true
 					});
 
 					var node_5 = sibling(node_4, 2);
@@ -6000,9 +6068,13 @@ function Runtime_settings($$anchor, $$props) {
 					var node_6 = sibling(node_5, 2);
 
 					Text_field(node_6, {
-						get field() {
-							return get(localRx).worker.path;
-						}
+						get text() {
+							return get(localDx).worker.path;
+						},
+						set text($$value) {
+							mutate(localDx, get(localDx).worker.path = $$value);
+						},
+						$$legacy: true
 					});
 
 					append($$anchor, fragment_3);
@@ -6061,8 +6133,8 @@ function Confirm_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$8 = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
-var root$6 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
+var root_1$9 = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
+var root$7 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6142,14 +6214,14 @@ function Context_menu($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$6();
+	var div = root$7();
 
 	bind_this(div, ($$value) => mutate(context, get(context).div = $$value), () => get(context)?.div);
 
 	var ul = child(div);
 
 	each(ul, 5, () => get(context).menu, index, ($$anchor, choice, index) => {
-		var li = root_1$8();
+		var li = root_1$9();
 
 		set_attribute(li, "data-index", index);
 
@@ -6183,7 +6255,7 @@ function Context_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$5 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
+var root$6 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
 
 function Text_area_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -6201,7 +6273,7 @@ function Text_area_input$1($$anchor, $$props) {
 
 	init();
 
-	var textarea = root$5();
+	var textarea = root$6();
 
 	template_effect(() => {
 		set_attribute(textarea, "rows", rows());
@@ -6376,11 +6448,11 @@ function Text_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$1 = template(`<p class="svelte-52mbok"> </p>`);
+var root_2$2 = template(`<p class="svelte-52mbok"> </p>`);
 var root_4$2 = template(`<p class="type-warning svelte-52mbok"> </p>`);
 var root_5$2 = template(`<p class="type-ok svelte-52mbok">contract match</p>`);
-var root_1$7 = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
-var root$4 = template(`<div class="profile svelte-52mbok"><!></div>`);
+var root_1$8 = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
+var root$5 = template(`<div class="profile svelte-52mbok"><!></div>`);
 
 function Profile_input_pin($$anchor, $$props) {
 	push($$props, false);
@@ -6412,11 +6484,11 @@ function Profile_input_pin($$anchor, $$props) {
 
 	init();
 
-	var div = root$4();
+	var div = root$5();
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
-		var fragment = root_1$7();
+		var fragment = root_1$8();
 		var div_1 = first_child(fragment);
 		var p = child(div_1);
 		var span = child(p);
@@ -6430,7 +6502,7 @@ function Profile_input_pin($$anchor, $$props) {
 			let type = () => get($$item).type;
 			let name = () => get($$item).name;
 			let description = () => get($$item).description;
-			var p_1 = root_2$1();
+			var p_1 = root_2$2();
 			var text_2 = child(p_1);
 			template_effect(() => set_text(text_2, `${name() ?? ""} (${type() ?? ""}) ${description() ?? ""}`));
 			append($$anchor, p_1);
@@ -6484,8 +6556,8 @@ function Profile_input_pin($$anchor, $$props) {
 	pop();
 }
 
-var root_1$6 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
-var root$3 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
+var root_1$7 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
+var root$4 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
 
 function Profile_output_pin($$anchor, $$props) {
 	push($$props, false);
@@ -6506,11 +6578,11 @@ function Profile_output_pin($$anchor, $$props) {
 
 	init();
 
-	var div = root$3();
+	var div = root$4();
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
-		var div_1 = root_1$6();
+		var div_1 = root_1$7();
 		var p = child(div_1);
 		var span = child(p);
 		var text = child(span);
@@ -6537,7 +6609,7 @@ function Profile_output_pin($$anchor, $$props) {
 var root_4$1 = template(`<span> </span>`);
 var root_3$1 = template(`<div></div>`);
 var root_6$2 = template(`<pre class="text svelte-1w43hf3"> </pre>`);
-var root_1$5 = template(`<div class="contract svelte-1w43hf3"><div class="role svelte-1w43hf3"><p class="svelte-1w43hf3"> </p></div> <!></div>`);
+var root_1$6 = template(`<div class="contract svelte-1w43hf3"><div class="role svelte-1w43hf3"><p class="svelte-1w43hf3"> </p></div> <!></div>`);
 
 function Pin_contract($$anchor, $$props) {
 	push($$props, false);
@@ -6550,7 +6622,7 @@ function Pin_contract($$anchor, $$props) {
 	var node = first_child(fragment);
 
 	if_block(node, contract, ($$anchor) => {
-		var div = root_1$5();
+		var div = root_1$6();
 		var div_1 = child(div);
 		var p = child(div_1);
 		var text = child(p);
@@ -6620,7 +6692,7 @@ function Pin_contract($$anchor, $$props) {
 var root_3 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Handlers and parameters</p></div> <!>`, 1);
 var root_5$1 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Handler and parameters</p></div> <!>`, 1);
 var root_6$1 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Send locactions</p></div> <!>`, 1);
-var root_1$4 = template(`<!> <!>`, 1);
+var root_1$5 = template(`<!> <!>`, 1);
 
 function Pin_profile($$anchor, $$props) {
 	push($$props, false);
@@ -6673,7 +6745,7 @@ function Pin_profile($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$4();
+			var fragment_1 = root_1$5();
 			var node = first_child(fragment_1);
 
 			Pin_contract(node, {
@@ -6779,7 +6851,7 @@ function Pin_profile($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$3 = template(`<p class="svelte-nkfvqo"> </p>`);
+var root_1$4 = template(`<p class="svelte-nkfvqo"> </p>`);
 
 function Message_box($$anchor, $$props) {
 	push($$props, false);
@@ -6820,7 +6892,7 @@ function Message_box($$anchor, $$props) {
 	Popup_box($$anchor, {
 		box,
 		children: ($$anchor, $$slotProps) => {
-			var p = root_1$3();
+			var p = root_1$4();
 			var text_1 = child(p);
 			template_effect(() => set_text(text_1, get(text)));
 			append($$anchor, p);
@@ -6832,7 +6904,7 @@ function Message_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$2 = template(`<div class="input-field svelte-dgsivs"><label class="svelte-dgsivs"> </label> <input type="text" spellcheck="false" class="svelte-dgsivs"></div>`);
+var root$3 = template(`<div class="input-field svelte-dgsivs"><label class="svelte-dgsivs"> </label> <input type="text" spellcheck="false" class="svelte-dgsivs"></div>`);
 
 function Label_input_field($$anchor, $$props) {
 	push($$props, false);
@@ -6877,7 +6949,7 @@ function Label_input_field($$anchor, $$props) {
 	legacy_pre_effect_reset();
 	init();
 
-	var div = root$2();
+	var div = root$3();
 	var label_1 = child(div);
 
 	set_attribute(label_1, "for", fid);
@@ -6901,6 +6973,310 @@ function Label_input_field($$anchor, $$props) {
 	pop();
 }
 
+var root_2$1 = template(`<li class="svelte-1kcgyk9"><span class="material-icons-outlined kind svelte-1kcgyk9"> </span> <span class="name svelte-1kcgyk9"> </span></li>`);
+var root_1$3 = template(`<ul class="suggestions svelte-1kcgyk9"></ul>`);
+var root$2 = template(`<div class="input-field svelte-1kcgyk9"><label class="svelte-1kcgyk9"> </label> <input type="text" spellcheck="false" class="svelte-1kcgyk9"></div> <!>`, 1);
+
+function Path_input_field($$anchor, $$props) {
+	push($$props, false);
+
+	let label = prop($$props, "label", 8);
+	let input = prop($$props, "input", 12, '');
+	let style = prop($$props, "style", 8);
+	let check = prop($$props, "check", 8);
+	let maxSuggestions = prop($$props, "maxSuggestions", 8, 12);
+	let fileExtensions = prop($$props, "fileExtensions", 8, '');
+	let getFolder = prop($$props, "getFolder", 8, null);
+	let field = mutable_state();
+	let listOpen = mutable_state(false);
+	let activeIndex = mutable_state(-1);
+	let suggestions = mutable_state([]);
+	let queryToken = 0;
+	let listRect = mutable_state(null);
+	let cachedFolderPath = null;
+	let cachedFolder = { folders: [], files: [] };
+	const fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+	const badInputColor = '#ff0000';
+	let savedColor = null;
+
+	const setFieldWidth = () => {
+		if (!get(field)) return;
+		mutate(field, get(field).style.width = '0px');
+		mutate(field, get(field).style.width = get(field).scrollWidth + 2 + 'px');
+	};
+
+	function updateListRect() {
+		if (!get(field)) return;
+
+		const rect = get(field).getBoundingClientRect();
+		const gap = 4;
+
+		set(listRect, {
+			left: rect.left,
+			top: rect.bottom + gap,
+			minWidth: Math.max(rect.width, 240)
+		});
+	}
+
+	function normalizePath(value = '') {
+		return value.replace(/\\/g, '/').replace(/\/+/g, '/');
+	}
+
+	function parseExtensionFilter(value = '') {
+		if (typeof value !== 'string' || !value.trim()) return [];
+		return value.split(';').map((ext) => ext.trim().toLowerCase()).filter(Boolean).map((ext) => ext.startsWith('.') ? ext : '.' + ext);
+	}
+
+	function matchesExtension(name, allowedExtensions) {
+		if (!allowedExtensions.length) return true;
+
+		const dot = name.lastIndexOf('.');
+		const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
+
+		return allowedExtensions.includes(ext);
+	}
+
+	function splitInput(value = '') {
+		const normalized = normalizePath(value ?? '');
+
+		if (!normalized) return { folderPath: '', partial: '', prefix: '' };
+
+		if (normalized.endsWith('/')) {
+			return {
+				folderPath: normalized,
+				partial: '',
+				prefix: normalized
+			};
+		}
+
+		const slash = normalized.lastIndexOf('/');
+
+		if (slash < 0) return {
+			folderPath: '',
+			partial: normalized,
+			prefix: ''
+		};
+
+		const folderPath = normalized.slice(0, slash + 1);
+
+		return {
+			folderPath,
+			partial: normalized.slice(slash + 1),
+			prefix: folderPath
+		};
+	}
+
+	async function ensureFolderLoaded(folderPath, token) {
+		if (cachedFolderPath === folderPath) return true;
+
+		if (typeof getFolder() !== 'function') {
+			cachedFolderPath = folderPath;
+			cachedFolder = { folders: [], files: [] };
+			return true;
+		}
+
+		const nextFolder = await getFolder()(folderPath);
+
+		if (token !== queryToken) return false;
+		cachedFolderPath = folderPath;
+		cachedFolder = nextFolder ?? { folders: [], files: [] };
+		return true;
+	}
+
+	async function updateSuggestions(value) {
+		const token = queryToken += 1;
+		const { folderPath, partial, prefix } = splitInput(value);
+		const allowedExtensions = parseExtensionFilter(fileExtensions());
+
+		try {
+			const stillCurrent = await ensureFolderLoaded(folderPath, token);
+
+			if (!stillCurrent || token !== queryToken) return;
+
+			const lowerPartial = partial.toLowerCase();
+			const nextSuggestions = [];
+
+			for (const name of cachedFolder.folders ?? []) {
+				if (partial && !name.toLowerCase().startsWith(lowerPartial)) continue;
+
+				nextSuggestions.push({
+					name,
+					kind: 'directory',
+					value: prefix + name + '/'
+				});
+			}
+
+			for (const name of cachedFolder.files ?? []) {
+				if (partial && !name.toLowerCase().startsWith(lowerPartial)) continue;
+				if (!matchesExtension(name, allowedExtensions)) continue;
+				nextSuggestions.push({ name, kind: 'file', value: prefix + name });
+			}
+
+			nextSuggestions.sort((a, b) => {
+				if (a.kind !== b.kind) return a.kind === 'directory' ? -1 : 1;
+				return a.name.localeCompare(b.name);
+			});
+
+			set(suggestions, nextSuggestions.slice(0, maxSuggestions()));
+			set(activeIndex, get(suggestions).length ? 0 : -1);
+			set(listOpen, get(suggestions).length > 0);
+			if (get(listOpen)) updateListRect();
+		} catch {
+			if (token !== queryToken) return;
+			set(suggestions, []);
+			set(activeIndex, -1);
+			set(listOpen, false);
+		}
+	}
+
+	function updateInputState(value) {
+		setFieldWidth();
+		if (!check() || !get(field)) return;
+		mutate(field, get(field).style.color = check()(value) ? savedColor : badInputColor);
+	}
+
+	function onInput(e) {
+		updateInputState(e.target.value);
+		updateSuggestions(e.target.value);
+	}
+
+	function applySuggestion(suggestion) {
+		input(suggestion.value);
+		updateInputState(input());
+		updateSuggestions(input());
+		get(field)?.focus();
+	}
+
+	function onKeydown(e) {
+		if (!get(listOpen) || !get(suggestions).length) return;
+		switch (e.key) {
+			case 'ArrowDown':
+				e.preventDefault();
+				e.stopPropagation();
+				set(activeIndex, (get(activeIndex) + 1) % get(suggestions).length);
+				break;
+
+			case 'ArrowUp':
+				e.preventDefault();
+				e.stopPropagation();
+				set(activeIndex, (get(activeIndex) - 1 + get(suggestions).length) % get(suggestions).length);
+				break;
+
+			case 'Enter':
+
+			case 'Tab':
+				if (get(activeIndex) < 0) return;
+				e.preventDefault();
+				e.stopPropagation();
+				applySuggestion(get(suggestions)[get(activeIndex)]);
+				break;
+
+			case 'Escape':
+				e.stopPropagation();
+				set(listOpen, false);
+				set(activeIndex, -1);
+				break;
+		}
+	}
+
+	function onFocus() {
+		if (input()) updateSuggestions(input());
+		updateListRect();
+	}
+
+	function onBlur() {
+		setTimeout(
+			() => {
+				set(listOpen, false);
+				set(activeIndex, -1);
+			},
+			120
+		);
+	}
+
+	onMount(() => {
+		savedColor = get(field).style.color;
+		setFieldWidth();
+		updateInputState(input());
+
+		const onViewportChange = () => {
+			if (get(listOpen)) updateListRect();
+		};
+
+		window.addEventListener('resize', onViewportChange);
+		window.addEventListener('scroll', onViewportChange, true);
+
+		return () => {
+			window.removeEventListener('resize', onViewportChange);
+			window.removeEventListener('scroll', onViewportChange, true);
+		};
+	});
+
+	legacy_pre_effect(() => (get(field)), () => {
+		if (get(field)) setFieldWidth();
+	});
+
+	legacy_pre_effect(() => (get(field), get(listOpen)), () => {
+		if (get(field) && get(listOpen)) updateListRect();
+	});
+
+	legacy_pre_effect_reset();
+	init();
+
+	var fragment = root$2();
+	var div = first_child(fragment);
+	var label_1 = child(div);
+
+	set_attribute(label_1, "for", fid);
+
+	var text = child(label_1);
+
+	var input_1 = sibling(label_1, 2);
+
+	bind_this(input_1, ($$value) => set(field, $$value), () => get(field));
+	set_attribute(input_1, "id", fid);
+
+	var node = sibling(div, 2);
+
+	if_block(node, () => get(listOpen) && get(suggestions).length && get(listRect), ($$anchor) => {
+		var ul = root_1$3();
+
+		each(ul, 5, () => get(suggestions), index, ($$anchor, suggestion, index) => {
+			var li = root_2$1();
+			var span = child(li);
+			var text_1 = child(span);
+
+			var span_1 = sibling(span, 2);
+			var text_2 = child(span_1);
+
+			template_effect(() => {
+				toggle_class(li, "active", index === get(activeIndex));
+				set_text(text_1, get(suggestion).kind === 'directory' ? 'folder' : 'file_open');
+				set_text(text_2, get(suggestion).value);
+			});
+
+			event("mousedown", li, preventDefault(() => applySuggestion(get(suggestion))));
+			append($$anchor, li);
+		});
+		template_effect(() => set_attribute(ul, "style", `left:${get(listRect).left}px; top:${get(listRect).top}px; min-width:${get(listRect).minWidth}px; max-width:min(36rem, calc(100vw - ${get(listRect).left + 16}px));`));
+		append($$anchor, ul);
+	});
+
+	template_effect(() => {
+		set_attribute(label_1, "style", style());
+		set_text(text, label());
+	});
+
+	bind_value(input_1, input);
+	event("input", input_1, onInput);
+	event("click", input_1, onInput);
+	event("keydown", input_1, onKeydown);
+	event("focus", input_1, onFocus);
+	event("blur", input_1, onBlur);
+	append($$anchor, fragment);
+	pop();
+}
+
 var root_1$2 = template(`<!> <!>`, 1);
 
 function Name_path($$anchor, $$props) {
@@ -6921,6 +7297,16 @@ function Name_path($$anchor, $$props) {
 	let _name = mutable_state('');
 	let _path = mutable_state('');
 	let _regex = '';
+	let _startFolder = null;
+	let _fileExtensions = mutable_state('');
+
+	async function getFolder(path = '') {
+		try {
+			return await tx().request('folder.get', { startFolder: _startFolder, path });
+		} catch {
+			return { folders: [], files: [] };
+		}
+	}
 
 	function checkPath(str) {
 		// if we need to test the input..
@@ -6944,7 +7330,9 @@ function Name_path($$anchor, $$props) {
 				ok,
 				cancel,
 				open,
-				trash
+				trash,
+				startFolder = null,
+				fileExtensions = ''
 			}
 		) {
 			// The box 
@@ -6969,6 +7357,8 @@ function Name_path($$anchor, $$props) {
 			set(_name, name);
 			set(_path, path);
 			_regex = regex;
+			_startFolder = startFolder;
+			set(_fileExtensions, fileExtensions);
 			// show the popup
 			get(box).show(pos);
 		}
@@ -6999,7 +7389,7 @@ function Name_path($$anchor, $$props) {
 
 			var node_1 = sibling(node, 2);
 
-			Label_input_field(node_1, {
+			Path_input_field(node_1, {
 				label: "Path",
 				style: "width: 3rem;",
 				get input() {
@@ -7009,6 +7399,10 @@ function Name_path($$anchor, $$props) {
 					set(_path, $$value);
 				},
 				check: checkPath,
+				getFolder,
+				get fileExtensions() {
+					return get(_fileExtensions);
+				},
 				$$legacy: true
 			});
 
@@ -7037,6 +7431,16 @@ function Path($$anchor, $$props) {
 
 	// local copies of the 
 	let _path = mutable_state();
+	let _startFolder = null;
+	let _fileExtensions = mutable_state('');
+
+	async function getFolder(path = '') {
+		try {
+			return await tx().request('folder.get', { startFolder: _startFolder, path });
+		} catch {
+			return { folders: [], files: [] };
+		}
+	}
 
 	function checkPath(str) {
 		// if we need to test the input..
@@ -7048,7 +7452,17 @@ function Path($$anchor, $$props) {
 	});
 
 	const handlers = {
-		"-> path"({ title, path, pos, ok, cancel }) {
+		"-> path"(
+			{
+				title,
+				path,
+				pos,
+				ok,
+				cancel,
+				startFolder = null,
+				fileExtensions = ''
+			}
+		) {
 			// The box 
 			(
 				mutate(box, get(box).title = title),
@@ -7059,6 +7473,8 @@ function Path($$anchor, $$props) {
 			mutate(box, get(box).cancel = cancel ? () => cancel() : null);
 			// the path field
 			set(_path, path);
+			_startFolder = startFolder;
+			set(_fileExtensions, fileExtensions);
 			// show the popup
 			get(box).show();
 		}
@@ -7071,7 +7487,7 @@ function Path($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			Label_input_field($$anchor, {
+			Path_input_field($$anchor, {
 				label: "Path :",
 				style: "width: 2rem;",
 				get input() {
@@ -7081,6 +7497,10 @@ function Path($$anchor, $$props) {
 					set(_path, $$value);
 				},
 				check: checkPath,
+				getFolder,
+				get fileExtensions() {
+					return get(_fileExtensions);
+				},
 				$$legacy: true
 			});
 		},
@@ -7971,7 +8391,7 @@ const SingleTextFieldFactory = getFactory(Single_text_field);
 const DocumentSettingsFactory = getFactory(Document_settings);
 const NodeSelectorFactory = getFactory(Node_selector);
 
-var uiSvelte_mod = "{\r\n    \"header\":  {\r\n                   \"version\":  \"no version\",\r\n                   \"created\":  \"4/2/2024, 12:51:45 PM\",\r\n                   \"saved\":  \"12/16/2025, 1:00:06 PM\",\r\n                   \"utc\":  \"2025-12-16T12:00:06.433Z\",\r\n                   \"runtime\":  \"./runtime.js\"\r\n               },\r\n    \"factories\":  [\r\n                      {\r\n                          \"path\":  \"./index.js\",\r\n                          \"function\":  \"ContextMenuFactory\"\r\n                      }\r\n                  ],\r\n    \"root\":  {\r\n                 \"kind\":  \"group\",\r\n                 \"name\":  \"\",\r\n                 \"nodes\":  [\r\n                               {\r\n                                   \"kind\":  \"group\",\r\n                                   \"name\":  \"modal boxes\",\r\n                                   \"nodes\":  [\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"context menu\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"ContextMenuFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"context menu\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"path request\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"PathRequestFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"path\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"single text field\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"SingleTextFieldFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"message box\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"MessageBoxFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"json input\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"JsonInputFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"json\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"text block\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"TextBlockFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"text\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"node selector\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"NodeSelectorFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"build table\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"selected node\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"get path\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"add file\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"remove file\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"name and path\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"NameAndPathFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"name and path\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"document settings\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"DocumentSettingsFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"confirm box\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"ConfirmBox\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"runtime settings\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"RuntimeSettingsFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"pin profile\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"PinProfileFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 }\r\n                                             ]\r\n                               },\r\n                               {\r\n                                   \"kind\":  \"group\",\r\n                                   \"name\":  \"page layout group\",\r\n                                   \"nodes\":  [\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"canvas layout\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"CanvasLayoutFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"menu\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab ribbon\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"workspace\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"canvas\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"canvas size change\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"menu tabs window\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"MenuTabsWindow\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"menu div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tabs div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"content div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"content size change\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"size change\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"left menu layout\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"LeftMenuLayoutFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"screen areas\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"left menu\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"left column\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"area one\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"area two\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        },\r\n                                                                        {\r\n                                                                            \"interface\":  \"messages\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"vertical\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"horizontal\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"size change\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"column-main layout\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"ColumnMainFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"left column\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"main area\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"size change\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"vertical menu tabs content\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"VerticalMenuTabsContent\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"menu div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tabs div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"content div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"content size change\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"modal div\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"size change\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"ViewSizeChange\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 }\r\n                                             ]\r\n                               },\r\n                               {\r\n                                   \"kind\":  \"group\",\r\n                                   \"name\":  \"menus and tab ribbons\",\r\n                                   \"nodes\":  [\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"tab ribbon\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"TabRibbonFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        },\r\n                                                                        {\r\n                                                                            \"interface\":  \"tab\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab new\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabName\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab rename\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabRename\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab select\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabName\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab remove\",\r\n                                                                                             \"kind\":  \"input\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabName\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab request to close\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabName\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"tab request to select\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"TabName\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"old top menu\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"TopMenuFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save as\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save all\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"accept changes\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"sync\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"recalibrate\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make app page\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make build lib\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"analyze model\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"AnyPayload\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"run app page\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"run app in iframe\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"vertical\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"horizontal\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show code editor\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"top menu\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"TopMenuFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save as\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"save all\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"accept changes\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"sync model\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"recalibrate\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"grid on-off\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make app page\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make build lib\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"run app page\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"run app in iframe\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show settings\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"set save point\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"back to save point\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"side menu\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"SideMenuFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"vertical\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"horizontal\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show code editor\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show app\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 },\r\n                                                 {\r\n                                                     \"kind\":  \"source\",\r\n                                                     \"name\":  \"vscode side menu\",\r\n                                                     \"factory\":  {\r\n                                                                     \"path\":  \"./index.js\",\r\n                                                                     \"function\":  \"VscodeSideMenuFactory\"\r\n                                                                 },\r\n                                                     \"interfaces\":  [\r\n                                                                        {\r\n                                                                            \"interface\":  \"dom\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"div\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"DomElement\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        },\r\n                                                                        {\r\n                                                                            \"interface\":  \"menu items\",\r\n                                                                            \"pins\":  [\r\n                                                                                         {\r\n                                                                                             \"name\":  \"accept changes\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"recalibrate\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"sync\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"grid on-off\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"show settings\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"set save point\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"back to save point\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make lib\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         },\r\n                                                                                         {\r\n                                                                                             \"name\":  \"make app\",\r\n                                                                                             \"kind\":  \"output\",\r\n                                                                                             \"contract\":  {\r\n                                                                                                              \"role\":  \"follower\",\r\n                                                                                                              \"payload\":  \"UiEvent\"\r\n                                                                                                          }\r\n                                                                                         }\r\n                                                                                     ]\r\n                                                                        }\r\n                                                                    ]\r\n                                                 }\r\n                                             ]\r\n                               }\r\n                           ]\r\n             },\r\n    \"types\":  {\r\n                  \"AnyPayload\":  {\r\n                                     \"kind\":  \"primitive\",\r\n                                     \"summary\":  \"Opaque payload used when shape is not stabilized yet.\"\r\n                                 },\r\n                  \"Void\":  {\r\n                               \"kind\":  \"object\",\r\n                               \"summary\":  \"No payload.\",\r\n                               \"fields\":  {\r\n\r\n                                          }\r\n                           },\r\n                  \"UiEvent\":  {\r\n                                  \"kind\":  \"external\",\r\n                                  \"summary\":  \"Browser UI event object.\",\r\n                                  \"external\":  {\r\n                                                   \"library\":  \"dom\",\r\n                                                   \"symbol\":  \"Event\"\r\n                                               }\r\n                              },\r\n                  \"DomElement\":  {\r\n                                     \"kind\":  \"external\",\r\n                                     \"summary\":  \"DOM element reference.\",\r\n                                     \"external\":  {\r\n                                                      \"library\":  \"dom\",\r\n                                                      \"symbol\":  \"HTMLElement\"\r\n                                                  }\r\n                                 },\r\n                  \"TabName\":  {\r\n                                  \"kind\":  \"primitive\",\r\n                                  \"summary\":  \"Tab name.\"\r\n                              },\r\n                  \"TabRename\":  {\r\n                                    \"kind\":  \"object\",\r\n                                    \"summary\":  \"Tab rename payload.\",\r\n                                    \"fields\":  {\r\n                                                   \"oldName\":  {\r\n                                                                   \"vmbluType\":  \"string\"\r\n                                                               },\r\n                                                   \"newName\":  {\r\n                                                                   \"vmbluType\":  \"string\"\r\n                                                               }\r\n                                               },\r\n                                    \"required\":  [\r\n                                                     \"oldName\",\r\n                                                     \"newName\"\r\n                                                 ]\r\n                                },\r\n                  \"Rect\":  {\r\n                               \"kind\":  \"object\",\r\n                               \"summary\":  \"Rectangle or size-like object.\",\r\n                               \"fields\":  {\r\n                                              \"x\":  {\r\n                                                        \"vmbluType\":  \"number\"\r\n                                                    },\r\n                                              \"y\":  {\r\n                                                        \"vmbluType\":  \"number\"\r\n                                                    },\r\n                                              \"w\":  {\r\n                                                        \"vmbluType\":  \"number\"\r\n                                                    },\r\n                                              \"h\":  {\r\n                                                        \"vmbluType\":  \"number\"\r\n                                                    }\r\n                                          }\r\n                           },\r\n                  \"ViewSizeChange\":  {\r\n                                         \"kind\":  \"object\",\r\n                                         \"summary\":  \"View/canvas resize payload.\",\r\n                                         \"fields\":  {\r\n                                                        \"id\":  {\r\n                                                                   \"vmbluType\":  \"AnyPayload\"\r\n                                                               },\r\n                                                        \"rect\":  {\r\n                                                                     \"vmbluType\":  \"Rect\"\r\n                                                                 },\r\n                                                        \"dpr\":  {\r\n                                                                    \"vmbluType\":  \"number\"\r\n                                                                }\r\n                                                    },\r\n                                         \"required\":  [\r\n                                                          \"rect\"\r\n                                                      ]\r\n                                     }\r\n              }\r\n}\r\n";
+var uiSvelte_mod = "{\n  \"header\": {\n    \"version\": \"no version\",\n    \"created\": \"4/2/2024, 12:51:45 PM\",\n    \"saved\": \"12/16/2025, 1:00:06 PM\",\n    \"utc\": \"2025-12-16T12:00:06.433Z\",\n    \"runtime\": \"./runtime.js\"\n  },\n  \"factories\": [\n    {\n      \"path\": \"./index.js\",\n      \"function\": \"ContextMenuFactory\"\n    }\n  ],\n  \"types\": {\n    \"AnyPayload\": {\n      \"kind\": \"primitive\",\n      \"summary\": \"Opaque payload used when shape is not stabilized yet.\"\n    },\n    \"Void\": {\n      \"kind\": \"object\",\n      \"summary\": \"No payload.\",\n      \"fields\": {}\n    },\n    \"UiEvent\": {\n      \"kind\": \"external\",\n      \"summary\": \"Browser UI event object.\",\n      \"external\": {\n        \"library\": \"dom\",\n        \"symbol\": \"Event\"\n      }\n    },\n    \"DomElement\": {\n      \"kind\": \"external\",\n      \"summary\": \"DOM element reference.\",\n      \"external\": {\n        \"library\": \"dom\",\n        \"symbol\": \"HTMLElement\"\n      }\n    },\n    \"TabName\": {\n      \"kind\": \"primitive\",\n      \"summary\": \"Tab name.\"\n    },\n    \"TabRename\": {\n      \"kind\": \"object\",\n      \"summary\": \"Tab rename payload.\",\n      \"fields\": {\n        \"oldName\": {\n          \"vmbluType\": \"string\"\n        },\n        \"newName\": {\n          \"vmbluType\": \"string\"\n        }\n      },\n      \"required\": [\n        \"oldName\",\n        \"newName\"\n      ]\n    },\n    \"Rect\": {\n      \"kind\": \"object\",\n      \"summary\": \"Rectangle or size-like object.\",\n      \"fields\": {\n        \"x\": {\n          \"vmbluType\": \"number\"\n        },\n        \"y\": {\n          \"vmbluType\": \"number\"\n        },\n        \"w\": {\n          \"vmbluType\": \"number\"\n        },\n        \"h\": {\n          \"vmbluType\": \"number\"\n        }\n      }\n    },\n    \"ViewSizeChange\": {\n      \"kind\": \"object\",\n      \"summary\": \"View/canvas resize payload.\",\n      \"fields\": {\n        \"id\": {\n          \"vmbluType\": \"AnyPayload\"\n        },\n        \"rect\": {\n          \"vmbluType\": \"Rect\"\n        },\n        \"dpr\": {\n          \"vmbluType\": \"number\"\n        }\n      },\n      \"required\": [\n        \"rect\"\n      ]\n    }\n  },\n  \"root\": {\n    \"kind\": \"group\",\n    \"name\": \"\",\n    \"nodes\": [\n      {\n        \"kind\": \"group\",\n        \"name\": \"modal boxes\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"context menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ContextMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"context menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"path request\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"PathRequestFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"path\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"folder.get\",\n                    \"kind\": \"request\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": {\n                        \"request\": {\n                          \"request\": \"AnyPayload\",\n                          \"reply\": \"AnyPayload\"\n                        },\n                        \"reply\": \"AnyPayload\"\n                      }\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"single text field\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"SingleTextFieldFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"message box\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"MessageBoxFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"json input\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"JsonInputFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"json\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"text block\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TextBlockFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"text\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"node selector\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"NodeSelectorFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"build table\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"selected node\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"get path\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"add file\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"remove file\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"name and path\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"NameAndPathFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"name and path\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"folder.get\",\n                    \"kind\": \"request\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": {\n                        \"request\": {\n                          \"request\": \"AnyPayload\",\n                          \"reply\": \"AnyPayload\"\n                        },\n                        \"reply\": \"AnyPayload\"\n                      }\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"document settings\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"DocumentSettingsFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"confirm box\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ConfirmBox\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"runtime settings\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"RuntimeSettingsFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"pin profile\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"PinProfileFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"kind\": \"group\",\n        \"name\": \"page layout group\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"canvas layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"CanvasLayoutFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab ribbon\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"workspace\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"canvas\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"canvas size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"menu tabs window\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"MenuTabsWindow\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tabs div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"left menu layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"LeftMenuLayoutFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"screen areas\",\n                \"pins\": [\n                  {\n                    \"name\": \"left menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"left column\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"area one\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"area two\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"messages\",\n                \"pins\": [\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"column-main layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ColumnMainFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"left column\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"main area\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"vertical menu tabs content\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"VerticalMenuTabsContent\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tabs div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"kind\": \"group\",\n        \"name\": \"menus and tab ribbons\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"tab ribbon\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TabRibbonFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"tab\",\n                \"pins\": [\n                  {\n                    \"name\": \"tab.new\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.rename\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabRename\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.select\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.remove\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.request to close\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.request to select\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"old top menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TopMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"save\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save as\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save all\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make build lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"analyze model\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app in iframe\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show code editor\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"top menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TopMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"save\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save as\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save all\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync model\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"grid on-off\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make build lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app in iframe\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show settings\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"set save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"back to save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"side menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"SideMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show code editor\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show app\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"vscode side menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"VscodeSideMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"dom\",\n                \"pins\": [\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"menu items\",\n                \"pins\": [\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"grid on-off\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show settings\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"set save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"back to save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}\n";
 
 export { CanvasLayoutFactory, ColumnMainFactory, ConfirmBox, ContextMenuFactory, DocumentSettingsFactory, JsonInputFactory, LeftMenuLayoutFactory, MenuTabsWindow, MessageBoxFactory, NameAndPathFactory, NodeSelectorFactory, PathRequestFactory, PinProfileFactory, RuntimeSettingsFactory, SideMenuFactory, SingleTextFieldFactory, TabRibbonFactory, TextBlockFactory, TopMenuFactory, uiSvelte_mod as UISvelte, VscodeSideMenuFactory };
 //# sourceMappingURL=ui-svelte-bundle.js.map

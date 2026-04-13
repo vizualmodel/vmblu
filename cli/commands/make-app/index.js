@@ -50,11 +50,11 @@ export const handler = async (argv) => {
   // Build the model root via the compiler.
   const arl = new ARL(modelPath);
   const model = new ModelBlueprint(arl);
-  await model.handleSourceProfile();
   const compiler = new ModelCompiler(new UIDGenerator());
+  await compiler.refreshRaw(model);
 
-  // Compile the model into a root node.
-  const root = await compiler.getRoot(model);
+  // Compile the model into a root node using the current compiler API.
+  const root = model.raw?.root ? compiler.compileRawNode(model, model.raw.root) : null;
   if (!root) {
     console.error('Failed to compile model root.');
     process.exit(1);

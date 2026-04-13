@@ -109,7 +109,7 @@ export const mouseUpHandling = {
                 pad.endDrag()
                 pad.unHighLightRoutes()
 
-                this.doEdit(tx,'padDrag', {pad: hit.pad, oldPos: state.modo.pos, oldWires: state.modo.wires, newPos:{x:pad.rect.x, y:pad.rect.y}, newWires: pad.copyWires()})
+                this.doEdit(tx,'padDrag', {pad, oldPos: state.modo.pos, oldWires: state.modo.wires, newPos:{x:pad.rect.x, y:pad.rect.y}, newWires: pad.copyWires()})
                 break
 
             case doing.tackDrag:

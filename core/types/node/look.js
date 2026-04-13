@@ -111,7 +111,7 @@ Look.prototype = {
 
     getTextWidth(str, multi=false) {
 
-        if (!multi) return multi ? this.getMultiTextWidth(str) : ctxOffscreen.measureText(str).width
+        return multi ? this.getMultiTextWidth(str) : ctxOffscreen.measureText(str).width
     },
 
     getMultiTextWidth(str) {
@@ -122,7 +122,7 @@ Look.prototype = {
         let width = ctxOffscreen.measureText(pre + '[').width + ctxOffscreen.measureText(']'+ post).width
 
         // change font
-        const savedFont = ctx.font
+        const savedFont = ctxOffscreen.font
         ctxOffscreen.font = style.pin.fMulti
 
         // measure the multi text

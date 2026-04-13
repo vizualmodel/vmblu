@@ -1,6 +1,5 @@
 import {Runtime} from './runtime.js'
 import {RuntimeNode} from './runtime-node.js'
-import {RuntimeFilter} from './runtime-filter.js'
 
 export let runtime = null
 
@@ -17,16 +16,6 @@ export function scaffold(nodeList, filterList = []) {
         const actor = new RuntimeNode( rawNode )
 
         // save the node in the runtime
-        runtime.actors.push( actor )
-    }
-
-    // create the routers
-    for(const rawFilter of filterList) {
-
-        // create the runtime router
-        const actor = new RuntimeFilter( rawFilter )
-
-        // save in the actors list
         runtime.actors.push( actor )
     }
 

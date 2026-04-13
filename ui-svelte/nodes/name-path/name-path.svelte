@@ -2,6 +2,7 @@
 import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
 import LabelInputField from '../../fragments/label-input-field.svelte'
+import PathInputField from '../../fragments/path-input-field.svelte'
 // import SameLine from '../../fragments/same-line.svelte'
 // import Label from '../../fragments/label.svelte'
 // import TextField from '../../fragments/text-field.svelte'
@@ -20,6 +21,17 @@ let box = {
 let _name = ''
 let _path = ''
 let _regex = ''
+let _startFolder = null
+let _fileExtensions = ''
+
+async function getFolder(path = '') {
+    try {
+        return await tx.request('folder.get', {startFolder: _startFolder, path})
+    }
+    catch {
+        return {folders: [], files: []}
+    }
+}
 
 function checkPath(str) {
                 
@@ -36,7 +48,7 @@ onMount( () => {
 
 export const handlers = {
 
-    onNameAndPath({title, pos, name, path, regex, ok, cancel, open, trash}) {
+    onNameAndPath({title, pos, name, path, regex, ok, cancel, open, trash, startFolder = null, fileExtensions = ''}) {
 
         // The box 
         box.title = title,
@@ -56,6 +68,8 @@ export const handlers = {
         _name = name
         _path = path
         _regex = regex
+        _startFolder = startFolder
+        _fileExtensions = fileExtensions
 
         // show the popup
         box.show(pos)
@@ -67,6 +81,5 @@ export const handlers = {
 </style>
 <PopupBox box={box}>
     <LabelInputField label="Name" style="width: 3rem;" bind:input={_name} check={null} />
-    <LabelInputField label="Path" style="width: 3rem;" bind:input={_path} check={checkPath} />
+    <PathInputField label="Path" style="width: 3rem;" bind:input={_path} check={checkPath} getFolder={getFolder} fileExtensions={_fileExtensions} />
 </PopupBox>
-

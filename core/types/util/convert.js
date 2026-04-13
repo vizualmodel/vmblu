@@ -178,7 +178,6 @@ export const convert = {
                 direction === "x" ? x += length : y += length
                 wire.push({x,y});
             }
-        
             return wire;           
         }
         
@@ -201,7 +200,6 @@ export const convert = {
                 direction === "x" ? x -= length : y -= length
                 wire.push({x,y});
             }
-        
             return wire.reverse();          
         }
         else return []

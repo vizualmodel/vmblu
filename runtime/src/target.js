@@ -1,7 +1,6 @@
 // The first four bits of the hix are used for the type of the target
 export const HIX_HANDLER =   0x00000000
 export const HIX_REPLY =     0x10000000
-export const HIX_ROUTER =    0x20000000
 export const HIX_TYPE_MASK = 0xF0000000;  // top 4 bits
 export const HIX_MASK =      0x0FFFFFFF;  // lower 28 bits
 
@@ -87,39 +86,6 @@ export const convert = {
             // done 
             return {output, channel, targets: rawTargets}
         }
-    },
-
-    // This function is used for the routertable
-    stringToScope(str) {
-
-        // selector and scope are seperated by a colon
-        let colon = str.indexOf(':')
-        if (colon < 0) return null
-
-        const selector = str.slice(0,colon).trim()
-        const scope = str.slice(colon+1).trim()
-
-        // check
-        if (selector.length == 0 || scope.length == 0) return null
-
-        // get all the targets between " "
-        const regex = /"(?:\\.|[^"\\])*"/g;
-        let matches = scope.match(regex);
-        
-        // split in target strings
-        const targetStringArray = matches ? matches.map(str => str.slice(1, -1).replace(/\\"/g, '"')) : []
-
-        // The array to collect the targets
-        const rawTargets = []
-
-        // do all the target strings
-        for (const  target of targetStringArray) {
-            const rawTarget = convert.stringToTarget(target)
-            if (rawTarget) rawTargets.push(rawTarget)
-        }
-
-        // done 
-        return {selector, scope: rawTargets}
     },
 
     // format: pin name @ node name (uid)

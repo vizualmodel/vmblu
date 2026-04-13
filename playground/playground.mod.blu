@@ -393,6 +393,20 @@
             "interface": "folder",
             "pins": [
               {
+                "name": "folder.get",
+                "kind": "reply",
+                "contract": {
+                  "role": "follower",
+                  "payload": {
+                    "request": {
+                      "request": "AnyPayload",
+                      "reply": "AnyPayload"
+                    },
+                    "reply": "AnyPayload"
+                  }
+                }
+              },
+              {
                 "name": "folder.context menu",
                 "kind": "output",
                 "contract": {
@@ -1557,6 +1571,14 @@
                 }
               },
               {
+                "name": "folder.get",
+                "kind": "request",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "modal div",
                 "kind": "output",
                 "contract": {
@@ -1584,6 +1606,14 @@
                   {
                     "name": "path",
                     "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1655,6 +1685,14 @@
                   {
                     "name": "modal div",
                     "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1857,6 +1895,15 @@
         "connections": [
           {
             "src": {
+              "pin": "folder.get",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "folder.get"
+            }
+          },
+          {
+            "src": {
               "pin": "modal div",
               "node": "path request"
             },
@@ -1880,6 +1927,15 @@
             },
             "dst": {
               "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "folder.get",
+              "node": "name and path"
+            },
+            "dst": {
+              "pin": "folder.get"
             }
           },
           {
@@ -2529,6 +2585,16 @@
         "dst": {
           "pin": "path only",
           "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "folder.get",
+          "node": "popups"
+        },
+        "dst": {
+          "pin": "folder.get",
+          "node": "workspace"
         }
       },
       {

@@ -1,6 +1,7 @@
 import {runtime} from './scaffold.js'
 import {rtFlags} from './runtime.js'
-import {Target, convert, HIX_HANDLER, HIX_ROUTER} from './target.js'
+import {Target, convert, HIX_HANDLER} from './target.js'
+import {normalizeRuntimeSettings} from './runtime-settings.js'
 
 function RX(pin, channel=false) {
 
@@ -15,7 +16,6 @@ function TX(pin, channel=false) {
     this.channel = channel
     this.targets = []
 }
-
 
 // the this is the cell for this function
 function missingHandler(param) {
@@ -50,15 +50,15 @@ export function RuntimeNode({name, uid, factory, inputs, outputs, sx, dx}) {
     // the factory can be called with new if it is a function and if the constructor does **not** point back to the function itself
     this.useNew = shouldUseNew(factory) //factory.prototype?.constructor === factory ? false : true
 
-    // the receive and transmit table
-    this.rxTable = []
-    this.txTable = []
+    // the receive sink and transmit map
+    this.rxSink = []
+    this.txMap = new Map()
 
     // the parameters for the node
     this.sx = sx ?? null;
 
     // the runtime settings
-    this.dx = dx ?? null;
+    this.dx = dx ? normalizeRuntimeSettings(dx) : null;
 
     // set the flags
     this.flags = 0x0; 
@@ -72,26 +72,26 @@ export function RuntimeNode({name, uid, factory, inputs, outputs, sx, dx}) {
     // now set the flags for the node
     this.setFlags()
 
-    // initialise the rx and tx tables
-    this.initRxTxTables( {inputs, outputs})
+    // initialise the rx sink and tx map
+    this.initRxTx({inputs, outputs})
 }
 RuntimeNode.prototype = {
 
     setFlags() {
 
-        if (! this.dx?.flags) return
+        if (!this.dx) return
 
-        if (this.dx.flags.includes('LOGMSG')) this.flags |= rtFlags.LOGMSG
+        if (this.dx.logMessages) this.flags |= rtFlags.LOGMSG
     },
 
-    initRxTxTables({inputs,outputs} ) {
+    initRxTx({inputs, outputs}) {
 
         // handle the inputs
         for ( const inputString of inputs) {
 
             // convert the string to an input
             const input = convert.stringToInput(inputString)
-            if (input) this.rxTable.push(new RX(input.pin, input.channel));
+            if (input) this.rxSink.push(new RX(input.pin, input.channel))
         }
 
         // handle the outputs
@@ -107,7 +107,7 @@ RuntimeNode.prototype = {
             const tx = new TX(raw.output, raw.channel)
 
             // save
-            this.txTable.push(tx)
+            this.txMap.set(tx.pin, tx)
 
             // add the targets
             for (const rawTarget of raw.targets) {
@@ -140,7 +140,7 @@ RuntimeNode.prototype = {
             else throw err;
         }
 
-        // set the handlers in the rx Table
+        // set the handlers in the rx sink
         this.addHandlersForCell()
     },
 
@@ -148,7 +148,7 @@ RuntimeNode.prototype = {
 
         // if there is no cell 
         if (!this.cell) {
-            if (this.rxTable?.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
+            if (this.rxSink.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
             return;
         }
 
@@ -183,7 +183,7 @@ RuntimeNode.prototype = {
         });
 
         // check that every message has a handler
-        this.rxTable.forEach(rx => {
+        for (const rx of this.rxSink) {
 
             // if no handler
             if (!rx.handler) {
@@ -194,10 +194,10 @@ RuntimeNode.prototype = {
                 // and use a default handler
                 rx.handler = missingHandler;
             }
-        });
+        }
     },
 
-    // given a function name, check if it corresponds to a pin in the rx table
+    // given a function name, check if it corresponds to a pin in the rx sink
     getRx(functionName) {
 
         // first try the old names...
@@ -206,21 +206,24 @@ RuntimeNode.prototype = {
             // get the name without the prefix
             const handlerName = functionName.slice(3)
 
-            // find the entry in the table and set the handler
-            return this.rxTable.find( rx => rx.pin == handlerName)
+            // find the entry in the sink
+            return this.rxSink.find(rx => rx.pin == handlerName)
         }
 
-        // try the new camelcased name
-        return this.rxTable.find( rx => convert.pinToHandler(rx.pin) == functionName)
+        // try the new camelcased name by scanning the known rx handlers once
+        for (const rx of this.rxSink) {
+            if (convert.pinToHandler(rx.pin) == functionName) return rx
+        }
+        return null
     },
 
     resolveUIDs(actors) {
 
         // for every output pin
-        this.txTable.forEach( tx => {
+        for (const tx of this.txMap.values()) {
 
             // for every pin connected to that output pin
-            tx.targets.forEach( target => {
+            for (const target of tx.targets) {
 
                 // find the node
                 target.actor = actors.find( actor => actor.uid == target.uid)
@@ -229,29 +232,16 @@ RuntimeNode.prototype = {
                 if (!target.actor) return console.error(`** ERROR ** target node ${target.uid} in ${this.name} not found`)
 
                 // find the index of the handler for a node - note that target.channel has already been set
-                target.hix = target.actor.factory   ? HIX_HANDLER | target.actor.rxTable.findIndex( rx => rx.pin == target.pin) 
-                                                    : HIX_ROUTER | target.actor.scopeTable.findIndex( scope => scope.selector == target.pin)
-            })
-        })
+                const hix = target.actor.rxSink.findIndex(rx => rx.pin == target.pin)
+                if (hix < 0) return console.error(`** ERROR ** target pin ${target.pin} in ${target.actor.name} not found`)
+                target.hix = HIX_HANDLER | hix
+            }
+        }
     },
 
-    // when sending a message find the targets for the message
-    findTargets(pin) {
-
-        //check
-        if (!pin) return []
-
-        // find the pin
-        const tx = this.txTable.find( tx => tx.pin == pin)
-
-        // check - targets is always an array, but it can be empty
-        if (tx) return tx.targets
-
-        // not found - give a warning
-        console.warn(`** NO OUTPUT PIN ** Node "${this.name}" pin: "${pin}"`, this.txTable)  
-        
-        //..and return null
-        return [] 
+    findTx(pin) {
+        if (!pin) return null
+        return this.txMap.get(pin) ?? null
     },
 
     // return an object with the functions for the cell - done like this to avoid direct access to source !
@@ -261,42 +251,41 @@ RuntimeNode.prototype = {
 
         return {
             // get the output pin from the message
-            get pin() {return source.msg?.pin},
+            get pin() {return source.msg?.txPin},
 
             // returns the local reference of the message
             send(pin, param) {
 
                 // check
-                if (!pin) return 0
+                if (pin) {
 
-                // get the targets for this pin
-                const targets = source.findTargets(pin)
+                    // get the tx entry for this pin
+                    const tx = source.findTx(pin)
 
-                // send
-                return runtime.sendTo(targets, source, pin, param)
+                    // send if output pin exists
+                    if (tx) return runtime.sendTo(tx, source, param)
+                }
+
+                // no pin or no tx
+                console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
+                return 0
             },
 
             // sends a request and returns a promise or an array of promises
             request(pin, param, timeout = 0) {
 
                 // check
-                if (!pin) return null
+                if (pin) {
 
-                // get the targets for this pin
-                const tx = source.txTable.find( tx => tx.pin == pin)
+                    // get the targets for this pin
+                    const tx = source.findTx(pin)
 
-                // check
-                if (tx?.targets.length) return runtime.requestFrom(tx.targets, source, pin, param, timeout)
-
-                // give an error message
-                if (tx) {
-                    console.warn(`** PIN IS NOT CONNECTED ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
-                    return runtime.reject('Not connected')
+                    // check
+                    if (tx) return runtime.requestFrom(tx, source, param, timeout)
                 }
-                else {
-                    console.warn(`** NO SUCH OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
-                    return runtime.reject('No such output pin')
-                }
+
+                console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)  
+                return runtime.reject('No such output pin')
             },
 
             // Returns a message to the sender over the backchannel
@@ -328,44 +317,62 @@ RuntimeNode.prototype = {
                     send(pin, param) {
 
                         // check
-                        if (!pin) return 0
+                        if (pin) {
 
-                        // get the targets for this pin
-                        const targets = source.findTargets(pin)
+                            // get the tx entry for this pin
+                            const tx = source.findTx(pin)
 
-                        // select the target with the right name
-                        const actualTarget = targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+                            // check
+                            if (tx) {
 
-                        // send
-                        return actualTarget ? runtime.sendTo([actualTarget], source, pin, param) : 0
+                                // select the target with the right name
+                                const actualTarget = tx.targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+
+                                if (actualTarget) {
+
+                                    const txCopy = new TX(tx.pin, tx.channel)
+                                    txCopy.targets = [actualTarget]
+                                    return runtime.sendTo(txCopy, source, param)
+                                }
+
+                                console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
+                                return 0
+                            }
+                        }
+
+                        // missing / inexesting pin
+                        console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
+                        return 0
                     },
 
                     // sends a request and returns a promise or an array of promises
                     request(pin, param, timeout = 0) {
 
                         // check
-                        if (!pin) return null
+                        if (pin) {
 
-                        // get the targets for this pin
-                        const tx = source.txTable.find( tx => tx.pin == pin)
+                            // get the targets for this pin
+                            const tx = source.findTx(pin)
 
-                        // check
-                        if (tx?.targets.length) {
+                            // check
+                            if (tx) {
 
-                            const actualTarget = tx.targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+                                const actualTarget = tx.targets.find( target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
 
-                            if (actualTarget) return runtime.requestFrom([actualTarget], source, pin, param, timeout)
+                                if (actualTarget) {
+
+                                    const txCopy = new TX(tx.pin, tx.channel)
+                                    txCopy.targets = [actualTarget]
+                                    return runtime.requestFrom(txCopy, source, param, timeout)
+                                }
+
+                                console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
+                                return  runtime.reject('selected node not connected')
+                            }
                         }
 
-                        // give an error message
-                        if (tx) {
-                            console.warn(`** PIN IS NOT CONNECTED ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
-                            return runtime.reject('Not connected')
-                        }
-                        else {
-                            console.warn(`** NO SUCH OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txTable)  
-                            return runtime.reject('No such output pin')
-                        }
+                        console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)  
+                        return runtime.reject('No such output pin')
                     },
                 }
             }

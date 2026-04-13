@@ -78,6 +78,14 @@
                 }
               },
               {
+                "name": "model.save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "sync links",
                 "kind": "output",
                 "contract": {
@@ -96,6 +104,14 @@
               {
                 "name": "open js file",
                 "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "folder.get",
+                "kind": "reply",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
@@ -728,6 +744,14 @@
                   "role": "follower",
                   "payload": "any"
                 }
+              },
+              {
+                "name": "folder.get",
+                "kind": "request",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
               }
             ]
           }
@@ -749,6 +773,14 @@
                   {
                     "name": "path",
                     "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -820,6 +852,14 @@
                   {
                     "name": "modal div",
                     "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1022,6 +1062,15 @@
         "connections": [
           {
             "src": {
+              "pin": "folder.get",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "folder.get"
+            }
+          },
+          {
+            "src": {
               "pin": "modal div",
               "node": "path request"
             },
@@ -1045,6 +1094,15 @@
             },
             "dst": {
               "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "folder.get",
+              "node": "name and path"
+            },
+            "dst": {
+              "pin": "folder.get"
             }
           },
           {
@@ -1364,6 +1422,16 @@
       },
       {
         "src": {
+          "pin": "model.save",
+          "node": "message broker"
+        },
+        "dst": {
+          "pin": "model.save",
+          "node": "model manager"
+        }
+      },
+      {
+        "src": {
           "pin": "sync links",
           "node": "message broker"
         },
@@ -1639,6 +1707,16 @@
         },
         "dst": {
           "pin": "modal div",
+          "node": "message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "folder.get",
+          "node": "popups"
+        },
+        "dst": {
+          "pin": "folder.get",
           "node": "message broker"
         }
       },

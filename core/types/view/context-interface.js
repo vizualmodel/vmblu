@@ -73,7 +73,7 @@ const cm = {
 		const entry = this.choices.find( c => c.text == "paste pins")
 		if (entry) {
 			entry.state = "disabled"
-			this.tx.request('clipboard get', cm.doc)
+			this.tx.request('clipboard.get', cm.doc)
 			.then( clipboard => {
 				entry.state = clipboard.selection.isPinSelection() ? "enabled" : "disabled";
 			})

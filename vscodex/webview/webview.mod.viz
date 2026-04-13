@@ -17,10 +17,10 @@
       {
         "kind": "source",
         "name": "message broker",
-        "rect": "x 244 y 746 w 200 h 326",
+        "rect": "x 244 y 746 w 200 h 356",
         "interfaces": [
           {
-            "interface": "(38) document",
+            "interface": "(48) document",
             "pins": [
               "(21 R)set document",
               "(20 R)open document",
@@ -29,16 +29,18 @@
             ]
           },
           {
-            "interface": "(39) edit",
+            "interface": "(49) edit",
             "pins": [
               "(37 R)reload model",
+              "(47 R)model.save",
               "(36 R)sync links",
               "(25 R)new edit",
-              "(26 R)open js file"
+              "(26 R)open js file",
+              "(42 R)folder.get"
             ]
           },
           {
-            "interface": "(40) divs",
+            "interface": "(50) divs",
             "pins": [
               "(29 L)canvas resize",
               "(28 L)canvas",
@@ -47,7 +49,7 @@
             ]
           },
           {
-            "interface": "(41) clipboard",
+            "interface": "(51) clipboard",
             "pins": [
               "(31 R)clipboard.local",
               "(32 R)clipboard.remote",
@@ -174,7 +176,7 @@
       {
         "kind": "dock",
         "name": "clipboard",
-        "rect": "x 647 y 956 w 150 h 116",
+        "rect": "x 654 y 986 w 150 h 116",
         "interfaces": [
           {
             "interface": "(0)",
@@ -192,7 +194,7 @@
       {
         "kind": "group",
         "name": "popups",
-        "rect": "x 1280 y 416 w 150 h 176",
+        "rect": "x 1280 y 416 w 150 h 191",
         "view": {
           "state": "closed",
           "rect": "x 1133 y -234 w 1062 h 1232",
@@ -211,7 +213,8 @@
               "(5 L)node prompt",
               "(8 L)context menu",
               "(4 L)name and path",
-              "(2 L)modal div"
+              "(2 L)modal div",
+              "(12 R)folder.get"
             ]
           }
         ],
@@ -225,18 +228,20 @@
           "(5 L)x -101 y 388 w 98 h 15|node prompt",
           "(8 L)x -82 y 768 w 103 h 15|context menu",
           "(4 L)x -82 y 261 w 110 h 15|name and path",
-          "(2 R)x 791 y 206 w 81 h 15|modal div"
+          "(2 R)x 791 y 206 w 81 h 15|modal div",
+          "(12 R)x 793 y 164 w 71 h 15|folder.get"
         ],
         "nodes": [
           {
             "kind": "dock",
             "name": "path request",
-            "rect": "x 199 y 129 w 150 h 56",
+            "rect": "x 199 y 129 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)path",
+                  "(4 R)folder.get",
                   "(2 R)modal div"
                 ]
               }
@@ -259,13 +264,14 @@
           {
             "kind": "dock",
             "name": "name and path",
-            "rect": "x 199 y 241 w 150 h 56",
+            "rect": "x 199 y 241 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)name and path",
-                  "(2 R)modal div"
+                  "(2 R)modal div",
+                  "(4 R)folder.get"
                 ]
               }
             ]
@@ -364,6 +370,11 @@
         ],
         "routes": [
           {
+            "from": "(pin 4) folder.get @ path request",
+            "to": "(pad 12) folder.get",
+            "wire": "x 222.0 y 0.0 x 222.0"
+          },
+          {
             "from": "(pin 2) modal div @ path request",
             "to": "(bus) div",
             "wire": "x 197.7"
@@ -377,6 +388,11 @@
             "from": "(pin 2) modal div @ name and path",
             "to": "(bus) div",
             "wire": "x 197.7"
+          },
+          {
+            "from": "(pin 4) folder.get @ name and path",
+            "to": "(pad 12) folder.get",
+            "wire": "x 53.3 y -127.0 x 390.7"
           },
           {
             "from": "(pin 2) modal div @ pin profile",
@@ -492,32 +508,37 @@
       {
         "from": "(pin 21) set document @ message broker",
         "to": "(pin 39) top level view @ view manager",
-        "wire": "x 56.0 y -195.0 x 142.0"
+        "wire": "x 97.0 y -195.0 x 101.0"
       },
       {
         "from": "(pin 21) set document @ message broker",
         "to": "(pin 78) model.set @ model manager",
-        "wire": "x 56.0 y -360.0 x 425.0"
+        "wire": "x 97.0 y -360.0 x 384.0"
+      },
+      {
+        "from": "(pin 47) model.save @ message broker",
+        "to": "(pin 64) model.save @ model manager",
+        "wire": "x 45.0 y -465.0 x 436.0"
       },
       {
         "from": "(pin 36) sync links @ message broker",
         "to": "(pin 75) sync links @ model manager",
-        "wire": "x 425.0 y -675.0 x 56.0"
+        "wire": "x 421.0 y -690.0 x 60.0"
       },
       {
         "from": "(pin 29) canvas resize @ message broker",
         "to": "(pin 38) size change @ view manager",
-        "wire": "x -43.0 y -285.0 x 441.0"
+        "wire": "x -43.0 y -315.0 x 441.0"
       },
       {
         "from": "(pin 31) clipboard.local @ message broker",
         "to": "(pin 16) local @ clipboard",
-        "wire": "x 104.6 y 0.0 x 98.4"
+        "wire": "x 104.6 y 0.0 x 105.4"
       },
       {
         "from": "(pin 33) clipboard.switched @ message broker",
         "to": "(pin 14) switched @ clipboard",
-        "wire": "x 104.6 y 0.0 x 98.4"
+        "wire": "x 104.6 y 0.0 x 105.4"
       },
       {
         "from": "(pin 17) redox.doit @ view manager",
@@ -537,7 +558,7 @@
       {
         "from": "(pin 37) canvas @ view manager",
         "to": "(pin 28) canvas @ message broker",
-        "wire": "x -454.0 y 315.0 x 56.0"
+        "wire": "x -454.0 y 345.0 x 56.0"
       },
       {
         "from": "(pin 25) node settings (sx) @ view manager",
@@ -572,17 +593,17 @@
       {
         "from": "(pin 26) open source file @ view manager",
         "to": "(pin 26) open js file @ message broker",
-        "wire": "x -60.0 y 120.0 x -138.0"
+        "wire": "x -60.0 y 135.0 x -138.0"
       },
       {
         "from": "(pin 44) clipboard.get @ view manager",
         "to": "(pin 18) get @ clipboard",
-        "wire": "x -46.5 y 180.0 x 51.5"
+        "wire": "x -46.5 y 210.0 x 58.5"
       },
       {
         "from": "(pin 45) clipboard.set @ view manager",
         "to": "(pin 17) set @ clipboard",
-        "wire": "x -33.1 y 150.0 x 38.1"
+        "wire": "x -33.1 y 180.0 x 45.1"
       },
       {
         "from": "(pin 63) save point.confirm @ model manager",
@@ -592,7 +613,7 @@
       {
         "from": "(pin 88) open source file @ model manager",
         "to": "(pin 26) open js file @ message broker",
-        "wire": "x -443.0 y 540.0 x -38.0"
+        "wire": "x -450.0 y 555.0 x -31.0"
       },
       {
         "from": "(pin 60) model.root @ model manager",
@@ -612,7 +633,7 @@
       {
         "from": "(pin 86) redox.done @ model manager",
         "to": "(pin 25) new edit @ message broker",
-        "wire": "x -31.0 y 360.0 x -450.0"
+        "wire": "x -36.0 y 375.0 x -445.0"
       },
       {
         "from": "(pin 84) pin profile @ model manager",
@@ -627,22 +648,27 @@
       {
         "from": "(pin 15) remote @ clipboard",
         "to": "(pin 32) clipboard.remote @ message broker",
-        "wire": "x -98.6 y 0.0 x -104.4"
+        "wire": "x -105.6 y 0.0 x -104.4"
       },
       {
         "from": "(pin 13) switch @ clipboard",
         "to": "(pin 34) clipboard.switch @ message broker",
-        "wire": "x -98.6 y 0.0 x -104.4"
+        "wire": "x -105.6 y 0.0 x -104.4"
       },
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 30) modal div @ message broker",
-        "wire": "x -41.0 y 527.5 x -1038.0 y -122.5 x 43.0"
+        "wire": "x -41.0 y 560.5 x -1038.0 y -125.5 x 43.0"
+      },
+      {
+        "from": "(pin 12) folder.get @ popups",
+        "to": "(pin 42) folder.get @ message broker",
+        "wire": "x 40.0 y 345.0 x -1026.0"
       },
       {
         "from": "(pin 2) div @ vscode side menu",
         "to": "(pin 27) floating menu @ message broker",
-        "wire": "x -71.0 y 795.0 x 71.0"
+        "wire": "x -71.0 y 825.0 x 71.0"
       },
       {
         "from": "(pin 5) sync @ vscode side menu",
@@ -682,12 +708,12 @@
       {
         "from": "(pin 4) recalibrate @ vscode side menu",
         "to": "(pin 41) recalibrate @ view manager",
-        "wire": "x 88.0 y 270.0 x 110.0"
+        "wire": "x 140.0 y 270.0 x 58.0"
       },
       {
         "from": "(pin 6) grid on-off @ vscode side menu",
         "to": "(pin 42) grid on-off @ view manager",
-        "wire": "x 77.0 y 300.0 x 121.0"
+        "wire": "x 128.0 y 300.0 x 70.0"
       }
     ]
   }

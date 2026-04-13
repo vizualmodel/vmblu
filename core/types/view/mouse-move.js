@@ -177,15 +177,9 @@ export const mouseMoveHandling = {
                     // do the edit
                     this.doEdit(tx,'extrudePad',{view: this, pos: xyLocal})
 
-                    // only switch state if the extrusion was successfull
-                    if (this.state.pad) {
-
-                        // state switch
-                        this.stateSwitch(doing.padDrag)
-
-                        // highlight the pad 
-                        for (const route of this.state.pad.routes) route.highLight()
-                    }
+                    // state switch
+                    this.stateSwitch(doing.padDrag)
+                    
                     // done
                     return true
                 }

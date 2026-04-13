@@ -17,7 +17,7 @@
       {
         "kind": "source",
         "name": "application launcher",
-        "rect": "x 198 y -12 w 200 h 86",
+        "rect": "x 141 y 266 w 200 h 86",
         "interfaces": [
           {
             "interface": "(0)",
@@ -48,17 +48,17 @@
       {
         "kind": "source",
         "name": "workspace",
-        "rect": "x 469 y 573 w 185 h 356",
+        "rect": "x 469 y 573 w 185 h 371",
         "interfaces": [
           {
-            "interface": "(36) dom",
+            "interface": "(41) dom",
             "pins": [
               "(2 L)dom.add modal div",
               "(3 R)dom.workspace div"
             ]
           },
           {
-            "interface": "(37) file",
+            "interface": "(42) file",
             "pins": [
               "(5 R)file.selected",
               "(21 R)file.new",
@@ -72,7 +72,7 @@
             ]
           },
           {
-            "interface": "(38) files",
+            "interface": "(43) files",
             "pins": [
               "(11 R)files.get list",
               "(32 R)files.selected",
@@ -80,15 +80,16 @@
             ]
           },
           {
-            "interface": "(39) folder",
+            "interface": "(44) folder",
             "pins": [
+              "(40 R)folder.get",
               "(14 R)folder.context menu",
               "(34 R)folder.renamed",
               "(35 R)folder.deleted"
             ]
           },
           {
-            "interface": "(40) drawer",
+            "interface": "(45) drawer",
             "pins": []
           }
         ]
@@ -368,7 +369,7 @@
       {
         "kind": "group",
         "name": "popups",
-        "rect": "x 2146 y 120 w 150 h 176",
+        "rect": "x 2146 y 120 w 150 h 191",
         "view": {
           "state": "closed",
           "rect": "x 1133 y -234 w 1062 h 1232",
@@ -387,6 +388,7 @@
               "(5 L)node prompt",
               "(8 L)context menu",
               "(4 L)name and path",
+              "(12 R)folder.get",
               "(2 R)modal div"
             ]
           }
@@ -401,18 +403,20 @@
           "(5 L)x -101 y 388 w 98 h 15|node prompt",
           "(8 L)x -82 y 768 w 103 h 15|context menu",
           "(4 L)x -82 y 261 w 110 h 15|name and path",
+          "(12 R)x 700 y 293 w 71 h 15|folder.get",
           "(2 R)x 791 y 206 w 81 h 15|modal div"
         ],
         "nodes": [
           {
             "kind": "dock",
             "name": "path request",
-            "rect": "x 199 y 129 w 150 h 56",
+            "rect": "x 199 y 129 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)path",
+                  "(4 R)folder.get",
                   "(2 R)modal div"
                 ]
               }
@@ -435,13 +439,14 @@
           {
             "kind": "dock",
             "name": "name and path",
-            "rect": "x 199 y 241 w 150 h 56",
+            "rect": "x 199 y 241 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)name and path",
-                  "(2 R)modal div"
+                  "(2 R)modal div",
+                  "(4 R)folder.get"
                 ]
               }
             ]
@@ -540,6 +545,11 @@
         ],
         "routes": [
           {
+            "from": "(pin 4) folder.get @ path request",
+            "to": "(pad 12) folder.get",
+            "wire": "x 35.0 y 129.0 x 316.0"
+          },
+          {
             "from": "(pin 2) modal div @ path request",
             "to": "(bus) div",
             "wire": "x 197.7"
@@ -553,6 +563,11 @@
             "from": "(pin 2) modal div @ name and path",
             "to": "(bus) div",
             "wire": "x 197.7"
+          },
+          {
+            "from": "(pin 4) folder.get @ name and path",
+            "to": "(pad 12) folder.get",
+            "wire": "x 15.0 y 2.0 x 336.0"
           },
           {
             "from": "(pin 2) modal div @ pin profile",
@@ -681,7 +696,7 @@
       {
         "from": "(pin 2) modal div @ message box",
         "to": "(pin 2) dom.add modal div @ workspace",
-        "wire": "x 78.5 y -20.6 x 61.6"
+        "wire": "x 78.5 y -21.0 x 61.5"
       },
       {
         "from": "(pin 4) content size change @ editor page",
@@ -894,9 +909,14 @@
         "wire": "x 45.9 y -52.0 x 129.1"
       },
       {
+        "from": "(pin 12) folder.get @ popups",
+        "to": "(pin 40) folder.get @ workspace",
+        "wire": "x 50.2 y 588.0 x -1692.2"
+      },
+      {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 5) modal div @ editor page",
-        "wire": "x 24.2 y 600.8 x -1291.0 y -598.8 x -50.2"
+        "wire": "x 24.2 y 559.4 x -1291.0 y -572.4 x -50.2"
       }
     ]
   }

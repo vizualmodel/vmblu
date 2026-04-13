@@ -147,7 +147,8 @@ export const handlers = {
 		div.width = Math.floor(mainArea.clientWidth)
 		div.height = Math.floor(mainArea.clientHeight)
 
-		sendMainAreaSize()
+		scheduleMainAreaNotification()
+		//sendMainAreaSize()
 	},
 }
 </script>

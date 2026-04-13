@@ -136,7 +136,7 @@ export const pinNameHandling = {
     withoutPrefix() {
 
         // change a space into a subscript '+' sign
-        const space = '\u208A'
+        const smallPlus = '\u208A'
 
         if (this.pxlen == 0) {
             return this.name
@@ -144,12 +144,11 @@ export const pinNameHandling = {
         else if (this.pxlen > 0) {
 
             let noPrefix = this.name.slice(this.pxlen)
-            return noPrefix[0] != ' ' ? noPrefix : space + noPrefix.trim()
+            return noPrefix[0] !== ' ' ? noPrefix : smallPlus + noPrefix.trim()
         }
         else if (this.pxlen < 0) {
-
-            let noPostfix = this.name.slice(0,this.pxlen-1)
-            return noPostfix.at(-1) != ' ' ? noPostfix : space + noPostfix.trim()
+            let noPostfix = this.name.slice(0,this.pxlen)
+            return noPostfix.at(-1) !== ' ' ? noPostfix : noPostfix.trim() + smallPlus
         }
     },
 

@@ -8,6 +8,13 @@ let rqKey = 1;
 // the callback map
 export const promiseMap = new Map();
 
+export function requestVsCode(verb, payload = {}) {
+	const currentKey = rqKey++;
+	const promise = new Promise(resolve => promiseMap.set(currentKey, resolve));
+	vscode.postMessage({verb, rqKey: currentKey, ...payload});
+	return promise;
+}
+
 // The function called to change some of the methods of ARL
 export function adaptARL() {
 	
@@ -115,18 +122,7 @@ const vscodeARLmethods = {
 
 	// for get we use the access to the filesystem that we have at the vscode-side - therefore we send a message
 	async get( as = 'text') {
-
-		// create a promise - save the resolve id in the resolve map
-		const promise = new Promise( resolve => promiseMap.set(rqKey, resolve));
-
-		// send a message to the message handler for the document
-		vscode.postMessage({verb:'HTTP-GET', arl:this, format: as, rqKey});
-
-		// increment the key value only now !
-		rqKey++;
-
-		// return the promise for this request
-		return promise;
+		return requestVsCode('HTTP-GET', {arl:this, format: as});
 	},
 
 	async jsImport() {
@@ -134,21 +130,10 @@ const vscodeARLmethods = {
 
 
 	async save(body) {
-
-		// create a promise - save the resolve id in the resolve map
-		const promise = new Promise( resolve => promiseMap.set(rqKey, resolve));
-
 		// encode the string as a Utf8Array
 		const encoder = new TextEncoder();
 		const bodyAsBytes = encoder.encode(body);
 
-		// send a message to the message handler for the document
-		vscode.postMessage({verb:'HTTP-POST', arl:this, bytes: bodyAsBytes, rqKey});
-
-		// increment the key value only now !
-		rqKey++;
-
-		// return the promise for this request
-		return promise;
+		return requestVsCode('HTTP-POST', {arl:this, bytes: bodyAsBytes});
 	}
 };
