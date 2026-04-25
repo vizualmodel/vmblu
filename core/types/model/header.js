@@ -12,7 +12,7 @@ export function ModelHeader() {
     this.saved = today.toLocaleString()
     this.utc = today.toJSON()
     this.style = style
-    this.runtime = '@vizualmodel/vmblu-runtime'
+    this.runtime = '@vizualmodel/vmblu-runtime/rt-base'
 }
 ModelHeader.prototype = {
 
@@ -31,7 +31,7 @@ ModelHeader.prototype = {
         this.style = style.create(raw.style)
 
         // get the runtime
-        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime'
+        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base'
     },
 
     // copy

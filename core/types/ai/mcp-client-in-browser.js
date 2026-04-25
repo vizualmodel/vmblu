@@ -2,303 +2,306 @@ export class McpClientOpenAI {
 
 	constructor(tx, sx) {
 
-		// save the transport 
-		this.tx = tx
-
-        // the id counter
-        this._id = 1
-
-		// Get the open ai key from local storage
- 		this.apiKey = localStorage.getItem('openai_key') || '';
-
-		// Where we keep the chat history...
-		this.chat =  [] // createChatStore()
-
-		// The tools that are available
+		this.tx = tx;
+		this.sx = sx ?? {};
+		this._id = 1;
+		this.chat = [];
 		this.tools = [];
+		this.mcpTools = [];
+		this.model = this.sx.model || 'gpt-4o';
+		this.bridgeBaseUrl = this.normalizeBridgeBaseUrl(this.sx.bridgeBaseUrl || 'http://127.0.0.1:8080/v1');
+		this.bridgeHealthUrl = this.getBridgeHealthUrl(this.bridgeBaseUrl);
+		this.connection = this.createStatus('checking', `Checking local bridge at ${this.bridgeBaseUrl}`);
 
-        // get the manifest from the server
-        this.tx.request('get manifest', this.assemble('getManifest')).then( (reply) => {
-
-            // Get the available tools from the server
-            this.tx.request('get tools', this.assemble('getTools')).then( (reply) => {
-
-				// The tools are in a generic mcp format - change to the openAI format
-				this.tools = this.convertToOpenAITools(reply.result)
-
-				// debug
-				console.log('received tools', this.tools)
-            })
-        })
+		this.pushStatus();
+		this.initialize();
 	}
 
-    // assemble a syntactically correct message packet
-    assemble(method, params={}) {
-        return {
-				jsonrpc: '2.0',
-				id: this._id++,
-				method,
-				params
-			}
-    }
+	async initialize() {
+		await this.refreshBridgeStatus();
+		await this.loadTools();
+	}
 
-    // a function to remove or set the api key from local storage
-	// ** NEVER SAVE YOUR KEY IN THE CODE **
-	async onHandleKey() {
-		if (this.apiKey) {
-			if (confirm("Are you sure you want to remove your API key?")) {
-				this.apiKey = null;
-				localStorage.removeItem('openai_key');
-			}
-		} else {
-			const newKey = prompt("Enter your OpenAI API key:");
-			if (newKey && newKey.startsWith("sk-")) {
-				const isValid = await this.validateApiKey(newKey);
-				if (isValid) {
-					this.apiKey = newKey;
-					localStorage.setItem('openai_key', this.apiKey);
-					alert("API key saved. It stays in your browser and is only sent to OpenAI.");
-				} else {
-					alert("That key appears to be invalid or expired.");
+	assemble(method, params = {}) {
+		return {
+			jsonrpc: '2.0',
+			id: this._id++,
+			method,
+			params
+		};
+	}
+
+	createStatus(state, reason, extra = {}) {
+		return {
+			state,
+			ready: state === 'connected',
+			reason,
+			baseUrl: this.bridgeBaseUrl,
+			healthUrl: this.bridgeHealthUrl,
+			...extra
+		};
+	}
+
+	normalizeBridgeBaseUrl(url) {
+		return String(url || 'http://127.0.0.1:8080/v1').replace(/\/+$/, '');
+	}
+
+	getBridgeHealthUrl(baseUrl) {
+		return `${baseUrl.replace(/\/v1$/, '')}/health`;
+	}
+
+	pushStatus() {
+		this.tx.send('update status', this.connection);
+	}
+
+	pushTools() {
+		this.tx.send('update tools', this.mcpTools);
+	}
+
+	async refreshBridgeStatus() {
+		this.connection = this.createStatus('checking', `Checking local bridge at ${this.bridgeBaseUrl}`);
+		this.pushStatus();
+
+		try {
+			const response = await fetch(this.bridgeHealthUrl, {
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
 				}
-			} else {
-				alert("Invalid API key format.");
+			});
+
+			let payload = {};
+			try {
+				payload = await response.json();
+			} catch (_error) {
+				payload = {};
 			}
+
+			if (!response.ok) {
+				this.connection = this.createStatus(
+					'error',
+					payload.reason || `Bridge health check failed with HTTP ${response.status}.`,
+					payload
+				);
+				this.pushStatus();
+				return this.connection;
+			}
+
+			if (payload.apiKeyConfigured) {
+				this.connection = this.createStatus(
+					'connected',
+					payload.reason || 'Connected to the local LLM bridge.',
+					payload
+				);
+			} else {
+				this.connection = this.createStatus(
+					'no-key',
+					payload.reason || 'The local bridge is running but OPENAI_API_KEY is not configured.',
+					payload
+				);
+			}
+		} catch (_error) {
+			this.connection = this.createStatus(
+				'no-bridge',
+				`No local LLM bridge is reachable at ${this.bridgeBaseUrl}. Start it with "npm run llm-bridge".`
+			);
+		}
+
+		this.pushStatus();
+		return this.connection;
+	}
+
+	async loadTools() {
+		try {
+			await this.tx.request('get manifest', this.assemble('getManifest'));
+			const reply = await this.tx.request('get tools', this.assemble('getTools'));
+			this.mcpTools = Array.isArray(reply?.result) ? reply.result : [];
+			this.tools = this.convertToOpenAITools(this.mcpTools);
+			this.pushTools();
+		} catch (error) {
+			console.warn('Unable to load MCP tools:', error);
+			this.mcpTools = [];
+			this.tools = [];
+			this.pushTools();
 		}
 	}
 
-	async validateApiKey(key) {
-		const testMessage = {
-			model: "gpt-4-turbo",
-			messages: [{ role: "user", content: "Hello" }],
-			max_tokens: 1
-		};
-
-		try {
-			const res = await fetch("https://api.openai.com/v1/chat/completions", {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${key}`,
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify(testMessage)
-			});
-
-			return res.ok;
-		} catch (e) {
-			console.warn("API key test failed:", e);
-			return false;
+	async onHandleKey() {
+		const status = await this.refreshBridgeStatus();
+		if (!status.ready) {
+			alert(status.reason);
 		}
 	}
 
 	reset() {
-		this.chat.reset()
+		this.chat = [];
+		this.tx.send('update chat', this.chat);
 	}
 
-	// a test function - gets the available open ai models
 	getModels() {
-		fetch("https://api.openai.com/v1/models", {
-			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
-			}
-		})
-		.then(res => res.json())
-		.then(data => console.log(data.data.map(m => m.id)))
+		return fetch(`${this.bridgeBaseUrl}/models`)
+			.then((res) => res.json())
+			.then((data) => console.log(data.data?.map((m) => m.id) || []));
 	}
 
-/**
- * Convert an abstract MCP toolspec to OpenAI-compatible format.
- *
- * @param {Array<object>|object} specOrTools - Output from generateToolSpecs() or a generated mcpSpec object
- * @returns {Array<object>} - OpenAI tool spec array
- */
-convertToOpenAITools(specOrTools) {
-  const tools = Array.isArray(specOrTools)
-    ? specOrTools
-    : (Array.isArray(specOrTools?.tools) ? specOrTools.tools : []);
+	convertToOpenAITools(specOrTools) {
+		const tools = Array.isArray(specOrTools)
+			? specOrTools
+			: (Array.isArray(specOrTools?.tools) ? specOrTools.tools : []);
 
-  return tools.map(tool => {
-    if (tool?.parameters?.type === 'object' && tool.parameters.properties) {
-      return {
-        type: 'function',
-        function: {
-          name: String(tool.name || '').replace(/\s+/g, '_'),
-          description: tool.description || '',
-          parameters: tool.parameters
-        }
-      };
-    }
+		return tools.map((tool) => {
+			if (tool?.parameters?.type === 'object' && tool.parameters.properties) {
+				return {
+					type: 'function',
+					function: {
+						name: String(tool.name || '').replace(/\s+/g, '_'),
+						description: tool.description || '',
+						parameters: tool.parameters
+					}
+				};
+			}
 
-    const schema = {
-      type: 'object',
-      properties: {},
-      required: []
-    };
+			const schema = {
+				type: 'object',
+				properties: {},
+				required: []
+			};
 
-    for (const param of tool.parameters) {
-      const { name, type, description, properties, required } = param;
-      if (!name || !type) continue;
+			for (const param of tool.parameters || []) {
+				const { name, type, description, properties, required } = param;
+				if (!name || !type) continue;
 
-      // Validate primitive type
-      const primitiveTypes = ['string', 'number', 'boolean', 'object', 'array', 'integer'];
-      if (!primitiveTypes.includes(type)) {
-        console.warn(`Skipping param '${name}' due to invalid type '${type}'`);
-        continue;
-      }
+				const primitiveTypes = ['string', 'number', 'boolean', 'object', 'array', 'integer'];
+				if (!primitiveTypes.includes(type)) {
+					console.warn(`Skipping param "${name}" due to invalid type "${type}"`);
+					continue;
+				}
 
-      const propSchema = { type, description: description || '' };
+				const propSchema = { type, description: description || '' };
 
-      if (type === 'object' && Array.isArray(properties)) {
-        propSchema.properties = {};
-        propSchema.required = required ?? [];
+				if (type === 'object' && Array.isArray(properties)) {
+					propSchema.properties = {};
+					propSchema.required = required ?? [];
 
-        for (const sub of properties) {
-          // Also validate nested types
-          if (!primitiveTypes.includes(sub.type)) {
-            console.warn(`Skipping nested param '${sub.name}' in '${name}' due to invalid type '${sub.type}'`);
-            continue;
-          }
-          propSchema.properties[sub.name] = {
-            type: sub.type,
-            description: sub.description || ''
-          };
-        }
-      }
+					for (const sub of properties) {
+						if (!primitiveTypes.includes(sub.type)) {
+							console.warn(`Skipping nested param "${sub.name}" in "${name}" due to invalid type "${sub.type}"`);
+							continue;
+						}
+						propSchema.properties[sub.name] = {
+							type: sub.type,
+							description: sub.description || ''
+						};
+					}
+				}
 
-      schema.properties[name] = propSchema;
-      schema.required.push(name);
-    }
+				schema.properties[name] = propSchema;
+				schema.required.push(name);
+			}
 
-    return {
-      type: 'function',
-      function: {
-        name: tool.name.replace(/\s+/g, '_'), // Avoid illegal characters
-        description: tool.description || '',
-        parameters: schema
-      }
-    };
-  });
-}
-
-
-	//async newUserPrompt(prompt) {
-	async onNewPrompt(prompt) {
-
-        // add the prompt to the chat history
-        this.chat.push({ role: 'user', content: prompt });
-
-		// update
-		this.tx.send('update chat', this.chat)
-
-// const body = JSON.stringify({
-// 				model: 'gpt-4o',
-// 				messages: this.chat,
-// 				tools: this.tools,
-// 				tool_choice: 'auto'
-// 			})
-// console.log(body)
-
-		// send the chat history to the LLM
-		const response = await fetch('https://api.openai.com/v1/chat/completions', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				model: 'gpt-4o',
-				messages: this.chat,
-				tools: this.tools,
-				tool_choice: 'auto'
-			})
+			return {
+				type: 'function',
+				function: {
+					name: String(tool.name || '').replace(/\s+/g, '_'),
+					description: tool.description || '',
+					parameters: schema
+				}
+			};
 		});
+	}
 
-		// check the response
-		if (!response.ok) {
-			this.chat.push({ role: 'assistant', content: response.statusText });
-			this.tx.send('update chat', this.chat)
-			return
+	async ensureBridgeReady() {
+		const status = await this.refreshBridgeStatus();
+		if (status.ready) return true;
+
+		this.chat.push({ role: 'assistant', content: status.reason });
+		this.tx.send('update chat', this.chat);
+		return false;
+	}
+
+	async onNewPrompt(prompt) {
+		this.chat.push({ role: 'user', content: prompt });
+		this.tx.send('update chat', this.chat);
+
+		if (!(await this.ensureBridgeReady())) {
+			return;
 		}
 
-		// get the json
-		const result = await response.json();
-		const message = result.choices?.[0]?.message || { role: 'assistant', content: 'No response' };
+		try {
+			const response = await fetch(`${this.bridgeBaseUrl}/chat/completions`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					model: this.model,
+					messages: this.chat,
+					tools: this.tools,
+					tool_choice: 'auto'
+				})
+			});
 
-		// check if tools need to be called 
-		if (message.tool_calls?.length) {
+			if (!response.ok) {
+				const detail = await this.readErrorDetail(response);
+				this.chat.push({ role: 'assistant', content: detail });
+				this.tx.send('update chat', this.chat);
+				await this.refreshBridgeStatus();
+				return;
+			}
 
-			// Handle the tool calls
-			this._handleToolCalls(message.tool_calls);
-		} else {
+			const result = await response.json();
+			const message = result.choices?.[0]?.message || { role: 'assistant', content: 'No response' };
 
-			// just add the message to the chat
-			//this.chat.push(message);
-			this.chat.push({role: 'assistant', content: message.content});
-			this.tx.send('update chat', this.chat)
+			if (message.tool_calls?.length) {
+				this._handleToolCalls(message.tool_calls);
+				return;
+			}
+
+			this.chat.push({ role: 'assistant', content: message.content });
+			this.tx.send('update chat', this.chat);
+		} catch (error) {
+			this.chat.push({
+				role: 'assistant',
+				content: `Bridge request failed: ${error.message}`
+			});
+			this.tx.send('update chat', this.chat);
+			await this.refreshBridgeStatus();
+		}
+	}
+
+	async readErrorDetail(response) {
+		try {
+			const payload = await response.json();
+			return payload.detail || payload.error?.message || payload.error || response.statusText;
+		} catch (_error) {
+			return response.statusText || `HTTP ${response.status}`;
 		}
 	}
 
 	async _handleToolCalls(toolCalls) {
-
-		// add the tool calls to the chat history
 		this.chat.push({
-			role: "assistant",
+			role: 'assistant',
 			content: null,
 			tool_calls: toolCalls
-		})
+		});
 
 		for (const toolCall of toolCalls) {
-
-			// make an object from the json 
 			const args = JSON.parse(toolCall.function.arguments);
-
-			// send a request to call the tool to the server
-            this.tx.send('call tool', this.assemble(toolCall.function.name, args))
-
-			// and also a result
+			this.tx.send('call tool', this.assemble(toolCall.function.name, args));
 			this.chat.push({
 				role: 'tool',
 				tool_call_id: toolCall.id,
-				content: `the tool call was successful !`
-			})
-
-			// show the result
-			this.tx.send('update chat', this.chat)
+				content: 'The tool call was sent to the MCP server.'
+			});
+			this.tx.send('update chat', this.chat);
 		}
 	}
 
-	// The server returns a tool result message
 	onToolResult(result) {
-
-		// add the result to the chat
 		this.chat.push({
 			role: 'tool',
-			tool_call_id: toolCall.id,
-			content: `the tool call was successful !`
-		})
-
-		// and confirm the result
-		this.confirmResult()
-	}
-
-	async confirmResult() {
-
-console.log("Sending messages:", JSON.stringify(this.chat, null, 2));
-
-		const response = await fetch('https://api.openai.com/v1/chat/completions', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				model: 'gpt-4o',
-				messages: this.chat
-			})
+			content: result?.content || 'Tool result received.'
 		});
-
-		const result = await response.json();
-		const message = result.choices?.[0]?.message || { role: 'assistant', content: 'No response' };
-		this.chat.push(message);
+		this.tx.send('update chat', this.chat);
 	}
 }

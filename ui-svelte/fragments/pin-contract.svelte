@@ -23,8 +23,8 @@
   .role p {
     font-family: var(--fFixed);
     font-size: 0.8rem;
-    color: #000000;
-    background: rgb(201, 201, 201);
+    color: yellow;
+    /* background: rgb(201, 201, 201); */
     /* padding: 0.3 0 0.2 0rem; */
     padding:0.1rem;
     margin: 0 0 0 0rem;
@@ -61,7 +61,7 @@
 {#if contract}
   <div class="contract">
     <div class="role">
-      <p>Contract ({contract.role ?? 'follower'})</p>
+      <p>&#x2022 Contract: {contract.role ?? 'follower'}</p>
     </div>
     {#if contract.tokens}
       {#each contract.tokens as line}

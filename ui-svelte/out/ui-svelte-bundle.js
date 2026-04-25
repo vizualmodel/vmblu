@@ -992,6 +992,14 @@ function get_proxied_value(value) {
 	return value;
 }
 
+/**
+ * @param {any} a
+ * @param {any} b
+ */
+function is(a, b) {
+	return Object.is(get_proxied_value(a), get_proxied_value(b));
+}
+
 function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
 	// The REPL ends up here over and over, and this prevents it from adding more and more patches
@@ -2039,6 +2047,9 @@ let current_version = 0;
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
 let skip_reaction = false;
+// Handle collecting all signals which are read during a specific time frame
+let is_signals_recorded = false;
+let captured_signals = new Set();
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -2578,6 +2589,10 @@ function get(signal) {
 		return value;
 	}
 
+	if (is_signals_recorded) {
+		captured_signals.add(signal);
+	}
+
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
@@ -2624,6 +2639,43 @@ function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/**
+ * Invokes a function and captures all signals that are read during the invocation,
+ * then invalidates them.
+ * @param {() => any} fn
+ */
+function invalidate_inner_signals(fn) {
+	var previous_is_signals_recorded = is_signals_recorded;
+	var previous_captured_signals = captured_signals;
+	is_signals_recorded = true;
+	captured_signals = new Set();
+	var captured = captured_signals;
+	var signal;
+	try {
+		untrack(fn);
+	} finally {
+		is_signals_recorded = previous_is_signals_recorded;
+		if (is_signals_recorded) {
+			for (signal of captured_signals) {
+				previous_captured_signals.add(signal);
+			}
+		}
+		captured_signals = previous_captured_signals;
+	}
+	for (signal of captured) {
+		// Go one level up because derived signals created as part of props in legacy mode
+		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
+			for (const dep of /** @type {Derived} */ (signal).deps || []) {
+				if ((dep.f & DERIVED) === 0) {
+					mutate(dep, null /* doesnt matter */);
+				}
+			}
+		} else {
+			mutate(signal, null /* doesnt matter */);
+		}
+	}
 }
 
 /**
@@ -4160,6 +4212,139 @@ function bind_prop(props, prop, value) {
 }
 
 /**
+ * Selects the correct option(s) (depending on whether this is a multiple select)
+ * @template V
+ * @param {HTMLSelectElement} select
+ * @param {V} value
+ * @param {boolean} [mounting]
+ */
+function select_option(select, value, mounting) {
+	if (select.multiple) {
+		return select_options(select, value);
+	}
+
+	for (var option of select.options) {
+		var option_value = get_option_value(option);
+		if (is(option_value, value)) {
+			option.selected = true;
+			return;
+		}
+	}
+
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
+}
+
+/**
+ * Selects the correct option(s) if `value` is given,
+ * and then sets up a mutation observer to sync the
+ * current selection to the dom when it changes. Such
+ * changes could for example occur when options are
+ * inside an `#each` block.
+ * @template V
+ * @param {HTMLSelectElement} select
+ * @param {() => V} [get_value]
+ */
+function init_select(select, get_value) {
+	effect(() => {
+
+		var observer = new MutationObserver(() => {
+			// @ts-ignore
+			var value = select.__value;
+			select_option(select, value);
+			// Deliberately don't update the potential binding value,
+			// the model should be preserved unless explicitly changed
+		});
+
+		observer.observe(select, {
+			// Listen to option element changes
+			childList: true,
+			subtree: true, // because of <optgroup>
+			// Listen to option element value attribute changes
+			// (doesn't get notified of select value changes,
+			// because that property is not reflected as an attribute)
+			attributes: true,
+			attributeFilter: ['value']
+		});
+
+		return () => {
+			observer.disconnect();
+		};
+	});
+}
+
+/**
+ * @param {HTMLSelectElement} select
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
+ * @returns {void}
+ */
+function bind_select_value(select, get, set = get) {
+	var mounting = true;
+
+	listen_to_event_and_reset_event(select, 'change', () => {
+		/** @type {unknown} */
+		var value;
+
+		if (select.multiple) {
+			value = [].map.call(select.querySelectorAll(':checked'), get_option_value);
+		} else {
+			/** @type {HTMLOptionElement | null} */
+			var selected_option = select.querySelector(':checked');
+			value = selected_option && get_option_value(selected_option);
+		}
+
+		set(value);
+	});
+
+	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
+	effect(() => {
+		var value = get();
+		select_option(select, value, mounting);
+
+		// Mounting and value undefined -> take selection from dom
+		if (mounting && value === undefined) {
+			/** @type {HTMLOptionElement | null} */
+			var selected_option = select.querySelector(':checked');
+			if (selected_option !== null) {
+				value = get_option_value(selected_option);
+				set(value);
+			}
+		}
+
+		// @ts-ignore
+		select.__value = value;
+		mounting = false;
+	});
+
+	// don't pass get_value, we already initialize it in the effect above
+	init_select(select);
+}
+
+/**
+ * @template V
+ * @param {HTMLSelectElement} select
+ * @param {V} value
+ */
+function select_options(select, value) {
+	for (var option of select.options) {
+		// @ts-ignore
+		option.selected = ~value.indexOf(get_option_value(option));
+	}
+}
+
+/** @param {HTMLOptionElement} option */
+function get_option_value(option) {
+	// __value only exists if the <option> has a value attribute
+	if ('__value' in option) {
+		return option.__value;
+	} else {
+		return option.value;
+	}
+}
+
+/**
  * @param {any} bound_value
  * @param {Element} element_or_component
  * @returns {boolean}
@@ -4463,6 +4648,18 @@ function prop(props, key, flags, fallback) {
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		var current = get(current_value);
 
+		// legacy nonsense — need to ensure the source is invalidated when necessary
+		// also needed for when handling inspect logic so we can inspect the correct source signal
+		if (is_signals_recorded) {
+			// set this so that we don't reset to the parent value if `d`
+			// is invalidated because of `invalidate_inner_signals` (rather
+			// than because the parent or child value changed)
+			from_child = was_from_child;
+			// invoke getters so that signals are picked up by `invalidate_inner_signals`
+			getter();
+			get(inner_current_value);
+		}
+
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
@@ -4627,7 +4824,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$k = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$n = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -4669,7 +4866,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$k();
+	var div_1 = root$n();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -4689,7 +4886,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$j = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$m = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -4750,7 +4947,7 @@ function Canvas_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$j();
+	var div_1 = root$m();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -4758,7 +4955,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$i = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$l = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5010,7 +5207,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$i();
+	var div_1 = root$l();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -5047,7 +5244,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$h = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$k = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -5217,7 +5414,7 @@ function Column_main($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$h();
+	var div_1 = root$k();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -5239,8 +5436,8 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$e = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$g = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$f = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$j = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
 	push($$props, false);
@@ -5273,12 +5470,12 @@ function Top_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$g();
+	var div = root$j();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$e();
+		var div_1 = root_1$f();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5303,8 +5500,8 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$d = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$f = template(`<div class="menu svelte-1st5yi2"></div>`);
+var root_1$e = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$i = template(`<div class="menu svelte-1st5yi2"></div>`);
 
 function Side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -5337,12 +5534,12 @@ function Side_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$f();
+	var div = root$i();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$d();
+		var div_1 = root_1$e();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5367,9 +5564,9 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$5 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root_3$4 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$e = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root_2$8 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_3$3 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root$h = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -5445,7 +5642,7 @@ function Tab_ribbon($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$e();
+	var div = root$h();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -5457,7 +5654,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$5();
+				var div_1 = root_2$8();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -5479,7 +5676,7 @@ function Tab_ribbon($$anchor, $$props) {
 				append($$anchor, div_1);
 			},
 			($$anchor) => {
-				var div_3 = root_3$4();
+				var div_3 = root_3$3();
 
 				set_attribute(div_3, "data-index", index);
 
@@ -5509,8 +5706,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$c = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
-var root$d = template(`<div class="menu svelte-1c44ark"></div>`);
+var root_1$d = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
+var root$g = template(`<div class="menu svelte-1c44ark"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -5542,12 +5739,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$d();
+	var div = root$g();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$c();
+		var div_1 = root_1$d();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5667,10 +5864,10 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$b = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$4 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
-var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
-var root$c = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
+var root_1$c = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$7 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_3$2 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
+var root$f = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
 	push($$props, false);
@@ -5763,7 +5960,7 @@ function Popup_box($$anchor, $$props) {
 
 	init();
 
-	var div = root$c();
+	var div = root$f();
 
 	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
 
@@ -5774,7 +5971,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$b();
+		var i_2 = root_1$c();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -5784,7 +5981,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$4();
+		var i_3 = root_2$7();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -5797,7 +5994,7 @@ function Popup_box($$anchor, $$props) {
 	var node_2 = sibling(h1, 2);
 
 	if_block(node_2, () => box().trash, ($$anchor) => {
-		var div_3 = root_3$3();
+		var div_3 = root_3$2();
 		var i_4 = child(div_3);
 		event("click", i_4, onTrash);
 		event("keydown", i_4, onKeydown);
@@ -5823,22 +6020,22 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root$b = template(`<div class="same-line svelte-nv80og"><!></div>`);
+var root$e = template(`<div class="same-line svelte-nv80og"><!></div>`);
 
 function Same_line($$anchor, $$props) {
-	var div = root$b();
+	var div = root$e();
 	var node = child(div);
 
 	slot(node, $$props, "default", {});
 	append($$anchor, div);
 }
 
-var root$a = template(`<label class="label svelte-1w9b525"> </label>`);
+var root$d = template(`<label class="label svelte-1w9b525"> </label>`);
 
 function Label($$anchor, $$props) {
 	let text = prop($$props, "text", 8);
 	let style = prop($$props, "style", 8);
-	var label = root$a();
+	var label = root$d();
 	var text_1 = child(label);
 
 	template_effect(() => {
@@ -5849,7 +6046,7 @@ function Label($$anchor, $$props) {
 	append($$anchor, label);
 }
 
-var root$9 = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
+var root$c = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
 
 function Text_field($$anchor, $$props) {
 	push($$props, false);
@@ -5883,7 +6080,7 @@ function Text_field($$anchor, $$props) {
 
 	init();
 
-	var input_1 = root$9();
+	var input_1 = root$c();
 
 	bind_this(input_1, ($$value) => set(input, $$value), () => get(input));
 	template_effect(() => set_attribute(input_1, "style", style() ? style() : ''));
@@ -5893,7 +6090,7 @@ function Text_field($$anchor, $$props) {
 	pop();
 }
 
-var root$8 = template(`<input type="checkbox" class="svelte-kvi95y">`);
+var root$b = template(`<input type="checkbox" class="svelte-kvi95y">`);
 
 function Checkbox($$anchor, $$props) {
 	push($$props, false);
@@ -5909,7 +6106,7 @@ function Checkbox($$anchor, $$props) {
 
 	init();
 
-	var input = root$8();
+	var input = root$b();
 	template_effect(() => set_attribute(input, "style", style() ? style() : ''));
 	bind_checked(input, on);
 	event("change", input, onInput);
@@ -5917,21 +6114,274 @@ function Checkbox($$anchor, $$props) {
 	pop();
 }
 
-const defaultWorker = () => ({
+var root_1$b = template(`<!> <!>`, 1);
+var root_2$6 = template(`<!> <!> <!>`, 1);
+var root$a = template(`<!> <!>`, 1);
+
+function Runtime_settings_base($$anchor, $$props) {
+	push($$props, false);
+
+	let dx = prop($$props, "dx", 12);
+
+	init();
+
+	var fragment = root$a();
+	var node = first_child(fragment);
+
+	Same_line(node, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_1 = root_1$b();
+			var node_1 = first_child(fragment_1);
+
+			Checkbox(node_1, {
+				get on() {
+					return dx().logMessages;
+				},
+				set on($$value) {
+					dx(dx().logMessages = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_2 = sibling(node_1, 2);
+
+			Label(node_2, { text: "log messages" });
+			append($$anchor, fragment_1);
+		},
+		$$slots: { default: true }
+	});
+
+	var node_3 = sibling(node, 2);
+
+	Same_line(node_3, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_2 = root_2$6();
+			var node_4 = first_child(fragment_2);
+
+			Checkbox(node_4, {
+				get on() {
+					return dx().worker.on;
+				},
+				set on($$value) {
+					dx(dx().worker.on = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_5 = sibling(node_4, 2);
+
+			Label(node_5, {
+				text: "use worker script:",
+				style: "margin-right: 0.5rem;"
+			});
+
+			var node_6 = sibling(node_5, 2);
+
+			Text_field(node_6, {
+				get text() {
+					return dx().worker.path;
+				},
+				set text($$value) {
+					dx(dx().worker.path = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			append($$anchor, fragment_2);
+		},
+		$$slots: { default: true }
+	});
+
+	append($$anchor, fragment);
+	pop();
+}
+
+var root_1$a = template(`<!> <!>`, 1);
+var root_2$5 = template(`<!> <!> <!>`, 1);
+var root_3$1 = template(`<!> <!>`, 1);
+var root_4$3 = template(`<!> <!>`, 1);
+var root_5$4 = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
+var root$9 = template(`<!> <!> <!> <!> <!>`, 1);
+
+function Runtime_settings_als($$anchor, $$props) {
+	push($$props, false);
+
+	let dx = prop($$props, "dx", 12);
+
+	init();
+
+	var fragment = root$9();
+	var node = first_child(fragment);
+
+	Same_line(node, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_1 = root_1$a();
+			var node_1 = first_child(fragment_1);
+
+			Checkbox(node_1, {
+				get on() {
+					return dx().logMessages;
+				},
+				set on($$value) {
+					dx(dx().logMessages = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_2 = sibling(node_1, 2);
+
+			Label(node_2, { text: "log messages" });
+			append($$anchor, fragment_1);
+		},
+		$$slots: { default: true }
+	});
+
+	var node_3 = sibling(node, 2);
+
+	Same_line(node_3, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_2 = root_2$5();
+			var node_4 = first_child(fragment_2);
+
+			Checkbox(node_4, {
+				get on() {
+					return dx().worker.on;
+				},
+				set on($$value) {
+					dx(dx().worker.on = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_5 = sibling(node_4, 2);
+
+			Label(node_5, {
+				text: "use worker script:",
+				style: "margin-right: 0.5rem;"
+			});
+
+			var node_6 = sibling(node_5, 2);
+
+			Text_field(node_6, {
+				get text() {
+					return dx().worker.path;
+				},
+				set text($$value) {
+					dx(dx().worker.path = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			append($$anchor, fragment_2);
+		},
+		$$slots: { default: true }
+	});
+
+	var node_7 = sibling(node_3, 2);
+
+	Same_line(node_7, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_3 = root_3$1();
+			var node_8 = first_child(fragment_3);
+
+			Checkbox(node_8, {
+				get on() {
+					return dx().safety.on;
+				},
+				set on($$value) {
+					dx(dx().safety.on = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_9 = sibling(node_8, 2);
+
+			Label(node_9, { text: "safety instrumentation" });
+			append($$anchor, fragment_3);
+		},
+		$$slots: { default: true }
+	});
+
+	var node_10 = sibling(node_7, 2);
+
+	Same_line(node_10, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_4 = root_4$3();
+			var node_11 = first_child(fragment_4);
+
+			Checkbox(node_11, {
+				get on() {
+					return dx().safety.forward;
+				},
+				set on($$value) {
+					dx(dx().safety.forward = $$value, true);
+				},
+				$$legacy: true
+			});
+
+			var node_12 = sibling(node_11, 2);
+
+			Label(node_12, { text: "forward `security.event`" });
+			append($$anchor, fragment_4);
+		},
+		$$slots: { default: true }
+	});
+
+	var node_13 = sibling(node_10, 2);
+
+	Same_line(node_13, {
+		children: ($$anchor, $$slotProps) => {
+			var fragment_5 = root_5$4();
+			var node_14 = first_child(fragment_5);
+
+			Label(node_14, {
+				text: "safety mode:",
+				style: "margin-right: 0.5rem;"
+			});
+
+			var select = sibling(node_14, 2);
+
+			template_effect(() => {
+				dx().safety.mode;
+				invalidate_inner_signals(() => {});
+			});
+
+			var option = child(select);
+
+			option.value = null == (option.__value = "off") ? "" : "off";
+
+			var option_1 = sibling(option);
+
+			option_1.value = null == (option_1.__value = "warn") ? "" : "warn";
+
+			var option_2 = sibling(option_1);
+
+			option_2.value = null == (option_2.__value = "enforce") ? "" : "enforce";
+			bind_select_value(select, () => dx().safety.mode, ($$value) => dx(dx().safety.mode = $$value, true));
+			append($$anchor, fragment_5);
+		},
+		$$slots: { default: true }
+	});
+
+	append($$anchor, fragment);
+	pop();
+}
+
+const defaultWorker$1 = () => ({
     on: false,
     path: '',
 });
 
-function makeRuntimeSettings() {
+function makeRuntimeSettings$2() {
     return {
         logMessages: false,
-        worker: defaultWorker(),
+        worker: defaultWorker$1(),
     }
 }
 
-function normalizeRuntimeSettings(dx = null) {
+function normalizeRuntimeSettings$1(dx = null) {
 
-    const defaults = makeRuntimeSettings();
+    const defaults = makeRuntimeSettings$2();
 
     if (!dx || typeof dx !== 'object') return defaults
 
@@ -5950,13 +6400,236 @@ function normalizeRuntimeSettings(dx = null) {
     return normalized
 }
 
-function cloneRuntimeSettings(dx = null) {
+function cloneRuntimeSettings$2(dx = null) {
+    return normalizeRuntimeSettings$1(dx)
+}
+
+function resetRuntimeSettings$1(target) {
+
+    const defaults = makeRuntimeSettings$2();
+
+    target.logMessages = defaults.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = defaults.worker.on;
+    target.worker.path = defaults.worker.path;
+
+    return target
+}
+
+function assignRuntimeSettings$1(target, dx = null) {
+
+    const normalized = normalizeRuntimeSettings$1(dx);
+
+    target.logMessages = normalized.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = normalized.worker.on;
+    target.worker.path = normalized.worker.path;
+
+    for (const key of Object.keys(normalized)) {
+        if ((key === 'logMessages') || (key === 'worker')) continue
+        target[key] = normalized[key];
+    }
+
+    for (const key of Object.keys(target)) {
+        if ((key === 'logMessages') || (key === 'worker')) continue
+        if (!(key in normalized)) delete target[key];
+    }
+
+    for (const key of Object.keys(normalized.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        target.worker[key] = normalized.worker[key];
+    }
+
+    for (const key of Object.keys(target.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        if (!(key in normalized.worker)) delete target.worker[key];
+    }
+
+    return target
+}
+
+function isDefaultRuntimeSettings$1(dx = null) {
+
+    const normalized = normalizeRuntimeSettings$1(dx);
+    const workerKeys = Object.keys(normalized.worker ?? {});
+    const topKeys = Object.keys(normalized);
+
+    if (normalized.logMessages) return false
+    if (normalized.worker?.on) return false
+    if ((normalized.worker?.path ?? '') !== '') return false
+    if (topKeys.some(key => !['logMessages', 'worker'].includes(key))) return false
+    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
+
+    return true
+}
+
+var baseRuntimeSettings = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	assignRuntimeSettings: assignRuntimeSettings$1,
+	cloneRuntimeSettings: cloneRuntimeSettings$2,
+	isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
+	makeRuntimeSettings: makeRuntimeSettings$2,
+	normalizeRuntimeSettings: normalizeRuntimeSettings$1,
+	resetRuntimeSettings: resetRuntimeSettings$1
+});
+
+const defaultWorker = () => ({
+    on: false,
+    path: '',
+});
+
+const defaultSafety = () => ({
+    on: false,
+    mode: 'warn',
+    forward: true,
+});
+
+function makeRuntimeSettings$1() {
+    return {
+        logMessages: false,
+        worker: defaultWorker(),
+        safety: defaultSafety(),
+    }
+}
+
+function normalizeRuntimeSettings(dx = null) {
+
+    const defaults = makeRuntimeSettings$1();
+
+    if (!dx || typeof dx !== 'object') return defaults
+
+    const normalized = {
+        ...dx,
+        logMessages: !!dx.logMessages,
+        worker: {
+            ...defaults.worker,
+            ...(dx.worker ?? {}),
+        },
+        safety: {
+            ...defaults.safety,
+            ...(dx.safety ?? {}),
+        }
+    };
+
+    normalized.worker.on = !!normalized.worker.on;
+    normalized.worker.path = normalized.worker.path ?? '';
+    normalized.safety.on = !!normalized.safety.on;
+    normalized.safety.forward = normalized.safety.forward !== false;
+    normalized.safety.mode = ['off', 'warn', 'enforce'].includes(normalized.safety.mode) ? normalized.safety.mode : defaults.safety.mode;
+
+    return normalized
+}
+
+function cloneRuntimeSettings$1(dx = null) {
     return normalizeRuntimeSettings(dx)
 }
 
-var root_2$3 = template(`<!> <!>`, 1);
-var root_3$2 = template(`<!> <!> <!>`, 1);
-var root_1$a = template(`<!> <!>`, 1);
+function resetRuntimeSettings(target) {
+
+    const defaults = makeRuntimeSettings$1();
+
+    target.logMessages = defaults.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = defaults.worker.on;
+    target.worker.path = defaults.worker.path;
+    target.safety = target.safety ?? {};
+    target.safety.on = defaults.safety.on;
+    target.safety.mode = defaults.safety.mode;
+    target.safety.forward = defaults.safety.forward;
+
+    return target
+}
+
+function assignRuntimeSettings(target, dx = null) {
+
+    const normalized = normalizeRuntimeSettings(dx);
+
+    target.logMessages = normalized.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = normalized.worker.on;
+    target.worker.path = normalized.worker.path;
+    target.safety = target.safety ?? {};
+    target.safety.on = normalized.safety.on;
+    target.safety.mode = normalized.safety.mode;
+    target.safety.forward = normalized.safety.forward;
+
+    for (const key of Object.keys(normalized)) {
+        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
+        target[key] = normalized[key];
+    }
+
+    for (const key of Object.keys(target)) {
+        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
+        if (!(key in normalized)) delete target[key];
+    }
+
+    for (const key of Object.keys(normalized.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        target.worker[key] = normalized.worker[key];
+    }
+
+    for (const key of Object.keys(target.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        if (!(key in normalized.worker)) delete target.worker[key];
+    }
+
+    for (const key of Object.keys(normalized.safety)) {
+        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
+        target.safety[key] = normalized.safety[key];
+    }
+
+    for (const key of Object.keys(target.safety)) {
+        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
+        if (!(key in normalized.safety)) delete target.safety[key];
+    }
+
+    return target
+}
+
+function isDefaultRuntimeSettings(dx = null) {
+
+    const normalized = normalizeRuntimeSettings(dx);
+    const workerKeys = Object.keys(normalized.worker ?? {});
+    const safetyKeys = Object.keys(normalized.safety ?? {});
+    const topKeys = Object.keys(normalized);
+
+    if (normalized.logMessages) return false
+    if (normalized.worker?.on) return false
+    if ((normalized.worker?.path ?? '') !== '') return false
+    if (normalized.safety?.on) return false
+    if (normalized.safety?.mode !== 'warn') return false
+    if (normalized.safety?.forward !== true) return false
+    if (topKeys.some(key => !['logMessages', 'worker', 'safety'].includes(key))) return false
+    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
+    if (safetyKeys.some(key => !['on', 'mode', 'forward'].includes(key))) return false
+
+    return true
+}
+
+var alsRuntimeSettings = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	assignRuntimeSettings: assignRuntimeSettings,
+	cloneRuntimeSettings: cloneRuntimeSettings$1,
+	isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+	makeRuntimeSettings: makeRuntimeSettings$1,
+	normalizeRuntimeSettings: normalizeRuntimeSettings,
+	resetRuntimeSettings: resetRuntimeSettings
+});
+
+const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base';
+const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
+
+function selectRuntimeSettings(runtime) {
+    return runtime === RT_ALS ? alsRuntimeSettings : baseRuntimeSettings
+}
+
+function makeRuntimeSettings(runtime) {
+    return selectRuntimeSettings(runtime).makeRuntimeSettings()
+}
+
+function cloneRuntimeSettings(runtime, dx = null) {
+    return selectRuntimeSettings(runtime).cloneRuntimeSettings(dx)
+}
 
 function Runtime_settings($$anchor, $$props) {
 	push($$props, false);
@@ -5964,11 +6637,9 @@ function Runtime_settings($$anchor, $$props) {
 	let tx = prop($$props, "tx", 8);
 
 	onMount(() => {
-		// send out the div
-		tx().send("modal div", get(box).div);
+		tx().send('modal div', get(box).div);
 	});
 
-	// the popup box data
 	const box = mutable_state({
 		div: null,
 		pos: null,
@@ -5977,35 +6648,25 @@ function Runtime_settings($$anchor, $$props) {
 		cancel: null
 	});
 
-	let localDx = mutable_state(makeRuntimeSettings());
+	let runtimeName = mutable_state(RT_BASE);
+	let localDx = mutable_state(makeRuntimeSettings(RT_BASE));
+
+	function isAlsRuntime(runtime) {
+		return runtime === RT_ALS;
+	}
 
 	const handlers = {
-		onShow({ title, pos, dx, ok, cancel }) {
-			// The box 
-			(
-				mutate(box, get(box).title = title),
-				mutate(box, get(box).pos = { ...pos })
-			);
-
-			// if there is a callback, call it
-			mutate(box, get(box).ok = () => {
-				if (!ok) return;
-				// call ok with the local rx
-				ok(cloneRuntimeSettings(get(localDx)));
-			});
-
-			mutate(box, get(box).cancel = () => {
-				cancel?.();
-			});
-
-			// Copy the settings while keeping Svelte reactivity
-			set(localDx, cloneRuntimeSettings(dx));
-			// and show
+		onShow({ title, pos, dx, runtime, ok, cancel }) {
+			set(runtimeName, runtime ?? RT_BASE);
+			mutate(box, get(box).title = title);
+			mutate(box, get(box).pos = { ...pos });
+			mutate(box, get(box).ok = () => ok?.(cloneRuntimeSettings(get(runtimeName), get(localDx))));
+			mutate(box, get(box).cancel = () => cancel?.());
+			set(localDx, dx ? cloneRuntimeSettings(get(runtimeName), dx) : makeRuntimeSettings(get(runtimeName)));
 			get(box).show(get(box).pos);
 		}
 	};
 
-	function onToggle(e) {}
 	init();
 
 	Popup_box($$anchor, {
@@ -6013,74 +6674,35 @@ function Runtime_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$a();
+			var fragment_1 = comment();
 			var node = first_child(fragment_1);
 
-			Same_line(node, {
-				children: ($$anchor, $$slotProps) => {
-					var fragment_2 = root_2$3();
-					var node_1 = first_child(fragment_2);
-
-					Checkbox(node_1, {
-						get on() {
-							return get(localDx).logMessages;
+			if_block(
+				node,
+				() => isAlsRuntime(get(runtimeName)),
+				($$anchor) => {
+					Runtime_settings_als($$anchor, {
+						get dx() {
+							return get(localDx);
 						},
-						set on($$value) {
-							mutate(localDx, get(localDx).logMessages = $$value);
+						set dx($$value) {
+							set(localDx, $$value);
 						},
-						onToggle,
 						$$legacy: true
 					});
-
-					var node_2 = sibling(node_1, 2);
-
-					Label(node_2, { text: "log messages" });
-					append($$anchor, fragment_2);
 				},
-				$$slots: { default: true }
-			});
-
-			var node_3 = sibling(node, 2);
-
-			Same_line(node_3, {
-				children: ($$anchor, $$slotProps) => {
-					var fragment_3 = root_3$2();
-					var node_4 = first_child(fragment_3);
-
-					Checkbox(node_4, {
-						get on() {
-							return get(localDx).worker.on;
+				($$anchor) => {
+					Runtime_settings_base($$anchor, {
+						get dx() {
+							return get(localDx);
 						},
-						set on($$value) {
-							mutate(localDx, get(localDx).worker.on = $$value);
-						},
-						style: "",
-						$$legacy: true
-					});
-
-					var node_5 = sibling(node_4, 2);
-
-					Label(node_5, {
-						text: "use worker script:",
-						style: "margin-right: 0.5rem;"
-					});
-
-					var node_6 = sibling(node_5, 2);
-
-					Text_field(node_6, {
-						get text() {
-							return get(localDx).worker.path;
-						},
-						set text($$value) {
-							mutate(localDx, get(localDx).worker.path = $$value);
+						set dx($$value) {
+							set(localDx, $$value);
 						},
 						$$legacy: true
 					});
-
-					append($$anchor, fragment_3);
-				},
-				$$slots: { default: true }
-			});
+				}
+			);
 
 			append($$anchor, fragment_1);
 		},
@@ -6134,7 +6756,7 @@ function Confirm_box($$anchor, $$props) {
 }
 
 var root_1$9 = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
-var root$7 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
+var root$8 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6214,7 +6836,7 @@ function Context_menu($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$7();
+	var div = root$8();
 
 	bind_this(div, ($$value) => mutate(context, get(context).div = $$value), () => get(context)?.div);
 
@@ -6255,7 +6877,7 @@ function Context_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$6 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
+var root$7 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
 
 function Text_area_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -6273,7 +6895,7 @@ function Text_area_input$1($$anchor, $$props) {
 
 	init();
 
-	var textarea = root$6();
+	var textarea = root$7();
 
 	template_effect(() => {
 		set_attribute(textarea, "rows", rows());
@@ -6448,11 +7070,11 @@ function Text_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$2 = template(`<p class="svelte-52mbok"> </p>`);
+var root_2$4 = template(`<p class="svelte-52mbok"> </p>`);
 var root_4$2 = template(`<p class="type-warning svelte-52mbok"> </p>`);
-var root_5$2 = template(`<p class="type-ok svelte-52mbok">contract match</p>`);
+var root_5$3 = template(`<p class="type-ok svelte-52mbok">contract match</p>`);
 var root_1$8 = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
-var root$5 = template(`<div class="profile svelte-52mbok"><!></div>`);
+var root$6 = template(`<div class="profile svelte-52mbok"><!></div>`);
 
 function Profile_input_pin($$anchor, $$props) {
 	push($$props, false);
@@ -6484,7 +7106,7 @@ function Profile_input_pin($$anchor, $$props) {
 
 	init();
 
-	var div = root$5();
+	var div = root$6();
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
@@ -6502,7 +7124,7 @@ function Profile_input_pin($$anchor, $$props) {
 			let type = () => get($$item).type;
 			let name = () => get($$item).name;
 			let description = () => get($$item).description;
-			var p_1 = root_2$2();
+			var p_1 = root_2$4();
 			var text_2 = child(p_1);
 			template_effect(() => set_text(text_2, `${name() ?? ""} (${type() ?? ""}) ${description() ?? ""}`));
 			append($$anchor, p_1);
@@ -6528,7 +7150,7 @@ function Profile_input_pin($$anchor, $$props) {
 				append($$anchor, fragment_1);
 			},
 			($$anchor) => {
-				var p_3 = root_5$2();
+				var p_3 = root_5$3();
 
 				append($$anchor, p_3);
 			}
@@ -6557,7 +7179,7 @@ function Profile_input_pin($$anchor, $$props) {
 }
 
 var root_1$7 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
-var root$4 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
+var root$5 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
 
 function Profile_output_pin($$anchor, $$props) {
 	push($$props, false);
@@ -6578,7 +7200,7 @@ function Profile_output_pin($$anchor, $$props) {
 
 	init();
 
-	var div = root$4();
+	var div = root$5();
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
@@ -6606,10 +7228,147 @@ function Profile_output_pin($$anchor, $$props) {
 	pop();
 }
 
+var root_5$2 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
+var root_7$1 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
+var root_8$1 = template(`<p class="empty svelte-7sbsh3">No source profile entry for this internal pin.</p>`);
+var root_2$3 = template(`<div class="target svelte-7sbsh3"><p class="endpoint svelte-7sbsh3"> </p> <!></div>`);
+var root_9$1 = template(`<div class="target svelte-7sbsh3"><p class="empty svelte-7sbsh3">No internal pins are currently resolved behind this proxy.</p></div>`);
+var root$4 = template(`<div class="proxy svelte-7sbsh3"><!></div>`);
+
+function Profile_proxy_pin($$anchor, $$props) {
+	push($$props, false);
+
+	let profile = prop($$props, "profile", 8),
+		open = prop($$props, "open", 8);
+
+	function onKeydown(e) {
+		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
+	}
+
+	function asArray(value) {
+		if (!value) return [];
+		return Array.isArray(value) ? value : [value];
+	}
+
+	init();
+
+	var div = root$4();
+	var node = child(div);
+
+	if_block(
+		node,
+		() => profile()?.targets?.length,
+		($$anchor) => {
+			var fragment = comment();
+			var node_1 = first_child(fragment);
+
+			each(node_1, 1, () => profile().targets, index, ($$anchor, target) => {
+				var div_1 = root_2$3();
+				var p = child(div_1);
+				var text = child(p);
+
+				var node_2 = sibling(p, 2);
+
+				if_block(
+					node_2,
+					() => asArray(get(target).profile).length,
+					($$anchor) => {
+						var fragment_1 = comment();
+						var node_3 = first_child(fragment_1);
+
+						each(node_3, 1, () => asArray(get(target).profile), index, ($$anchor, item) => {
+							var fragment_2 = comment();
+							var node_4 = first_child(fragment_2);
+
+							if_block(
+								node_4,
+								() => get(item)?.handler,
+								($$anchor) => {
+									var p_1 = root_5$2();
+									var span = child(p_1);
+									var text_1 = child(span);
+
+									var text_2 = sibling(span);
+
+									template_effect(() => {
+										set_text(text_1, get(item).handler);
+										set_text(text_2, `  in ${get(item).file ?? ""} (${get(item).line ?? ""})`);
+									});
+
+									event("click", span, () => open()?.({
+										file: get(item).file,
+										line: get(item).line
+									}));
+
+									event("keydown", span, onKeydown);
+									append($$anchor, p_1);
+								},
+								($$anchor) => {
+									var fragment_3 = comment();
+									var node_5 = first_child(fragment_3);
+
+									if_block(
+										node_5,
+										() => get(item)?.file,
+										($$anchor) => {
+											var p_2 = root_7$1();
+											var span_1 = child(p_2);
+											var text_3 = child(span_1);
+
+											var text_4 = sibling(span_1);
+
+											template_effect(() => {
+												set_text(text_3, get(item).pin);
+												set_text(text_4, `  ${get(item).file ?? ""} (${get(item).line ?? ""})`);
+											});
+
+											event("click", span_1, () => open()?.({
+												file: get(item).file,
+												line: get(item).line
+											}));
+
+											event("keydown", span_1, onKeydown);
+											append($$anchor, p_2);
+										},
+										null,
+										true
+									);
+
+									append($$anchor, fragment_3);
+								}
+							);
+
+							append($$anchor, fragment_2);
+						});
+
+						append($$anchor, fragment_1);
+					},
+					($$anchor) => {
+						var p_3 = root_8$1();
+
+						append($$anchor, p_3);
+					}
+				);
+				template_effect(() => set_text(text, get(target).pin + ' @ ' + get(target).node + '(' + get(target).io + ')'));
+				append($$anchor, div_1);
+			});
+
+			append($$anchor, fragment);
+		},
+		($$anchor) => {
+			var div_2 = root_9$1();
+
+			append($$anchor, div_2);
+		}
+	);
+	append($$anchor, div);
+	pop();
+}
+
 var root_4$1 = template(`<span> </span>`);
-var root_3$1 = template(`<div></div>`);
-var root_6$2 = template(`<pre class="text svelte-1w43hf3"> </pre>`);
-var root_1$6 = template(`<div class="contract svelte-1w43hf3"><div class="role svelte-1w43hf3"><p class="svelte-1w43hf3"> </p></div> <!></div>`);
+var root_3 = template(`<div></div>`);
+var root_6$1 = template(`<pre class="text svelte-1np5y2u"> </pre>`);
+var root_1$6 = template(`<div class="contract svelte-1np5y2u"><div class="role svelte-1np5y2u"><p class="svelte-1np5y2u"> </p></div> <!></div>`);
 
 function Pin_contract($$anchor, $$props) {
 	push($$props, false);
@@ -6637,14 +7396,14 @@ function Pin_contract($$anchor, $$props) {
 				var node_2 = first_child(fragment_1);
 
 				each(node_2, 1, () => contract().tokens, index, ($$anchor, line) => {
-					var div_2 = root_3$1();
+					var div_2 = root_3();
 
 					each(div_2, 5, () => get(line).parts, index, ($$anchor, part) => {
 						var span = root_4$1();
 						var text_1 = child(span);
 
 						template_effect(() => {
-							set_class(span, `part ${get(part).kind ?? ""} svelte-1w43hf3`);
+							set_class(span, `part ${get(part).kind ?? ""} svelte-1np5y2u`);
 							set_text(text_1, get(part).text);
 						});
 
@@ -6652,7 +7411,7 @@ function Pin_contract($$anchor, $$props) {
 					});
 
 					template_effect(() => {
-						set_class(div_2, `line ${(get(line).parts?.[0]?.kind === 'header' ? 'header' : '') ?? ""} svelte-1w43hf3`);
+						set_class(div_2, `line ${(get(line).parts?.[0]?.kind === 'header' ? 'header' : '') ?? ""} svelte-1np5y2u`);
 						set_attribute(div_2, "style", `--indent:${get(line).indent}`);
 					});
 
@@ -6669,7 +7428,7 @@ function Pin_contract($$anchor, $$props) {
 					node_3,
 					() => contract().text,
 					($$anchor) => {
-						var pre = root_6$2();
+						var pre = root_6$1();
 						var text_2 = child(pre);
 						template_effect(() => set_text(text_2, contract().text));
 						append($$anchor, pre);
@@ -6681,7 +7440,7 @@ function Pin_contract($$anchor, $$props) {
 				append($$anchor, fragment_2);
 			}
 		);
-		template_effect(() => set_text(text, `Contract (${contract().role ?? 'follower' ?? ""})`));
+		template_effect(() => set_text(text, `• Contract: ${contract().role ?? 'follower' ?? ""}`));
 		append($$anchor, div);
 	});
 
@@ -6689,9 +7448,10 @@ function Pin_contract($$anchor, $$props) {
 	pop();
 }
 
-var root_3 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Handlers and parameters</p></div> <!>`, 1);
-var root_5$1 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Handler and parameters</p></div> <!>`, 1);
-var root_6$1 = template(`<div class="pin svelte-1vbnmmk"><p class="svelte-1vbnmmk">Send locactions</p></div> <!>`, 1);
+var root_2$2 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0"> </p></div> <!>`, 1);
+var root_5$1 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handlers and parameters</p></div> <!>`, 1);
+var root_7 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handler and parameters</p></div> <!>`, 1);
+var root_8 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Sent at</p></div> <!>`, 1);
 var root_1$5 = template(`<!> <!>`, 1);
 
 function Pin_profile($$anchor, $$props) {
@@ -6758,87 +7518,119 @@ function Pin_profile($$anchor, $$props) {
 
 			if_block(
 				node_1,
-				() => get(_pin)?.is.input,
+				() => get(_pin)?.is?.proxy,
 				($$anchor) => {
-					var fragment_2 = comment();
-					var node_2 = first_child(fragment_2);
+					var fragment_2 = root_2$2();
+					var div = first_child(fragment_2);
+					var p = child(div);
+					var text = child(p);
 
-					if_block(
-						node_2,
-						() => Array.isArray(get(_profile)),
-						($$anchor) => {
-							var fragment_3 = root_3();
-							var node_3 = sibling(first_child(fragment_3), 2);
+					var node_2 = sibling(div, 2);
 
-							each(node_3, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
-								Profile_input_pin($$anchor, {
-									get profile() {
-										return get(singleProfile);
-									},
-									get open() {
-										return get(_open);
-									}
-								});
-							});
-
-							append($$anchor, fragment_3);
+					Profile_proxy_pin(node_2, {
+						get profile() {
+							return get(_profile);
 						},
-						($$anchor) => {
-							var fragment_5 = root_5$1();
-							var node_4 = sibling(first_child(fragment_5), 2);
-
-							Profile_input_pin(node_4, {
-								get profile() {
-									return get(_profile);
-								},
-								get open() {
-									return get(_open);
-								}
-							});
-
-							append($$anchor, fragment_5);
+						get open() {
+							return get(_open);
 						}
-					);
+					});
 
+					template_effect(() => set_text(text, get(_pin)?.is.input ? '• Connected internal handlers' : '• Connected internal emitters'));
 					append($$anchor, fragment_2);
 				},
 				($$anchor) => {
-					var fragment_6 = root_6$1();
-					var node_5 = sibling(first_child(fragment_6), 2);
+					var fragment_3 = comment();
+					var node_3 = first_child(fragment_3);
 
 					if_block(
-						node_5,
-						() => Array.isArray(get(_profile)),
+						node_3,
+						() => get(_pin)?.is.input,
 						($$anchor) => {
-							var fragment_7 = comment();
-							var node_6 = first_child(fragment_7);
+							var fragment_4 = comment();
+							var node_4 = first_child(fragment_4);
 
-							each(node_6, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
-								Profile_output_pin($$anchor, {
-									get profile() {
-										return get(singleProfile);
-									},
-									get open() {
-										return get(_open);
-									}
-								});
-							});
+							if_block(
+								node_4,
+								() => Array.isArray(get(_profile)),
+								($$anchor) => {
+									var fragment_5 = root_5$1();
+									var node_5 = sibling(first_child(fragment_5), 2);
 
-							append($$anchor, fragment_7);
+									each(node_5, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
+										Profile_input_pin($$anchor, {
+											get profile() {
+												return get(singleProfile);
+											},
+											get open() {
+												return get(_open);
+											}
+										});
+									});
+
+									append($$anchor, fragment_5);
+								},
+								($$anchor) => {
+									var fragment_7 = root_7();
+									var node_6 = sibling(first_child(fragment_7), 2);
+
+									Profile_input_pin(node_6, {
+										get profile() {
+											return get(_profile);
+										},
+										get open() {
+											return get(_open);
+										}
+									});
+
+									append($$anchor, fragment_7);
+								}
+							);
+
+							append($$anchor, fragment_4);
 						},
 						($$anchor) => {
-							Profile_output_pin($$anchor, {
-								get profile() {
-									return get(_profile);
+							var fragment_8 = root_8();
+							var node_7 = sibling(first_child(fragment_8), 2);
+
+							if_block(
+								node_7,
+								() => Array.isArray(get(_profile)),
+								($$anchor) => {
+									var fragment_9 = comment();
+									var node_8 = first_child(fragment_9);
+
+									each(node_8, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
+										Profile_output_pin($$anchor, {
+											get profile() {
+												return get(singleProfile);
+											},
+											get open() {
+												return get(_open);
+											}
+										});
+									});
+
+									append($$anchor, fragment_9);
 								},
-								get open() {
-									return get(_open);
+								($$anchor) => {
+									Profile_output_pin($$anchor, {
+										get profile() {
+											return get(_profile);
+										},
+										get open() {
+											return get(_open);
+										}
+									});
 								}
-							});
-						}
+							);
+
+							append($$anchor, fragment_8);
+						},
+						true
 					);
 
-					append($$anchor, fragment_6);
+					append($$anchor, fragment_3);
 				}
 			);
 

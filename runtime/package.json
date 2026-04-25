@@ -8,13 +8,23 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "import": "./dist/rt-base/index.js",
+      "require": "./dist/rt-base/index.cjs",
+      "default": "./dist/rt-base/index.js"
+    },
+    "./rt-base": {
+      "import": "./dist/rt-base/index.js",
+      "require": "./dist/rt-base/index.cjs",
+      "default": "./dist/rt-base/index.js"
+    },
+    "./rt-als": {
+      "import": "./dist/rt-als/index.js",
+      "require": "./dist/rt-als/index.cjs",
+      "default": "./dist/rt-als/index.js"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/rt-base/index.cjs",
+  "module": "./dist/rt-base/index.js",
   "files": [
     "dist",
     "README.md",
@@ -24,7 +34,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsup src/index.js --format esm,cjs --out-dir dist --sourcemap --splitting false --keep-names",
+    "build:base": "tsup rt-base/index.js --format esm,cjs --out-dir dist/rt-base --sourcemap --splitting false --keep-names",
+    "build:als": "tsup rt-als/index.js --format esm,cjs --out-dir dist/rt-als --sourcemap --splitting false --keep-names",
+    "build": "npm run build:base && npm run build:als",
+    "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },
   "publishConfig": {

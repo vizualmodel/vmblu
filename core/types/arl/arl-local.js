@@ -1,4 +1,5 @@
 import * as Path from './path.js'
+import {parseJsonWithDuplicateKeyWarning} from '../util/json-parse.js'
 
 // domain path resource uses a canonical path plus optional local file handle
 export function LARL(path, handle=null) {
@@ -181,7 +182,7 @@ async get(as = 'text') {
     const content = await file.text();
     
     // Return the content as JSON if requested, otherwise as raw text.
-    return as === 'json' ? JSON.parse(content) : content;        
+    return as === 'json' ? parseJsonWithDuplicateKeyWarning(content, this.getFullPath() ?? this.getPath()) : content;        
 },
 
 async xxxget(as = 'text') {
@@ -222,7 +223,7 @@ async xxxget(as = 'text') {
     const content = await file.text();
     
     // Return the content as JSON if requested, otherwise as raw text.
-    return as === 'json' ? JSON.parse(content) : content;        
+    return as === 'json' ? parseJsonWithDuplicateKeyWarning(content, this.getFullPath() ?? this.getPath()) : content;        
 },
 
 async save(body) {

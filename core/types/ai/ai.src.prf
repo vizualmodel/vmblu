@@ -1,6 +1,6 @@
 {
-  "version": "0.4.5",
-  "generatedAt": "2026-03-05T21:49:51.565Z",
+  "version": "0.5.2",
+  "generatedAt": "2026-04-20T15:32:40.770Z",
   "entries": [
     {
       "node": "McpClientOpenAI",
@@ -9,7 +9,7 @@
           "pin": "handle.key",
           "handler": "onHandleKey",
           "file": "mcp-client-in-browser.js",
-          "line": 47,
+          "line": 129,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -19,7 +19,7 @@
           "pin": "new.prompt",
           "handler": "onNewPrompt",
           "file": "mcp-client-in-browser.js",
-          "line": 185,
+          "line": 222,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -35,7 +35,7 @@
           "pin": "tool.result",
           "handler": "onToolResult",
           "file": "mcp-client-in-browser.js",
-          "line": 271,
+          "line": 300,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -50,39 +50,69 @@
       ],
       "transmits": [
         {
+          "pin": "update status",
+          "file": "mcp-client-in-browser.js",
+          "line": 54
+        },
+        {
+          "pin": "update tools",
+          "file": "mcp-client-in-browser.js",
+          "line": 58
+        },
+        {
           "pin": "get manifest",
           "file": "mcp-client-in-browser.js",
-          "line": 21
+          "line": 116
         },
         {
           "pin": "get tools",
           "file": "mcp-client-in-browser.js",
-          "line": 24
+          "line": 117
         },
         {
           "pin": "update chat",
           "file": "mcp-client-in-browser.js",
-          "line": 191
+          "line": 138
         },
         {
           "pin": "update chat",
           "file": "mcp-client-in-browser.js",
-          "line": 219
+          "line": 218
         },
         {
           "pin": "update chat",
           "file": "mcp-client-in-browser.js",
-          "line": 237
+          "line": 224
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 247
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 261
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 267
         },
         {
           "pin": "call tool",
           "file": "mcp-client-in-browser.js",
-          "line": 256
+          "line": 290
         },
         {
           "pin": "update chat",
           "file": "mcp-client-in-browser.js",
-          "line": 266
+          "line": 296
+        },
+        {
+          "pin": "update chat",
+          "file": "mcp-client-in-browser.js",
+          "line": 305
         }
       ]
     },

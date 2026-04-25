@@ -62,7 +62,7 @@ function defaultModel(projectName) {
       saved: now,
       utc: now,
       style: "#2c7be5",
-      runtime: "@vizualmodel/vmblu-runtime",
+      runtime: "@vizualmodel/vmblu-runtime/rt-base",
       description: `${projectName} - vmblu model (scaffolded)`
     },
     imports: [],

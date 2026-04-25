@@ -106,8 +106,7 @@ flattenSourceProfile(nodeMap) {
     return flatList;
 },
 
-// get the information for a given pin
-getInputPinProfile(pin) {
+getDirectInputPinProfile(pin) {
 
     // Get the info about the handlers of the node
     const handles = this.sourceProfile?.get(pin.node.name)?.handles
@@ -142,8 +141,7 @@ getInputPinProfile(pin) {
     return multiProfile
 },
 
-// get the information for a given pin
-getOutputPinProfile(pin) {
+getDirectOutputPinProfile(pin) {
 
     // Get the info about the node
     const transmits = this.sourceProfile?.get(pin.node.name)?.transmits
@@ -170,6 +168,52 @@ getOutputPinProfile(pin) {
 
     // done
     return multiProfile
+},
+
+getProxyPinProfile(pin) {
+
+    // proxy pins on group nodes resolve to one or more internal endpoints via the pad
+    if (!pin?.is?.proxy || !pin.pad) return null
+
+    const targets = []
+    pin.pad.makeConxList(targets)
+
+    // keep the list stable and remove duplicates caused by multiple internal routes
+    const unique = new Map()
+    for (const target of targets) {
+        if (!target?.node?.name || !target?.name) continue
+        const key = `${target.node.name}|${target.name}|${target.is.input ? 'in' : 'out'}`
+        if (!unique.has(key)) unique.set(key, target)
+    }
+
+    const resolved = Array.from(unique.values())
+        .map(target => ({
+            node: target.node.name,
+            pin: target.name,
+            io: target.is.input ? 'in' : 'out',
+            profile: target.is.input
+                ? this.getDirectInputPinProfile(target)
+                : this.getDirectOutputPinProfile(target)
+        }))
+        .sort((a, b) =>
+            a.node.localeCompare(b.node)
+            || a.pin.localeCompare(b.pin)
+            || a.io.localeCompare(b.io)
+        )
+
+    return { targets: resolved }
+},
+
+// get the information for a given pin
+getInputPinProfile(pin) {
+    if (pin?.is?.proxy) return this.getProxyPinProfile(pin)
+    return this.getDirectInputPinProfile(pin)
+},
+
+// get the information for a given pin
+getOutputPinProfile(pin) {
+    if (pin?.is?.proxy) return this.getProxyPinProfile(pin)
+    return this.getDirectOutputPinProfile(pin)
 },
 
 getContract(pin) {

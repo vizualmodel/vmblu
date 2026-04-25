@@ -1,6 +1,6 @@
 {
   "version": "0.5.2",
-  "generatedAt": "2026-04-13T07:38:51.425Z",
+  "generatedAt": "2026-04-22T08:41:06.033Z",
   "entries": [
     {
       "node": "message broker",
@@ -859,22 +859,22 @@
         {
           "pin": "runtime settings (dx)",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 157
+          "line": 159
         },
         {
           "pin": "node prompt",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 167
+          "line": 171
         },
         {
           "pin": "open model",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 189
+          "line": 193
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 202
+          "line": 206
         }
       ]
     }

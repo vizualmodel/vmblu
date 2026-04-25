@@ -1,0 +1,20 @@
+{
+  "header": {
+    "version": "no version",
+    "utc": "2026-04-16T15:00:00.000Z",
+    "style": "#0066ff"
+  },
+  "root": {
+    "kind": "source",
+    "name": "security reporter",
+    "rect": "x 90 y 30 w 180 h 41",
+    "interfaces": [
+      {
+        "interface": "(0)",
+        "pins": [
+          "(2 R)security.event"
+        ]
+      }
+    ]
+  }
+}
