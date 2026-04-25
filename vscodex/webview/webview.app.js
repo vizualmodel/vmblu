@@ -1,11 +1,11 @@
 // ------------------------------------------------------------------
 // Model: 
 // Path: /c:/dev/vmblu/vscodex/webview/webview.app.js
-// Creation date 4/9/2026, 10:44:53 AM
+// Creation date 4/22/2026, 10:22:08 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
-import * as VMBLU from "../../runtime/src/scaffold.js"
+import * as VMBLU from "../../runtime/rt-base/scaffold.js"
 
 
 //Imports
@@ -29,7 +29,7 @@ const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker", 
-	uid: "YrxP", 
+	uid: "KfeZ", 
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
@@ -45,21 +45,21 @@ const nodeList = [
 		],
 	outputs: [
 		`set document -> [ 
-			"top level view @ view manager (hQha)",
-			"model.set @ model manager (LjaH)" ]`,
+			"top level view @ view manager (ERip)",
+			"model.set @ model manager (aaPU)" ]`,
 		"get document -> ()",
 		"reload model -> ()",
-		"model.save -> model.save @ model manager (LjaH)",
-		"sync links -> sync links @ model manager (LjaH)",
-		"canvas resize -> size change @ view manager (hQha)",
-		"clipboard.local => local @ clipboard (TvUB)",
-		"clipboard.switched -> switched @ clipboard (TvUB)"
+		"model.save -> model.save @ model manager (aaPU)",
+		"sync links -> sync links @ model manager (aaPU)",
+		"canvas resize -> size change @ view manager (ERip)",
+		"clipboard.local => local @ clipboard (HHsC)",
+		"clipboard.switched -> switched @ clipboard (HHsC)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager", 
-	uid: "hQha", 
+	uid: "ERip", 
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -70,25 +70,25 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (LjaH)",
-		"redox.undo -> redox.undo @ model manager (LjaH)",
-		"redox.redo -> redox.redo @ model manager (LjaH)",
-		"canvas -> canvas @ message broker (YrxP)",
-		"node settings (sx) -> json @ node settings (NPEl)",
-		"runtime settings (dx) -> show @ runtime settings (WFTA)",
-		"node prompt -> text @ text block (mLLt)",
-		"context menu -> context menu @ context menu (cDSE)",
-		"name and path -> name and path @ name and path (XELl)",
-		"open model -> open document @ message broker (YrxP)",
-		"open source file -> open js file @ message broker (YrxP)",
-		"clipboard.get => get @ clipboard (TvUB)",
-		"clipboard.set -> set @ clipboard (TvUB)"
+		"redox.doit -> redox.doit @ model manager (aaPU)",
+		"redox.undo -> redox.undo @ model manager (aaPU)",
+		"redox.redo -> redox.redo @ model manager (aaPU)",
+		"canvas -> canvas @ message broker (KfeZ)",
+		"node settings (sx) -> json @ node settings (zWpr)",
+		"runtime settings (dx) -> show @ runtime settings (rqQG)",
+		"node prompt -> text @ text block (mpyA)",
+		"context menu -> context menu @ context menu (gVlR)",
+		"name and path -> name and path @ name and path (ijMs)",
+		"open model -> open document @ message broker (KfeZ)",
+		"open source file -> open js file @ message broker (KfeZ)",
+		"clipboard.get => get @ clipboard (HHsC)",
+		"clipboard.set -> set @ clipboard (HHsC)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager", 
-	uid: "LjaH", 
+	uid: "aaPU", 
 	factory: ModelManager,
 	inputs: [
 		"-> sync links",
@@ -106,22 +106,22 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (MdSu)",
-		"open source file -> open js file @ message broker (YrxP)",
+		"save point.confirm -> show @ confirm box (xfnG)",
+		"open source file -> open js file @ message broker (KfeZ)",
 		"open model -> ()",
-		"model.root -> root @ view manager (hQha)",
-		"model.header -> show @ doc settings (GHzT)",
+		"model.root -> root @ view manager (ERip)",
+		"model.header -> show @ doc settings (GzCM)",
 		`redox.done -> [ 
-			"redox.done @ view manager (hQha)",
-			"new edit @ message broker (YrxP)" ]`,
-		"pin profile -> show @ pin profile (PIjN)",
-		"get path -> path @ path request (CmUu)"
+			"redox.done @ view manager (ERip)",
+			"new edit @ message broker (KfeZ)" ]`,
+		"pin profile -> show @ pin profile (KoSl)",
+		"get path -> path @ path request (HjYF)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "TvUB", 
+	uid: "HHsC", 
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -130,137 +130,137 @@ const nodeList = [
 		"-> switched"
 		],
 	outputs: [
-		"remote => clipboard.remote @ message broker (YrxP)",
-		"switch -> clipboard.switch @ message broker (YrxP)"
+		"remote => clipboard.remote @ message broker (KfeZ)",
+		"switch -> clipboard.switch @ message broker (KfeZ)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "CmUu", 
+	uid: "HjYF", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"folder.get => folder.get @ message broker (YrxP)",
-		"modal div -> modal div @ message broker (YrxP)"
+		"folder.get => folder.get @ message broker (KfeZ)",
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings", 
-	uid: "NPEl", 
+	uid: "zWpr", 
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path", 
-	uid: "XELl", 
+	uid: "ijMs", 
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)",
-		"folder.get => folder.get @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)",
+		"folder.get => folder.get @ message broker (KfeZ)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile", 
-	uid: "PIjN", 
+	uid: "KoSl", 
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block", 
-	uid: "mLLt", 
+	uid: "mpyA", 
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//________________________________________________DOC SETTINGS
 	{
 	name: "doc settings", 
-	uid: "GHzT", 
+	uid: "GzCM", 
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "cDSE", 
+	uid: "gVlR", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings", 
-	uid: "WFTA", 
+	uid: "rqQG", 
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box", 
-	uid: "MdSu", 
+	uid: "xfnG", 
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (YrxP)"
+		"modal div -> modal div @ message broker (KfeZ)"
 		]
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu", 
-	uid: "drTd", 
+	uid: "iwYL", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (YrxP)",
-		"sync -> sync links @ model manager (LjaH)",
-		"accept changes -> accept changes @ model manager (LjaH)",
-		"show settings -> show settings @ model manager (LjaH)",
-		"make app -> make app @ model manager (LjaH)",
-		"make lib -> make lib @ model manager (LjaH)",
-		"set save point -> save point.set @ model manager (LjaH)",
-		"back to save point -> save point.back @ model manager (LjaH)",
-		"recalibrate -> recalibrate @ view manager (hQha)",
-		"grid on-off -> grid on-off @ view manager (hQha)"
+		"div -> floating menu @ message broker (KfeZ)",
+		"sync -> sync links @ model manager (aaPU)",
+		"accept changes -> accept changes @ model manager (aaPU)",
+		"show settings -> show settings @ model manager (aaPU)",
+		"make app -> make app @ model manager (aaPU)",
+		"make lib -> make lib @ model manager (aaPU)",
+		"set save point -> save point.set @ model manager (aaPU)",
+		"back to save point -> save point.back @ model manager (aaPU)",
+		"recalibrate -> recalibrate @ view manager (ERip)",
+		"grid on-off -> grid on-off @ view manager (ERip)"
 		],
 	sx:	[
 		    {

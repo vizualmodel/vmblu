@@ -55,7 +55,7 @@ export const AppHandling = {
         const indexArl = this.getArl().resolve('index.js')
     
         // the runtime to use for this model
-        const runtime = this.header.runtime ?? '@vizualmodel/vmblu-runtime'
+        const runtime = this.header.runtime ?? '@vizualmodel/vmblu-runtime/rt-base'
     
         // and save the app 
         const jsSource = this.makeJSApp(node, srcArl, indexArl, runtime)

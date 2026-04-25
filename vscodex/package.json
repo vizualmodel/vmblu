@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "0.1.29",
+    "version": "0.1.30",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -117,7 +117,7 @@
         "svelte": "^5.0.0"
     },
     "dependencies": {
-        "@vscode/vsce": "^3.7.1",
+        "@vscode/vsce": "^3.9.1",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     },

@@ -1,6 +1,6 @@
 {
   "version": "0.5.2",
-  "generatedAt": "2026-04-12T20:00:26.916Z",
+  "generatedAt": "2026-04-22T08:41:06.928Z",
   "entries": [
     {
       "node": "document manager",
@@ -637,22 +637,22 @@
         {
           "pin": "runtime settings (dx)",
           "file": "../core/types/node/node-icon-click.js",
-          "line": 157
+          "line": 159
         },
         {
           "pin": "node prompt",
           "file": "../core/types/node/node-icon-click.js",
-          "line": 167
+          "line": 171
         },
         {
           "pin": "open model",
           "file": "../core/types/node/node-icon-click.js",
-          "line": 189
+          "line": 193
         },
         {
           "pin": "open source file",
           "file": "../core/types/node/node-icon-click.js",
-          "line": 202
+          "line": 206
         }
       ]
     }

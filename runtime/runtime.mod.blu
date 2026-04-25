@@ -1,0 +1,67 @@
+{
+  "header": {
+    "version": "no version",
+    "created": "4/16/2026, 5:00:00 PM",
+    "saved": "4/16/2026, 5:00:00 PM",
+    "utc": "2026-04-16T15:00:00.000Z",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-als"
+  },
+  "factories": [
+    {
+      "path": "./rt-als/security-reporter.js",
+      "function": "SecurityReporterFactory"
+    }
+  ],
+  "types": {
+    "SecurityEvent": {
+      "kind": "object",
+      "summary": "Runtime safety event emitted by the ALS runtime.",
+      "fields": {
+        "ts": {
+          "vmbluType": "number"
+        },
+        "node": {
+          "vmbluType": "string"
+        },
+        "cap": {
+          "vmbluType": "string"
+        },
+        "detail": {
+          "vmbluType": "object"
+        }
+      },
+      "required": [
+        "ts",
+        "node",
+        "cap",
+        "detail"
+      ]
+    }
+  },
+  "root": {
+    "kind": "source",
+    "name": "security reporter",
+    "factory": {
+      "path": "./rt-als/security-reporter.js",
+      "function": "SecurityReporterFactory"
+    },
+    "interfaces": [
+      {
+        "interface": "",
+        "pins": [
+          {
+            "name": "security.event",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "SecurityEvent"
+            }
+          }
+        ]
+      }
+    ],
+    "sx": {
+      "mode": "warn"
+    }
+  }
+}

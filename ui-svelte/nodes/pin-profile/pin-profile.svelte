@@ -3,6 +3,7 @@
     import PopupBox from '../../fragments/popup-box.svelte';
     import InputProfile from '../../fragments/profile-input-pin.svelte'
     import OutputProfile from '../../fragments/profile-output-pin.svelte'
+    import ProxyProfile from '../../fragments/profile-proxy-pin.svelte'
     import PinContract from '../../fragments/pin-contract.svelte'
 
     export let tx//, sx;
@@ -55,9 +56,10 @@
 .pin p {
     font-family: var(--fFixed);
     font-size: 0.8rem;
-    color: #000000;
-    background: rgb(201, 201, 201);
+    color: yellow;
+    /* background: rgb(168, 169, 212); */
     padding:0.1rem;
+    border-radius: 0.8rem;
     margin: 0 0 0.1 0rem;
 }
 </style>
@@ -66,23 +68,28 @@
 
 <PinContract contract={_contract} />
 
-{#if _pin?.is.input}
+{#if _pin?.is?.proxy}
+    <div class="pin">
+        <p>{_pin?.is.input ? '• Connected internal handlers' : '• Connected internal emitters'}</p>
+    </div>
+    <ProxyProfile profile={_profile} open={_open} />
+{:else if _pin?.is.input}
     {#if Array.isArray(_profile)}
         <div class="pin">
-            <p>Handlers and parameters</p>
+            <p>&#x2022 Handlers and parameters</p>
         </div>
         {#each _profile as singleProfile}
             <InputProfile profile={singleProfile} open={_open} />
         {/each}
     {:else}
        <div class="pin">
-            <p>Handler and parameters</p>
+            <p>&#x2022 Handler and parameters</p>
         </div>
         <InputProfile profile={_profile} open={_open}/>
     {/if}
 {:else}
     <div class="pin">
-        <p>Send locactions </p>
+        <p>&#x2022 Sent at</p>
     </div>
     {#if Array.isArray(_profile)}
         {#each _profile as singleProfile}

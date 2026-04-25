@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import {cout} from './util.js';
+import {parseJsonWithDuplicateKeyWarning} from './json-parse.js';
 
 // to be removed - will be defined in View
 interface SomeEdit {
@@ -114,7 +115,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 			const content = rawFile.toString();
 
 			// Parse and return JSON if the content is not empty
-			return content.length > 0 ? JSON.parse(content) : null;
+			return content.length > 0 ? parseJsonWithDuplicateKeyWarning(content, uri.path, cout) : null;
 
 		} catch (error) {
 			// report the error

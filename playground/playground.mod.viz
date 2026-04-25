@@ -17,7 +17,7 @@
       {
         "kind": "source",
         "name": "application launcher",
-        "rect": "x 141 y 266 w 200 h 86",
+        "rect": "x 402 y 11 w 200 h 86",
         "interfaces": [
           {
             "interface": "(0)",
@@ -372,8 +372,8 @@
         "rect": "x 2146 y 120 w 150 h 191",
         "view": {
           "state": "closed",
-          "rect": "x 1133 y -234 w 1062 h 1232",
-          "transform": "sx 1.000 sy 1.000 dx 1310.662 dy -275.602"
+          "rect": "x 1133 y -233 w 1062 h 1232",
+          "transform": "sx 1.000 sy 1.000 dx 1310.662 dy -274.602"
         },
         "interfaces": [
           {

@@ -765,6 +765,10 @@ input.svelte-wgdzge:checked::after {
 
 
 
+
+
+
+
 /* p {
     font-family:var(--fontFixed);
     font-size:var(--sFontMS);
@@ -974,6 +978,52 @@ textarea.svelte-1ylwq8l {
 }
 
 
+  .proxy.svelte-1ehaxn9 {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+  }
+
+  .target.svelte-1ehaxn9 {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-left: 1rem;
+  }
+
+  .target.svelte-1ehaxn9 p:where(.svelte-1ehaxn9) {
+      font-family: var(--fFixed);
+      font-size: 0.7rem;
+      white-space: pre-wrap;
+      margin: 0;
+  }
+
+  .endpoint.svelte-1ehaxn9 {
+      color: #ff8522;
+  }
+
+  .meta.svelte-1ehaxn9 {
+      color: #44a3fc;
+  }
+
+  .empty.svelte-1ehaxn9 {
+      color: #999;
+  }
+
+  .clickable.svelte-1ehaxn9 {
+      cursor: pointer;
+      display: inline-block;
+      transition: transform 0.1s ease-out;
+      padding: 0.2rem;
+      border: 1px solid #ff8522;
+  }
+
+  .clickable.svelte-1ehaxn9:active {
+      transform: scale(0.9);
+  }
+
+
   .contract.svelte-1e42der {
     display: flex;
     flex-direction: column;
@@ -994,8 +1044,8 @@ textarea.svelte-1ylwq8l {
   .role.svelte-1e42der p:where(.svelte-1e42der) {
     font-family: var(--fFixed);
     font-size: 0.8rem;
-    color: #000000;
-    background: rgb(201, 201, 201);
+    color: yellow;
+    /* background: rgb(201, 201, 201); */
     /* padding: 0.3 0 0.2 0rem; */
     padding:0.1rem;
     margin: 0 0 0 0rem;
@@ -1037,9 +1087,10 @@ textarea.svelte-1ylwq8l {
 .pin.svelte-1oswn12 p:where(.svelte-1oswn12) {
     font-family: var(--fFixed);
     font-size: 0.8rem;
-    color: #000000;
-    background: rgb(201, 201, 201);
+    color: yellow;
+    /* background: rgb(168, 169, 212); */
     padding:0.1rem;
+    border-radius: 0.8rem;
     margin: 0 0 0.1 0rem;
 }
 

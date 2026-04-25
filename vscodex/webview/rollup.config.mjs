@@ -18,7 +18,7 @@ const plugins =  [
 		},
 		onwarn: (warning, handler) => {
 			// e.g. don't warn on a11y-autofocus
-			if (warning.code.startsWith('a11y')) return;
+			if (warning?.code?.startsWith?.('a11y')) return;
 
 			// let Rollup handle all other warnings normally
 			handler(warning);

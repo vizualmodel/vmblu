@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------
 
 // import the runtime code
-import * as VMBLU from "../runtime/src/scaffold.js"
+import * as VMBLU from "../runtime/rt-base/scaffold.js"
 
 
 //Imports

@@ -2,6 +2,7 @@ import * as HTTP from './http.js'
 import * as Path from './path.js'
 import fs from 'fs/promises';
 import path from 'path';
+import {parseJsonWithDuplicateKeyWarning} from '../util/json-parse.js'
 
 export function ARL(filePath) {
 
@@ -147,7 +148,7 @@ async get(as='text') {
     return fs.readFile(this.url, 'utf8')
     .then( async data => {
 
-        if (as=='json') return JSON.parse(data)
+        if (as=='json') return parseJsonWithDuplicateKeyWarning(data, this.getFullPath())
         return data
     })
 },

@@ -2503,7 +2503,7 @@ function ModelHeader() {
     this.saved = today.toLocaleString();
     this.utc = today.toJSON();
     this.style = style;
-    this.runtime = '@vizualmodel/vmblu-runtime';
+    this.runtime = '@vizualmodel/vmblu-runtime/rt-base';
 }
 ModelHeader.prototype = {
 
@@ -2522,7 +2522,7 @@ ModelHeader.prototype = {
         this.style = style.create(raw.style);
 
         // get the runtime
-        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime';
+        this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base';
     },
 
     // copy
@@ -3057,6 +3057,187 @@ async jsImport() {},
 
 };
 
+function formatJsonPath(path) {
+    if (!path?.length) return '$'
+
+    let result = '$';
+    for (const segment of path) {
+        if (typeof segment === 'number') {
+            result += `[${segment}]`;
+            continue
+        }
+
+        if (/^[A-Za-z_][A-Za-z0-9_-]*$/.test(segment)) {
+            result += `.${segment}`;
+            continue
+        }
+
+        result += `[${JSON.stringify(segment)}]`;
+    }
+    return result
+}
+
+function decodeJsonString(text, start) {
+    if (text[start] !== '"') throw new Error(`Expected string at ${start}`)
+
+    let i = start + 1;
+    let value = '';
+
+    while (i < text.length) {
+        const ch = text[i++];
+
+        if (ch === '"') return {value, end: i}
+
+        if (ch !== '\\') {
+            value += ch;
+            continue
+        }
+
+        const esc = text[i++];
+        switch (esc) {
+            case '"': value += '"'; break
+            case '\\': value += '\\'; break
+            case '/': value += '/'; break
+            case 'b': value += '\b'; break
+            case 'f': value += '\f'; break
+            case 'n': value += '\n'; break
+            case 'r': value += '\r'; break
+            case 't': value += '\t'; break
+            case 'u': {
+                const hex = text.slice(i, i + 4);
+                if (!/^[0-9a-fA-F]{4}$/.test(hex)) throw new Error(`Invalid unicode escape at ${i - 2}`)
+                value += String.fromCharCode(parseInt(hex, 16));
+                i += 4;
+                break
+            }
+            default:
+                throw new Error(`Invalid escape sequence at ${i - 1}`)
+        }
+    }
+
+    throw new Error(`Unterminated string at ${start}`)
+}
+
+function detectDuplicateJsonKeys(text) {
+    const duplicates = [];
+    let i = 0;
+
+    const skipWhitespace = () => {
+        while (i < text.length && /\s/.test(text[i])) i++;
+    };
+
+    const parseLiteral = (literal) => {
+        if (text.slice(i, i + literal.length) !== literal) throw new Error(`Expected ${literal} at ${i}`)
+        i += literal.length;
+    };
+
+    const parseNumber = () => {
+        const match = text.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);
+        if (!match) throw new Error(`Invalid number at ${i}`)
+        i += match[0].length;
+    };
+
+    const parseString = () => {
+        const parsed = decodeJsonString(text, i);
+        i = parsed.end;
+        return parsed.value
+    };
+
+    const parseValue = (path = []) => {
+        skipWhitespace();
+
+        const ch = text[i];
+        if (ch === '{') return parseObject(path)
+        if (ch === '[') return parseArray(path)
+        if (ch === '"') return parseString()
+        if (ch === 't') return parseLiteral('true')
+        if (ch === 'f') return parseLiteral('false')
+        if (ch === 'n') return parseLiteral('null')
+        return parseNumber()
+    };
+
+    const parseArray = (path) => {
+        i++;
+        skipWhitespace();
+        if (text[i] === ']') {
+            i++;
+            return
+        }
+
+        let index = 0;
+        while (i < text.length) {
+            parseValue(path.concat(index));
+            skipWhitespace();
+
+            if (text[i] === ']') {
+                i++;
+                return
+            }
+
+            if (text[i] !== ',') throw new Error(`Expected , or ] at ${i}`)
+            i++;
+            index++;
+        }
+    };
+
+    const parseObject = (path) => {
+        i++;
+        skipWhitespace();
+        if (text[i] === '}') {
+            i++;
+            return
+        }
+
+        const seen = new Set();
+
+        while (i < text.length) {
+            skipWhitespace();
+            const key = parseString();
+            skipWhitespace();
+            if (text[i] !== ':') throw new Error(`Expected : at ${i}`)
+            i++;
+
+            if (seen.has(key)) duplicates.push({key, path: formatJsonPath(path.concat(key))});
+            else seen.add(key);
+
+            parseValue(path.concat(key));
+            skipWhitespace();
+
+            if (text[i] === '}') {
+                i++;
+                return
+            }
+
+            if (text[i] !== ',') throw new Error(`Expected , or } at ${i}`)
+            i++;
+        }
+    };
+
+    parseValue([]);
+    skipWhitespace();
+    if (i !== text.length) throw new Error(`Unexpected trailing content at ${i}`)
+
+    return duplicates
+}
+
+function parseJsonWithDuplicateKeyWarning(text, source = 'JSON', warn = console.warn) {
+    const content = typeof text === 'string' ? text : String(text ?? '');
+    const value = JSON.parse(content);
+
+    try {
+        const duplicates = detectDuplicateJsonKeys(content);
+        if (duplicates.length > 0) {
+            const locations = duplicates.map(dup => dup.path).join(', ');
+            warn(`[vmblu] Duplicate JSON key(s) detected in ${source}: ${locations}`);
+        }
+    }
+    catch {
+        // Let JSON.parse remain the source of truth for syntax errors.
+    }
+
+    return value
+}
+
 const RawHandling = {
 
 // gets the blu and viz file - only fails if blu is missing
@@ -3570,8 +3751,7 @@ flattenSourceProfile(nodeMap) {
     return flatList;
 },
 
-// get the information for a given pin
-getInputPinProfile(pin) {
+getDirectInputPinProfile(pin) {
 
     // Get the info about the handlers of the node
     const handles = this.sourceProfile?.get(pin.node.name)?.handles;
@@ -3606,8 +3786,7 @@ getInputPinProfile(pin) {
     return multiProfile
 },
 
-// get the information for a given pin
-getOutputPinProfile(pin) {
+getDirectOutputPinProfile(pin) {
 
     // Get the info about the node
     const transmits = this.sourceProfile?.get(pin.node.name)?.transmits;
@@ -3634,6 +3813,52 @@ getOutputPinProfile(pin) {
 
     // done
     return multiProfile
+},
+
+getProxyPinProfile(pin) {
+
+    // proxy pins on group nodes resolve to one or more internal endpoints via the pad
+    if (!pin?.is?.proxy || !pin.pad) return null
+
+    const targets = [];
+    pin.pad.makeConxList(targets);
+
+    // keep the list stable and remove duplicates caused by multiple internal routes
+    const unique = new Map();
+    for (const target of targets) {
+        if (!target?.node?.name || !target?.name) continue
+        const key = `${target.node.name}|${target.name}|${target.is.input ? 'in' : 'out'}`;
+        if (!unique.has(key)) unique.set(key, target);
+    }
+
+    const resolved = Array.from(unique.values())
+        .map(target => ({
+            node: target.node.name,
+            pin: target.name,
+            io: target.is.input ? 'in' : 'out',
+            profile: target.is.input
+                ? this.getDirectInputPinProfile(target)
+                : this.getDirectOutputPinProfile(target)
+        }))
+        .sort((a, b) =>
+            a.node.localeCompare(b.node)
+            || a.pin.localeCompare(b.pin)
+            || a.io.localeCompare(b.io)
+        );
+
+    return { targets: resolved }
+},
+
+// get the information for a given pin
+getInputPinProfile(pin) {
+    if (pin?.is?.proxy) return this.getProxyPinProfile(pin)
+    return this.getDirectInputPinProfile(pin)
+},
+
+// get the information for a given pin
+getOutputPinProfile(pin) {
+    if (pin?.is?.proxy) return this.getProxyPinProfile(pin)
+    return this.getDirectOutputPinProfile(pin)
 },
 
 getContract(pin) {
@@ -4149,7 +4374,7 @@ const AppHandling = {
         const indexArl = this.getArl().resolve('index.js');
     
         // the runtime to use for this model
-        const runtime = this.header.runtime ?? '@vizualmodel/vmblu-runtime';
+        const runtime = this.header.runtime ?? '@vizualmodel/vmblu-runtime/rt-base';
     
         // and save the app 
         const jsSource = this.makeJSApp(node, srcArl, indexArl, runtime);
@@ -5003,14 +5228,18 @@ const nodeClickHandling = {
                                     });                  
                 break     
 
-            case 'pulse':
+            case 'pulse': {
+
+                const runtime = view?.getManager?.()?.getModel?.()?.header?.runtime ?? '@vizualmodel/vmblu-runtime/rt-base';
 
                 tx.send("runtime settings (dx)",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
+                                                runtime,
                                                 dx: node.dx,
                                                 ok: (dx) => doEdit(tx,"changeNodeDynamics",{node, dx})
                                             });
                 break 
+            }
 
             case 'comment':
 
@@ -11196,6 +11425,10 @@ const mouseDownHandling = {
                         this.state.modo.pos.y = pad.rect.y;
                         this.state.modo.wires = pad.copyWires();
 
+                        this.state.modo.pos.x = pad.rect.x;
+                        this.state.modo.pos.y = pad.rect.y;
+                        this.state.modo.wires = pad.copyWires();
+
                         // new state
                         this.stateSwitch(doing.padDrag);
                     }
@@ -15176,21 +15409,21 @@ Object.assign(View.prototype,
     viewWidgetHandling,
     dropHandling);
 
-const defaultWorker = () => ({
+const defaultWorker$1 = () => ({
     on: false,
     path: '',
 });
 
-function makeRuntimeSettings() {
+function makeRuntimeSettings$1() {
     return {
         logMessages: false,
-        worker: defaultWorker(),
+        worker: defaultWorker$1(),
     }
 }
 
-function normalizeRuntimeSettings(dx = null) {
+function normalizeRuntimeSettings$2(dx = null) {
 
-    const defaults = makeRuntimeSettings();
+    const defaults = makeRuntimeSettings$1();
 
     if (!dx || typeof dx !== 'object') return defaults
 
@@ -15207,6 +15440,232 @@ function normalizeRuntimeSettings(dx = null) {
     normalized.worker.path = normalized.worker.path ?? '';
 
     return normalized
+}
+
+function cloneRuntimeSettings$1(dx = null) {
+    return normalizeRuntimeSettings$2(dx)
+}
+
+function resetRuntimeSettings$1(target) {
+
+    const defaults = makeRuntimeSettings$1();
+
+    target.logMessages = defaults.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = defaults.worker.on;
+    target.worker.path = defaults.worker.path;
+
+    return target
+}
+
+function assignRuntimeSettings$1(target, dx = null) {
+
+    const normalized = normalizeRuntimeSettings$2(dx);
+
+    target.logMessages = normalized.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = normalized.worker.on;
+    target.worker.path = normalized.worker.path;
+
+    for (const key of Object.keys(normalized)) {
+        if ((key === 'logMessages') || (key === 'worker')) continue
+        target[key] = normalized[key];
+    }
+
+    for (const key of Object.keys(target)) {
+        if ((key === 'logMessages') || (key === 'worker')) continue
+        if (!(key in normalized)) delete target[key];
+    }
+
+    for (const key of Object.keys(normalized.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        target.worker[key] = normalized.worker[key];
+    }
+
+    for (const key of Object.keys(target.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        if (!(key in normalized.worker)) delete target.worker[key];
+    }
+
+    return target
+}
+
+function isDefaultRuntimeSettings$1(dx = null) {
+
+    const normalized = normalizeRuntimeSettings$2(dx);
+    const workerKeys = Object.keys(normalized.worker ?? {});
+    const topKeys = Object.keys(normalized);
+
+    if (normalized.logMessages) return false
+    if (normalized.worker?.on) return false
+    if ((normalized.worker?.path ?? '') !== '') return false
+    if (topKeys.some(key => !['logMessages', 'worker'].includes(key))) return false
+    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
+
+    return true
+}
+
+var baseRuntimeSettings = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    assignRuntimeSettings: assignRuntimeSettings$1,
+    cloneRuntimeSettings: cloneRuntimeSettings$1,
+    isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
+    makeRuntimeSettings: makeRuntimeSettings$1,
+    normalizeRuntimeSettings: normalizeRuntimeSettings$2,
+    resetRuntimeSettings: resetRuntimeSettings$1
+});
+
+const defaultWorker = () => ({
+    on: false,
+    path: '',
+});
+
+const defaultSafety = () => ({
+    on: false,
+    mode: 'warn',
+    forward: true,
+});
+
+function makeRuntimeSettings() {
+    return {
+        logMessages: false,
+        worker: defaultWorker(),
+        safety: defaultSafety(),
+    }
+}
+
+function normalizeRuntimeSettings$1(dx = null) {
+
+    const defaults = makeRuntimeSettings();
+
+    if (!dx || typeof dx !== 'object') return defaults
+
+    const normalized = {
+        ...dx,
+        logMessages: !!dx.logMessages,
+        worker: {
+            ...defaults.worker,
+            ...(dx.worker ?? {}),
+        },
+        safety: {
+            ...defaults.safety,
+            ...(dx.safety ?? {}),
+        }
+    };
+
+    normalized.worker.on = !!normalized.worker.on;
+    normalized.worker.path = normalized.worker.path ?? '';
+    normalized.safety.on = !!normalized.safety.on;
+    normalized.safety.forward = normalized.safety.forward !== false;
+    normalized.safety.mode = ['off', 'warn', 'enforce'].includes(normalized.safety.mode) ? normalized.safety.mode : defaults.safety.mode;
+
+    return normalized
+}
+
+function cloneRuntimeSettings(dx = null) {
+    return normalizeRuntimeSettings$1(dx)
+}
+
+function resetRuntimeSettings(target) {
+
+    const defaults = makeRuntimeSettings();
+
+    target.logMessages = defaults.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = defaults.worker.on;
+    target.worker.path = defaults.worker.path;
+    target.safety = target.safety ?? {};
+    target.safety.on = defaults.safety.on;
+    target.safety.mode = defaults.safety.mode;
+    target.safety.forward = defaults.safety.forward;
+
+    return target
+}
+
+function assignRuntimeSettings(target, dx = null) {
+
+    const normalized = normalizeRuntimeSettings$1(dx);
+
+    target.logMessages = normalized.logMessages;
+    target.worker = target.worker ?? {};
+    target.worker.on = normalized.worker.on;
+    target.worker.path = normalized.worker.path;
+    target.safety = target.safety ?? {};
+    target.safety.on = normalized.safety.on;
+    target.safety.mode = normalized.safety.mode;
+    target.safety.forward = normalized.safety.forward;
+
+    for (const key of Object.keys(normalized)) {
+        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
+        target[key] = normalized[key];
+    }
+
+    for (const key of Object.keys(target)) {
+        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
+        if (!(key in normalized)) delete target[key];
+    }
+
+    for (const key of Object.keys(normalized.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        target.worker[key] = normalized.worker[key];
+    }
+
+    for (const key of Object.keys(target.worker)) {
+        if ((key === 'on') || (key === 'path')) continue
+        if (!(key in normalized.worker)) delete target.worker[key];
+    }
+
+    for (const key of Object.keys(normalized.safety)) {
+        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
+        target.safety[key] = normalized.safety[key];
+    }
+
+    for (const key of Object.keys(target.safety)) {
+        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
+        if (!(key in normalized.safety)) delete target.safety[key];
+    }
+
+    return target
+}
+
+function isDefaultRuntimeSettings(dx = null) {
+
+    const normalized = normalizeRuntimeSettings$1(dx);
+    const workerKeys = Object.keys(normalized.worker ?? {});
+    const safetyKeys = Object.keys(normalized.safety ?? {});
+    const topKeys = Object.keys(normalized);
+
+    if (normalized.logMessages) return false
+    if (normalized.worker?.on) return false
+    if ((normalized.worker?.path ?? '') !== '') return false
+    if (normalized.safety?.on) return false
+    if (normalized.safety?.mode !== 'warn') return false
+    if (normalized.safety?.forward !== true) return false
+    if (topKeys.some(key => !['logMessages', 'worker', 'safety'].includes(key))) return false
+    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
+    if (safetyKeys.some(key => !['on', 'mode', 'forward'].includes(key))) return false
+
+    return true
+}
+
+var alsRuntimeSettings = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    assignRuntimeSettings: assignRuntimeSettings,
+    cloneRuntimeSettings: cloneRuntimeSettings,
+    isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+    makeRuntimeSettings: makeRuntimeSettings,
+    normalizeRuntimeSettings: normalizeRuntimeSettings$1,
+    resetRuntimeSettings: resetRuntimeSettings
+});
+
+const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
+
+function selectRuntimeSettings(runtime) {
+    return runtime === RT_ALS ? alsRuntimeSettings : baseRuntimeSettings
+}
+
+function normalizeRuntimeSettings(runtime, dx = null) {
+    return selectRuntimeSettings(runtime).normalizeRuntimeSettings(dx)
 }
 
 // The node in a nodegraph
@@ -15429,7 +15888,10 @@ Node.prototype = {
         if (raw.sx) this.sx = raw.sx;
 
         // check if the node has dynamics
-        if (raw.dx) this.dx = normalizeRuntimeSettings(raw.dx);
+        if (raw.dx) {
+            const runtime = modcom?.getCurrentModel?.()?.header?.runtime;
+            this.dx = normalizeRuntimeSettings(runtime, raw.dx);
+        }
     },
 
     // used for nodes that have been copied
@@ -22406,7 +22868,7 @@ async get(as='text') {
     return fs.readFile(this.url, 'utf8')
     .then( async data => {
 
-        if (as=='json') return JSON.parse(data)
+        if (as=='json') return parseJsonWithDuplicateKeyWarning(data, this.getFullPath())
         return data
     })
 },

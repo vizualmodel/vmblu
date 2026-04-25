@@ -213,7 +213,7 @@
               "(5 L)node prompt",
               "(8 L)context menu",
               "(4 L)name and path",
-              "(2 L)modal div",
+              "(2 R)modal div",
               "(12 R)folder.get"
             ]
           }
@@ -658,7 +658,7 @@
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 30) modal div @ message broker",
-        "wire": "x -41.0 y 560.5 x -1038.0 y -125.5 x 43.0"
+        "wire": "x 64.0 y 560.5 x -1293.0 y -125.5 x 43.0"
       },
       {
         "from": "(pin 12) folder.get @ popups",

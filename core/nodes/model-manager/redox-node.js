@@ -1,4 +1,4 @@
-import {cloneRuntimeSettings, isDefaultRuntimeSettings} from '../../../runtime/src/runtime-settings.js'
+import {cloneRuntimeSettings, isDefaultRuntimeSettings} from '../../../runtime/runtime-settings-registry.js'
 
 export const redoxNode = {
 
@@ -299,11 +299,12 @@ changeNodeSettings: {
 changeNodeDynamics: {
     doit({node, dx}) {
 
-        const nextDx = cloneRuntimeSettings(dx)
+        const runtime = this.manager?.model?.header?.runtime
+        const nextDx = cloneRuntimeSettings(runtime, dx)
 
         // don't save an empty runtime settings object
-        const normalizedNodeDx = node.dx ? cloneRuntimeSettings(node.dx) : null
-        const saveDx = isDefaultRuntimeSettings(nextDx) ? null : nextDx
+        const normalizedNodeDx = node.dx ? cloneRuntimeSettings(runtime, node.dx) : null
+        const saveDx = isDefaultRuntimeSettings(runtime, nextDx) ? null : nextDx
 
         if (JSON.stringify(saveDx) !== JSON.stringify(normalizedNodeDx)) node.dx = saveDx
 
