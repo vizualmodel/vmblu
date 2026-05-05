@@ -4,11 +4,11 @@
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
-    "runtime": "../../runtime/src/scaffold.js"
+    "runtime": "../../runtime/rt-base/scaffold.js"
   },
   "imports": [
-    "../../core/core.mod.blu",
-    "../../ui-svelte/ui-svelte.mod.blu"
+    "../../core/model/core.mod.blu",
+    "../../ui-svelte/model/ui-svelte.mod.blu"
   ],
   "factories": [
     {
@@ -199,7 +199,7 @@
         "kind": "dock",
         "name": "view manager",
         "link": {
-          "path": "../../core/core.mod.blu",
+          "path": "../../core/model/core.mod.blu",
           "node": "view manager"
         },
         "interfaces": [
@@ -391,7 +391,7 @@
         "kind": "dock",
         "name": "model manager",
         "link": {
-          "path": "../../core/core.mod.blu",
+          "path": "../../core/model/core.mod.blu",
           "node": "model manager"
         },
         "interfaces": [
@@ -590,6 +590,22 @@
                   "role": "follower",
                   "payload": "any"
                 }
+              },
+              {
+                "name": "tool settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "event settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
               }
             ]
           }
@@ -599,7 +615,7 @@
         "kind": "dock",
         "name": "clipboard",
         "link": {
-          "path": "../../core/core.mod.blu",
+          "path": "../../core/model/core.mod.blu",
           "node": "clipboard"
         },
         "interfaces": [
@@ -763,7 +779,7 @@
             "label": "ask for filename to save",
             "prompt": "We use the callback parameter for this node, so we can disregard the path return message.",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "path request"
             },
             "interfaces": [
@@ -803,7 +819,7 @@
             "name": "node settings",
             "label": "node settings in json format",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "json input"
             },
             "interfaces": [
@@ -834,7 +850,7 @@
             "kind": "dock",
             "name": "name and path",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "name and path"
             },
             "interfaces": [
@@ -874,7 +890,7 @@
             "name": "pin profile",
             "label": " the message parameters and prompt",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "pin profile"
             },
             "interfaces": [
@@ -906,7 +922,7 @@
             "name": "text block",
             "label": "comment  about the node",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "text block"
             },
             "interfaces": [
@@ -937,7 +953,7 @@
             "kind": "dock",
             "name": "doc settings",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "document settings"
             },
             "interfaces": [
@@ -969,7 +985,7 @@
             "name": "context menu",
             "label": "uses callbacks",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "context menu"
             },
             "interfaces": [
@@ -1000,7 +1016,7 @@
             "kind": "dock",
             "name": "runtime settings",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "runtime settings"
             },
             "interfaces": [
@@ -1031,7 +1047,7 @@
             "kind": "dock",
             "name": "confirm box",
             "link": {
-              "path": "../../ui-svelte/ui-svelte.mod.blu",
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "confirm box"
             },
             "interfaces": [
@@ -1246,7 +1262,7 @@
         "kind": "dock",
         "name": "vscode side menu",
         "link": {
-          "path": "../../ui-svelte/ui-svelte.mod.blu",
+          "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vscode side menu"
         },
         "interfaces": [

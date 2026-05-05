@@ -1,4 +1,4 @@
-import {convert} from '../util/index.js'
+import {convert, jsonDeepCopy} from '../util/index.js'
 import {Widget} from '../widget/index.js'
 import {Look} from './look.js'
 
@@ -25,6 +25,9 @@ export const copyHandling = {
                 nw = w.is.proxy ? new Widget.Proxy(w.rect, newNode, w.name, w.is) : new Widget.Pin(w.rect, newNode, w.name, w.is) 
                 //nw.profile = w.profile
                 nw.pxlen = w.pxlen
+                nw.tool = w.tool ? jsonDeepCopy(w.tool) : null
+                nw.event = w.event ? jsonDeepCopy(w.event) : null
+                nw.is.capability = w.is.capability
             }
             else if (w.is.ifName) {        
                 nw = new Widget.InterfaceName(w.rect,w.text,newNode)      
@@ -72,6 +75,9 @@ export const copyHandling = {
                 nw = w.is.proxy ? new Widget.Pin(w.rect, newNode, w.name, w.is) : new Widget.Proxy(w.rect, newNode, w.name, w.is) 
                 //nw.profile = w.profile
                 nw.pxlen = w.pxlen
+                nw.tool = w.tool ? jsonDeepCopy(w.tool) : null
+                nw.event = w.event ? jsonDeepCopy(w.event) : null
+                nw.is.capability = w.is.capability
             }
             else if (w.is.ifName) {
                 nw = new Widget.InterfaceName(w.rect,w.text,newNode)

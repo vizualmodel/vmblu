@@ -112,7 +112,7 @@ function cutLink() {
 
 // type in the name of a model and try to find the requested node in that model
 function getFromLink() {
-	cm.node.showLinkForm(cm.xyLocal,cm.tx)
+	cm.node.showLinkForm(cm.view, cm.xyLocal,cm.tx)
 }
 
 // save the node to a file, ie change it into a link

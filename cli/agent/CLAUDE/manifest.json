@@ -2,6 +2,17 @@
   "id": "claude",
   "displayName": "Claude",
   "install": {
-    "files": []
+    "files": [
+      {
+        "from": "VMblu.md",
+        "toHomeRelative": ".claude/vmblu/VMblu.md"
+      }
+    ],
+    "dirs": [
+      {
+        "fromCliRelative": "context",
+        "toHomeRelative": ".claude/vmblu/context"
+      }
+    ]
   }
 }

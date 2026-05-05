@@ -204,6 +204,11 @@ cookPin(raw) {
     // set the prompt
     if (raw.prompt) newPin.prompt = raw.prompt
 
+    // set agent capability metadata
+    if (raw.tool) newPin.tool = raw.tool
+    if (raw.event) newPin.event = raw.event
+    newPin.is.capability = raw.tool?.enabled === true || raw.event?.enabled === true
+
     // recover the wid
     newPin.wid = raw.wid ?? 0
 

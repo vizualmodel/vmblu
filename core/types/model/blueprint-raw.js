@@ -10,14 +10,18 @@ async fetch() {
     if (this.blu.arl) {
 
         try {
-            const [bRaw, vRaw] = await Promise.all([
-                this.blu.arl.get('json'),
-                this.viz.arl.get('json').catch(error => {
-                    // viz file not found - return null which makes the promise resolve successfully !
-                    console.warn(`Viz file failed to load, proceeding with null: ${error.message}`);
-                    return null;
-                })
-            ]);
+            let bRaw = await this.blu.arl.get('json')
+
+            if (isEntrypointRaw(bRaw)) {
+                this.resolveEntrypointRaw(bRaw)
+                bRaw = await this.blu.arl.get('json')
+            }
+
+            const vRaw = await this.viz.arl.get('json').catch(error => {
+                // viz file not found - return null which makes the promise resolve successfully !
+                console.warn(`Viz file failed to load, proceeding with null: ${error.message}`);
+                return null;
+            })
 
             // set the fresh bit 
             this.blu.is.fresh = true;
@@ -53,6 +57,33 @@ async fetch() {
     }
     // it's one or the other !
     else return {bRaw:null, vRaw: null}
+},
+
+resolveEntrypointRaw(raw) {
+
+    if (!raw?.model || typeof raw.model !== 'string') {
+        throw new Error(`Entrypoint ${this.blu.arl.getPath()} requires a string "model" field`)
+    }
+
+    if (raw.version !== 1) {
+        throw new Error(`Unsupported vmblu entrypoint version in ${this.blu.arl.getPath()}: ${raw.version}`)
+    }
+
+    const entrypointArl = this.blu.arl
+    const modelArl = entrypointArl.resolve(raw.model)
+    if (!modelArl) throw new Error(`Entrypoint ${entrypointArl.getPath()} could not resolve model path ${raw.model}`)
+
+    const visualArl = raw.visual
+        ? entrypointArl.resolve(raw.visual)
+        : modelArl.resolve(defaultVizPath(modelArl))
+
+    this.entrypoint = {
+        arl: entrypointArl,
+        raw
+    }
+
+    this.blu.arl = modelArl
+    this.viz.arl = visualArl
 },
 
 // get the raw model from two files and combine in one
@@ -117,12 +148,15 @@ splitRaw(raw) {
 
 splitHeader(rHeader) {
 
-    const {version, created, saved, utc, runtime, style} = {...rHeader}
+    const {version, created, saved, utc, runtime, agent, style} = {...rHeader}
     const headerVersion = version ?? 'no version'
     const styleRgb = (typeof style === 'string') ? style : style?.rgb ?? style?.color ?? null
 
+    const blu = {version: headerVersion, created, saved, utc, runtime}
+    if (agent) blu.agent = agent
+
     return { 
-            blu : {version: headerVersion, created, saved, utc, runtime},
+            blu,
             viz : {version: headerVersion, utc, style: styleRgb}
     }
 },
@@ -141,6 +175,8 @@ splitInterfaces(rawInterfaces) {
                                     contract: pin.contract
                                 }
                 if (pin.prompt?.length) bluPin.prompt = pin.prompt
+                if (pin.tool) bluPin.tool = pin.tool
+                if (pin.event) bluPin.event = pin.event
                 return bluPin
             })
         return { interface: rif.interface, pins}
@@ -164,6 +200,7 @@ splitNode(rNode) {
     }
     if (rNode.label) blu.label = rNode.label
     if (rNode.prompt) blu.prompt = rNode.prompt;
+    if (rNode.probes) blu.probes = rNode.probes;
 
     const viz = {
         kind: rNode.kind,
@@ -406,4 +443,13 @@ analyzeJSLib(rawCode) {
     return JSON.parse(cleanText)
 },
 
+}
+
+function isEntrypointRaw(raw) {
+    return raw?.kind === 'vmblu.entrypoint'
+}
+
+function defaultVizPath(modelArl) {
+    const split = Path.split(modelArl.getPath())
+    return split.name + (split.kind ?? '') + '.viz'
 }

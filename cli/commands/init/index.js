@@ -1,14 +1,10 @@
 ﻿// vmblu init [targetDir] --name <project> --schema <ver> --force --dry-run
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { initProject } from './init-project.js';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const pckg = require('../../package.json');
-
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const command = 'init <folder name>';
 export const describe = 'Scaffold an empty vmblu project';
@@ -41,7 +37,6 @@ export const handler = async (argv) => {
     schemaVersion,
     force: Boolean(args.force),
     dryRun: Boolean(args.dryRun),
-    templatesDir: path.join(__dirname, '..', '..', 'templates'),
     ui: {
       info: (m) => console.log(m),
       warn: (m) => console.warn(m),
@@ -51,4 +46,3 @@ export const handler = async (argv) => {
 
   console.log(`vmblu project scaffolded in ${targetDir}`);
 };
-

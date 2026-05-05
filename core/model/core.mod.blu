@@ -1,0 +1,1172 @@
+{
+  "header": {
+    "version": "no version",
+    "created": "4/2/2024, 1:26:41 PM",
+    "saved": "3/9/2026, 6:56:39 PM",
+    "utc": "2026-03-09T17:56:39.260Z",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-base"
+  },
+  "imports": [
+    "../../ui-svelte/model/ui-svelte.mod.blu"
+  ],
+  "factories": [
+    {
+      "path": "../nodes/library-manager/library-manager.js",
+      "function": "LibraryManager"
+    },
+    {
+      "path": "../nodes/document-manager/document-manager.js",
+      "function": "DocumentManager"
+    },
+    {
+      "path": "../nodes/clipboard/clipboard.js",
+      "function": "Clipboard"
+    },
+    {
+      "path": "../nodes/view-manager/view-manager.js",
+      "function": "ViewManager"
+    },
+    {
+      "path": "../nodes/model-manager/model-manager.js",
+      "function": "ModelManager"
+    }
+  ],
+  "types": {
+    "AnyPayload": {
+      "kind": "primitive",
+      "summary": "Opaque payload used during migration."
+    },
+    "Void": {
+      "kind": "object",
+      "summary": "No payload.",
+      "fields": {}
+    },
+    "TabName": {
+      "kind": "primitive",
+      "summary": "Tab/document display name."
+    },
+    "ArlRef": {
+      "kind": "external",
+      "summary": "Workspace/model path reference.",
+      "external": {
+        "library": "kernel",
+        "symbol": "ARL"
+      }
+    },
+    "ActiveDocument": {
+      "kind": "object",
+      "summary": "Active document payload containing model and optional view.",
+      "fields": {
+        "model": {
+          "vmbluType": "AnyPayload"
+        },
+        "view": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "model"
+      ]
+    },
+    "ModelHeader": {
+      "kind": "external",
+      "summary": "Model header metadata.",
+      "external": {
+        "library": "kernel",
+        "symbol": "ModelHeader"
+      }
+    },
+    "ModelNode": {
+      "kind": "external",
+      "summary": "Compiled root node/view-model structure.",
+      "external": {
+        "library": "kernel",
+        "symbol": "Node"
+      }
+    },
+    "ViewSize": {
+      "kind": "object",
+      "summary": "Canvas/view size update.",
+      "fields": {
+        "w": {
+          "vmbluType": "number"
+        },
+        "h": {
+          "vmbluType": "number"
+        },
+        "dpr": {
+          "vmbluType": "number"
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ]
+    },
+    "RedoxDoit": {
+      "kind": "object",
+      "summary": "Command message for a redox action.",
+      "fields": {
+        "verb": {
+          "vmbluType": "string"
+        },
+        "param": {
+          "vmbluType": "AnyPayload"
+        },
+        "viewManager": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "verb"
+      ]
+    },
+    "RedoxDone": {
+      "kind": "object",
+      "summary": "Notification that a redox action finished.",
+      "fields": {
+        "verb": {
+          "vmbluType": "string"
+        },
+        "undo": {
+          "vmbluType": "boolean"
+        },
+        "redo": {
+          "vmbluType": "boolean"
+        }
+      },
+      "required": [
+        "verb"
+      ]
+    },
+    "ContextMenuPayload": {
+      "kind": "object",
+      "summary": "Context menu request emitted by the view manager.",
+      "fields": {
+        "menu": {
+          "vmbluType": "AnyPayload"
+        },
+        "event": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "menu",
+        "event"
+      ]
+    },
+    "ClipboardQuery": {
+      "kind": "primitive",
+      "summary": "Clipboard lookup context."
+    },
+    "ClipboardData": {
+      "kind": "external",
+      "summary": "Clipboard content payload.",
+      "external": {
+        "library": "kernel",
+        "symbol": "ClipboardEntry"
+      }
+    }
+  },
+  "root": {
+    "kind": "group",
+    "name": "node-editor",
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "library manager",
+        "label": "makes a node library from the model files",
+        "factory": {
+          "path": "../nodes/library-manager/library-manager.js",
+          "function": "LibraryManager"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "add file",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "remove file",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "switch library",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "build table",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "document manager",
+        "label": "Manages the list of open documents",
+        "prompt": "The document manager is typically used together with a tab-ribbon ui element.\n\nThe document manager is also the node that gets and saves the content of the documents.\n\nThe selection, closing, renaming etc is typically handled here.\n\nThe editor is typically only aware of one document - the active document - that is set by the document manager.",
+        "factory": {
+          "path": "../nodes/document-manager/document-manager.js",
+          "function": "DocumentManager"
+        },
+        "interfaces": [
+          {
+            "interface": "doc",
+            "pins": [
+              {
+                "name": "doc.selected",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "doc.new",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "doc.renamed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "doc.deleted",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "doc.get",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "doc.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "doc.open",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "file",
+            "pins": [
+              {
+                "name": "file.save as",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "file.save as filename",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.save all",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "tab",
+            "pins": [
+              {
+                "name": "tab.request to close",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "TabName"
+                }
+              },
+              {
+                "name": "tab.request to select",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "TabName"
+                }
+              },
+              {
+                "name": "tab.select",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "TabName"
+                }
+              },
+              {
+                "name": "tab.remove",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "TabName"
+                }
+              },
+              {
+                "name": "tab.new",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "TabName"
+                }
+              },
+              {
+                "name": "tab.rename",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "clipboard",
+        "factory": {
+          "path": "../nodes/clipboard/clipboard.js",
+          "function": "Clipboard"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "switch",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "switched",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "remote",
+                "kind": "request",
+                "contract": {
+                  "role": "follower",
+                  "payload": {
+                    "request": "ClipboardData",
+                    "reply": "Void"
+                  }
+                }
+              },
+              {
+                "name": "local",
+                "kind": "reply",
+                "contract": {
+                  "role": "follower",
+                  "payload": {
+                    "request": "ClipboardQuery",
+                    "reply": "ClipboardData"
+                  }
+                }
+              },
+              {
+                "name": "set",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ClipboardData"
+                }
+              },
+              {
+                "name": "get",
+                "kind": "reply",
+                "contract": {
+                  "role": "follower",
+                  "payload": {
+                    "request": "ClipboardQuery",
+                    "reply": "ClipboardData"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "select node",
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "select node",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "node",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "switch library",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "node selector",
+            "label": "select nodes from the library",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "node selector"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "selected node",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "build table",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "remove file",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "add file",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "get path",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "library manager",
+            "link": {
+              "path": "",
+              "node": "library manager"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "switch library",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "build table",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "remove file",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "add file",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "path request",
+            "label": "add a file to the nodelib",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "path request"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "path",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "folder.get",
+                    "kind": "request",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "src": {
+              "pin": "selected node",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "node"
+            }
+          },
+          {
+            "src": {
+              "pin": "remove file",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "remove file",
+              "node": "library manager"
+            }
+          },
+          {
+            "src": {
+              "pin": "add file",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "add file",
+              "node": "library manager"
+            }
+          },
+          {
+            "src": {
+              "pin": "get path",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "path",
+              "node": "path request"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "node selector"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "build table",
+              "node": "library manager"
+            },
+            "dst": {
+              "pin": "build table",
+              "node": "node selector"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "select node"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "node selector"
+            }
+          },
+          {
+            "src": {
+              "pin": "switch library"
+            },
+            "dst": {
+              "pin": "switch library",
+              "node": "library manager"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "view manager",
+        "label": "Manages the views and the ui",
+        "factory": {
+          "path": "../nodes/view-manager/view-manager.js",
+          "function": "ViewManager"
+        },
+        "interfaces": [
+          {
+            "interface": "setup",
+            "pins": [
+              {
+                "name": "canvas",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "size change",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ViewSize"
+                }
+              },
+              {
+                "name": "top level view",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "root",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "visuals",
+            "pins": [
+              {
+                "name": "recalibrate",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "grid on-off",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "clipboard",
+            "pins": [
+              {
+                "name": "clipboard.get",
+                "kind": "request",
+                "contract": {
+                  "role": "follower",
+                  "payload": {
+                    "request": "ClipboardQuery",
+                    "reply": "ClipboardData"
+                  }
+                }
+              },
+              {
+                "name": "clipboard.set",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ClipboardData"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "ui",
+            "pins": [
+              {
+                "name": "name and path",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "context menu",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ContextMenuPayload"
+                }
+              },
+              {
+                "name": "node prompt",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "runtime settings (dx)",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "node settings (sx)",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open source file",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "open model",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "redox",
+            "pins": [
+              {
+                "name": "redox.doit",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "RedoxDoit"
+                }
+              },
+              {
+                "name": "redox.undo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "redox.redo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "redox.done",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "RedoxDone"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "model manager",
+        "label": "Manages the active model",
+        "factory": {
+          "path": "../nodes/model-manager/model-manager.js",
+          "function": "ModelManager"
+        },
+        "interfaces": [
+          {
+            "interface": "actions",
+            "pins": [
+              {
+                "name": "accept changes",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "reload model",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sync links",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "show settings",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "make app",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "make lib",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "model",
+            "pins": [
+              {
+                "name": "model.set",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "model.header",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ModelHeader"
+                }
+              },
+              {
+                "name": "model.root",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ModelNode"
+                }
+              },
+              {
+                "name": "model.save",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "save point",
+            "pins": [
+              {
+                "name": "save point.set",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "save point.back",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "save point.confirm",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "info",
+            "pins": [
+              {
+                "name": "pin profile",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "tool settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "event settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "get path",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "redox",
+            "pins": [
+              {
+                "name": "redox.doit",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "RedoxDoit"
+                }
+              },
+              {
+                "name": "redox.undo",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "redox.redo",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "redox.done",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "RedoxDone"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open source file",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "open model",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

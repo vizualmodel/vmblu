@@ -4,7 +4,7 @@ import {Path} from '../arl/index.js'
 import {ModelMap} from './model-map.js'
 import {RawHandling} from './blueprint-raw.js'
 import {ProfileHandling} from './blueprint-prf.js'
-import {McpHandling} from './blueprint-mcp.js'
+import {CapabilityHandling} from './blueprint-cap.js'
 import {AppHandling} from './blueprint-app.js'
 import {TestHandling} from './blueprint-tst.js'
 import {LibHandling} from './blueprint-lib.js'
@@ -35,6 +35,11 @@ export function ModelBlueprint(arl) {
 
     this.bundle = {
         arl: null
+    }
+
+    this.entrypoint = {
+        arl: null,
+        raw: null
     }
 
     this.target = {
@@ -99,7 +104,7 @@ ModelBlueprint.prototype = {
         // check the extension
         if (split.ext === '.blu') {
             this.blu.arl = arl
-            this.viz.arl = arl.resolve(split.name + split.kind + '.viz')
+            this.viz.arl = arl.resolve(split.name + (split.kind ?? '') + '.viz')
         }
         else if ((split.ext === '.js') || (split.ext === '.mjs')) {
             this.bundle.arl = arl
@@ -272,4 +277,4 @@ ModelBlueprint.prototype = {
 
 }
 
-Object.assign(ModelBlueprint.prototype, RawHandling, ProfileHandling, McpHandling, AppHandling, TestHandling, LibHandling)
+Object.assign(ModelBlueprint.prototype, RawHandling, ProfileHandling, CapabilityHandling, AppHandling, TestHandling, LibHandling)

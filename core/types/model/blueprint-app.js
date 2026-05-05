@@ -63,22 +63,6 @@ export const AppHandling = {
         // and save the source
         srcArl.save(jsSource)
 
-        // check if there are mcp compliant tools...
-        const mcpToolString = this.makeMcpToolString(node)
-
-        // save the tools
-        if (mcpToolString) {
-
-            // get the name from the model file
-            const split = Path.getSplit(this.getArl().getPath())
-
-            // get the arl for the mcp spec
-            const mcpArl = srcArl.resolve(split.name + '.mcp.js')
-
-            // save the mcp file
-            mcpArl.save(mcpToolString)
-        }
-    
         // return the src arl and the html arl so that the app can be started (if wanted)
         const htmlArl = this.getArl().resolve(Path.changeExt(appPath,'html'))
         // modcom.saveHtmlPage(doc.root, srcArl, htmlArl)
@@ -132,6 +116,8 @@ export const AppHandling = {
         // close
         sFilterList += '\n]'
 
+        const sAgentRuntimeOptions = this.JSAgentRuntimeOptions(runtime, node)
+
         // combine all..
         const jsSource = 
 `
@@ -144,13 +130,31 @@ ${sNodeList}
 
 ${sFilterList}
 
+${sAgentRuntimeOptions}
+
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList)
+const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
 
 // and start the app
 runtime.start()
 `
         return sHeader + jsSource
+    },
+
+    JSAgentRuntimeOptions(runtime, node) {
+
+        const isAgentRuntime = runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
+        if (!isAgentRuntime) return 'const agentRuntimeOptions = {}'
+
+        const options = {
+            capabilities: this.makeCapabilityObject(node)
+        }
+
+        if (this.header.agent) options.agent = this.header.agent
+
+        const json = JSON.stringify(options, null, 4).replaceAll('\n', '\n')
+
+        return `// Agent runtime options\nconst agentRuntimeOptions = ${json}`
     },
 
     // make a string with all imported or exported object factories - line prefix = 'import' or 'export'

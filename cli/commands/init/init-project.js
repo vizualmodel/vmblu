@@ -1,7 +1,6 @@
 // core/initProject.js
 // Node 18+ (fs/promises, crypto). No external deps.
 import * as fs from 'fs/promises';
-import * as fssync from 'fs';
 import path from 'path';
 //import crypto from 'crypto';
 import { makePackageJson } from './make-package-json.js';
@@ -12,10 +11,6 @@ const require = createRequire(import.meta.url);
 const pckg = require('../../package.json');
 const SCHEMA_VERSION = pckg.schemaVersion
 const CLI_VERSION = pckg.version
-
-function rel(from, to) {
-  return path.posix.join(...path.relative(from, to).split(path.sep));
-}
 
 async function exists(p) {
   try { await fs.access(p); return true; } catch { return false; }
@@ -34,30 +29,16 @@ async function writeFileSafe(file, contents, { force = false, dry = false } = {}
   return true;
 }
 
-async function copyOrWriteFallback(src, dst, fallback, { force = false, dry = false } = {}) {
-  const already = await exists(dst);
-  if (already && !force) return false;
-
-  if (dry) return true;
-
-  if (src && fssync.existsSync(src)) {
-    await fs.copyFile(src, dst);
-  } else {
-    await fs.writeFile(dst, fallback);
-  }
-  return true;
-}
-
 // async function sha256(file) {
 //   const buf = await fs.readFile(file);
 //   return crypto.createHash('sha256').update(buf).digest('hex');
 // }
 
-function defaultModel(projectName) {
+function defaultModel(projectName, schemaVersion = SCHEMA_VERSION) {
   const now = new Date().toISOString();
   return JSON.stringify({
     header: {
-      version: SCHEMA_VERSION,
+      version: schemaVersion,
       created: now,
       saved: now,
       utc: now,
@@ -79,46 +60,48 @@ function defaultModel(projectName) {
   }, null, 2);
 }
 
-function fallbackAnnex() {
-  return `# vmblu Annex (placeholder)
-This is a minimal scaffold. Replace with the official annex matching your pinned schema version.
+function defaultVizual(schemaVersion = SCHEMA_VERSION) {
+  const now = new Date().toISOString();
+  return JSON.stringify({
+    header: {
+      version: schemaVersion,
+      utc: now,
+      style: "#2c7be5"
+    },
+    root: {
+      kind: "group",
+      name: "Root",
+      rect: "x 90 y 30 w 150 h 26",
+      view: {
+        state: "open",
+        rect: "x 0 y 0 w 1200 h 800",
+        transform: "sx 1.000 sy 1.000 dx 0.000 dy 0.000"
+      },
+      nodes: [],
+      connections: []
+    }
+  }, null, 2);
+}
 
-- Nodes: Source, Group, Dock
-- Pins: input/output/channel, 'profile' describes payloads
-- Routes: "output@NodeA" -> "input@NodeB" (or via group pads)
-- Keep names normalized; avoid ambiguous magic.
+function defaultEntrypoint(projectName) {
+  return JSON.stringify({
+    kind: "vmblu.entrypoint",
+    version: 1,
+    model: `model/${projectName}.mod.blu`
+  }, null, 2);
+}
+
+function defaultProjectPrompt(entrypointName) {
+  return `# vmblu Project
+
+This is a vmblu project.
+
+- Use \`${entrypointName}\` to find the model entrypoint.
+- Treat \`model/\` as the application model file set.
+- Treat \`nodes/\` as model-owned implementation code.
+- Use installed vmblu agent support, plugin support, or CLI package docs for general vmblu instructions.
+- Do not assume copied schemas or general docs in \`.vmblu/\` are canonical.
 `;
-}
-
-function fallbackSchema() {
-  return `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "blu.schema.json (placeholder)",
-  "type": "object",
-  "description": "Placeholder schema. Replace with official version."
-}`;
-}
-
-function fallbackVizual() {
-  return `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "viz.schema.json (placeholder)",
-  "type": "object",
-  "description": "Placeholder schema. Replace with official version."
-}`;
-}
-
-function fallbackProfileSchema() {
-  return `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "prf.schema.json (placeholder)",
-  "type": "object",
-  "description": "Placeholder schema. Replace with official version."
-}`;
-}
-
-function fallbackPrompt(promptType) {
-  return `# Missing prompt for ${promptType}`
 }
 
 /**
@@ -130,10 +113,6 @@ function fallbackPrompt(promptType) {
  * @param {string} [opts.schemaVersion]     e.g. "0.8.2"
  * @param {boolean}[opts.force]             Overwrite existing files
  * @param {boolean}[opts.dryRun]            Print actions, do not write
- * @param {string} [opts.templatesDir]      Root where templates live (defaults to package templates)
- *                                          expects:
- *                                            templates/<ver>/blu.schema.json
- *                                            templates/<ver>/blu.annex.md
  * @param {Object} [opts.ui]                { info, warn, error } callbacks (optional)
  */
 async function initProject(opts) {
@@ -143,7 +122,6 @@ async function initProject(opts) {
     schemaVersion = SCHEMA_VERSION,
     force = false,
     dryRun = false,
-    templatesDir = path.join(__dirname, '..', 'templates'),
     ui = {
       info: console.log,
       warn: console.warn,
@@ -154,92 +132,66 @@ async function initProject(opts) {
   if (!targetDir) throw new Error("initProject: targetDir is required");
 
   const absTarget = path.resolve(targetDir);
-  const modelFile = path.join(absTarget, `${projectName}.mod.blu`);
-
-  const vmbluDir   = path.join(absTarget, '.vmblu');
-  //const sessionDir = path.join(vmbluDir, 'session');
-  const nodesDir   = path.join(absTarget, 'nodes');
-
-  // Template sources
-  const schemaSrc = path.join(templatesDir, schemaVersion, 'blu.schema.json');
-  const annexSrc  = path.join(templatesDir, schemaVersion, 'blu.annex.md');
-  const vizualSrc = path.join(templatesDir, schemaVersion, 'viz.schema.json');
-  const profileSchemaSrc = path.join(templatesDir, schemaVersion, 'prf.schema.json');
-  const promptPrj = path.join(templatesDir, schemaVersion, 'vmblu.prompt.md');
-  const promptDev = path.join(templatesDir, schemaVersion, 'develop.prompt.md');
-  const promptTst = path.join(templatesDir, schemaVersion, 'test.prompt.md');
+  const entrypointName = `${projectName}.blu`;
+  const entrypointFile = path.join(absTarget, entrypointName);
+  const modelDir = path.join(absTarget, 'model');
+  const modelFile = path.join(modelDir, `${projectName}.mod.blu`);
+  const vizualFile = path.join(modelDir, `${projectName}.mod.viz`);
+  const vmbluDir = path.join(absTarget, '.vmblu');
+  const overridesDir = path.join(vmbluDir, 'overrides');
+  const cacheDir = path.join(vmbluDir, 'cache');
+  const logsDir = path.join(vmbluDir, 'logs');
+  const nodesDir = path.join(absTarget, 'nodes');
+  const promptPrjDst = path.join(vmbluDir, 'vmblu.prompt.md');
   
   // 1) Create folders
-  //for (const dir of [absTarget, vmbluDir, sessionDir, nodesDir]) {
-  for (const dir of [absTarget, vmbluDir, nodesDir]) {
+  for (const dir of [absTarget, modelDir, nodesDir, vmbluDir, overridesDir, cacheDir, logsDir]) {
     ui.info(`mkdir -p ${dir}`);
     await ensureDir(dir, dryRun);
   }
 
   // 2) Create root files
+  ui.info(`create ${entrypointFile}${force ? ' (force)' : ''}`);
+  await writeFileSafe(entrypointFile, defaultEntrypoint(projectName), { force, dry: dryRun });
+
   ui.info(`create ${modelFile}${force ? ' (force)' : ''}`);
-  await writeFileSafe(modelFile, defaultModel(projectName), { force, dry: dryRun });
+  await writeFileSafe(modelFile, defaultModel(projectName, schemaVersion), { force, dry: dryRun });
 
-  // 3) Copy schema + annex into .vmblu/
-  const schemaDst = path.join(vmbluDir, 'blu.schema.json');
-  const annexDst  = path.join(vmbluDir, 'blu.annex.md');
-  const vizualDst = path.join(vmbluDir, 'viz.schema.json');
-  const profileSchemaDst = path.join(vmbluDir, 'prf.schema.json');
-  const promptPrjDst  = path.join(vmbluDir, 'vmblu.prompt.md');
-  const promptDevDst  = path.join(vmbluDir, 'develop.prompt.md');
-  const promptTstDst  = path.join(vmbluDir, 'test.prompt.md');
+  ui.info(`create ${vizualFile}${force ? ' (force)' : ''}`);
+  await writeFileSafe(vizualFile, defaultVizual(schemaVersion), { force, dry: dryRun });
 
-  ui.info(`copy ${schemaSrc} -> ${schemaDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(schemaSrc, schemaDst, fallbackSchema(), { force, dry: dryRun });
-
-  ui.info(`copy ${annexSrc} -> ${annexDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(annexSrc, annexDst, fallbackAnnex(), { force, dry: dryRun });
-
-  ui.info(`copy ${vizualSrc} -> ${vizualDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(vizualSrc, vizualDst, fallbackVizual(), { force, dry: dryRun });
-
-   ui.info(`copy ${profileSchemaSrc} -> ${profileSchemaDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(profileSchemaSrc, profileSchemaDst, fallbackProfileSchema(), { force, dry: dryRun });
-
-  ui.info(`copy ${promptPrj} -> ${promptPrjDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptPrj, promptPrjDst, fallbackPrompt('vmblu'), { force, dry: dryRun });
-
-  ui.info(`copy ${promptDev} -> ${promptDevDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptDev, promptDevDst, fallbackPrompt('develop'), { force, dry: dryRun });
-
-  ui.info(`copy ${promptTst} -> ${promptTstDst}${force ? ' (force)' : ''}`);
-  await copyOrWriteFallback(promptTst, promptTstDst, fallbackPrompt('test'), { force, dry: dryRun });
+  ui.info(`create ${promptPrjDst}${force ? ' (force)' : ''}`);
+  await writeFileSafe(promptPrjDst, defaultProjectPrompt(entrypointName), { force, dry: dryRun });
 
   // 4) Build manifest with hashes DELETED
 
   // 5) Make the package file
-  makePackageJson({ absTarget, projectName, force, dryRun, addCliDep: true, cliVersion: "^" + CLI_VERSION }, ui);
+  await makePackageJson({ absTarget, projectName, entrypointName, force, dryRun, addCliDep: true, cliVersion: "^" + CLI_VERSION }, ui);
 
   // 6) Final tree hint
   ui.info(`\nScaffold complete${dryRun ? ' (dry run)' : ''}:\n` +
 `  ${absTarget}/
-    ${path.basename(modelFile)}
+    ${entrypointName}
     package.json
+    model/
+      ${projectName}.mod.blu
+      ${projectName}.mod.viz
+    nodes/
     .vmblu/
       vmblu.prompt.md
-      develop.prompt.md
-      test.prompt.md
-      blu.schema.json
-      blu.annex.md
-      viz.schema.json
-      prf.schema.json
-    nodes/\n`);
+      overrides/
+      cache/
+      logs/\n`);
 
   return {
     targetDir: absTarget,
     projectName,
     schemaVersion,
     files: {
+      entrypoint: entrypointFile,
       model: modelFile,
-      schema: schemaDst,
-      annex: annexDst,
-      vizualSchema: vizualDst,
-      profileSchema: profileSchemaDst,
+      vizual: vizualFile,
+      projectPrompt: promptPrjDst,
       // manifest: path.join(vmbluDir, 'manifest.json')
     },
     dryRun,

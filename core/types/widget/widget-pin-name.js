@@ -41,7 +41,9 @@ export const pinNameHandling = {
 
     // a function to get the displayname
     displayName() {
-        return this.pxlen == 0 ? this.name : this.withoutPrefix()
+        let dName = this.pxlen == 0 ? this.name : this.withoutPrefix()
+
+        return dName
     },
 
     // check for a name clash

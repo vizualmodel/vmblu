@@ -52,8 +52,9 @@ export const handler = async (argv) => {
 
   const { agentDir, manifest } = manifestEntry;
   const files = manifest?.install?.files;
-  if (!Array.isArray(files) || files.length === 0) {
-    console.error(`Agent "${agentId}" manifest has no install files.`);
+  const dirs = manifest?.install?.dirs;
+  if ((!Array.isArray(files) || files.length === 0) && (!Array.isArray(dirs) || dirs.length === 0)) {
+    console.error(`Agent "${agentId}" manifest has no install files or dirs.`);
     process.exit(1);
   }
 
@@ -61,27 +62,47 @@ export const handler = async (argv) => {
   const dryRun = Boolean(args.dryRun);
   const force = Boolean(args.force);
 
-  for (const entry of files) {
-    validateManifestEntry(entry, manifest.id);
+  for (const entry of files || []) {
+    validateManifestEntry(entry, manifest.id, 'file');
 
-    const src = path.join(agentDir, entry.from);
+    const src = resolveSourcePath(entry, agentDir, manifest.id);
     const dest = path.join(homeDir, entry.toHomeRelative);
 
     if (!fs.existsSync(src) || !fs.statSync(src).isFile()) {
       throw new Error(`Missing source file for agent "${manifest.id}": ${src}`);
     }
 
+    if (dryRun) {
+      const action = fs.existsSync(dest) && !force ? 'would skip existing' : 'copy';
+      console.log(`[dry-run] ${action} ${src} -> ${dest}`);
+      continue;
+    }
+
     if (fs.existsSync(dest) && !force) {
       throw new Error(`Destination exists (use --force to overwrite): ${dest}`);
     }
 
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+    console.log(`Installed ${path.basename(dest)} -> ${dest}`);
+  }
+
+  for (const entry of dirs || []) {
+    validateManifestEntry(entry, manifest.id, 'dir');
+
+    const src = resolveSourcePath(entry, agentDir, manifest.id);
+    const dest = path.join(homeDir, entry.toHomeRelative);
+
+    if (!fs.existsSync(src) || !fs.statSync(src).isDirectory()) {
+      throw new Error(`Missing source directory for agent "${manifest.id}": ${src}`);
+    }
+
     if (dryRun) {
-      console.log(`[dry-run] copy ${src} -> ${dest}`);
+      console.log(`[dry-run] copy directory ${src} -> ${dest}`);
       continue;
     }
 
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.copyFileSync(src, dest);
+    copyDirectory(src, dest, { force });
     console.log(`Installed ${path.basename(dest)} -> ${dest}`);
   }
 
@@ -164,20 +185,67 @@ function loadManifest(agentDir) {
   return { agentDir, manifestPath, manifest };
 }
 
-function validateManifestEntry(entry, agentId) {
+function resolveSourcePath(entry, agentDir, agentId) {
+  if (entry.fromCliRelative) {
+    const resolved = path.resolve(cliRoot, entry.fromCliRelative);
+    assertInsideRoot(resolved, cliRoot, `CLI-relative source for agent "${agentId}"`);
+    return resolved;
+  }
+
+  return path.join(agentDir, entry.from);
+}
+
+function copyDirectory(srcDir, destDir, { force }) {
+  fs.mkdirSync(destDir, { recursive: true });
+
+  for (const dirent of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const src = path.join(srcDir, dirent.name);
+    const dest = path.join(destDir, dirent.name);
+
+    if (dirent.isDirectory()) {
+      copyDirectory(src, dest, { force });
+      continue;
+    }
+
+    if (!dirent.isFile()) continue;
+
+    if (fs.existsSync(dest) && !force) {
+      throw new Error(`Destination exists (use --force to overwrite): ${dest}`);
+    }
+
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+  }
+}
+
+function validateManifestEntry(entry, agentId, kind) {
   if (!entry || typeof entry !== 'object') {
     throw new Error(`Invalid install entry for agent "${agentId}"`);
   }
-  if (!entry.from || !entry.toHomeRelative) {
-    throw new Error(`Manifest install entry for agent "${agentId}" requires "from" and "toHomeRelative"`);
+  if ((!entry.from && !entry.fromCliRelative) || !entry.toHomeRelative) {
+    throw new Error(`Manifest install entry for agent "${agentId}" requires "from" or "fromCliRelative", and "toHomeRelative"`);
+  }
+  if (entry.from && entry.fromCliRelative) {
+    throw new Error(`Manifest install entry for agent "${agentId}" may not specify both "from" and "fromCliRelative"`);
   }
 
-  const from = String(entry.from);
+  const from = String(entry.from || '');
+  const fromCliRelative = String(entry.fromCliRelative || '');
   const toHomeRelative = String(entry.toHomeRelative);
-  if (path.isAbsolute(from) || path.isAbsolute(toHomeRelative)) {
+  if (path.isAbsolute(from) || path.isAbsolute(fromCliRelative) || path.isAbsolute(toHomeRelative)) {
     throw new Error(`Manifest paths must be relative for agent "${agentId}"`);
   }
-  if (from.includes('..') || toHomeRelative.includes('..')) {
+  if (from.includes('..') || fromCliRelative.includes('..') || toHomeRelative.includes('..')) {
     throw new Error(`Manifest paths may not contain ".." for agent "${agentId}"`);
+  }
+  if (kind !== 'file' && kind !== 'dir') {
+    throw new Error(`Invalid manifest entry kind for agent "${agentId}": ${kind}`);
+  }
+}
+
+function assertInsideRoot(candidate, root, label) {
+  const relative = path.relative(root, candidate);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`${label} resolves outside ${root}: ${candidate}`);
   }
 }

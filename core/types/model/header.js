@@ -13,6 +13,7 @@ export function ModelHeader() {
     this.utc = today.toJSON()
     this.style = style
     this.runtime = '@vizualmodel/vmblu-runtime/rt-base'
+    this.agent = null
 }
 ModelHeader.prototype = {
 
@@ -32,12 +33,15 @@ ModelHeader.prototype = {
 
         // get the runtime
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base'
+
+        // get the agent configuration
+        this.agent = raw.agent ? JSON.parse(JSON.stringify(raw.agent)) : null
     },
 
     // copy
     copyWithoutStyle() {
 
-        return {
+        const raw = {
             // Set the schema version in the header
             version: this.version = SCHEMA_VERSION,
             created: this.created,
@@ -46,5 +50,9 @@ ModelHeader.prototype = {
             style: this.style.rgb,
             runtime: this.runtime
         }
+
+        if (this.agent) raw.agent = JSON.parse(JSON.stringify(this.agent))
+
+        return raw
     }
 }

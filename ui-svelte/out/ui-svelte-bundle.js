@@ -1,3 +1,627 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// shared/resolve-queue.js
+function Deferred() {
+  this.promise = new Promise((resolve, reject) => {
+    this._resolve = resolve;
+    this._reject = reject;
+  });
+}
+__name(Deferred, "Deferred");
+Deferred.prototype = {
+  resolve(value) {
+    this._resolve(value);
+  },
+  reject(error) {
+    this._reject(error);
+  }
+};
+function PromiseHandler(defs) {
+  this.defs = defs;
+}
+__name(PromiseHandler, "PromiseHandler");
+PromiseHandler.prototype = {
+  then(onFulfilled, onRejected) {
+    const newDefs = this.defs.map((deferred) => {
+      const next = new Deferred();
+      deferred.promise.then(onFulfilled, onRejected).then(next.resolve.bind(next), next.reject.bind(next));
+      return next;
+    });
+    return new PromiseHandler(newDefs);
+  },
+  catch(onRejected) {
+    const newDefs = this.defs.map((deferred) => {
+      const next = new Deferred();
+      deferred.promise.catch(onRejected).then(next.resolve.bind(next), next.reject.bind(next));
+      return next;
+    });
+    return new PromiseHandler(newDefs);
+  },
+  replace(count) {
+    if (count > this.defs.length) {
+      for (let i = this.defs.length; i < count; i++) {
+        this.defs.push(new Deferred());
+      }
+    } else if (count < this.defs.length) {
+      this.defs.splice(count);
+    }
+  }
+};
+function ResolveQueue() {
+  this.minTimeout = 1e3;
+  this.queue = /* @__PURE__ */ new Map();
+}
+__name(ResolveQueue, "ResolveQueue");
+ResolveQueue.prototype = {
+  addPromiseHandler(txRef, timeout, count = 1) {
+    const duration = Math.max(timeout, this.minTimeout);
+    const defs = Array.from({ length: count }, () => new Deferred());
+    const handler = new PromiseHandler(defs);
+    this.queue.set(txRef, { handler, time: { start: Date.now(), duration } });
+    return handler;
+  },
+  changePromiseHandler(txRef, count) {
+    const entry = this.queue.get(txRef);
+    if (!entry) return;
+    entry.handler.replace(count);
+  },
+  trigger(rxRef, value) {
+    const entry = this.queue.get(rxRef);
+    if (!entry) return console.log(rxRef, "NOT FOUND");
+    const deferred = entry.handler.defs.shift();
+    deferred.resolve(value);
+    if (entry.handler.defs.length === 0) {
+      this.queue.delete(rxRef);
+    }
+  },
+  checkTimeouts(now = Date.now()) {
+    for (const [txRef, entry] of this.queue.entries()) {
+      const { start, duration } = entry.time;
+      if (start + duration <= now) {
+        const err = new Error("Reply timeout", { sender: txRef, msec: duration });
+        entry.handler.defs.forEach((deferred) => deferred.reject(err));
+        this.queue.delete(txRef);
+      }
+    }
+  }
+};
+
+// shared/target.js
+var HIX_HANDLER = 0;
+var HIX_REPLY = 268435456;
+var HIX_TYPE_MASK = 4026531840;
+function Target(uid, pin, channel = false) {
+  this.uid = uid;
+  this.actor = null;
+  this.pin = pin;
+  this.channel = channel;
+  this.hix = HIX_HANDLER;
+}
+__name(Target, "Target");
+var arrow = "->";
+var channelArrow = "=>";
+var convert = {
+  stringToInput(str) {
+    const pure = str.trim();
+    const symbol = pure.slice(0, 2);
+    const pin = pure.slice(2).trim();
+    return {
+      pin,
+      channel: symbol === arrow ? false : true
+    };
+  },
+  stringToOutput(str) {
+    function singleTarget(targetString2) {
+      return targetString2[0] == "[" && targetString2.at(-1) == "]" ? false : true;
+    }
+    __name(singleTarget, "singleTarget");
+    let channel = false;
+    let symbolIndex = str.indexOf(arrow);
+    if (symbolIndex < 0) {
+      symbolIndex = str.indexOf(channelArrow);
+      channel = true;
+    }
+    if (symbolIndex < 0) return null;
+    const output = str.slice(0, symbolIndex).trim();
+    const targetString = str.slice(symbolIndex + 2).trim();
+    if (output.length == 0 || targetString.length == 0) return null;
+    if (singleTarget(targetString)) {
+      const rawTarget = convert.stringToTarget(targetString);
+      return rawTarget ? { output, channel, targets: [rawTarget] } : { output, channel, targets: [] };
+    }
+    const regex = /"(?:\\.|[^"\\])*"/g;
+    const matches = targetString.match(regex);
+    const targetStringArray = matches ? matches.map((part) => part.slice(1, -1).replace(/\\"/g, '"')) : [];
+    const rawTargets = [];
+    for (const target of targetStringArray) {
+      const rawTarget = convert.stringToTarget(target);
+      if (rawTarget) rawTargets.push(rawTarget);
+    }
+    return { output, channel, targets: rawTargets };
+  },
+  stringToTarget(str) {
+    const uidStart = str.lastIndexOf("(");
+    if (uidStart < 0) return null;
+    const uidEnd = str.lastIndexOf(")");
+    if (uidEnd < 0) return null;
+    if (uidEnd - uidStart < 2) return null;
+    const uid = str.slice(uidStart + 1, uidEnd);
+    const atIndex = str.indexOf("@");
+    if (atIndex < 0) return null;
+    const pinName = str.slice(0, atIndex).trim();
+    const nodeName = str.slice(atIndex + 1, uidStart).trim();
+    if (pinName.length == 0 || nodeName.length == 0) return null;
+    return { pinName, nodeName, uid };
+  },
+  pinToHandler(pinName) {
+    const words = pinName.split(/[ .-]+/).map((word) => word.replace(/[^a-zA-Z0-9_]/g, ""));
+    const cleaned = words.filter(Boolean);
+    return "on" + cleaned.map((word) => word[0].toUpperCase() + word.slice(1)).join("");
+  }
+};
+
+// shared/runtime.js
+var rtFlags = {
+  LOGMSG: 1
+};
+var LOGMSG = rtFlags.LOGMSG;
+function defaultInvokeHandler(dest, hix, param) {
+  return dest.rxSink[hix].handler.call(dest.cell, param);
+}
+__name(defaultInvokeHandler, "defaultInvokeHandler");
+function createRuntime({ invokeHandler = defaultInvokeHandler } = {}) {
+  function Runtime2() {
+    this.actors = [];
+    this.receiveTimer = 0;
+    this.idleTimer = 0;
+    this.receiveDelay = 0;
+    this.idleDelay = 100;
+    this.idleCount = 0;
+    this.msgCount = 0;
+    this.startTime = null;
+    this.qOut = [];
+    this.qIn = [];
+    this.qResolve = new ResolveQueue();
+  }
+  __name(Runtime2, "Runtime");
+  Runtime2.prototype = {
+    clearReceiveTimer() {
+      clearTimeout(this.receiveTimer);
+      this.receiveTimer = 0;
+    },
+    clearIdleTimer() {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = 0;
+    },
+    scheduleReceive() {
+      if (this.receiveTimer) return;
+      this.clearIdleTimer();
+      this.receiveTimer = setTimeout(() => {
+        this.receiveTimer = 0;
+        this.receive();
+      }, this.receiveDelay);
+    },
+    scheduleIdleCheck() {
+      if (this.idleTimer || this.receiveTimer || this.qOut.length) return;
+      this.idleTimer = setTimeout(() => {
+        this.idleTimer = 0;
+        this.idle();
+      }, this.idleDelay);
+    },
+    start() {
+      this.clearReceiveTimer();
+      this.clearIdleTimer();
+      this.qOut = [];
+      this.qIn = [];
+      this.msgCount = 0;
+      this.idleCount = 0;
+      for (const actor of this.actors) actor.makeCell();
+      this.startTime = Date.now();
+      this.scheduleIdleCheck();
+    },
+    stop() {
+      this.clearReceiveTimer();
+      this.clearIdleTimer();
+      this.msgCount = 0;
+      this.idleCount = 0;
+      this.actors.forEach((actor) => actor.cell = null);
+      this.qOut = [];
+      this.qIn = [];
+    },
+    halt() {
+      this.clearReceiveTimer();
+      this.clearIdleTimer();
+    },
+    continue() {
+      if (this.qOut.length) this.scheduleReceive();
+      else this.scheduleIdleCheck();
+    },
+    switch() {
+      const temp = this.qIn;
+      this.qIn = this.qOut;
+      this.qOut = temp;
+      this.qOut.length = 0;
+    },
+    idle() {
+      this.idleCount++;
+      const now = Date.now();
+      this.qResolve.checkTimeouts(now);
+      if (this.idleCount % 600 == 0) {
+        const min = (now - this.startTime) / 6e4;
+        console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`);
+      }
+      this.scheduleIdleCheck();
+    },
+    reject(reason) {
+      return new Promise((resolve, reject) => {
+        reject(new Error(reason));
+      });
+    },
+    logMessage(msg) {
+      console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`);
+    },
+    logReqReply(msg, what) {
+      console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`);
+    },
+    logNotConnected(nodeName, pinName) {
+      console.log(`${nodeName}[${pinName}] : not connected.`);
+    },
+    sendTo(tx, source, param) {
+      if (tx.targets.length < 1) {
+        if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
+        return 0;
+      }
+      ++this.msgCount;
+      const log = source.flags & LOGMSG;
+      for (const target of tx.targets) {
+        this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+        if (log) this.logMessage(this.qOut.at(-1));
+      }
+      this.idleCount = 0;
+      if (!this.receiveTimer) this.scheduleReceive();
+      return tx.targets.length;
+    },
+    requestFrom(tx, source, param, timeout) {
+      if (tx.targets.length < 1) {
+        if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
+        return this.reject("Not connected");
+      }
+      const txRef = ++this.msgCount;
+      let channelCount = 0;
+      const log = source.flags & LOGMSG;
+      for (const target of tx.targets) {
+        this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+        if (log) this.logReqReply(this.qOut.at(-1), "request");
+        if (target.channel) channelCount++;
+      }
+      this.idleCount = 0;
+      if (!this.receiveTimer) this.scheduleReceive();
+      if (channelCount == 0) return this.reject("No channel");
+      return this.qResolve.addPromiseHandler(txRef, timeout, channelCount);
+    },
+    reply(source, param) {
+      var _a;
+      if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return 0;
+      ++this.msgCount;
+      this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef: 0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+      if (source.flags & LOGMSG) this.logReqReply(this.qOut.at(-1), "reply");
+      this.idleCount = 0;
+      if (!this.receiveTimer) this.scheduleReceive();
+      return 1;
+    },
+    next(source, param, timeout) {
+      var _a;
+      if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return this.reject("No target");
+      const txRef = ++this.msgCount;
+      this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+      this.idleCount = 0;
+      if (!this.receiveTimer) this.scheduleReceive();
+      return this.qResolve.addPromiseHandler(txRef, timeout);
+    },
+    receive() {
+      if (!this.qOut.length) return this.scheduleIdleCheck();
+      this.switch();
+      this.handleReceiveQueue();
+      if (this.qOut.length && !this.receiveTimer) this.scheduleReceive();
+      else this.scheduleIdleCheck();
+    },
+    handleReceiveQueue() {
+      for (const msg of this.qIn) {
+        const dest = msg.dest;
+        switch (msg.hix & HIX_TYPE_MASK) {
+          case HIX_HANDLER:
+            {
+              dest.msg = msg;
+              if (dest.flags & LOGMSG) this.logMessage(msg);
+              invokeHandler(dest, msg.hix, msg.param);
+            }
+            break;
+          case HIX_REPLY:
+            {
+              if (dest.flags & LOGMSG) this.logReqReply(msg, "incoming reply");
+              this.qResolve.trigger(msg.rxRef, msg.param);
+            }
+            break;
+        }
+      }
+    },
+    reschedule(msg) {
+      this.qOut.push(msg);
+      this.idleCount = 0;
+      if (!this.receiveTimer) this.scheduleReceive();
+    }
+  };
+  return Runtime2;
+}
+__name(createRuntime, "createRuntime");
+
+// rt-base/runtime.js
+var Runtime = createRuntime();
+
+// rt-base/runtime-settings.js
+var defaultWorker$2 = /* @__PURE__ */ __name(() => ({
+  on: false,
+  path: ""
+}), "defaultWorker");
+function makeRuntimeSettings$3() {
+  return {
+    logMessages: false,
+    worker: defaultWorker$2()
+  };
+}
+__name(makeRuntimeSettings$3, "makeRuntimeSettings");
+function normalizeRuntimeSettings$2(dx = null) {
+  const defaults = makeRuntimeSettings$3();
+  if (!dx || typeof dx !== "object") return defaults;
+  const normalized = {
+    ...dx,
+    logMessages: !!dx.logMessages,
+    worker: {
+      ...defaults.worker,
+      ...dx.worker ?? {}
+    }
+  };
+  normalized.worker.on = !!normalized.worker.on;
+  normalized.worker.path = normalized.worker.path ?? "";
+  return normalized;
+}
+__name(normalizeRuntimeSettings$2, "normalizeRuntimeSettings");
+
+// shared/runtime-node.js
+function RX(pin, channel = false) {
+  this.pin = pin;
+  this.channel = channel;
+  this.handler = null;
+}
+__name(RX, "RX");
+function TX(pin, channel = false) {
+  this.pin = pin;
+  this.channel = channel;
+  this.targets = [];
+}
+__name(TX, "TX");
+function missingHandler(param) {
+  const names = Object.getOwnPropertyNames(this);
+  console.warn(`Missing handler for cell: ${names} - parameters: ${param}`);
+}
+__name(missingHandler, "missingHandler");
+function shouldUseNew(factory) {
+  if (typeof factory !== "function" || !factory.prototype) return false;
+  const protoKeys = Object.getOwnPropertyNames(factory.prototype);
+  return protoKeys.length !== 1 || protoKeys[0] !== "constructor" || factory.prototype.constructor !== factory;
+}
+__name(shouldUseNew, "shouldUseNew");
+function createRuntimeNode({ getRuntime, normalizeRuntimeSettings: normalizeRuntimeSettings2, rtFlags: rtFlags2 }) {
+  function RuntimeNode2({ name, uid, factory, inputs, outputs, sx, dx }) {
+    this.name = name;
+    this.uid = uid;
+    this.factory = factory;
+    this.useNew = shouldUseNew(factory);
+    this.rxSink = [];
+    this.txMap = /* @__PURE__ */ new Map();
+    this.sx = sx ?? null;
+    this.dx = dx ? normalizeRuntimeSettings2(dx) : null;
+    this.flags = 0;
+    this.cell = null;
+    this.msg = null;
+    this.setFlags();
+    this.initRxTx({ inputs, outputs });
+  }
+  __name(RuntimeNode2, "RuntimeNode");
+  RuntimeNode2.prototype = {
+    setFlags() {
+      if (!this.dx) return;
+      if (this.dx.logMessages) this.flags |= rtFlags2.LOGMSG;
+    },
+    initRxTx({ inputs, outputs }) {
+      for (const inputString of inputs) {
+        const input = convert.stringToInput(inputString);
+        if (input) this.rxSink.push(new RX(input.pin, input.channel));
+      }
+      for (const outputString of outputs) {
+        const raw = convert.stringToOutput(outputString);
+        if (!raw) continue;
+        const tx = new TX(raw.output, raw.channel);
+        this.txMap.set(tx.pin, tx);
+        for (const rawTarget of raw.targets) {
+          tx.targets.push(new Target(rawTarget.uid, rawTarget.pinName, raw.channel));
+        }
+      }
+    },
+    makeCell() {
+      try {
+        if (this.useNew) {
+          this.cell = new this.factory(this.getTx(), this.sx);
+        } else {
+          this.cell = this.factory(this.getTx(), this.sx);
+        }
+      } catch (err) {
+        if (err instanceof TypeError && typeof this.factory === "function" && /class constructor/i.test(err.message)) {
+          this.useNew = true;
+          this.cell = new this.factory(this.getTx(), this.sx);
+        } else throw err;
+      }
+      this.addHandlersForCell();
+    },
+    addHandlersForCell() {
+      if (!this.cell) {
+        if (this.rxSink.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
+        return;
+      }
+      const entries = Object.entries(this.cell);
+      const proto = Object.getPrototypeOf(this.cell);
+      const protoNames = Object.getOwnPropertyNames(proto) ?? [];
+      for (const protoName of protoNames) {
+        if (typeof proto[protoName] === "function") entries.push([protoName, proto[protoName]]);
+      }
+      entries.forEach(([name, fn]) => {
+        if (typeof fn === "function") {
+          const rx = this.getRx(name);
+          if (rx) rx.handler = fn;
+        }
+      });
+      for (const rx of this.rxSink) {
+        if (!rx.handler) {
+          console.warn(`** NO HANDLER ** Node "${this.name}" has input pin "${rx.pin}" but no handler for it.`);
+          rx.handler = missingHandler;
+        }
+      }
+    },
+    getRx(functionName) {
+      if (functionName.startsWith("-> ") || functionName.startsWith("=> ")) {
+        const handlerName = functionName.slice(3);
+        return this.rxSink.find((rx) => rx.pin == handlerName);
+      }
+      for (const rx of this.rxSink) {
+        if (convert.pinToHandler(rx.pin) == functionName) return rx;
+      }
+      return null;
+    },
+    resolveUIDs(actors) {
+      for (const tx of this.txMap.values()) {
+        for (const target of tx.targets) {
+          target.actor = actors.find((actor) => actor.uid == target.uid);
+          if (!target.actor) return console.error(`** ERROR ** target node ${target.uid} in ${this.name} not found`);
+          const hix = target.actor.rxSink.findIndex((rx) => rx.pin == target.pin);
+          if (hix < 0) return console.error(`** ERROR ** target pin ${target.pin} in ${target.actor.name} not found`);
+          target.hix = HIX_HANDLER | hix;
+        }
+      }
+    },
+    findTx(pin) {
+      if (!pin) return null;
+      return this.txMap.get(pin) ?? null;
+    },
+    getTx() {
+      const source = this;
+      return {
+        get pin() {
+          var _a;
+          return (_a = source.msg) == null ? void 0 : _a.txPin;
+        },
+        send(pin, param) {
+          if (pin) {
+            const tx = source.findTx(pin);
+            if (tx) return getRuntime().sendTo(tx, source, param);
+          }
+          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+          return 0;
+        },
+        request(pin, param, timeout = 0) {
+          if (pin) {
+            const tx = source.findTx(pin);
+            if (tx) return getRuntime().requestFrom(tx, source, param, timeout);
+          }
+          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+          return getRuntime().reject("No such output pin");
+        },
+        reply(param) {
+          return getRuntime().reply(source, param);
+        },
+        next(param, timeout = 0) {
+          return getRuntime().next(source, param, timeout);
+        },
+        reschedule() {
+          if (source.msg) getRuntime().reschedule(source.msg);
+        },
+        select(nodeName) {
+          const _nodeName = nodeName;
+          return {
+            send(pin, param) {
+              if (pin) {
+                const tx = source.findTx(pin);
+                if (tx) {
+                  const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+                  if (actualTarget) {
+                    const txCopy = new TX(tx.pin, tx.channel);
+                    txCopy.targets = [actualTarget];
+                    return getRuntime().sendTo(txCopy, source, param);
+                  }
+                  console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+                  return 0;
+                }
+              }
+              console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+              return 0;
+            },
+            request(pin, param, timeout = 0) {
+              if (pin) {
+                const tx = source.findTx(pin);
+                if (tx) {
+                  const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+                  if (actualTarget) {
+                    const txCopy = new TX(tx.pin, tx.channel);
+                    txCopy.targets = [actualTarget];
+                    return getRuntime().requestFrom(txCopy, source, param, timeout);
+                  }
+                  console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+                  return getRuntime().reject("selected node not connected");
+                }
+              }
+              console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+              return getRuntime().reject("No such output pin");
+            }
+          };
+        }
+      };
+    }
+  };
+  return RuntimeNode2;
+}
+__name(createRuntimeNode, "createRuntimeNode");
+
+// rt-base/runtime-node.js
+var RuntimeNode = createRuntimeNode({
+  getRuntime: /* @__PURE__ */ __name(() => runtime$1, "getRuntime"),
+  normalizeRuntimeSettings: normalizeRuntimeSettings$2,
+  rtFlags
+});
+
+// shared/scaffold.js
+function createScaffold({ createRuntime: createRuntime2, RuntimeNode: RuntimeNode2, setRuntime }) {
+  return /* @__PURE__ */ __name(function scaffold2(nodeList, filterList = []) {
+    const runtime2 = createRuntime2();
+    setRuntime(runtime2);
+    for (const rawNode of nodeList) {
+      runtime2.actors.push(new RuntimeNode2(rawNode));
+    }
+    runtime2.actors.forEach((actor) => actor.resolveUIDs(runtime2.actors));
+    return runtime2;
+  }, "scaffold");
+}
+__name(createScaffold, "createScaffold");
+
+// rt-base/scaffold.js
+var runtime$1 = null;
+var scaffold = createScaffold({
+  createRuntime: /* @__PURE__ */ __name(() => new Runtime(), "createRuntime"),
+  RuntimeNode,
+  setRuntime(value) {
+    runtime$1 = value;
+  }
+});
+
 const node_env = globalThis.process?.env?.NODE_ENV;
 var DEV = node_env && !node_env.toLowerCase().startsWith('prod');
 
@@ -4824,7 +5448,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$n = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$o = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -4866,7 +5490,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$n();
+	var div_1 = root$o();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -4881,6 +5505,71 @@ function Menu_tabs_window($$anchor, $$props) {
 	var div_4 = sibling(div_3, 2);
 
 	bind_this(div_4, ($$value) => set(contentDiv, $$value), () => get(contentDiv));
+	append($$anchor, div_1);
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root$n = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
+
+function Vertical_menu_tabs_content($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8);
+	let mainDiv = mutable_state();
+	let contentDiv = mutable_state();
+	let tabsDiv = mutable_state();
+	// menuDiv is initialised with a message
+	let menuDiv = null;
+
+	onMount(async () => {});
+
+	const handlers = {
+		onContentDiv(div) {
+			// replace the content
+			get(contentDiv).replaceChildren(div);
+			// append the menu again
+			if (menuDiv) get(contentDiv).append(menuDiv);
+			// send out the div
+			tx().send('div', get(mainDiv));
+		},
+		onMenuDiv(div) {
+			// save
+			menuDiv = div;
+			// append
+			get(contentDiv).append(menuDiv);
+		},
+		onTabsDiv(div) {
+			get(tabsDiv).replaceChildren(div);
+		},
+		onModalDiv(div) {
+			get(mainDiv).append(div);
+		},
+		onSizeChange({ id, rect }) {
+			// and inform other nodes about the content size change
+			const w = Math.floor(get(contentDiv).clientWidth);
+			const h = Math.floor(get(contentDiv).clientHeight);
+
+			tx().send("content size change", { x: 0, y: 0, w, h });
+		},
+		onShow() {
+			tx().send('div', get(mainDiv));
+		}
+	};
+
+	init();
+
+	var div_1 = root$n();
+
+	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
+
+	var div_2 = child(div_1);
+
+	bind_this(div_2, ($$value) => set(tabsDiv, $$value), () => get(tabsDiv));
+
+	var div_3 = sibling(div_2, 2);
+
+	bind_this(div_3, ($$value) => set(contentDiv, $$value), () => get(contentDiv));
 	append($$anchor, div_1);
 	bind_prop($$props, "handlers", handlers);
 	return pop({ handlers });
@@ -5436,7 +6125,7 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$f = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root_1$h = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
 var root$j = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
@@ -5475,7 +6164,7 @@ function Top_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$f();
+		var div_1 = root_1$h();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5500,7 +6189,7 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$e = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root_1$g = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
 var root$i = template(`<div class="menu svelte-1st5yi2"></div>`);
 
 function Side_menu($$anchor, $$props) {
@@ -5539,7 +6228,7 @@ function Side_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$e();
+		var div_1 = root_1$g();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5564,7 +6253,7 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$8 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$a = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root_3$3 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root$h = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
@@ -5654,7 +6343,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$8();
+				var div_1 = root_2$a();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -5706,7 +6395,7 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$d = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
+var root_1$f = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
 var root$g = template(`<div class="menu svelte-1c44ark"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
@@ -5744,7 +6433,7 @@ function Vscode_side_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$d();
+		var div_1 = root_1$f();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -5864,8 +6553,8 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$c = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$7 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_1$e = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$9 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
 var root_3$2 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
 var root$f = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
@@ -5971,7 +6660,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$c();
+		var i_2 = root_1$e();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -5981,7 +6670,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$7();
+		var i_3 = root_2$9();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6114,8 +6803,8 @@ function Checkbox($$anchor, $$props) {
 	pop();
 }
 
-var root_1$b = template(`<!> <!>`, 1);
-var root_2$6 = template(`<!> <!> <!>`, 1);
+var root_1$d = template(`<!> <!>`, 1);
+var root_2$8 = template(`<!> <!> <!>`, 1);
 var root$a = template(`<!> <!>`, 1);
 
 function Runtime_settings_base($$anchor, $$props) {
@@ -6130,7 +6819,7 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	Same_line(node, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$b();
+			var fragment_1 = root_1$d();
 			var node_1 = first_child(fragment_1);
 
 			Checkbox(node_1, {
@@ -6155,7 +6844,7 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	Same_line(node_3, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$6();
+			var fragment_2 = root_2$8();
 			var node_4 = first_child(fragment_2);
 
 			Checkbox(node_4, {
@@ -6196,8 +6885,8 @@ function Runtime_settings_base($$anchor, $$props) {
 	pop();
 }
 
-var root_1$a = template(`<!> <!>`, 1);
-var root_2$5 = template(`<!> <!> <!>`, 1);
+var root_1$c = template(`<!> <!>`, 1);
+var root_2$7 = template(`<!> <!> <!>`, 1);
 var root_3$1 = template(`<!> <!>`, 1);
 var root_4$3 = template(`<!> <!>`, 1);
 var root_5$4 = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
@@ -6215,7 +6904,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	Same_line(node, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$a();
+			var fragment_1 = root_1$c();
 			var node_1 = first_child(fragment_1);
 
 			Checkbox(node_1, {
@@ -6240,7 +6929,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	Same_line(node_3, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$5();
+			var fragment_2 = root_2$7();
 			var node_4 = first_child(fragment_2);
 
 			Checkbox(node_4, {
@@ -6464,13 +7153,13 @@ function isDefaultRuntimeSettings$1(dx = null) {
 }
 
 var baseRuntimeSettings = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	assignRuntimeSettings: assignRuntimeSettings$1,
-	cloneRuntimeSettings: cloneRuntimeSettings$2,
-	isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
-	makeRuntimeSettings: makeRuntimeSettings$2,
-	normalizeRuntimeSettings: normalizeRuntimeSettings$1,
-	resetRuntimeSettings: resetRuntimeSettings$1
+  __proto__: null,
+  assignRuntimeSettings: assignRuntimeSettings$1,
+  cloneRuntimeSettings: cloneRuntimeSettings$2,
+  isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
+  makeRuntimeSettings: makeRuntimeSettings$2,
+  normalizeRuntimeSettings: normalizeRuntimeSettings$1,
+  resetRuntimeSettings: resetRuntimeSettings$1
 });
 
 const defaultWorker = () => ({
@@ -6607,19 +7296,31 @@ function isDefaultRuntimeSettings(dx = null) {
 }
 
 var alsRuntimeSettings = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	assignRuntimeSettings: assignRuntimeSettings,
-	cloneRuntimeSettings: cloneRuntimeSettings$1,
-	isDefaultRuntimeSettings: isDefaultRuntimeSettings,
-	makeRuntimeSettings: makeRuntimeSettings$1,
-	normalizeRuntimeSettings: normalizeRuntimeSettings,
-	resetRuntimeSettings: resetRuntimeSettings
+  __proto__: null,
+  assignRuntimeSettings: assignRuntimeSettings,
+  cloneRuntimeSettings: cloneRuntimeSettings$1,
+  isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+  makeRuntimeSettings: makeRuntimeSettings$1,
+  normalizeRuntimeSettings: normalizeRuntimeSettings,
+  resetRuntimeSettings: resetRuntimeSettings
+});
+
+var agentRuntimeSettings = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  assignRuntimeSettings: assignRuntimeSettings,
+  cloneRuntimeSettings: cloneRuntimeSettings$1,
+  isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+  makeRuntimeSettings: makeRuntimeSettings$1,
+  normalizeRuntimeSettings: normalizeRuntimeSettings,
+  resetRuntimeSettings: resetRuntimeSettings
 });
 
 const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base';
 const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
+const RT_AGENT = '@vizualmodel/vmblu-runtime/rt-agent';
 
 function selectRuntimeSettings(runtime) {
+    if (runtime === RT_AGENT) return agentRuntimeSettings
     return runtime === RT_ALS ? alsRuntimeSettings : baseRuntimeSettings
 }
 
@@ -6755,7 +7456,7 @@ function Confirm_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$9 = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
+var root_1$b = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
 var root$8 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
@@ -6843,7 +7544,7 @@ function Context_menu($$anchor, $$props) {
 	var ul = child(div);
 
 	each(ul, 5, () => get(context).menu, index, ($$anchor, choice, index) => {
-		var li = root_1$9();
+		var li = root_1$b();
 
 		set_attribute(li, "data-index", index);
 
@@ -7070,10 +7771,10 @@ function Text_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$4 = template(`<p class="svelte-52mbok"> </p>`);
+var root_2$6 = template(`<p class="svelte-52mbok"> </p>`);
 var root_4$2 = template(`<p class="type-warning svelte-52mbok"> </p>`);
 var root_5$3 = template(`<p class="type-ok svelte-52mbok">contract match</p>`);
-var root_1$8 = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
+var root_1$a = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
 var root$6 = template(`<div class="profile svelte-52mbok"><!></div>`);
 
 function Profile_input_pin($$anchor, $$props) {
@@ -7110,7 +7811,7 @@ function Profile_input_pin($$anchor, $$props) {
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
-		var fragment = root_1$8();
+		var fragment = root_1$a();
 		var div_1 = first_child(fragment);
 		var p = child(div_1);
 		var span = child(p);
@@ -7124,7 +7825,7 @@ function Profile_input_pin($$anchor, $$props) {
 			let type = () => get($$item).type;
 			let name = () => get($$item).name;
 			let description = () => get($$item).description;
-			var p_1 = root_2$4();
+			var p_1 = root_2$6();
 			var text_2 = child(p_1);
 			template_effect(() => set_text(text_2, `${name() ?? ""} (${type() ?? ""}) ${description() ?? ""}`));
 			append($$anchor, p_1);
@@ -7178,7 +7879,7 @@ function Profile_input_pin($$anchor, $$props) {
 	pop();
 }
 
-var root_1$7 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
+var root_1$9 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
 var root$5 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
 
 function Profile_output_pin($$anchor, $$props) {
@@ -7204,7 +7905,7 @@ function Profile_output_pin($$anchor, $$props) {
 	var node = child(div);
 
 	if_block(node, () => profile() != null, ($$anchor) => {
-		var div_1 = root_1$7();
+		var div_1 = root_1$9();
 		var p = child(div_1);
 		var span = child(p);
 		var text = child(span);
@@ -7231,7 +7932,7 @@ function Profile_output_pin($$anchor, $$props) {
 var root_5$2 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
 var root_7$1 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
 var root_8$1 = template(`<p class="empty svelte-7sbsh3">No source profile entry for this internal pin.</p>`);
-var root_2$3 = template(`<div class="target svelte-7sbsh3"><p class="endpoint svelte-7sbsh3"> </p> <!></div>`);
+var root_2$5 = template(`<div class="target svelte-7sbsh3"><p class="endpoint svelte-7sbsh3"> </p> <!></div>`);
 var root_9$1 = template(`<div class="target svelte-7sbsh3"><p class="empty svelte-7sbsh3">No internal pins are currently resolved behind this proxy.</p></div>`);
 var root$4 = template(`<div class="proxy svelte-7sbsh3"><!></div>`);
 
@@ -7263,7 +7964,7 @@ function Profile_proxy_pin($$anchor, $$props) {
 			var node_1 = first_child(fragment);
 
 			each(node_1, 1, () => profile().targets, index, ($$anchor, target) => {
-				var div_1 = root_2$3();
+				var div_1 = root_2$5();
 				var p = child(div_1);
 				var text = child(p);
 
@@ -7368,7 +8069,7 @@ function Profile_proxy_pin($$anchor, $$props) {
 var root_4$1 = template(`<span> </span>`);
 var root_3 = template(`<div></div>`);
 var root_6$1 = template(`<pre class="text svelte-1np5y2u"> </pre>`);
-var root_1$6 = template(`<div class="contract svelte-1np5y2u"><div class="role svelte-1np5y2u"><p class="svelte-1np5y2u"> </p></div> <!></div>`);
+var root_1$8 = template(`<div class="contract svelte-1np5y2u"><div class="role svelte-1np5y2u"><p class="svelte-1np5y2u"> </p></div> <!></div>`);
 
 function Pin_contract($$anchor, $$props) {
 	push($$props, false);
@@ -7381,7 +8082,7 @@ function Pin_contract($$anchor, $$props) {
 	var node = first_child(fragment);
 
 	if_block(node, contract, ($$anchor) => {
-		var div = root_1$6();
+		var div = root_1$8();
 		var div_1 = child(div);
 		var p = child(div_1);
 		var text = child(p);
@@ -7448,11 +8149,11 @@ function Pin_contract($$anchor, $$props) {
 	pop();
 }
 
-var root_2$2 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0"> </p></div> <!>`, 1);
+var root_2$4 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0"> </p></div> <!>`, 1);
 var root_5$1 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handlers and parameters</p></div> <!>`, 1);
 var root_7 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handler and parameters</p></div> <!>`, 1);
 var root_8 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Sent at</p></div> <!>`, 1);
-var root_1$5 = template(`<!> <!>`, 1);
+var root_1$7 = template(`<!> <!>`, 1);
 
 function Pin_profile($$anchor, $$props) {
 	push($$props, false);
@@ -7505,7 +8206,7 @@ function Pin_profile($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$5();
+			var fragment_1 = root_1$7();
 			var node = first_child(fragment_1);
 
 			Pin_contract(node, {
@@ -7520,7 +8221,7 @@ function Pin_profile($$anchor, $$props) {
 				node_1,
 				() => get(_pin)?.is?.proxy,
 				($$anchor) => {
-					var fragment_2 = root_2$2();
+					var fragment_2 = root_2$4();
 					var div = first_child(fragment_2);
 					var p = child(div);
 					var text = child(p);
@@ -7635,6 +8336,425 @@ function Pin_profile($$anchor, $$props) {
 			);
 
 			append($$anchor, fragment_1);
+		},
+		$$slots: { default: true }
+	});
+
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_2$3 = template(`<div class="error svelte-1wofc62"> </div>`);
+var root_1$6 = template(`<div class="form svelte-1wofc62"><label class="inline svelte-1wofc62"><input type="checkbox" class="svelte-1wofc62"> expose input pin as agent tool</label> <label class="svelte-1wofc62">id <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">title <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">description <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <div class="row svelte-1wofc62"><label class="svelte-1wofc62">risk <select class="svelte-1wofc62"><option>low</option><option>medium</option><option>high</option></select></label> <label class="svelte-1wofc62">approval <select class="svelte-1wofc62"><option>never</option><option>on-request</option><option>always</option></select></label></div> <label class="svelte-1wofc62">timeoutMs <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">schema JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">effects JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">examples JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">usageGuidance JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <!></div>`);
+
+function Pin_tool($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8);
+
+	let box = mutable_state({
+		div: null,
+		pos: null,
+		title: '',
+		ok: null,
+		cancel: null
+	});
+
+	let pin = null;
+	let ok = null;
+	let settings = mutable_state(makeSettings(null));
+	let schemaText = mutable_state('{}');
+	let effectsText = mutable_state('[]');
+	let examplesText = mutable_state('');
+	let usageGuidanceText = mutable_state('');
+	let error = mutable_state('');
+
+	onMount(() => {
+		tx().send('modal div', get(box).div);
+	});
+
+	const handlers = {
+		onShow({ pos, pin: shownPin, ok: okFn, cancel }) {
+			pin = shownPin;
+			ok = okFn;
+			set(settings, makeSettings(pin));
+			set(schemaText, jsonText(get(settings).schema, '{}'));
+			set(effectsText, jsonText(get(settings).effects, '[]'));
+			set(examplesText, jsonText(get(settings).examples, ''));
+			set(usageGuidanceText, jsonText(get(settings).usageGuidance, ''));
+			set(error, '');
+			mutate(box, get(box).title = `Tool settings: ${pin?.name ?? ''} @ ${pin?.node?.name ?? ''}`);
+			mutate(box, get(box).pos = { ...pos });
+			mutate(box, get(box).ok = submit);
+			mutate(box, get(box).cancel = () => cancel?.());
+			get(box).show(get(box).pos);
+		}
+	};
+
+	function submit() {
+		const next = collectSettings();
+
+		if (!next) {
+			get(box).show(get(box).pos);
+			return;
+		}
+
+		ok?.(next);
+	}
+
+	function makeSettings(pin) {
+		const current = pin?.tool ?? {};
+
+		return {
+			enabled: current.enabled ?? false,
+			id: current.id ?? defaultId(pin),
+			title: current.title ?? titleFromName(pin?.name),
+			description: current.description ?? pin?.prompt ?? '',
+			risk: current.risk ?? 'low',
+			approval: current.approval ?? 'never',
+			timeoutMs: current.timeoutMs ?? '',
+			effects: current.effects ?? [],
+			examples: current.examples,
+			usageGuidance: current.usageGuidance,
+			schema: current.schema
+		};
+	}
+
+	function collectSettings() {
+		set(error, '');
+
+		const next = {
+			enabled: get(settings).enabled,
+			id: get(settings).id.trim(),
+			title: get(settings).title.trim(),
+			description: get(settings).description.trim(),
+			risk: get(settings).risk,
+			approval: get(settings).approval
+		};
+
+		if (!next.enabled) return { enabled: false };
+
+		if (!next.id) {
+			set(error, 'id is required');
+			return null;
+		}
+
+		const schema = parseOptionalJson(get(schemaText), 'schema');
+
+		if (schema === undefined) return null;
+		if (schema !== null) next.schema = schema;
+
+		const effects = parseOptionalJson(get(effectsText), 'effects');
+
+		if (effects === undefined) return null;
+		next.effects = Array.isArray(effects) ? effects : [];
+
+		if (get(settings).timeoutMs !== '') {
+			const timeoutMs = Number(get(settings).timeoutMs);
+
+			if (!Number.isInteger(timeoutMs) || timeoutMs < 0) {
+				set(error, 'timeoutMs must be a positive integer');
+				return null;
+			}
+
+			next.timeoutMs = timeoutMs;
+		}
+
+		const examples = parseOptionalJson(get(examplesText), 'examples');
+
+		if (examples === undefined) return null;
+		if (examples !== null) next.examples = examples;
+
+		const usageGuidance = parseOptionalJson(get(usageGuidanceText), 'usageGuidance');
+
+		if (usageGuidance === undefined) return null;
+		if (usageGuidance !== null) next.usageGuidance = usageGuidance;
+		return next;
+	}
+
+	function parseOptionalJson(text, label) {
+		if (!text?.trim()) return null;
+
+		try {
+			return JSON.parse(text);
+		} catch(err) {
+			set(error, `${label} is not valid JSON`);
+			return undefined;
+		}
+	}
+
+	function jsonText(value, fallback) {
+		return value == null ? fallback : JSON.stringify(value, null, 2);
+	}
+
+	function defaultId(pin) {
+		const pinName = String(pin?.name ?? '').trim();
+		const nodeName = String(pin?.node?.name ?? '').trim();
+
+		if (pinName && nodeName) return `${pinName} @ ${nodeName}`;
+		return pinName || nodeName;
+	}
+
+	function titleFromName(name) {
+		return String(name ?? '').replace(/[-_.]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+	}
+
+	init();
+
+	Popup_box($$anchor, {
+		get box() {
+			return get(box);
+		},
+		children: ($$anchor, $$slotProps) => {
+			var div = root_1$6();
+			var label_1 = child(div);
+			var input = child(label_1);
+
+			var label_2 = sibling(label_1, 2);
+			var input_1 = sibling(child(label_2));
+
+			var label_3 = sibling(label_2, 2);
+			var input_2 = sibling(child(label_3));
+
+			var label_4 = sibling(label_3, 2);
+			var textarea = sibling(child(label_4));
+
+			var div_1 = sibling(label_4, 2);
+			var label_5 = child(div_1);
+			var select = sibling(child(label_5));
+
+			template_effect(() => {
+				get(settings).risk;
+				invalidate_inner_signals(() => {});
+			});
+
+			var option = child(select);
+
+			option.value = null == (option.__value = "low") ? "" : "low";
+
+			var option_1 = sibling(option);
+
+			option_1.value = null == (option_1.__value = "medium") ? "" : "medium";
+
+			var option_2 = sibling(option_1);
+
+			option_2.value = null == (option_2.__value = "high") ? "" : "high";
+
+			var label_6 = sibling(label_5, 2);
+			var select_1 = sibling(child(label_6));
+
+			template_effect(() => {
+				get(settings).approval;
+				invalidate_inner_signals(() => {});
+			});
+
+			var option_3 = child(select_1);
+
+			option_3.value = null == (option_3.__value = "never") ? "" : "never";
+
+			var option_4 = sibling(option_3);
+
+			option_4.value = null == (option_4.__value = "on-request") ? "" : "on-request";
+
+			var option_5 = sibling(option_4);
+
+			option_5.value = null == (option_5.__value = "always") ? "" : "always";
+
+			var label_7 = sibling(div_1, 2);
+			var input_3 = sibling(child(label_7));
+
+			var label_8 = sibling(label_7, 2);
+			var textarea_1 = sibling(child(label_8));
+
+			var label_9 = sibling(label_8, 2);
+			var textarea_2 = sibling(child(label_9));
+
+			var label_10 = sibling(label_9, 2);
+			var textarea_3 = sibling(child(label_10));
+
+			var label_11 = sibling(label_10, 2);
+			var textarea_4 = sibling(child(label_11));
+
+			var node = sibling(label_11, 2);
+
+			if_block(node, () => get(error), ($$anchor) => {
+				var div_2 = root_2$3();
+				var text_1 = child(div_2);
+				template_effect(() => set_text(text_1, get(error)));
+				append($$anchor, div_2);
+			});
+			bind_checked(input, () => get(settings).enabled, ($$value) => mutate(settings, get(settings).enabled = $$value));
+			bind_value(input_1, () => get(settings).id, ($$value) => mutate(settings, get(settings).id = $$value));
+			bind_value(input_2, () => get(settings).title, ($$value) => mutate(settings, get(settings).title = $$value));
+			bind_value(textarea, () => get(settings).description, ($$value) => mutate(settings, get(settings).description = $$value));
+			bind_select_value(select, () => get(settings).risk, ($$value) => mutate(settings, get(settings).risk = $$value));
+			bind_select_value(select_1, () => get(settings).approval, ($$value) => mutate(settings, get(settings).approval = $$value));
+			bind_value(input_3, () => get(settings).timeoutMs, ($$value) => mutate(settings, get(settings).timeoutMs = $$value));
+			bind_value(textarea_1, () => get(schemaText), ($$value) => set(schemaText, $$value));
+			bind_value(textarea_2, () => get(effectsText), ($$value) => set(effectsText, $$value));
+			bind_value(textarea_3, () => get(examplesText), ($$value) => set(examplesText, $$value));
+			bind_value(textarea_4, () => get(usageGuidanceText), ($$value) => set(usageGuidanceText, $$value));
+			append($$anchor, div);
+		},
+		$$slots: { default: true }
+	});
+
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_2$2 = template(`<div class="error svelte-1jevcjj"> </div>`);
+var root_1$5 = template(`<div class="form svelte-1jevcjj"><label class="inline svelte-1jevcjj"><input type="checkbox" class="svelte-1jevcjj"> expose output pin as agent event</label> <label class="svelte-1jevcjj">id <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">title <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">description <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <label class="svelte-1jevcjj">schema JSON <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <!></div>`);
+
+function Pin_event($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8);
+
+	let box = mutable_state({
+		div: null,
+		pos: null,
+		title: '',
+		ok: null,
+		cancel: null
+	});
+
+	let pin = null;
+	let ok = null;
+	let settings = mutable_state(makeSettings(null));
+	let schemaText = mutable_state('{}');
+	let error = mutable_state('');
+
+	onMount(() => {
+		tx().send('modal div', get(box).div);
+	});
+
+	const handlers = {
+		onShow({ pos, pin: shownPin, ok: okFn, cancel }) {
+			pin = shownPin;
+			ok = okFn;
+			set(settings, makeSettings(pin));
+			set(schemaText, jsonText(get(settings).schema, '{}'));
+			set(error, '');
+			mutate(box, get(box).title = `Event settings: ${pin?.name ?? ''} @ ${pin?.node?.name ?? ''}`);
+			mutate(box, get(box).pos = { ...pos });
+			mutate(box, get(box).ok = submit);
+			mutate(box, get(box).cancel = () => cancel?.());
+			get(box).show(get(box).pos);
+		}
+	};
+
+	function submit() {
+		const next = collectSettings();
+
+		if (!next) {
+			get(box).show(get(box).pos);
+			return;
+		}
+
+		ok?.(next);
+	}
+
+	function makeSettings(pin) {
+		const current = pin?.event ?? {};
+
+		return {
+			enabled: current.enabled ?? false,
+			id: current.id ?? defaultId(pin),
+			title: current.title ?? titleFromName(pin?.name),
+			description: current.description ?? pin?.prompt ?? '',
+			schema: current.schema
+		};
+	}
+
+	function collectSettings() {
+		set(error, '');
+
+		const next = {
+			enabled: get(settings).enabled,
+			id: get(settings).id.trim(),
+			title: get(settings).title.trim(),
+			description: get(settings).description.trim()
+		};
+
+		if (!next.enabled) return { enabled: false };
+
+		if (!next.id) {
+			set(error, 'id is required');
+			return null;
+		}
+
+		const schema = parseOptionalJson(get(schemaText), 'schema');
+
+		if (schema === undefined) return null;
+		if (schema !== null) next.schema = schema;
+		return next;
+	}
+
+	function parseOptionalJson(text, label) {
+		if (!text?.trim()) return null;
+
+		try {
+			return JSON.parse(text);
+		} catch(err) {
+			set(error, `${label} is not valid JSON`);
+			return undefined;
+		}
+	}
+
+	function jsonText(value, fallback) {
+		return value == null ? fallback : JSON.stringify(value, null, 2);
+	}
+
+	function defaultId(pin) {
+		const pinName = String(pin?.name ?? '').trim();
+		const nodeName = String(pin?.node?.name ?? '').trim();
+
+		if (pinName && nodeName) return `${pinName} @ ${nodeName}`;
+		return pinName || nodeName;
+	}
+
+	function titleFromName(name) {
+		return String(name ?? '').replace(/[-_.]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+	}
+
+	init();
+
+	Popup_box($$anchor, {
+		get box() {
+			return get(box);
+		},
+		children: ($$anchor, $$slotProps) => {
+			var div = root_1$5();
+			var label_1 = child(div);
+			var input = child(label_1);
+
+			var label_2 = sibling(label_1, 2);
+			var input_1 = sibling(child(label_2));
+
+			var label_3 = sibling(label_2, 2);
+			var input_2 = sibling(child(label_3));
+
+			var label_4 = sibling(label_3, 2);
+			var textarea = sibling(child(label_4));
+
+			var label_5 = sibling(label_4, 2);
+			var textarea_1 = sibling(child(label_5));
+
+			var node = sibling(label_5, 2);
+
+			if_block(node, () => get(error), ($$anchor) => {
+				var div_1 = root_2$2();
+				var text_1 = child(div_1);
+				template_effect(() => set_text(text_1, get(error)));
+				append($$anchor, div_1);
+			});
+			bind_checked(input, () => get(settings).enabled, ($$value) => mutate(settings, get(settings).enabled = $$value));
+			bind_value(input_1, () => get(settings).id, ($$value) => mutate(settings, get(settings).id = $$value));
+			bind_value(input_2, () => get(settings).title, ($$value) => mutate(settings, get(settings).title = $$value));
+			bind_value(textarea, () => get(settings).description, ($$value) => mutate(settings, get(settings).description = $$value));
+			bind_value(textarea_1, () => get(schemaText), ($$value) => set(schemaText, $$value));
+			append($$anchor, div);
 		},
 		$$slots: { default: true }
 	});
@@ -9163,6 +10283,7 @@ function getFactory( svelteComponent, htmlTarget=null) {
 	}
 }
 const MenuTabsWindow = getFactory(Menu_tabs_window);
+const VerticalMenuTabsContent = getFactory(Vertical_menu_tabs_content);
 const CanvasLayoutFactory = getFactory(Canvas_layout, document.body);
 const LeftMenuLayoutFactory = getFactory(Left_menu_layout, document.body);
 const ColumnMainFactory = getFactory(Column_main, document.body);
@@ -9176,6 +10297,8 @@ const ContextMenuFactory = getFactory(Context_menu);
 const JsonInputFactory = getFactory(Json_area_input);
 const TextBlockFactory = getFactory(Text_area_input);
 const PinProfileFactory = getFactory(Pin_profile);
+const PinToolFactory = getFactory(Pin_tool);
+const PinEventFactory = getFactory(Pin_event);
 const MessageBoxFactory = getFactory(Message_box);
 const NameAndPathFactory = getFactory(Name_path);
 const PathRequestFactory = getFactory(Path);
@@ -9183,7 +10306,381 @@ const SingleTextFieldFactory = getFactory(Single_text_field);
 const DocumentSettingsFactory = getFactory(Document_settings);
 const NodeSelectorFactory = getFactory(Node_selector);
 
-var uiSvelte_mod = "{\n  \"header\": {\n    \"version\": \"no version\",\n    \"created\": \"4/2/2024, 12:51:45 PM\",\n    \"saved\": \"12/16/2025, 1:00:06 PM\",\n    \"utc\": \"2025-12-16T12:00:06.433Z\",\n    \"runtime\": \"./runtime.js\"\n  },\n  \"factories\": [\n    {\n      \"path\": \"./index.js\",\n      \"function\": \"ContextMenuFactory\"\n    }\n  ],\n  \"types\": {\n    \"AnyPayload\": {\n      \"kind\": \"primitive\",\n      \"summary\": \"Opaque payload used when shape is not stabilized yet.\"\n    },\n    \"Void\": {\n      \"kind\": \"object\",\n      \"summary\": \"No payload.\",\n      \"fields\": {}\n    },\n    \"UiEvent\": {\n      \"kind\": \"external\",\n      \"summary\": \"Browser UI event object.\",\n      \"external\": {\n        \"library\": \"dom\",\n        \"symbol\": \"Event\"\n      }\n    },\n    \"DomElement\": {\n      \"kind\": \"external\",\n      \"summary\": \"DOM element reference.\",\n      \"external\": {\n        \"library\": \"dom\",\n        \"symbol\": \"HTMLElement\"\n      }\n    },\n    \"TabName\": {\n      \"kind\": \"primitive\",\n      \"summary\": \"Tab name.\"\n    },\n    \"TabRename\": {\n      \"kind\": \"object\",\n      \"summary\": \"Tab rename payload.\",\n      \"fields\": {\n        \"oldName\": {\n          \"vmbluType\": \"string\"\n        },\n        \"newName\": {\n          \"vmbluType\": \"string\"\n        }\n      },\n      \"required\": [\n        \"oldName\",\n        \"newName\"\n      ]\n    },\n    \"Rect\": {\n      \"kind\": \"object\",\n      \"summary\": \"Rectangle or size-like object.\",\n      \"fields\": {\n        \"x\": {\n          \"vmbluType\": \"number\"\n        },\n        \"y\": {\n          \"vmbluType\": \"number\"\n        },\n        \"w\": {\n          \"vmbluType\": \"number\"\n        },\n        \"h\": {\n          \"vmbluType\": \"number\"\n        }\n      }\n    },\n    \"ViewSizeChange\": {\n      \"kind\": \"object\",\n      \"summary\": \"View/canvas resize payload.\",\n      \"fields\": {\n        \"id\": {\n          \"vmbluType\": \"AnyPayload\"\n        },\n        \"rect\": {\n          \"vmbluType\": \"Rect\"\n        },\n        \"dpr\": {\n          \"vmbluType\": \"number\"\n        }\n      },\n      \"required\": [\n        \"rect\"\n      ]\n    }\n  },\n  \"root\": {\n    \"kind\": \"group\",\n    \"name\": \"\",\n    \"nodes\": [\n      {\n        \"kind\": \"group\",\n        \"name\": \"modal boxes\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"context menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ContextMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"context menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"path request\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"PathRequestFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"path\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"folder.get\",\n                    \"kind\": \"request\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": {\n                        \"request\": {\n                          \"request\": \"AnyPayload\",\n                          \"reply\": \"AnyPayload\"\n                        },\n                        \"reply\": \"AnyPayload\"\n                      }\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"single text field\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"SingleTextFieldFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"message box\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"MessageBoxFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"json input\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"JsonInputFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"json\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"text block\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TextBlockFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"text\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"node selector\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"NodeSelectorFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"build table\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"selected node\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"get path\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"add file\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"remove file\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"name and path\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"NameAndPathFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"name and path\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"folder.get\",\n                    \"kind\": \"request\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": {\n                        \"request\": {\n                          \"request\": \"AnyPayload\",\n                          \"reply\": \"AnyPayload\"\n                        },\n                        \"reply\": \"AnyPayload\"\n                      }\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"document settings\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"DocumentSettingsFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"confirm box\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ConfirmBox\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"runtime settings\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"RuntimeSettingsFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"pin profile\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"PinProfileFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"kind\": \"group\",\n        \"name\": \"page layout group\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"canvas layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"CanvasLayoutFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab ribbon\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"workspace\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"canvas\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"canvas size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"menu tabs window\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"MenuTabsWindow\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tabs div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"left menu layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"LeftMenuLayoutFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"screen areas\",\n                \"pins\": [\n                  {\n                    \"name\": \"left menu\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"left column\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"area one\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"area two\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"messages\",\n                \"pins\": [\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"column-main layout\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"ColumnMainFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"left column\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"main area\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"vertical menu tabs content\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"VerticalMenuTabsContent\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"menu div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"tabs div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"content size change\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"modal div\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  },\n                  {\n                    \"name\": \"show\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"size change\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"ViewSizeChange\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"kind\": \"group\",\n        \"name\": \"menus and tab ribbons\",\n        \"nodes\": [\n          {\n            \"kind\": \"source\",\n            \"name\": \"tab ribbon\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TabRibbonFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"tab\",\n                \"pins\": [\n                  {\n                    \"name\": \"tab.new\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.rename\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabRename\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.select\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.remove\",\n                    \"kind\": \"input\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.request to close\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  },\n                  {\n                    \"name\": \"tab.request to select\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"TabName\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"old top menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TopMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"save\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save as\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save all\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make build lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"analyze model\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"AnyPayload\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app in iframe\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show code editor\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"top menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"TopMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"save\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save as\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"save all\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync model\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"grid on-off\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make build lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app page\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"run app in iframe\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show settings\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"set save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"back to save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"side menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"SideMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"\",\n                \"pins\": [\n                  {\n                    \"name\": \"vertical\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"horizontal\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show code editor\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show app\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              }\n            ]\n          },\n          {\n            \"kind\": \"source\",\n            \"name\": \"vscode side menu\",\n            \"factory\": {\n              \"path\": \"./index.js\",\n              \"function\": \"VscodeSideMenuFactory\"\n            },\n            \"interfaces\": [\n              {\n                \"interface\": \"dom\",\n                \"pins\": [\n                  {\n                    \"name\": \"div\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"DomElement\"\n                    }\n                  }\n                ]\n              },\n              {\n                \"interface\": \"menu items\",\n                \"pins\": [\n                  {\n                    \"name\": \"accept changes\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"recalibrate\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"sync\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"grid on-off\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"show settings\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"set save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"back to save point\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make lib\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  },\n                  {\n                    \"name\": \"make app\",\n                    \"kind\": \"output\",\n                    \"contract\": {\n                      \"role\": \"follower\",\n                      \"payload\": \"UiEvent\"\n                    }\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}\n";
+// ------------------------------------------------------------------
+// Model: 
+// Path: C:/dev/vmblu/ui-svelte/model/ui-svelte.app.js
+// Creation date 5/4/2026, 11:15:15 AM
+// ------------------------------------------------------------------
 
-export { CanvasLayoutFactory, ColumnMainFactory, ConfirmBox, ContextMenuFactory, DocumentSettingsFactory, JsonInputFactory, LeftMenuLayoutFactory, MenuTabsWindow, MessageBoxFactory, NameAndPathFactory, NodeSelectorFactory, PathRequestFactory, PinProfileFactory, RuntimeSettingsFactory, SideMenuFactory, SingleTextFieldFactory, TabRibbonFactory, TextBlockFactory, TopMenuFactory, uiSvelte_mod as UISvelte, VscodeSideMenuFactory };
+
+//The runtime nodes
+const nodeList = [
+	//________________________________________________CONTEXT MENU
+	{
+	name: "context menu", 
+	uid: "ALvG", 
+	factory: ContextMenuFactory,
+	inputs: [
+		"-> context menu"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//________________________________________________PATH REQUEST
+	{
+	name: "path request", 
+	uid: "CmQX", 
+	factory: PathRequestFactory,
+	inputs: [
+		"-> path"
+		],
+	outputs: [
+		"modal div -> ()",
+		"folder.get => ()"
+		]
+	},
+	//___________________________________________SINGLE TEXT FIELD
+	{
+	name: "single text field", 
+	uid: "cPCR", 
+	factory: SingleTextFieldFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_________________________________________________MESSAGE BOX
+	{
+	name: "message box", 
+	uid: "lAxf", 
+	factory: MessageBoxFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//__________________________________________________JSON INPUT
+	{
+	name: "json input", 
+	uid: "lOuj", 
+	factory: JsonInputFactory,
+	inputs: [
+		"-> json"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//__________________________________________________TEXT BLOCK
+	{
+	name: "text block", 
+	uid: "eHpa", 
+	factory: TextBlockFactory,
+	inputs: [
+		"-> text"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_______________________________________________NODE SELECTOR
+	{
+	name: "node selector", 
+	uid: "OhIc", 
+	factory: NodeSelectorFactory,
+	inputs: [
+		"-> build table",
+		"-> show"
+		],
+	outputs: [
+		"selected node -> ()",
+		"get path -> ()",
+		"add file -> ()",
+		"remove file -> ()",
+		"modal div -> ()"
+		]
+	},
+	//_______________________________________________NAME AND PATH
+	{
+	name: "name and path", 
+	uid: "RDAl", 
+	factory: NameAndPathFactory,
+	inputs: [
+		"-> name and path"
+		],
+	outputs: [
+		"modal div -> ()",
+		"folder.get => ()"
+		]
+	},
+	//___________________________________________DOCUMENT SETTINGS
+	{
+	name: "document settings", 
+	uid: "WmBb", 
+	factory: DocumentSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_________________________________________________CONFIRM BOX
+	{
+	name: "confirm box", 
+	uid: "UhiS", 
+	factory: ConfirmBox,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//____________________________________________RUNTIME SETTINGS
+	{
+	name: "runtime settings", 
+	uid: "yVJT", 
+	factory: RuntimeSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_________________________________________________PIN PROFILE
+	{
+	name: "pin profile", 
+	uid: "jTQo", 
+	factory: PinProfileFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_______________________________________________TOOL SETTINGS
+	{
+	name: "tool settings", 
+	uid: "KYkJ", 
+	factory: PinToolFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//______________________________________________EVENT SETTINGS
+	{
+	name: "event settings", 
+	uid: "yESR", 
+	factory: PinEventFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//_______________________________________________CANVAS LAYOUT
+	{
+	name: "canvas layout", 
+	uid: "rWmC", 
+	factory: CanvasLayoutFactory,
+	inputs: [
+		"-> menu",
+		"-> tab ribbon",
+		"-> workspace",
+		"-> canvas",
+		"-> modal div"
+		],
+	outputs: [
+		"canvas size change -> ()"
+		]
+	},
+	//____________________________________________MENU TABS WINDOW
+	{
+	name: "menu tabs window", 
+	uid: "yduf", 
+	factory: MenuTabsWindow,
+	inputs: [
+		"-> menu div",
+		"-> tabs div",
+		"-> content div",
+		"-> modal div",
+		"-> show",
+		"-> size change"
+		],
+	outputs: [
+		"content size change -> ()",
+		"div -> ()"
+		]
+	},
+	//____________________________________________LEFT MENU LAYOUT
+	{
+	name: "left menu layout", 
+	uid: "VakN", 
+	factory: LeftMenuLayoutFactory,
+	inputs: [
+		"-> left menu",
+		"-> left column",
+		"-> area one",
+		"-> area two",
+		"-> vertical",
+		"-> horizontal"
+		],
+	outputs: [
+		"size change -> ()"
+		]
+	},
+	//__________________________________________COLUMN-MAIN LAYOUT
+	{
+	name: "column-main layout", 
+	uid: "UbGq", 
+	factory: ColumnMainFactory,
+	inputs: [
+		"-> left column",
+		"-> main area"
+		],
+	outputs: [
+		"size change -> ()"
+		]
+	},
+	//__________________________________VERTICAL MENU TABS CONTENT
+	{
+	name: "vertical menu tabs content", 
+	uid: "PzJY", 
+	factory: VerticalMenuTabsContent,
+	inputs: [
+		"-> menu div",
+		"-> tabs div",
+		"-> content div",
+		"-> modal div",
+		"-> show",
+		"-> size change"
+		],
+	outputs: [
+		"content size change -> ()",
+		"div -> ()"
+		]
+	},
+	//__________________________________________________TAB RIBBON
+	{
+	name: "tab ribbon", 
+	uid: "kmxS", 
+	factory: TabRibbonFactory,
+	inputs: [
+		"-> tab.new",
+		"-> tab.rename",
+		"-> tab.select",
+		"-> tab.remove"
+		],
+	outputs: [
+		"div -> ()",
+		"tab.request to close -> ()",
+		"tab.request to select -> ()"
+		]
+	},
+	//________________________________________________OLD TOP MENU
+	{
+	name: "old top menu", 
+	uid: "WPlK", 
+	factory: TopMenuFactory,
+	inputs: [],
+	outputs: [
+		"save -> ()",
+		"save as -> ()",
+		"save all -> ()",
+		"accept changes -> ()",
+		"sync -> ()",
+		"recalibrate -> ()",
+		"make app page -> ()",
+		"make build lib -> ()",
+		"analyze model -> ()",
+		"run app page -> ()",
+		"run app in iframe -> ()",
+		"vertical -> ()",
+		"horizontal -> ()",
+		"show code editor -> ()",
+		"div -> ()"
+		]
+	},
+	//____________________________________________________TOP MENU
+	{
+	name: "top menu", 
+	uid: "MiUG", 
+	factory: TopMenuFactory,
+	inputs: [],
+	outputs: [
+		"save -> ()",
+		"save as -> ()",
+		"save all -> ()",
+		"accept changes -> ()",
+		"sync model -> ()",
+		"recalibrate -> ()",
+		"grid on-off -> ()",
+		"make app page -> ()",
+		"make build lib -> ()",
+		"run app page -> ()",
+		"run app in iframe -> ()",
+		"show settings -> ()",
+		"set save point -> ()",
+		"back to save point -> ()",
+		"div -> ()"
+		]
+	},
+	//___________________________________________________SIDE MENU
+	{
+	name: "side menu", 
+	uid: "ZThq", 
+	factory: SideMenuFactory,
+	inputs: [],
+	outputs: [
+		"vertical -> ()",
+		"horizontal -> ()",
+		"show code editor -> ()",
+		"show app -> ()",
+		"div -> ()"
+		]
+	},
+	//____________________________________________VSCODE SIDE MENU
+	{
+	name: "vscode side menu", 
+	uid: "mBfE", 
+	factory: VscodeSideMenuFactory,
+	inputs: [],
+	outputs: [
+		"div -> ()",
+		"accept changes -> ()",
+		"recalibrate -> ()",
+		"sync -> ()",
+		"grid on-off -> ()",
+		"show settings -> ()",
+		"set save point -> ()",
+		"back to save point -> ()",
+		"make lib -> ()",
+		"make app -> ()"
+		]
+	},
+];
+
+//The filters
+const filterList = [
+];
+
+const agentRuntimeOptions = {};
+
+// prepare the runtime
+const runtime = scaffold(nodeList, filterList, agentRuntimeOptions);
+
+// and start the app
+runtime.start();
 //# sourceMappingURL=ui-svelte-bundle.js.map

@@ -1,5 +1,6 @@
 const noLink = [
     {text: 'profile',           char: 'p',  icon: 'info', state: 'disabled', action: showProfile },    
+    {text: '-',                 char: 't',  icon: 'build', state: 'disabled', action: showCapability },    
     {text: 'new output',        char: 'o',  icon: 'logout',state: 'enabled',action: newOutput,},
     {text: 'new input',         char: 'i',  icon: 'login',state: 'enabled',action: newInput,},
     {text: 'new interface',     char: 'f',  icon: 'drag_handle',state: 'enabled',action: newInterfaceName,},
@@ -94,7 +95,12 @@ const cm = {
               : () => {};
 
         // check if there are pins to paste
-        entry = this.choices.find((c) => c.text == 'paste pins');
+        // entry = this.choices.find((c) => c.text == 'paste pins');
+
+        // Tool settings
+        entry = this.choices.find((c) => c.action == showCapability);
+        entry.text = this.widget?.is.input ? 'tool settings' : 'event settings'
+        entry.state = this.widget?.is.pin ? 'enabled' : 'disabled'
     },
 
     doEdit(verb, param) {
@@ -177,7 +183,12 @@ function showProfile(e) {
         pos: { x: cm.xyScreen.x, y: cm.xyScreen.y + 10 },
     });
 }
-
+function showCapability(e) {
+    cm.doEdit('showCapability', {
+        pin: cm.widget,
+        pos: { x: cm.xyScreen.x, y: cm.xyScreen.y + 10 },
+    });
+}
 function pinsSwap() {
     cm.doEdit('swapPins', {
         node: cm.node,

@@ -1,4 +1,4 @@
-import {updateDerivedSettings} from '../util/index.js'
+import {jsonDeepCopy, updateDerivedSettings} from '../util/index.js'
 
 export const compareHandling = {
 
@@ -174,6 +174,9 @@ export const compareHandling = {
         // copy profile and prefix length
         //newPin.profile = lw.profile
         newPin.pxlen = lw.pxlen
+        newPin.tool = lw.tool ? jsonDeepCopy(lw.tool) : null
+        newPin.event = lw.event ? jsonDeepCopy(lw.event) : null
+        newPin.is.capability = lw.is.capability
 
         // it is a new widget 
         newPin.is.added = true

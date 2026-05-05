@@ -118,10 +118,10 @@
       {
         "kind": "dock",
         "name": "model manager",
-        "rect": "x 925 y 161 w 180 h 431",
+        "rect": "x 936 y 161 w 180 h 461",
         "interfaces": [
           {
-            "interface": "(89) actions",
+            "interface": "(95) actions",
             "pins": [
               "(75 L)sync links",
               "(73 L)accept changes",
@@ -132,7 +132,7 @@
             ]
           },
           {
-            "interface": "(91) save point",
+            "interface": "(97) save point",
             "pins": [
               "(81 L)save point.set",
               "(82 L)save point.back",
@@ -140,14 +140,14 @@
             ]
           },
           {
-            "interface": "(94) files",
+            "interface": "(100) files",
             "pins": [
               "(88 L)open source file",
               "(62 L)open model"
             ]
           },
           {
-            "interface": "(90) model",
+            "interface": "(96) model",
             "pins": [
               "(64 L)model.save",
               "(78 L)model.set",
@@ -156,7 +156,7 @@
             ]
           },
           {
-            "interface": "(93) redox",
+            "interface": "(99) redox",
             "pins": [
               "(56 L)redox.doit",
               "(57 L)redox.undo",
@@ -165,10 +165,12 @@
             ]
           },
           {
-            "interface": "(92) info",
+            "interface": "(98) info",
             "pins": [
               "(84 R)pin profile",
-              "(59 R)get path"
+              "(59 R)get path",
+              "(93 R)tool settings",
+              "(94 R)event settings"
             ]
           }
         ]
@@ -513,17 +515,17 @@
       {
         "from": "(pin 21) set document @ message broker",
         "to": "(pin 78) model.set @ model manager",
-        "wire": "x 97.0 y -360.0 x 384.0"
+        "wire": "x 97.0 y -360.0 x 395.0"
       },
       {
         "from": "(pin 47) model.save @ message broker",
         "to": "(pin 64) model.save @ model manager",
-        "wire": "x 45.0 y -465.0 x 436.0"
+        "wire": "x 45.0 y -465.0 x 447.0"
       },
       {
         "from": "(pin 36) sync links @ message broker",
         "to": "(pin 75) sync links @ model manager",
-        "wire": "x 421.0 y -690.0 x 60.0"
+        "wire": "x 421.0 y -690.0 x 71.0"
       },
       {
         "from": "(pin 29) canvas resize @ message broker",
@@ -543,17 +545,17 @@
       {
         "from": "(pin 17) redox.doit @ view manager",
         "to": "(pin 56) redox.doit @ model manager",
-        "wire": "x 57.2 y 0.0 x 45.8"
+        "wire": "x 60.2 y 0.0 x 53.8"
       },
       {
         "from": "(pin 18) redox.undo @ view manager",
         "to": "(pin 57) redox.undo @ model manager",
-        "wire": "x 57.2 y 0.0 x 45.8"
+        "wire": "x 57.2 y 0.0 x 56.8"
       },
       {
         "from": "(pin 19) redox.redo @ view manager",
         "to": "(pin 58) redox.redo @ model manager",
-        "wire": "x 57.2 y 0.0 x 45.8"
+        "wire": "x 57.2 y 0.0 x 56.8"
       },
       {
         "from": "(pin 37) canvas @ view manager",
@@ -608,42 +610,42 @@
       {
         "from": "(pin 63) save point.confirm @ model manager",
         "to": "(pin 11) confirm @ popups",
-        "wire": "x 95.7 y 105.0 x 79.3"
+        "wire": "x 84.7 y 105.0 x 79.3"
       },
       {
         "from": "(pin 88) open source file @ model manager",
         "to": "(pin 26) open js file @ message broker",
-        "wire": "x -450.0 y 555.0 x -31.0"
+        "wire": "x -461.0 y 555.0 x -31.0"
       },
       {
         "from": "(pin 60) model.root @ model manager",
         "to": "(pin 22) root @ view manager",
-        "wire": "x -44.6 y 120.0 x -58.4"
+        "wire": "x -59.6 y 120.0 x -54.4"
       },
       {
         "from": "(pin 79) model.header @ model manager",
         "to": "(pin 9) header @ popups",
-        "wire": "x 84.4 y 0.0 x 90.6"
+        "wire": "x 73.4 y 0.0 x 90.6"
       },
       {
         "from": "(pin 86) redox.done @ model manager",
         "to": "(pin 21) redox.done @ view manager",
-        "wire": "x -46.0 y 0.0 x -57.0"
+        "wire": "x -57.0 y 0.0 x -57.0"
       },
       {
         "from": "(pin 86) redox.done @ model manager",
         "to": "(pin 25) new edit @ message broker",
-        "wire": "x -36.0 y 375.0 x -445.0"
+        "wire": "x -42.0 y 375.0 x -450.0"
       },
       {
         "from": "(pin 84) pin profile @ model manager",
         "to": "(pin 6) pin profile @ popups",
-        "wire": "x 38.0 y -90.0 x 137.0"
+        "wire": "x 27.0 y -90.0 x 137.0"
       },
       {
         "from": "(pin 59) get path @ model manager",
         "to": "(pin 3) path only @ popups",
-        "wire": "x 45.9 y -90.0 x 129.1"
+        "wire": "x 34.9 y -90.0 x 129.1"
       },
       {
         "from": "(pin 15) remote @ clipboard",
@@ -673,37 +675,37 @@
       {
         "from": "(pin 5) sync @ vscode side menu",
         "to": "(pin 75) sync links @ model manager",
-        "wire": "x 390.0 y 0.0 x 91.0"
+        "wire": "x 390.0 y 0.0 x 102.0"
       },
       {
         "from": "(pin 3) accept changes @ vscode side menu",
         "to": "(pin 73) accept changes @ model manager",
-        "wire": "x 392.5 y 0.0 x 88.5"
+        "wire": "x 392.5 y 0.0 x 99.5"
       },
       {
         "from": "(pin 7) show settings @ vscode side menu",
         "to": "(pin 76) show settings @ model manager",
-        "wire": "x 397.5 y 0.0 x 83.5"
+        "wire": "x 397.5 y 0.0 x 94.5"
       },
       {
         "from": "(pin 11) make app @ vscode side menu",
         "to": "(pin 53) make app @ model manager",
-        "wire": "x 404.0 y 0.0 x 77.0"
+        "wire": "x 404.0 y 0.0 x 88.0"
       },
       {
         "from": "(pin 10) make lib @ vscode side menu",
         "to": "(pin 54) make lib @ model manager",
-        "wire": "x 412.0 y 0.0 x 69.0"
+        "wire": "x 412.0 y 0.0 x 80.0"
       },
       {
         "from": "(pin 8) set save point @ vscode side menu",
         "to": "(pin 81) save point.set @ model manager",
-        "wire": "x 256.5 y 30.0 x 224.5"
+        "wire": "x 256.5 y 30.0 x 235.5"
       },
       {
         "from": "(pin 9) back to save point @ vscode side menu",
         "to": "(pin 82) save point.back @ model manager",
-        "wire": "x 241.5 y 30.0 x 239.5"
+        "wire": "x 241.5 y 30.0 x 250.5"
       },
       {
         "from": "(pin 4) recalibrate @ vscode side menu",

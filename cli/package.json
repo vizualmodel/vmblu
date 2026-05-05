@@ -1,7 +1,7 @@
 {
   "name": "@vizualmodel/vmblu-cli",
   "version": "0.5.2",
-  "schemaVersion": "0.9.4",
+  "schemaVersion": "0.9.5",
   "type": "module",
   "bin": {
     "vmblu": "bin/vmblu.js"
@@ -11,16 +11,19 @@
   },
   "files": [
     "bin",
+    "lib",
     "agent",
+    "context",
     "commands/agent",
     "commands/init",
     "commands/llm-bridge",
+    "commands/make-capabilities",
     "commands/make-app",
     "commands/make-test",
     "commands/migrate",
+    "commands/plugin",
     "commands/profile/index.js",
     "commands/profile/profile.bundle.js",
-    "templates",
     "README.md",
     "LICENSE"
   ],

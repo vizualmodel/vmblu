@@ -1095,6 +1095,113 @@ textarea.svelte-1xkqtu5 {
 }
 
 
+.form.svelte-1wofc62 {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 24rem;
+    max-width: 34rem;
+}
+
+label.svelte-1wofc62 {
+    display: grid;
+    gap: 0.15rem;
+    color: #ddd;
+    font-family: var(--fBase);
+    font-size: 0.78rem;
+}
+
+.inline.svelte-1wofc62 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+input.svelte-1wofc62,
+select.svelte-1wofc62,
+textarea.svelte-1wofc62 {
+    box-sizing: border-box;
+    width: 100%;
+    background: #1f1f1f;
+    color: #ddd;
+    border: 1px solid #555;
+    border-radius: 0.15rem;
+    padding: 0.25rem 0.35rem;
+    font-family: var(--fFixed);
+    font-size: 0.76rem;
+}
+
+input[type="checkbox"].svelte-1wofc62 {
+    width: auto;
+}
+
+textarea.svelte-1wofc62 {
+    min-height: 3.8rem;
+    resize: vertical;
+}
+
+.row.svelte-1wofc62 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+}
+
+.error.svelte-1wofc62 {
+    color: #ff7777;
+    font-family: var(--fBase);
+    font-size: 0.76rem;
+}
+
+
+.form.svelte-1jevcjj {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 24rem;
+    max-width: 34rem;
+}
+
+label.svelte-1jevcjj {
+    display: grid;
+    gap: 0.15rem;
+    color: #ddd;
+    font-family: var(--fBase);
+    font-size: 0.78rem;
+}
+
+.inline.svelte-1jevcjj {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+input.svelte-1jevcjj,
+textarea.svelte-1jevcjj {
+    box-sizing: border-box;
+    width: 100%;
+    background: #1f1f1f;
+    color: #ddd;
+    border: 1px solid #555;
+    border-radius: 0.15rem;
+    padding: 0.25rem 0.35rem;
+    font-family: var(--fFixed);
+    font-size: 0.76rem;
+}
+
+input[type="checkbox"].svelte-1jevcjj {
+    width: auto;
+}
+
+textarea.svelte-1jevcjj {
+    min-height: 3.8rem;
+    resize: vertical;
+}
+
+.error.svelte-1jevcjj {
+    color: #ff7777;
+    font-family: var(--fBase);
+    font-size: 0.76rem;
+}
+
+
 p.svelte-nkfvqo {
     font-family:var(--fFixed);
     font-size:var(--fSmall);

@@ -4,7 +4,13 @@
   "description": "",
   "main": "ui-svelte.js",
   "type" : "module",
+  "dependencies": {
+    "@vizualmodel/vmblu-runtime": "file:../runtime"
+  },
   "scripts": {
+    "vm:profile": "vmblu profile ui-svelte.blu",
+    "vm:app": "vmblu make-app ui-svelte.blu",
+    "vm:capabilities": "vmblu make-capabilities ui-svelte.blu",
     "build": "rollup -c"
   }
 }

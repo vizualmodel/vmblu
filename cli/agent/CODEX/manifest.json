@@ -11,6 +11,12 @@
         "from": "openai.yaml",
         "toHomeRelative": ".codex/skills/vmblu/agents/openai.yaml"
       }
+    ],
+    "dirs": [
+      {
+        "fromCliRelative": "context",
+        "toHomeRelative": ".codex/skills/vmblu/context"
+      }
     ]
   }
 }
