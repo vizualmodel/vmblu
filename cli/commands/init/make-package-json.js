@@ -16,6 +16,7 @@ function sortKeys(obj) {
 export async function makePackageJson({
                                         absTarget, 
                                         projectName, 
+                                        entrypointName = `${projectName}.blu`,
                                         force, 
                                         dryRun,
                                         addCliDep = true, 
@@ -37,7 +38,7 @@ export async function makePackageJson({
     version: "0.0.0",
     type: "module",
     dependencies: {
-      "@vizualmodel/vmblu-runtime": "^0.1.0"
+      "@vizualmodel/vmblu-runtime": "^0.3.0"
     },
     devDependencies : {
       "@vizualmodel/vmblu-cli": cliVersion,
@@ -50,7 +51,9 @@ export async function makePackageJson({
     },
     scripts : {
       "vm:init": "vmblu init .",
-      "vm:profile": "vmblu profile",
+      "vm:profile": `vmblu profile ${entrypointName}`,
+      "vm:app": `vmblu make-app ${entrypointName}`,
+      "vm:capabilities": `vmblu make-capabilities ${entrypointName}`,
       "dev": "vite",
       "build": "vite build",
       "preview": "vite preview"

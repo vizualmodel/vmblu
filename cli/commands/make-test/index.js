@@ -5,6 +5,7 @@ import path from 'path';
 import { ModelBlueprint, ModelCompiler, UIDGenerator } from '../../../core/types/model/index.js';
 import { ARL } from '../../../core/types/arl/arl-node.js';
 import { normalizeSeparators } from '../../../core/types/arl/path.js';
+import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
 
 export const command = 'make-test <model-file>';
 export const describe = 'Generate test app files from a model';
@@ -24,12 +25,16 @@ export const handler = async (argv) => {
     process.exit(1);
   }
 
-  // Resolve and validate the model file path.
-  const absoluteModelPath = path.resolve(args.modelFile);
-  if (!fs.existsSync(absoluteModelPath) || !fs.statSync(absoluteModelPath).isFile()) {
-    console.error(args.modelFile, 'is not a file');
+  let resolved;
+  try {
+    resolved = resolveEntrypoint(args.modelFile);
+  } catch (err) {
+    console.error(err.message);
     process.exit(1);
   }
+
+  // Resolve and validate the model file path.
+  const absoluteModelPath = resolved.modelPath;
 
   // Resolve the output directory (default: <model-dir>/test).
   const outDir = args.outDir

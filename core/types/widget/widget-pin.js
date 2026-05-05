@@ -25,6 +25,7 @@ export function Pin(rect, node, name, is) {
         input: is.input ?? false,
         left: is.left ?? false, // default set inputs right
         multi: is.multi ?? false, // the pin can send / receive several messages
+        capability: false, // visible as a capabilty for an agent, either as a tool or an event
         selected: false, // when the pin is selected
         highLighted: false,
         hoverOk: false, // to give feedback when hovering over the pin
@@ -40,11 +41,12 @@ export function Pin(rect, node, name, is) {
         payload: null,
     }
 
-    // the parameter profile
-    // this.profile = '';
-
     // The prompt for the input handler or a description of when the output is sent
     this.prompt = '';
+
+    // Agent capability metadata. Kept as plain model data and interpreted by generators.
+    this.tool = null;
+    this.event = null;
 
     // the routes for this pin
     this.routes = [];
@@ -60,7 +62,8 @@ Pin.prototype = {
         const rc = this.rect;
 
         // the name to display
-        const displayName = this.pxlen == 0 ? this.name : this.withoutPrefix();
+        //const displayName = this.displayName();
+        const displayName = this.pxlen == 0 ? this.name : this.withoutPrefix()
 
         // select the color for the widget
         const { cArrow, cText } = this.setColor();
@@ -187,6 +190,8 @@ Pin.prototype = {
         };
 
         if (this.prompt) rawPin.prompt = this.prompt
+        if (this.tool) rawPin.tool = this.tool
+        if (this.event) rawPin.event = this.event
 
         return rawPin
     },

@@ -92,6 +92,12 @@ export const TextBlockFactory = getFactory(TextAreaInputSvelte)
 import PinProfileSvelte from './nodes/pin-profile/pin-profile.svelte'
 export const PinProfileFactory = getFactory(PinProfileSvelte)
 
+import PinToolSvelte from './nodes/pin-tool/pin-tool.svelte'
+export const PinToolFactory = getFactory(PinToolSvelte)
+
+import PinEventSvelte from './nodes/pin-event/pin-event.svelte'
+export const PinEventFactory = getFactory(PinEventSvelte)
+
 import MessageBoxSvelte from './nodes/message-box/message-box.svelte'
 export const MessageBoxFactory = getFactory(MessageBoxSvelte)
 
@@ -109,5 +115,4 @@ export const DocumentSettingsFactory = getFactory(DocumentSettingsSvelte)
 
 import NodeSelectorSvelte from './nodes/node-selector/node-selector.svelte'
 export const NodeSelectorFactory = getFactory(NodeSelectorSvelte)
-
 

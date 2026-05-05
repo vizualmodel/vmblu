@@ -18,7 +18,7 @@ export default defineConfig({
     emptyOutDir: false,
     outDir: './out',
     rollupOptions: {
-      input: 'playground.app.js',
+      input: 'model/playground.app.js',
       output: {
         format: 'es',
         entryFileNames: '[name]-bundle.js',

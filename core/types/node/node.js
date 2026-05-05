@@ -41,6 +41,9 @@ export function Node (look=null, name=null, uid=null) {
 
     // comment is an optional text field for the node
     this.prompt = null
+
+    // Agent probe metadata authored on source nodes.
+    this.probes = null
 }
 // common functions
 Node.prototype = {
@@ -224,6 +227,9 @@ Node.prototype = {
     
         // check if the node has a comment
         if (raw.prompt) this.prompt = raw.prompt
+
+        // check if the node has agent probe metadata
+        if (raw.probes) this.probes = raw.probes
 
         // check if the node has settings
         if (raw.sx) this.sx = raw.sx

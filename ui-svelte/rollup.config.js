@@ -40,7 +40,7 @@ const plugins =  [
 export default [
 
 {
-	input: 'ui-svelte.js',
+	input: 'model/ui-svelte.app.js',
 	output: {
 		sourcemap: true,
 		format: 'es', 

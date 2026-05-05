@@ -49,6 +49,9 @@ const sourceFunctions = {
         // copy the comment
         newNode.prompt = this.prompt ? this.prompt.slice() : null
 
+        // copy agent probe metadata
+        newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null
+
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;
 
@@ -202,5 +205,4 @@ const sourceFunctions = {
 
 }
 Object.assign(SourceNode.prototype, Node.prototype, sourceFunctions, jsonHandling)
-
 

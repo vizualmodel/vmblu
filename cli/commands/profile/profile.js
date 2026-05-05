@@ -13,6 +13,7 @@ import { Project } from 'ts-morph';
 import { ModelBlueprint, ModelCompiler } from '../../../core/types/model/index.js';
 import { ARL } from '../../../core/types/arl/arl-node.js'
 import { normalizeSeparators } from '../../../core/types/arl/path.js';
+import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
 
 // profile tool
 import {findHandlers} from './find-handlers.js'
@@ -34,13 +35,16 @@ export async function profile(argv = process.argv.slice(2)) {
         process.exit(1);
     }
 
-    const absoluteModelPath = path.resolve(cli.modelFile);
-    const modelPath = normalizeSeparators(absoluteModelPath);
-
-    if (!fs.existsSync(absoluteModelPath) || !fs.statSync(absoluteModelPath).isFile()) {
-        console.error(cli.modelFile, 'is not a file');
+    let resolved;
+    try {
+        resolved = resolveEntrypoint(cli.modelFile);
+    } catch (err) {
+        console.error(err.message);
         process.exit(1);
     }
+
+    const absoluteModelPath = resolved.modelPath;
+    const modelPath = normalizeSeparators(absoluteModelPath);
 
     const outPath = cli.outFile
         ? path.resolve(cli.outFile)

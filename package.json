@@ -39,7 +39,7 @@
     },
     "dependencies": {
         "@vizualmodel/vmblu-cli": "^0.5.2",
-        "@vizualmodel/vmblu-runtime": "^0.2.0",
+        "@vizualmodel/vmblu-runtime": "file:runtime",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     }

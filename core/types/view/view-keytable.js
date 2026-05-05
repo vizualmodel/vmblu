@@ -115,6 +115,20 @@ export const justKeyTable = {
         });
     },
 
+    // show the profile
+    t: (view,tx) => {
+
+        // find the pin selected
+        const pin = view.selection.getSelectedWidget()
+
+        if (!pin.is.pin || !pin.is.capability) return
+
+        view.doEdit(tx,'showCapability', {
+            pin,
+            pos: { x: pin.rect.x, y: pin.rect.y },
+        });
+    },
+
     // add a label
     a: (view,tx) => {
         // get the selected node (only one !)

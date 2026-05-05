@@ -178,23 +178,6 @@ export const redoxWidget = {
         },
     },
 
-    /*
-pinAreaDrag: {
-
-    doit(view) {
-
-        // The widgets that are being dragged
-        const widgets = view.selection.widgets
-
-        // get the current y-position of the selected widgets
-        this.saveEdit('pinAreaDrag', {widgets, oldY:widgets[0].rect.y, newY:widgets[0].rect.y})
-    },
-    undo({widgets, oldY, newY}) {
-    },
-    redo({widgets, oldY, newY}) {
-    }
-},
-*/
     showProfile: {
         doit({ pin, pos }) {
             // check that we have a model
@@ -229,6 +212,81 @@ pinAreaDrag: {
 
         undo() {},
         redo() {},
+    },
+
+    showCapability: {
+        
+        doit({ pin, pos }) {
+
+            // check that we have a model
+            if (!this.manager.model) return;
+            const manager = this.manager;
+            const redox = this;
+
+            if (pin.is.input) {
+                manager.tx.send('tool settings', {pos,pin,
+
+                    // The function that is called when clicking ok
+                    ok: (settings) => {
+                        redox.setToolSettings.doit.call(redox, {pin, settings});
+                        manager.tx.send('redox.done', {verb: 'setToolSettings'});
+                    },})
+            }
+            else  {
+                manager.tx.send('event settings', {pos,pin,
+
+                    // The function that is called when clicking ok
+                    ok: (settings) => {
+                        redox.setEventSettings.doit.call(redox, {pin, settings});
+                        manager.tx.send('redox.done', {verb: 'setEventSettings'});
+                    },});
+            }
+        },
+
+        undo() {},
+        redo() {},
+    },
+
+    setToolSettings: {
+        doit({pin, settings}) {
+            if (!pin) return;
+
+            const oldTool = cloneSettings(pin.tool);
+            const newTool = normalizeSettings(settings);
+            pin.tool = newTool;
+            pin.is.capability = isEnabledCapability(pin);
+
+            this.saveEdit('setToolSettings', {pin, oldTool, newTool});
+        },
+        undo({pin, oldTool}) {
+            pin.tool = cloneSettings(oldTool);
+            pin.is.capability = isEnabledCapability(pin);
+        },
+        redo({pin, newTool}) {
+            pin.tool = cloneSettings(newTool);
+            pin.is.capability = isEnabledCapability(pin);
+        },
+    },
+
+    setEventSettings: {
+        doit({pin, settings}) {
+            if (!pin) return;
+
+            const oldEvent = cloneSettings(pin.event);
+            const newEvent = normalizeSettings(settings);
+            pin.event = newEvent;
+            pin.is.capability = isEnabledCapability(pin);
+
+            this.saveEdit('setEventSettings', {pin, oldEvent, newEvent});
+        },
+        undo({pin, oldEvent}) {
+            pin.event = cloneSettings(oldEvent);
+            pin.is.capability = isEnabledCapability(pin);
+        },
+        redo({pin, newEvent}) {
+            pin.event = cloneSettings(newEvent);
+            pin.is.capability = isEnabledCapability(pin);
+        },
     },
 
     addLabel: {
@@ -279,3 +337,16 @@ pinAreaDrag: {
         },
     },
 };
+
+function cloneSettings(settings) {
+    return settings == null ? null : structuredClone(settings);
+}
+
+function normalizeSettings(settings) {
+    if (!settings?.enabled) return null;
+    return cloneSettings(settings);
+}
+
+function isEnabledCapability(pin) {
+    return pin?.tool?.enabled === true || pin?.event?.enabled === true;
+}

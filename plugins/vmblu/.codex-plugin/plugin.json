@@ -1,0 +1,44 @@
+{
+  "name": "vmblu",
+  "version": "0.1.0",
+  "description": "Codex support for creating and working in vmblu projects.",
+  "author": {
+    "name": "Vizual Model",
+    "url": "https://github.com/vizualmodel/vmblu"
+  },
+  "homepage": "https://github.com/vizualmodel/vmblu",
+  "repository": "https://github.com/vizualmodel/vmblu",
+  "license": "Apache-2.0",
+  "keywords": [
+    "vmblu",
+    "visual-modeling",
+    "architecture",
+    "codex",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "vmblu",
+    "shortDescription": "Work with vmblu visual architecture projects.",
+    "longDescription": "Adds Codex guidance for initializing vmblu projects, reading project-local vmblu prompts, using root entrypoints, and preserving generated model structure.",
+    "developerName": "Vizual Model",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Project scaffolding",
+      "Code generation guidance",
+      "Model-aware workflow"
+    ],
+    "websiteURL": "https://github.com/vizualmodel/vmblu",
+    "defaultPrompt": [
+      "Use vmblu in this project.",
+      "Initialize a vmblu project here.",
+      "Check this vmblu model structure."
+    ],
+    "brandColor": "#2C7BE5",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": [
+      "./assets/screenshot.png"
+    ]
+  }
+}

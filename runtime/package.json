@@ -1,17 +1,12 @@
 {
   "name": "@vizualmodel/vmblu-runtime",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": {
-      "import": "./dist/rt-base/index.js",
-      "require": "./dist/rt-base/index.cjs",
-      "default": "./dist/rt-base/index.js"
-    },
     "./rt-base": {
       "import": "./dist/rt-base/index.js",
       "require": "./dist/rt-base/index.cjs",
@@ -21,6 +16,11 @@
       "import": "./dist/rt-als/index.js",
       "require": "./dist/rt-als/index.cjs",
       "default": "./dist/rt-als/index.js"
+    },
+    "./rt-agent": {
+      "import": "./dist/rt-agent/index.js",
+      "require": "./dist/rt-agent/index.cjs",
+      "default": "./dist/rt-agent/index.js"
     }
   },
   "main": "./dist/rt-base/index.cjs",
@@ -36,7 +36,8 @@
   "scripts": {
     "build:base": "tsup rt-base/index.js --format esm,cjs --out-dir dist/rt-base --sourcemap --splitting false --keep-names",
     "build:als": "tsup rt-als/index.js --format esm,cjs --out-dir dist/rt-als --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als",
+    "build:agent": "tsup rt-agent/index.js --format esm,cjs --out-dir dist/rt-agent --sourcemap --splitting false --keep-names",
+    "build": "npm run build:base && npm run build:als && npm run build:agent",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },
