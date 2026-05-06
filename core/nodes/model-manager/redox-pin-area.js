@@ -139,26 +139,6 @@ pasteWidgetsFromClipboard: {
     }
 },
 
-pinAreaToMulti: {
-
-    doit({view,widgets}) {
-        this.saveEdit('pinAreaToMulti',{view, widgets});
-    },
-    undo({view, widgets}) {
-    },
-    redo() {}
-},
-
-multiToPinArea: {
-
-    doit({view,pin}) {
-        this.saveEdit('multiToPinArea',{view, pin});
-    },
-    undo({view, pin}) {
-    },
-    redo() {}
-},
-
 ioSwitchPinArea: {
 
     doit({view}) {

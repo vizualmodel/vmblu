@@ -59,13 +59,7 @@
 
     pinNameCheck(A,B) {
 
-        // there has to be a full name match
-        if (A.is.multi || B.is.multi) {
-            if (!A.hasFullNameMatch(B)) return false
-        }
-        else {
-            if (A.name != B.name) return false
-        }
+        if (A.name != B.name) return false
 
         return true
     },
@@ -119,9 +113,6 @@
             }
         }
 
-        // check the names if multis
-        if (actualA.is.multi || actualB.is.multi) return actualA.hasFullNameMatch(actualB) 
-    
         // check the name or the alias
         const nameA = this.alias ? this.alias : actualA.name
         const nameB = tack.alias ? tack.alias : actualB.name
@@ -169,4 +160,3 @@
         return {up:1, down:1}
     }
 }
-

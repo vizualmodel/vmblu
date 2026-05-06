@@ -320,9 +320,6 @@ singleConnect(src, dst){
     // check
     if (!tx) return;
 
-    // if one of the pins is a multi, there must be a partial overlap
-    if ((src.is.multi || dst.is.multi) &&  !dst.hasMultiOverlap(src)) return;
-
     // and add it to the array of destinations
     tx.targets.push(dst)        
 },
@@ -345,11 +342,7 @@ fullConnect(srcList, dstList) {
             }
 
             // for each entry in the dstlist, add a destination
-            for(const dst of dstList) {
-                
-                // if one of the pins is a multi, there must be a partial overlap
-                if ( !(src.is.multi || dst.is.multi) || dst.hasMultiOverlap(src)) txRecord.targets.push(dst)
-            }
+            for(const dst of dstList) txRecord.targets.push(dst)
         }
         // a tack here means that there is filter function on the bus
         else if (src.is.tack) {

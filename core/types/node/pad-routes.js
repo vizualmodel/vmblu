@@ -48,8 +48,6 @@ export const padRouteFunctions = {
             // if the widget is a channel, then the proxy must be a channel also
             if (widget.is.channel && !this.proxy.is.channel) return false
 
-            // if the widget is a multi
-            if ((widget.is.multi || this.proxy.is.multi) && (!widget.hasMultiOverlap(this.proxy))) return false
         }
 
         // no duplicates
@@ -310,10 +308,8 @@ export const padRouteFunctions = {
             //check
             if (!other) continue
 
-            // filter multis
             if (other.is.pin) {
 
-                // filter unconnected multis
                 if (!this.areConnected(other)) continue
                     
                 // ok - highlight the route
@@ -361,14 +357,7 @@ export const padRouteFunctions = {
             // get the other side of the route
             const other = route.from == this ? route.to : route.from;
 
-            // multi messages can only connect to multimessages
-            if (other.is.pin) {
-                if ((other.is.multi || proxy.is.multi) && !proxy.hasMultiOverlap(other)) route.is.notUsed = true;
-            }
-            // else if (other.is.pad){
-            //     if ((proxy.is.multi || other.proxy.is.multi) && !proxy.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
-            // } 
-            else if (other.is.tack) {
+            if (other.is.tack) {
 
                 // check all the bus routes
                 let found = false

@@ -24,7 +24,6 @@ export function Pin(rect, node, name, is) {
         channel: is.channel ?? false,
         input: is.input ?? false,
         left: is.left ?? false, // default set inputs right
-        multi: is.multi ?? false, // the pin can send / receive several messages
         capability: false, // visible as a capabilty for an agent, either as a tool or an event
         selected: false, // when the pin is selected
         highLighted: false,
@@ -75,30 +74,31 @@ Pin.prototype = {
         const dx = style.box.wLine / 2;
 
         // The shape for a channel is different
-        const pointLeft = this.is.channel
-            ? shape.triangleBall
-            : shape.leftTriangle;
-        const pointRight = this.is.channel
-            ? shape.ballTriangle
-            : shape.rightTriangle;
+        const pointLeft =  this.is.channel ? shape.triangleBall : shape.leftTriangle;
+        const pointRight = this.is.channel ? shape.ballTriangle : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#007700", null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,cText, null)
+
+        const icons = this.is.capability ? (this.is.input ? 'T' : 'E') : null
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
+
             const xArrow = rc.x + st.wOutside;
-            this.is.multi
-                ? shape.leftTextMulti(ctx, displayName, st.fMulti, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h)
-                : shape.leftText(ctx, displayName, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h);
+            shape.leftText(ctx, displayName, cText, rc.x + st.wMargin, rc.y, rc.w, rc.h);
             this.is.input
                 ? pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow);
+
+            if (icons) shape.pinIcons(ctx,icons, st.cIcon ,rc.x + rc.w + st.wIcon, rc.y, 0, rc.h)
+
         } else {
+
+            if (icons) shape.pinIcons(ctx,icons, st.cIcon ,rc.x - st.wIcon, rc.y, 0, rc.h)
+
             const xArrow = rc.x + rc.w - st.wOutside;
-            this.is.multi
-                ? shape.rightTextMulti(ctx, displayName, st.fMulti, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h)
-                : shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h);
+            shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - st.wMargin, rc.h);
             this.is.input
                 ? pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow);
@@ -148,9 +148,6 @@ Pin.prototype = {
         // both cannot be outputs or inputs
         if (this.is.input === pin.is.input) return false;
 
-        // multi messages can only be connected if there is a (partial) overlap
-        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin)) return false;
-
         // check if we have already a connection between the pins
         if (this.haveRoute(pin)) return false;
 
@@ -164,15 +161,9 @@ Pin.prototype = {
             // should not happen
             if (widget.is.input == this.is.input) return false;
 
-            // multis
-            if ((widget.is.multi || this.is.multi) && !this.hasMultiOverlap(widget))
-                return false;
         } else if (widget.is.pad) {
             // should not happen
             if (widget.proxy.is.input != this.is.input) return false;
-
-            // multis
-            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy)) return false;
         }
         return true;
     },
@@ -444,7 +435,7 @@ Pin.prototype = {
         // The width of the pad
         const width =
             style.pad.wExtra +
-            this.node.look.getTextWidth(this.name, this.is.multi);
+            this.node.look.getTextWidth(this.name);
 
         // determine the rectangle for the pad widget
         return this.is.left

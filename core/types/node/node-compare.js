@@ -216,7 +216,6 @@ export const compareHandling = {
             // copy 
             dw.name = lw.name
             dw.pxlen = lw.pxlen
-            dw.is.multi = lw.is.multi
         }
 
         // profile change (silent)

@@ -47,6 +47,7 @@ const color = {
     red:    '#FE2712', 
     redT:   '#FE271222', 
     blue:   '#0000ff',
+    yellow:   '#fff000',
 
     // set the shades for this color object
     setShades(rgb) {
@@ -115,10 +116,9 @@ function StyleFactory() {
         cSelected: color.select, cHighLighted: color.highLight
     }
     this.pin = {
-        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7,
+        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7, wIcon: 16,
         cNormal: color.shade1, cSelected: color.select, cHighLighted: color.highLight, 
-        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
-        fMulti: "italic 11px tahoma"
+        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black, cIcon: color.yellow
     } 
     this.pad = {
         hPad: 15,hSpace: 15, rBullet: 7.5, wArrow:10, hArrow:10, wExtra: 30, wMargin:4,  wViewLeft: 10,  wViewRight: 100, 

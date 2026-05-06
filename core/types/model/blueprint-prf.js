@@ -117,28 +117,7 @@ getDirectInputPinProfile(pin) {
     // us the handler name to index the map
     const handlerName = convert.pinToHandler(pin.name)
 
-    // if the pin is not a multi just return the single record
-    if (!pin.is.multi) return handles.get(handlerName) ?? null
-
-    // multi case: expand the multi in an array of all names
-    const multi = pin.expandMultis()
-
-    // collect the info in an array
-    const multiProfile = []
-    for (const name of multi) {
-
-        // search on handlername
-        const handlerName = convert.pinToHandler(name)
-
-        // get the info for the name
-        const info = handles.get(handlerName) ?? null;
-
-        // check
-        if (info) multiProfile.push(info)
-    }
-
-    // done
-    return multiProfile
+    return handles.get(handlerName) ?? null
 },
 
 getDirectOutputPinProfile(pin) {
@@ -149,25 +128,7 @@ getDirectOutputPinProfile(pin) {
     //check
     if (!transmits) return null
 
-    // if the pin is not a multi just return the single record
-    if (!pin.is.multi) return transmits.get(pin.name) ?? null
-
-    // multi case: expand the multi in an array of all names
-    const multi = pin.expandMultis()
-
-    // collect the info in an array
-    const multiProfile = []
-    for (const name of multi) {
-
-        // get the info for the name
-        const info = transmits.get(name) ?? null;
-
-        // check
-        Array.isArray(info) ? multiProfile.push(...info) : multiProfile.push(info)
-    }
-
-    // done
-    return multiProfile
+    return transmits.get(pin.name) ?? null
 },
 
 getProxyPinProfile(pin) {

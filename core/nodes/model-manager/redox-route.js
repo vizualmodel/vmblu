@@ -20,9 +20,6 @@ routeDraw: {
     doit({route}) {
         this.saveEdit('routeDraw',{route, newRoute:route.clone()})
 
-        // check if the route has to be displayed as a twisted pair
-        route.checkTwistedPair()
-
         // check if the route can be used or not
     },
 

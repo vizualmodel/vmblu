@@ -194,6 +194,7 @@ export const redoxWidget = {
 
             // show the profile
             manager.tx.send('pin profile', {
+                
                 pos,
                 pin,
                 contract,

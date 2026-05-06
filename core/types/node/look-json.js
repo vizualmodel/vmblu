@@ -1,6 +1,3 @@
-import {convert} from '../util/index.js'
-import {Widget} from '../widget/index.js'
-
 export const jsonHandling = {
 
 // collect the elements of the look that need to be saved in the vmblu file
@@ -31,7 +28,7 @@ makeRaw() {
         // save interface names
         if (w.is.ifName) widgets.push(w)
 
-        // save pins, but expand multis into seperate messages
+        // save pins
         else if (w.is.pin) {
             widgets.push(w)
         }
@@ -177,7 +174,6 @@ cookPin(raw) {
         input: false,
         left: false,
         channel: false,
-        multi: false,
         zombie: false
     }
 
@@ -185,9 +181,6 @@ cookPin(raw) {
     is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
     is.left = raw.left ?? false;
     is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
-
-    // a comma seperated list between [] is a multi message
-    is.multi = convert.isMulti(raw.name)
 
     // proxy or pure pin
     is.proxy = this.node.is.group
