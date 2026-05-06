@@ -34,7 +34,6 @@ export const TestHandling = {
             input: !master,
             left: !master,
             channel: false,
-            multi: false,
             zombie: false
         }
 

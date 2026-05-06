@@ -103,30 +103,23 @@ export const justKeyTable = {
 
     // show the profile
     p: (view,tx) => {
-
-        // find the pin selected
         const pin = view.selection.getSelectedWidget()
-
         if (!pin.is.pin) return
-
-        view.doEdit(tx,'showProfile', {
-            pin,
-            pos: { x: pin.rect.x, y: pin.rect.y },
-        });
+        view.doEdit(tx,'showProfile', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
     },
 
-    // show the profile
-    t: (view,tx) => {
-
-        // find the pin selected
+    // show the event
+    e: (view,tx) => {
         const pin = view.selection.getSelectedWidget()
+        if (!pin.is.pin ) return
+        view.doEdit(tx,'showCapability', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
+    },
 
-        if (!pin.is.pin || !pin.is.capability) return
-
-        view.doEdit(tx,'showCapability', {
-            pin,
-            pos: { x: pin.rect.x, y: pin.rect.y },
-        });
+    // show the tool
+    t: (view,tx) => {
+        const pin = view.selection.getSelectedWidget()
+        if (!pin.is.pin ) return
+        view.doEdit(tx,'showCapability', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
     },
 
     // add a label

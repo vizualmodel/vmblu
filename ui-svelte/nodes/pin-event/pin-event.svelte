@@ -22,8 +22,18 @@ onMount(() => {
     tx.send('modal div', box.div)
 })
 
+// small helper
+const closeBox = () => {
+    pin = null
+    box.hide()        
+}
+
 export const handlers = {
     onShow({pos, pin: shownPin, ok: okFn, cancel}) {
+
+        // toggle behaviour for repeat key press
+        if (pin && pin == shownPin) return closeBox();
+
         pin = shownPin
         ok = okFn
         settings = makeSettings(pin)

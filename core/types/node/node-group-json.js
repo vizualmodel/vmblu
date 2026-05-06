@@ -183,9 +183,6 @@ export const jsonHandling = {
         from.is.tack ? from.setRoute(route) : from.routes.push(route)
         to.is.tack ? to.setRoute(route) : to.routes.push(route)
 
-        // set the route as twisted pair if required (multi wire)
-        route.checkTwistedPair()
-
         // this is required if a linked node has changed (eg more pins or pins have moved...)
         route.adjust()
 

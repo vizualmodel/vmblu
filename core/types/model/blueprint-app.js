@@ -1,8 +1,5 @@
 import {Path} from '../arl/index.js'
-import {convert} from '../util/index.js'
 
-// we have to expand multi sources into single names, eg AA.[x,y] => AA.x, AA.y
-// for each variant 
 function ActualSource(name, pin) {
     this.variant = name,
     this.pin = pin
@@ -11,7 +8,7 @@ function ActualSource(name, pin) {
 ActualSource.prototype = {
 }
 
-// This object is used to split multi-messages in a single targets
+// This object is used to format targets in output and filter tables.
 function ActualTarget(name, target) {
 
     this.variant = name
@@ -201,12 +198,7 @@ runtime.start()
         const pinString = (pin) => {
             const prefix = '\n\t\t'
             const symbol = pin.is.input ? (pin.is.channel ? "=>" : "->") : (pin.is.channel ? "<=" : "<-")
-            if (pin.is.multi) {
-                let str = ''
-                for(const variant of pin.expandMultis()) str += prefix + `"${symbol} ${variant}",`;
-                return str
-            }
-            else return prefix + `"${symbol} ${pin.name}",`;           
+            return prefix + `"${symbol} ${pin.name}",`;           
         }
 
         // helper function to print a json string
@@ -247,7 +239,7 @@ runtime.start()
         // add all the targets for each output of the node
         for(const tx of node.txTable) {
 
-            // make the actual output table for each output - it expands the multi-messages
+            // make the actual output table for each output
             const outputTable = this.makeOutputTable(tx)
 
             // then stringify the output table
@@ -273,28 +265,17 @@ runtime.start()
         // The expanded tx table or output table
         const outputTable = []
 
-        // create an array with all possible source names
-        const sourceNames = tx.pin.is.multi ? convert.expandMultis(tx.pin.name) : [tx.pin.name]
+        const actualSource = new ActualSource(tx.pin.name, tx.pin)
 
-        // get for each single source the corresponding targets
-        for (const sourceName of sourceNames) {
+        // for each target 
+        for (const target of tx.targets){
 
-            // We store the result in an ActualSource record
-            const actualSource = new ActualSource(sourceName, tx.pin)
+            const actualTarget = this.getActualTarget(target)
 
-            // for each target 
-            for (const target of tx.targets){
-
-                // get the actual target for this source variant
-                const actualTarget = this.getActualTarget(tx.pin, sourceName, target)
-
-                // The actual target for a given source variant can be null
-                if (actualTarget) actualSource.actualTargets.push(actualTarget)
-            }
-
-            // add it to the output table if there is anything in the target table
-            outputTable.push(actualSource)
+            if (actualTarget) actualSource.actualTargets.push(actualTarget)
         }
+
+        outputTable.push(actualSource)
 
         return outputTable
     },
@@ -380,94 +361,48 @@ runtime.start()
             // get the pin
             const pin = rx.tack.getOtherPin()
 
-            // for each actual source
-            const rxNames = pin.is.multi ? convert.expandMultis(pin.name) : [pin.name]
+            const rxName = pin.name
 
-            // for each name
-            for (const rxName of rxNames) {
+            // maybe we have an entry for the rx name already - if so we do not have to handle it again (gives same result !)
+            if (filterTable.find( actualSource => actualSource.variant == rxName)) continue
 
-                // maybe we have an entry for the rx name already - if so we do not have to handle it again (gives same result !)
-                if (filterTable.find( actualSource => actualSource.variant == rxName)) continue
+            // get a new source entry
+            const actualSource = new ActualSource(rxName, null)
 
-                // get a new source entry
-                const actualSource = new ActualSource(rxName, null)
+            // get the tx tacks that are connected to this tack
+            for(const tx of bus.txTable) {
 
-                // get the tx tacks that are connected to this tack
-                for(const tx of bus.txTable) {
+                // check for a match between rx and tx 
+                if (!tx.connectsTo(rxName)) continue
 
-                    // check for a match between rx and tx 
-                    if (!tx.connectsTo(rxName)) continue
+                // go through every message in the fanout
+                for (const target of tx.fanout) {
 
-                    // go through every message in the fanout
-                    for (const target of tx.fanout) {
+                    const actualTarget = this.getActualTarget(target)
 
-                        // get the actual target for this source variant
-                        const actualTarget = this.getActualTarget(pin, rxName, target)
-
-                        // The actual target for a given source variant can be null
-                        if (actualTarget) actualSource.actualTargets.push(actualTarget)                        
-                    }
+                    if (actualTarget) actualSource.actualTargets.push(actualTarget)                        
                 }
-
-                // add it to the filtertable
-                if (actualSource.actualTargets.length > 0) filterTable.push(actualSource)
             }
+
+            // add it to the filtertable
+            if (actualSource.actualTargets.length > 0) filterTable.push(actualSource)
         }
         // done
         return filterTable
     },
 
     // make a table with the actual targets for this source message
-    // If the target is a multi-message we have to decide which one is the actual target
-    getActualTarget(source, sourceName, target) {
+    getActualTarget(target) {
 
         if (target.is.pin) {
-
-            if (target.is.multi) {
-
-                // get the target variant that corresponds with the source name
-                const targetName = target.getMatch(sourceName)
-
-                // check
-                return targetName ? new ActualTarget(targetName, target) : null
-            }
-            else if (source.is.multi) {
-
-                // get the source variant that corresponds with the target name
-                const sourceVariant = source.getMatch(target.name)
-
-                // check - it should be the same as the sourceName
-                return (sourceVariant == sourceName) ? new ActualTarget(target.name, target) : null
-            }
-            else {
-                // simple connection - names do not matter
-                return new ActualTarget(target.name, target)
-            }
+            return new ActualTarget(target.name, target)
         }
         else if (target.is.tack) {
 
             // get the corresponding pin or proxy
             const pin = target.getOtherPin()
 
-            // check if multi
-            if (pin.is.multi) {
-
-                // check if there is a match with the source
-                const targetName = pin.getMatch(sourceName)
-                return targetName ? new ActualTarget(targetName, target) : null
-            }
-            else if (source.is.multi) {
-
-                // get the source variant that corresponds with the target name
-                const sourceVariant = source.getMatch(pin.name)
-
-                // check - it should be the same as the sourceName
-                return (sourceVariant == sourceName) ? new ActualTarget(pin.name, target) : null
-            }
-            else {
-                // simple connection - names do not matter (or have been checked before eg on a cable bus)
-                return new ActualTarget(pin.name, target)
-            }
+            return new ActualTarget(pin.name, target)
         }
     },
 

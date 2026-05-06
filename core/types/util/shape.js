@@ -236,6 +236,14 @@ labelCursor(ctx,text,x,y,w,h,pCursor) {
     return {x: x + cx + 1, y: y-0.25*h}
 },
 
+pinIcons(ctx, text, cText,x,y,w,h) {
+
+    const saveFont = ctx.font
+    ctx.font= "normal 8px tahoma"
+    ctx.fillStyle = cText
+    ctx.fillText(text,x,y + 0.5*h)
+    ctx.font = saveFont
+},
 
 leftText(ctx, text, cText,x,y,w,h) {
     ctx.fillStyle = cText
@@ -246,82 +254,6 @@ rightText(ctx, text,cText,x,y,w,h) {
     ctx.fillStyle = cText
     let tw = ctx.measureText(text).width
     ctx.fillText(text, x + w - tw, y+0.75*h)
-},
-
-rightTextMulti(ctx, text, fMulti, cText,x,y,w,h) {
-
-    // set the color
-    ctx.fillStyle = cText
-
-    // set the actual y-position
-    y += 0.75*h
-
-    // cut the text in three parts 
-    const opbr = text.indexOf('[')
-    const clbr = text.indexOf(']')
-    const pre = text.slice(0, opbr+1)
-    const multi = text.slice(opbr+1,clbr)
-    const post = text.slice(clbr)
-
-    // save the font
-    const savedFont = ctx.font
-
-    // total width 
-    const wPre = ctx.measureText(pre).width 
-    const wPost = ctx.measureText(post).width
-    ctx.font = fMulti
-    const wMulti = ctx.measureText(multi).width
-
-    // write the text
-    ctx.font = savedFont
-    x = x + w - wPre - wMulti - wPost
-    ctx.fillText(pre,x,y)
-
-    ctx.font = fMulti
-    x += wPre
-    ctx.fillText(multi,x, y)
-
-    ctx.font = savedFont
-    x += wMulti
-    ctx.fillText(post,x,y)
-},
-
-leftTextMulti(ctx, text, fMulti, cText,x,y,w,h) {
-
-    ctx.fillStyle = cText
- 
-    // set the color
-    ctx.fillStyle = cText
-
-    // set the actual y-position
-    y += 0.75*h
-
-    // cut the text in three parts 
-    const opbr = text.indexOf('[')
-    const clbr = text.indexOf(']')
-    const pre = text.slice(0, opbr+1)
-    const multi = text.slice(opbr+1,clbr)
-    const post = text.slice(clbr)
-
-    // save the font
-    const savedFont = ctx.font
-
-    // sizes
-    const wPre = ctx.measureText(pre).width 
-    ctx.font = fMulti
-    const wMulti = ctx.measureText(multi).width
-
-    // write the text
-    ctx.font = savedFont
-    ctx.fillText(pre,x,y)
-
-    ctx.font = fMulti
-    x += wPre
-    ctx.fillText(multi,x, y)
-
-    ctx.font = savedFont
-    x += wMulti
-    ctx.fillText(post,x,y)
 },
 
 centerText(ctx, text,font, cText,x,y,w,h) {
@@ -798,26 +730,6 @@ drawWire(ctx, color, width, points) {
     ctx.strokeStyle = color
 
     this.drawPoints(ctx, points)
-},
-
-// draw twisted segments with an arc
-twistedPair(ctx, color, width, points) {
-
-    // we have segments to draw..
-    ctx.beginPath()
-
-    // set the linewidth
-    ctx.strokeStyle = color
-    ctx.lineWidth = 2*width
-
-    // the dash pattern
-    //ctx.setLineDash([3,3])
-    //ctx.setLineDash([24,4,3,4])
-
-    this.drawPoints(ctx, points)
-
-    // reset the dash pattern to nothing
-    //ctx.setLineDash([])
 },
 
 // get the rectangle of the alias - x, y are the position of the tack

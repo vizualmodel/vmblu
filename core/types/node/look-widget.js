@@ -114,14 +114,14 @@ export const widgetHandling = {
     },
 
     // calculate the rectangle for a pin
-    pinRectangle(displayName, y, left, multi=false) {
+    pinRectangle(displayName, y, left) {
 
         // notation
         const st = style.pin
         let rc = this.rect
 
         // total width of the widget
-        const width = st.wMargin + this.getTextWidth(displayName, multi)
+        const width = st.wMargin + this.getTextWidth(displayName)
 
         // check the width of the look (can change the ractangle of the look !)
         if (width > rc.w) this.wider(width - rc.w)

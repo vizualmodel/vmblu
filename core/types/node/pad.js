@@ -1,4 +1,4 @@
-import {shape,convert, style, inside} from '../util/index.js'
+import {shape, style, inside} from '../util/index.js'
 import {zap} from '../view/index.js'
 import {padRouteFunctions} from './pad-routes.js'
 
@@ -88,8 +88,7 @@ Pad.prototype = {
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape.leftTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
-                            : shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
+            shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
         }
         else {
             // The x-position of the arrow
@@ -110,8 +109,7 @@ Pad.prototype = {
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape.rightTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
-                            : shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h)
+            shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h)
         }
     },
 
@@ -168,7 +166,7 @@ Pad.prototype = {
 
     getWidth() {
         const proxy = this.proxy
-        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
+        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text)
     },
 
     endEdit(saved) {
@@ -191,7 +189,7 @@ Pad.prototype = {
                 return
             }
 
-            // the name might have changed (multi)
+            // the name might have been normalized
             this.text = proxy.name
 
             // check for route usage
@@ -276,14 +274,7 @@ Pad.prototype = {
     },
 
     // checks if the widget and the pad are logically connected
-    // we only have to filter unconnected multis
     areConnected(widget) {
-
-        if (widget.is.pin) {
-            // only when the proxy is a multi, it functions as a filter
-            if (this.proxy.is.multi && !widget.hasMultiOverlap(this.proxy)) return false
-        }
-
         return true
     },
 

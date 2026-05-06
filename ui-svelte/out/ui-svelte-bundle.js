@@ -5448,7 +5448,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$o = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$l = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -5490,7 +5490,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$o();
+	var div_1 = root$l();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5510,7 +5510,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$n = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
+var root$k = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
 
 function Vertical_menu_tabs_content($$anchor, $$props) {
 	push($$props, false);
@@ -5559,7 +5559,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$n();
+	var div_1 = root$k();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5575,7 +5575,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$m = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$j = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5636,7 +5636,7 @@ function Canvas_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$m();
+	var div_1 = root$j();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -5644,7 +5644,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$l = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$i = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5896,7 +5896,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$l();
+	var div_1 = root$i();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -5933,7 +5933,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$k = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$h = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -6103,7 +6103,7 @@ function Column_main($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$k();
+	var div_1 = root$h();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -6125,8 +6125,8 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$h = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$j = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$e = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$g = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6159,12 +6159,12 @@ function Top_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$j();
+	var div = root$g();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$h();
+		var div_1 = root_1$e();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6189,8 +6189,8 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$g = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$i = template(`<div class="menu svelte-1st5yi2"></div>`);
+var root_1$d = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$f = template(`<div class="menu svelte-1st5yi2"></div>`);
 
 function Side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6223,12 +6223,12 @@ function Side_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$i();
+	var div = root$f();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$g();
+		var div_1 = root_1$d();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6253,9 +6253,9 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$a = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$8 = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root_3$3 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$h = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root$e = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -6331,7 +6331,7 @@ function Tab_ribbon($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$h();
+	var div = root$e();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -6343,7 +6343,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$a();
+				var div_1 = root_2$8();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -6395,8 +6395,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$f = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
-var root$g = template(`<div class="menu svelte-1c44ark"></div>`);
+var root_1$c = template(`<div class="menu-item svelte-1c44ark"><i class="material-icons-outlined icon svelte-1c44ark"> </i> <div class="tooltip svelte-1c44ark"> </div></div>`);
+var root$d = template(`<div class="menu svelte-1c44ark"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6428,12 +6428,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$g();
+	var div = root$d();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$f();
+		var div_1 = root_1$c();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6553,10 +6553,10 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$e = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$9 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_1$b = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$7 = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
 var root_3$2 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
-var root$f = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
+var root$c = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
 	push($$props, false);
@@ -6649,7 +6649,7 @@ function Popup_box($$anchor, $$props) {
 
 	init();
 
-	var div = root$f();
+	var div = root$c();
 
 	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
 
@@ -6660,7 +6660,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$e();
+		var i_2 = root_1$b();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -6670,7 +6670,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$9();
+		var i_3 = root_2$7();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6709,22 +6709,22 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root$e = template(`<div class="same-line svelte-nv80og"><!></div>`);
+var root$b = template(`<div class="same-line svelte-nv80og"><!></div>`);
 
 function Same_line($$anchor, $$props) {
-	var div = root$e();
+	var div = root$b();
 	var node = child(div);
 
 	slot(node, $$props, "default", {});
 	append($$anchor, div);
 }
 
-var root$d = template(`<label class="label svelte-1w9b525"> </label>`);
+var root$a = template(`<label class="label svelte-1w9b525"> </label>`);
 
 function Label($$anchor, $$props) {
 	let text = prop($$props, "text", 8);
 	let style = prop($$props, "style", 8);
-	var label = root$d();
+	var label = root$a();
 	var text_1 = child(label);
 
 	template_effect(() => {
@@ -6735,7 +6735,7 @@ function Label($$anchor, $$props) {
 	append($$anchor, label);
 }
 
-var root$c = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
+var root$9 = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
 
 function Text_field($$anchor, $$props) {
 	push($$props, false);
@@ -6769,7 +6769,7 @@ function Text_field($$anchor, $$props) {
 
 	init();
 
-	var input_1 = root$c();
+	var input_1 = root$9();
 
 	bind_this(input_1, ($$value) => set(input, $$value), () => get(input));
 	template_effect(() => set_attribute(input_1, "style", style() ? style() : ''));
@@ -6779,7 +6779,7 @@ function Text_field($$anchor, $$props) {
 	pop();
 }
 
-var root$b = template(`<input type="checkbox" class="svelte-kvi95y">`);
+var root$8 = template(`<input type="checkbox" class="svelte-kvi95y">`);
 
 function Checkbox($$anchor, $$props) {
 	push($$props, false);
@@ -6795,7 +6795,7 @@ function Checkbox($$anchor, $$props) {
 
 	init();
 
-	var input = root$b();
+	var input = root$8();
 	template_effect(() => set_attribute(input, "style", style() ? style() : ''));
 	bind_checked(input, on);
 	event("change", input, onInput);
@@ -6803,9 +6803,9 @@ function Checkbox($$anchor, $$props) {
 	pop();
 }
 
-var root_1$d = template(`<!> <!>`, 1);
-var root_2$8 = template(`<!> <!> <!>`, 1);
-var root$a = template(`<!> <!>`, 1);
+var root_1$a = template(`<!> <!>`, 1);
+var root_2$6 = template(`<!> <!> <!>`, 1);
+var root$7 = template(`<!> <!>`, 1);
 
 function Runtime_settings_base($$anchor, $$props) {
 	push($$props, false);
@@ -6814,12 +6814,12 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	init();
 
-	var fragment = root$a();
+	var fragment = root$7();
 	var node = first_child(fragment);
 
 	Same_line(node, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$d();
+			var fragment_1 = root_1$a();
 			var node_1 = first_child(fragment_1);
 
 			Checkbox(node_1, {
@@ -6844,7 +6844,7 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	Same_line(node_3, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$8();
+			var fragment_2 = root_2$6();
 			var node_4 = first_child(fragment_2);
 
 			Checkbox(node_4, {
@@ -6885,12 +6885,12 @@ function Runtime_settings_base($$anchor, $$props) {
 	pop();
 }
 
-var root_1$c = template(`<!> <!>`, 1);
-var root_2$7 = template(`<!> <!> <!>`, 1);
+var root_1$9 = template(`<!> <!>`, 1);
+var root_2$5 = template(`<!> <!> <!>`, 1);
 var root_3$1 = template(`<!> <!>`, 1);
-var root_4$3 = template(`<!> <!>`, 1);
-var root_5$4 = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
-var root$9 = template(`<!> <!> <!> <!> <!>`, 1);
+var root_4$1 = template(`<!> <!>`, 1);
+var root_5$2 = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
+var root$6 = template(`<!> <!> <!> <!> <!>`, 1);
 
 function Runtime_settings_als($$anchor, $$props) {
 	push($$props, false);
@@ -6899,12 +6899,12 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	init();
 
-	var fragment = root$9();
+	var fragment = root$6();
 	var node = first_child(fragment);
 
 	Same_line(node, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$c();
+			var fragment_1 = root_1$9();
 			var node_1 = first_child(fragment_1);
 
 			Checkbox(node_1, {
@@ -6929,7 +6929,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	Same_line(node_3, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$7();
+			var fragment_2 = root_2$5();
 			var node_4 = first_child(fragment_2);
 
 			Checkbox(node_4, {
@@ -6995,7 +6995,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	Same_line(node_10, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_4 = root_4$3();
+			var fragment_4 = root_4$1();
 			var node_11 = first_child(fragment_4);
 
 			Checkbox(node_11, {
@@ -7020,7 +7020,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	Same_line(node_13, {
 		children: ($$anchor, $$slotProps) => {
-			var fragment_5 = root_5$4();
+			var fragment_5 = root_5$2();
 			var node_14 = first_child(fragment_5);
 
 			Label(node_14, {
@@ -7456,8 +7456,8 @@ function Confirm_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$b = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
-var root$8 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
+var root_1$8 = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
+var root$5 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
 	push($$props, false);
@@ -7537,14 +7537,14 @@ function Context_menu($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$8();
+	var div = root$5();
 
 	bind_this(div, ($$value) => mutate(context, get(context).div = $$value), () => get(context)?.div);
 
 	var ul = child(div);
 
 	each(ul, 5, () => get(context).menu, index, ($$anchor, choice, index) => {
-		var li = root_1$b();
+		var li = root_1$8();
 
 		set_attribute(li, "data-index", index);
 
@@ -7578,7 +7578,7 @@ function Context_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$7 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
+var root$4 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
 
 function Text_area_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -7596,7 +7596,7 @@ function Text_area_input$1($$anchor, $$props) {
 
 	init();
 
-	var textarea = root$7();
+	var textarea = root$4();
 
 	template_effect(() => {
 		set_attribute(textarea, "rows", rows());
@@ -7771,389 +7771,31 @@ function Text_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$6 = template(`<p class="svelte-52mbok"> </p>`);
-var root_4$2 = template(`<p class="type-warning svelte-52mbok"> </p>`);
-var root_5$3 = template(`<p class="type-ok svelte-52mbok">contract match</p>`);
-var root_1$a = template(`<div class="handler svelte-52mbok"><p class="svelte-52mbok"><span class="clickable svelte-52mbok"> </span> </p></div> <div class="params svelte-52mbok"></div> <div class="type-status svelte-52mbok"><!></div> <div class="prompt svelte-52mbok"><pre class="svelte-52mbok"> </pre></div>`, 1);
-var root$6 = template(`<div class="profile svelte-52mbok"><!></div>`);
-
-function Profile_input_pin($$anchor, $$props) {
-	push($$props, false);
-
-	let profile = prop($$props, "profile", 8),
-		open = prop($$props, "open", 8);
-
-	/* The layout of profile
-	  {
-	        "pin": "local",
-	        "handler": "-> local",
-	        "file": "C:/dev/vmblu/core/model/clipboard.js",
-	        "line": 154,
-	        "summary": "",
-	        "returns": "",
-	        "examples": [],
-	        "params": [
-	          {
-	            "name": "doc",
-	            "type": "any",
-	            "description": ""
-	          }
-	        ]
-	      }
-	*/
-	function onKeydown(e) {
-		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
-	}
-
-	init();
-
-	var div = root$6();
-	var node = child(div);
-
-	if_block(node, () => profile() != null, ($$anchor) => {
-		var fragment = root_1$a();
-		var div_1 = first_child(fragment);
-		var p = child(div_1);
-		var span = child(p);
-		var text = child(span);
-
-		var text_1 = sibling(span);
-
-		var div_2 = sibling(div_1, 2);
-
-		each(div_2, 5, () => profile().params, index, ($$anchor, $$item) => {
-			let type = () => get($$item).type;
-			let name = () => get($$item).name;
-			let description = () => get($$item).description;
-			var p_1 = root_2$6();
-			var text_2 = child(p_1);
-			template_effect(() => set_text(text_2, `${name() ?? ""} (${type() ?? ""}) ${description() ?? ""}`));
-			append($$anchor, p_1);
-		});
-
-		var div_3 = sibling(div_2, 2);
-		var node_1 = child(div_3);
-
-		if_block(
-			node_1,
-			() => profile().typeErrors?.length,
-			($$anchor) => {
-				var fragment_1 = comment();
-				var node_2 = first_child(fragment_1);
-
-				each(node_2, 1, () => profile().typeErrors, index, ($$anchor, msg) => {
-					var p_2 = root_4$2();
-					var text_3 = child(p_2);
-					template_effect(() => set_text(text_3, get(msg)));
-					append($$anchor, p_2);
-				});
-
-				append($$anchor, fragment_1);
-			},
-			($$anchor) => {
-				var p_3 = root_5$3();
-
-				append($$anchor, p_3);
-			}
-		);
-
-		var div_4 = sibling(div_3, 2);
-		var pre = child(div_4);
-		var text_4 = child(pre);
-
-		template_effect(() => {
-			set_text(text, profile().handler);
-			set_text(text_1, `  in ${profile().file ?? ""} (${profile().line ?? ""})`);
-			set_text(text_4, profile().summary);
-		});
-
-		event("click", span, () => open()?.({
-			file: profile().file,
-			line: profile().line
-		}));
-
-		event("keydown", span, onKeydown);
-		append($$anchor, fragment);
-	});
-	append($$anchor, div);
-	pop();
-}
-
-var root_1$9 = template(`<div class="transmit svelte-1s2gtx8"><p class="svelte-1s2gtx8"><span class="clickable svelte-1s2gtx8"> </span> </p></div>`);
-var root$5 = template(`<div class="profile svelte-1s2gtx8"><!></div>`);
-
-function Profile_output_pin($$anchor, $$props) {
-	push($$props, false);
-
-	let profile = prop($$props, "profile", 8),
-		open = prop($$props, "open", 8);
-
-	/* The layout of profile
-	    {
-	        "pin": "local",
-	        "file": "C:/dev/vmblu/core/model/clipboard.js",
-	        "line": 154,
-	    }
-	*/
-	function onKeydown(e) {
-		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
-	}
-
-	init();
-
-	var div = root$5();
-	var node = child(div);
-
-	if_block(node, () => profile() != null, ($$anchor) => {
-		var div_1 = root_1$9();
-		var p = child(div_1);
-		var span = child(p);
-		var text = child(span);
-
-		var text_1 = sibling(span);
-
-		template_effect(() => {
-			set_text(text, profile().pin);
-			set_text(text_1, ` ${profile().file ?? ""} (${profile().line ?? ""})`);
-		});
-
-		event("click", span, () => open()?.({
-			file: profile().file,
-			line: profile().line
-		}));
-
-		event("keydown", span, onKeydown);
-		append($$anchor, div_1);
-	});
-	append($$anchor, div);
-	pop();
-}
-
-var root_5$2 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
-var root_7$1 = template(`<p class="meta svelte-7sbsh3"><span class="clickable svelte-7sbsh3"> </span> </p>`);
-var root_8$1 = template(`<p class="empty svelte-7sbsh3">No source profile entry for this internal pin.</p>`);
-var root_2$5 = template(`<div class="target svelte-7sbsh3"><p class="endpoint svelte-7sbsh3"> </p> <!></div>`);
-var root_9$1 = template(`<div class="target svelte-7sbsh3"><p class="empty svelte-7sbsh3">No internal pins are currently resolved behind this proxy.</p></div>`);
-var root$4 = template(`<div class="proxy svelte-7sbsh3"><!></div>`);
-
-function Profile_proxy_pin($$anchor, $$props) {
-	push($$props, false);
-
-	let profile = prop($$props, "profile", 8),
-		open = prop($$props, "open", 8);
-
-	function onKeydown(e) {
-		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
-	}
-
-	function asArray(value) {
-		if (!value) return [];
-		return Array.isArray(value) ? value : [value];
-	}
-
-	init();
-
-	var div = root$4();
-	var node = child(div);
-
-	if_block(
-		node,
-		() => profile()?.targets?.length,
-		($$anchor) => {
-			var fragment = comment();
-			var node_1 = first_child(fragment);
-
-			each(node_1, 1, () => profile().targets, index, ($$anchor, target) => {
-				var div_1 = root_2$5();
-				var p = child(div_1);
-				var text = child(p);
-
-				var node_2 = sibling(p, 2);
-
-				if_block(
-					node_2,
-					() => asArray(get(target).profile).length,
-					($$anchor) => {
-						var fragment_1 = comment();
-						var node_3 = first_child(fragment_1);
-
-						each(node_3, 1, () => asArray(get(target).profile), index, ($$anchor, item) => {
-							var fragment_2 = comment();
-							var node_4 = first_child(fragment_2);
-
-							if_block(
-								node_4,
-								() => get(item)?.handler,
-								($$anchor) => {
-									var p_1 = root_5$2();
-									var span = child(p_1);
-									var text_1 = child(span);
-
-									var text_2 = sibling(span);
-
-									template_effect(() => {
-										set_text(text_1, get(item).handler);
-										set_text(text_2, `  in ${get(item).file ?? ""} (${get(item).line ?? ""})`);
-									});
-
-									event("click", span, () => open()?.({
-										file: get(item).file,
-										line: get(item).line
-									}));
-
-									event("keydown", span, onKeydown);
-									append($$anchor, p_1);
-								},
-								($$anchor) => {
-									var fragment_3 = comment();
-									var node_5 = first_child(fragment_3);
-
-									if_block(
-										node_5,
-										() => get(item)?.file,
-										($$anchor) => {
-											var p_2 = root_7$1();
-											var span_1 = child(p_2);
-											var text_3 = child(span_1);
-
-											var text_4 = sibling(span_1);
-
-											template_effect(() => {
-												set_text(text_3, get(item).pin);
-												set_text(text_4, `  ${get(item).file ?? ""} (${get(item).line ?? ""})`);
-											});
-
-											event("click", span_1, () => open()?.({
-												file: get(item).file,
-												line: get(item).line
-											}));
-
-											event("keydown", span_1, onKeydown);
-											append($$anchor, p_2);
-										},
-										null,
-										true
-									);
-
-									append($$anchor, fragment_3);
-								}
-							);
-
-							append($$anchor, fragment_2);
-						});
-
-						append($$anchor, fragment_1);
-					},
-					($$anchor) => {
-						var p_3 = root_8$1();
-
-						append($$anchor, p_3);
-					}
-				);
-				template_effect(() => set_text(text, get(target).pin + ' @ ' + get(target).node + '(' + get(target).io + ')'));
-				append($$anchor, div_1);
-			});
-
-			append($$anchor, fragment);
-		},
-		($$anchor) => {
-			var div_2 = root_9$1();
-
-			append($$anchor, div_2);
-		}
-	);
-	append($$anchor, div);
-	pop();
-}
-
-var root_4$1 = template(`<span> </span>`);
-var root_3 = template(`<div></div>`);
-var root_6$1 = template(`<pre class="text svelte-1np5y2u"> </pre>`);
-var root_1$8 = template(`<div class="contract svelte-1np5y2u"><div class="role svelte-1np5y2u"><p class="svelte-1np5y2u"> </p></div> <!></div>`);
-
-function Pin_contract($$anchor, $$props) {
-	push($$props, false);
-
-	let contract = prop($$props, "contract", 8, null);
-
-	init();
-
-	var fragment = comment();
-	var node = first_child(fragment);
-
-	if_block(node, contract, ($$anchor) => {
-		var div = root_1$8();
-		var div_1 = child(div);
-		var p = child(div_1);
-		var text = child(p);
-
-		var node_1 = sibling(div_1, 2);
-
-		if_block(
-			node_1,
-			() => contract().tokens,
-			($$anchor) => {
-				var fragment_1 = comment();
-				var node_2 = first_child(fragment_1);
-
-				each(node_2, 1, () => contract().tokens, index, ($$anchor, line) => {
-					var div_2 = root_3();
-
-					each(div_2, 5, () => get(line).parts, index, ($$anchor, part) => {
-						var span = root_4$1();
-						var text_1 = child(span);
-
-						template_effect(() => {
-							set_class(span, `part ${get(part).kind ?? ""} svelte-1np5y2u`);
-							set_text(text_1, get(part).text);
-						});
-
-						append($$anchor, span);
-					});
-
-					template_effect(() => {
-						set_class(div_2, `line ${(get(line).parts?.[0]?.kind === 'header' ? 'header' : '') ?? ""} svelte-1np5y2u`);
-						set_attribute(div_2, "style", `--indent:${get(line).indent}`);
-					});
-
-					append($$anchor, div_2);
-				});
-
-				append($$anchor, fragment_1);
-			},
-			($$anchor) => {
-				var fragment_2 = comment();
-				var node_3 = first_child(fragment_2);
-
-				if_block(
-					node_3,
-					() => contract().text,
-					($$anchor) => {
-						var pre = root_6$1();
-						var text_2 = child(pre);
-						template_effect(() => set_text(text_2, contract().text));
-						append($$anchor, pre);
-					},
-					null,
-					true
-				);
-
-				append($$anchor, fragment_2);
-			}
-		);
-		template_effect(() => set_text(text, `• Contract: ${contract().role ?? 'follower' ?? ""}`));
-		append($$anchor, div);
-	});
-
-	append($$anchor, fragment);
-	pop();
-}
-
-var root_2$4 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0"> </p></div> <!>`, 1);
-var root_5$1 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handlers and parameters</p></div> <!>`, 1);
-var root_7 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Handler and parameters</p></div> <!>`, 1);
-var root_8 = template(`<div class="pin svelte-1tkobt0"><p class="svelte-1tkobt0">&#x2022 Sent at</p></div> <!>`, 1);
-var root_1$7 = template(`<!> <!>`, 1);
+var root_5$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc"> </span><span class="punct svelte-1y335rc">:</span></p>`);
+var root_8 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">summary</span><span class="punct svelte-1y335rc">:</span><span class="summary svelte-1y335rc"> </span></p>`);
+var root_7 = template(`<p class="line contract-line svelte-1y335rc"><span class="field svelte-1y335rc"> </span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!>`, 1);
+var root_10 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">kind</span><span class="punct svelte-1y335rc">:</span><span class="kind svelte-1y335rc"> </span></p>`);
+var root_11$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">summary</span><span class="punct svelte-1y335rc">:</span><span class="summary svelte-1y335rc"> </span></p>`);
+var root_9$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">type</span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!> <!>`, 1);
+var root_3 = template(`<p class="line brace svelte-1y335rc"></p> <p class="line contract-line svelte-1y335rc" style="--indent:1"><span class="contract-key svelte-1y335rc">role</span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!> <p class="line brace svelte-1y335rc"></p>`, 1);
+var root_13 = template(`<pre class="line svelte-1y335rc"> </pre>`);
+var root_2$4 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Contract</p> <div class="box contract svelte-1y335rc"><!></div></div>`);
+var root_19 = template(`<p class="line meta svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span></p>`);
+var root_21$1 = template(`<p class="line meta svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span></p>`);
+var root_22 = template(`<p class="line empty svelte-1y335rc">No source profile entry for this internal pin.</p>`);
+var root_16$1 = template(`<p class="line endpoint svelte-1y335rc"> </p> <!>`, 1);
+var root_23 = template(`<p class="line empty svelte-1y335rc">No internal pins are currently resolved behind this proxy.</p>`);
+var root_14$1 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc"> </p> <div class="box lines svelte-1y335rc"><!></div></div>`);
+var root_28 = template(`<p class="line status-warning svelte-1y335rc"> </p>`);
+var root_29 = template(`<p class="line status-ok svelte-1y335rc">contract match</p>`);
+var root_30 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Description</p> <div class="box svelte-1y335rc"><pre class="line summary svelte-1y335rc"> </pre></div></div>`);
+var root_26 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"><p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p> <!></div></div> <!>`, 1);
+var root_25 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Handler and parameters</p></div> <!>`, 1);
+var root_34 = template(`<p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p>`);
+var root_32 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"></div></div>`);
+var root_36 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"><p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p></div></div>`);
+var root_31 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Sent at</p></div> <!>`, 1);
+var root_1$7 = template(`<div class="profile svelte-1y335rc"><!> <!></div>`);
 
 function Pin_profile($$anchor, $$props) {
 	push($$props, false);
@@ -8165,7 +7807,7 @@ function Pin_profile($$anchor, $$props) {
 		pos: null,
 		title: '',
 		ok: null,
-		cancel: null
+		cancel: () => set(_pin, null)
 	});
 
 	onMount(() => {
@@ -8190,7 +7832,6 @@ function Pin_profile($$anchor, $$props) {
 			}
 
 			mutate(box, get(box).title = pin.name + ' @ ' + pin.node.name + (pin.is.input ? ' (in)' : ' (out)'));
-			// box.title = pin.is.left ? ((pin.is.input ? ' \u25B6 ' : ' \u25C0 ' ) + pin.name) : (pin.name + (pin.is.input ? ' \u25C0 ' : ' \u25B6 '));
 			set(_pin, pin);
 			set(_contract, contract);
 			set(_profile, profile);
@@ -8199,6 +7840,40 @@ function Pin_profile($$anchor, $$props) {
 		}
 	};
 
+	function onProfileKeydown(e) {
+		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
+	}
+
+	function asArray(value) {
+		if (!value) return [];
+		return Array.isArray(value) ? value : [value];
+	}
+
+	function partText(parts, kind) {
+		return parts?.find((part) => part.kind === kind)?.text ?? '';
+	}
+
+	function cleanKind(text) {
+		return String(text ?? '').replace(/[()]/g, '').trim();
+	}
+
+	function cleanSummary(text) {
+		return String(text ?? '').replace(/^\s*-\s*/, '').trim();
+	}
+
+	function contractRow(line) {
+		const parts = line.parts ?? [];
+		const header = partText(parts, 'header');
+		const field = partText(parts, 'field');
+		const type = partText(parts, 'type');
+		const kind = cleanKind(partText(parts, 'kind'));
+		const summary = cleanSummary(partText(parts, 'summary'));
+
+		if (header) return { kind: 'header', key: header };
+		if (field) return { kind: 'field', key: field, type, summary };
+		return { kind: 'type', type, typeKind: kind, summary };
+	}
+
 	init();
 
 	Popup_box($$anchor, {
@@ -8206,136 +7881,434 @@ function Pin_profile($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$7();
-			var node = first_child(fragment_1);
+			var div = root_1$7();
+			var node = child(div);
 
-			Pin_contract(node, {
-				get contract() {
-					return get(_contract);
-				}
+			if_block(node, () => get(_contract), ($$anchor) => {
+				var div_1 = root_2$4();
+				var div_2 = sibling(child(div_1), 2);
+				var node_1 = child(div_2);
+
+				if_block(
+					node_1,
+					() => get(_contract).tokens,
+					($$anchor) => {
+						var fragment_1 = root_3();
+						var p = first_child(fragment_1);
+
+						p.textContent = `{`;
+
+						var p_1 = sibling(p, 2);
+						var span = sibling(child(p_1), 2);
+						var text_1 = child(span);
+
+						var node_2 = sibling(p_1, 2);
+
+						each(node_2, 1, () => get(_contract).tokens, index, ($$anchor, line) => {
+							var fragment_2 = comment();
+							const row = derived_safe_equal(() => contractRow(get(line)));
+							var node_3 = first_child(fragment_2);
+
+							if_block(
+								node_3,
+								() => get(row).kind === 'header',
+								($$anchor) => {
+									var p_2 = root_5$1();
+									var span_1 = child(p_2);
+									var text_2 = child(span_1);
+
+									template_effect(() => {
+										set_attribute(p_2, "style", `--indent:${get(line).indent + 1}`);
+										set_text(text_2, get(row).key);
+									});
+
+									append($$anchor, p_2);
+								},
+								($$anchor) => {
+									var fragment_3 = comment();
+									var node_4 = first_child(fragment_3);
+
+									if_block(
+										node_4,
+										() => get(row).kind === 'field',
+										($$anchor) => {
+											var fragment_4 = root_7();
+											var p_3 = first_child(fragment_4);
+											var span_2 = child(p_3);
+											var text_3 = child(span_2);
+
+											var span_3 = sibling(span_2, 2);
+											var text_4 = child(span_3);
+
+											var node_5 = sibling(p_3, 2);
+
+											if_block(node_5, () => get(row).summary, ($$anchor) => {
+												var p_4 = root_8();
+												var span_4 = sibling(child(p_4), 2);
+												var text_5 = child(span_4);
+
+												template_effect(() => {
+													set_attribute(p_4, "style", `--indent:${get(line).indent + 2}`);
+													set_text(text_5, get(row).summary);
+												});
+
+												append($$anchor, p_4);
+											});
+
+											template_effect(() => {
+												set_attribute(p_3, "style", `--indent:${get(line).indent + 1}`);
+												set_text(text_3, get(row).key);
+												set_text(text_4, get(row).type);
+											});
+
+											append($$anchor, fragment_4);
+										},
+										($$anchor) => {
+											var fragment_5 = root_9$1();
+											var p_5 = first_child(fragment_5);
+											var span_5 = sibling(child(p_5), 2);
+											var text_6 = child(span_5);
+
+											var node_6 = sibling(p_5, 2);
+
+											if_block(node_6, () => get(row).typeKind, ($$anchor) => {
+												var p_6 = root_10();
+												var span_6 = sibling(child(p_6), 2);
+												var text_7 = child(span_6);
+
+												template_effect(() => {
+													set_attribute(p_6, "style", `--indent:${get(line).indent + 1}`);
+													set_text(text_7, get(row).typeKind);
+												});
+
+												append($$anchor, p_6);
+											});
+
+											var node_7 = sibling(node_6, 2);
+
+											if_block(node_7, () => get(row).summary, ($$anchor) => {
+												var p_7 = root_11$1();
+												var span_7 = sibling(child(p_7), 2);
+												var text_8 = child(span_7);
+
+												template_effect(() => {
+													set_attribute(p_7, "style", `--indent:${get(line).indent + 1}`);
+													set_text(text_8, get(row).summary);
+												});
+
+												append($$anchor, p_7);
+											});
+
+											template_effect(() => {
+												set_attribute(p_5, "style", `--indent:${get(line).indent + 1}`);
+												set_text(text_6, get(row).type);
+											});
+
+											append($$anchor, fragment_5);
+										},
+										true
+									);
+
+									append($$anchor, fragment_3);
+								}
+							);
+
+							append($$anchor, fragment_2);
+						});
+
+						var p_8 = sibling(node_2, 2);
+
+						p_8.textContent = `}`;
+						template_effect(() => set_text(text_1, get(_contract).role ?? 'follower'));
+						append($$anchor, fragment_1);
+					},
+					($$anchor) => {
+						var fragment_6 = comment();
+						var node_8 = first_child(fragment_6);
+
+						if_block(
+							node_8,
+							() => get(_contract).text,
+							($$anchor) => {
+								var pre = root_13();
+								var text_9 = child(pre);
+								template_effect(() => set_text(text_9, get(_contract).text));
+								append($$anchor, pre);
+							},
+							null,
+							true
+						);
+
+						append($$anchor, fragment_6);
+					}
+				);
+				append($$anchor, div_1);
 			});
 
-			var node_1 = sibling(node, 2);
+			var node_9 = sibling(node, 2);
 
 			if_block(
-				node_1,
+				node_9,
 				() => get(_pin)?.is?.proxy,
 				($$anchor) => {
-					var fragment_2 = root_2$4();
-					var div = first_child(fragment_2);
-					var p = child(div);
-					var text = child(p);
+					var div_3 = root_14$1();
+					var p_9 = child(div_3);
+					var text_10 = child(p_9);
 
-					var node_2 = sibling(div, 2);
-
-					Profile_proxy_pin(node_2, {
-						get profile() {
-							return get(_profile);
-						},
-						get open() {
-							return get(_open);
-						}
-					});
-
-					template_effect(() => set_text(text, get(_pin)?.is.input ? '• Connected internal handlers' : '• Connected internal emitters'));
-					append($$anchor, fragment_2);
-				},
-				($$anchor) => {
-					var fragment_3 = comment();
-					var node_3 = first_child(fragment_3);
+					var div_4 = sibling(p_9, 2);
+					var node_10 = child(div_4);
 
 					if_block(
-						node_3,
-						() => get(_pin)?.is.input,
+						node_10,
+						() => get(_profile)?.targets?.length,
 						($$anchor) => {
-							var fragment_4 = comment();
-							var node_4 = first_child(fragment_4);
+							var fragment_7 = comment();
+							var node_11 = first_child(fragment_7);
 
-							if_block(
-								node_4,
-								() => Array.isArray(get(_profile)),
-								($$anchor) => {
-									var fragment_5 = root_5$1();
-									var node_5 = sibling(first_child(fragment_5), 2);
+							each(node_11, 1, () => get(_profile).targets, index, ($$anchor, target) => {
+								var fragment_8 = root_16$1();
+								var p_10 = first_child(fragment_8);
+								var text_11 = child(p_10);
 
-									each(node_5, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
-										Profile_input_pin($$anchor, {
-											get profile() {
-												return get(singleProfile);
-											},
-											get open() {
-												return get(_open);
-											}
+								var node_12 = sibling(p_10, 2);
+
+								if_block(
+									node_12,
+									() => asArray(get(target).profile).length,
+									($$anchor) => {
+										var fragment_9 = comment();
+										var node_13 = first_child(fragment_9);
+
+										each(node_13, 1, () => asArray(get(target).profile), index, ($$anchor, item) => {
+											var fragment_10 = comment();
+											var node_14 = first_child(fragment_10);
+
+											if_block(
+												node_14,
+												() => get(item)?.handler,
+												($$anchor) => {
+													var p_11 = root_19();
+													var span_8 = child(p_11);
+													var text_12 = child(span_8);
+													template_effect(() => set_text(text_12, `${get(item).file ?? ""} (${get(item).line ?? ""})`));
+
+													event("click", span_8, () => get(_open)?.({
+														file: get(item).file,
+														line: get(item).line
+													}));
+
+													event("keydown", span_8, onProfileKeydown);
+													append($$anchor, p_11);
+												},
+												($$anchor) => {
+													var fragment_11 = comment();
+													var node_15 = first_child(fragment_11);
+
+													if_block(
+														node_15,
+														() => get(item)?.file,
+														($$anchor) => {
+															var p_12 = root_21$1();
+															var span_9 = child(p_12);
+															var text_13 = child(span_9);
+															template_effect(() => set_text(text_13, `${get(item).file ?? ""} (${get(item).line ?? ""})`));
+
+															event("click", span_9, () => get(_open)?.({
+																file: get(item).file,
+																line: get(item).line
+															}));
+
+															event("keydown", span_9, onProfileKeydown);
+															append($$anchor, p_12);
+														},
+														null,
+														true
+													);
+
+													append($$anchor, fragment_11);
+												}
+											);
+
+											append($$anchor, fragment_10);
 										});
-									});
 
-									append($$anchor, fragment_5);
-								},
-								($$anchor) => {
-									var fragment_7 = root_7();
-									var node_6 = sibling(first_child(fragment_7), 2);
+										append($$anchor, fragment_9);
+									},
+									($$anchor) => {
+										var p_13 = root_22();
 
-									Profile_input_pin(node_6, {
-										get profile() {
-											return get(_profile);
-										},
-										get open() {
-											return get(_open);
-										}
-									});
+										append($$anchor, p_13);
+									}
+								);
 
-									append($$anchor, fragment_7);
-								}
-							);
+								template_effect(() => set_text(text_11, get(target).pin + ' @ ' + get(target).node));
+								append($$anchor, fragment_8);
+							});
 
-							append($$anchor, fragment_4);
+							append($$anchor, fragment_7);
 						},
 						($$anchor) => {
-							var fragment_8 = root_8();
-							var node_7 = sibling(first_child(fragment_8), 2);
+							var p_14 = root_23();
+
+							append($$anchor, p_14);
+						}
+					);
+					template_effect(() => set_text(text_10, get(_pin)?.is.input ? 'Connected internal handlers' : 'Connected internal emitters'));
+					append($$anchor, div_3);
+				},
+				($$anchor) => {
+					var fragment_12 = comment();
+					var node_16 = first_child(fragment_12);
+
+					if_block(
+						node_16,
+						() => get(_pin)?.is.input,
+						($$anchor) => {
+							var fragment_13 = root_25();
+							var node_17 = sibling(first_child(fragment_13), 2);
+
+							if_block(node_17, () => get(_profile) != null, ($$anchor) => {
+								var fragment_14 = root_26();
+								var div_5 = first_child(fragment_14);
+								var div_6 = child(div_5);
+								var p_15 = child(div_6);
+								var span_10 = child(p_15);
+								var text_14 = child(span_10);
+
+								var text_15 = sibling(span_10);
+
+								var node_18 = sibling(p_15, 2);
+
+								if_block(
+									node_18,
+									() => get(_profile).typeErrors?.length,
+									($$anchor) => {
+										var fragment_15 = comment();
+										var node_19 = first_child(fragment_15);
+
+										each(node_19, 1, () => get(_profile).typeErrors, index, ($$anchor, msg) => {
+											var p_16 = root_28();
+											var text_16 = child(p_16);
+											template_effect(() => set_text(text_16, get(msg)));
+											append($$anchor, p_16);
+										});
+
+										append($$anchor, fragment_15);
+									},
+									($$anchor) => {
+										var p_17 = root_29();
+
+										append($$anchor, p_17);
+									}
+								);
+
+								var node_20 = sibling(div_5, 2);
+
+								if_block(node_20, () => get(_profile).summary, ($$anchor) => {
+									var div_7 = root_30();
+									var div_8 = sibling(child(div_7), 2);
+									var pre_1 = child(div_8);
+									var text_17 = child(pre_1);
+									template_effect(() => set_text(text_17, get(_profile).summary));
+									append($$anchor, div_7);
+								});
+
+								template_effect(() => {
+									set_text(text_14, get(_profile).handler);
+									set_text(text_15, `  in ${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`);
+								});
+
+								event("click", span_10, () => get(_open)?.({
+									file: get(_profile).file,
+									line: get(_profile).line
+								}));
+
+								event("keydown", span_10, onProfileKeydown);
+								append($$anchor, fragment_14);
+							});
+
+							append($$anchor, fragment_13);
+						},
+						($$anchor) => {
+							var fragment_16 = root_31();
+							var node_21 = sibling(first_child(fragment_16), 2);
 
 							if_block(
-								node_7,
+								node_21,
 								() => Array.isArray(get(_profile)),
 								($$anchor) => {
-									var fragment_9 = comment();
-									var node_8 = first_child(fragment_9);
+									var div_9 = root_32();
+									var div_10 = child(div_9);
 
-									each(node_8, 1, () => get(_profile), index, ($$anchor, singleProfile) => {
-										Profile_output_pin($$anchor, {
-											get profile() {
-												return get(singleProfile);
-											},
-											get open() {
-												return get(_open);
-											}
+									each(div_10, 5, () => get(_profile), index, ($$anchor, singleProfile) => {
+										var fragment_17 = comment();
+										var node_22 = first_child(fragment_17);
+
+										if_block(node_22, () => get(singleProfile) != null, ($$anchor) => {
+											var p_18 = root_34();
+											var span_11 = child(p_18);
+											var text_18 = child(span_11);
+
+											var text_19 = sibling(span_11);
+
+											template_effect(() => {
+												set_text(text_18, get(singleProfile).pin);
+												set_text(text_19, `  ${get(singleProfile).file ?? ""} (${get(singleProfile).line ?? ""})`);
+											});
+
+											event("click", span_11, () => get(_open)?.({
+												file: get(singleProfile).file,
+												line: get(singleProfile).line
+											}));
+
+											event("keydown", span_11, onProfileKeydown);
+											append($$anchor, p_18);
 										});
-									});
 
-									append($$anchor, fragment_9);
+										append($$anchor, fragment_17);
+									});
+									append($$anchor, div_9);
 								},
 								($$anchor) => {
-									Profile_output_pin($$anchor, {
-										get profile() {
-											return get(_profile);
-										},
-										get open() {
-											return get(_open);
-										}
+									var fragment_18 = comment();
+									var node_23 = first_child(fragment_18);
+
+									if_block(node_23, () => get(_profile) != null, ($$anchor) => {
+										var div_11 = root_36();
+										var div_12 = child(div_11);
+										var p_19 = child(div_12);
+										var span_12 = child(p_19);
+										var text_20 = child(span_12);
+
+										var text_21 = sibling(span_12);
+
+										template_effect(() => {
+											set_text(text_20, get(_profile).pin);
+											set_text(text_21, `  ${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`);
+										});
+
+										event("click", span_12, () => get(_open)?.({
+											file: get(_profile).file,
+											line: get(_profile).line
+										}));
+
+										event("keydown", span_12, onProfileKeydown);
+										append($$anchor, div_11);
 									});
+
+									append($$anchor, fragment_18);
 								}
 							);
 
-							append($$anchor, fragment_8);
+							append($$anchor, fragment_16);
 						},
 						true
 					);
 
-					append($$anchor, fragment_3);
+					append($$anchor, fragment_12);
 				}
 			);
-
-			append($$anchor, fragment_1);
+			append($$anchor, div);
 		},
 		$$slots: { default: true }
 	});

@@ -122,9 +122,6 @@ export const mouseMoveHandling = {
                     // this is the route we are drawing
                     state.route.select()
 
-                    // if the pin we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.lookWidget.is.multi) state.route.setTwistedPair()
-
                     // add the route to the widget
                     state.lookWidget.routes.push(state.route)  
                     
@@ -216,9 +213,6 @@ export const mouseMoveHandling = {
 
                     // create a new route - only the from widget is known
                     state.route = new Route(state.pad, null)
-
-                    // if the pad we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.pad.proxy.is.multi) state.route.setTwistedPair()
 
                     // this is the route we are drawing
                     state.route.select()

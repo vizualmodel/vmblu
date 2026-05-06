@@ -13,7 +13,6 @@ export function Route(from, to) {
     this.is = {
         selected: false,
         highLighted: false,
-        twistedPair: false,
         notUsed: false,
         newConx: false,                 // the route is there because of a new conx
         noConx: false                   // there is no corresponding connection anymore
@@ -40,7 +39,7 @@ Route.prototype = {
         const width = this.is.selected ? style.route.wSelected : style.route.wNormal
 
         // draw the line segments
-        this.is.twistedPair ? shape.twistedPair(ctx, color, width, this.wire) : shape.drawWire(ctx,color, width, this.wire)
+        shape.drawWire(ctx,color, width, this.wire)
     },
 
     // change the route direction
@@ -84,20 +83,6 @@ Route.prototype = {
         this.is.highLighted = false
         if (this.from) this.from.is.highLighted = false
         if (this.to) this.to.is.highLighted = false
-    },
-
-    setTwistedPair() {
-        this.is.twistedPair = true
-    },
-
-    checkTwistedPair() {
-
-        const A = this.from.is.input ? this.to : this.from
-
-        if (!A) return
-
-        if (A.is.pin && A.is.multi) this.is.twistedPair = true
-        else if (A.is.pad && A.proxy?.is.multi) this.is.twistedPair = true
     },
 
     // generates the type string for a route
@@ -196,4 +181,3 @@ Route.prototype = {
 
 }
 Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling)
-

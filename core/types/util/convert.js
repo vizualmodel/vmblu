@@ -324,68 +324,6 @@ export const convert = {
             .reverse();                      // reverse: outermost to innermost
     },
 
-
-
-    // check if a pin has a multi structure
-    isMulti: str => {
-
-        // now get the brackets
-        const opbr = str.indexOf('[')
-        const clbr = str.lastIndexOf(']')
-
-        return ((opbr > -1) && (clbr > -1) && (clbr > opbr))
-    },
-
-    // extract the names between square brackets:  'any text [selector a, selector b, ...] any text'
-    extractMultis: str => {
-
-        const [pre, middle, post] = convert.getPreMiddlePost(str)
-
-        // split, trim an filter
-        return middle.split(',')
-    },
-
-    // makes a list of all full message names - if there are no multis, just returns the message in an array
-    expandMultis: str => {
-
-        const [pre, middle, post] = convert.getPreMiddlePost(str)
-
-        // split, trim an filter
-        const multis = middle.split(',')
-
-        // re-assemble
-        return multis.map(name => pre + name + post)
-    },
-
-    cleanMulti(str) {
-
-        //get the parts before and after the multi part
-        const [pre, middle, post] = convert.getPreMiddlePost(str)
-
-        // reassemble the name
-        return pre + '[' + middle + ']' + post
-    },
-
-    // get the part before and after a multi message
-    getPreMiddlePost(str) {
-        // now get the brackets
-        const opbr = str.indexOf('[')
-        const clbr = str.lastIndexOf(']')
-
-        // get the parts before and after the multi part
-        let pre = str.slice(0,opbr).trim()
-        let middle = str.slice(opbr+1, clbr).split(',').map(n=>n.trim()).filter(Boolean).join(',')
-        let post = str.slice(clbr+1).trim()
-
-        // if there is no period, hyphen or underscore, we add a period
-        const last = pre.at(-1)
-        if ((pre.length > 0) && (last != '.') && (last != '-') && (last != '_')) pre = pre + ' '
-        const first = post[0]
-        if ((post.length > 0) && (first != '.') && (first != '-') && (first != '_')) post = ' ' + post
-
-        return [pre, middle, post]
-    },
-
     // a pin name that has been edited can start or end with a special character
     // that indicates that th einterface name will be added as prefix / postfix
     // + indicates a single space

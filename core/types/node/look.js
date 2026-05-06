@@ -1,4 +1,4 @@
-import {style, convert} from '../util/index.js'
+import {style} from '../util/index.js'
 
 import {widgetHandling} from './look-widget.js'
 import {widgetLifecycle} from './look-widget-lifecycle.js'
@@ -97,7 +97,7 @@ Look.prototype = {
     adjustPinWidth(widget) {
 
         // Get the new width
-        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix(), widget.is.multi)
+        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix())
 
         // move the x of the widgets if at the right
         if ( ! widget.is.left) widget.rect.x += (widget.rect.w - newWidth)
@@ -109,30 +109,9 @@ Look.prototype = {
         if (widget.rect.w > this.rect.w) this.wider(widget.rect.w - this.rect.w)
     },
 
-    getTextWidth(str, multi=false) {
+    getTextWidth(str) {
 
-        return multi ? this.getMultiTextWidth(str) : ctxOffscreen.measureText(str).width
-    },
-
-    getMultiTextWidth(str) {
-        // cut the text in three parts 
-        const [pre, middle, post] = convert.getPreMiddlePost(str)
-
-        // measure pre and post
-        let width = ctxOffscreen.measureText(pre + '[').width + ctxOffscreen.measureText(']'+ post).width
-
-        // change font
-        const savedFont = ctxOffscreen.font
-        ctxOffscreen.font = style.pin.fMulti
-
-        // measure the multi text
-        width += ctxOffscreen.measureText(middle).width
-
-        // restore the font
-        ctxOffscreen.font = savedFont
-
-        // done
-        return width
+        return ctxOffscreen.measureText(str).width
     },
 
     wider(delta=0) {

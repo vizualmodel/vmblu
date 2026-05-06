@@ -158,12 +158,7 @@ const sourceFunctions = {
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->'
 
-            // could be a multi-message
-            if (widget.is.multi) {
-                const multis = convert.expandMultis(widget.name)
-                for(const multi of multis) sendList += `\n\t"${multi} ${symbol}",`
-            }
-            else sendList += `\n\t"${widget.name} ${symbol}",`
+            sendList += `\n\t"${widget.name} ${symbol}",`
         }
         // close the brackets
         sendList += '\n\t],'
@@ -189,12 +184,7 @@ const sourceFunctions = {
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->'
 
-            // could be a multi-message
-            if (widget.is.multi) {
-                const multis = convert.expandMultis(widget.name)
-                for(const multi of multis) sPrototype += `\n\t"${symbol} ${multi}"({}) {\n\t},`
-            }
-            else sPrototype += `\n\t"${symbol} ${widget.name}"({}) {\n\t},`
+            sPrototype += `\n\t"${symbol} ${widget.name}"({}) {\n\t},`
         })
         // the closing bracket
         sPrototype += `\n\n} // ${this.name}.prototype`
@@ -205,4 +195,3 @@ const sourceFunctions = {
 
 }
 Object.assign(SourceNode.prototype, Node.prototype, sourceFunctions, jsonHandling)
-

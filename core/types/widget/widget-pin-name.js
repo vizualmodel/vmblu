@@ -12,9 +12,6 @@ export const pinNameHandling = {
             this.pxlen = 0
         }
 
-        // also reset the multi bit
-        this.is.multi = false
-
         if (!click) return {prop: 'name', index: this.name.length};
 
         // the text starts here
@@ -41,9 +38,14 @@ export const pinNameHandling = {
 
     // a function to get the displayname
     displayName() {
+
         let dName = this.pxlen == 0 ? this.name : this.withoutPrefix()
 
-        return dName
+        if (!this.is.capability) return dName
+
+        const mark = this.is.input ? '\u24E3' : '\u24D4'
+
+        return this.is.left ?  mark + ' ' + dName : dName + ' ' + mark 
     },
 
     // check for a name clash
@@ -85,10 +87,6 @@ export const pinNameHandling = {
         }
         // no prefix naming - reset the prefix/postfix length
         else this.pxlen = 0
-
-        // reformat a multi message pin
-        this.is.multi = convert.isMulti(this.name)
-        if (this.is.multi) this.name = convert.cleanMulti(this.name)
 
         // check the route usage
         this.checkRouteUsage()
@@ -272,17 +270,7 @@ export const pinNameHandling = {
             // get the other side of the route
             const other = route.from == this ? route.to : route.from;
 
-            // check the twisted pair (thick line)
-            route.is.twistedPair = other.is.multi || this.is.multi;
-
-            // multi messages can only connect to multimessages
-            if (other.is.pin) {
-                if ((other.is.multi || this.is.multi) && !this.hasMultiOverlap(other)) route.is.notUsed = true;
-            }
-            else if (other.is.pad){
-                if ((this.is.multi || other.proxy.is.multi) && !this.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
-            } 
-            else if (other.is.tack) {
+            if (other.is.tack) {
 
                 // check all the bus routes
                 let found = false
@@ -306,91 +294,8 @@ export const pinNameHandling = {
         }
     },
 
-    // extract the names between [] as an array
-    extractMultis() {
-        return convert.extractMultis(this.name)
-    },
-
-    // expand the multis - returns an array - if no multis, it contains the original name
-    expandMultis() {
-        return convert.expandMultis(this.name)
-    },
-
     // is used to check if two pins are logically connected via a cable
     hasFullNameMatch(pin) {
-
-        // The messages between the pins must overlap
-        const allPinMsgs = pin.is.multi ? convert.expandMultis(pin.lowerCase()) : [pin.lowerCase()]
-        const allThisMsgs = this.is.multi ? convert.expandMultis(this.lowerCase()) : [this.lowerCase()]
-//console.log('MULTI', allPinMsgs, allThisMsgs)
-        // at the first common message we return
-        for(const pinMsg of allPinMsgs) {
-            if ( allThisMsgs.includes(pinMsg)) return true
-        }
-
-        // no overlap
-        return false
-    },
-
-    // The names should partially match 
-    hasMultiOverlap(pin) {
-        
-        if (pin.is.multi) {
-            if (this.is.multi) 
-                return this.checkMultiPartOnly(pin)
-            else
-                return pin.checkPartial(this.lowerCase())
-        }
-        else if (this.is.multi) {
-            return this.checkPartial(pin.lowerCase())
-        }
-        return false
-    },
-
-    // both are multis !
-    checkMultiPartOnly(pin) {
-
-        // get the list of messages between brackets
-        const pinMulti = convert.extractMultis(pin.lowerCase())
-        const thisMulti = convert.extractMultis(this.lowerCase())
-
-        // check - at the first match return
-        for(const variant of pinMulti) {
-            if (thisMulti.includes(variant)) return true
-        }
-
-        // no matches
-        return false
-    },
-
-    // check if the othername contains at least one of the multis
-    checkPartial(otherName) {
-
-        // get the multis
-        const thisMulti = convert.extractMultis(this.lowerCase())
-
-        // check - at the first match return
-        for(const variant of thisMulti) {
-            if (otherName.indexOf(variant) >= 0) return true
-        }
-
-        // no matches
-        return false
-    },
-
-    getMatch(mName) {
-
-        if (this.is.multi) {
-
-            const multiParts = convert.extractMultis(this.lowerCase())
-            const multis = convert.expandMultis(this.lowerCase())
-
-            // if a part is found in mName, return the corresponding full multi name
-            for (let i=0; i < multiParts.length; i++) {
-
-                if (mName.includes(multiParts[i])) return (multis[i])
-            }
-        }
-        return null
+        return this.lowerCase() == pin.lowerCase()
     }
 }

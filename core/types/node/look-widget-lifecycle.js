@@ -1,5 +1,5 @@
 import {Widget} from '../widget/index.js'
-import {style, eject, convert} from '../util/index.js'
+import {style, eject} from '../util/index.js'
 
 export const widgetLifecycle = {
 
@@ -92,7 +92,7 @@ addPin(name, pos, is) {
     const displayName = this.displayName(name,pos.y)
 
     // the rectangle for the pin
-    const rect = this.pinRectangle(displayName, pos.y, left, is.multi)
+    const rect = this.pinRectangle(displayName, pos.y, left)
 
     // create the pin
     const pin = is.proxy ? new Widget.Proxy(rect, this.node, name, is)  : new Widget.Pin(rect, this.node, name, is) 
@@ -254,7 +254,6 @@ rawWidgetsToPinArea(rawWidgets, pos) {
         left: false,
         channel: false,
         proxy: false,
-        multi: false,
         zombie: false
     }
 
@@ -270,7 +269,6 @@ rawWidgetsToPinArea(rawWidgets, pos) {
             is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
             is.left = raw.left ?? false;
             is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
-            is.multi = convert.isMulti(raw.name)
             is.proxy = this.node.is.group
 
             // add the pin at the requested position

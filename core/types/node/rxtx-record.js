@@ -56,8 +56,7 @@ TxTack.prototype = {
 
         const pin = this.tack.getOtherPin()
 
-        // it must either be a literal match or the pin variant must include the message
-        return pin.is.multi ? (pin.getMatch(messageName) == messageName) : (pin.name == messageName)
+        return pin.name == messageName
     },
 
     dropTarget(dst) {
