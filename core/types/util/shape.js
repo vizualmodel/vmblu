@@ -516,17 +516,6 @@ tack(ctx, type, channel, top, rc,t,cFill) {
     ctx.fill()
 },
 
-filterSign(ctx,point, width, color){
-
-    let cx = point.x - width/2
-    let cy = point.y - width/2
-
-    ctx.fillStyle = color
-    ctx.fillRect(cx, cy, width, width)
-    ctx.fillStyle = "#000000"
-    ctx.fillRect(cx + 2, cy + 2, width-4, width-4)
-},
-
 // the text is centered in the label 
 hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
@@ -572,27 +561,6 @@ wirelessSymbol(ctx, x, y,r,color) {
     ctx.arc(cx, cy,r,Math.PI,-Math.PI/2)
     ctx.moveTo(cx-r+4,cy)
     ctx.arc(cx, cy,r-4,Math.PI,-Math.PI/2)
-
-    ctx.stroke()
-},
-
-// draws a funnel symbol - s is the size of the square
-filterSymbol(ctx, x, y, s, color) {
-
-    // router symbol
-    ctx.beginPath()
-    ctx.strokeStyle = color
-
-    const dx = s/3
-    const dy = s/2
-
-    ctx.moveTo(x,y)
-    ctx.lineTo(x+s,y)
-    ctx.lineTo(x+s-dx,y+dy)
-    ctx.lineTo(x+s-dx,y+s)
-    ctx.lineTo(x+dx,y+s)
-    ctx.lineTo(x+dx,y+dy)
-    ctx.lineTo(x,y)
 
     ctx.stroke()
 },

@@ -97,7 +97,7 @@ export const collectHandling = {
     },
 
     // build an array of source nodes ** Recursive **
-    makeSourceLists(nodeList, filterList) {
+    makeSourceLists(nodeList) {
 
         if (this.is.source) {
             nodeList.push(this)
@@ -114,7 +114,7 @@ export const collectHandling = {
             else {
 
                 // and the nodes !
-                for(const node of this.nodes) node.makeSourceLists(nodeList, filterList)
+                for(const node of this.nodes) node.makeSourceLists(nodeList)
             }
         }
     },

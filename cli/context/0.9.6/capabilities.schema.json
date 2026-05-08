@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/schemas/capabilities.v1.json",
+  "title": "vmblu Agent Capability Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "application", "tools", "probes", "events"],
+  "properties": {
+    "schema": { "const": "https://vmblu.dev/schemas/capabilities.v1.json" },
+    "version": { "const": 1 },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Tool" }
+    },
+    "probes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Probe" }
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Event" }
+    },
+    "policies": { "type": "object" },
+    "usageGuidance": { "type": "object" }
+  },
+  "$defs": {
+    "JsonSchema": {
+      "type": "object"
+    },
+    "Tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "description", "input", "risk", "approval"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["node", "pin", "ref", "schema"],
+          "properties": {
+            "node": { "type": "string", "minLength": 1 },
+            "pin": { "type": "string", "minLength": 1 },
+            "ref": { "type": "string", "minLength": 1 },
+            "payload": { "type": "string", "minLength": 1 },
+            "schema": { "$ref": "#/$defs/JsonSchema" }
+          }
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Effect" }
+        },
+        "risk": { "type": "string" },
+        "approval": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 0 },
+        "examples": { "type": "array" },
+        "usageGuidance": { "type": "object" }
+      }
+    },
+    "Probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "description", "kind", "schema"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "kind": { "type": "string" },
+        "schema": { "$ref": "#/$defs/JsonSchema" },
+        "binding": { "type": "object" }
+      }
+    },
+    "Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "description", "source", "schema"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["node", "pin", "ref"],
+          "properties": {
+            "node": { "type": "string", "minLength": 1 },
+            "pin": { "type": "string", "minLength": 1 },
+            "ref": { "type": "string", "minLength": 1 }
+          }
+        },
+        "schema": { "$ref": "#/$defs/JsonSchema" }
+      }
+    },
+    "Effect": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "verifyWith": { "type": "object" },
+        "successHint": { "type": "string" },
+        "timeoutMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

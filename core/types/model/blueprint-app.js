@@ -57,8 +57,11 @@ export const AppHandling = {
         // and save the app 
         const jsSource = this.makeJSApp(node, srcArl, indexArl, runtime)
 
+        // and save runtime sidecar files before saving the generated app that imports them
+        this.makeAndSaveAgentRuntimeFiles(srcArl, node, runtime)
+
         // and save the source
-        srcArl.save(jsSource)
+        srcArl.save(jsSource).catch(error => console.error(`Failed to save ${srcArl.getPath()}:`, error))
 
         // return the src arl and the html arl so that the app can be started (if wanted)
         const htmlArl = this.getArl().resolve(Path.changeExt(appPath,'html'))
@@ -90,30 +93,20 @@ export const AppHandling = {
         // set the imported source/libs
         let sImports = '\n//Imports' + this.JSImportExportString(imports,'\nimport ', srcArl)
 
-        // make the list of source nodes and filters - a recursive function
+        // make the list of source nodes - a recursive function
         const nodeList = []
-        const filterList = []
-        node.makeSourceLists(nodeList, filterList)
+        node.makeSourceLists(nodeList)
 
         // an array of nodes
         let sNodeList = '//The runtime nodes\nconst nodeList = ['
 
-        // make the init code for the run time nodes & filters
+        // make the init code for the runtime nodes
         for(const item of nodeList) sNodeList += this.JSSourceNode(item)
 
         // close the nodeList
         sNodeList += '\n]'
 
-        // the filter list
-        let sFilterList = '//The filters\nconst filterList = ['
-
-        // stringify the filters
-        for(const item of filterList) sFilterList += this.JSFilter(item)
-
-        // close
-        sFilterList += '\n]'
-
-        const sAgentRuntimeOptions = this.JSAgentRuntimeOptions(runtime, node)
+        const agentRuntime = this.JSAgentRuntimeOptions(runtime, node, srcArl)
 
         // combine all..
         const jsSource = 
@@ -123,14 +116,14 @@ import * as VMBLU from "${runtime}"
 
 ${sImports}
 
+${agentRuntime.imports}
+
 ${sNodeList}
 
-${sFilterList}
-
-${sAgentRuntimeOptions}
+${agentRuntime.options}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
+const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
 
 // and start the app
 runtime.start()
@@ -138,20 +131,77 @@ runtime.start()
         return sHeader + jsSource
     },
 
-    JSAgentRuntimeOptions(runtime, node) {
+    makeAndSaveAgentRuntimeFiles(srcArl, node, runtime) {
 
-        const isAgentRuntime = runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
-        if (!isAgentRuntime) return 'const agentRuntimeOptions = {}'
+        if (!this.isAgentRuntime(runtime)) return null
 
-        const options = {
-            capabilities: this.makeCapabilityObject(node)
+        const capArl = srcArl.resolve(this.agentRuntimeArtifactPath(srcArl, 'cap'))
+        capArl.save(this.makeCapabilityString(node)).catch(error => console.error(`Failed to save ${capArl.getPath()}:`, error))
+
+        const agent = this.header.agent
+        if (agent && typeof agent === 'object' && !Array.isArray(agent) && !agent.path) {
+            const agentArl = srcArl.resolve(this.agentRuntimeArtifactPath(srcArl, 'agent'))
+            agentArl.save(JSON.stringify(agent, null, 2)).catch(error => console.error(`Failed to save ${agentArl.getPath()}:`, error))
         }
 
-        if (this.header.agent) options.agent = this.header.agent
+        return capArl
+    },
 
-        const json = JSON.stringify(options, null, 4).replaceAll('\n', '\n')
+    JSAgentRuntimeOptions(runtime, node, srcArl) {
 
-        return `// Agent runtime options\nconst agentRuntimeOptions = ${json}`
+        if (!this.isAgentRuntime(runtime)) {
+            return {
+                imports: '',
+                options: 'const agentRuntimeOptions = {}'
+            }
+        }
+
+        const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap')
+        const imports = [
+            `import capabilities from '${capPath}' with { type: 'json' }`
+        ]
+        const optionLines = ['    capabilities']
+
+        const agentPath = this.agentRuntimeAgentImportPath(srcArl)
+        if (agentPath) {
+            imports.push(`import agent from '${agentPath}' with { type: 'json' }`)
+            optionLines.push('    agent')
+        }
+
+        const options = `const agentRuntimeOptions = {\n${optionLines.join(',\n')}\n}`
+
+        return {
+            imports: `// Agent runtime sidecars\n${imports.join('\n')}`,
+            options: `// Agent runtime options\n${options}`
+        }
+    },
+
+    isAgentRuntime(runtime) {
+        return runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
+    },
+
+    agentRuntimeAgentImportPath(srcArl) {
+
+        const agent = this.header.agent
+        if (!agent) return null
+
+        if (typeof agent === 'string') return Path.relative(this.getArl().resolve(agent).getFullPath(), srcArl.getFullPath())
+
+        if (typeof agent === 'object' && !Array.isArray(agent)) {
+            if (agent.path) return Path.relative(this.getArl().resolve(agent.path).getFullPath(), srcArl.getFullPath())
+            return this.agentRuntimeArtifactPath(srcArl, 'agent')
+        }
+
+        return null
+    },
+
+    agentRuntimeArtifactPath(srcArl, kind) {
+
+        const path = srcArl.getPath()
+        const ext = `.${kind}.json`
+
+        if (path.endsWith('.app.js')) return './' + Path.fileName(path.slice(0, -'.app.js'.length) + ext)
+        return './' + Path.fileName(Path.changeExt(path, ext))
     },
 
     // make a string with all imported or exported object factories - line prefix = 'import' or 'export'
@@ -317,80 +367,6 @@ runtime.start()
         return sTable
     },
 
-    // make a string with all the run time nodes
-    JSFilter(bus) {
-
-        const underscores = '\n\t//_____________________________________________________'
-
-        // a separator between the nodes
-        const separator = underscores.slice(0, -bus.name.length) + bus.name.toUpperCase() + ' FILTER'
-
-        // every node has name, uid and code - use the alias if present
-        let sSource = `${separator}\n\t{\n\tname: "${bus.name}", \n\tuid: "${bus.uid}", \n\tfilter: ${bus.filter.alias ?? bus.filter.fName},`
-
-        sSource += '\n\ttable: ['
-
-        // make the filtertable
-        const filterTable = this.makeFilterTable(bus)
-
-        // print it
-        const wSpace = '\n\t\t'
-        for(const actualSource of filterTable) {
-            sSource += '\n\t\t`' + actualSource.variant + ' : ['
-
-            // write the rest to scope
-            let sScope = ''
-            for (const target of actualSource.actualTargets) sScope += wSpace + '\t"' + target.toString() + '",'
-
-            // remove last comma
-            sSource += sScope.slice(0,-1) + ' ]`,' 
-        }
-
-        // close and return
-        return sSource + ']\n\t},'
-    },
-
-    // make the filter table
-    makeFilterTable(bus) {
-
-        const filterTable = []
-
-        // first make the tack/tack connection table
-        for(const rx of bus.rxTable) {
-
-            // get the pin
-            const pin = rx.tack.getOtherPin()
-
-            const rxName = pin.name
-
-            // maybe we have an entry for the rx name already - if so we do not have to handle it again (gives same result !)
-            if (filterTable.find( actualSource => actualSource.variant == rxName)) continue
-
-            // get a new source entry
-            const actualSource = new ActualSource(rxName, null)
-
-            // get the tx tacks that are connected to this tack
-            for(const tx of bus.txTable) {
-
-                // check for a match between rx and tx 
-                if (!tx.connectsTo(rxName)) continue
-
-                // go through every message in the fanout
-                for (const target of tx.fanout) {
-
-                    const actualTarget = this.getActualTarget(target)
-
-                    if (actualTarget) actualSource.actualTargets.push(actualTarget)                        
-                }
-            }
-
-            // add it to the filtertable
-            if (actualSource.actualTargets.length > 0) filterTable.push(actualSource)
-        }
-        // done
-        return filterTable
-    },
-
     // make a table with the actual targets for this source message
     getActualTarget(target) {
 
@@ -433,7 +409,7 @@ runtime.start()
 </html>`
 
         // save the html page
-        htmlArl.save(htmlPage)
+        htmlArl.save(htmlPage).catch(error => console.error(`Failed to save ${htmlArl.getPath()}:`, error))
     },
 
     // **************************** DOES NOT WORK !! cross scripting !!

@@ -244,6 +244,14 @@ labelCursor(ctx,text,x,y,w,h,pCursor) {
     return {x: x + cx + 1, y: y-0.25*h}
 },
 
+pinIcons(ctx, text, cText,x,y,w,h) {
+
+    const saveFont = ctx.font;
+    ctx.font= "normal 8px tahoma";
+    ctx.fillStyle = cText;
+    ctx.fillText(text,x,y + 0.5*h);
+    ctx.font = saveFont;
+},
 
 leftText(ctx, text, cText,x,y,w,h) {
     ctx.fillStyle = cText;
@@ -254,82 +262,6 @@ rightText(ctx, text,cText,x,y,w,h) {
     ctx.fillStyle = cText;
     let tw = ctx.measureText(text).width;
     ctx.fillText(text, x + w - tw, y+0.75*h);
-},
-
-rightTextMulti(ctx, text, fMulti, cText,x,y,w,h) {
-
-    // set the color
-    ctx.fillStyle = cText;
-
-    // set the actual y-position
-    y += 0.75*h;
-
-    // cut the text in three parts 
-    const opbr = text.indexOf('[');
-    const clbr = text.indexOf(']');
-    const pre = text.slice(0, opbr+1);
-    const multi = text.slice(opbr+1,clbr);
-    const post = text.slice(clbr);
-
-    // save the font
-    const savedFont = ctx.font;
-
-    // total width 
-    const wPre = ctx.measureText(pre).width; 
-    const wPost = ctx.measureText(post).width;
-    ctx.font = fMulti;
-    const wMulti = ctx.measureText(multi).width;
-
-    // write the text
-    ctx.font = savedFont;
-    x = x + w - wPre - wMulti - wPost;
-    ctx.fillText(pre,x,y);
-
-    ctx.font = fMulti;
-    x += wPre;
-    ctx.fillText(multi,x, y);
-
-    ctx.font = savedFont;
-    x += wMulti;
-    ctx.fillText(post,x,y);
-},
-
-leftTextMulti(ctx, text, fMulti, cText,x,y,w,h) {
-
-    ctx.fillStyle = cText;
- 
-    // set the color
-    ctx.fillStyle = cText;
-
-    // set the actual y-position
-    y += 0.75*h;
-
-    // cut the text in three parts 
-    const opbr = text.indexOf('[');
-    const clbr = text.indexOf(']');
-    const pre = text.slice(0, opbr+1);
-    const multi = text.slice(opbr+1,clbr);
-    const post = text.slice(clbr);
-
-    // save the font
-    const savedFont = ctx.font;
-
-    // sizes
-    const wPre = ctx.measureText(pre).width; 
-    ctx.font = fMulti;
-    const wMulti = ctx.measureText(multi).width;
-
-    // write the text
-    ctx.font = savedFont;
-    ctx.fillText(pre,x,y);
-
-    ctx.font = fMulti;
-    x += wPre;
-    ctx.fillText(multi,x, y);
-
-    ctx.font = savedFont;
-    x += wMulti;
-    ctx.fillText(post,x,y);
 },
 
 centerText(ctx, text,font, cText,x,y,w,h) {
@@ -592,17 +524,6 @@ tack(ctx, type, channel, top, rc,t,cFill) {
     ctx.fill();
 },
 
-filterSign(ctx,point, width, color){
-
-    let cx = point.x - width/2;
-    let cy = point.y - width/2;
-
-    ctx.fillStyle = color;
-    ctx.fillRect(cx, cy, width, width);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(cx + 2, cy + 2, width-4, width-4);
-},
-
 // the text is centered in the label 
 hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
@@ -648,27 +569,6 @@ wirelessSymbol(ctx, x, y,r,color) {
     ctx.arc(cx, cy,r,Math.PI,-Math.PI/2);
     ctx.moveTo(cx-r+4,cy);
     ctx.arc(cx, cy,r-4,Math.PI,-Math.PI/2);
-
-    ctx.stroke();
-},
-
-// draws a funnel symbol - s is the size of the square
-filterSymbol(ctx, x, y, s, color) {
-
-    // router symbol
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-
-    const dx = s/3;
-    const dy = s/2;
-
-    ctx.moveTo(x,y);
-    ctx.lineTo(x+s,y);
-    ctx.lineTo(x+s-dx,y+dy);
-    ctx.lineTo(x+s-dx,y+s);
-    ctx.lineTo(x+dx,y+s);
-    ctx.lineTo(x+dx,y+dy);
-    ctx.lineTo(x,y);
 
     ctx.stroke();
 },
@@ -806,26 +706,6 @@ drawWire(ctx, color, width, points) {
     ctx.strokeStyle = color;
 
     this.drawPoints(ctx, points);
-},
-
-// draw twisted segments with an arc
-twistedPair(ctx, color, width, points) {
-
-    // we have segments to draw..
-    ctx.beginPath();
-
-    // set the linewidth
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2*width;
-
-    // the dash pattern
-    //ctx.setLineDash([3,3])
-    //ctx.setLineDash([24,4,3,4])
-
-    this.drawPoints(ctx, points);
-
-    // reset the dash pattern to nothing
-    //ctx.setLineDash([])
 },
 
 // get the rectangle of the alias - x, y are the position of the tack
@@ -1512,68 +1392,6 @@ const convert = {
             .reverse();                      // reverse: outermost to innermost
     },
 
-
-
-    // check if a pin has a multi structure
-    isMulti: str => {
-
-        // now get the brackets
-        const opbr = str.indexOf('[');
-        const clbr = str.lastIndexOf(']');
-
-        return ((opbr > -1) && (clbr > -1) && (clbr > opbr))
-    },
-
-    // extract the names between square brackets:  'any text [selector a, selector b, ...] any text'
-    extractMultis: str => {
-
-        const [pre, middle] = convert.getPreMiddlePost(str);
-
-        // split, trim an filter
-        return middle.split(',')
-    },
-
-    // makes a list of all full message names - if there are no multis, just returns the message in an array
-    expandMultis: str => {
-
-        const [pre, middle, post] = convert.getPreMiddlePost(str);
-
-        // split, trim an filter
-        const multis = middle.split(',');
-
-        // re-assemble
-        return multis.map(name => pre + name + post)
-    },
-
-    cleanMulti(str) {
-
-        //get the parts before and after the multi part
-        const [pre, middle, post] = convert.getPreMiddlePost(str);
-
-        // reassemble the name
-        return pre + '[' + middle + ']' + post
-    },
-
-    // get the part before and after a multi message
-    getPreMiddlePost(str) {
-        // now get the brackets
-        const opbr = str.indexOf('[');
-        const clbr = str.lastIndexOf(']');
-
-        // get the parts before and after the multi part
-        let pre = str.slice(0,opbr).trim();
-        let middle = str.slice(opbr+1, clbr).split(',').map(n=>n.trim()).filter(Boolean).join(',');
-        let post = str.slice(clbr+1).trim();
-
-        // if there is no period, hyphen or underscore, we add a period
-        const last = pre.at(-1);
-        if ((pre.length > 0) && (last != '.') && (last != '-') && (last != '_')) pre = pre + ' ';
-        const first = post[0];
-        if ((post.length > 0) && (first != '.') && (first != '-') && (first != '_')) post = ' ' + post;
-
-        return [pre, middle, post]
-    },
-
     // a pin name that has been edited can start or end with a special character
     // that indicates that th einterface name will be added as prefix / postfix
     // + indicates a single space
@@ -1938,6 +1756,7 @@ const color = {
     red:    '#FE2712', 
     redT:   '#FE271222', 
     blue:   '#0000ff',
+    yellow:   '#fff000',
 
     // set the shades for this color object
     setShades(rgb) {
@@ -2006,10 +1825,9 @@ function StyleFactory() {
         cSelected: color.select, cHighLighted: color.highLight
     };
     this.pin = {
-        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7,
+        hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7, wIcon: 16,
         cNormal: color.shade1, cSelected: color.select, cHighLighted: color.highLight, 
-        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black,
-        fMulti: "italic 11px tahoma"
+        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black, cIcon: color.yellow
     }; 
     this.pad = {
         hPad: 15,hSpace: 15, rBullet: 7.5, wArrow:10, hArrow:10, wExtra: 30, wMargin:4,  wViewLeft: 10,  wViewRight: 100, 
@@ -2022,7 +1840,7 @@ function StyleFactory() {
         cAdded: color.add, cDeleted: color.red
     }; 
     this.bus = {
-        wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5, wFilter: 15,
+        wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5,
         cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
     }; 
     this.selection = {
@@ -2491,7 +2309,7 @@ function updateDerivedSettings(original, derived) {
 }
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const SCHEMA_VERSION = "0.9.5";
+const SCHEMA_VERSION = "0.9.6";
 
 function ModelHeader() {
 
@@ -2957,7 +2775,8 @@ resolve(path) {
 resolve_dbg(path) {
 
     const arl = this.resolve(path);
-    console.log(`%cresolved: ${path} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f');
+    //DEV ONLY
+    //console.log(`%cresolved: ${path} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
     return arl
 },
 
@@ -3363,8 +3182,8 @@ saveRaw() {
     const viz = JSON.stringify(split.viz,null,2);
 
     // save both parts of the model
-    if (blu) this.blu.arl.save( blu );
-    if (viz) this.viz.arl.save( viz );
+    if (blu) this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error));
+    if (viz) this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error));
 },
 
 // Splits raw into a part for the blu file and the viz file
@@ -3608,7 +3427,7 @@ rawAsLinks(imports, raw) {
     // We need to adapt already existing links ! 
     const oldRef = raw.origin;
     const newRef = this.fullPath();
-console.log(newRef);
+  
     // we only save the origin once 
     let saveOrigin = true;
 
@@ -3627,7 +3446,7 @@ console.log(newRef);
         else {
             rawNode.kind = 'dock';
             rawNode.link = { path: raw.origin, node: rawNode.name};
-console.log(rawNode);
+
             // save origin just once
             if (saveOrigin) {
                 imports.push(raw.origin);
@@ -3816,28 +3635,7 @@ getDirectInputPinProfile(pin) {
     // us the handler name to index the map
     const handlerName = convert.pinToHandler(pin.name);
 
-    // if the pin is not a multi just return the single record
-    if (!pin.is.multi) return handles.get(handlerName) ?? null
-
-    // multi case: expand the multi in an array of all names
-    const multi = pin.expandMultis();
-
-    // collect the info in an array
-    const multiProfile = [];
-    for (const name of multi) {
-
-        // search on handlername
-        const handlerName = convert.pinToHandler(name);
-
-        // get the info for the name
-        const info = handles.get(handlerName) ?? null;
-
-        // check
-        if (info) multiProfile.push(info);
-    }
-
-    // done
-    return multiProfile
+    return handles.get(handlerName) ?? null
 },
 
 getDirectOutputPinProfile(pin) {
@@ -3848,25 +3646,7 @@ getDirectOutputPinProfile(pin) {
     //check
     if (!transmits) return null
 
-    // if the pin is not a multi just return the single record
-    if (!pin.is.multi) return transmits.get(pin.name) ?? null
-
-    // multi case: expand the multi in an array of all names
-    const multi = pin.expandMultis();
-
-    // collect the info in an array
-    const multiProfile = [];
-    for (const name of multi) {
-
-        // get the info for the name
-        const info = transmits.get(name) ?? null;
-
-        // check
-        Array.isArray(info) ? multiProfile.push(...info) : multiProfile.push(info);
-    }
-
-    // done
-    return multiProfile
+    return transmits.get(pin.name) ?? null
 },
 
 getProxyPinProfile(pin) {
@@ -4123,7 +3903,7 @@ makeAndSaveCapabilities(capPath, root = null) {
     if (!capPath) return null
 
     const capArl = this.getArl().resolve(capPath);
-    capArl.save(this.makeCapabilityString(root));
+    capArl.save(this.makeCapabilityString(root)).catch(error => console.error(`Failed to save ${capArl.getPath()}:`, error));
 
     return capArl
 },
@@ -4314,8 +4094,6 @@ titleFromId(id) {
 
 };
 
-// we have to expand multi sources into single names, eg AA.[x,y] => AA.x, AA.y
-// for each variant 
 function ActualSource(name, pin) {
     this.variant = name,
     this.pin = pin;
@@ -4324,7 +4102,7 @@ function ActualSource(name, pin) {
 ActualSource.prototype = {
 };
 
-// This object is used to split multi-messages in a single targets
+// This object is used to format targets in output and filter tables.
 function ActualTarget(name, target) {
 
     this.variant = name;
@@ -4373,8 +4151,11 @@ const AppHandling = {
         // and save the app 
         const jsSource = this.makeJSApp(node, srcArl, indexArl, runtime);
 
+        // and save runtime sidecar files before saving the generated app that imports them
+        this.makeAndSaveAgentRuntimeFiles(srcArl, node, runtime);
+
         // and save the source
-        srcArl.save(jsSource);
+        srcArl.save(jsSource).catch(error => console.error(`Failed to save ${srcArl.getPath()}:`, error));
 
         // return the src arl and the html arl so that the app can be started (if wanted)
         const htmlArl = this.getArl().resolve(changeExt(appPath,'html'));
@@ -4406,30 +4187,20 @@ const AppHandling = {
         // set the imported source/libs
         let sImports = '\n//Imports' + this.JSImportExportString(imports,'\nimport ', srcArl);
 
-        // make the list of source nodes and filters - a recursive function
+        // make the list of source nodes - a recursive function
         const nodeList = [];
-        const filterList = [];
-        node.makeSourceLists(nodeList, filterList);
+        node.makeSourceLists(nodeList);
 
         // an array of nodes
         let sNodeList = '//The runtime nodes\nconst nodeList = [';
 
-        // make the init code for the run time nodes & filters
+        // make the init code for the runtime nodes
         for(const item of nodeList) sNodeList += this.JSSourceNode(item);
 
         // close the nodeList
         sNodeList += '\n]';
 
-        // the filter list
-        let sFilterList = '//The filters\nconst filterList = [';
-
-        // stringify the filters
-        for(const item of filterList) sFilterList += this.JSFilter(item);
-
-        // close
-        sFilterList += '\n]';
-
-        const sAgentRuntimeOptions = this.JSAgentRuntimeOptions(runtime, node);
+        const agentRuntime = this.JSAgentRuntimeOptions(runtime, node, srcArl);
 
         // combine all..
         const jsSource = 
@@ -4439,14 +4210,14 @@ import * as VMBLU from "${runtime}"
 
 ${sImports}
 
+${agentRuntime.imports}
+
 ${sNodeList}
 
-${sFilterList}
-
-${sAgentRuntimeOptions}
+${agentRuntime.options}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
+const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
 
 // and start the app
 runtime.start()
@@ -4454,20 +4225,77 @@ runtime.start()
         return sHeader + jsSource
     },
 
-    JSAgentRuntimeOptions(runtime, node) {
+    makeAndSaveAgentRuntimeFiles(srcArl, node, runtime) {
 
-        const isAgentRuntime = runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent');
-        if (!isAgentRuntime) return 'const agentRuntimeOptions = {}'
+        if (!this.isAgentRuntime(runtime)) return null
 
-        const options = {
-            capabilities: this.makeCapabilityObject(node)
-        };
+        const capArl = srcArl.resolve(this.agentRuntimeArtifactPath(srcArl, 'cap'));
+        capArl.save(this.makeCapabilityString(node)).catch(error => console.error(`Failed to save ${capArl.getPath()}:`, error));
 
-        if (this.header.agent) options.agent = this.header.agent;
+        const agent = this.header.agent;
+        if (agent && typeof agent === 'object' && !Array.isArray(agent) && !agent.path) {
+            const agentArl = srcArl.resolve(this.agentRuntimeArtifactPath(srcArl, 'agent'));
+            agentArl.save(JSON.stringify(agent, null, 2)).catch(error => console.error(`Failed to save ${agentArl.getPath()}:`, error));
+        }
 
-        const json = JSON.stringify(options, null, 4).replaceAll('\n', '\n');
+        return capArl
+    },
 
-        return `// Agent runtime options\nconst agentRuntimeOptions = ${json}`
+    JSAgentRuntimeOptions(runtime, node, srcArl) {
+
+        if (!this.isAgentRuntime(runtime)) {
+            return {
+                imports: '',
+                options: 'const agentRuntimeOptions = {}'
+            }
+        }
+
+        const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap');
+        const imports = [
+            `import capabilities from '${capPath}' with { type: 'json' }`
+        ];
+        const optionLines = ['    capabilities'];
+
+        const agentPath = this.agentRuntimeAgentImportPath(srcArl);
+        if (agentPath) {
+            imports.push(`import agent from '${agentPath}' with { type: 'json' }`);
+            optionLines.push('    agent');
+        }
+
+        const options = `const agentRuntimeOptions = {\n${optionLines.join(',\n')}\n}`;
+
+        return {
+            imports: `// Agent runtime sidecars\n${imports.join('\n')}`,
+            options: `// Agent runtime options\n${options}`
+        }
+    },
+
+    isAgentRuntime(runtime) {
+        return runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
+    },
+
+    agentRuntimeAgentImportPath(srcArl) {
+
+        const agent = this.header.agent;
+        if (!agent) return null
+
+        if (typeof agent === 'string') return relative(this.getArl().resolve(agent).getFullPath(), srcArl.getFullPath())
+
+        if (typeof agent === 'object' && !Array.isArray(agent)) {
+            if (agent.path) return relative(this.getArl().resolve(agent.path).getFullPath(), srcArl.getFullPath())
+            return this.agentRuntimeArtifactPath(srcArl, 'agent')
+        }
+
+        return null
+    },
+
+    agentRuntimeArtifactPath(srcArl, kind) {
+
+        const path = srcArl.getPath();
+        const ext = `.${kind}.json`;
+
+        if (path.endsWith('.app.js')) return './' + fileName(path.slice(0, -'.app.js'.length) + ext)
+        return './' + fileName(changeExt(path, ext))
     },
 
     // make a string with all imported or exported object factories - line prefix = 'import' or 'export'
@@ -4514,12 +4342,7 @@ runtime.start()
         const pinString = (pin) => {
             const prefix = '\n\t\t';
             const symbol = pin.is.input ? (pin.is.channel ? "=>" : "->") : (pin.is.channel ? "<=" : "<-");
-            if (pin.is.multi) {
-                let str = '';
-                for(const variant of pin.expandMultis()) str += prefix + `"${symbol} ${variant}",`;
-                return str
-            }
-            else return prefix + `"${symbol} ${pin.name}",`;           
+            return prefix + `"${symbol} ${pin.name}",`;           
         };
 
         // helper function to print a json string
@@ -4560,7 +4383,7 @@ runtime.start()
         // add all the targets for each output of the node
         for(const tx of node.txTable) {
 
-            // make the actual output table for each output - it expands the multi-messages
+            // make the actual output table for each output
             const outputTable = this.makeOutputTable(tx);
 
             // then stringify the output table
@@ -4586,28 +4409,17 @@ runtime.start()
         // The expanded tx table or output table
         const outputTable = [];
 
-        // create an array with all possible source names
-        const sourceNames = tx.pin.is.multi ? convert.expandMultis(tx.pin.name) : [tx.pin.name];
+        const actualSource = new ActualSource(tx.pin.name, tx.pin);
 
-        // get for each single source the corresponding targets
-        for (const sourceName of sourceNames) {
+        // for each target 
+        for (const target of tx.targets){
 
-            // We store the result in an ActualSource record
-            const actualSource = new ActualSource(sourceName, tx.pin);
+            const actualTarget = this.getActualTarget(target);
 
-            // for each target 
-            for (const target of tx.targets){
-
-                // get the actual target for this source variant
-                const actualTarget = this.getActualTarget(tx.pin, sourceName, target);
-
-                // The actual target for a given source variant can be null
-                if (actualTarget) actualSource.actualTargets.push(actualTarget);
-            }
-
-            // add it to the output table if there is anything in the target table
-            outputTable.push(actualSource);
+            if (actualTarget) actualSource.actualTargets.push(actualTarget);
         }
+
+        outputTable.push(actualSource);
 
         return outputTable
     },
@@ -4649,138 +4461,18 @@ runtime.start()
         return sTable
     },
 
-    // make a string with all the run time nodes
-    JSFilter(bus) {
-
-        const underscores = '\n\t//_____________________________________________________';
-
-        // a separator between the nodes
-        const separator = underscores.slice(0, -bus.name.length) + bus.name.toUpperCase() + ' FILTER';
-
-        // every node has name, uid and code - use the alias if present
-        let sSource = `${separator}\n\t{\n\tname: "${bus.name}", \n\tuid: "${bus.uid}", \n\tfilter: ${bus.filter.alias ?? bus.filter.fName},`;
-
-        sSource += '\n\ttable: [';
-
-        // make the filtertable
-        const filterTable = this.makeFilterTable(bus);
-
-        // print it
-        const wSpace = '\n\t\t';
-        for(const actualSource of filterTable) {
-            sSource += '\n\t\t`' + actualSource.variant + ' : [';
-
-            // write the rest to scope
-            let sScope = '';
-            for (const target of actualSource.actualTargets) sScope += wSpace + '\t"' + target.toString() + '",';
-
-            // remove last comma
-            sSource += sScope.slice(0,-1) + ' ]`,'; 
-        }
-
-        // close and return
-        return sSource + ']\n\t},'
-    },
-
-    // make the filter table
-    makeFilterTable(bus) {
-
-        const filterTable = [];
-
-        // first make the tack/tack connection table
-        for(const rx of bus.rxTable) {
-
-            // get the pin
-            const pin = rx.tack.getOtherPin();
-
-            // for each actual source
-            const rxNames = pin.is.multi ? convert.expandMultis(pin.name) : [pin.name];
-
-            // for each name
-            for (const rxName of rxNames) {
-
-                // maybe we have an entry for the rx name already - if so we do not have to handle it again (gives same result !)
-                if (filterTable.find( actualSource => actualSource.variant == rxName)) continue
-
-                // get a new source entry
-                const actualSource = new ActualSource(rxName, null);
-
-                // get the tx tacks that are connected to this tack
-                for(const tx of bus.txTable) {
-
-                    // check for a match between rx and tx 
-                    if (!tx.connectsTo(rxName)) continue
-
-                    // go through every message in the fanout
-                    for (const target of tx.fanout) {
-
-                        // get the actual target for this source variant
-                        const actualTarget = this.getActualTarget(pin, rxName, target);
-
-                        // The actual target for a given source variant can be null
-                        if (actualTarget) actualSource.actualTargets.push(actualTarget);                        
-                    }
-                }
-
-                // add it to the filtertable
-                if (actualSource.actualTargets.length > 0) filterTable.push(actualSource);
-            }
-        }
-        // done
-        return filterTable
-    },
-
     // make a table with the actual targets for this source message
-    // If the target is a multi-message we have to decide which one is the actual target
-    getActualTarget(source, sourceName, target) {
+    getActualTarget(target) {
 
         if (target.is.pin) {
-
-            if (target.is.multi) {
-
-                // get the target variant that corresponds with the source name
-                const targetName = target.getMatch(sourceName);
-
-                // check
-                return targetName ? new ActualTarget(targetName, target) : null
-            }
-            else if (source.is.multi) {
-
-                // get the source variant that corresponds with the target name
-                const sourceVariant = source.getMatch(target.name);
-
-                // check - it should be the same as the sourceName
-                return (sourceVariant == sourceName) ? new ActualTarget(target.name, target) : null
-            }
-            else {
-                // simple connection - names do not matter
-                return new ActualTarget(target.name, target)
-            }
+            return new ActualTarget(target.name, target)
         }
         else if (target.is.tack) {
 
             // get the corresponding pin or proxy
             const pin = target.getOtherPin();
 
-            // check if multi
-            if (pin.is.multi) {
-
-                // check if there is a match with the source
-                const targetName = pin.getMatch(sourceName);
-                return targetName ? new ActualTarget(targetName, target) : null
-            }
-            else if (source.is.multi) {
-
-                // get the source variant that corresponds with the target name
-                const sourceVariant = source.getMatch(pin.name);
-
-                // check - it should be the same as the sourceName
-                return (sourceVariant == sourceName) ? new ActualTarget(pin.name, target) : null
-            }
-            else {
-                // simple connection - names do not matter (or have been checked before eg on a cable bus)
-                return new ActualTarget(pin.name, target)
-            }
+            return new ActualTarget(pin.name, target)
         }
     },
 
@@ -4811,7 +4503,7 @@ runtime.start()
 </html>`;
 
         // save the html page
-        htmlArl.save(htmlPage);
+        htmlArl.save(htmlPage).catch(error => console.error(`Failed to save ${htmlArl.getPath()}:`, error));
     },
 
     // **************************** DOES NOT WORK !! cross scripting !!
@@ -4888,8 +4580,7 @@ TxTack.prototype = {
 
         const pin = this.tack.getOtherPin();
 
-        // it must either be a literal match or the pin variant must include the message
-        return pin.is.multi ? (pin.getMatch(messageName) == messageName) : (pin.name == messageName)
+        return pin.name == messageName
     },
 
     dropTarget(dst) {
@@ -5393,7 +5084,7 @@ const collectHandling = {
     },
 
     // build an array of source nodes ** Recursive **
-    makeSourceLists(nodeList, filterList) {
+    makeSourceLists(nodeList) {
 
         if (this.is.source) {
             nodeList.push(this);
@@ -5410,7 +5101,7 @@ const collectHandling = {
             else {
 
                 // and the nodes !
-                for(const node of this.nodes) node.makeSourceLists(nodeList, filterList);
+                for(const node of this.nodes) node.makeSourceLists(nodeList);
             }
         }
     },
@@ -5903,7 +5594,6 @@ const compareHandling = {
             // copy 
             dw.name = lw.name;
             dw.pxlen = lw.pxlen;
-            dw.is.multi = lw.is.multi;
         }
 
         // profile change (silent)
@@ -6085,9 +5775,6 @@ const pinNameHandling = {
             this.pxlen = 0;
         }
 
-        // also reset the multi bit
-        this.is.multi = false;
-
         if (!click) return {prop: 'name', index: this.name.length};
 
         // the text starts here
@@ -6114,9 +5801,14 @@ const pinNameHandling = {
 
     // a function to get the displayname
     displayName() {
+
         let dName = this.pxlen == 0 ? this.name : this.withoutPrefix();
 
-        return dName
+        if (!this.is.capability) return dName
+
+        const mark = this.is.input ? '\u24E3' : '\u24D4';
+
+        return this.is.left ?  mark + ' ' + dName : dName + ' ' + mark 
     },
 
     // check for a name clash
@@ -6158,10 +5850,6 @@ const pinNameHandling = {
         }
         // no prefix naming - reset the prefix/postfix length
         else this.pxlen = 0;
-
-        // reformat a multi message pin
-        this.is.multi = convert.isMulti(this.name);
-        if (this.is.multi) this.name = convert.cleanMulti(this.name);
 
         // check the route usage
         this.checkRouteUsage();
@@ -6345,17 +6033,7 @@ const pinNameHandling = {
             // get the other side of the route
             const other = route.from == this ? route.to : route.from;
 
-            // check the twisted pair (thick line)
-            route.is.twistedPair = other.is.multi || this.is.multi;
-
-            // multi messages can only connect to multimessages
-            if (other.is.pin) {
-                if ((other.is.multi || this.is.multi) && !this.hasMultiOverlap(other)) route.is.notUsed = true;
-            }
-            else if (other.is.pad){
-                if ((this.is.multi || other.proxy.is.multi) && !this.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
-            } 
-            else if (other.is.tack) {
+            if (other.is.tack) {
 
                 // check all the bus routes
                 let found = false;
@@ -6379,92 +6057,9 @@ const pinNameHandling = {
         }
     },
 
-    // extract the names between [] as an array
-    extractMultis() {
-        return convert.extractMultis(this.name)
-    },
-
-    // expand the multis - returns an array - if no multis, it contains the original name
-    expandMultis() {
-        return convert.expandMultis(this.name)
-    },
-
     // is used to check if two pins are logically connected via a cable
     hasFullNameMatch(pin) {
-
-        // The messages between the pins must overlap
-        const allPinMsgs = pin.is.multi ? convert.expandMultis(pin.lowerCase()) : [pin.lowerCase()];
-        const allThisMsgs = this.is.multi ? convert.expandMultis(this.lowerCase()) : [this.lowerCase()];
-//console.log('MULTI', allPinMsgs, allThisMsgs)
-        // at the first common message we return
-        for(const pinMsg of allPinMsgs) {
-            if ( allThisMsgs.includes(pinMsg)) return true
-        }
-
-        // no overlap
-        return false
-    },
-
-    // The names should partially match 
-    hasMultiOverlap(pin) {
-        
-        if (pin.is.multi) {
-            if (this.is.multi) 
-                return this.checkMultiPartOnly(pin)
-            else
-                return pin.checkPartial(this.lowerCase())
-        }
-        else if (this.is.multi) {
-            return this.checkPartial(pin.lowerCase())
-        }
-        return false
-    },
-
-    // both are multis !
-    checkMultiPartOnly(pin) {
-
-        // get the list of messages between brackets
-        const pinMulti = convert.extractMultis(pin.lowerCase());
-        const thisMulti = convert.extractMultis(this.lowerCase());
-
-        // check - at the first match return
-        for(const variant of pinMulti) {
-            if (thisMulti.includes(variant)) return true
-        }
-
-        // no matches
-        return false
-    },
-
-    // check if the othername contains at least one of the multis
-    checkPartial(otherName) {
-
-        // get the multis
-        const thisMulti = convert.extractMultis(this.lowerCase());
-
-        // check - at the first match return
-        for(const variant of thisMulti) {
-            if (otherName.indexOf(variant) >= 0) return true
-        }
-
-        // no matches
-        return false
-    },
-
-    getMatch(mName) {
-
-        if (this.is.multi) {
-
-            const multiParts = convert.extractMultis(this.lowerCase());
-            const multis = convert.expandMultis(this.lowerCase());
-
-            // if a part is found in mName, return the corresponding full multi name
-            for (let i=0; i < multiParts.length; i++) {
-
-                if (mName.includes(multiParts[i])) return (multis[i])
-            }
-        }
-        return null
+        return this.lowerCase() == pin.lowerCase()
     }
 };
 
@@ -6491,7 +6086,6 @@ function Pin(rect, node, name, is) {
         channel: is.channel ?? false,
         input: is.input ?? false,
         left: is.left ?? false, // default set inputs right
-        multi: is.multi ?? false, // the pin can send / receive several messages
         capability: false, // visible as a capabilty for an agent, either as a tool or an event
         selected: false, // when the pin is selected
         highLighted: false,
@@ -6542,30 +6136,31 @@ Pin.prototype = {
         const dx = style.box.wLine / 2;
 
         // The shape for a channel is different
-        const pointLeft = this.is.channel
-            ? shape.triangleBall
-            : shape.leftTriangle;
-        const pointRight = this.is.channel
-            ? shape.ballTriangle
-            : shape.rightTriangle;
+        const pointLeft =  this.is.channel ? shape.triangleBall : shape.leftTriangle;
+        const pointRight = this.is.channel ? shape.ballTriangle : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,"#007700", null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,cText, null)
+
+        const icons = this.is.capability ? (this.is.input ? 'T' : 'E') : null;
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
+
             const xArrow = rc.x + st.wOutside;
-            this.is.multi
-                ? shape.leftTextMulti(ctx, displayName, st.fMulti, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h)
-                : shape.leftText(ctx, displayName, cText, rc.x + style.pin.wMargin, rc.y, rc.w, rc.h);
+            shape.leftText(ctx, displayName, cText, rc.x + st.wMargin, rc.y, rc.w, rc.h);
             this.is.input
                 ? pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow);
+
+            if (icons) shape.pinIcons(ctx,icons, st.cIcon ,rc.x + rc.w + st.wIcon, rc.y, 0, rc.h);
+
         } else {
+
+            if (icons) shape.pinIcons(ctx,icons, st.cIcon ,rc.x - st.wIcon, rc.y, 0, rc.h);
+
             const xArrow = rc.x + rc.w - st.wOutside;
-            this.is.multi
-                ? shape.rightTextMulti(ctx, displayName, st.fMulti, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h)
-                : shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - style.pin.wMargin, rc.h);
+            shape.rightText(ctx, displayName, cText, rc.x, rc.y, rc.w - st.wMargin, rc.h);
             this.is.input
                 ? pointLeft(ctx, xArrow - st.hArrow + dx, yArrow, st.hArrow, st.wArrow, cArrow)
                 : pointRight(ctx, xArrow - dx, yArrow, st.hArrow, st.wArrow, cArrow);
@@ -6615,9 +6210,6 @@ Pin.prototype = {
         // both cannot be outputs or inputs
         if (this.is.input === pin.is.input) return false;
 
-        // multi messages can only be connected if there is a (partial) overlap
-        if ((this.is.multi || pin.is.multi) && !this.hasMultiOverlap(pin)) return false;
-
         // check if we have already a connection between the pins
         if (this.haveRoute(pin)) return false;
 
@@ -6631,15 +6223,9 @@ Pin.prototype = {
             // should not happen
             if (widget.is.input == this.is.input) return false;
 
-            // multis
-            if ((widget.is.multi || this.is.multi) && !this.hasMultiOverlap(widget))
-                return false;
         } else if (widget.is.pad) {
             // should not happen
             if (widget.proxy.is.input != this.is.input) return false;
-
-            // multis
-            if (widget.proxy.is.multi && !this.hasMultiOverlap(widget.proxy)) return false;
         }
         return true;
     },
@@ -6911,7 +6497,7 @@ Pin.prototype = {
         // The width of the pad
         const width =
             style.pad.wExtra +
-            this.node.look.getTextWidth(this.name, this.is.multi);
+            this.node.look.getTextWidth(this.name);
 
         // determine the rectangle for the pad widget
         return this.is.left
@@ -7099,13 +6685,7 @@ const TackConnectHandling = {
 
     pinNameCheck(A,B) {
 
-        // there has to be a full name match
-        if (A.is.multi || B.is.multi) {
-            if (!A.hasFullNameMatch(B)) return false
-        }
-        else {
-            if (A.name != B.name) return false
-        }
+        if (A.name != B.name) return false
 
         return true
     },
@@ -7159,9 +6739,6 @@ const TackConnectHandling = {
             }
         }
 
-        // check the names if multis
-        if (actualA.is.multi || actualB.is.multi) return actualA.hasFullNameMatch(actualB) 
-    
         // check the name or the alias
         const nameA = this.alias ? this.alias : actualA.name;
         const nameB = tack.alias ? tack.alias : actualB.name;
@@ -8274,14 +7851,14 @@ const widgetHandling = {
     },
 
     // calculate the rectangle for a pin
-    pinRectangle(displayName, y, left, multi=false) {
+    pinRectangle(displayName, y, left) {
 
         // notation
         const st = style.pin;
         let rc = this.rect;
 
         // total width of the widget
-        const width = st.wMargin + this.getTextWidth(displayName, multi);
+        const width = st.wMargin + this.getTextWidth(displayName);
 
         // check the width of the look (can change the ractangle of the look !)
         if (width > rc.w) this.wider(width - rc.w);
@@ -8494,7 +8071,7 @@ addPin(name, pos, is) {
     const displayName = this.displayName(name,pos.y);
 
     // the rectangle for the pin
-    const rect = this.pinRectangle(displayName, pos.y, left, is.multi);
+    const rect = this.pinRectangle(displayName, pos.y, left);
 
     // create the pin
     const pin = is.proxy ? new Proxy(rect, this.node, name, is)  : new Pin(rect, this.node, name, is); 
@@ -8656,7 +8233,6 @@ rawWidgetsToPinArea(rawWidgets, pos) {
         left: false,
         channel: false,
         proxy: false,
-        multi: false,
         zombie: false
     };
 
@@ -8672,7 +8248,6 @@ rawWidgetsToPinArea(rawWidgets, pos) {
             is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
             is.left = raw.left ?? false;
             is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
-            is.multi = convert.isMulti(raw.name);
             is.proxy = this.node.is.group;
 
             // add the pin at the requested position
@@ -9555,7 +9130,7 @@ makeRaw() {
         // save interface names
         if (w.is.ifName) widgets.push(w);
 
-        // save pins, but expand multis into seperate messages
+        // save pins
         else if (w.is.pin) {
             widgets.push(w);
         }
@@ -9701,7 +9276,6 @@ cookPin(raw) {
         input: false,
         left: false,
         channel: false,
-        multi: false,
         zombie: false
     };
 
@@ -9709,9 +9283,6 @@ cookPin(raw) {
     is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
     is.left = raw.left ?? false;
     is.channel = ((raw.kind == "request") || (raw.kind == "reply")) ? true : false;
-
-    // a comma seperated list between [] is a multi message
-    is.multi = convert.isMulti(raw.name);
 
     // proxy or pure pin
     is.proxy = this.node.is.group;
@@ -9853,7 +9424,7 @@ Look.prototype = {
     adjustPinWidth(widget) {
 
         // Get the new width
-        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix(), widget.is.multi);
+        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix());
 
         // move the x of the widgets if at the right
         if ( ! widget.is.left) widget.rect.x += (widget.rect.w - newWidth);
@@ -9865,30 +9436,9 @@ Look.prototype = {
         if (widget.rect.w > this.rect.w) this.wider(widget.rect.w - this.rect.w);
     },
 
-    getTextWidth(str, multi=false) {
+    getTextWidth(str) {
 
-        return multi ? this.getMultiTextWidth(str) : ctxOffscreen.measureText(str).width
-    },
-
-    getMultiTextWidth(str) {
-        // cut the text in three parts 
-        const [pre, middle, post] = convert.getPreMiddlePost(str);
-
-        // measure pre and post
-        let width = ctxOffscreen.measureText(pre + '[').width + ctxOffscreen.measureText(']'+ post).width;
-
-        // change font
-        const savedFont = ctxOffscreen.font;
-        ctxOffscreen.font = style.pin.fMulti;
-
-        // measure the multi text
-        width += ctxOffscreen.measureText(middle).width;
-
-        // restore the font
-        ctxOffscreen.font = savedFont;
-
-        // done
-        return width
+        return ctxOffscreen.measureText(str).width
     },
 
     wider(delta=0) {
@@ -10501,10 +10051,11 @@ Selection.prototype = {
         return selection;
     },
 
-    canCancel(hit) {
+    canCancel(hit, keys = 0) {
         // if we have hit a selection we cannot cancel it
         // if we have not hit it we can cancel the rectangle selections
         // The single node selection is not cancelled normally
+        if (keys === CTRL) return false;
 
         return hit.what == zap.selection
             ? false
@@ -10931,9 +10482,6 @@ const mouseMoveHandling = {
                     // this is the route we are drawing
                     state.route.select();
 
-                    // if the pin we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.lookWidget.is.multi) state.route.setTwistedPair();
-
                     // add the route to the widget
                     state.lookWidget.routes.push(state.route);  
                     
@@ -11025,9 +10573,6 @@ const mouseMoveHandling = {
 
                     // create a new route - only the from widget is known
                     state.route = new Route(state.pad, null);
-
-                    // if the pad we are starting from is a multi message pin, set the route as a twisted pair
-                    if (state.pad.proxy.is.multi) state.route.setTwistedPair();
 
                     // this is the route we are drawing
                     state.route.select();
@@ -11148,7 +10693,7 @@ const mouseDownHandling = {
         keys === (CTRL|ALT) ?  this.mouseHitRoutes(xyLocal) : this.mouseHit(xyLocal);
 
         // check if we need to cancel the selection
-        if (this.selection.canCancel(hit)) this.selection.reset();
+        if (this.selection.canCancel(hit, keys)) this.selection.reset();
 
         // check what we have to do
         switch(hit.what){
@@ -11408,7 +10953,7 @@ const mouseDownHandling = {
 
                     case SHIFT:{
 
-                        //The mouse down route is deleted but saved if it would need to be restored
+                        // Save the original route so undo can restore it after rerouting.
                         this.doEdit(tx,'deleteRoute',{route: hit.route, oldRoute: hit.route.clone()});
                     
                         // and start rerouting
@@ -11696,7 +11241,7 @@ const mouseDownHandling = {
                         // stateswitch
                         state.route = route;
 
-                        //delete the mouse down route
+                        // Save the original route so undo can restore it after rerouting.
                         this.doEdit(tx,'deleteRoute',{route, oldRoute: route.clone()});
 
                         // and start rerouting from the last segment
@@ -12144,6 +11689,7 @@ function saveToLink() {
 }          		
 
 function unGroup() {
+	cm$6.doEdit('disconnectNode',{node: cm$6.node});
 	cm$6.doEdit('unGroup', {view: cm$6.view, node: cm$6.node});
 }
 
@@ -13418,7 +12964,7 @@ undoTransferToSelection(group, shift, padRoutes) {
         node.look.moveRoutes(dx, dy);
 
         // take them out of the nodes array
-        view.root.removeNode(node);
+        this.root.removeNode(node);
     }
 
     // move the buses to the parent node as well
@@ -13430,15 +12976,15 @@ undoTransferToSelection(group, shift, padRoutes) {
         // move the routes
         bus.moveRoutes(dx, dy);
 
-        // remove the bcakplane
-        group.removeBus(bus);
+        // remove it from the parent view again
+        this.root.removeBus(bus);
     }
 
     // reconnect all the pad routes
     for(const route of padRoutes) route.reconnect();
 
     // put the node back in the view
-    view.root.restoreNode(group);
+    this.root.restoreNode(group);
 }
 
 
@@ -13859,30 +13405,23 @@ const justKeyTable = {
 
     // show the profile
     p: (view,tx) => {
-
-        // find the pin selected
         const pin = view.selection.getSelectedWidget();
-
         if (!pin.is.pin) return
-
-        view.doEdit(tx,'showProfile', {
-            pin,
-            pos: { x: pin.rect.x, y: pin.rect.y },
-        });
+        view.doEdit(tx,'showProfile', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
     },
 
-    // show the profile
-    t: (view,tx) => {
-
-        // find the pin selected
+    // show the event
+    e: (view,tx) => {
         const pin = view.selection.getSelectedWidget();
+        if (!pin.is.pin ) return
+        view.doEdit(tx,'showCapability', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
+    },
 
-        if (!pin.is.pin || !pin.is.capability) return
-
-        view.doEdit(tx,'showCapability', {
-            pin,
-            pos: { x: pin.rect.x, y: pin.rect.y },
-        });
+    // show the tool
+    t: (view,tx) => {
+        const pin = view.selection.getSelectedWidget();
+        if (!pin.is.pin ) return
+        view.doEdit(tx,'showCapability', {pin, pos: { x: pin.rect.x, y: pin.rect.y },});
     },
 
     // add a label
@@ -14136,7 +13675,7 @@ const ctrlKeyTable = {
 
 const keyboardHandling = {
 
-    // helper function
+    // helper function for debugging
     _logKey(e) {
         let keyStr = 'Key = ';
         if (e.ctrlKey)  keyStr += 'ctrl '; 
@@ -16255,9 +15794,6 @@ const jsonHandling$1 = {
         from.is.tack ? from.setRoute(route) : from.routes.push(route);
         to.is.tack ? to.setRoute(route) : to.routes.push(route);
 
-        // set the route as twisted pair if required (multi wire)
-        route.checkTwistedPair();
-
         // this is required if a linked node has changed (eg more pins or pins have moved...)
         route.adjust();
 
@@ -18030,12 +17566,7 @@ const sourceFunctions = {
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->';
 
-            // could be a multi-message
-            if (widget.is.multi) {
-                const multis = convert.expandMultis(widget.name);
-                for(const multi of multis) sendList += `\n\t"${multi} ${symbol}",`;
-            }
-            else sendList += `\n\t"${widget.name} ${symbol}",`;
+            sendList += `\n\t"${widget.name} ${symbol}",`;
         }
         // close the brackets
         sendList += '\n\t],';
@@ -18061,12 +17592,7 @@ const sourceFunctions = {
             // make it clear if the pin has a return-channel
             const symbol = (widget.is.channel) ? '=>' : '->';
 
-            // could be a multi-message
-            if (widget.is.multi) {
-                const multis = convert.expandMultis(widget.name);
-                for(const multi of multis) sPrototype += `\n\t"${symbol} ${multi}"({}) {\n\t},`;
-            }
-            else sPrototype += `\n\t"${symbol} ${widget.name}"({}) {\n\t},`;
+            sPrototype += `\n\t"${symbol} ${widget.name}"({}) {\n\t},`;
         });
         // the closing bracket
         sPrototype += `\n\n} // ${this.name}.prototype`;
@@ -18667,6 +18193,10 @@ const routeDrawing = {
             this.reverse();
             segment = this.wire.length - segment;
         }
+
+        // Detach the existing connection before turning the same route into a
+        // half-drawn route. Redox keeps the clone for undo; this mutates live state.
+        this.disconnect();
 
         // we have to take a few segments away - if only one point left set length to 0 !
         this.wire.length = segment > 1 ? segment : 0;
@@ -19273,11 +18803,12 @@ disconnect() {
 
         default: 
             console.error('Impossible combination in route.disconnect:',conx);
-            break     
+            return false
     }
 
     // remove the route
     this.remove();
+    return true
 },
 
 // used in undo operations - the route has been removed in the to and from widgets 
@@ -19664,9 +19195,6 @@ singleConnect(src, dst){
     // check
     if (!tx) return;
 
-    // if one of the pins is a multi, there must be a partial overlap
-    if ((src.is.multi || dst.is.multi) &&  !dst.hasMultiOverlap(src)) return;
-
     // and add it to the array of destinations
     tx.targets.push(dst);        
 },
@@ -19689,13 +19217,9 @@ fullConnect(srcList, dstList) {
             }
 
             // for each entry in the dstlist, add a destination
-            for(const dst of dstList) {
-                
-                // if one of the pins is a multi, there must be a partial overlap
-                if ( !(src.is.multi || dst.is.multi) || dst.hasMultiOverlap(src)) txRecord.targets.push(dst);
-            }
+            for(const dst of dstList) txRecord.targets.push(dst);
         }
-        // a tack here means that there is filter function on the bus
+        // a tack here means that the route is connected through a bus
         else if (src.is.tack) {
 
             // find the entry in the conx table that corresponds to the tack
@@ -19728,7 +19252,7 @@ fullDisconnect(srcList, dstList) {
 
             /** debug should not happen */
             if (!txRecord) {
-                console.warning('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name);
+                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name);
                 continue
             }
 
@@ -19743,7 +19267,7 @@ fullDisconnect(srcList, dstList) {
 
             /** debug should not happen */
             if (!txTack) {
-                console.warning('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name);
+                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name);
                 continue
             }            
 
@@ -19764,7 +19288,6 @@ function Route(from, to) {
     this.is = {
         selected: false,
         highLighted: false,
-        twistedPair: false,
         notUsed: false,
         newConx: false,                 // the route is there because of a new conx
         noConx: false                   // there is no corresponding connection anymore
@@ -19791,7 +19314,7 @@ Route.prototype = {
         const width = this.is.selected ? style.route.wSelected : style.route.wNormal;
 
         // draw the line segments
-        this.is.twistedPair ? shape.twistedPair(ctx, color, width, this.wire) : shape.drawWire(ctx,color, width, this.wire);
+        shape.drawWire(ctx,color, width, this.wire);
     },
 
     // change the route direction
@@ -19835,20 +19358,6 @@ Route.prototype = {
         this.is.highLighted = false;
         if (this.from) this.from.is.highLighted = false;
         if (this.to) this.to.is.highLighted = false;
-    },
-
-    setTwistedPair() {
-        this.is.twistedPair = true;
-    },
-
-    checkTwistedPair() {
-
-        const A = this.from.is.input ? this.to : this.from;
-
-        if (!A) return
-
-        if (A.is.pin && A.is.multi) this.is.twistedPair = true;
-        else if (A.is.pad && A.proxy?.is.multi) this.is.twistedPair = true;
     },
 
     // generates the type string for a route
@@ -19995,8 +19504,6 @@ const padRouteFunctions = {
             // if the widget is a channel, then the proxy must be a channel also
             if (widget.is.channel && !this.proxy.is.channel) return false
 
-            // if the widget is a multi
-            if ((widget.is.multi || this.proxy.is.multi) && (!widget.hasMultiOverlap(this.proxy))) return false
         }
 
         // no duplicates
@@ -20257,10 +19764,8 @@ const padRouteFunctions = {
             //check
             if (!other) continue
 
-            // filter multis
             if (other.is.pin) {
 
-                // filter unconnected multis
                 if (!this.areConnected(other)) continue
                     
                 // ok - highlight the route
@@ -20300,7 +19805,7 @@ const padRouteFunctions = {
         for(const route of this.routes) route.is.notUsed = false;
 
         // get the proxy for this pad
-        const proxy = this.proxy;
+        this.proxy;
 
         // check the routes
         for(const route of this.routes) {
@@ -20308,14 +19813,7 @@ const padRouteFunctions = {
             // get the other side of the route
             const other = route.from == this ? route.to : route.from;
 
-            // multi messages can only connect to multimessages
-            if (other.is.pin) {
-                if ((other.is.multi || proxy.is.multi) && !proxy.hasMultiOverlap(other)) route.is.notUsed = true;
-            }
-            // else if (other.is.pad){
-            //     if ((proxy.is.multi || other.proxy.is.multi) && !proxy.hasMultiOverlap(other.proxy)) route.is.notUsed = true;
-            // } 
-            else if (other.is.tack) {
+            if (other.is.tack) {
 
                 // check all the bus routes
                 let found = false;
@@ -20431,8 +19929,7 @@ Pad.prototype = {
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape.leftTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h)
-                            : shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
+            shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
         }
         else {
             // The x-position of the arrow
@@ -20453,8 +19950,7 @@ Pad.prototype = {
             }
 
             // write the text in the rectangle
-            proxy.is.multi  ? shape.rightTextMulti(ctx,this.text,style.pin.fMulti,cText,rc.x,rc.y,rc.w,rc.h)
-                            : shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
+            shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
         }
     },
 
@@ -20511,7 +20007,7 @@ Pad.prototype = {
 
     getWidth() {
         const proxy = this.proxy;
-        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text, proxy.is.multi)
+        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text)
     },
 
     endEdit(saved) {
@@ -20534,7 +20030,7 @@ Pad.prototype = {
                 return
             }
 
-            // the name might have changed (multi)
+            // the name might have been normalized
             this.text = proxy.name;
 
             // check for route usage
@@ -20619,14 +20115,7 @@ Pad.prototype = {
     },
 
     // checks if the widget and the pad are logically connected
-    // we only have to filter unconnected multis
     areConnected(widget) {
-
-        if (widget.is.pin) {
-            // only when the proxy is a multi, it functions as a filter
-            if (this.proxy.is.multi && !widget.hasMultiOverlap(this.proxy)) return false
-        }
-
         return true
     },
 
@@ -21610,7 +21099,6 @@ const TestHandling = {
             input: !master,
             left: !master,
             channel: false,
-            multi: false,
             zombie: false
         };
 
@@ -21858,7 +21346,7 @@ const LibHandling = {
         const lib = this.makeJSLib(this.view.root, modelArl, libArl, indexArl);
 
         // save the lib
-        libArl.save(lib);
+        libArl.save(lib).catch(error => console.error(`Failed to save ${libArl.getPath()}:`, error));
     },
 
     // save the file that can be used to build the lib
@@ -22139,6 +21627,9 @@ ModelBlueprint.prototype = {
 
     // cook some parts of the model ...
     preCook() {
+        if (!this.raw?.header) {
+            throw new Error(`Cannot cook model before raw header is loaded: ${this.fullPath() ?? '<unknown model>'}`)
+        }
         this.header.cook(this.getArl(), this.raw.header);
         const rawTypes = this.raw?.types;
         this.vmbluTypes = typeof rawTypes === 'string' ? JSON.parse(rawTypes) : rawTypes ?? null;
@@ -22828,8 +22319,8 @@ sameDir(arl) {
 
     if (!this.url || !arl.url) return false
 
-    const slash1 = this.url.href.lastIndexOf('/');
-    const slash2 = arl.url.href.lastIndexOf('/');
+    const slash1 = this.url.lastIndexOf('/');
+    const slash2 = arl.url.lastIndexOf('/');
 
     return this.url.slice(0,slash1) === arl.url.slice(0, slash2)
 },
@@ -22903,7 +22394,8 @@ resolve(filePath) {
 resolve_dbg(filePath) {
 
     const arl = this.resolve(filePath);
-    console.log(`%cresolved: ${filePath} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f');
+    //DEV ONLY
+    //console.log(`%cresolved: ${filePath} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
     return arl
 },
 
@@ -24114,7 +23606,10 @@ async function profile(argv = process.argv.slice(2)) {
     const model = new ModelBlueprint(arl);
 
     // Load raw model and types for contract checks.
-    await model.getRaw();
+    const raw = await model.getRaw();
+    if (!raw) {
+        throw new Error(`Could not load model raw data from ${modelPath}`);
+    }
     model.preCook();
 
     // create a model compile object - we do not need a uid generator
