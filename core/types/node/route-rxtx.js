@@ -344,7 +344,7 @@ fullConnect(srcList, dstList) {
             // for each entry in the dstlist, add a destination
             for(const dst of dstList) txRecord.targets.push(dst)
         }
-        // a tack here means that there is filter function on the bus
+        // a tack here means that the route is connected through a bus
         else if (src.is.tack) {
 
             // find the entry in the conx table that corresponds to the tack
@@ -377,7 +377,7 @@ fullDisconnect(srcList, dstList) {
 
             /** debug should not happen */
             if (!txRecord) {
-                console.warning('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name)
+                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name)
                 continue
             }
 
@@ -392,7 +392,7 @@ fullDisconnect(srcList, dstList) {
 
             /** debug should not happen */
             if (!txTack) {
-                console.warning('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name)
+                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name)
                 continue
             }            
 

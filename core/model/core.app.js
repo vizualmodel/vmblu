@@ -184,14 +184,10 @@ const nodeList = [
 	},
 ]
 
-//The filters
-const filterList = [
-]
-
 const agentRuntimeOptions = {}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
+const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
 
 // and start the app
 runtime.start()
