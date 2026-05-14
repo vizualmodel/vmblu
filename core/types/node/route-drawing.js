@@ -40,6 +40,14 @@ export const routeDrawing = {
         return false
     },
 
+    tackOnHorizontalTrunk(tack) {
+        const trunk = tack?.bus
+        const a = trunk?.wire?.[tack.segment - 1]
+        const b = trunk?.wire?.[tack.segment]
+
+        return !!(a && b && a.y === b.y)
+    },
+
     // Collect orthogonal segments from already routed connections so autoroute can
     // prefer less crowded lanes. Routes are deduplicated because the same route can
     // be reachable from multiple widgets.
@@ -533,8 +541,40 @@ export const routeDrawing = {
         // get the point to connect to on the widget
         let {x,y} = widget.center()
 
+        // Routes that start or end on a horizontal bus/cable trunk should stay as
+        // a simple two-segment route, with the vertical segment at the tack. This
+        // lets dragging that segment slide the tack along the trunk.
+        if (this.from.is.tack && this.tackOnHorizontalTrunk(this.from)) {
+            const f = this.from.center()
+
+            p.length = 0
+            p.push(f)
+            p.push({x: f.x, y})
+            p.push({x, y})
+            return
+        }
+
+        if (this.to?.is?.tack && this.tackOnHorizontalTrunk(this.to)) {
+            const t = this.to.center()
+
+            p.length = 0
+            p.push({x, y})
+            p.push({x: t.x, y})
+            p.push(t)
+            return
+        }
+
         // only two points...
         if (L == 2) {
+            if (this.from.is.tack && this.tackOnHorizontalTrunk(this.from)) {
+                this.threePointRoute(false)
+                return
+            }
+            if (this.to?.is?.tack && this.tackOnHorizontalTrunk(this.to)) {
+                this.threePointRoute(true)
+                return
+            }
+
             // if the two points are not at the same y..
             if (p[0].y != y) {
 
@@ -589,6 +629,10 @@ export const routeDrawing = {
             segment = this.wire.length - segment
         }
 
+        // Detach the existing connection before turning the same route into a
+        // half-drawn route. Redox keeps the clone for undo; this mutates live state.
+        this.disconnect()
+
         // we have to take a few segments away - if only one point left set length to 0 !
         this.wire.length = segment > 1 ? segment : 0
 
@@ -641,11 +685,37 @@ export const routeDrawing = {
             case 'BUS-PAD':
                 this.autoBusRoute(this.from, nodes)
                 break
+
+            case 'BUS-BUS':
+                this.autoBridgeRoute(nodes)
+                break
         }
     },
 
     autoBusRoute(tack, nodes) {
-        tack.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true)      
+        const trunk = tack.bus
+        const a = trunk?.wire?.[tack.segment - 1]
+        const b = trunk?.wire?.[tack.segment]
+        const verticalTrunk = a && b ? a.x === b.x : tack.horizontal()
+
+        verticalTrunk ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(tack === this.to)
+    },
+
+    autoBridgeRoute(nodes) {
+        const fromHorizontal = this.tackOnHorizontalTrunk(this.from)
+        const toHorizontal = this.tackOnHorizontalTrunk(this.to)
+
+        if (fromHorizontal) {
+            this.threePointRoute(false)
+            return
+        }
+
+        if (toHorizontal) {
+            this.threePointRoute(true)
+            return
+        }
+
+        this.fourPointRoute(nodes) || this.sixPointRoute(nodes)
     },
 
     checkLeftRight() {

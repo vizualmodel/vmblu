@@ -11,7 +11,10 @@ export function Route(from, to) {
     this.from = from                    // ref to widget - from is just the draw direction, it can be input or output
     this.to = to                        // ref to widget
     this.is = {
+        route: true,
         selected: false,
+        hoverOk: false,
+        hoverNok: false,
         highLighted: false,
         notUsed: false,
         newConx: false,                 // the route is there because of a new conx
@@ -25,10 +28,11 @@ Route.prototype = {
     render(ctx) {
 
         // check
-        if (this.wire.length < 2) return 
+        if (this.wire.length < 2) return
 
         // color
-        let color = this.is.selected      ? style.route.cSelected 
+        let color = this.is.hoverNok      ? style.bus.cBad
+                    : this.is.selected || this.is.hoverOk ? style.route.cSelected 
                     : this.is.highLighted   ? style.route.cHighLighted
                     : this.is.newConx       ? style.route.cAdded
                     : this.is.noConx        ? style.route.cDeleted

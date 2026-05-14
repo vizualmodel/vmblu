@@ -441,11 +441,16 @@ unGroup: {
         const padRoutes = []
         for(const pad of node.pads) for(const route of pad.routes) padRoutes.push(route)
 
-        // the nodes and busses have to be moved to the equivalent position in this view
-        const shift = {dx: view.rect.x, dy:view.rect.y}
+        // the nodes and buses have to be moved from their group-local
+        // bounds to the current position of the group node in this view.
+        const rect = view.calcRect(node)
+        const shift = {dx: node.look.rect.x - rect.x, dy: node.look.rect.y - rect.y}
 
         // save the undo parameters
         this.saveEdit('unGroup',{view, node, shift, padRoutes})
+
+        // close the view of the node (note: is possible that savedView is still raw !)
+        node.savedView?.closeView?.()
 
         // move the nodes and busses to the view
         view.transferToSelection(node, shift)

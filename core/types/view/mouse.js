@@ -82,6 +82,12 @@ export const mouseHandling = {
             if (hit.what != zap.nothing) return
         }
 
+        // search the cables
+        for(const cable of this.root.cables) {
+            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = cable.hitTest(xyLocal)
+            if (hit.what != zap.nothing) return
+        }
+
         // check if we have hit a route
         this.mouseHitRoutes(xyLocal)
     },
@@ -105,6 +111,12 @@ export const mouseHandling = {
         // search the buses
         for(const bus of this.root.buses) {
             [hit.what, hit.route, hit.routeSegment] = bus.hitRoute(xyLocal)
+            if (hit.what != zap.nothing) return
+        }
+
+        // search the cables
+        for(const cable of this.root.cables) {
+            [hit.what, hit.route, hit.routeSegment] = cable.hitRoute(xyLocal)
             if (hit.what != zap.nothing) return
         }
     },

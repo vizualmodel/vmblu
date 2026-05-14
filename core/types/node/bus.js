@@ -27,10 +27,10 @@ export function Bus(name, from, uid = null) {
     }
 
     // incoming connections
-    this.rxTable = []
+    // this.rxTable = []
 
     // outgoing connections
-    this.txTable = []
+    // this.txTable = []
 
     // set the start and endpoint of the bus before defining the labels
     this.wire = []
@@ -54,6 +54,11 @@ export function Bus(name, from, uid = null) {
 }
 Bus.prototype = {
 
+    defaultTackSelectivity(widget) {
+        const actual = widget?.is?.pin ? widget : widget?.is?.pad ? widget.proxy : null
+        return !!actual?.is?.input
+    },
+
     render(ctx) {
 
         if (this.wire.length < 2) return
@@ -66,7 +71,7 @@ Bus.prototype = {
                         : st.cNormal
 
         // Draw a bus or a cable...
-        shape.drawBus(ctx,this.wire, cLine, st.wCable)
+        shape.drawBus(ctx,this.wire, cLine, st.wBus)
 
         // render the two labels
         this.startLabel.render(ctx)
@@ -113,10 +118,6 @@ Bus.prototype = {
                     
         if (label) return [zap.busLabel, this, label, null, 0]
 
-        // check the segments
-        let segment = this.hitSegment(pos)
-        if (segment) return [zap.busSegment, this, null, null, segment]
-
         // check the tacks
         for (const tack of this.tacks) {
 
@@ -125,6 +126,10 @@ Bus.prototype = {
 
             if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
         }
+
+        // check the segments
+        let segment = this.hitSegment(pos)
+        if (segment) return [zap.busSegment, this, null, null, segment]
 
         // nothing
         return [zap.nothing, null, null, null, 0]
@@ -202,6 +207,7 @@ Bus.prototype = {
 
         // create the widget
         const newTack = new Widget.BusTack(this)
+        newTack.setSelective(this.defaultTackSelectivity(other))
 
         // set the route for this tack
         newTack.setRoute(route)
@@ -213,12 +219,13 @@ Bus.prototype = {
         return newTack
     },
 
-    newTack(alias = null) {
+    newTack(alias = null, selective = false) {
         // make a tack
         const tack = new Widget.BusTack(this)
 
         // set the alias if any
         if (alias) tack.alias = alias
+        tack.setSelective(selective)
 
         // set the tack
         this.tacks.push(tack)
@@ -253,6 +260,7 @@ Bus.prototype = {
 
             // make a new tack
             const newTack = new Widget.BusTack(newBus)
+            newTack.is.selective = tack.is.selective
 
             // replace the old tack with the new
             newRoute.to.is.tack ?  newRoute.to = newTack : newRoute.from = newTack

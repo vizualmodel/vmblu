@@ -25,6 +25,14 @@ export const selectionHandling = {
             // ...and select the tacks in the selection
             for( const tack of bus.tacks) if (tack.overlap(rect)) slct.tacks.push(tack)
         }
+
+        // check the cables and the individual tacks
+        for( const cable of this.root.cables) if (cable.overlap(rect)) {
+
+            slct.cables.push(cable)
+
+            for( const tack of cable.tacks) if (tack.overlap(rect)) slct.tacks.push(tack)
+        }
     },
 
     // an external widget has a connection with a node outside the selection
@@ -89,6 +97,10 @@ export const selectionHandling = {
             bus.move(delta.x, delta.y)
             this.selection.buses.push(bus)           
         }
+        const pasteCable = (cable, delta) => {
+            cable.move(delta.x, delta.y)
+            this.selection.cables.push(cable)           
+        }
 
         // copy as required
         switch(content.raw.what) {
@@ -98,6 +110,7 @@ export const selectionHandling = {
                // paste
                 for (const node of content.root.nodes) pasteNode(node, delta)
                 for (const bus of content.root.buses) pasteBus(bus, delta)
+                for (const cable of content.root.cables ?? []) pasteCable(cable, delta)
                 for (const pad of content.root.pads) {}
 
                 // notation
@@ -176,6 +189,7 @@ export const selectionHandling = {
         // remove all the nodes etc.
         for (const node of selection.nodes) this.root.removeNode(node)
         for (const bus of selection.buses) this.root.removeBus(bus)
+        for (const cable of selection.cables) this.root.removeCable(cable)
         for (const pad of selection.pads) this.root.removePad(pad)
     },
 
@@ -185,6 +199,7 @@ export const selectionHandling = {
         // restore all the nodes etc.
         for (const node of selection.nodes) this.root.restoreNode(node)
         for (const bus of selection.buses) this.root.restoreBus(bus)
+        for (const cable of selection.cables) this.root.restoreCable(cable)
         for (const pad of selection.pads) this.root.restorePad(pad)
 
         // reset the current selection
@@ -194,6 +209,7 @@ export const selectionHandling = {
         // and put the restored nodes in the selection again
         for (const node of selection.nodes) sel.nodes.push(node)
         for (const bus of selection.buses) sel.buses.push(bus)
+        for (const cable of selection.cables) sel.cables.push(cable)
         for (const pad of selection.pads) sel.pads.push(pad)        
 
         const rc = selection.rect

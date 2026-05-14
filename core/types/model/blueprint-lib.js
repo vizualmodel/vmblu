@@ -28,7 +28,7 @@ export const LibHandling = {
         const lib = this.makeJSLib(this.view.root, modelArl, libArl, indexArl)
 
         // save the lib
-        libArl.save(lib)
+        libArl.save(lib).catch(error => console.error(`Failed to save ${libArl.getPath()}:`, error))
     },
 
     // save the file that can be used to build the lib

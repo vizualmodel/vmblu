@@ -18,10 +18,10 @@ export const conxHandling = {
             return
         }
 
-        // If the destination is a bus we have to find the actual connected pins and pads
+        // If the destination is a bus/cable we have to find the actual connected pins and pads
         const fanout = []
 
-        // check the connections to the bus
+        // check the connections to the bus/cable
         for(const tack of dst.bus.tacks) {
 
             // skip the to tack
@@ -94,6 +94,18 @@ export const conxHandling = {
 
             // convert each tack
             for(const tack of bus.tacks) {
+
+                const other = tack.getOther()
+                if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route))
+                if (other.is.pad && !other.proxy.is.input) routes.push(convert.routeToRaw(tack.route))
+            }
+        }
+
+        // What remains are the routes from the cable to incoming pins and from the cable to outgoing pads
+        // Note that routes from a cable are **not** added to the connections array.
+        for(const cable of this.cables) {
+
+            for(const tack of cable.tacks) {
 
                 const other = tack.getOther()
                 if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route))
@@ -226,7 +238,7 @@ export const conxHandling = {
         // if there are no connections the route is new
         if ( conx.length == 0) {
 
-            // we always accept routes to buses 
+            // we always accept routes to buses/cables
             route.is.noConx = dst.is.tack ? false : true;
             return
         }
@@ -234,7 +246,7 @@ export const conxHandling = {
         // check the routes 
         if (src.is.tack){
 
-            // we do not check routes that come from a bus...
+            // we do not check routes that come from a bus/cable...
             route.is.noConx = false
         }
         // pin or pad
@@ -308,6 +320,69 @@ export const conxHandling = {
             // could not connect - drop the route in the source as well
             route.from.routes.pop()
         }
+    },
+
+    convertRouteToCable(route, segment = 1, xyLocal = null, createPending = false) {
+
+        if (!route?.from || !route?.to) return null
+        if (route.from.is.tack || route.to.is.tack) return null
+        if (route.wire.length < 2) return null
+
+        const oldRoute = route.clone()
+        const wire = route.copyWire()
+        const clickSegment = Math.min(Math.max(segment, 1), wire.length - 1)
+
+        const cable = this.addCable(wire[0])
+        cable.wire = wire.map(point => ({...point}))
+
+        route.disconnect()
+
+        const attach = (widget, point, tackSegment, endpoint = false) => {
+            const tack = cable.newTack()
+            tack.is.endpoint = endpoint
+            tack.placeOnSegment(point, tackSegment)
+
+            const leg = new Route(widget, tack)
+            leg.wire = [widget.center(), {...point}]
+            widget.routes.push(leg)
+            tack.restore(leg)
+
+            widget.is.pin ? leg.rxtxPinBus() : leg.rxtxPadBus()
+
+            return leg
+        }
+
+        const pointOnSegment = (wire, segment, point) => {
+            const a = wire[segment - 1]
+            const b = wire[segment]
+
+            if (!point) return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
+            if (a.x === b.x) return {x: a.x, y: Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))}
+            if (a.y === b.y) return {x: Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x)), y: a.y}
+            return {x: point.x, y: point.y}
+        }
+
+        const makePendingBranch = () => {
+            const point = pointOnSegment(cable.wire, clickSegment, xyLocal)
+            const tack = cable.newTack()
+            tack.placeOnSegment(point, clickSegment)
+
+            const pendingRoute = new Route(tack, null)
+            pendingRoute.wire = [{...point}, {...point}]
+            tack.route = pendingRoute
+
+            return {route: pendingRoute, tack}
+        }
+
+        const first = cable.wire[0]
+        const last = cable.wire.at(-1)
+        const routes = [
+            attach(oldRoute.from, first, 1, true),
+            attach(oldRoute.to, last, cable.wire.length - 1, true)
+        ]
+
+        const pending = createPending ? makePendingBranch() : null
+        return {node: this, route, oldRoute, cable, routes, tacks: routes.map(leg => leg.from.is.tack ? leg.from : leg.to), pending}
     },
 
     getInternalRoutes(nodes) {

@@ -1,4 +1,4 @@
-import {Route, Bus, Pad} from './index.js'
+import {Route, Bus, Cable, Pad} from './index.js'
 import {style, eject} from '../util/index.js'
 import {Widget} from '../widget/index.js'
 
@@ -202,6 +202,15 @@ export const proxyHandling = {
         return bus
     },
 
+    addCable(pos, uid=null) {
+
+        const cable = new Cable(pos, uid)
+
+        this.cables.push(cable)
+
+        return cable
+    },
+
     deleteBus(bus) {
 
         // first disconnect every connection to the bus
@@ -225,5 +234,24 @@ export const proxyHandling = {
 
         // put in the list again
         this.buses.push(bus)
+    },
+
+    deleteCable(cable) {
+
+        cable.disconnect()
+
+        this.removeCable(cable)
+    },
+
+    removeCable(cable) {
+
+        eject(this.cables, cable)
+    },
+
+    restoreCable(cable) {
+
+        if (this.cables.find(cp => cp.uid == cable.uid)) return
+
+        this.cables.push(cable)
     }
 }

@@ -106,6 +106,19 @@
             "additionalProperties": false
           }
         },
+        "cables": {
+          "description": "Visual representation of cables in this group. A cable is shared wire topology; routes connect pins or pads to cable tacks.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "A cable can represent one-to-one, one-to-many, many-to-one or many-to-many wiring.",
+            "properties": {
+              "start": { "type": "string" },
+              "wire": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
         "routes": {
           "description": "Visual representation of connections between pins or interfaces.",
           "type": "array",

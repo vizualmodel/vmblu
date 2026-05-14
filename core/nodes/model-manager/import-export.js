@@ -97,7 +97,8 @@ async exportToModel(node, lName, model) {
 	const json =  JSON.stringify(target,null,4)
 
 	// save the json
-	await model.getArl().save( json )
+    const arl = model.getArl()
+	arl.save(json).catch(error => console.error(`Failed to save ${arl.getPath()}:`, error))
 
 	// set the link
 	node.setLink(model, lName, Path.getKind(model.getArl().relativeTo(this.model.getArl())))

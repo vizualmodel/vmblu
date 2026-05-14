@@ -1,19 +1,80 @@
 export const connectHandling = {
 
-// if no parameter is given, take to
+trunkOfTack(tack) {
+    if (!tack?.is?.tack) return null
+    return tack.bus
+},
+
+bridgeParts(from, to) {
+    if (!from?.is?.tack || !(to?.is?.bus || to?.is?.cable)) return null
+    if (from.bus?.is?.cable && to.is.bus) return {cable: from.bus, bus: to}
+    if (from.bus?.is?.bus && to.is.cable) return {cable: to, bus: from.bus}
+    return null
+},
+
+bridgeNeighbors(trunk) {
+    const neighbors = []
+
+    for (const tack of trunk?.tacks ?? []) {
+        const other = tack.route?.from == tack ? tack.route.to : tack.route?.from
+        if (!other?.is?.tack) continue
+
+        const neighbor = this.trunkOfTack(other)
+        if (neighbor) neighbors.push(neighbor)
+    }
+
+    return neighbors
+},
+
+bridgePathExists(from, to) {
+    const seen = new Set()
+    const pending = [from]
+
+    while (pending.length) {
+        const trunk = pending.pop()
+        if (!trunk || seen.has(trunk)) continue
+        if (trunk === to) return true
+
+        seen.add(trunk)
+        pending.push(...this.bridgeNeighbors(trunk))
+    }
+
+    return false
+},
+
+canBridge(from, to) {
+    const bridge = this.bridgeParts(from, to)
+    if (!bridge) return false
+
+    return !this.bridgePathExists(bridge.cable, bridge.bus)
+},
+
+canConnectPromotedRoute(from, route) {
+    if (!route?.is?.route || route === this) return false
+    if (!route.from || !route.to || route.wire.length < 2) return false
+    if (route.from.is.tack || route.to.is.tack) return false
+    if (route.from === from || route.to === from) return false
+
+    if (from.is.pin || from.is.pad) return true
+    if (!from.is.tack) return false
+
+    return !from.bus?.is?.cable
+},
+
 conxString(from, to) {
     // set the type of connection that needs to be made
 
+    if (!from || !to) return null
+
     let conxStr =     from.is.pin  ? 'PIN'
-                    : from.is.tack || from.is.bus ? 'BUS'
+                    : from.is.tack || from.is.bus || from.is.cable ? 'BUS'
+                    : from.is.route ? 'ROUTE'
                     : from.is.pad ? 'PAD'
                     : ''
 
-    //if (!conxTo) conxTo = this.to
-    if (!to) return conxStr
-
     conxStr +=        to.is.pin  ? '-PIN'
-                    : to.is.tack || to.is.bus ? '-BUS'
+                    : to.is.tack || to.is.bus || to.is.cable ? '-BUS'
+                    : to.is.route ? '-ROUTE'
                     : to.is.pad ? '-PAD'
                     : ''
 
@@ -25,6 +86,8 @@ checkConxType(from, to) {
 
     // set the type of connection that needs to be made
     const conxStr = this.conxString(from, to)
+
+    if (!conxStr) return false
 
     switch (conxStr) {
 
@@ -59,7 +122,10 @@ checkConxType(from, to) {
             // multiple connections are refused !
             return to.findTack(from) ? false : true
 
-        case 'BUS-BUS': return false
+        case 'BUS-BUS': return this.canBridge(from, to)
+        case 'PIN-ROUTE':
+        case 'PAD-ROUTE':
+        case 'BUS-ROUTE': return this.canConnectPromotedRoute(from, to)
         case 'PAD-PAD': return false
 
         default : return false
@@ -103,12 +169,16 @@ connect(conxTo) {
         case 'BUS-PIN':
             this.to = conxTo
             conxTo.routes.push(this)            
+            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo))
+            this.from.setRoute(this)
             this.rxtxPinBus() 
             return true
 
         case 'BUS-PAD': 
             this.to = conxTo
             conxTo.routes.push(this)
+            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo))
+            this.from.setRoute(this)
             this.rxtxPadBus()
             return true    
 
@@ -121,7 +191,10 @@ connect(conxTo) {
             return false
 
         case 'BUS-BUS': 
-            return false
+            if (!conxTo.addTack(this)) return false
+            this.autoRoute()
+            this.rxtxBusBus()
+            return true
 
         default : return false
     }
@@ -154,13 +227,18 @@ disconnect() {
             this.rxtxPadBusDisconnect()
             break
 
+        case 'BUS-BUS':
+            this.rxtxBusBusDisconnect()
+            break
+
         default: 
             console.error('Impossible combination in route.disconnect:',conx)
-            break     
+            return false
     }
 
     // remove the route
     this.remove()
+    return true
 },
 
 // used in undo operations - the route has been removed in the to and from widgets 
@@ -216,7 +294,14 @@ connectFromClone(clone) {
     // save the old route details in the route
     this.wire = clone.wire
     this.from = clone.from
-    this.from.routes.push(this)
+
+    if (this.from.is.pin || this.from.is.pad) {
+        this.from.routes.push(this)
+    }
+    else if (this.from.is.tack) {
+        this.from.route = this
+        if (!this.from.bus.tacks.includes(this.from)) this.from.bus.tacks.push(this.from)
+    }
 
     // and reconnect
     const other = clone.to.is.tack ? clone.to.bus : clone.to

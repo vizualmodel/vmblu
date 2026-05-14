@@ -29,10 +29,15 @@ export const mouseUpHandling = {
                 this.stopHover()
 
                 // what did we hit..
-                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? null;
+                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? this.hit.route ?? null;
 
                 // complete the route or cancel it...
-                route.connect(conx) ? this.doEdit(tx,'routeDraw',{route}) : route.popFromRoute()
+                if (conx?.is?.route && route.checkConxType(route.from, conx)) {
+                    this.doEdit(tx,'routeDrawToRoute',{view: this, route, targetRoute: conx, segment: this.hit.routeSegment, xyLocal})
+                }
+                else {
+                    route.connect(conx) ? this.doEdit(tx,'routeDraw',{view: this, route}) : this.doEdit(tx,'routeCancel',{view: this, route})
+                }
 
                 break
 
@@ -78,7 +83,11 @@ export const mouseUpHandling = {
                 bus = state.bus;
                 bus.is.selected = false
                 bus.unHighLight()
-                this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()})
+                this.stopHover()
+                const cableConx = this.hit.lookWidget ?? this.hit.pad ?? null
+                bus.is.cable 
+                    ? this.doEdit(tx,'cableDraw',{view: this, cable: bus, conx: cableConx, oldWire: state.modo.wire, newWire: bus.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires, newTacks: bus.tacks.slice(), newTackWires: bus.copyTackWires()})
+                    : this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()})
                 break
 
             case doing.busSegmentDrag:
@@ -118,7 +127,7 @@ export const mouseUpHandling = {
                 tack.fuseEndSegment()
                 tack.route.unSelect()
 
-                this.doEdit(tx,'tackDrag', {tack: hit.tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()})
+                this.doEdit(tx,'tackDrag', {tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()})
                 break
 
             case doing.pinDrag:

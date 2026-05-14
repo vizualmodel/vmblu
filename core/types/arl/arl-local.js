@@ -185,47 +185,6 @@ async get(as = 'text') {
     return as === 'json' ? parseJsonWithDuplicateKeyWarning(content, this.getFullPath() ?? this.getPath()) : content;        
 },
 
-async xxxget(as = 'text') {
-
-    let file;
-    try {
-
-        // if the handle for this file is null, we have to find it first
-        if (!this.handle) {
-
-            // find the file
-            const wsFile = await this.fileTree.findFile(this.fullPath)
-
-            // check
-            if (!wsFile) {
-                console.warn(`get(${this.fullPath}) in local-arl.js : handle for the file not found)`)
-                return null
-            }
-
-            // set the handle
-            this.handle = wsFile.arl.handle
-        }
-
-        // Attempt to retrieve the file from the handle.
-        file = await this.handle.getFile();
-
-    } catch (error) {
-
-        // If an error occurs (e.g., file not found), log the error and return null.
-        console.warn(`get(${this.fullPath}) in local-arl.js failed: ${error}`)
-        return null;
-    }
-    
-    // If the file is empty, return null (mirroring the behavior for remote files)
-    if (file.size === 0) return null;
-    
-    // Read the file content as text.
-    const content = await file.text();
-    
-    // Return the content as JSON if requested, otherwise as raw text.
-    return as === 'json' ? parseJsonWithDuplicateKeyWarning(content, this.getFullPath() ?? this.getPath()) : content;        
-},
-
 async save(body) {
 
     // ---- small helpers ----

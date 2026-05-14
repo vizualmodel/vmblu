@@ -131,8 +131,12 @@ function StyleFactory() {
         cAdded: color.add, cDeleted: color.red
     } 
     this.bus = {
-        wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5,
-        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
+        wNormal: 6, wBus: 4, split: 50, tooClose: 25, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 7.5,
+        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
+
+        wCable: 4, rTack: 4,
+
+        wBridge: 6, hBridge: 6
     } 
     this.selection = {
         xPadding: 20, yPadding: 20, 

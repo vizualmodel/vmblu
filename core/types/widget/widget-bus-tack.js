@@ -1,59 +1,48 @@
-import {shape,convert,style,closestPointOnCurve} from '../util/index.js'
-import {TackConnectHandling} from './widget-bus-tack-connect.js'
+import {shape, convert, style, closestPointOnCurve} from '../util/index.js'
 
-// an in out symbol is a triangle 
 export function BusTack(bus, wid = null) {
 
-    // the rectangle will be filled in by orient
     this.rect = {x:0, y:0, w: 0, h: 0}
 
-    // set the type
     this.is = {
         tack: true,
         selected: false,
         highLighted: false,
-        channel: false,
-        top: false,                  // ball on top for tacks going to inputs / at the bottom for tacks coming from outputs
+        bridge: false,
+        endpoint: false,
+        selective: false,
     }
 
-    // save the bus this tack is connected to
+    // Owner trunk. This can be a bus or a cable.
     this.bus = bus
-
-    // the wid of this tack - currently not used !
-    this.wid = wid ?? bus.generateWid()
-
-    // the segment of the bus on which the tack sits 
+    this.wid = wid ?? bus.generateWid?.() ?? null
     this.segment = 0
-
-    // the alias that the tack can use {text, rc}
     this.alias = null
-
-    // the rectangle for the alias
     this.rcAlias = null
-
-    // direction of the tack 'up 'down' 'right' 'left'
-    this.dir = ''
-
-    // the route
     this.route = null
 }
 
 BusTack.prototype = {
 
     render(ctx) {
-        // the color
-        const color =  this.is.selected ? style.bus.cSelected 
+
+        if (this.is.endpoint) return
+
+        const color =  this.is.selected ? style.bus.cSelected
                      : this.is.highLighted ? style.bus.cHighLighted
                      : style.bus.cNormal
 
-        // draw the tack
-        shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color)
+        const center = this.visualCenter()
+        if (!center) return;
 
-        // if we have an alias, draw it
+        this.is.bridge 
+            ? shape.bridge(ctx, center.x, center.y, style.bus.rTack, color)
+            : this.isSelective()
+                ? shape.selectiveTack(ctx, center.x, center.y, style.bus.rTack, color)
+                : shape.tack(ctx, center.x, center.y, style.bus.rTack, color);
+
         if (this.alias && this.route) {
-
-            // check if we have the rectangle
-            if (! this.rcAlias) {
+            if (!this.rcAlias) {
                 this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
             }
 
@@ -61,159 +50,132 @@ BusTack.prototype = {
         }
     },
 
-    // where to put the alias wrt to the tack
     aliasZone() {
-
+        if (!this.route) return
         const wire = this.route.wire
-
-        let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)] 
-
-        if (a.x === b.x) return a.y < b.y ? 'S' : 'N'
-        else return a.x < b.x ? 'E' : 'W'
+        let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)]
+        return (a.x === b.x) ? (a.y < b.y ? 'S' : 'N') : (a.x < b.x ? 'E' : 'W')
     },
 
-
-    // sets the route for a tack and places the tack on that route
     setRoute(route) {
-        
-        // the route to this tack
         this.route = route
 
-        // if one of the end points is still null, set the tack
-        if (!route.to) route.to = this 
+        if (!route.to) route.to = this
         else if (!route.from) route.from = this
 
-        // get the other endpoint of the route 
-        const other = route.from == this ? route.to : route.from
+        const other = this.getOther()
 
-        // check if the tack is channel
-        this.is.channel  = other.is.pad ? other.proxy.is.channel  : other.is.channel
-        this.is.top = other.is.pad ? !other.proxy.is.input : other.is.input
+        if (other.is.tack) {
+            this.is.bridge = true
+            other.is.bridge = true            
+        }
 
-        // and place the tack
-        this.orient()
+        other?.is?.tack ? this.bridgeRect(other) : this.tackRect(other)
     },
 
-    // sets the arrow in the correct position (up down left right) - does not change the route
-    orient() {
+    // where does the route intersect the bus
+    intersection() {
+        const wire = this.route.wire
+        const [a,b] = this.route.to == this ? [ wire.at(-1), wire.at(-2) ] : [wire[0], wire[1]];
 
-        // helper function - the tack direction to a pad is the opposite of the tack direction to a pin
-        // inflow - flow to the bus - is true in thes cases:  output pin >---->||  input pad >----->||  
-        const inflow = (widget) => widget.is.pin ? widget.is.input : !widget.proxy.is.input
+        // a hits the bus
+        let segment = this.bus.hitSegment(a)
 
-        // notation
-        const rWire = this.route.wire
-        const bWire = this.bus.wire
-        const other = this.route.to == this ? this.route.from : this.route.to
-
-        // the points of the route on the bus (crossing segment) - a is the point on the bus
-        const a = this.route.to == this ? rWire.at(-1) : rWire[0]
-        const b = this.route.to == this ? rWire.at(-2) : rWire[1]
-
-        // determine the segment of the bus
-        this.segment = this.bus.hitSegment(a) 
-
-        // A saved route endpoint can end up a few pixels off the bus after load.
-        // In that case snap to the nearest bus segment instead of falling back
-        // to segment 1.
-        if (this.segment == 0) {
-            const closest = closestPointOnCurve(bWire, a)
-
-            if (closest?.segment) {
-                this.segment = closest.segment
+        // if no hit find the closest
+        if (segment == 0) {
+            const closest = closestPointOnCurve(this.bus.wire, a)
+            segment = closest?.segment ?? 1
+            if (closest?.point) {
                 a.x = closest.point.x
                 a.y = closest.point.y
             }
-            else {
-                console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus)
-                this.segment = 1
-            }
         }
 
-        // the bus segment can be horizontal or vertical
-        const horizontal = Math.floor(bWire[this.segment-1].y) === Math.floor(bWire[this.segment].y)
+        // get the endpoints of the segment
+        const A = this.bus.wire[segment-1]
+        const B = this.bus.wire[segment]
 
-        //notation
-        const rc = this.rect
-        const sp = bWire[this.segment]
+        // place the point exactly on the segment
+        const point = (A.x == B.x) ? {x: A.x, y: a.y} : {x: a.x, y: A.y}
+        a.x = point.x
+        a.y = point.y
 
-        // to place the arrow we take the width of the bus into account - the -1 is to avoid a very small gap
-        const shift = style.bus.wNormal/2 - 1
-
-        // set the rectangle values
-        if (horizontal) {
-            rc.w = style.bus.wArrow
-            rc.h = style.bus.hArrow
-            rc.x = a.x - rc.w/2
-            if (b.y > a.y) {
-                rc.y = sp.y + shift
-                this.dir = inflow(other) ? 'down' : 'up'
-            }
-            else {
-                rc.y = sp.y - rc.h - shift
-                this.dir = inflow(other) ? 'up' : 'down'
-            }
-            // allign the route endpoint perfectly with the bus (could stick out a little bit)
-            a.y = sp.y
-        }
-        else {
-            rc.w = style.bus.hArrow
-            rc.h = style.bus.wArrow
-            rc.y = a.y - rc.h/2
-            if (b.x > a.x) {
-                rc.x = sp.x + shift
-                this.dir = inflow(other) ? 'right' : 'left'
-            }
-            else {
-                rc.x = sp.x - rc.w - shift
-                this.dir = inflow(other) ?  'left' : 'right'
-            }
-            // allign the route endpoint perfectly with the bus (could stick out a little bit)
-            a.x = sp.x
-        }
+        // done
+        return {segment, point}
     },
 
-    // point p is guaranteed to be on the bus - the arrow will be oriented correctly later...
+    bridgeRect() {
+
+        const inter = this.intersection()
+
+        this.segment = inter.segment
+
+        this.rect.w = 2 * style.bus.rTack
+        this.rect.h = 2 * style.bus.rTack
+        this.rect.x = inter.point.x - this.rect.w/2
+        this.rect.y = inter.point.y - this.rect.h/2
+    },
+
+    zoneDelta() {
+        const r = style.bus.rTack
+        const zone = this.aliasZone()
+        return zone == 'N' ? {x: r, y: 2*r} : zone == 'S' ? {x: r, y: 0}: zone == 'E' ? {x: 0, y: r}: {x: 2*r, y: r}
+    },
+
+    tackRect() {
+
+        const inter = this.intersection()
+
+        this.segment = inter.segment
+
+        const r = style.bus.rTack
+        const rc = this.rect
+        const delta =  this.zoneDelta()
+
+        rc.w = 2 * r
+        rc.h = 2 * r
+        rc.x = inter.point.x - delta.x
+        rc.y = inter.point.y - delta.y
+    },
+
     placeOnSegment(point, segment) {
 
-        // save the segment
         this.segment = segment
+        this.rect.w = 2 * style.bus.rTack
+        this.rect.h = 2 * style.bus.rTack
 
-        // check the segment
-        const a = this.bus.wire[segment-1]
-        const b = this.bus.wire[segment]
-
-        // vertical
-        if (a.x == b.x) {
-            this.dir = 'left'
-            this.rect.x = a.x
-            this.rect.y = point.y 
-        } else {
-            this.dir = 'up'
-            this.rect.x = point.x 
-            this.rect.y = a.y
+        // place the bridge on the crossing 
+        if (this.is.bridge) {
+            this.rect.x = point.x - this.rect.w/2
+            this.rect.y = point.y - this.rect.h/2
         }
-
+        // place the tack in the right zone
+        else {
+            const delta =  this.zoneDelta()
+            this.rect.x = point.x - delta.x
+            this.rect.y = point.y - delta.y
+        }
     },
 
-    // returns true if the tack is horizontal (the segment is vertical in that case !)
     horizontal() {
-        return ((this.dir == 'left') || (this.dir == 'right'))
+        const s = this.segment
+        const w = this.bus.wire
+        return Math.floor(w[s-1].y) === Math.floor(w[s].y)
     },
 
-    // center is where a route connects !
     center() {
-
         const rc = this.rect
 
-        // check the segment
-        if (this.segment == 0) return null
+        if (this.is.bridge)  return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
 
-        const p = this.bus.wire[this.segment]
-
-        return (this.dir == 'left' || this.dir == 'right') ? {x: p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
+        const delta =  this.zoneDelta()
+        return   {x: rc.x + delta.x, y: rc.y + delta.y}
     },
 
+    visualCenter() {
+        const rc = this.rect
+        return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
+    },
 
     toJSON() {
         return convert.routeToRaw(this.route)
@@ -221,185 +183,151 @@ BusTack.prototype = {
 
     overlap(rect) {
         const rc = this.rect
-
-        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
-        return true
+        return !((rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h < rect.y))
     },
 
     remove() {
-        // remove the route at both ends - this will also call removeRoute below !
         this.route.remove()
     },
 
     removeRoute(route) {
-        // and remove the tack - the route is also gone then...
         this.bus.removeTack(this)
     },
 
-
     moveX(dx) {
-
-        // move the rect
         this.rect.x += dx
 
-        // move the endpoint of the route as well..
-        const p = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
+        if (this.is.bridge) {
+            this.route.autoRoute()
+            return
+        }
 
+        const p = this.getContactPoint()
         p.x += dx
-
-        // place the link..
-        this.orient()
+        this.placeOnSegment(p, this.segment)
     },
 
     moveY(dy) {
-
-        // move the rect
         this.rect.y += dy
 
-        // move the endpoint of the route as well..
-        const p = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
+        if (this.is.bridge) {
+            this.route.autoRoute()
+            return
+        }
 
+        const p = this.getContactPoint()
         p.y += dy
-
-        // place the link..
-        this.orient()
+        this.placeOnSegment(p, this.segment)
     },
 
-    // just move the link and adjust the route
     moveXY(dx,dy) {
-
-        // move the rect
         this.rect.x += dx
         this.rect.y += dy
 
-        // check that we have enough segments
-        //if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1])
+        if (this.is.bridge) {
+            this.route.autoRoute()
+            return
+        }
+
         if (this.route.wire.length == 2) this.route.fourPointRoute()
 
-
-        // move the endpoint of the route as well..
         const a = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
         const b = this.route.from == this ? this.route.wire[1] : this.route.wire.at(-2)
-
-        // check
         const vertical = Math.abs(a.x - b.x) < Math.abs(a.y - b.y)
 
-        // vertical
         if (vertical) {
             a.x += dx
             b.x += dx
             a.y += dy
         }
-        // horizontal
         else {
             a.y += dy
             b.y += dy
             a.x += dx
         }
 
-        // place the link..
-        this.orient()
+        this.placeOnSegment(a, this.segment)
     },
 
-    // check that the link stays on the segment
     slide(delta) {
-
-        // notation
-        let pa = this.bus.wire[this.segment -1]
-        let pb = this.bus.wire[this.segment]
+        const [a,b] = [this.bus.wire[this.segment -1], this.bus.wire[this.segment]]
         const rc = this.rect
-        const wBus = style.bus.wNormal
+        const wTrunk = this.bus.is.cable ? style.bus.wCable : style.bus.wBus
 
-        // horizontal segment
-        if (pa.y == pb.y) {
-            // the max and min position on the segment
-            let xMax = Math.max(pa.x, pb.x) - rc.w - wBus/2
-            let xMin = Math.min(pa.x, pb.x) + wBus/2
+        if (a.y == b.y) {
+            let xMax = Math.max(a.x, b.x) - rc.w - wTrunk/2
+            let xMin = Math.min(a.x, b.x) + wTrunk/2
 
-            // increment 
             rc.x += delta.x
-
-            // clamp to max or min
             rc.x = rc.x > xMax ? xMax : rc.x < xMin ? xMin : rc.x
         }
         else {
-            // the max and min position on the segment
-            let yMax = Math.max(pa.y, pb.y) - rc.h - wBus/2
-            let yMin = Math.min(pa.y, pb.y) + wBus/2
+            let yMax = Math.max(a.y, b.y) - rc.h - wTrunk/2
+            let yMin = Math.min(a.y, b.y) + wTrunk/2
 
-            // increment check and adjust
             rc.y += delta.y
-
-            // clamp to min / max
             rc.y = rc.y > yMax ? yMax : rc.y < yMin ? yMin : rc.y
         }
-        // re-establish the connection with the end points
-        this.route.adjust()
+
+        this.alignRouteEndpoint()
     },
 
-    // sliding endpoints on a bus can cause segments to combine
-    // s is 1 or the last segment
-    fuseEndSegment() {
-
-        // at least three segments 
-        if (this.route.wire.length < 4) return 
-
-        // notation - a is where the link is connected
+    alignRouteEndpoint() {
         const route = this.route
         const p = route.wire
-        const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false] 
 
-        // horizontal segment
+        if (p.length < 3) route.threePointRoute(this === route.to)
+
+        const center = this.center()
+        const trunk = this.bus.wire
+        const [a,b] = [trunk[this.segment - 1], trunk[this.segment]]
+        const horizontal = a.y === b.y
+
+        if (route.from === this) {
+            p[0].x = center.x
+            p[0].y = center.y
+
+            horizontal ? p[1].x = center.x : p[1].y = center.y
+        }
+        else {
+            const last = p.length - 1
+
+            p[last].x = center.x
+            p[last].y = center.y
+
+            horizontal ? p[last - 1].x = center.x : p[last - 1].y = center.y
+        }
+    },
+
+    fuseEndSegment() {
+        if (this.route.wire.length < 4) return
+
+        const route = this.route
+        const p = route.wire
+        const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]
+
         if ((a.y == b.y) && (Math.abs(c.y - b.y) < style.route.tooClose)) {
-
-            // move the endpoint
             a.y = c.y
-
-            // remove the segment from the route
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p)
-
-            // and place the link again
-            this.orient()
+            this.placeOnSegment(a, this.segment)
         }
-        // vertical segment
         else if ((a.x == b.x)&&(Math.abs(b.x - c.x) < style.route.tooClose)) {
-
-            // move the endpoint
             a.x = c.x
-
-            // remove the segment
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p)
-
-            // and place the link again
-            this.orient()
+            this.placeOnSegment(a, this.segment)
         }
-        return
     },
 
     restore(route) {
-    
-        // set the route
         this.route = route
-
-        // add to the bus widgets
-        this.bus.tacks.push(this)
-
-        // place the arrow 
-        this.orient()
+        if (!this.bus.tacks.includes(this)) this.bus.tacks.push(this)
+        this.setRoute(route)
     },
 
-
-
-    // The text edit functions 
-
     startEdit(ctx, click = null) {
+        if (!this.alias) this.alias = ''
 
-        // if we do not have an alias, set it
-        if (! this.alias) this.alias = ''
-
-        // get the alias rectangle
         const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
-
         const index = click ? shape.cursorIndex(ctx, this.alias, rc.x, click.x) : this.alias.length
         return { prop: 'alias', index }
     },
@@ -410,15 +338,121 @@ BusTack.prototype = {
     },
 
     endEdit(saved) {
-
-        // clean the user input
         this.alias = convert.cleanInput(this.alias)
-
-        // check
         if (!this.alias?.length) this.alias = null
-
-        // reset the rectangle
         this.rcAlias = null
     },
+
+    getOther() {
+        return this.route.from == this ? this.route.to : this.route.from
+    },
+
+    getOtherPin() {
+        const other = this.getOther()
+        return other.is.pin ? other : (other.is.pad ? other.proxy : null)
+    },
+
+    getContactPoint() {
+        return this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
+    },
+
+    actualEndpoint() {
+        const other = this.getOther()
+        if (other?.is?.pin) return other
+        if (other?.is?.pad) return other.proxy
+        return null
+    },
+
+    setSelective(selective) {
+        this.is.selective = !!selective
+    },
+
+    incoming() {
+        const actual = this.actualEndpoint()
+        return actual ? !actual.is.input : false
+    },
+
+    key() {
+        const actual = this.actualEndpoint()
+        return this.alias ?? actual?.name ?? null
+    },
+
+    isSelective() {
+        return !!this.is.selective
+    },
+
+    acceptsFrom(tack) {
+        if (!this.isSelective()) return true
+        return this.key() === tack.key()
+    },
+
+    areConnected(tack) {
+        const A = this.getOther()
+        const B = tack.getOther()
+
+        if (!A || !B) return false
+        if (A.is.tack || B.is.tack) return false
+
+        const actualA = A.is.pin ? A : A.proxy
+        const actualB = B.is.pin ? B : B.proxy
+
+        if (!actualA || !actualB) return false
+        if (actualA.is.input === actualB.is.input) return false
+        if (A.is.pin && B.is.pin && A.node === B.node) return false
+
+        const inputTack = actualA.is.input ? this : tack
+        const outputTack = actualA.is.input ? tack : this
+
+        return inputTack.acceptsFrom(outputTack)
+    },
+
+    makeConxList(list, visited = new Set(), blockedRoute = null, origin = this) {
+        if (visited.has(this)) return
+        visited.add(this)
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (!tack.route?.from || !tack.route?.to) continue
+            if (tack.route === blockedRoute) continue
+
+            const other = tack.getOther()
+
+            if (other.is.tack) {
+                other.makeConxList?.(list, visited, blockedRoute, origin)
+            }
+            else if (!origin.areConnected(tack)) {
+                continue
+            }
+            else if (other.is.pin) {
+                other.is.proxy ? other.pad.makeConxList(list) : list.push(other)
+            }
+            else if (other.is.pad) {
+                other.proxy.makeConxList(list)
+            }
+        }
+    },
+
+    highLightRoutes() {
+        this.bus.is.highLighted = true
+        this.route.highLight()
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (this.areConnected(tack)) tack.route.highLight()
+        }
+    },
+
+    unHighLightRoutes() {
+        this.bus.is.highLighted = false
+        this.route.unHighLight()
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (this.areConnected(tack)) tack.route.unHighLight()
+        }
+    },
+
+    rank() {
+        return {up:1, down:1}
+    }
 }
-Object.assign(BusTack.prototype, TackConnectHandling)

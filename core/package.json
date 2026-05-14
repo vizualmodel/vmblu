@@ -17,7 +17,8 @@
     "vm:app": "vmblu make-app core.blu",
     "vm:capabilities": "vmblu make-capabilities core.blu",
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run test",
+    "test": "node --test tests/*.test.js",
     "preview": "vite preview"
   }
 }

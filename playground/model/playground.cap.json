@@ -1,0 +1,23 @@
+{
+  "schema": "https://vmblu.dev/schemas/capabilities.v1.json",
+  "version": 1,
+  "application": {
+    "id": "hv-layout",
+    "title": "hv-layout",
+    "description": "hv-layout application."
+  },
+  "tools": [],
+  "probes": [],
+  "events": [],
+  "policies": {
+    "defaultApproval": "never"
+  },
+  "usageGuidance": {
+    "principles": [
+      "Use tools to change application state.",
+      "Use probes to verify effects.",
+      "Use events for asynchronous observations.",
+      "Do not assume that a tool call succeeded unless a result, probe, or event confirms it."
+    ]
+  }
+}

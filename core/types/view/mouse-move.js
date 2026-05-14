@@ -59,6 +59,11 @@ export const mouseMoveHandling = {
 
             case doing.busDraw:
                 state.bus.drawXY(xyLocal)
+                if (state.bus.is.cable) {
+                    this.mouseHit(xyLocal)
+                    const conx = this.hit.lookWidget ?? this.hit.pad ?? null
+                    this.hover(conx, conx ? !state.bus.findTack(conx) : false)
+                }
                 return true
 
             case doing.busRedraw:
@@ -251,6 +256,7 @@ export const mouseMoveHandling = {
         const conx =  hit.what == zap.pin ? hit.lookWidget 
                     : hit.what == zap.pad ? hit.pad 
                     : hit.what == zap.busSegment ? hit.bus
+                    : hit.what == zap.route ? hit.route
                     : null
 
         // give visual feedback if we hover over a connectable object

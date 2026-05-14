@@ -118,8 +118,8 @@ saveRaw() {
     const viz = JSON.stringify(split.viz,null,2)
 
     // save both parts of the model
-    if (blu) this.blu.arl.save( blu )
-    if (viz) this.viz.arl.save( viz )
+    if (blu) this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error))
+    if (viz) this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error))
 },
 
 // Splits raw into a part for the blu file and the viz file
@@ -239,6 +239,7 @@ splitNode(rNode) {
         if (rNode.pads) viz.pads = rNode.pads.map( pad => convert.padToString(pad))
         if (splitNodes.length) viz.nodes = splitNodes.map( node => node.viz )
         if (rNode.buses) viz.buses = rNode.buses
+        if (rNode.cables) viz.cables = rNode.cables
         if (rNode.routes) viz.routes = rNode.routes
     }
 
@@ -278,6 +279,9 @@ joinNode(bNode, vNode) {
 
         // copy the buses
         bNode.buses = vNode.buses
+
+        // copy the cables
+        bNode.cables = vNode.cables
 
         // copy the routes
         bNode.routes = vNode.routes
@@ -363,7 +367,7 @@ rawAsLinks(imports, raw) {
     // We need to adapt already existing links ! 
     const oldRef = raw.origin
     const newRef = this.fullPath()
-console.log(newRef)
+  
     // we only save the origin once 
     let saveOrigin = true
 
@@ -382,7 +386,7 @@ console.log(newRef)
         else {
             rawNode.kind = 'dock'
             rawNode.link = { path: raw.origin, node: rawNode.name}
-console.log(rawNode)
+
             // save origin just once
             if (saveOrigin) {
                 imports.push(raw.origin)

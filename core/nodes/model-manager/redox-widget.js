@@ -161,6 +161,24 @@ export const redoxWidget = {
         },
     },
 
+    tackSelectivitySwitch: {
+        doit({ tack }) {
+            if (!tack?.is?.tack) return
+
+            const oldSelective = tack.is.selective
+            const newSelective = !oldSelective
+
+            setTackSelectivity(tack, newSelective)
+            this.saveEdit('tackSelectivitySwitch', {tack, oldSelective, newSelective})
+        },
+        undo({ tack, oldSelective }) {
+            setTackSelectivity(tack, oldSelective)
+        },
+        redo({ tack, newSelective }) {
+            setTackSelectivity(tack, newSelective)
+        },
+    },
+
     pinDrag: {
         doit({ pin, oldY, oldLeft}) {
             // just save the current position
@@ -338,6 +356,33 @@ export const redoxWidget = {
         },
     },
 };
+
+function setTackSelectivity(tack, selective) {
+    if (!tack?.route?.from || !tack.route?.to) {
+        tack.setSelective(selective)
+        return
+    }
+
+    disconnectTack(tack)
+    tack.setSelective(selective)
+    connectTack(tack)
+}
+
+function disconnectTack(tack) {
+    const other = tack.getOther()
+
+    other.is.tack ? tack.route.rxtxBusBusDisconnect()
+    : other.is.pin ? tack.route.rxtxPinBusDisconnect()
+    : tack.route.rxtxPadBusDisconnect()
+}
+
+function connectTack(tack) {
+    const other = tack.getOther()
+
+    other.is.tack ? tack.route.rxtxBusBus()
+    : other.is.pin ? tack.route.rxtxPinBus()
+    : tack.route.rxtxPadBus()
+}
 
 function cloneSettings(settings) {
     return settings == null ? null : structuredClone(settings);

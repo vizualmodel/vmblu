@@ -24,6 +24,9 @@ export function GroupNode (look=null, name=defaultGroupNodeName, uid=null) {
     // the buses that are part of this group
     this.buses = []
 
+    // the cables that are part of this group
+    this.cables = []
+
     // inside a group node there is a pad for every outside connection
     this.pads = []
 
@@ -222,6 +225,16 @@ const groupFunctions = {
 
             // save in the new node..
             newNode.buses.push(newBus)
+        })
+
+        // copy the cables
+        this.cables?.forEach( cable => {
+
+            const newCable = cable.copy()
+
+            cable.copyTacks(newCable, newNode)
+
+            newNode.cables.push(newCable)
         })
 
         // the txrx tables for the copy must be filled in

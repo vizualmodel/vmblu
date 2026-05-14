@@ -228,6 +228,9 @@ View.prototype = {
         // the buses
         this.root.buses.forEach( bus => bus.move(dx, dy))
 
+        // the cables
+        this.root.cables.forEach( cable => cable.move(dx, dy))
+
         // the pads ???
     },
 
@@ -375,10 +378,18 @@ View.prototype = {
             }
         }
 
-        // now render the nodes, pads and buses
+        // draw all the cable routes
+        for(const cable of root.cables) {
+            for(const tack of cable.tacks) {
+                if(tack.route?.from == tack) tack.route.render(ctx)
+            }
+        }
+
+        // now render the nodes, pads, buses and cables
         for(const node of root.nodes) node.render(ctx)
         for(const pad of root.pads) pad.render(ctx)
         for(const bus of root.buses) bus.render(ctx)
+        for(const cable of root.cables) cable.render(ctx)
     },
 
 

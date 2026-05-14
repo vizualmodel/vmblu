@@ -1,5 +1,5 @@
 import { inside, shape, style, eject } from '../util/index.js';
-import { zap } from './mouse.js';
+import { CTRL, zap } from './mouse.js';
 import { pinAreaHandling } from './selection-pin-area.js';
 
 // a constant for indicating the selection type
@@ -40,6 +40,7 @@ export function Selection(view = null) {
     this.nodes = [];
     this.pads = [];
     this.buses = [];
+    this.cables = [];
     this.tacks = [];
     this.widgets = [];
 }
@@ -73,6 +74,7 @@ Selection.prototype = {
         this.nodes.length = 0;
         this.pads.length = 0;
         this.buses.length = 0;
+        this.cables.length = 0;
         this.widgets.length = 0;
         this.tacks.length = 0;
     },
@@ -88,16 +90,18 @@ Selection.prototype = {
         selection.nodes = this.nodes?.slice();
         selection.pads = this.pads?.slice();
         selection.buses = this.buses?.slice();
+        selection.cables = this.cables?.slice();
         selection.tacks = this.tacks?.slice();
         selection.widgets = this.widgets?.slice();
 
         return selection;
     },
 
-    canCancel(hit) {
+    canCancel(hit, keys = 0) {
         // if we have hit a selection we cannot cancel it
         // if we have not hit it we can cancel the rectangle selections
         // The single node selection is not cancelled normally
+        if (keys === CTRL) return false;
 
         return hit.what == zap.selection
             ? false
@@ -315,8 +319,10 @@ Selection.prototype = {
         for (const pad of this.pads) pad.move(delta);
 
         // move the buses if there are nodes in the selection
-        if (this.nodes.length > 0)
+        if (this.nodes.length > 0) {
             for (const bus of this.buses) bus.move(delta.x, delta.y);
+            for (const cable of this.cables) cable.move(delta.x, delta.y);
+        }
         // or otherwise just the bus tacks
         else for (const tack of this.tacks) tack.slide(delta);
 
@@ -332,6 +338,7 @@ Selection.prototype = {
 
         // also for the buses
         for (const bus of this.buses) bus.adjustRoutes();
+        for (const cable of this.cables) cable.adjustRoutes();
 
         // *3* move the selection rectangle
 

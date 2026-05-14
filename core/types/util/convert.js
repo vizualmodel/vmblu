@@ -214,7 +214,9 @@ export const convert = {
         //const pinString = (pin) =>  '(pin) ' + pin.name + ' @ ' + pin.node.name
         const pinString = (pin) =>  `(pin ${pin.wid}) ${pin.name} @ ${pin.node.name}`
         //const busString = (tack) => '(bus) ' + tack.bus.name
-        const busString = (tack) => tack.alias?.length ? `(bus) ${tack.alias} @ ${tack.bus.name}` : '(bus) ' + tack.bus.name
+        const selectiveFlag = tack => tack.is.selective ? 'selective' : 'nonselective'
+        const busString = (tack) => tack.alias?.length ? `(bus ${selectiveFlag(tack)}) ${tack.alias} @ ${tack.bus.name}` : `(bus ${selectiveFlag(tack)}) ${tack.bus.name}`
+        const cableString = (tack) => `(cable ${tack.bus._rawIndex ?? 0}${tack.is.endpoint ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})`
         const padString = (pad) =>  `(pad ${pad.proxy.wid}) ${pad.proxy.name}`
         const itfString = (itf) =>  '(itf) ' + itf.name + ' @ ' + itf.node.name
 
@@ -233,11 +235,11 @@ export const convert = {
 
             from.is.pin ? strRoute.from = pinString(from) :
             from.is.pad ? strRoute.from = padString(from) : 
-            from.is.tack ? strRoute.from = busString(from) : null
+            from.is.tack ? strRoute.from = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null
 
             to.is.pin ? strRoute.to = pinString(to) :
             to.is.pad ? strRoute.to = padString(to) : 
-            to.is.tack ? strRoute.to = busString(to) : null
+            to.is.tack ? strRoute.to = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null
 
             strRoute.wire = convert.wireToString(route.wire)
         }
@@ -245,11 +247,11 @@ export const convert = {
 
             to.is.pin ? strRoute.from = pinString(to) :
             to.is.pad ? strRoute.from = padString(to) : 
-            to.is.tack ? strRoute.from = busString(to) : null
+            to.is.tack ? strRoute.from = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null
 
             from.is.pin ? strRoute.to = pinString(from) :
             from.is.pad ? strRoute.to = padString(from) : 
-            from.is.tack ? strRoute.to = busString(from) : null
+            from.is.tack ? strRoute.to = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null
 
             strRoute.wire = convert.wireToString(route.wire.slice().reverse())
         }
@@ -290,11 +292,26 @@ export const convert = {
 
             case 'bus': 
                 at = raw.indexOf('@')
-                raw.slice()
-                return {
+                const busParts = raw.slice(4, clbr).trim().split(/\s+/).filter(part => part.length)
+                const busEndPoint = {
                     bus: at > 0 ? raw.slice(at+1).trim() : raw.slice(clbr+1).trim(),
                     alias: at > 0 ? raw.slice(clbr+1, at).trim() : null
                 }
+                if (busParts.includes('selective')) busEndPoint.selective = true
+                if (busParts.includes('nonselective')) busEndPoint.selective = false
+                return busEndPoint
+
+            case 'cab': 
+                const cableParts = raw.slice(6, clbr).trim().split(/\s+/).filter(part => part.length)
+                const cableEndPoint = {
+                    cable: true,
+                    index: +(cableParts[0] || 0),
+                    endpoint: cableParts.includes('endpoint'),
+                    bridge: cableParts.includes('bridge')
+                }
+                if (cableParts.includes('selective')) cableEndPoint.selective = true
+                if (cableParts.includes('nonselective')) cableEndPoint.selective = false
+                return cableEndPoint
 
             case 'itf': return {itf: raw.slice(5).trim()}
         }

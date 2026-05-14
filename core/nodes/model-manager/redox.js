@@ -5,6 +5,7 @@ import {redoxWidget} from './redox-widget.js'
 import {redoxInterface} from './redox-interface.js'
 import {redoxRoute} from './redox-route.js'
 import {redoxBus} from './redox-bus.js'
+import {redoxCable} from './redox-cable.js'
 import {redoxPad} from './redox-pad.js'
 import {redoxSelect} from './redox-select.js'
 import {redoxPinArea} from './redox-pin-area.js'
@@ -33,4 +34,4 @@ Redox.prototype = {
         this.undoStack.push({verb, param})
     },
 }
-Object.assign(Redox.prototype, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxBus, redoxPad, redoxSelect, redoxPinArea, redoxView)
+Object.assign(Redox.prototype, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxBus, redoxCable, redoxPad, redoxSelect, redoxPinArea, redoxView)

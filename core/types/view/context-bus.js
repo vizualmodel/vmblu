@@ -53,5 +53,7 @@ function disconnect() {
 }
 
 function deleteBus() {
-	cm.doEdit('busDelete',{view: cm.view, bus: cm.bus})	
+	cm.bus.is.cable
+		? cm.doEdit('cableDelete',{view: cm.view, cable: cm.bus})
+		: cm.doEdit('busDelete',{view: cm.view, bus: cm.bus})	
 }

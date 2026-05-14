@@ -431,7 +431,10 @@ ModelManager.prototype = {
                     const text = JSON.stringify(doc.model.raw, null, 4);
 
                     // check and save
-                    if (text) this.model.getArl().save(text);
+                    if (text) {
+                        const arl = this.model.getArl()
+                        arl.save(text).catch(error => console.error(`Failed to save ${arl.getPath()}:`, error))
+                    }
 
                 } 
                 catch (err) {

@@ -125,6 +125,7 @@ DocumentManager.prototype = {
      */
     onDocRenamed({oldName, newName}) {
 
+        //DEV ONLY
         console.log('old-new', oldName, newName)
     },
 

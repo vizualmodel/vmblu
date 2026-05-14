@@ -250,6 +250,9 @@ ModelBlueprint.prototype = {
 
     // cook some parts of the model ...
     preCook() {
+        if (!this.raw?.header) {
+            throw new Error(`Cannot cook model before raw header is loaded: ${this.fullPath() ?? '<unknown model>'}`)
+        }
         this.header.cook(this.getArl(), this.raw.header)
         const rawTypes = this.raw?.types
         this.vmbluTypes = typeof rawTypes === 'string' ? JSON.parse(rawTypes) : rawTypes ?? null
