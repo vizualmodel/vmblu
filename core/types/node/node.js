@@ -252,6 +252,7 @@ Node.prototype = {
 
         for(const pad of this.pads) UID.generate(pad)
         for(const bus of this.buses) UID.generate(bus)
+        for(const cable of this.cables) UID.generate(cable)
         for(const node of this.nodes) node.uidChangeAll(UID)
     },
 
@@ -263,6 +264,7 @@ Node.prototype = {
         // change the UIDS in the linked node
         for(const pad of this.pads) UID.generate(pad)
         for(const bus of this.buses) UID.generate(bus)
+        for(const cable of this.cables) UID.generate(cable)
 
         // change also for nodes that are not links
         for(const node of this.nodes) if (!node.link) {
@@ -281,6 +283,7 @@ Node.prototype = {
         // generate the UIDS for buses and pads
         for(const pad of this.pads) UID.generate(pad)
         for(const bus of this.buses) UID.generate(bus)
+        for(const cable of this.cables) UID.generate(cable)
     },
 
 

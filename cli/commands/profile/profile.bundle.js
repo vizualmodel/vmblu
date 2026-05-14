@@ -53,6 +53,13 @@ circle(ctx, x,y,r, color) {
     ctx.stroke();
 },
 
+bullet(ctx,x,y,R,cFill) {
+    ctx.beginPath();
+    ctx.arc(x,y,R,0,2*Math.PI);
+    ctx.fillStyle = cFill;
+    ctx.fill();
+},
+
 diamond(ctx,x,y,w,h,cFill) {
     ctx.beginPath();
     ctx.fillStyle = cFill;
@@ -178,19 +185,7 @@ grid(ctx, x, y, w, h, dx, dy, cLine, cAxis) {
     ctx.stroke();
 },
 
-bullet(ctx,x,y,R,cLine,cFill) {
-    ctx.beginPath();
-    ctx.arc(x,y,R,0,2*Math.PI);
-    if (cFill) {
-        ctx.fillStyle = cFill;
-        ctx.fill();
-    }
-    if (cLine) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = cLine;
-        ctx.stroke();
-    }
-},
+
 
 textWidth(ctx,text) {
     return ctx.measureText(text).width
@@ -469,9 +464,41 @@ triangle(ctx, x,y,w,h,type,cFill) {
     ctx.fill();
 },
 
+bridge(ctx, x, y, r, color) {            
+
+    ctx.beginPath();
+
+    ctx.fillStyle = '#000000';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.rect(x - r, y - r, 2 * r, 2 * r);
+    ctx.stroke();
+    ctx.fill();
+},
+
+selectiveTack(ctx, x, y, r, color) {
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.arc(x,y,r,0,2*Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#000000';
+    ctx.arc(x,y,Math.max(1, r-1),0,2*Math.PI);
+    ctx.fill();
+},
+
+tack(ctx, x, y, r, color) {
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(x,y,r,0,2*Math.PI);
+    ctx.fill();
+},
 
 // t is the width of the top segment
-tack(ctx, type, channel, top, rc,t,cFill) {
+xtack(ctx, type, channel, top, rc,t,cFill) {
 
     ctx.beginPath();
     ctx.fillStyle = cFill;
@@ -524,34 +551,34 @@ tack(ctx, type, channel, top, rc,t,cFill) {
     ctx.fill();
 },
 
-// the text is centered in the label 
-hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+// // the text is centered in the label 
+// hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
-    ctx.beginPath();
-    ctx.fillStyle = cRect;
-    shape._roundedRect(ctx,x,y,w,h,r);
-    ctx.fill();
+//     ctx.beginPath();
+//     ctx.fillStyle = cRect
+//     shape._roundedRect(ctx,x,y,w,h,r)
+//     ctx.fill();
 
-    // center the text
-    ctx.fillStyle = cText;
-    ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h);  
-},
+//     // center the text
+//     ctx.fillStyle = cText
+//     ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h)  
+// },
 
-// the text is centered in the label 
-vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+// // the text is centered in the label 
+// vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
-    ctx.beginPath();
-    ctx.fillStyle = cRect;
-    shape._roundedRect(ctx,x,y,w,h,r);
-    ctx.fill();
+//     ctx.beginPath();
+//     ctx.fillStyle = cRect
+//     shape._roundedRect(ctx,x,y,w,h,r)
+//     ctx.fill();
 
-    ctx.save();                 // Save the current state
-    ctx.translate(x,y);         // the rectangle is at the origin
-    ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
-    ctx.fillStyle = cText;
-    ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w);  // center the text
-    ctx.restore();              // Restore the state
-},
+//     ctx.save();                 // Save the current state
+//     ctx.translate(x,y);         // the rectangle is at the origin
+//     ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
+//     ctx.fillStyle = cText
+//     ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w)  // center the text
+//     ctx.restore();              // Restore the state
+// },
 
 // draws three arches
 wirelessSymbol(ctx, x, y,r,color) {
@@ -573,13 +600,25 @@ wirelessSymbol(ctx, x, y,r,color) {
     ctx.stroke();
 },
 
+emptyLabel(ctx, x,y,r, color) {
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(x,y,r,0,2*Math.PI);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#000000';
+    ctx.arc(x,y,r-2,0,2*Math.PI);
+    ctx.stroke();
+},
+
 // the text is centered in the label 
-hCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+hBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     // big filled oval
     ctx.beginPath();
     ctx.fillStyle = cRect;
-    //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
     shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
     ctx.fill();
 
@@ -595,12 +634,11 @@ hCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 },
 
 // the text is centered in the label 
-vCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+vBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     // big filled oval
     ctx.beginPath();
     ctx.fillStyle = cRect;
-    //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
     shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2);
     ctx.fill();
 
@@ -1283,7 +1321,9 @@ const convert = {
         //const pinString = (pin) =>  '(pin) ' + pin.name + ' @ ' + pin.node.name
         const pinString = (pin) =>  `(pin ${pin.wid}) ${pin.name} @ ${pin.node.name}`;
         //const busString = (tack) => '(bus) ' + tack.bus.name
-        const busString = (tack) => tack.alias?.length ? `(bus) ${tack.alias} @ ${tack.bus.name}` : '(bus) ' + tack.bus.name;
+        const selectiveFlag = tack => tack.is.selective ? 'selective' : 'nonselective';
+        const busString = (tack) => tack.alias?.length ? `(bus ${selectiveFlag(tack)}) ${tack.alias} @ ${tack.bus.name}` : `(bus ${selectiveFlag(tack)}) ${tack.bus.name}`;
+        const cableString = (tack) => `(cable ${tack.bus._rawIndex ?? 0}${tack.is.endpoint ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})`;
         const padString = (pad) =>  `(pad ${pad.proxy.wid}) ${pad.proxy.name}`;
 
         // check if the route is drawn from input to output or the other way around
@@ -1301,11 +1341,11 @@ const convert = {
 
             from.is.pin ? strRoute.from = pinString(from) :
             from.is.pad ? strRoute.from = padString(from) : 
-            from.is.tack ? strRoute.from = busString(from) : null;
+            from.is.tack ? strRoute.from = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null;
 
             to.is.pin ? strRoute.to = pinString(to) :
             to.is.pad ? strRoute.to = padString(to) : 
-            to.is.tack ? strRoute.to = busString(to) : null;
+            to.is.tack ? strRoute.to = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null;
 
             strRoute.wire = convert.wireToString(route.wire);
         }
@@ -1313,11 +1353,11 @@ const convert = {
 
             to.is.pin ? strRoute.from = pinString(to) :
             to.is.pad ? strRoute.from = padString(to) : 
-            to.is.tack ? strRoute.from = busString(to) : null;
+            to.is.tack ? strRoute.from = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null;
 
             from.is.pin ? strRoute.to = pinString(from) :
             from.is.pad ? strRoute.to = padString(from) : 
-            from.is.tack ? strRoute.to = busString(from) : null;
+            from.is.tack ? strRoute.to = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null;
 
             strRoute.wire = convert.wireToString(route.wire.slice().reverse());
         }
@@ -1358,11 +1398,26 @@ const convert = {
 
             case 'bus': 
                 at = raw.indexOf('@');
-                raw.slice();
-                return {
+                const busParts = raw.slice(4, clbr).trim().split(/\s+/).filter(part => part.length);
+                const busEndPoint = {
                     bus: at > 0 ? raw.slice(at+1).trim() : raw.slice(clbr+1).trim(),
                     alias: at > 0 ? raw.slice(clbr+1, at).trim() : null
-                }
+                };
+                if (busParts.includes('selective')) busEndPoint.selective = true;
+                if (busParts.includes('nonselective')) busEndPoint.selective = false;
+                return busEndPoint
+
+            case 'cab': 
+                const cableParts = raw.slice(6, clbr).trim().split(/\s+/).filter(part => part.length);
+                const cableEndPoint = {
+                    cable: true,
+                    index: +(cableParts[0] || 0),
+                    endpoint: cableParts.includes('endpoint'),
+                    bridge: cableParts.includes('bridge')
+                };
+                if (cableParts.includes('selective')) cableEndPoint.selective = true;
+                if (cableParts.includes('nonselective')) cableEndPoint.selective = false;
+                return cableEndPoint
 
             case 'itf': return {itf: raw.slice(5).trim()}
         }
@@ -1840,8 +1895,12 @@ function StyleFactory() {
         cAdded: color.add, cDeleted: color.red
     }; 
     this.bus = {
-        wNormal: 6, wBusbar: 6, wCable: 6, wSelected: 6, split: 50, tooClose: 25, wArrow : 10, hArrow : 10, sChar: 5, hLabel: 15, radius: 7.5,
-        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma"
+        wNormal: 6, wBus: 4, split: 50, tooClose: 25, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 7.5,
+        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
+
+        wCable: 4, rTack: 4,
+
+        wBridge: 6, hBridge: 6
     }; 
     this.selection = {
         xPadding: 20, yPadding: 20, 
@@ -3303,6 +3362,7 @@ splitNode(rNode) {
         if (rNode.pads) viz.pads = rNode.pads.map( pad => convert.padToString(pad));
         if (splitNodes.length) viz.nodes = splitNodes.map( node => node.viz );
         if (rNode.buses) viz.buses = rNode.buses;
+        if (rNode.cables) viz.cables = rNode.cables;
         if (rNode.routes) viz.routes = rNode.routes;
     }
 
@@ -3342,6 +3402,9 @@ joinNode(bNode, vNode) {
 
         // copy the buses
         bNode.buses = vNode.buses;
+
+        // copy the cables
+        bNode.cables = vNode.cables;
 
         // copy the routes
         bNode.routes = vNode.routes;
@@ -6140,7 +6203,7 @@ Pin.prototype = {
         const pointRight = this.is.channel ? shape.ballTriangle : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,cText, null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,'#11aa77', null)
 
         const icons = this.is.capability ? (this.is.input ? 'T' : 'E') : null;
 
@@ -6624,222 +6687,49 @@ const ProxyFunctions = {
 // overwrite some specific pin functions
 Object.assign(Proxy.prototype, Pin.prototype, ProxyFunctions);
 
-const TackConnectHandling = {
-    
-    // return the widget at the other end
-    getOther() {
-        return this.route.from == this ? this.route.to : this.route.from
-    },
-
-    // return the pin or the proxy if the other is a pad
-    getOtherPin() {
-        const other = this.route.from == this ? this.route.to : this.route.from;
-        return other.is.pin ? other : (other.is.pad ? other.proxy : null)
-    },
-
-    getContactPoint() {
-        return this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
-    },
-
-    // getOtherName() {
-    //     const other = this.route.from == this ? this.route.to : this.route.from
-
-    //     if (other.is.pin) return other.name
-    //     if (other.is.pad) return other.proxy.name
-    //     return null
-    // },
-
-    incoming() {
-        const other = this.route.from == this ? this.route.to : this.route.from;
-
-        if (other.is.pin) return !other.is.input
-        if (other.is.pad) return other.proxy.is.input
-        return false
-    },
-
-    // make the list of pins/pads that are connected via this tack
-    makeConxList(list) {
-
-        for(const tack of this.bus.tacks) {
-
-            // TEMP - ELIMINATES BAD ROUTES
-            if (! tack.route?.from || ! tack.route?.to) continue
-
-            // check if the two are connected
-            if (! this.areConnected(tack)) continue
-
-            // get the widget connected to the bus
-            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
-
-            // search further if required
-            if (other.is.pin) {
-                
-                other.is.proxy ? other.pad.makeConxList(list) : list.push(other);
-            }
-            else if (other.is.pad) {
-
-                other.proxy.makeConxList(list);
-            }
-        }
-    },
-
-    pinNameCheck(A,B) {
-
-        if (A.name != B.name) return false
-
-        return true
-    },
-
-     // check if two widgets connected to the bus are logically connected
-    // if two pins are connected to a bus, the bus is external and a and b can belong to the same node
-    // when there is a pad, the proxy and the pin are always from a differnt node 
-    // two pads can be connected by a bus
-
-    areConnected(tack) {
-
-        const A = this.getOther();
-        const B = tack.getOther();
-
-        let actualA = A;
-        let actualB = B;
-
-        if (A.is.pin) {
-            if (B.is.pin) {
-
-                // input / output have to match
-                if (A.is.input == B.is.input) return false
-
-                // you cannot connect to your own node via a bus
-                if (A.node == B.node) return false
-            }
-            else if (B.is.pad) {
-
-                // input / output have to be different
-                if (A.is.input != B.proxy.is.input) return false
-
-                actualB = B.proxy;
-            }
-        }
-        else if (A.is.pad) {
-            if (B.is.pin) {
-
-                // input / output have to match
-                if (A.proxy.is.input != B.is.input) return false
-
-                actualA = A.proxy;
-            }
-            else if (B.is.pad) {
-
-                // input / output have to be different
-                if (A.proxy.is.input == B.proxy.is.input) return false
-
-                // check the names
-                actualA = A.proxy;
-                actualB = B.proxy;
-            }
-        }
-
-        // check the name or the alias
-        const nameA = this.alias ? this.alias : actualA.name;
-        const nameB = tack.alias ? tack.alias : actualB.name;
-
-        return nameA === nameB
-    },
-
-   // highlight the routes that are connected via the incoming route
-    highLightRoutes() {
-
-        // highlight the bus
-        this.bus.is.highLighted = true;
-        this.route.highLight();
-
-        // check for the connections to the bus..
-        for(const tack of this.bus.tacks) {
-
-            // skip the other
-            if (tack === this) continue
-
-            // check if connecetd
-            if (this.areConnected(tack)) tack.route.highLight();
-        }
-    },
-
-    // unhighlight the routes that the tack of this route is connected to
-    unHighLightRoutes() {
-
-        // unhighlight the bus
-        this.bus.is.highLighted = false;
-        this.route.unHighLight();
-
-        // check for the connections to the bus..
-        for(const tack of this.bus.tacks) {
-
-            // skip
-            if (tack === this) continue
-
-            // check if connecetd
-            if (this.areConnected(tack)) tack.route.unHighLight();
-        }
-    },
-
-    rank() {
-        return {up:1, down:1}
-    }
-};
-
-// an in out symbol is a triangle 
 function BusTack(bus, wid = null) {
 
-    // the rectangle will be filled in by orient
     this.rect = {x:0, y:0, w: 0, h: 0};
 
-    // set the type
     this.is = {
         tack: true,
         selected: false,
         highLighted: false,
-        channel: false,
-        top: false,                  // ball on top for tacks going to inputs / at the bottom for tacks coming from outputs
+        bridge: false,
+        endpoint: false,
+        selective: false,
     };
 
-    // save the bus this tack is connected to
+    // Owner trunk. This can be a bus or a cable.
     this.bus = bus;
-
-    // the wid of this tack - currently not used !
-    this.wid = wid ?? bus.generateWid();
-
-    // the segment of the bus on which the tack sits 
+    this.wid = wid ?? bus.generateWid?.() ?? null;
     this.segment = 0;
-
-    // the alias that the tack can use {text, rc}
     this.alias = null;
-
-    // the rectangle for the alias
     this.rcAlias = null;
-
-    // direction of the tack 'up 'down' 'right' 'left'
-    this.dir = '';
-
-    // the route
     this.route = null;
 }
 
 BusTack.prototype = {
 
     render(ctx) {
-        // the color
-        const color =  this.is.selected ? style.bus.cSelected 
+
+        if (this.is.endpoint) return
+
+        const color =  this.is.selected ? style.bus.cSelected
                      : this.is.highLighted ? style.bus.cHighLighted
                      : style.bus.cNormal;
 
-        // draw the tack
-        shape.tack(ctx, this.dir, this.is.channel, this.is.top, this.rect, style.route.wNormal, color);
+        const center = this.visualCenter();
+        if (!center) return;
 
-        // if we have an alias, draw it
+        this.is.bridge 
+            ? shape.bridge(ctx, center.x, center.y, style.bus.rTack, color)
+            : this.isSelective()
+                ? shape.selectiveTack(ctx, center.x, center.y, style.bus.rTack, color)
+                : shape.tack(ctx, center.x, center.y, style.bus.rTack, color);
+
         if (this.alias && this.route) {
-
-            // check if we have the rectangle
-            if (! this.rcAlias) {
+            if (!this.rcAlias) {
                 this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
             }
 
@@ -6847,159 +6737,132 @@ BusTack.prototype = {
         }
     },
 
-    // where to put the alias wrt to the tack
     aliasZone() {
-
+        if (!this.route) return
         const wire = this.route.wire;
-
-        let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)]; 
-
-        if (a.x === b.x) return a.y < b.y ? 'S' : 'N'
-        else return a.x < b.x ? 'E' : 'W'
+        let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
+        return (a.x === b.x) ? (a.y < b.y ? 'S' : 'N') : (a.x < b.x ? 'E' : 'W')
     },
 
-
-    // sets the route for a tack and places the tack on that route
     setRoute(route) {
-        
-        // the route to this tack
         this.route = route;
 
-        // if one of the end points is still null, set the tack
-        if (!route.to) route.to = this; 
+        if (!route.to) route.to = this;
         else if (!route.from) route.from = this;
 
-        // get the other endpoint of the route 
-        const other = route.from == this ? route.to : route.from;
+        const other = this.getOther();
 
-        // check if the tack is channel
-        this.is.channel  = other.is.pad ? other.proxy.is.channel  : other.is.channel;
-        this.is.top = other.is.pad ? !other.proxy.is.input : other.is.input;
+        if (other.is.tack) {
+            this.is.bridge = true;
+            other.is.bridge = true;            
+        }
 
-        // and place the tack
-        this.orient();
+        other?.is?.tack ? this.bridgeRect(other) : this.tackRect(other);
     },
 
-    // sets the arrow in the correct position (up down left right) - does not change the route
-    orient() {
+    // where does the route intersect the bus
+    intersection() {
+        const wire = this.route.wire;
+        const [a] = this.route.to == this ? [ wire.at(-1), wire.at(-2) ] : [wire[0], wire[1]];
 
-        // helper function - the tack direction to a pad is the opposite of the tack direction to a pin
-        // inflow - flow to the bus - is true in thes cases:  output pin >---->||  input pad >----->||  
-        const inflow = (widget) => widget.is.pin ? widget.is.input : !widget.proxy.is.input;
+        // a hits the bus
+        let segment = this.bus.hitSegment(a);
 
-        // notation
-        const rWire = this.route.wire;
-        const bWire = this.bus.wire;
-        const other = this.route.to == this ? this.route.from : this.route.to;
-
-        // the points of the route on the bus (crossing segment) - a is the point on the bus
-        const a = this.route.to == this ? rWire.at(-1) : rWire[0];
-        const b = this.route.to == this ? rWire.at(-2) : rWire[1];
-
-        // determine the segment of the bus
-        this.segment = this.bus.hitSegment(a); 
-
-        // A saved route endpoint can end up a few pixels off the bus after load.
-        // In that case snap to the nearest bus segment instead of falling back
-        // to segment 1.
-        if (this.segment == 0) {
-            const closest = closestPointOnCurve(bWire, a);
-
-            if (closest?.segment) {
-                this.segment = closest.segment;
+        // if no hit find the closest
+        if (segment == 0) {
+            const closest = closestPointOnCurve(this.bus.wire, a);
+            segment = closest?.segment ?? 1;
+            if (closest?.point) {
                 a.x = closest.point.x;
                 a.y = closest.point.y;
             }
-            else {
-                console.error('*** SEGMENT ON BUS NOT FOUND ***', other, this.bus);
-                this.segment = 1;
-            }
         }
 
-        // the bus segment can be horizontal or vertical
-        const horizontal = Math.floor(bWire[this.segment-1].y) === Math.floor(bWire[this.segment].y);
+        // get the endpoints of the segment
+        const A = this.bus.wire[segment-1];
+        const B = this.bus.wire[segment];
 
-        //notation
-        const rc = this.rect;
-        const sp = bWire[this.segment];
+        // place the point exactly on the segment
+        const point = (A.x == B.x) ? {x: A.x, y: a.y} : {x: a.x, y: A.y};
+        a.x = point.x;
+        a.y = point.y;
 
-        // to place the arrow we take the width of the bus into account - the -1 is to avoid a very small gap
-        const shift = style.bus.wNormal/2 - 1;
-
-        // set the rectangle values
-        if (horizontal) {
-            rc.w = style.bus.wArrow;
-            rc.h = style.bus.hArrow;
-            rc.x = a.x - rc.w/2;
-            if (b.y > a.y) {
-                rc.y = sp.y + shift;
-                this.dir = inflow(other) ? 'down' : 'up';
-            }
-            else {
-                rc.y = sp.y - rc.h - shift;
-                this.dir = inflow(other) ? 'up' : 'down';
-            }
-            // allign the route endpoint perfectly with the bus (could stick out a little bit)
-            a.y = sp.y;
-        }
-        else {
-            rc.w = style.bus.hArrow;
-            rc.h = style.bus.wArrow;
-            rc.y = a.y - rc.h/2;
-            if (b.x > a.x) {
-                rc.x = sp.x + shift;
-                this.dir = inflow(other) ? 'right' : 'left';
-            }
-            else {
-                rc.x = sp.x - rc.w - shift;
-                this.dir = inflow(other) ?  'left' : 'right';
-            }
-            // allign the route endpoint perfectly with the bus (could stick out a little bit)
-            a.x = sp.x;
-        }
+        // done
+        return {segment, point}
     },
 
-    // point p is guaranteed to be on the bus - the arrow will be oriented correctly later...
+    bridgeRect() {
+
+        const inter = this.intersection();
+
+        this.segment = inter.segment;
+
+        this.rect.w = 2 * style.bus.rTack;
+        this.rect.h = 2 * style.bus.rTack;
+        this.rect.x = inter.point.x - this.rect.w/2;
+        this.rect.y = inter.point.y - this.rect.h/2;
+    },
+
+    zoneDelta() {
+        const r = style.bus.rTack;
+        const zone = this.aliasZone();
+        return zone == 'N' ? {x: r, y: 2*r} : zone == 'S' ? {x: r, y: 0}: zone == 'E' ? {x: 0, y: r}: {x: 2*r, y: r}
+    },
+
+    tackRect() {
+
+        const inter = this.intersection();
+
+        this.segment = inter.segment;
+
+        const r = style.bus.rTack;
+        const rc = this.rect;
+        const delta =  this.zoneDelta();
+
+        rc.w = 2 * r;
+        rc.h = 2 * r;
+        rc.x = inter.point.x - delta.x;
+        rc.y = inter.point.y - delta.y;
+    },
+
     placeOnSegment(point, segment) {
 
-        // save the segment
         this.segment = segment;
+        this.rect.w = 2 * style.bus.rTack;
+        this.rect.h = 2 * style.bus.rTack;
 
-        // check the segment
-        const a = this.bus.wire[segment-1];
-        const b = this.bus.wire[segment];
-
-        // vertical
-        if (a.x == b.x) {
-            this.dir = 'left';
-            this.rect.x = a.x;
-            this.rect.y = point.y; 
-        } else {
-            this.dir = 'up';
-            this.rect.x = point.x; 
-            this.rect.y = a.y;
+        // place the bridge on the crossing 
+        if (this.is.bridge) {
+            this.rect.x = point.x - this.rect.w/2;
+            this.rect.y = point.y - this.rect.h/2;
         }
-
+        // place the tack in the right zone
+        else {
+            const delta =  this.zoneDelta();
+            this.rect.x = point.x - delta.x;
+            this.rect.y = point.y - delta.y;
+        }
     },
 
-    // returns true if the tack is horizontal (the segment is vertical in that case !)
     horizontal() {
-        return ((this.dir == 'left') || (this.dir == 'right'))
+        const s = this.segment;
+        const w = this.bus.wire;
+        return Math.floor(w[s-1].y) === Math.floor(w[s].y)
     },
 
-    // center is where a route connects !
     center() {
-
         const rc = this.rect;
 
-        // check the segment
-        if (this.segment == 0) return null
+        if (this.is.bridge)  return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
 
-        const p = this.bus.wire[this.segment];
-
-        return (this.dir == 'left' || this.dir == 'right') ? {x: p.x, y:rc.y + rc.h/2} : {x: rc.x + rc.w/2, y: p.y}
+        const delta =  this.zoneDelta();
+        return   {x: rc.x + delta.x, y: rc.y + delta.y}
     },
 
+    visualCenter() {
+        const rc = this.rect;
+        return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
+    },
 
     toJSON() {
         return convert.routeToRaw(this.route)
@@ -7007,185 +6870,151 @@ BusTack.prototype = {
 
     overlap(rect) {
         const rc = this.rect;
-
-        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
-        return true
+        return !((rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h < rect.y))
     },
 
     remove() {
-        // remove the route at both ends - this will also call removeRoute below !
         this.route.remove();
     },
 
     removeRoute(route) {
-        // and remove the tack - the route is also gone then...
         this.bus.removeTack(this);
     },
 
-
     moveX(dx) {
-
-        // move the rect
         this.rect.x += dx;
 
-        // move the endpoint of the route as well..
-        const p = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1);
+        if (this.is.bridge) {
+            this.route.autoRoute();
+            return
+        }
 
+        const p = this.getContactPoint();
         p.x += dx;
-
-        // place the link..
-        this.orient();
+        this.placeOnSegment(p, this.segment);
     },
 
     moveY(dy) {
-
-        // move the rect
         this.rect.y += dy;
 
-        // move the endpoint of the route as well..
-        const p = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1);
+        if (this.is.bridge) {
+            this.route.autoRoute();
+            return
+        }
 
+        const p = this.getContactPoint();
         p.y += dy;
-
-        // place the link..
-        this.orient();
+        this.placeOnSegment(p, this.segment);
     },
 
-    // just move the link and adjust the route
     moveXY(dx,dy) {
-
-        // move the rect
         this.rect.x += dx;
         this.rect.y += dy;
 
-        // check that we have enough segments
-        //if (this.route.wire.length == 2) this.route.addTwoSegments(this.route.wire[0], this.route.wire[1])
+        if (this.is.bridge) {
+            this.route.autoRoute();
+            return
+        }
+
         if (this.route.wire.length == 2) this.route.fourPointRoute();
 
-
-        // move the endpoint of the route as well..
         const a = this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1);
         const b = this.route.from == this ? this.route.wire[1] : this.route.wire.at(-2);
-
-        // check
         const vertical = Math.abs(a.x - b.x) < Math.abs(a.y - b.y);
 
-        // vertical
         if (vertical) {
             a.x += dx;
             b.x += dx;
             a.y += dy;
         }
-        // horizontal
         else {
             a.y += dy;
             b.y += dy;
             a.x += dx;
         }
 
-        // place the link..
-        this.orient();
+        this.placeOnSegment(a, this.segment);
     },
 
-    // check that the link stays on the segment
     slide(delta) {
-
-        // notation
-        let pa = this.bus.wire[this.segment -1];
-        let pb = this.bus.wire[this.segment];
+        const [a,b] = [this.bus.wire[this.segment -1], this.bus.wire[this.segment]];
         const rc = this.rect;
-        const wBus = style.bus.wNormal;
+        const wTrunk = this.bus.is.cable ? style.bus.wCable : style.bus.wBus;
 
-        // horizontal segment
-        if (pa.y == pb.y) {
-            // the max and min position on the segment
-            let xMax = Math.max(pa.x, pb.x) - rc.w - wBus/2;
-            let xMin = Math.min(pa.x, pb.x) + wBus/2;
+        if (a.y == b.y) {
+            let xMax = Math.max(a.x, b.x) - rc.w - wTrunk/2;
+            let xMin = Math.min(a.x, b.x) + wTrunk/2;
 
-            // increment 
             rc.x += delta.x;
-
-            // clamp to max or min
             rc.x = rc.x > xMax ? xMax : rc.x < xMin ? xMin : rc.x;
         }
         else {
-            // the max and min position on the segment
-            let yMax = Math.max(pa.y, pb.y) - rc.h - wBus/2;
-            let yMin = Math.min(pa.y, pb.y) + wBus/2;
+            let yMax = Math.max(a.y, b.y) - rc.h - wTrunk/2;
+            let yMin = Math.min(a.y, b.y) + wTrunk/2;
 
-            // increment check and adjust
             rc.y += delta.y;
-
-            // clamp to min / max
             rc.y = rc.y > yMax ? yMax : rc.y < yMin ? yMin : rc.y;
         }
-        // re-establish the connection with the end points
-        this.route.adjust();
+
+        this.alignRouteEndpoint();
     },
 
-    // sliding endpoints on a bus can cause segments to combine
-    // s is 1 or the last segment
-    fuseEndSegment() {
-
-        // at least three segments 
-        if (this.route.wire.length < 4) return 
-
-        // notation - a is where the link is connected
+    alignRouteEndpoint() {
         const route = this.route;
         const p = route.wire;
-        const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
 
-        // horizontal segment
+        if (p.length < 3) route.threePointRoute(this === route.to);
+
+        const center = this.center();
+        const trunk = this.bus.wire;
+        const [a,b] = [trunk[this.segment - 1], trunk[this.segment]];
+        const horizontal = a.y === b.y;
+
+        if (route.from === this) {
+            p[0].x = center.x;
+            p[0].y = center.y;
+
+            horizontal ? p[1].x = center.x : p[1].y = center.y;
+        }
+        else {
+            const last = p.length - 1;
+
+            p[last].x = center.x;
+            p[last].y = center.y;
+
+            horizontal ? p[last - 1].x = center.x : p[last - 1].y = center.y;
+        }
+    },
+
+    fuseEndSegment() {
+        if (this.route.wire.length < 4) return
+
+        const route = this.route;
+        const p = route.wire;
+        const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false];
+
         if ((a.y == b.y) && (Math.abs(c.y - b.y) < style.route.tooClose)) {
-
-            // move the endpoint
             a.y = c.y;
-
-            // remove the segment from the route
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
-
-            // and place the link again
-            this.orient();
+            this.placeOnSegment(a, this.segment);
         }
-        // vertical segment
         else if ((a.x == b.x)&&(Math.abs(b.x - c.x) < style.route.tooClose)) {
-
-            // move the endpoint
             a.x = c.x;
-
-            // remove the segment
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
-
-            // and place the link again
-            this.orient();
+            this.placeOnSegment(a, this.segment);
         }
-        return
     },
 
     restore(route) {
-    
-        // set the route
         this.route = route;
-
-        // add to the bus widgets
-        this.bus.tacks.push(this);
-
-        // place the arrow 
-        this.orient();
+        if (!this.bus.tacks.includes(this)) this.bus.tacks.push(this);
+        this.setRoute(route);
     },
 
-
-
-    // The text edit functions 
-
     startEdit(ctx, click = null) {
+        if (!this.alias) this.alias = '';
 
-        // if we do not have an alias, set it
-        if (! this.alias) this.alias = '';
-
-        // get the alias rectangle
         const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias);
-
         const index = click ? shape.cursorIndex(ctx, this.alias, rc.x, click.x) : this.alias.length;
         return { prop: 'alias', index }
     },
@@ -7196,18 +7025,124 @@ BusTack.prototype = {
     },
 
     endEdit(saved) {
-
-        // clean the user input
         this.alias = convert.cleanInput(this.alias);
-
-        // check
         if (!this.alias?.length) this.alias = null;
-
-        // reset the rectangle
         this.rcAlias = null;
     },
+
+    getOther() {
+        return this.route.from == this ? this.route.to : this.route.from
+    },
+
+    getOtherPin() {
+        const other = this.getOther();
+        return other.is.pin ? other : (other.is.pad ? other.proxy : null)
+    },
+
+    getContactPoint() {
+        return this.route.from == this ? this.route.wire[0] : this.route.wire.at(-1)
+    },
+
+    actualEndpoint() {
+        const other = this.getOther();
+        if (other?.is?.pin) return other
+        if (other?.is?.pad) return other.proxy
+        return null
+    },
+
+    setSelective(selective) {
+        this.is.selective = !!selective;
+    },
+
+    incoming() {
+        const actual = this.actualEndpoint();
+        return actual ? !actual.is.input : false
+    },
+
+    key() {
+        const actual = this.actualEndpoint();
+        return this.alias ?? actual?.name ?? null
+    },
+
+    isSelective() {
+        return !!this.is.selective
+    },
+
+    acceptsFrom(tack) {
+        if (!this.isSelective()) return true
+        return this.key() === tack.key()
+    },
+
+    areConnected(tack) {
+        const A = this.getOther();
+        const B = tack.getOther();
+
+        if (!A || !B) return false
+        if (A.is.tack || B.is.tack) return false
+
+        const actualA = A.is.pin ? A : A.proxy;
+        const actualB = B.is.pin ? B : B.proxy;
+
+        if (!actualA || !actualB) return false
+        if (actualA.is.input === actualB.is.input) return false
+        if (A.is.pin && B.is.pin && A.node === B.node) return false
+
+        const inputTack = actualA.is.input ? this : tack;
+        const outputTack = actualA.is.input ? tack : this;
+
+        return inputTack.acceptsFrom(outputTack)
+    },
+
+    makeConxList(list, visited = new Set(), blockedRoute = null, origin = this) {
+        if (visited.has(this)) return
+        visited.add(this);
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (!tack.route?.from || !tack.route?.to) continue
+            if (tack.route === blockedRoute) continue
+
+            const other = tack.getOther();
+
+            if (other.is.tack) {
+                other.makeConxList?.(list, visited, blockedRoute, origin);
+            }
+            else if (!origin.areConnected(tack)) {
+                continue
+            }
+            else if (other.is.pin) {
+                other.is.proxy ? other.pad.makeConxList(list) : list.push(other);
+            }
+            else if (other.is.pad) {
+                other.proxy.makeConxList(list);
+            }
+        }
+    },
+
+    highLightRoutes() {
+        this.bus.is.highLighted = true;
+        this.route.highLight();
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (this.areConnected(tack)) tack.route.highLight();
+        }
+    },
+
+    unHighLightRoutes() {
+        this.bus.is.highLighted = false;
+        this.route.unHighLight();
+
+        for(const tack of this.bus.tacks) {
+            if (tack === this) continue
+            if (this.areConnected(tack)) tack.route.unHighLight();
+        }
+    },
+
+    rank() {
+        return {up:1, down:1}
+    }
 };
-Object.assign(BusTack.prototype, TackConnectHandling);
 
 // an in out symbol is a triangle 
 function BusLabel(rect, bus) {
@@ -7216,12 +7151,15 @@ function BusLabel(rect, bus) {
     this.is = {
         busLabel: true,
         beingEdited: false,
-        highLighted: false,   
-        horizontal: true
+        highLighted: false
+//        horizontal: true
     };
 
     // the label text
     this.text = bus.name;
+
+    // the zone for the label
+    this.zone = 'N'; // N S E W
 
     // save the bus
     this.bus = bus;
@@ -7230,7 +7168,20 @@ function BusLabel(rect, bus) {
 // specific bullet functions
 const BusLabelFunctions = {
 
-    makeRect(a, b, w, h) {
+    makeRect(w, h) {
+
+        const wire = this.bus.wire;
+        let [a,b] = (this == this.bus.startLabel) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
+        const zone = this.zone = (a.x === b.x) ? (a.y < b.y ? 'N' : 'S') : (a.x < b.x ? 'W' : 'E');
+
+        this.rect = zone == 'N' ? {x: a.x - h/2, y: a.y-w, h:w, w:h}
+                :   zone == 'S' ? {x: a.x - h/2, y: a.y, h:w, w:h}
+                :   zone == 'E' ? {x: a.x, y: a.y-h/2, h, w}
+                :   zone == 'W' ? {x: a.x - w, y: a.y-h/2, h, w}
+                :   {x:0,y:0,h, w};
+    },
+
+    xxmakeRect(a, b, w, h) {
 
         const rc = this.rect;
 
@@ -7259,13 +7210,12 @@ const BusLabelFunctions = {
     place() {
         //notation
         const st = style.bus;
-        const wire = this.bus.wire;
 
         // set the size of the label
-        const sText = this.text.length * st.sChar + 2*st.hLabel;
+        const sText = this.text.length > 0 ? this.text.length * st.sChar + 2*st.hLabel : st.hLabel;
 
-        // vertical or horizontal
-        (this == this.bus.startLabel) ? this.makeRect(wire[0], wire[1], sText, st.hLabel) : this.makeRect(wire.at(-1), wire.at(-2), sText, st.hLabel); 
+        // make the rectangle
+        this.makeRect(sText, st.hLabel);
     },
 
     // called when the editing starts
@@ -7331,9 +7281,17 @@ const BusLabelFunctions = {
                         : state.highLighted ? st.cHighLighted
                         : st.cNormal;
 
+        // If there is no name we draw a small circular label
+        if (!this.text.length && !this.is.beingEdited) {
+
+            const rc = this.rect;
+            shape.emptyLabel(ctx,rc.x + rc.w/2, rc.y + rc.h/2, st.radius,cLabel);
+            return
+        }
+
         // draw the label
-        this.is.horizontal  ? shape.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
-                            : shape.vCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText);
+        (this.zone == 'E' || this.zone == 'W')  ? shape.hBusLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
+                                                : shape.vBusLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText);
     },
 
     setSize(ctx) {
@@ -9583,6 +9541,12 @@ const mouseHandling = {
             if (hit.what != zap.nothing) return
         }
 
+        // search the cables
+        for(const cable of this.root.cables) {
+            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = cable.hitTest(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+
         // check if we have hit a route
         this.mouseHitRoutes(xyLocal);
     },
@@ -9606,6 +9570,12 @@ const mouseHandling = {
         // search the buses
         for(const bus of this.root.buses) {
             [hit.what, hit.route, hit.routeSegment] = bus.hitRoute(xyLocal);
+            if (hit.what != zap.nothing) return
+        }
+
+        // search the cables
+        for(const cable of this.root.cables) {
+            [hit.what, hit.route, hit.routeSegment] = cable.hitRoute(xyLocal);
             if (hit.what != zap.nothing) return
         }
     },
@@ -9997,6 +9967,7 @@ function Selection(view = null) {
     this.nodes = [];
     this.pads = [];
     this.buses = [];
+    this.cables = [];
     this.tacks = [];
     this.widgets = [];
 }
@@ -10030,6 +10001,7 @@ Selection.prototype = {
         this.nodes.length = 0;
         this.pads.length = 0;
         this.buses.length = 0;
+        this.cables.length = 0;
         this.widgets.length = 0;
         this.tacks.length = 0;
     },
@@ -10045,6 +10017,7 @@ Selection.prototype = {
         selection.nodes = this.nodes?.slice();
         selection.pads = this.pads?.slice();
         selection.buses = this.buses?.slice();
+        selection.cables = this.cables?.slice();
         selection.tacks = this.tacks?.slice();
         selection.widgets = this.widgets?.slice();
 
@@ -10273,8 +10246,10 @@ Selection.prototype = {
         for (const pad of this.pads) pad.move(delta);
 
         // move the buses if there are nodes in the selection
-        if (this.nodes.length > 0)
+        if (this.nodes.length > 0) {
             for (const bus of this.buses) bus.move(delta.x, delta.y);
+            for (const cable of this.cables) cable.move(delta.x, delta.y);
+        }
         // or otherwise just the bus tacks
         else for (const tack of this.tacks) tack.slide(delta);
 
@@ -10290,6 +10265,7 @@ Selection.prototype = {
 
         // also for the buses
         for (const bus of this.buses) bus.adjustRoutes();
+        for (const cable of this.cables) cable.adjustRoutes();
 
         // *3* move the selection rectangle
 
@@ -10419,6 +10395,11 @@ const mouseMoveHandling = {
 
             case doing.busDraw:
                 state.bus.drawXY(xyLocal);
+                if (state.bus.is.cable) {
+                    this.mouseHit(xyLocal);
+                    const conx = this.hit.lookWidget ?? this.hit.pad ?? null;
+                    this.hover(conx, conx ? !state.bus.findTack(conx) : false);
+                }
                 return true
 
             case doing.busRedraw:
@@ -10611,6 +10592,7 @@ const mouseMoveHandling = {
         const conx =  hit.what == zap.pin ? hit.lookWidget 
                     : hit.what == zap.pad ? hit.pad 
                     : hit.what == zap.busSegment ? hit.bus
+                    : hit.what == zap.route ? hit.route
                     : null;
 
         // give visual feedback if we hover over a connectable object
@@ -10954,7 +10936,7 @@ const mouseDownHandling = {
                     case SHIFT:{
 
                         // Save the original route so undo can restore it after rerouting.
-                        this.doEdit(tx,'deleteRoute',{route: hit.route, oldRoute: hit.route.clone()});
+                        this.doEdit(tx,'deleteRoute',{view: this, route: hit.route, oldRoute: hit.route.clone()});
                     
                         // and start rerouting
                         hit.route.resumeDrawing(hit.routeSegment, xyLocal);
@@ -10965,6 +10947,20 @@ const mouseDownHandling = {
                         // stateswitch
                         this.stateSwitch(doing.routeDraw);
                         state.route = hit.route;
+                    }
+                    break
+
+                    case CTRL:{
+                        const conversion = this.root.convertRouteToCable(hit.route, hit.routeSegment, xyLocal, true);
+                        const pendingRoute = conversion?.pending?.route;
+
+                        if (!pendingRoute) break
+
+                        this.doEdit(tx,'routeToCable',{conversion});
+
+                        pendingRoute.select();
+                        this.stateSwitch(doing.routeDraw);
+                        state.route = pendingRoute;
                     }
                     break
                 }
@@ -11204,15 +11200,49 @@ const mouseDownHandling = {
                     }
                     break
 
-                    case SHIFT:                    break
+                    case SHIFT:{
+                        if (hit.bus.is.cable) {
+                            state.bus = hit.bus;
+                            state.busSegment = hit.busSegment;
+                            state.bus.is.selected = true;
+                            state.modo.wire = hit.bus.copyWire();
+                            state.modo.tacks = hit.bus.tacks.slice();
+                            state.modo.tackWires = hit.bus.copyTackWires();
+
+                            hit.bus.resumeDrawing(hit.busSegment, xyLocal);
+
+                            this.stateSwitch(doing.busDraw);
+                        }
+                    }
+                    break
 
                     case CTRL:{
 
-                        state.bus = hit.bus;
-                        state.bus.is.selected = true;
-                        state.modo.wire = hit.bus.copyWire();
-                        state.modo.wires = hit.bus.copyTackWires();
-                        this.stateSwitch(doing.busDrag);
+                        const trunk = hit.bus;
+                        const segment = hit.busSegment;
+                        const a = trunk.wire[segment - 1];
+                        const b = trunk.wire[segment];
+                        const point = {x: xyLocal.x, y: xyLocal.y};
+
+                        if (a.x === b.x) {
+                            point.x = a.x;
+                            point.y = Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y));
+                        }
+                        else {
+                            point.x = Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x));
+                            point.y = a.y;
+                        }
+
+                        const tack = trunk.newTack();
+                        tack.placeOnSegment(point, segment);
+
+                        const route = new Route(tack, null);
+                        route.wire = [{...tack.center()}, {...tack.center()}];
+                        tack.route = route;
+
+                        route.select();
+                        this.stateSwitch(doing.routeDraw);
+                        state.route = route;
                     }
                     break
                 }
@@ -11242,7 +11272,7 @@ const mouseDownHandling = {
                         state.route = route;
 
                         // Save the original route so undo can restore it after rerouting.
-                        this.doEdit(tx,'deleteRoute',{route, oldRoute: route.clone()});
+                        this.doEdit(tx,'deleteRoute',{view: this, route, oldRoute: route.clone()});
 
                         // and start rerouting from the last segment
                         route.resumeDrawing(route.wire.length-1, xyLocal);      
@@ -11326,10 +11356,15 @@ const mouseUpHandling = {
                 this.stopHover();
 
                 // what did we hit..
-                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? null;
+                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? this.hit.route ?? null;
 
                 // complete the route or cancel it...
-                route.connect(conx) ? this.doEdit(tx,'routeDraw',{route}) : route.popFromRoute();
+                if (conx?.is?.route && route.checkConxType(route.from, conx)) {
+                    this.doEdit(tx,'routeDrawToRoute',{view: this, route, targetRoute: conx, segment: this.hit.routeSegment, xyLocal});
+                }
+                else {
+                    route.connect(conx) ? this.doEdit(tx,'routeDraw',{view: this, route}) : this.doEdit(tx,'routeCancel',{view: this, route});
+                }
 
                 break
 
@@ -11375,7 +11410,11 @@ const mouseUpHandling = {
                 bus = state.bus;
                 bus.is.selected = false;
                 bus.unHighLight();
-                this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()});
+                this.stopHover();
+                const cableConx = this.hit.lookWidget ?? this.hit.pad ?? null;
+                bus.is.cable 
+                    ? this.doEdit(tx,'cableDraw',{view: this, cable: bus, conx: cableConx, oldWire: state.modo.wire, newWire: bus.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires, newTacks: bus.tacks.slice(), newTackWires: bus.copyTackWires()})
+                    : this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()});
                 break
 
             case doing.busSegmentDrag:
@@ -11415,7 +11454,7 @@ const mouseUpHandling = {
                 tack.fuseEndSegment();
                 tack.route.unSelect();
 
-                this.doEdit(tx,'tackDrag', {tack: hit.tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()});
+                this.doEdit(tx,'tackDrag', {tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()});
                 break
 
             case doing.pinDrag:
@@ -11485,12 +11524,13 @@ const mouseUpHandling = {
 };
 
 // The context menu
-const cm$7 = {
+const cm$8 = {
 
 	choices:[
 		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
 		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
 		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
+		{text:'new cable',		icon:'cable',  		char:'ctrl shift k',	state:"enabled",	action:newCable},
 		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
 		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
 		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
@@ -11517,40 +11557,44 @@ const cm$7 = {
 	}
 };
 
-const bgCxMenu = cm$7;
+const bgCxMenu = cm$8;
 
 
 function newGroupNode() { 				   
-	cm$7.doEdit('newGroupNode',{view: cm$7.view, pos: cm$7.xyLocal});
+	cm$8.doEdit('newGroupNode',{view: cm$8.view, pos: cm$8.xyLocal});
 }
 
 function newSourceNode() {
-	cm$7.doEdit('newSourceNode',{view: cm$7.view,pos: cm$7.xyLocal});
+	cm$8.doEdit('newSourceNode',{view: cm$8.view,pos: cm$8.xyLocal});
 }
 
 function newBus() {
-	cm$7.doEdit('busCreate',{view: cm$7.view, pos: cm$7.xyLocal});
+	cm$8.doEdit('busCreate',{view: cm$8.view, pos: cm$8.xyLocal});
+}
+
+function newCable() {
+	cm$8.doEdit('cableCreate',{view: cm$8.view, pos: cm$8.xyLocal});
 }
 
 function newInputPad() {
-	cm$7.doEdit('padCreate', {view: cm$7.view,pos: cm$7.xyLocal, input:true});
+	cm$8.doEdit('padCreate', {view: cm$8.view,pos: cm$8.xyLocal, input:true});
 }
 
 function newOutputPad() {
-	cm$7.doEdit('padCreate', {view: cm$7.view,pos: cm$7.xyLocal, input: false});
+	cm$8.doEdit('padCreate', {view: cm$8.view,pos: cm$8.xyLocal, input: false});
 }
 
 function selectNode() {
-	cm$7.tx.send("select node", {xyScreen: cm$7.xyScreen, xyLocal:cm$7.xyLocal});
+	cm$8.tx.send("select node", {xyScreen: cm$8.xyScreen, xyLocal:cm$8.xyLocal});
 }
 
 function linkFromClipboard() {
 
 	// request the clipboard - also set the target, the clipboard can come from another file
-	cm$7.tx.request('clipboard.get').then( ({raw}) => {
+	cm$8.tx.request('clipboard.get').then( ({raw}) => {
 
 		// do the edit
-		cm$7.doEdit('pasteFromClipboard',{view: cm$7.view, pos: cm$7.xyLocal, raw, asLink: true});
+		cm$8.doEdit('pasteFromClipboard',{view: cm$8.view, pos: cm$8.xyLocal, raw, asLink: true});
 	});
 	//.catch( error => console.log('link from context menu: clipboard.get error -> ' + error))
 }
@@ -11558,15 +11602,15 @@ function linkFromClipboard() {
 function pasteFromClipboard() {
 
 	// request the clipboard - also set the target, the clipboard can come from another file
-	cm$7.tx.request('clipboard.get').then( ({raw}) => {
+	cm$8.tx.request('clipboard.get').then( ({raw}) => {
 
 		// do the edit
-		cm$7.doEdit('pasteFromClipboard',{view: cm$7.view, pos: cm$7.xyLocal, raw, asLink: false});
+		cm$8.doEdit('pasteFromClipboard',{view: cm$8.view, pos: cm$8.xyLocal, raw, asLink: false});
 	});
 	//.catch( error => console.log('paste from context menu: clipboard.get error -> ' + error))
 }
 
-const cm$6 = {
+const cm$7 = {
 
 	choices: [
 		{text:"",			char:'h',	state:"enabled", action:nodeHighLight,	icon:"highlight"},
@@ -11630,73 +11674,73 @@ const cm$6 = {
 		this.tx.send('redox.doit',{verb, param});
 	}
 };
-const nodeCxMenu = cm$6;
+const nodeCxMenu = cm$7;
 
 
 // the actions 
 function addLabel() {
-	cm$6.doEdit('addLabel',{view: cm$6.view, node: cm$6.node});
+	cm$7.doEdit('addLabel',{view: cm$7.view, node: cm$7.node});
 }
 
 function wider() {
-	cm$6.doEdit('wider', {node: cm$6.node});
+	cm$7.doEdit('wider', {node: cm$7.node});
 }
 
 function smaller() {
-	cm$6.doEdit('smaller', {node: cm$6.node});
+	cm$7.doEdit('smaller', {node: cm$7.node});
 }
 
 function nodeHighLight() {
-	cm$6.doEdit('nodeHighLight', {node: cm$6.node});
+	cm$7.doEdit('nodeHighLight', {node: cm$7.node});
 }
 
 function nodeToClipboard() {
-	cm$6.doEdit('nodeToClipboard', {view: cm$6.view, node: cm$6.node});
+	cm$7.doEdit('nodeToClipboard', {view: cm$7.view, node: cm$7.node});
 }
 
 function convertNode() {
-	cm$6.doEdit('convertNode',{view: cm$6.view, node: cm$6.node});
+	cm$7.doEdit('convertNode',{view: cm$7.view, node: cm$7.node});
 }
 
 function makeTestNode() {
 }
 
 function sourceToClipboard() {
-	cm$6.doEdit('sourceToClipboard',{node: cm$6.node});
+	cm$7.doEdit('sourceToClipboard',{node: cm$7.node});
 }
 
 function disconnectNode() {
-	cm$6.doEdit('disconnectNode',{node: cm$6.node});
+	cm$7.doEdit('disconnectNode',{node: cm$7.node});
 }
 
 function deleteNode() {
-	cm$6.doEdit('deleteNode',{view: cm$6.view, node: cm$6.node});
+	cm$7.doEdit('deleteNode',{view: cm$7.view, node: cm$7.node});
 }
 
 // make the node local, ie break the link....
 function cutLink() {
-	cm$6.doEdit('cutLink',{node: cm$6.node});
+	cm$7.doEdit('cutLink',{node: cm$7.node});
 }
 
 // type in the name of a model and try to find the requested node in that model
 function getFromLink() {
-	cm$6.node.showLinkForm(cm$6.view, cm$6.xyLocal,cm$6.tx);
+	cm$7.node.showLinkForm(cm$7.view, cm$7.xyLocal,cm$7.tx);
 }
 
 // save the node to a file, ie change it into a link
 function saveToLink() {
-	cm$6.node.showExportForm(cm$6.xyLocal,cm$6.tx);
+	cm$7.node.showExportForm(cm$7.xyLocal,cm$7.tx);
 }          		
 
 function unGroup() {
-	cm$6.doEdit('disconnectNode',{node: cm$6.node});
-	cm$6.doEdit('unGroup', {view: cm$6.view, node: cm$6.node});
+	cm$7.doEdit('disconnectNode',{node: cm$7.node});
+	cm$7.doEdit('unGroup', {view: cm$7.view, node: cm$7.node});
 }
 
 function pasteWidgetsFromClipboard$2() {
     // request the clipboard - also set the target, the clipboard can come from another file
-    cm$6.tx.request('clipboard.get', cm$6.doc).then(({raw}) => {
-        cm$6.doEdit('pasteWidgetsFromClipboard', {view: cm$6.view, raw});
+    cm$7.tx.request('clipboard.get', cm$7.doc).then(({raw}) => {
+        cm$7.doEdit('pasteWidgetsFromClipboard', {view: cm$7.view, raw});
     });
     //.catch( error => console.log('paste: clipboard get error -> ' + error))
 }
@@ -11728,7 +11772,7 @@ const withLink$1 = [
     ];
 
 // click on the node
-const cm$5 = {
+const cm$6 = {
     choices: null,
 
     view: null,
@@ -11811,113 +11855,113 @@ const cm$5 = {
     },
 };
 
-const pinCxMenu = cm$5;
+const pinCxMenu = cm$6;
 
 
 // is = {channel, input, request, proxy}
 function newInput$1() {
     // set the flags
-    const is = { channel: false, input: true, proxy: cm$5.node.is.group };
-    cm$5.doEdit('newPin', {
-        view: cm$5.view,
-        node: cm$5.node,
-        pos: cm$5.xyLocal,
+    const is = { channel: false, input: true, proxy: cm$6.node.is.group };
+    cm$6.doEdit('newPin', {
+        view: cm$6.view,
+        node: cm$6.node,
+        pos: cm$6.xyLocal,
         is,
     });
 }
 function newOutput$1() {
     // set the flags
-    const is = { channel: false, input: false, proxy: cm$5.node.is.group };
-    cm$5.doEdit('newPin', {
-        view: cm$5.view,
-        node: cm$5.node,
-        pos: cm$5.xyLocal,
+    const is = { channel: false, input: false, proxy: cm$6.node.is.group };
+    cm$6.doEdit('newPin', {
+        view: cm$6.view,
+        node: cm$6.node,
+        pos: cm$6.xyLocal,
         is,
     });
 }
 function newRequest$1() {
     // set the flags
-    const is = { channel: true, input: false, proxy: cm$5.node.is.group };
-    cm$5.doEdit('newPin', {
-        view: cm$5.view,
-        node: cm$5.node,
-        pos: cm$5.xyLocal,
+    const is = { channel: true, input: false, proxy: cm$6.node.is.group };
+    cm$6.doEdit('newPin', {
+        view: cm$6.view,
+        node: cm$6.node,
+        pos: cm$6.xyLocal,
         is,
     });
 }
 function newReply$1() {
     // set the flags
-    const is = { channel: true, input: true, proxy: cm$5.node.is.group };
-    cm$5.doEdit('newPin', {
-        view: cm$5.view,
-        node: cm$5.node,
-        pos: cm$5.xyLocal,
+    const is = { channel: true, input: true, proxy: cm$6.node.is.group };
+    cm$6.doEdit('newPin', {
+        view: cm$6.view,
+        node: cm$6.node,
+        pos: cm$6.xyLocal,
         is,
     });
 }
 function inOutSwitch$1() {
-    cm$5.doEdit('ioSwitch', { pin: cm$5.widget });
+    cm$6.doEdit('ioSwitch', { pin: cm$6.widget });
 }
 function channelOnOff() {
-    cm$5.doEdit('channelOnOff', { pin: cm$5.widget });
+    cm$6.doEdit('channelOnOff', { pin: cm$6.widget });
 }
 function disconnectPin() {
-    cm$5.doEdit('disconnectPin', { pin: cm$5.widget });
+    cm$6.doEdit('disconnectPin', { pin: cm$6.widget });
 }
 function deletePin() {
-    cm$5.doEdit('deletePin', { view: cm$5.view, pin: cm$5.widget });
+    cm$6.doEdit('deletePin', { view: cm$6.view, pin: cm$6.widget });
 }
 function newInterfaceName$1() {
-    cm$5.doEdit('newInterfaceName', {
-        view: cm$5.view,
-        node: cm$5.node,
-        pos: cm$5.xyLocal,
+    cm$6.doEdit('newInterfaceName', {
+        view: cm$6.view,
+        node: cm$6.node,
+        pos: cm$6.xyLocal,
     });
 }
 function deleteInterfaceName() {
-    cm$5.doEdit('deleteInterfaceName', {
-        view: cm$5.view,
-        ifName: cm$5.widget,
+    cm$6.doEdit('deleteInterfaceName', {
+        view: cm$6.view,
+        ifName: cm$6.widget,
     });
 }
 function showProfile(e) {
-    cm$5.doEdit('showProfile', {
-        pin: cm$5.widget,
-        pos: { x: cm$5.xyScreen.x, y: cm$5.xyScreen.y + 10 },
+    cm$6.doEdit('showProfile', {
+        pin: cm$6.widget,
+        pos: { x: cm$6.xyScreen.x, y: cm$6.xyScreen.y + 10 },
     });
 }
 function showCapability(e) {
-    cm$5.doEdit('showCapability', {
-        pin: cm$5.widget,
-        pos: { x: cm$5.xyScreen.x, y: cm$5.xyScreen.y + 10 },
+    cm$6.doEdit('showCapability', {
+        pin: cm$6.widget,
+        pos: { x: cm$6.xyScreen.x, y: cm$6.xyScreen.y + 10 },
     });
 }
 function pinsSwap$1() {
-    cm$5.doEdit('swapPins', {
-        node: cm$5.node,
+    cm$6.doEdit('swapPins', {
+        node: cm$6.node,
         left: true,
         right: true,
     });
 }
 
 function pinsLeft$1() {
-    cm$5.doEdit('swapPins', {
-        node: cm$5.node,
+    cm$6.doEdit('swapPins', {
+        node: cm$6.node,
         left: true,
         right: false,
     });
 }
 function pinsRight$1() {
-    cm$5.doEdit('swapPins', {
-        node: cm$5.node,
+    cm$6.doEdit('swapPins', {
+        node: cm$6.node,
         left: false,
         right: true,
     });
 }
 function pasteWidgetsFromClipboard$1() {
     // request the clipboard - also set the target, the clipboard can come from another file
-    cm$5.tx.request('clipboard.get', cm$5.doc).then(({raw}) => {
-        cm$5.doEdit('pasteWidgetsFromClipboard', {view: cm$5.view, raw});
+    cm$6.tx.request('clipboard.get', cm$6.doc).then(({raw}) => {
+        cm$6.doEdit('pasteWidgetsFromClipboard', {view: cm$6.view, raw});
     });
     //.catch( error => console.log('paste: clipboard get error -> ' + error))
 }
@@ -11951,7 +11995,7 @@ const noLink = [
 ];
 
 // click on the node
-const cm$4 = {
+const cm$5 = {
 
 	choices: null,
 
@@ -11995,7 +12039,7 @@ const cm$4 = {
 		const entry = this.choices.find( c => c.text == "paste pins");
 		if (entry) {
 			entry.state = "disabled";
-			this.tx.request('clipboard.get', cm$4.doc)
+			this.tx.request('clipboard.get', cm$5.doc)
 			.then( clipboard => {
 				entry.state = clipboard.selection.isPinSelection() ? "enabled" : "disabled";
 			})
@@ -12008,68 +12052,68 @@ const cm$4 = {
 	},
 };
 
-const ifCxMenu = cm$4;
+const ifCxMenu = cm$5;
 
 
 // is = {channel, input, request, proxy}
 function newInput() {
-	const is = {channel: false, input: true, proxy: cm$4.node.is.group};
-	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+	const is = {channel: false, input: true, proxy: cm$5.node.is.group};
+	cm$5.doEdit('newPin',{view: cm$5.view, node: cm$5.node, pos: cm$5.xyLocal, is});
 }
 function newOutput() {
-	const is = {channel: false, input: false, proxy: cm$4.node.is.group};
-	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+	const is = {channel: false, input: false, proxy: cm$5.node.is.group};
+	cm$5.doEdit('newPin',{view: cm$5.view, node: cm$5.node, pos: cm$5.xyLocal, is});
 }
 function newRequest() {
-	const is = {channel: true, input: false, proxy: cm$4.node.is.group};
-	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+	const is = {channel: true, input: false, proxy: cm$5.node.is.group};
+	cm$5.doEdit('newPin',{view: cm$5.view, node: cm$5.node, pos: cm$5.xyLocal, is});
 }
 function newReply() {
-	const is = {channel: true, input: true, proxy: cm$4.node.is.group};
-	cm$4.doEdit('newPin',{view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal, is});
+	const is = {channel: true, input: true, proxy: cm$5.node.is.group};
+	cm$5.doEdit('newPin',{view: cm$5.view, node: cm$5.node, pos: cm$5.xyLocal, is});
 }
 function newInterfaceName() {
-	cm$4.doEdit('newInterfaceName', {view: cm$4.view, node: cm$4.node, pos: cm$4.xyLocal});
+	cm$5.doEdit('newInterfaceName', {view: cm$5.view, node: cm$5.node, pos: cm$5.xyLocal});
 }
 function ioSwitch() {
-	cm$4.doEdit('ioSwitchPinArea', {view: cm$4.view});
+	cm$5.doEdit('ioSwitchPinArea', {view: cm$5.view});
 }
 function ifDisconnect() {
-	cm$4.doEdit('disconnectPinArea', {});
+	cm$5.doEdit('disconnectPinArea', {});
 }
 function ifDelete() {
-	cm$4.doEdit('deletePinArea',{view: cm$4.view});
+	cm$5.doEdit('deletePinArea',{view: cm$5.view});
 }
 
 // pin swapping
 function ifPinsSwap()  {
-	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:true, right:true});
+	cm$5.doEdit('swapPinArea',{view: cm$5.view, left:true, right:true});
 }
 function ifPinsLeft()  {
-	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:true, right:false});
+	cm$5.doEdit('swapPinArea',{view: cm$5.view, left:true, right:false});
 }
 function ifPinsRight() {
-	cm$4.doEdit('swapPinArea',{view: cm$4.view, left:false, right:true});
+	cm$5.doEdit('swapPinArea',{view: cm$5.view, left:false, right:true});
 }
 
 function widgetsToClipboard() {
 
 	// sends the selection to the local clipboard node
-	cm$4.view.selectionToClipboard(cm$4.tx);
+	cm$5.view.selectionToClipboard(cm$5.tx);
 }
 
 // paste widgets
 function pasteWidgetsFromClipboard()  {
 
 	// request the clipboard - also set the target, the clipboard can come from another file
-	cm$4.tx.request('clipboard.get').then( ({raw}) => {
+	cm$5.tx.request('clipboard.get').then( ({raw}) => {
 
-		cm$4.doEdit('pasteWidgetsFromClipboard',{view: cm$4.view, raw});
+		cm$5.doEdit('pasteWidgetsFromClipboard',{view: cm$5.view, raw});
 	})
 	.catch( error => console.log('paste: clipboard get error -> ' + error));
 }
 
-const cm$3 = {
+const cm$4 = {
 
 	choices: [
         {text:"align left",icon:"align_horizontal_left",state:"enabled",action: () => alignVertical(true)},
@@ -12100,39 +12144,39 @@ const cm$3 = {
     }
 };
 
-const selectFreeCxMenu = cm$3;
+const selectFreeCxMenu = cm$4;
 
 // align vertical we do for nodes and pads
 function alignVertical(left) {
-    cm$3.doEdit('alignVertical',{view: cm$3.view, left});
+    cm$4.doEdit('alignVertical',{view: cm$4.view, left});
 }
 // align top we only do for nodes 
 function alignHorizontal(top) {
-    cm$3.doEdit('alignHorizontal',{view: cm$3.view, top});
+    cm$4.doEdit('alignHorizontal',{view: cm$4.view, top});
 }
 function spaceVertical() {
-    cm$3.doEdit('spaceVertical',{view: cm$3.view});
+    cm$4.doEdit('spaceVertical',{view: cm$4.view});
 }
 function spaceHorizontal() {
-    cm$3.doEdit('spaceHorizontal', {view: cm$3.view});
+    cm$4.doEdit('spaceHorizontal', {view: cm$4.view});
 }
 function disconnect$2() {
-    cm$3.doEdit('disconnectSelection',{selection: cm$3.view.selection});
+    cm$4.doEdit('disconnectSelection',{selection: cm$4.view.selection});
 }
 function deleteSelection() {
-    cm$3.doEdit('deleteSelection',{view: cm$3.view});
+    cm$4.doEdit('deleteSelection',{view: cm$4.view});
 }
 function selectionToClipboard$1() {
-    cm$3.view.selectionToClipboard(cm$3.tx);
+    cm$4.view.selectionToClipboard(cm$4.tx);
 }
 function group() {
-    cm$3.doEdit('selectionToGroup',{view: cm$3.view});
+    cm$4.doEdit('selectionToGroup',{view: cm$4.view});
 }
 function autoRoute() {
-    cm$3.doEdit('autoRouteSelection',{view: cm$3.view});
+    cm$4.doEdit('autoRouteSelection',{view: cm$4.view});
 }
 
-const cm$2 = {
+const cm$3 = {
 
 	choices: [
 		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
@@ -12168,33 +12212,33 @@ const cm$2 = {
 	}
 };
 
-const pinAreaCxMenu = cm$2;
+const pinAreaCxMenu = cm$3;
 
 
 function selectionToClipboard() {
 	
-	cm$2.view.selectionToClipboard(cm$2.tx);
+	cm$3.view.selectionToClipboard(cm$3.tx);
 }
 function disconnectPinArea() {
-	cm$2.doEdit('disconnectPinArea', {view: cm$2.view, node: cm$2.node, widgets: cm$2.widgets});
+	cm$3.doEdit('disconnectPinArea', {view: cm$3.view, node: cm$3.node, widgets: cm$3.widgets});
 }
 function deletePinArea() {
-	cm$2.doEdit('deletePinArea',{view: cm$2.view, node: cm$2.node, widgets: cm$2.widgets});
+	cm$3.doEdit('deletePinArea',{view: cm$3.view, node: cm$3.node, widgets: cm$3.widgets});
 }
 function pinsSwap()  {
-	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:true, right:true});
+	cm$3.doEdit('swapPinArea',{view: cm$3.view, left:true, right:true});
 }
 function pinsLeft()  {
-	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:true, right:false});
+	cm$3.doEdit('swapPinArea',{view: cm$3.view, left:true, right:false});
 }
 function pinsRight() {
-	cm$2.doEdit('swapPinArea',{view: cm$2.view, left:false, right:true});
+	cm$3.doEdit('swapPinArea',{view: cm$3.view, left:false, right:true});
 }
 function inOutSwitch() {
-	cm$2.doEdit('ioSwitchPinArea', {view: cm$2.view});
+	cm$3.doEdit('ioSwitchPinArea', {view: cm$3.view});
 }
 
-const cm$1 = {
+const cm$2 = {
 
 	choices: [
 		{icon:"highlight",text:"",state:"enabled", action:busHighLight},
@@ -12227,27 +12271,69 @@ const cm$1 = {
 	}
 };
 
-const busCxMenu = cm$1;
+const busCxMenu = cm$2;
 
 
 function busHighLight() {
-	cm$1.doEdit('busHighlight',{bus: cm$1.bus});
+	cm$2.doEdit('busHighlight',{bus: cm$2.bus});
 }
 
 function changeName$1() {
-	cm$1.doEdit('busChangeName', {view: cm$1.view, bus: cm$1.bus, label: cm$1.label});
+	cm$2.doEdit('busChangeName', {view: cm$2.view, bus: cm$2.bus, label: cm$2.label});
 }
 
 function straightConnections() {
-	cm$1.doEdit('busStraightConnections', {bus: cm$1.bus});
+	cm$2.doEdit('busStraightConnections', {bus: cm$2.bus});
 }
 
 function disconnect$1() {
-	cm$1.doEdit('busDisconnect',{bus: cm$1.bus});
+	cm$2.doEdit('busDisconnect',{bus: cm$2.bus});
 }
 
 function deleteBus() {
-	cm$1.doEdit('busDelete',{view: cm$1.view, bus: cm$1.bus});	
+	cm$2.bus.is.cable
+		? cm$2.doEdit('cableDelete',{view: cm$2.view, cable: cm$2.bus})
+		: cm$2.doEdit('busDelete',{view: cm$2.view, bus: cm$2.bus});	
+}
+
+const cm$1 = {
+
+    choices: [
+        {icon:"filter_alt", text:"", state:"enabled", action:switchSelectivity},
+        {icon:"sell", text:"add alias", state:"enabled", action:addAlias},
+    ],
+
+    view: null,
+    tx: null,
+    tack: null,
+    xyLocal: null,
+
+    prepare(view, tx) {
+        this.view = view;
+        this.tx = tx;
+        this.tack = view.hit.tack;
+        this.xyLocal = view.hit.xyLocal;
+
+        const choice = this.choices.find(choice => choice.action == switchSelectivity);
+        choice.text = this.tack?.is?.selective ? "make non-selective" : "make selective";
+
+        const alias = this.choices.find(choice => choice.action == addAlias);
+        alias.text = this.tack?.alias ? "change alias" : "add alias";
+    },
+
+    doEdit(verb, param) {
+        this.tx.send('redox.doit', {verb, param});
+    }
+};
+
+const tackCxMenu = cm$1;
+
+function switchSelectivity() {
+    cm$1.doEdit('tackSelectivitySwitch', {tack: cm$1.tack});
+}
+
+function addAlias() {
+    cm$1.doEdit('widgetTextEdit', {view: cm$1.view, widget: cm$1.tack, click: cm$1.xyLocal});
 }
 
 const cm = {
@@ -12328,6 +12414,10 @@ const contextHandling = {
             case zap.busSegment:
             case zap.busLabel:
                 cxMenu = busCxMenu;
+            break;
+
+            case zap.tack:
+                cxMenu = tackCxMenu;
             break;
 
             case zap.pad:
@@ -12513,6 +12603,14 @@ const selectionHandling = {
             // ...and select the tacks in the selection
             for( const tack of bus.tacks) if (tack.overlap(rect)) slct.tacks.push(tack);
         }
+
+        // check the cables and the individual tacks
+        for( const cable of this.root.cables) if (cable.overlap(rect)) {
+
+            slct.cables.push(cable);
+
+            for( const tack of cable.tacks) if (tack.overlap(rect)) slct.tacks.push(tack);
+        }
     },
 
     // an external widget has a connection with a node outside the selection
@@ -12577,6 +12675,10 @@ const selectionHandling = {
             bus.move(delta.x, delta.y);
             this.selection.buses.push(bus);           
         };
+        const pasteCable = (cable, delta) => {
+            cable.move(delta.x, delta.y);
+            this.selection.cables.push(cable);           
+        };
 
         // copy as required
         switch(content.raw.what) {
@@ -12586,6 +12688,7 @@ const selectionHandling = {
                // paste
                 for (const node of content.root.nodes) pasteNode(node, delta);
                 for (const bus of content.root.buses) pasteBus(bus, delta);
+                for (const cable of content.root.cables ?? []) pasteCable(cable, delta);
                 for (const pad of content.root.pads) {}
 
                 // notation
@@ -12664,6 +12767,7 @@ const selectionHandling = {
         // remove all the nodes etc.
         for (const node of selection.nodes) this.root.removeNode(node);
         for (const bus of selection.buses) this.root.removeBus(bus);
+        for (const cable of selection.cables) this.root.removeCable(cable);
         for (const pad of selection.pads) this.root.removePad(pad);
     },
 
@@ -12673,6 +12777,7 @@ const selectionHandling = {
         // restore all the nodes etc.
         for (const node of selection.nodes) this.root.restoreNode(node);
         for (const bus of selection.buses) this.root.restoreBus(bus);
+        for (const cable of selection.cables) this.root.restoreCable(cable);
         for (const pad of selection.pads) this.root.restorePad(pad);
 
         // reset the current selection
@@ -12682,6 +12787,7 @@ const selectionHandling = {
         // and put the restored nodes in the selection again
         for (const node of selection.nodes) sel.nodes.push(node);
         for (const bus of selection.buses) sel.buses.push(bus);
+        for (const cable of selection.cables) sel.cables.push(cable);
         for (const pad of selection.pads) sel.pads.push(pad);        
 
         const rc = selection.rect;
@@ -14762,6 +14868,9 @@ View.prototype = {
         // the buses
         this.root.buses.forEach( bus => bus.move(dx, dy));
 
+        // the cables
+        this.root.cables.forEach( cable => cable.move(dx, dy));
+
         // the pads ???
     },
 
@@ -14909,10 +15018,18 @@ View.prototype = {
             }
         }
 
-        // now render the nodes, pads and buses
+        // draw all the cable routes
+        for(const cable of root.cables) {
+            for(const tack of cable.tacks) {
+                if(tack.route?.from == tack) tack.route.render(ctx);
+            }
+        }
+
+        // now render the nodes, pads, buses and cables
         for(const node of root.nodes) node.render(ctx);
         for(const pad of root.pads) pad.render(ctx);
         for(const bus of root.buses) bus.render(ctx);
+        for(const cable of root.cables) cable.render(ctx);
     },
 
 
@@ -15506,6 +15623,7 @@ Node.prototype = {
 
         for(const pad of this.pads) UID.generate(pad);
         for(const bus of this.buses) UID.generate(bus);
+        for(const cable of this.cables) UID.generate(cable);
         for(const node of this.nodes) node.uidChangeAll(UID);
     },
 
@@ -15517,6 +15635,7 @@ Node.prototype = {
         // change the UIDS in the linked node
         for(const pad of this.pads) UID.generate(pad);
         for(const bus of this.buses) UID.generate(bus);
+        for(const cable of this.cables) UID.generate(cable);
 
         // change also for nodes that are not links
         for(const node of this.nodes) if (!node.link) {
@@ -15535,6 +15654,7 @@ Node.prototype = {
         // generate the UIDS for buses and pads
         for(const pad of this.pads) UID.generate(pad);
         for(const bus of this.buses) UID.generate(bus);
+        for(const cable of this.cables) UID.generate(cable);
     },
 
 
@@ -15612,6 +15732,4432 @@ Object.assign(  Node.prototype,
                 rxtxHandling$1, 
                 nodeClickHandling);
 
+// the route used for a connection between an output and an input
+
+const routeDrawing = {
+
+    // Returns true when the connector point is on the left side of the widget.
+    // For pads, `leftText` means the text is on the left and the bullet/connector is on the right.
+    connectorOnLeft(widget) {
+        if (!widget?.is) return false
+        if (widget.is.pad) return !widget.is.leftText
+        if (typeof widget.is.left === 'boolean') return widget.is.left
+        if (typeof widget.is.leftText === 'boolean') return widget.is.leftText
+        return false
+    },
+
+    ownerNode(widget) {
+        if (!widget) return null
+        if (widget.node) return widget.node
+        if (widget.proxy?.node) return widget.proxy.node
+        if (widget.bus?.node) return widget.bus.node
+        return null
+    },
+
+    // For autoroute collision on endpoint legs, pads belong to the enclosing group and
+    // are allowed to route inside that group. Only real node-owned widgets (pins/tacks)
+    // should reject routes that cut through their own node body.
+    endpointBlockRect(widget) {
+        if (!widget?.is) return null
+        if (widget.is.pad) return null
+        const node = this.ownerNode(widget);
+        return node?.look?.rect ?? null
+    },
+
+    routeCutsEndpointBody(wire, rc, allowSegmentIndex) {
+        if (!rc || !wire || wire.length < 2) return false
+        for (let i = 0; i < wire.length - 1; i++) {
+            if (i === allowSegmentIndex) continue
+            if (cutsRectangle(wire[i], wire[i + 1], rc)) return true
+        }
+        return false
+    },
+
+    tackOnHorizontalTrunk(tack) {
+        const trunk = tack?.bus;
+        const a = trunk?.wire?.[tack.segment - 1];
+        const b = trunk?.wire?.[tack.segment];
+
+        return !!(a && b && a.y === b.y)
+    },
+
+    // Collect orthogonal segments from already routed connections so autoroute can
+    // prefer less crowded lanes. Routes are deduplicated because the same route can
+    // be reachable from multiple widgets.
+    collectRouteSegments(nodes=[]) {
+        const routes = new Set();
+        const segments = [];
+
+        for (const node of nodes ?? []) {
+            const widgets = node?.look?.widgets ?? [];
+            for (const widget of widgets) {
+                if (!widget?.routes?.length) continue
+                for (const route of widget.routes) {
+                    if (!route || route === this || routes.has(route) || route.wire.length < 2) continue
+                    routes.add(route);
+
+                    for (let i = 0; i < route.wire.length - 1; i++) {
+                        const a = route.wire[i];
+                        const b = route.wire[i + 1];
+                        if (a.x === b.x) {
+                            segments.push({dir:'v', x: a.x, y1: Math.min(a.y, b.y), y2: Math.max(a.y, b.y)});
+                        }
+                        else if (a.y === b.y) {
+                            segments.push({dir:'h', y: a.y, x1: Math.min(a.x, b.x), x2: Math.max(a.x, b.x)});
+                        }
+                    }
+                }
+            }
+        }
+
+        return segments
+    },
+
+    rangeOverlap(a1, a2, b1, b2) {
+        return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1))
+    },
+
+    quantizeLane(value, step = 1) {
+        const s = Math.max(1, step || 1);
+        return Math.round(value / s) * s
+    },
+
+    collectLaneUsage(segments, xStep = 5, yStep = 5) {
+        const vertical = new Map();
+        const horizontal = new Map();
+
+        for (const seg of segments ?? []) {
+            if (seg.dir === 'v') {
+                const key = this.quantizeLane(seg.x, xStep);
+                vertical.set(key, (vertical.get(key) ?? 0) + 1);
+            }
+            else if (seg.dir === 'h') {
+                const key = this.quantizeLane(seg.y, yStep);
+                horizontal.set(key, (horizontal.get(key) ?? 0) + 1);
+            }
+        }
+
+        return {vertical, horizontal}
+    },
+
+    laneRegistryPenaltyVertical(x, laneUsage, laneStep = 5) {
+        if (!laneUsage?.vertical) return 0
+        const key = this.quantizeLane(x, laneStep);
+        let penalty = (laneUsage.vertical.get(key) ?? 0) * 120;
+
+        const left = key - laneStep;
+        const right = key + laneStep;
+        penalty += (laneUsage.vertical.get(left) ?? 0) * 25;
+        penalty += (laneUsage.vertical.get(right) ?? 0) * 25;
+
+        return penalty
+    },
+
+    laneRegistryPenaltyHorizontal(y, laneUsage, laneStep = 5) {
+        if (!laneUsage?.horizontal) return 0
+        const key = this.quantizeLane(y, laneStep);
+        let penalty = (laneUsage.horizontal.get(key) ?? 0) * 120;
+
+        const up = key - laneStep;
+        const down = key + laneStep;
+        penalty += (laneUsage.horizontal.get(up) ?? 0) * 25;
+        penalty += (laneUsage.horizontal.get(down) ?? 0) * 25;
+
+        return penalty
+    },
+
+    lanePenaltyVertical(x, y1, y2, segments, laneStep = 5) {
+        let penalty = 0;
+        const yy1 = Math.min(y1, y2);
+        const yy2 = Math.max(y1, y2);
+
+        for (const seg of segments) {
+            if (seg.dir !== 'v') continue
+            const overlap = this.rangeOverlap(yy1, yy2, seg.y1, seg.y2);
+            if (overlap <= 0) continue
+
+            const dx = Math.abs(seg.x - x);
+            if (dx < 1) penalty += 1000 + overlap;
+            else if (dx < laneStep) penalty += 200 + overlap;
+            else if (dx < laneStep * 2) penalty += 20;
+        }
+
+        return penalty
+    },
+
+    lanePenaltyHorizontal(y, x1, x2, segments, laneStep = 5) {
+        let penalty = 0;
+        const xx1 = Math.min(x1, x2);
+        const xx2 = Math.max(x1, x2);
+
+        for (const seg of segments) {
+            if (seg.dir !== 'h') continue
+            const overlap = this.rangeOverlap(xx1, xx2, seg.x1, seg.x2);
+            if (overlap <= 0) continue
+
+            const dy = Math.abs(seg.y - y);
+            if (dy < 1) penalty += 1000 + overlap;
+            else if (dy < laneStep) penalty += 200 + overlap;
+            else if (dy < laneStep * 2) penalty += 20;
+        }
+
+        return penalty
+    },
+
+    // draw freely with x/y segments
+    // we always assume that the route is extended at the last point (i.e. the to widget !)
+    drawXY(next) {
+
+        // notation
+        const wire = this.wire;
+        let L = wire.length;
+
+        // if there is no line segment push two points - start in the x -direction !
+        if (L == 0) {
+            let c = this.from.center();
+            wire.push({x: c.x, y: c.y});
+            wire.push({x: next.x, y: c.y});
+            return
+        }
+
+        // take the two last points b a 
+        let b = wire[L - 2];
+        let a = wire[L - 1];
+
+        // moving in x direction
+        if (a.y == b.y) {
+
+            // need to split ?
+            if (Math.abs(next.y - a.y) > style.route.split) {
+
+                // create a new segment
+                wire.push({x:a.x, y:next.y});
+            }
+            else {
+                // just adapt the x value
+                a.x = next.x;
+
+                // check if points are getting too close, if so drop 
+                if ((L>2) && (Math.abs(a.x - b.x) < style.route.tooClose)) wire.pop();
+            }
+        }
+        // moving in the y-direction
+        else {
+
+            // need to split ?
+            if (Math.abs(next.x - a.x) > style.route.split) {
+
+                // create a new segment
+                wire.push({x:next.x, y:a.y});
+            }
+            else {
+                // just adapt the y value
+                a.y = next.y;
+
+                // check if points are getting too close
+                if ((L>2) && (Math.abs(a.y - b.y) < style.route.tooClose)) wire.pop();
+            }
+        }
+    },
+
+    // // make a route between from and to
+    // builder() {
+
+    //     const conx = this.typeString()
+
+    //     switch (conx) {
+
+    //         case 'PIN-PIN':
+    //             this.fourPointRoute()
+    //             break
+
+    //         case 'PIN-PAD':
+    //             this.fourPointRoute()
+    //             break
+
+    //         case 'PAD-PIN':
+    //             this.fourPointRoute()
+    //             break
+
+    //         case 'PIN-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+
+    //         case 'BUS-PIN':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+
+    //         case 'PAD-BUS':
+    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+
+    //         case 'BUS-PAD':
+    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
+    //             break
+    //     }
+    // },
+
+    sixPointRoute(nodes=[]) {
+
+        // reset points
+        if (this.wire.length > 0) this.wire.length = 0;
+
+        // create a simple route between the two widgets
+        const wire = this.wire;
+        const from = this.from;
+        const to = this.to;
+        const f = from.center();
+        const t = to.center();
+
+        // deterministic offsets away from node bodies
+        
+        const dpx = style.autoroute.xDelta;
+        const mg = style.autoroute.xMargin;
+
+        const fromNode = this.ownerNode(from);
+        const toNode = this.ownerNode(to);
+        const frc = fromNode?.look?.rect;
+        const trc = toNode?.look?.rect;
+        if (!frc || !trc) return this.fourPointRoute(nodes)
+        let yMid = f.y + (frc.h/4 + trc.h/4);
+
+        const fromLeft = this.connectorOnLeft(from);
+        const toLeft = this.connectorOnLeft(to);
+
+        const fRank = from.rank();
+        const fRankValue = yMid < f.y ? fRank.up : fRank.down;
+        const xBase1 = fromLeft ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue;
+
+        const tRank = to.rank();
+        const tRankValue = yMid < t.y ? tRank.up : tRank.down;
+        const xBase2 = toLeft ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue;
+
+        let x1 = xBase1;
+        let x2 = xBase2;
+
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== fromNode && n !== toNode);
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
+        const expandY = style.autoroute.yDelta;
+        const routeSegments = this.collectRouteSegments(nodes);
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, expandY);
+
+        const buildWire = () => {
+            wire.length = 0;
+        wire.push(f);
+        wire.push({x:x1, y:f.y});
+        wire.push({x:x1, y:yMid});
+        wire.push({x:x2, y:yMid});
+        wire.push({x:x2, y:t.y});
+        wire.push(t);
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from);
+        const toRc = this.endpointBlockRect(to);
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
+        };
+
+        const firstHorizontalCut = () => {
+            const p1 = {x:x1, y:yMid};
+            const p2 = {x:x2, y:yMid};
+            for (const node of blockers) {
+                if (segmentCuts(p1, p2, node.look.rect)) return node
+            }
+            return null
+        };
+
+        let guard = 0;
+        buildWire();
+        let hit = firstHorizontalCut();
+        while (hit && guard < 30) {
+            const rc = hit.look.rect;
+            const distTop = yMid - rc.y;
+            const distBottom = (rc.y + rc.h) - yMid;
+            if (distTop < distBottom) yMid -= expandY;
+            else yMid += expandY;
+            buildWire();
+            hit = firstHorizontalCut();
+            guard++;
+        }
+
+        // If multiple y lanes are available, prefer the less crowded horizontal lane.
+        if (!hit && routeSegments.length) {
+            const yBase = yMid;
+            const yCandidates = [0, 1, -1, 2, -2, 3, -3].map(step => yBase + step * expandY);
+            let bestY = yMid;
+            let bestScore = Infinity;
+
+            for (const candidateY of yCandidates) {
+                const p1 = {x:x1, y:candidateY};
+                const p2 = {x:x2, y:candidateY};
+                if (blockers.some(node => segmentCuts(p1, p2, node.look.rect))) continue
+
+                const score =
+                    this.lanePenaltyVertical(x1, f.y, candidateY, routeSegments, dpx) +
+                    this.lanePenaltyHorizontal(candidateY, x1, x2, routeSegments, expandY) +
+                    this.lanePenaltyVertical(x2, candidateY, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyHorizontal(candidateY, laneUsage, expandY) +
+                    this.laneRegistryPenaltyVertical(x1, laneUsage, dpx) +
+                    this.laneRegistryPenaltyVertical(x2, laneUsage, dpx);
+
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestY = candidateY;
+                }
+            }
+
+            yMid = bestY;
+            buildWire();
+        }
+
+        return true
+    },
+
+    fourPointRoute(nodes=[]) {
+
+        // reset points
+        if (this.wire.length > 0) this.wire.length = 0;
+
+        // create a simple orthogonal route between the two widgets
+        const wire = this.wire;
+        const from = this.from;
+        const to = this.to;
+        const f = from.center();
+        const t = to.center();
+
+        // helper data for collision checks and gentle nudges
+        const margin = style.look.dxCopy;
+        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
+        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
+        const routeSegments = this.collectRouteSegments(nodes);
+
+        // choose the x for the vertical leg (xNew):
+        // - prefer the middle when pins face each other with no node overlap in x
+        // - otherwise, push the vertical leg away from the "from" side
+        const dpx = style.autoroute.xDelta;
+        const mg = style.autoroute.xMargin;
+        const laneUsage = this.collectLaneUsage(routeSegments, dpx, style.autoroute.yDelta);
+        const isBusRoute = from.is?.tack || to.is?.tack;
+        let fromLeft = this.connectorOnLeft(from);
+        let toLeft = this.connectorOnLeft(to);
+        if (isBusRoute) {
+            // For bus connections, infer "facing" by relative position to avoid routing past the bus.
+            fromLeft = f.x > t.x;
+            toLeft = t.x > f.x;
+        }
+        const rank = from.rank ? from.rank() : {up: 1, down: 1};
+        const rankValue = t.y < f.y ? rank.up : rank.down;
+        let xNew = fromLeft ? f.x - mg - dpx * rankValue : f.x + mg + dpx * rankValue;
+
+        // if the nodes are clearly separated in x and the pins face each other,
+        // keep the vertical leg between the pins for a clean, direct route
+        const frc = from.node?.look?.rect;
+        const trc = to.node?.look?.rect;
+        const xOverlap = frc && trc ? !((frc.x + frc.w < trc.x) || (trc.x + trc.w < frc.x)) : true;
+        const pinsFaceEachOther = fromLeft !== toLeft;
+        if (!xOverlap && pinsFaceEachOther) {
+            xNew = (f.x + t.x) / 2;
+        }
+
+        // enforce the "shape" rule:
+        // - opposite sides: keep the vertical leg between the two endpoints
+        // - same side: push the vertical leg outside both endpoints (left or right)
+        const minX = Math.min(f.x, t.x);
+        const maxX = Math.max(f.x, t.x);
+        const enforceShapeRule = (xCandidate) => {
+            if (fromLeft !== toLeft) {
+                if (xCandidate < minX) return minX
+                if (xCandidate > maxX) return maxX
+                return xCandidate
+            }
+            return fromLeft ? Math.min(xCandidate, minX - mg) : Math.max(xCandidate, maxX + mg)
+        };
+        xNew = enforceShapeRule(xNew);
+
+        // nudge xNew left/right if the vertical legs would cut through other nodes
+        const tryClearX = (xCandidate) => {
+            const pA = {x:xCandidate, y:f.y};
+            const pB = {x:xCandidate, y:t.y};
+            return blockers.some(n => segmentCuts(pA, pB, n.look.rect))
+        };
+        if (tryClearX(xNew)) {
+            const shifts = [margin, -margin, margin*2, -margin*2];
+            const base = xNew;
+            for (const dx of shifts) {
+                const candidate = enforceShapeRule(base + dx);
+                if (!tryClearX(candidate)) { xNew = candidate; break }
+            }
+        }
+
+        // Prefer a less crowded vertical lane when several valid lanes exist.
+        if (routeSegments.length) {
+            const xBase = xNew;
+            const shifts = [0, dpx, -dpx, dpx*2, -dpx*2, margin, -margin];
+            let bestX = xNew;
+            let bestScore = Infinity;
+
+            for (const dx of shifts) {
+                const candidate = enforceShapeRule(xBase + dx);
+                if (tryClearX(candidate)) continue
+
+                const score =
+                    this.lanePenaltyVertical(candidate, f.y, t.y, routeSegments, dpx) +
+                    this.laneRegistryPenaltyVertical(candidate, laneUsage, dpx);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestX = candidate;
+                }
+            }
+
+            xNew = bestX;
+        }
+        
+        // build a 4-point orthogonal wire: horizontal, vertical, horizontal
+        wire.push(f);
+        wire.push({ x: xNew, y: f.y});
+        wire.push({ x: xNew, y: t.y});
+        wire.push(t);
+
+        // Endpoint owner nodes are excluded from generic blockers, but the route may
+        // still not cut through them with non-adjacent segments.
+        const fromRc = this.endpointBlockRect(from);
+        const toRc = this.endpointBlockRect(to);
+        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
+        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
+
+        // check for collisions with other nodes; if any, signal failure
+        for (let i=0; i<wire.length-1; i++) {
+            const a = wire[i], b = wire[i+1];
+            if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return false
+        }
+        return true
+    },
+
+    threePointRoute(horizontal) {
+
+        // reset points
+        if (this.wire.length > 0) this.wire.length = 0;
+
+        const p = this.wire;
+        const f = this.from.center();
+        const t = this.to.center();
+
+        p.push(f);
+        horizontal ? p.push({x:t.x, y:f.y}) : p.push({x:f.x, y:t.y});
+        p.push(t);
+    },
+
+    twoPointRoute() {
+
+        // reset points
+        if (this.wire.length > 0) this.wire.length = 0;
+
+       // create a simple route between the two widgets
+       const p = this.wire;
+       const f = this.from.center();
+       const t = this.to.center();
+       
+       p.push(f);
+       p.push({x:t.x, y:f.y});
+    },
+   
+    // x,y is the endpoint - adjust some segment coordinates as required
+    endpoint(widget) {
+
+        let p = this.wire;
+        let L = p.length;
+
+        // there are at least two points...
+        if (L<2) return
+
+        // get the point to connect to on the widget
+        let {x,y} = widget.center();
+
+        // Routes that start or end on a horizontal bus/cable trunk should stay as
+        // a simple two-segment route, with the vertical segment at the tack. This
+        // lets dragging that segment slide the tack along the trunk.
+        if (this.from.is.tack && this.tackOnHorizontalTrunk(this.from)) {
+            const f = this.from.center();
+
+            p.length = 0;
+            p.push(f);
+            p.push({x: f.x, y});
+            p.push({x, y});
+            return
+        }
+
+        if (this.to?.is?.tack && this.tackOnHorizontalTrunk(this.to)) {
+            const t = this.to.center();
+
+            p.length = 0;
+            p.push({x, y});
+            p.push({x: t.x, y});
+            p.push(t);
+            return
+        }
+
+        // only two points...
+        if (L == 2) {
+            if (this.from.is.tack && this.tackOnHorizontalTrunk(this.from)) {
+                this.threePointRoute(false);
+                return
+            }
+            if (this.to?.is?.tack && this.tackOnHorizontalTrunk(this.to)) {
+                this.threePointRoute(true);
+                return
+            }
+
+            // if the two points are not at the same y..
+            if (p[0].y != y) {
+
+                //..we adjust point 1 and add two extra points 
+                p[1].x = (p[0].x + x)/2;      //1
+                p[1].y = p[0].y;
+                p.push({x:p[1].x, y:y});      //2
+                p.push({x,y});                //3
+            }
+            else
+                // we just adjust the x to the endpoint
+                p[1].x = x;
+
+            // done
+            return
+        }
+
+        // L > 2
+        if (p[L-1].x== p[L-2].x) {
+
+            // adjust the last y to the y of the widget
+            p[L-1].y = y;
+
+            // and push the endpoint on the route
+            p.push({x,y});
+        }
+        else {
+            //save the coordinates of the last line segment
+            p[L-1].x = x;
+            p[L-1].y = y;
+
+            // if the segment before is vertical 
+            p[L-2].x == p[L-3].x    ? p[L-2].y = p[L-1].y 
+                                    : p[L-2].x = p[L-1].x;
+        }
+    },
+
+    resumeDrawing(segment,xyLocal) {
+
+        // get the center points of the widgets
+        let xyFrom = this.from.center();
+        let xyTo = this.to.center();
+
+        const distanceFrom = Math.hypot( xyFrom.x - xyLocal.x, xyFrom.y - xyLocal.y );
+        const distanceTo = Math.hypot( xyTo.x - xyLocal.x, xyTo.y - xyLocal.y);
+
+        // choose where to disconnect based on the distance to the from/to pin
+        if (distanceFrom < distanceTo) {
+            
+            // reverse if we are closer to 'from'
+            this.reverse();
+            segment = this.wire.length - segment;
+        }
+
+        // Detach the existing connection before turning the same route into a
+        // half-drawn route. Redox keeps the clone for undo; this mutates live state.
+        this.disconnect();
+
+        // we have to take a few segments away - if only one point left set length to 0 !
+        this.wire.length = segment > 1 ? segment : 0;
+
+        // now we can store the route again in the from widget
+        if (this.from.is.pin || this.from.is.pad) {
+            this.from.routes.push(this);
+        }
+        else if (this.from.is.tack) {
+            this.from.route = this; 
+            this.from.bus.tacks.push(this.from);
+        }
+
+        // we also set the 'to' to null for good measure
+        this.to = null;
+
+        // and draw the next point using the xy
+        this.drawXY(xyLocal);
+    },
+
+    autoRoute(nodes) {
+        
+        // get the type of connection
+        const conx = this.typeString();
+
+        switch (conx) {
+
+            case 'PIN-PIN':
+
+                // if there is no route yet we can swap left/right to have a better fit
+                this.checkLeftRight();
+
+                // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
+
+                break
+
+            case 'PIN-PAD':
+            case 'PAD-PIN':
+                
+               // try a 4-point route first; fall back to 6-point if it intersects nodes
+                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
+                break
+
+            case 'PIN-BUS':
+            case 'PAD-BUS':
+                this.autoBusRoute(this.to, nodes);
+                break
+
+            case 'BUS-PIN':
+            case 'BUS-PAD':
+                this.autoBusRoute(this.from, nodes);
+                break
+
+            case 'BUS-BUS':
+                this.autoBridgeRoute(nodes);
+                break
+        }
+    },
+
+    autoBusRoute(tack, nodes) {
+        const trunk = tack.bus;
+        const a = trunk?.wire?.[tack.segment - 1];
+        const b = trunk?.wire?.[tack.segment];
+        const verticalTrunk = a && b ? a.x === b.x : tack.horizontal();
+
+        verticalTrunk ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(tack === this.to);
+    },
+
+    autoBridgeRoute(nodes) {
+        const fromHorizontal = this.tackOnHorizontalTrunk(this.from);
+        const toHorizontal = this.tackOnHorizontalTrunk(this.to);
+
+        if (fromHorizontal) {
+            this.threePointRoute(false);
+            return
+        }
+
+        if (toHorizontal) {
+            this.threePointRoute(true);
+            return
+        }
+
+        this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
+    },
+
+    checkLeftRight() {
+
+        // from and to already contain the route ! so 1 is ok.
+        if ( (this.from.routes.length > 1) && (this.to.routes.length > 1)) return;
+
+        // sort according to x 
+        const [near, far] = this.from.center().x < this.to.center().x ? [this.from, this.to] : [this.to, this.from];
+
+        const nrc = near.node.look.rect;
+        const frc = far.node.look.rect;
+
+        // no x-overlap make right-left
+        if ((nrc.x + nrc.w < frc.x) || (frc.x + frc.w < nrc.x)) {
+
+            if ( near.is.left && near.routes.length < 2) near.leftRightSwap();
+            if ( !far.is.left && far.routes.length < 2) far.leftRightSwap();
+        }
+        // x-overlap make left-left or right-right
+        else {
+            if (near.is.left != far.is.left) {
+
+                if (near.routes.length < 2) near.leftRightSwap();
+                else if (far.routes.length < 2) far.leftRightSwap();
+            }
+        }
+    },
+
+    // sometimes a route can be pathological - this is a fix for that
+    healWire(){
+
+        if (this.wire.length == 3) {
+
+            const p0 = this.wire[0];
+            const p1 = this.wire[1];
+            const p2 = this.wire[2];
+
+            // rebuild as a clean orthogonal path
+            this.wire.length = 0;
+            this.wire.push(
+                {x:p0.x, y:p0.y},
+                {x:p1.x, y:p0.y},
+                {x:p1.x, y:p2.y},
+                {x:p2.x, y:p2.y},
+            );
+        }
+
+    }
+    
+};
+
+// the route used for a connection between an output and an input
+
+const routeMoving = {
+
+    tackOnHorizontalTrunk(tack) {
+        const trunk = tack?.bus;
+        const a = trunk?.wire?.[tack.segment - 1];
+        const b = trunk?.wire?.[tack.segment];
+
+        return !!(a && b && a.y === b.y)
+    },
+
+    adjustCableEndpoint(tack, otherCenter) {
+        if (!tack?.bus?.is?.cable || !tack.is.endpoint) return false
+
+        const cable = tack.bus;
+        const wire = cable?.wire;
+        if (!wire || wire.length < 2) return false
+
+        const moveTacksOnSegment = (segment, delta, axis) => {
+            for (const otherTack of cable.tacks) {
+                if (otherTack.is.endpoint || otherTack.segment != segment) continue
+
+                axis == 'x' ? otherTack.moveX(delta) : otherTack.moveY(delta);
+            }
+        };
+
+        const tackCenter = tack.center();
+        const first = wire[0];
+        const last = wire.at(-1);
+        const firstDistance = Math.hypot(tackCenter.x - first.x, tackCenter.y - first.y);
+        const lastDistance = Math.hypot(tackCenter.x - last.x, tackCenter.y - last.y);
+
+        if (firstDistance <= lastDistance) {
+            const next = wire[1];
+            const horizontal = first.y === next.y;
+            const delta = horizontal ? otherCenter.y - first.y : otherCenter.x - first.x;
+
+            first.x = otherCenter.x;
+            first.y = otherCenter.y;
+            horizontal ? next.y = otherCenter.y : next.x = otherCenter.x;
+            moveTacksOnSegment(1, delta, horizontal ? 'y' : 'x');
+            tack.placeOnSegment(otherCenter, 1);
+        }
+        else {
+            const previous = wire.at(-2);
+            const horizontal = previous.y === last.y;
+            const segment = wire.length - 1;
+            const delta = horizontal ? otherCenter.y - last.y : otherCenter.x - last.x;
+
+            last.x = otherCenter.x;
+            last.y = otherCenter.y;
+            horizontal ? previous.y = otherCenter.y : previous.x = otherCenter.x;
+            moveTacksOnSegment(segment, delta, horizontal ? 'y' : 'x');
+            tack.placeOnSegment(otherCenter, segment);
+        }
+
+        const tackPoint = tack.center();
+        this.wire.length = 0;
+        if (this.from === tack) {
+            this.wire.push({...tackPoint}, {...otherCenter});
+        }
+        else {
+            this.wire.push({...otherCenter}, {...tackPoint});
+        }
+
+        return true
+    },
+
+    // moves a segment horizontally or vertically
+    moveSegment(s,delta) {
+
+        const from = this.from;
+        const to = this.to;
+
+        let p1 = this.wire[s-1];
+        let p2 = this.wire[s];
+
+        // if there is only one segment and one of the endpoints is a bus, add two segments
+        if (this.wire.length == 2) {
+            if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2);
+        }
+
+        // first segment...
+        if (s == 1) {
+            // if one of the end points is a tack or pad - it can slide
+            return (from.is.tack || from.is.pad) ? from.slide(delta) : null
+        }
+
+        // last segment...
+        if (s == this.wire.length-1) {
+            return (to.is.tack || to.is.pad) ? to.slide(delta) : null
+        }
+
+        // otherwise just move the segment
+        if (p1.x == p2.x) {
+            p1.x += delta.x;
+            p2.x += delta.x;
+        }
+        else {
+            p1.y += delta.y;
+            p2.y += delta.y;
+        }
+    },
+
+    moveAllPoints(dx,dy) {
+        this.wire.forEach( p => {
+            p.x += dx;
+            p.y += dy;
+        });
+    },
+
+    removeOnePoint(n,p) {
+        let last = p.length-1;
+        for (let i = n; i<last; i++)  p[i] = p[i+1];
+        p.length = last;      
+    },
+
+    removeTwoPoints(n,p) {
+        let last = p.length-2;
+        for (let i = n; i<last; i++)  p[i] = p[i+2];
+        p.length = last;      
+    },
+
+    endDrag(s) {
+
+        // the last point is 
+        const L = this.wire.length;
+
+        // segments 1 and 2 and L-1 and L-2 are special...
+        if (s==1) {
+            if (this.from.is.tack || this.from.is.pad) this.from.fuseEndSegment();
+        }
+        else if (s==2) {
+            if (this.from.is.pin) this.fuseSegmentAfter(s);
+            else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
+        }
+        else if (s == L-1) {
+            if (this.to.is.tack || this.to.is.pad) this.to.fuseEndSegment();
+        }
+        else if (s == L-2) {
+            if (this.to.is.pin) this.fuseSegmentBefore(s);
+            else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
+        }
+        else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
+    },
+
+    // check if the segment has to be fused wit previous
+    fuseSegmentBefore(s) {
+
+        // notation - a and b are the points on the segment
+        const p = this.wire;  
+
+        // check
+        if (s-2 < 0) return false
+
+        const [before, a, b] = [p[s-2], p[s-1], p[s]];
+        const min = style.route.tooClose;
+
+        // horizontal segment
+        if (a.y == b.y) {
+            // check the point before the segment
+            if (Math.abs(before.y - a.y) < min) {
+                b.y = before.y;
+                this.removeTwoPoints(s-2,p);
+                return true
+            }
+        }
+        // vertical segment
+        else if (a.x == b.x) {
+            // check the point before
+            if (Math.abs(before.x - a.x) < min) {
+                b.x = before.x;
+                this.removeTwoPoints(s-2,p);
+                return true
+            }
+        }
+        return false
+    },
+
+    // check if the segment has to be fused with next 
+    fuseSegmentAfter(s) {
+
+        // notation - a and b are the points on the segment
+        const p = this.wire;  
+
+        // check
+        if (s+1 > p.length-1) return false
+
+        // notation
+        const [a, b, after] = [p[s-1], p[s], p[s+1]];
+        const min = style.route.tooClose;
+
+        // horizontal segment
+        if (a.y == b.y) {
+
+            // check the point after the segment
+            if (Math.abs(after.y - b.y) < min) {
+                a.y = after.y;
+                this.removeTwoPoints(s,p);
+                return true
+            }
+        }
+        // vertical segment
+        else if (a.x == b.x) {
+
+            // check the point after
+            if (Math.abs(after.x - b.x) < min) {
+                a.x = after.x;
+                this.removeTwoPoints(s,p);
+                return true
+            }
+        }
+        return false
+    },
+
+    // moves an endpoint of a route to a new widget position
+    clampToWidget( widget ) {
+
+        const p = this.wire;
+        const L = this.wire.length;
+        const center = widget.center();
+
+        // if the segment is too short, change it to a four point route
+        if (L < 3) return this.fourPointRoute()
+
+        // clamp 'from' or 'to' to the center
+        if (this.from == widget) {
+            p[0].x = center.x;
+            p[0].y = center.y;
+            p[1].y = center.y;
+        }
+        else if (this.to == widget) {
+            p[L-1].x = center.x;
+            p[L-1].y = center.y;
+            p[L-2].y = center.y;
+        }
+    },
+
+    // The endpoint(s) of the route have changed - make a better route
+    adjust() {
+
+        // in autoroute situations the wire can be missing
+        if (!this.wire.length) return
+
+        // notation
+        const from = this.from;
+        const to = this.to;
+
+        // check that there are two valid endpoints
+        if ( ! to?.center || !from?.center) return
+
+        // from new - to new
+        const fn = from.center();
+        const tn = to.center();
+
+        // from previous - to previous
+        const fp = this.wire[0];
+        const tp = this.wire.at(-1);
+
+        // the deltas
+        const df = {x: fn.x - fp.x, y: fn.y - fp.y};
+        const dt = {x: tn.x - tp.x, y: tn.y - tp.y};
+
+        if (from.is.tack && this.adjustCableEndpoint(from, tn)) return
+        if (to.is.tack && this.adjustCableEndpoint(to, fn)) return
+
+        // check if both endpoints moved over the same distance - just move the route
+        if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
+
+        // adjust the routes - there are 3 topologies
+        if (from.is.tack && to.is.tack) {
+            if (this.tackOnHorizontalTrunk(from)) {
+                this.adjustTH(fn, tn);
+                return
+            }
+            if (this.tackOnHorizontalTrunk(to)) {
+                this.adjustHT(fn, tn);
+                return
+            }
+            this.adjustHH(fn, tn);
+        }
+        else if (to.is.tack) {
+            if (this.tackOnHorizontalTrunk(to)) {
+                this.adjustHT(fn, tn);
+                return
+            }
+            (to.bus?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn);
+        }
+        else if (from.is.tack) {
+            if (this.tackOnHorizontalTrunk(from)) {
+                this.adjustTH(fn, tn);
+                return
+            }
+            (from.bus?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn);
+        }
+        else {
+            this.adjustHH(fn,tn);      
+        }  
+    },
+
+    // Starts and ends horizontally
+    // Only one of the end points moves
+    // a and be are the next position of the end points of the wire
+    adjustHH(a, b) {
+
+        // notation
+        let p = this.wire;
+
+        // For HH there have to be at least three segments
+        if (p.length < 4) return this.makeThreeSegments(a,b)
+
+        // notation
+        let last = p.length - 1;
+        const sMax = p.length-1;
+        const xMin = style.route.tooClose + 5;
+
+        // if we move the start of the route
+        if (p[0].x != a.x || p[0].y != a.y) {
+
+            // adjust the starting point
+            p[0].x = a.x;
+            p[0].y = a.y;
+            p[1].y = a.y;
+
+            // check the horizontal = uneven segments, starting from the front
+            for(let s = 1; s < sMax; s += 2) {
+                const dx = p[s].x - p[s-1].x;
+
+                // if the segment is too short
+                if (Math.abs(dx) < xMin ) {
+
+                    // s-1 <S> s <S+1> s+1   make the segment <S> minimal length
+                    p[s].x = dx > 0 ? p[s-1].x + xMin : p[s-1].x - xMin;
+
+                    // and collapse segment <S+1>
+                    p[s+1].x = p[s].x;
+                }
+            }
+        }
+
+        // move the route at the end
+        if (p[last].x != b.x || p[last].y != b.y) {
+
+            // adjust the end point
+            p[last].x = b.x;
+            p[last].y = b.y;
+            p[last-1].y = b.y;
+
+            //check the horizontal = uneven segments, starting from the back
+            for(let s = sMax; s > 1; s -= 2) {
+                const dx = p[s].x - p[s-1].x;
+                if (Math.abs(dx) < xMin) {
+                    p[s-1].x = dx > 0 ? p[s].x - xMin : p[s].x + xMin;
+                    p[s-2].x = p[s-1].x;
+                }
+            }
+        }
+    },
+
+    // horizontal / vertical
+    adjustHV(a, b) {
+        // maybe create an extra segment
+        if (this.wire.length == 2) return this.makeTwoSegments(a, b)
+
+        const p = this.wire;
+        const last = p.length-1;
+
+        p[0].x = a.x;
+        p[0].y = a.y;
+        p[1].y = a.y;
+        p[last].x = b.x;
+        p[last].y = b.y;
+        p[last-1].x = b.x;
+        p[last-1].y = p[last-2].y;
+    },
+
+    // horizontal / vertical
+    adjustVH(a, b) {
+        // maybe create an extra segment
+        if (this.wire.length == 2) return this.makeTwoSegments(a, b)
+
+        const p = this.wire;
+        const last = p.length-1;
+
+        p[0].x = a.x;
+        p[0].y = a.y;
+        p[1].x = a.x;
+        p[last].x = b.x;
+        p[last].y = b.y;
+        p[last-1].x = p[last-2].x;
+        p[last-1].y = b.y;
+    },
+
+    makeTwoSegments(a, b) {
+
+        // notation
+        const w = this.wire;
+
+        // reset the wire
+        w.length = 0;
+
+        // set 3 points
+        w.push({x: a.x, y: a.y});
+        w.push({x: b.x, y: a.y});
+        w.push({x: b.x, y: b.y});
+    },
+
+    makeThreeSegments(a, b) {
+
+        // notation
+        const w = this.wire;
+
+        // reset the wire
+        w.length = 0;
+
+        // set four points
+        w.push({x: a.x, y: a.y});
+        w.push({x: (a.x+b.x)/2, y: a.y});
+        w.push({x: (a.x+b.x)/2, y: b.y});
+        w.push({x: b.x, y: b.y});
+    },
+
+    // tack on horizontal trunk -> widget
+    adjustTH(a, b) {
+        const p = this.wire;
+        if (p.length !== 3) return this.threePointRoute(false)
+
+        p[0].x = a.x;
+        p[0].y = a.y;
+        p[1].x = a.x;
+        p[1].y = b.y;
+        p[2].x = b.x;
+        p[2].y = b.y;
+    },
+
+    // widget -> tack on horizontal trunk
+    adjustHT(a, b) {
+        const p = this.wire;
+        if (p.length !== 3) return this.threePointRoute(true)
+
+        p[0].x = a.x;
+        p[0].y = a.y;
+        p[1].x = b.x;
+        p[1].y = a.y;
+        p[2].x = b.x;
+        p[2].y = b.y;
+    },
+
+};
+
+const connectHandling = {
+
+trunkOfTack(tack) {
+    if (!tack?.is?.tack) return null
+    return tack.bus
+},
+
+bridgeParts(from, to) {
+    if (!from?.is?.tack || !(to?.is?.bus || to?.is?.cable)) return null
+    if (from.bus?.is?.cable && to.is.bus) return {cable: from.bus, bus: to}
+    if (from.bus?.is?.bus && to.is.cable) return {cable: to, bus: from.bus}
+    return null
+},
+
+bridgeNeighbors(trunk) {
+    const neighbors = [];
+
+    for (const tack of trunk?.tacks ?? []) {
+        const other = tack.route?.from == tack ? tack.route.to : tack.route?.from;
+        if (!other?.is?.tack) continue
+
+        const neighbor = this.trunkOfTack(other);
+        if (neighbor) neighbors.push(neighbor);
+    }
+
+    return neighbors
+},
+
+bridgePathExists(from, to) {
+    const seen = new Set();
+    const pending = [from];
+
+    while (pending.length) {
+        const trunk = pending.pop();
+        if (!trunk || seen.has(trunk)) continue
+        if (trunk === to) return true
+
+        seen.add(trunk);
+        pending.push(...this.bridgeNeighbors(trunk));
+    }
+
+    return false
+},
+
+canBridge(from, to) {
+    const bridge = this.bridgeParts(from, to);
+    if (!bridge) return false
+
+    return !this.bridgePathExists(bridge.cable, bridge.bus)
+},
+
+canConnectPromotedRoute(from, route) {
+    if (!route?.is?.route || route === this) return false
+    if (!route.from || !route.to || route.wire.length < 2) return false
+    if (route.from.is.tack || route.to.is.tack) return false
+    if (route.from === from || route.to === from) return false
+
+    if (from.is.pin || from.is.pad) return true
+    if (!from.is.tack) return false
+
+    return !from.bus?.is?.cable
+},
+
+conxString(from, to) {
+    // set the type of connection that needs to be made
+
+    if (!from || !to) return null
+
+    let conxStr =     from.is.pin  ? 'PIN'
+                    : from.is.tack || from.is.bus || from.is.cable ? 'BUS'
+                    : from.is.route ? 'ROUTE'
+                    : from.is.pad ? 'PAD'
+                    : '';
+
+    conxStr +=        to.is.pin  ? '-PIN'
+                    : to.is.tack || to.is.bus || to.is.cable ? '-BUS'
+                    : to.is.route ? '-ROUTE'
+                    : to.is.pad ? '-PAD'
+                    : '';
+
+    return conxStr
+},
+
+// checks if a connection is possible - used for hover-feedback
+checkConxType(from, to) {
+
+    // set the type of connection that needs to be made
+    const conxStr = this.conxString(from, to);
+
+    if (!conxStr) return false
+
+    switch (conxStr) {
+
+        case 'PIN-PIN':
+
+            // from and to are the same - but avoid bad 'hover' feedback at the start of the route
+            if (from === to) return (this.wire.length < 3) ? true : false
+            
+            // else check
+            return from.canConnect(to)  
+
+        case 'PIN-BUS':
+            // multiple connections are refused !
+            return to.findTack(from) ? false : true
+
+        case 'BUS-PIN':
+            // multiple connections are refused !
+            return from.bus.findTack(to) ? false : true
+
+        case 'PIN-PAD':
+            // only accept new connections of the right type
+            return to.canConnect(from)
+
+        case 'PAD-PIN':
+            // only accept new connections
+            return from.canConnect(to)
+
+        case 'BUS-PAD': 
+            return false
+
+        case 'PAD-BUS': 
+            // multiple connections are refused !
+            return to.findTack(from) ? false : true
+
+        case 'BUS-BUS': return this.canBridge(from, to)
+        case 'PIN-ROUTE':
+        case 'PAD-ROUTE':
+        case 'BUS-ROUTE': return this.canConnectPromotedRoute(from, to)
+        case 'PAD-PAD': return false
+
+        default : return false
+    }
+},
+
+// make the actual connection
+connect(conxTo) {
+
+    // we do the check here
+    if (! this.checkConxType(this.from, conxTo)) return false
+
+    // set the type of connection that needs to be made
+    const conxStr = this.conxString(this.from, conxTo);
+    
+    switch (conxStr) {
+
+        case 'PIN-PIN':
+            this.to = conxTo;
+            conxTo.routes.push(this);
+            this.rxtxPinPin();
+            return true
+
+        case 'PIN-PAD':
+            this.to = conxTo;
+            conxTo.routes.push(this);
+            this.rxtxPinPad();
+            return true
+
+        case 'PAD-PIN':
+            this.to = conxTo;
+            conxTo.routes.push(this);   
+            this.rxtxPinPad();           
+            return true
+
+        case 'PIN-BUS':
+            conxTo.addTack(this);
+            this.rxtxPinBus(); 
+            return true
+
+        case 'BUS-PIN':
+            this.to = conxTo;
+            conxTo.routes.push(this);            
+            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo));
+            this.from.setRoute(this);
+            this.rxtxPinBus(); 
+            return true
+
+        case 'BUS-PAD': 
+            this.to = conxTo;
+            conxTo.routes.push(this);
+            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo));
+            this.from.setRoute(this);
+            this.rxtxPadBus();
+            return true    
+
+        case 'PAD-BUS': 
+            conxTo.addTack(this);
+            this.rxtxPadBus(); 
+            return true        
+
+        case 'PAD-PAD': 
+            return false
+
+        case 'BUS-BUS': 
+            if (!conxTo.addTack(this)) return false
+            this.autoRoute();
+            this.rxtxBusBus();
+            return true
+
+        default : return false
+    }
+},
+
+// disconnects a route at both ends 
+disconnect() {
+
+    // set the type of connection that needs to be made
+    let conx = this.conxString(this.from, this.to);
+
+    switch (conx) {
+
+        case 'PIN-PIN':
+            this.rxtxPinPinDisconnect();
+            break
+
+        case 'PIN-PAD':
+        case 'PAD-PIN':
+            this.rxtxPinPadDisconnect();
+            break        
+
+        case 'PIN-BUS':
+        case 'BUS-PIN':
+            this.rxtxPinBusDisconnect();
+            break        
+
+        case 'PAD-BUS':
+        case 'BUS-PAD':
+            this.rxtxPadBusDisconnect();
+            break
+
+        case 'BUS-BUS':
+            this.rxtxBusBusDisconnect();
+            break
+
+        default: 
+            console.error('Impossible combination in route.disconnect:',conx);
+            return false
+    }
+
+    // remove the route
+    this.remove();
+    return true
+},
+
+// used in undo operations - the route has been removed in the to and from widgets 
+// and has to be reconnected there. It is possible that a route appears twice in the list
+// so we always check if we have already handled the route or not
+// Reconnecting is a two stage process: first connect the route in the from widget (we do this here)
+// and then connect in the to-widget by calling the connect function
+reconnect() {
+
+    // check if we have already handled the route. Could be a pin..
+    if (this.from.is.pin) {
+
+        // check if already handled
+        if (this.from.routes.includes(this)) return
+
+        // save the route in from
+        this.from.routes.push(this);
+    }
+
+    // ..or a pad
+    else if (this.from.is.pad) {
+
+        // check if already handled
+        if (this.from.routes.includes(this)) return
+
+        // no, save the route
+        this.from.routes.push(this);
+    }
+
+    // ..or could be a bus tack
+    else if (this.from.is.tack) { 
+
+        // check if already handled
+        if (this.from.bus.tacks.includes(this.from)) return
+
+        // add it to the bus tacks again
+        this.from.bus.tacks.push(this.from);
+    }
+
+    // for buses we need to use the bus to connect to
+    const conxTo = this.to.is.tack ? this.to.bus : this.to;
+
+    // set to in the route to null
+    this.to = null;
+    
+    // and connect again
+    this.connect(conxTo);
+},
+
+// also used in undo/redo - copies the content of a temp copy into this route
+connectFromClone(clone) {
+    
+    // save the old route details in the route
+    this.wire = clone.wire;
+    this.from = clone.from;
+
+    if (this.from.is.pin || this.from.is.pad) {
+        this.from.routes.push(this);
+    }
+    else if (this.from.is.tack) {
+        this.from.route = this;
+        if (!this.from.bus.tacks.includes(this.from)) this.from.bus.tacks.push(this.from);
+    }
+
+    // and reconnect
+    const other = clone.to.is.tack ? clone.to.bus : clone.to;
+    this.connect(other);   
+},
+
+};
+
+const rxtxHandling = {
+
+// return how messages can arrow between two widgets
+// There are actually ony two cases to consider: pin pin | pin pad | pin bus | pad bus
+// right = A->B, left = A<-B
+arrow(A, B) {
+
+    // pin pin
+    if (B.is.pin) return {right: B.is.input, left: !B.is.input}
+
+    // pin pad
+    if (B.is.pad) return {right: !B.proxy.is.input, left: B.proxy.is.input}
+
+    // pin/pad to shared trunk (bus or cable)
+    if (B.is.bus || B.is.cable) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
+                                                : {right: A.proxy.is.input, left: !A.proxy.is.input}
+},
+
+// A and B are two pin widgets (actual or proxy)
+rxtxPinPin() {
+
+    // messages are flowing from the src list to the dst list
+    const srcList = [];
+    const dstList = [];
+
+    // get the arrow
+    const arrow = this.arrow(this.from, this.to);
+
+    // get source and destination
+    const src = arrow.right ? this.from : this.to;
+    const dst = arrow.right ? this.to : this.from;
+
+    // proxies require possibly many connections
+    if (dst.is.proxy || src.is.proxy) {
+
+        // find all the pins that can generate input via src - incoming to src
+        src.is.proxy ? src.pad?.makeConxList( srcList ) : srcList.push( src );
+
+        // Find all the pins that can receive input via dst - outgoing from dst
+        dst.is.proxy ? dst.pad?.makeConxList( dstList ) : dstList.push( dst );
+
+        // do a full connection...
+        this.fullConnect(srcList, dstList);
+    }
+    // if the two are pins, we have to add one destination in one table
+    else this.singleConnect(src, dst);
+
+},
+
+rxtxPinPad() {
+
+    // messages are flowing from the inlist to the outlist (list = list of source node widgets)
+    const srcList = [];
+    const dstList = [];
+
+    // get the pin and the pad
+    const [pin, pad] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
+
+    // if the pin that we connect has a channel, the proxy also allows channels
+    if (pin.is.channel) pad.proxy.is.channel = true;
+
+    // determine the arrow over the route: left or right
+    const arrow = this.arrow(pin, pad);
+
+    // from pin to pad
+    if (arrow.right) {
+
+        // get all the incoming connections to the pin (that can be a proxy)
+        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);
+
+        // get all the outgoing connections on the proxy of the pad
+        pad.proxy.makeConxList(dstList);    
+        
+        // fully connect
+        this.fullConnect(srcList, dstList);
+    }
+
+    // from pad to pin
+    if (arrow.left) {
+
+        // get all the incoming connections on the proxy of the pad
+        pad.proxy.makeConxList(srcList);   
+
+        // get all the outgoing connections of the pin
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
+        
+        // and fully connect
+        this.fullConnect(srcList, dstList);
+    }
+},
+
+// connect to the bus
+rxtxPinBus() {
+
+    // we will build an output/input list with of actual widgets
+    const dstList = [];
+    const srcList = [];
+
+    // get the pin and the tack
+    const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
+
+    // get the arrow
+    const arrow = this.arrow(pin, tack.bus);
+
+    // arrow is from pin to bus
+    if (arrow.right) {
+
+        // now make the source list 
+        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin); 
+
+        // make the list of destinations connected to this bus for this pin
+        tack.makeConxList(dstList);
+        
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
+    }
+
+    // left 
+    if (arrow.left) {
+
+        // now make the inlist
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
+
+        // make the list of outputs of connected to this bus
+        tack.makeConxList(srcList);
+
+        // and do a full connect between source and destination list
+        this.fullConnect(srcList, dstList);
+    }
+},
+
+// connect to the bus
+rxtxPadBus() {
+
+    // we will build an output/input list with of actual widgets
+    const dstList = [];
+    const srcList = [];
+
+    // get the pin and the bus
+    const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from];
+
+    const arrow = this.arrow(pad, tack.bus);
+
+    // from pad to bus
+    if (arrow.right) {
+
+        pad.proxy.makeConxList(srcList);
+
+        // find the connections from the tack
+        tack.makeConxList(dstList);
+
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
+    }
+    // from bus to pad
+    if (arrow.left) {
+
+        pad.proxy.makeConxList(dstList);
+
+        // find the incoming connections on the bus that lead to the pad 
+        tack.makeConxList(srcList);
+
+        // and do a full connect
+        this.fullConnect(srcList, dstList);
+    }
+},
+
+// disconnect a pin
+rxtxPinPinDisconnect() {
+
+    const srcList = [];
+    const dstList = [];
+
+    const arrow = this.arrow(this.from, this.to);
+
+    const src = arrow.right ? this.from : this.to;
+    const dst = arrow.right ? this.to : this.from;
+
+    // if one of the two is a proxy, we have to remove many destinations
+    if (src.is.proxy || dst.is.proxy) {
+
+        // make the list of actual in and out widgets
+        src.is.proxy ? src.pad?.makeConxList( srcList)  : srcList.push( src );
+        dst.is.proxy ? dst.pad?.makeConxList( dstList ) : dstList.push( dst );
+ 
+        // and now do a full disconnection of the pins
+        this.fullDisconnect(srcList, dstList);
+     }
+    // if the two are actual pins we have to remove one destination from one table
+    else {
+        // remove the destination from the specified output-pin of the node
+        src.node.rxtxRemoveFromTxTable(src, dst);
+    }
+},
+
+// disconnect a pin from a pad
+rxtxPinPadDisconnect() {
+
+    // messages are flowing from the inlist to the outlist (list = list of source node widgets)
+    const srcList = [];
+    const dstList = [];
+
+    // get the pin and the pad
+    const [pin, pad] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
+
+    // check if we still need to keep the channel
+    if (pad.proxy.is.channel) {
+
+        // find the first other route that also has a channel
+        const route = pad.routes.find( route => {
+                                if (route != this) {
+                                    const other = route.from == pad ? route.to : route.from;
+                                    if (other.is.pin && other.is.channel) return true
+                                    if (other.is.pad && other.proxy.is.channel) return true
+                                }
+                            });
+        
+        pad.proxy.is.channel = route ? true : false;
+    }
+
+    // determine the arrow over the route
+    const arrow = this.arrow(pin, pad);
+
+    // from pin to pad
+    if (arrow.right) {
+        // get all the incoming connections to the pin (that can be a proxy)
+        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);
+
+        // get all the outgoing connections on the proxy of the pad
+        pad.proxy.makeConxList(dstList);    
+        
+        // fully disconnect
+        this.fullDisconnect(srcList, dstList);
+    }
+
+    // from pad to pin
+    if (arrow.left) {
+        // get all the incoming connections on the proxy of the pad
+        pad.proxy.makeConxList(srcList); 
+
+        // get all the outgoing connections of the pin
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
+        
+        // and fully disconnect
+        this.fullDisconnect(srcList, dstList);
+    }
+},
+
+// disconnect from the bus
+rxtxPinBusDisconnect() {
+
+     // we will build an output/input list with of actual widgets
+    const dstList = [];
+    const srcList = [];
+
+    // get the pin and the bus
+    const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
+
+    // get the arrow
+    const arrow = this.arrow(pin, tack.bus);
+
+    // right
+    if (arrow.right) {
+        // now make the output list 
+        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);   
+
+        // make the list of inputs connected to this bus of the same name
+        tack.makeConxList(dstList);
+
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList);
+    }
+
+    // left 
+    if (arrow.left) {
+
+        // make the list of outputs of the same name connected to this bus
+        tack.makeConxList(srcList);
+
+        // now make the inlist
+        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
+
+        // and do a full disconnect 
+        this.fullDisconnect(srcList, dstList);
+    }
+},
+
+rxtxPadBusDisconnect() {
+
+    // we will build an output/input list with of actual widgets
+    const dstList = [];
+    const srcList = [];
+
+    // get the pin and the bus
+    const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from];
+
+    // get the arrow
+    const arrow = this.arrow(pad, tack.bus);
+
+    if (arrow.right) {
+
+        pad.proxy.makeConxList(srcList);
+        tack.makeConxList(dstList);
+        this.fullDisconnect(srcList, dstList);
+    }
+    if (arrow.left) {
+
+        tack.makeConxList(srcList);
+        pad.proxy.makeConxList(dstList);
+        this.fullDisconnect(srcList, dstList);
+    }
+},
+
+rxtxBusBus() {
+    const [A, B] = [this.from, this.to];
+    const listA = this.endpointTacksAcrossBridge(A, this);
+    const listB = this.endpointTacksAcrossBridge(B, this);
+    const {srcList, dstList} = this.connectedEndpointsFromTacks(listA, listB);
+
+    this.fullConnect(srcList, dstList);
+},
+
+rxtxBusBusDisconnect() {
+    const [A, B] = [this.from, this.to];
+    const listA = this.endpointTacksAcrossBridge(A, this);
+    const listB = this.endpointTacksAcrossBridge(B, this);
+    const {srcList, dstList} = this.connectedEndpointsFromTacks(listA, listB);
+
+    this.fullDisconnect(srcList, dstList);
+},
+
+endpointTacksAcrossBridge(start, blockedRoute, visited = new Set()) {
+    const list = [];
+
+    if (!start?.is?.tack || visited.has(start)) return list
+    visited.add(start);
+
+    for (const tack of start.bus.tacks) {
+        if (tack === start) continue
+        if (!tack.route?.from || !tack.route?.to) continue
+        if (tack.route === blockedRoute) continue
+
+        const other = tack.getOther();
+
+        if (other.is.tack) {
+            list.push(...this.endpointTacksAcrossBridge(other, blockedRoute, visited));
+        }
+        else {
+            list.push(tack);
+        }
+    }
+
+    return list
+},
+
+actualEndpoint(widget) {
+    if (widget?.is?.pin) return widget
+    if (widget?.is?.pad) return widget.proxy
+    return null
+},
+
+connectedEndpointsFromTacks(listA, listB) {
+    const srcList = [];
+    const dstList = [];
+
+    for (const tackA of listA) for (const tackB of listB) {
+        if (!tackA.areConnected(tackB)) continue
+
+        const actualA = this.actualEndpoint(tackA.getOther());
+        const actualB = this.actualEndpoint(tackB.getOther());
+
+        actualA.is.input ? (srcList.push(actualB), dstList.push(actualA)) : (srcList.push(actualA), dstList.push(actualB));
+    }
+
+    return {srcList, dstList}
+},
+
+// just need to make a single connection
+singleConnect(src, dst){
+
+    // find the entry in the txTable 
+    let tx = src.node.txTable.find( tx => tx.pin.name == src.name);
+
+    // check
+    if (!tx) return;
+
+    // and add it to the array of destinations
+    tx.targets.push(dst);        
+},
+
+// for each resolved rx and tx pair, add an entry to the table
+fullConnect(srcList, dstList) {
+
+    // we have a list of out and ins that we have to connect 
+    for(const src of srcList) {
+
+        // find the entry in the conx table that corresponds to the pin 
+        const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name );
+
+        /** debug should not happen */
+        if (!txRecord) {
+            console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullConnect', src.name, src.node.name);
+            continue
+        }
+
+        // for each entry in the dstlist, add a destination
+        for(const dst of dstList) txRecord.targets.push(dst);
+    }
+},
+
+// for each resolved rx and tx pair, remove the entry in the table
+fullDisconnect(srcList, dstList) {
+
+    for(const src of srcList) {
+
+        // find the entry in the conx table that corresponds to the pin 
+        const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name );
+
+        /** debug should not happen */
+        if (!txRecord) {
+            console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name);
+            continue
+        }
+
+        // remove all the targets that are in the list of destinations
+        for(const dst of dstList) txRecord.dropTarget(dst);
+    }
+},
+
+};
+
+// the route used for a connection between an output and an input
+
+function Route(from, to) {
+
+    this.from = from;                    // ref to widget - from is just the draw direction, it can be input or output
+    this.to = to;                        // ref to widget
+    this.is = {
+        route: true,
+        selected: false,
+        hoverOk: false,
+        hoverNok: false,
+        highLighted: false,
+        notUsed: false,
+        newConx: false,                 // the route is there because of a new conx
+        noConx: false                   // there is no corresponding connection anymore
+    };
+    // The wire between the two widgets
+    this.wire = [];                    
+}
+Route.prototype = {
+
+    render(ctx) {
+
+        // check
+        if (this.wire.length < 2) return
+
+        // color
+        let color = this.is.hoverNok      ? style.bus.cBad
+                    : this.is.selected || this.is.hoverOk ? style.route.cSelected 
+                    : this.is.highLighted   ? style.route.cHighLighted
+                    : this.is.newConx       ? style.route.cAdded
+                    : this.is.noConx        ? style.route.cDeleted
+                    : this.is.notUsed       ? style.route.cNotUsed
+                    : style.route.cNormal;
+
+        //linewidth
+        const width = this.is.selected ? style.route.wSelected : style.route.wNormal;
+
+        // draw the line segments
+        shape.drawWire(ctx,color, width, this.wire);
+    },
+
+    // change the route direction
+    reverse() {
+        // reverse the from to pair
+        [this.from, this.to] = [this.to, this.from];
+
+        let p = this.wire;
+        let l = p.length;
+
+        // reverse the points - if l is uneven the middle point stays, which is ok
+        for (let i=0; i<l/2; i++) [p[i], p[l-i-1]] = [p[l-i-1], p[i]];
+    },
+
+    select() {
+        this.is.selected = true;
+        if (this.from) this.from.is.selected = true;
+        if (this.to) this.to.is.selected = true;
+    },
+
+    unSelect() {
+        this.is.selected = false;
+        if (this.from) this.from.is.selected = false;
+        if (this.to) this.to.is.selected = false;
+    },
+
+    // highlight is simple
+    highLight() {
+        this.is.highLighted = true;
+        if (this.from) this.from.is.highLighted = true;
+        if (this.to) this.to.is.highLighted = true;
+    },
+
+    // unhighlight is a bit more complicated
+    unHighLight(){
+
+        // if the other look is still highlighted and it belongs to a different node, do not turn off
+        if ( (this.from?.node?.is.highLighted || this.to?.node?.is.highLighted) && this.from.node != this.to.node) return
+
+        // turn off
+        this.is.highLighted = false;
+        if (this.from) this.from.is.highLighted = false;
+        if (this.to) this.to.is.highLighted = false;
+    },
+
+    // generates the type string for a route
+    typeString() {
+
+        const from = this.from.is;
+        const to = this.to.is;
+
+        let str =     from.pin ? 'PIN' 
+                    : from.tack ? 'BUS' 
+                    : from.pad ? 'PAD' : '';
+        str +=        to.pin ? '-PIN' 
+                    : to.tack ? '-BUS' 
+                    : to.pad ? '-PAD' : '';
+
+        return str
+    },
+
+    // returns the segment 1, 2 etc - 0 means failure
+    hitSegment(pos) {
+
+        // notation
+        const last = this.wire.length-1;
+        const x = pos.x, y = pos.y;
+
+        // the precision in pixels
+        const delta = 5;
+
+        // check if the point lies on the route
+        for (let i=0; i<last; i++) {
+
+            const a = this.wire[i];
+            const b = this.wire[i+1];
+            
+            // horizontal segment
+            if (a.y == b.y) {
+                if ((y < a.y + delta) && (y > a.y - delta) && ((a.x-x)*(b.x-x) <= 0)) return i+1
+            }
+            // vertical segment
+            else {
+                if ((x < a.x + delta) && (x > a.x - delta) && ((a.y-y)*(b.y-y) <= 0)) return i+1
+            }         
+        }
+        // no hit
+        return 0
+    },
+
+    remove() {
+        this.from.removeRoute(this);
+        this.to.removeRoute(this);
+    },
+
+    popFromRoute() {
+        this.from.is.tack ? this.from.bus.tacks.pop() : this.from.routes.pop(); 
+    },
+
+    clone() {
+        // make a new route
+        let newRoute = new Route(this.from, this.to);
+
+        // copy the points array
+        for (const point of this.wire) newRoute.wire.push({...point});
+
+        // done
+        return newRoute
+    },
+
+    restore() {
+
+    },
+
+    // used for undo/redo
+    copyWire() {
+        const copy = [];
+        for (const point of this.wire) copy.push({...point});
+        return copy
+    },
+
+    restoreWire(copy) {
+        this.wire = [];
+        for (const point of copy) this.wire.push({...point});
+    },
+
+    // returns A, B where the message flow is from A to B
+    messageFlow() {
+
+        const from = this.from;
+        const to = this.to;
+
+        if (from.is.pin) return from.is.input ?  [to, from] : [from, to]
+        if (to.is.pin) return to.is.input ? [from, to] : [to, from]
+        if (from.is.pad) return from.proxy.is.input ? [from, to] : [to, from]
+        if (to.is.pad) return to.proxy.is.input ? [to, from] : [from, to]
+        return [to, from]
+    }
+
+};
+Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling);
+
+// a bus groups a number of connections
+
+const busConnect = {
+
+    // disconnect all routes to and from a bus
+    disconnect() {
+
+        // make a copy - the original array will be modified
+        const tacks = this.tacks.slice();
+
+        // remove the tacks
+        for (const tack of tacks) {
+
+            // what is the tack connected to..
+            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
+
+            // disconnect
+            other.is.tack ? tack.route.rxtxBusBusDisconnect()
+            : other.is.pin ? tack.route.rxtxPinBusDisconnect()
+            : tack.route.rxtxPadBusDisconnect();
+            
+            // remove the route at the pin also
+            tack.route.remove();
+        }
+    },
+
+    // undo a disconnect action
+    reconnect(tacks) {
+
+        for (const tack of tacks) {
+
+            // add the tack to the bus again
+            this.tacks.push(tack);
+
+            // place it (probably not necessary)
+            tack.setRoute(tack.route);
+
+            // the tack is connected to...
+            const other = tack.route.to == tack ? tack.route.from : tack.route.to;
+
+            // add the route to the pin
+            if (!other.is.tack) other.routes.push(tack.route);
+
+            // change the rxtx tables...
+            other.is.tack ? tack.route.rxtxBusBus()
+            : other.is.pin ? tack.route.rxtxPinBus()
+            : tack.route.rxtxPadBus();
+        }
+    },
+
+    // every connection of the old bus that starts from a node in the selection is transferred to the new bus
+    splitTacks(newBus, newGroup) {
+
+        this.tacks.forEach( (tack,index) => {
+
+            // if the arrow comes from a node in the new group
+            if (tack.route.from.is.pin && newGroup.nodes.includes(tack.route.from.node)) {
+
+                // push the arrow on the new bus
+                newBus.tacks.push(tack);
+
+                // take it from this bus
+                this.tacks[index] = null;
+
+                // adjust the bus
+                tack.bus = newBus;
+            }
+        });
+
+        // close the holes..
+        this.tacks = this.tacks.filter( w => w != null);
+    },
+
+    // transfer the tacks from this buses (inside a group) to the same bus outside - used in undo group
+    transferTacks(outsiders) {
+
+        // for all tacks
+        for(const tack of this.tacks) {
+
+            // find the corresponding bus
+            for(const outside of outsiders) {
+
+                if (this.uid == outside.uid) {
+                    tack.bus = outside;
+                    break
+                }
+            }
+        }
+    },
+
+    // make a route from the widget to the bus - the widget is a pin or a pad
+    makeRoute(widget) {
+
+        // select a point on the bus wire closest = {point, segment nr, endPoint}
+        const closest = closestPointOnCurve(this.wire, widget.center());
+
+        // if the closest point is an endpoint, we interpollate close to that point
+        const point = closest.endPoint ? interpolateSegment(closest.point, closest.segment, this.wire) : closest.point;
+
+        // create a tack
+        const tack = new BusTack(this);
+        tack.setSelective(this.defaultTackSelectivity(widget));
+
+        // place the tack at a the selected position on the bus
+        tack.placeOnSegment(point, closest.segment);
+
+        // a new route between the widget and the tack
+        const route = new Route(widget, tack);
+
+        // make a smart connection between the two destinations
+        route.autoRoute();
+
+        // and save the route in the new proxy...
+        widget.routes.push(route);
+
+        // set the route in the tack, the tack in the bus and orient the tack
+        tack.restore(route);
+    },
+
+    rxtxPrepareTables() {
+    },
+    
+    xxxrxtxResetTables() {
+    
+        this.txTable = [];
+        this.rxTable = [];
+    },
+
+    // follow the routes to build the tx tables - recursive function
+    xxxrxtxBuildRxTxTable() {
+    
+        // for all the incoming tacks
+        for (const tack of this.tacks) {
+
+            if (tack.incoming()) {
+
+                this.rxtxAddRxTack(tack);
+            }
+            else {
+
+                const outgoing = [];
+
+                const other = tack.getOther();
+
+                other.is.proxy ? other.pad.makeConxList(outgoing) : (other.is.pad ? other.proxy.makeConxList(outgoing) : outgoing.push(other));
+
+                this.rxtxAddTxTack(tack, outgoing);
+            }
+        }
+    },
+    
+    // For an outgoing tack, we save the incoming connections
+    xxxrxtxAddTxTack(tack, outgoing) {
+    
+        // make a record for the tack
+        const txTack = new TxTack(tack);
+    
+        // now add the list to the tx record (make a copy !)
+        txTack.fanout = outgoing.slice();
+    
+        // push the target to the txTable
+        this.txTable.push(txTack);
+    },
+    
+    // removes a connection
+    xxxrxtxRemoveTxTack(tack) {
+        
+        // find the destination targets that corresponds with the transmitter and remove the enrty
+        const index = this.txTable.findIndex( tx => tx.tack == tack);
+        if (index > -1) this.txTable.splice(index, 1);
+    },
+
+    // For an incoming tack, we save the outgoing connections
+    xxxrxtxAddRxTack(tack) {
+
+        this.rxTable.push(new RxTack(tack));
+    },
+
+    // removes a connection
+    xxxrxtxRemoveRxTack(tack) {
+
+        // find the destination targets that corresponds with the transmitter and remove the enrty
+        const index = this.rxTable.findIndex( tx => tx.tack == tack);
+        if (index > -1) this.rxTable.splice(index, 1);
+    },
+
+
+};
+
+const busJsonHandling = {
+
+makeRaw(refArl) {
+
+    const json = {
+        name: this.name
+    };
+
+    // the wire
+    json.start = convert.pointToString(this.wire[0]);
+    json.wire = convert.wireToString(this.wire);
+
+    // done
+    return json
+},
+
+ 
+cook(raw, modcom) {
+    
+    // set the name
+    this.name = raw.name;
+
+    // save the path and labels for this bus
+    this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire);
+
+    // ** pathological ** should not happen
+    if (this.wire.length == 1) this.wire.push(this.wire[0]);
+
+    // place the labels..
+    this.startLabel.place();
+    this.endLabel.place();
+},
+
+
+};
+
+const busDrawing = {
+    
+    // draw freely with x/y segments - do not pass beyond arrows that are attached to the bus
+    drawXY(next) {
+
+        const L = this.wire.length;
+
+        // notation
+        const r1 = this.wire[L - 2];
+        const r2 = this.wire[L - 1];
+        const wBus = style.bus.wCable;
+        const hLabel = this.endLabel.rect.h;
+        let limit = null;
+
+        const vertical = r2.x == r1.x;
+        const horizontal = r2.y == r1.y;
+
+        // the first segment x==y
+        if (vertical && horizontal) {
+
+            // the first two points of the wire are the same, so seperate them...
+            (Math.abs(next.x - r1.x) < Math.abs(next.y - r1.y)) ? r2.y = next.y : r2.x = next.x;
+        }
+        // Horizontal - moving in x direction
+        else if (horizontal) {
+
+            // change to vertical ?
+            if (Math.abs(next.y - r2.y) > style.bus.split) {
+
+                // create a new segment
+                this.wire.push({x:r2.x, y:next.y});
+            }
+            else {
+
+                // if there are widgets we have to do an additional check - we do not move beyond widgets
+                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
+                    if ((r1.x < r2.x)&&(next.x < limit.r + wBus/2)) next.x = limit.r + wBus/2;
+                    if ((r1.x > r2.x)&&(next.x > limit.l - wBus/2)) next.x = limit.l - wBus/2;
+                }
+
+                // set the next x value
+                r2.x = next.x;
+
+                // remove the segment if too small 
+                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.bus.tooClose)) this.wire.pop();
+            }
+        }
+        // Vertical - moving in the y-direction
+        else if (vertical) {
+
+            // change to horizontal ?
+            if (Math.abs(next.x - r2.x) > style.bus.split) {
+
+                // new segment
+                this.wire.push({x:next.x, y:r2.y});
+            }
+            else {
+                // if there are widgets we have to do an additional check - we do not move beyond widgets
+                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
+                    if ((r1.y < r2.y)&&(next.y < limit.b )) next.y = limit.b;
+                    if ((r1.y > r2.y)&&(next.y > limit.t - hLabel/2)) next.y = limit.t - hLabel/2;
+                }
+
+                // set the next y value
+                r2.y = next.y;
+
+                // check if points are getting too close
+                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.bus.tooClose)) this.wire.pop();
+            }
+        }
+
+        // reposition the labels of the bus
+        this.startLabel.place();
+        this.endLabel.place();
+    },
+
+    resumeDrawXY(label,pos,delta) {
+        // switch the direction of the bus if the startlabel is moved
+        if (label == this.startLabel) this.reverse();
+
+        // notation
+        const p = this.wire;
+        const pa = p[p.length-2];
+        const pb = p[p.length-1];
+
+        // check is we need to switch horizontal/vertical
+        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.bus.split) ? pos.x : pb.x + delta.x;
+        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.bus.split) ? pos.y : pb.y + delta.y;
+
+        // draw the bus
+        this.drawXY({x,y});
+    },
+
+    // reverses the path of the bus - switches end and start label
+    reverse() {
+        [this.startLabel, this.endLabel] = [this.endLabel, this.startLabel];
+
+        const p = this.wire;
+        const L = p.length;
+
+        // reverse the points - if l is uneven the middle point stays, which is ok
+        for (let i=0; i<L/2; i++) [p[i], p[L-i-1]] = [p[L-i-1], p[i]];
+
+        // the segment number for the arrows has to be adapted as well
+        this.tacks.forEach( tack => tack.segment = L - tack.segment);
+    },
+
+    // returns the zone where there are widgets on the segment
+    getLimit(segment) {
+
+        let limit=null;
+
+        this.tacks.forEach( tack => {
+            if (tack.segment == segment) {
+                const rc = tack.rect;
+                if (limit) {
+                    if (rc.x < limit.l)         limit.l = rc.x;
+                    if (rc.x + rc.w > limit.r)  limit.r = rc.x + rc.w;
+                    if (rc.y < limit.t)         limit.t = rc.y;
+                    if (rc.y + rc.h > limit.b)  limit.b = rc.y + rc.h;
+
+                }
+                else limit = {l: rc.x, r:rc.x + rc.w, t: rc.y, b:rc.y + rc.h};
+            }
+        });
+        return limit
+    },
+
+    // move the bus and the tacks - but not the routes - used in selection move
+    move(dx, dy) {
+
+        // move all segments
+        for(const point of this.wire) {
+            point.x += dx;
+            point.y += dy;
+        }
+
+        // move the labels
+        this.startLabel.move(dx,dy);
+        this.endLabel.move(dx,dy);
+
+        // move the tacks
+        for(const tack of this.tacks) {
+            tack.rect.x += dx;
+            tack.rect.y += dy;
+        }
+    },
+
+    // 
+    drag(delta) {
+
+       // move all segments
+       for(const point of this.wire) {
+            point.x += delta.x;
+            point.y += delta.y;
+        }
+
+        // move the labels
+        this.startLabel.move(delta.x, delta.y);
+        this.endLabel.move(delta.x, delta.y);
+
+        // move the tacks and the route
+        for(const tack of this.tacks) tack.moveXY(delta.x, delta.y);
+    },
+
+    // move the routes that originated from the bus
+    moveRoutes(x,y) {
+        this.tacks.forEach( (tack) => { 
+            if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y);
+        });
+    },
+
+    // returns the widget zone of the two adjacent segments
+    getCombinedLimit(s1,s2) {
+
+        let limit1 = this.getLimit(s1);
+        let limit2 = this.getLimit(s2);
+
+        if (limit1 && limit2) {
+            if (limit2.l < limit1.l) limit1.l = limit2.l;
+            if (limit2.r > limit1.r) limit1.r = limit2.r;
+            if (limit2.t < limit1.t) limit1.t = limit2.t;
+            if (limit2.b > limit1.b) limit1.b = limit2.b;
+        }
+        return limit1 ? limit1 : limit2
+    },
+
+    // move the segment if possible
+    moveSegment(segment, delta) {
+
+        // notation
+        let p = this.wire;
+        const dx = delta.x;
+        const dy = delta.y;
+
+        // get the forbidden zone in which the segment cannot move
+        let limit = this.getCombinedLimit(segment-1, segment+1);
+
+        // segment is defined by two points
+        let a = p[segment-1];
+        let b = p[segment];
+
+        // horizontal segment
+        if (a.y == b.y) {
+            // if the new point is not in the forbidden zone, it can move
+            if ((limit == null) || (a.y > limit.b)&&(a.y+dy > limit.b) || (a.y < limit.t)&&(a.y+dy < limit.t)) {
+                a.y += dy;
+                b.y += dy;
+
+                for (const tack of this.tacks) if (tack.segment == segment) tack.moveY(dy);
+            }
+        }
+        // vertical segment
+        else if (a.x == b.x) {
+           // if the new point is not in the forbidden zone, it can move
+            if ((limit == null) || (a.x > limit.r)&&(a.x+dx > limit.r) || (a.x < limit.l)&&(a.x+dx < limit.l)) {
+                a.x += dx;
+                b.x += dx;
+
+                for (const tack of this.tacks) if (tack.segment == segment) tack.moveX(dx);
+            }
+        }
+        // labels have to be moved if the first or last segment has been moved
+        if (segment == 1) this.startLabel.place(); 
+        if (segment == p.length - 1) this.endLabel.place(); 
+    },
+
+    placeTacks(segment,dx,dy) {
+        for (const tack of this.tacks) tack.setRoute(tack.route);
+    },
+
+    removeTwoPoints(segment) {
+
+        // remove  the segment from the bus
+        const p = this.wire;
+        const L = p.length;
+
+        // we remove two points from the array
+        for (let i = segment; i < L-2; i++) p[i] = p[i+2];
+
+        // remove the two last points..
+        p.pop();
+        p.pop();
+
+        // ..and reassign widgets to a different segment...
+        this.tacks.forEach( w => { if (w.segment > segment) w.segment -= 2; });
+    },
+
+    // check if the segment has to be fused wit previous/next
+    fuseSegment(s) {
+
+        let p = this.wire;  
+
+        // check
+        if (p.length < 3) return
+        
+        // notation
+        const deltaMin = style.bus.tooClose;
+
+        // horizontal segment
+        if (p[s-1].y == p[s].y) {
+
+            // check next
+            if ((s < p.length-2)&&(Math.abs(p[s+1].y - p[s].y) < deltaMin)) {
+                p[s-1].y = p[s+1].y;
+                this.removeTwoPoints(s);
+            }
+            // or previous
+            else if ((s > 1)&&(Math.abs(p[s-2].y - p[s-1].y) < deltaMin)) {
+                p[s].y = p[s-2].y;
+                this.removeTwoPoints(s-2);
+            }
+        }
+        // vertical segment
+        else if (p[s-1].x == p[s].x) {
+
+            // check next
+            if ((s < p.length-2)&&(Math.abs(p[s+1].x - p[s].x) < deltaMin)) {
+                p[s-1].x = p[s+1].x;
+                this.removeTwoPoints(s);
+            }
+            // or previous
+            else if ((s > 1)&&(Math.abs(p[s-2].x - p[s-1].x) < deltaMin)) {
+                p[s].x = p[s-2].x;
+                this.removeTwoPoints(s-2);
+            }
+        }
+        // place the labels - not always necessary but saves time ...
+        this.startLabel.place(); 
+        this.endLabel.place(); 
+    },
+
+    // after a bus move 
+    adjustRoutes() {
+
+        for(const tack of this.tacks) {
+            tack.route.adjust();
+        }
+    },
+
+    // closest tack
+    closestTack(widget) {
+    },
+
+    straightConnections() {
+
+        for(const tack of this.tacks) {
+
+            // take the route
+            const route = tack.route;
+
+            // other end of the route
+            const other = route.to == tack ? route.from : route.to;
+
+            // get the two points of the bus segment
+            let a = this.wire[tack.segment-1];
+            let b = this.wire[tack.segment];
+
+            // only vertical segment
+            if (a.x == b.x) {
+
+                // arrange
+                [a, b] = a.y > b.y ? [b, a] : [a, b];
+
+                // check 
+                if (other.rect.y > a.y && other.rect.y < b.y) {
+
+                    // move the tack
+                    tack.rect.y = other.rect.y + other.rect.h/2 - tack.rect.h/2;
+
+                    // straighten the route
+                    for(const p of route.wire) p.y = other.rect.y + other.rect.h/2;
+                }
+            }
+        }
+    }
+    
+};
+
+// a bus groups a number of connections
+
+function Bus(name, from, uid = null) {
+
+    // unique identifier for the bus
+    this.uid = uid;
+
+    // save the name
+    this.name = name ?? '';
+
+    // note that a widget id is never 0 ! currently not used
+    this.widGenerator = 0;
+
+    // state
+    this.is = {
+        bus: true,
+        selected: false,
+        hoverOk: false,
+        hoverNok : false,
+        highLighted: false
+    };
+
+    // incoming connections
+    // this.rxTable = []
+
+    // outgoing connections
+    // this.txTable = []
+
+    // set the start and endpoint of the bus before defining the labels
+    this.wire = [];
+    this.wire.push({x:from.x, y:from.y});
+    this.wire.push({x:from.x, y:from.y});
+
+    // w and h for the labels - w is set by place()
+    const h = style.bus.hLabel;
+    const w = 0;
+
+    // now set the labels
+    this.startLabel  = new BusLabel({x:0, y:0, w,h}, this);
+    this.endLabel = new BusLabel({x:0, y:0, w,h}, this);
+
+    // place the two labels
+    this.startLabel.place();
+    this.endLabel.place();
+
+    // the contacts on the bus
+    this.tacks = [];
+}
+Bus.prototype = {
+
+    defaultTackSelectivity(widget) {
+        const actual = widget?.is?.pin ? widget : widget?.is?.pad ? widget.proxy : null;
+        return !!actual?.is?.input
+    },
+
+    render(ctx) {
+
+        if (this.wire.length < 2) return
+
+        const st = style.bus;
+
+        const cLine =     this.is.hoverNok ? st.cBad 
+                        : this.is.selected || this.is.hoverOk ? st.cSelected
+                        : this.is.highLighted ? st.cHighLighted
+                        : st.cNormal;
+
+        // Draw a bus or a cable...
+        shape.drawBus(ctx,this.wire, cLine, st.wBus);
+
+        // render the two labels
+        this.startLabel.render(ctx);
+        this.endLabel.render(ctx);
+
+        // also render the tacks
+        this.tacks.forEach( tack => tack.render(ctx) );
+    },
+
+    generateWid() {
+        return ++this.widGenerator
+    },
+
+    highLight() {
+
+        // the bus itself
+        this.is.highLighted = true;
+
+        // the labels
+        this.startLabel.highLight();
+        this.endLabel.highLight();
+
+        // the tacks and routes
+        for (const tack of this.tacks) tack.route.highLight();
+    },
+
+    unHighLight() {
+        
+        this.is.highLighted = false;
+
+        this.startLabel.unHighLight();
+        this.endLabel.unHighLight();
+
+        for (const tack of this.tacks) tack.route.unHighLight();
+    },
+
+    // returns zap, bus, label, tack, segment
+    hitTest(pos) {
+
+        // check the label
+        let label =   inside(pos, this.startLabel.rect) ? this.startLabel 
+                    : inside(pos, this.endLabel.rect) ? this.endLabel 
+                    : null;
+                    
+        if (label) return [zap.busLabel, this, label, null, 0]
+
+        // check the tacks
+        for (const tack of this.tacks) {
+
+            // check if inside the rectangle
+            if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
+
+            if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
+        }
+
+        // check the segments
+        let segment = this.hitSegment(pos);
+        if (segment) return [zap.busSegment, this, null, null, segment]
+
+        // nothing
+        return [zap.nothing, null, null, null, 0]
+    },
+
+    // returns the segment that was hit
+    hitSegment(pos) {
+        
+        // notation
+        const L = this.wire.length;
+        const x = pos.x;
+        const y = pos.y;
+
+        // check if the point lies on the route
+        for (let i=0; i<L-1; i++) {
+
+            const a = this.wire[i];
+            const b = this.wire[i+1];
+
+            // the precision in pixels
+            const d = 5;
+
+
+            // horizontal
+            if (a.y == b.y) {
+                if ((y > a.y - d) && (y < a.y + d))
+                    if (((x >= a.x) && (x <= b.x)) || ((x >= b.x) && (x <= a.x))) return i+1
+            }
+            // vertical
+            else {
+                if ((x > a.x - d) && (x < a.x + d))
+                    if (((y >= a.y) && (y <= b.y)) || ((y >= b.y) && (y <= a.y))) return i+1
+            }
+        }
+        // no hit
+        return 0
+    },
+
+    singleSegment() {
+        return (this.wire.length === 2)
+    },
+
+    hitRoute(pos) {
+
+        let segment = 0;
+        for (const tack of this.tacks) {
+            if ((tack.route.from == tack)&&(segment = tack.route.hitSegment(pos)))  return [zap.route, tack.route, segment]
+        }
+        return [zap.nothing, null, 0]
+    },
+
+    // check if (part of) the bus is inside the rectangle
+    overlap(rect) {
+        return segmentsInside(this.wire, rect)?.length > 0 ? true : false
+    },
+
+    findTack(from) {
+        return this.tacks.find( tack => (tack.route.from == from) || (tack.route.to == from))
+    },
+
+    removeTack(tack) {
+
+        eject(this.tacks, tack);
+    },
+
+    // make a connection netween a route and the bus segment 
+    // the route is conected at the route.to, i.e. route.to is null
+    addTack(route) {
+
+        // the other terminal of the route
+        const other = route.to == null ? route.from : route.to;
+
+        // we only accept one connection to the bus from the same pin/pad
+        if (this.findTack(other)) return null
+
+        // create the widget
+        const newTack = new BusTack(this);
+        newTack.setSelective(this.defaultTackSelectivity(other));
+
+        // set the route for this tack
+        newTack.setRoute(route);
+
+        // save the tack on this bus
+        this.tacks.push(newTack);
+
+        // return the widget
+        return newTack
+    },
+
+    newTack(alias = null, selective = false) {
+        // make a tack
+        const tack = new BusTack(this);
+
+        // set the alias if any
+        if (alias) tack.alias = alias;
+        tack.setSelective(selective);
+
+        // set the tack
+        this.tacks.push(tack);
+
+        // done
+        return tack
+    },
+
+    // copies labels and points - after cloning both buses are still conncted to the same tacks !
+    copy() {
+        // create a new bus
+        const newBus = new Bus( this.name, this.wire[0], this.uid);
+
+        // copy the wire 
+        newBus.wire = this.copyWire();
+
+        // place the labels again
+        newBus.startLabel.place();
+        newBus.endLabel.place();
+
+        // done
+        return newBus
+    },
+
+    copyTacks(newBus, newRoot) {
+
+        // copy the tacks
+        for (const tack of this.tacks) {
+
+            // clone the route - the from and to widgets are still the old ones
+            const newRoute = tack.route.clone();
+
+            // make a new tack
+            const newTack = new BusTack(newBus);
+            newTack.is.selective = tack.is.selective;
+
+            // replace the old tack with the new
+            newRoute.to.is.tack ?  newRoute.to = newTack : newRoute.from = newTack;
+
+            // set the route
+            newTack.setRoute(newRoute);
+
+            // now find the copied node where the route starts - first shorten the notation
+            const other = newRoute.to.is.tack ? newRoute.from : newRoute.to;
+
+            // the other end can be a pin or a pad
+            if (other.is.pin) {
+
+                // find the other node in the new root 
+                const node = newRoot.nodes.find( node => node.uid == other.node.uid);
+
+                // find the other widget
+                const pin = node.look.findPin(other.name, other.is.input);
+
+                // and save the newly found other again in the route itself
+                newRoute.to.is.tack ? newRoute.from = pin : newRoute.to = pin;
+
+                // save the route also in the other
+                pin.routes.push( newRoute );
+            }
+            else if (other.is.pad) {
+
+                // find the corresponding pad in the newRoot
+                const pad = newRoot.pads.find( pd => pd.proxy.name == other.proxy.name);
+
+                // and save the newly found other again in the route itself
+                newRoute.to.is.tack ? newRoute.from = pad : newRoute.to = pad;
+
+                // save the route also
+                pad.routes.push(newRoute);
+            }
+
+            // save the widget in the new bus
+            newBus.tacks.push(newTack);
+        }
+    },
+
+    // used for undo/redo
+    copyWire() {
+        const copy = [];
+        for (const point of this.wire) copy.push({...point});
+        return copy
+    },
+
+    restoreWire(copy) {
+        this.wire = [];
+        for (const point of copy) this.wire.push({...point});
+    },
+
+    // make a copy of the segment and the route points of the links on the bus
+    copyTackWires() {
+
+        const copy = [];
+        for (const tack of this.tacks) {
+            const track = tack.route.copyWire();
+            copy.push({segment: tack.segment, track});
+        }
+        return copy
+    },
+
+    restoreTackWires(copy) {
+
+        // the links and the copy array have the same size !!
+        const tacks = this.tacks;
+        const L = tacks.length;
+        for(let i = 0; i < L; i++) {
+
+            tacks[i].segment = copy[i].segment;
+            tacks[i].route.restoreWire(copy[i].track);
+        }
+    },
+};
+Object.assign(Bus.prototype, busConnect, busJsonHandling, busDrawing);
+
+function Cable(from = {x:0, y:0}, uid = null) {
+
+    // unique identifier for the cable
+    this.uid = uid;
+
+    // state
+    this.is = {
+        cable: true,
+        selected: false,
+        hoverOk: false,
+        hoverNok : false,
+        highLighted: false
+    };
+
+    // the cable trunk
+    this.wire = [
+        {x:from.x, y:from.y},
+        {x:from.x, y:from.y}
+    ];
+
+    // the contacts on the cable
+    this.tacks = [];
+}
+Cable.prototype = {
+
+    render(ctx) {
+
+        if (this.wire.length < 2) return
+
+        const st = style.bus;
+
+        const cLine =     this.is.hoverNok ? st.cBad 
+                        : this.is.selected || this.is.hoverOk ? st.cSelected
+                        : this.is.highLighted ? st.cHighLighted
+                        : st.cNormal;
+
+        // Draw a bus or a cable...
+        shape.drawBus(ctx,this.wire, cLine, st.wCable);
+
+        // also render the tacks
+        this.tacks.forEach( tack => tack.render(ctx) );
+    },
+
+    defaultTackSelectivity(widget) {
+        return false
+    },
+
+    isKeyed() {
+        return false
+    },
+
+    makeRaw() {
+        return {
+            start: convert.pointToString(this.wire[0]),
+            wire: convert.wireToString(this.wire)
+        }
+    },
+
+    cook(raw) {
+        this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire);
+        if (this.wire.length == 1) this.wire.push(this.wire[0]);
+    },
+
+    highLight() {
+        this.is.highLighted = true;
+        for (const tack of this.tacks) tack.route.highLight();
+    },
+
+    unHighLight() {
+        this.is.highLighted = false;
+        for (const tack of this.tacks) tack.route.unHighLight();
+    },
+
+    hitTest(pos) {
+        for (const tack of this.tacks) {
+            if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
+        }
+
+        const segment = this.hitSegment(pos);
+        if (segment) return [zap.busSegment, this, null, null, segment]
+
+        return [zap.nothing, null, null, null, 0]
+    },
+
+    hitSegment(pos) {
+        const L = this.wire.length;
+        const x = pos.x;
+        const y = pos.y;
+
+        for (let i=0; i<L-1; i++) {
+            const a = this.wire[i];
+            const b = this.wire[i+1];
+            const d = 5;
+
+            if (a.y == b.y) {
+                if ((y > a.y - d) && (y < a.y + d))
+                    if (((x >= a.x) && (x <= b.x)) || ((x >= b.x) && (x <= a.x))) return i+1
+            }
+            else {
+                if ((x > a.x - d) && (x < a.x + d))
+                    if (((y >= a.y) && (y <= b.y)) || ((y >= b.y) && (y <= a.y))) return i+1
+            }
+        }
+        return 0
+    },
+
+    singleSegment() {
+        return (this.wire.length === 2)
+    },
+
+    hitRoute(pos) {
+        let segment = 0;
+        for (const tack of this.tacks) {
+            if ((tack.route.from == tack)&&(segment = tack.route.hitSegment(pos)))  return [zap.route, tack.route, segment]
+        }
+        return [zap.nothing, null, 0]
+    },
+
+    overlap(rect) {
+        return segmentsInside(this.wire, rect)?.length > 0 ? true : false
+    },
+
+    findTack(from) {
+        return this.tacks.find(tack => (tack.route.from == from) || (tack.route.to == from))
+    },
+
+    removeTack(tack) {
+        eject(this.tacks, tack);
+    },
+
+    addTack(route) {
+
+        const other = route.to == null ? route.from : route.to;
+        if (this.findTack(other)) return null
+
+        const newTack = new BusTack(this);
+        newTack.setSelective(this.defaultTackSelectivity(other));
+        newTack.setRoute(route);
+        this.tacks.push(newTack);
+        return newTack
+    },
+
+    newTack(alias = null, selective = false) {
+        const tack = new BusTack(this);
+        tack.setSelective(selective);
+        this.tacks.push(tack);
+        return tack
+    },
+
+    makeRoute(widget) {
+
+        const closest = closestPointOnCurve(this.wire, widget.center());
+        const point = closest.endPoint ? interpolateSegment(closest.point, closest.segment, this.wire) : closest.point;
+        const tack = new BusTack(this);
+
+        tack.placeOnSegment(point, closest.segment);
+
+        const route = new Route(widget, tack);
+        route.autoRoute();
+        widget.routes.push(route);
+        tack.restore(route);
+    },
+
+    connectEndpoint(widget) {
+        if (!widget?.center) return null
+        if (this.findTack(widget)) return null
+
+        const center = widget.center();
+        const point = this.wire.at(-1);
+        const segment = this.wire.length - 1;
+        const previous = this.wire.at(-2);
+
+        if (previous) {
+            previous.y === point.y ? previous.y = center.y : previous.x = center.x;
+        }
+
+        point.x = center.x;
+        point.y = center.y;
+
+        const tack = this.newTack();
+        tack.is.endpoint = true;
+        tack.placeOnSegment(point, segment);
+
+        const route = new Route(widget, tack);
+        route.wire = [{...center}, {...tack.center()}];
+        widget.routes.push(route);
+        tack.restore(route);
+
+        widget.is.pin ? route.rxtxPinBus() : route.rxtxPadBus();
+        return tack
+    },
+
+    copy() {
+        const newCable = new Cable(this.wire[0], this.uid);
+        newCable.wire = this.copyWire();
+        return newCable
+    },
+
+    copyTacks(newCable, newRoot) {
+
+        for (const tack of this.tacks) {
+
+            const newRoute = tack.route.clone();
+            const newTack = new BusTack(newCable);
+            newTack.is.endpoint = tack.is.endpoint;
+            newTack.is.bridge = tack.is.bridge;
+            newTack.is.selective = tack.is.selective;
+
+            newRoute.to.is.tack ? newRoute.to = newTack : newRoute.from = newTack;
+            newTack.setRoute(newRoute);
+
+            const other = newRoute.to.is.tack ? newRoute.from : newRoute.to;
+
+            if (other.is.pin) {
+                const node = newRoot.nodes.find(node => node.uid == other.node.uid);
+                const pin = node.look.findPin(other.name, other.is.input);
+                newRoute.to.is.tack ? newRoute.from = pin : newRoute.to = pin;
+                pin.routes.push(newRoute);
+            }
+            else if (other.is.pad) {
+                const pad = newRoot.pads.find(pd => pd.proxy.name == other.proxy.name);
+                newRoute.to.is.tack ? newRoute.from = pad : newRoute.to = pad;
+                pad.routes.push(newRoute);
+            }
+
+            newCable.tacks.push(newTack);
+        }
+    },
+
+    copyWire() {
+        const copy = [];
+        for (const point of this.wire) copy.push({...point});
+        return copy
+    },
+
+    restoreWire(copy) {
+        this.wire = [];
+        for (const point of copy) this.wire.push({...point});
+    },
+
+    copyTackWires() {
+        const copy = [];
+        for (const tack of this.tacks) {
+            const track = tack.route.copyWire();
+            copy.push({segment: tack.segment, track});
+        }
+        return copy
+    },
+
+    restoreTackWires(copy) {
+        const tacks = this.tacks;
+        const L = tacks.length;
+        for(let i = 0; i < L; i++) {
+            tacks[i].segment = copy[i].segment;
+            tacks[i].route.restoreWire(copy[i].track);
+        }
+    },
+
+    disconnect() {
+        const tacks = this.tacks.slice();
+
+        for (const tack of tacks) {
+            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
+            other.is.tack ? tack.route.rxtxBusBusDisconnect()
+            : other.is.pin ? tack.route.rxtxPinBusDisconnect()
+            : tack.route.rxtxPadBusDisconnect();
+            tack.route.remove();
+        }
+    },
+
+    reconnect(tacks) {
+        for (const tack of tacks) {
+            this.tacks.push(tack);
+            tack.setRoute(tack.route);
+
+            const other = tack.route.to == tack ? tack.route.from : tack.route.to;
+            if (!other.is.tack) other.routes.push(tack.route);
+            other.is.tack ? tack.route.rxtxBusBus()
+            : other.is.pin ? tack.route.rxtxPinBus()
+            : tack.route.rxtxPadBus();
+        }
+    },
+
+    drawXY(next) {
+        const L = this.wire.length;
+        const r1 = this.wire[L - 2];
+        const r2 = this.wire[L - 1];
+        const wCable = style.bus.wCable;
+        let limit = null;
+
+        const vertical = r2.x == r1.x;
+        const horizontal = r2.y == r1.y;
+
+        if (vertical && horizontal) {
+            (Math.abs(next.x - r1.x) < Math.abs(next.y - r1.y)) ? r2.y = next.y : r2.x = next.x;
+        }
+        else if (horizontal) {
+            if (Math.abs(next.y - r2.y) > style.bus.split) {
+                this.wire.push({x:r2.x, y:next.y});
+            }
+            else {
+                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
+                    if ((r1.x < r2.x)&&(next.x < limit.r + wCable/2)) next.x = limit.r + wCable/2;
+                    if ((r1.x > r2.x)&&(next.x > limit.l - wCable/2)) next.x = limit.l - wCable/2;
+                }
+
+                r2.x = next.x;
+                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.bus.tooClose)) this.wire.pop();
+            }
+        }
+        else if (vertical) {
+            if (Math.abs(next.x - r2.x) > style.bus.split) {
+                this.wire.push({x:next.x, y:r2.y});
+            }
+            else {
+                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
+                    if ((r1.y < r2.y)&&(next.y < limit.b)) next.y = limit.b;
+                    if ((r1.y > r2.y)&&(next.y > limit.t)) next.y = limit.t;
+                }
+
+                r2.y = next.y;
+                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.bus.tooClose)) this.wire.pop();
+            }
+        }
+    },
+
+    resumeDrawXY(label, pos, delta) {
+        const p = this.wire;
+        const pa = p[p.length-2];
+        const pb = p[p.length-1];
+
+        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.bus.split) ? pos.x : pb.x + delta.x;
+        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.bus.split) ? pos.y : pb.y + delta.y;
+
+        this.drawXY({x,y});
+    },
+
+    resumeDrawing(segment, point) {
+        const p = this.wire;
+        if (p.length < 2) return
+
+        const clampToSegment = (segment, point) => {
+            const a = p[segment - 1];
+            const b = p[segment];
+
+            if (a.x === b.x) return {
+                x: a.x,
+                y: Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))
+            }
+
+            return {
+                x: Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x)),
+                y: a.y
+            }
+        };
+
+        const first = p[0];
+        const last = p.at(-1);
+        const distanceFirst = Math.hypot(first.x - point.x, first.y - point.y);
+        const distanceLast = Math.hypot(last.x - point.x, last.y - point.y);
+
+        if (distanceFirst < distanceLast) {
+            this.reverse();
+            segment = p.length - segment;
+        }
+
+        const redrawPoint = clampToSegment(segment, point);
+        const a = p[segment - 1];
+        const b = p[segment];
+        const horizontal = a.y === b.y;
+
+        const keepTack = tack => {
+            if (tack.segment < segment) return true
+            if (tack.segment > segment) return false
+
+            const center = tack.center();
+            if (horizontal) {
+                return a.x <= redrawPoint.x
+                    ? center.x <= redrawPoint.x
+                    : center.x >= redrawPoint.x
+            }
+
+            return a.y <= redrawPoint.y
+                ? center.y <= redrawPoint.y
+                : center.y >= redrawPoint.y
+        };
+
+        for (const tack of this.tacks.slice()) {
+            if (!keepTack(tack)) tack.route.disconnect();
+        }
+
+        p.length = segment;
+        p.push(redrawPoint);
+    },
+
+    reverse() {
+        const p = this.wire;
+        const L = p.length;
+
+        for (let i=0; i<L/2; i++) [p[i], p[L-i-1]] = [p[L-i-1], p[i]];
+        this.tacks.forEach(tack => tack.segment = L - tack.segment);
+    },
+
+    getLimit(segment) {
+        let limit=null;
+
+        this.tacks.forEach(tack => {
+            if (tack.segment == segment) {
+                const rc = tack.rect;
+                if (limit) {
+                    if (rc.x < limit.l)         limit.l = rc.x;
+                    if (rc.x + rc.w > limit.r)  limit.r = rc.x + rc.w;
+                    if (rc.y < limit.t)         limit.t = rc.y;
+                    if (rc.y + rc.h > limit.b)  limit.b = rc.y + rc.h;
+                }
+                else limit = {l: rc.x, r:rc.x + rc.w, t: rc.y, b:rc.y + rc.h};
+            }
+        });
+        return limit
+    },
+
+    move(dx, dy) {
+        for(const point of this.wire) {
+            point.x += dx;
+            point.y += dy;
+        }
+
+        for(const tack of this.tacks) {
+            tack.rect.x += dx;
+            tack.rect.y += dy;
+        }
+    },
+
+    drag(delta) {
+        for(const point of this.wire) {
+            point.x += delta.x;
+            point.y += delta.y;
+        }
+
+        for(const tack of this.tacks) tack.moveXY(delta.x, delta.y);
+    },
+
+    moveRoutes(x,y) {
+        this.tacks.forEach(tack => { 
+            if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y);
+        });
+    },
+
+    getCombinedLimit(s1,s2) {
+        let limit1 = this.getLimit(s1);
+        let limit2 = this.getLimit(s2);
+
+        if (limit1 && limit2) {
+            if (limit2.l < limit1.l) limit1.l = limit2.l;
+            if (limit2.r > limit1.r) limit1.r = limit2.r;
+            if (limit2.t < limit1.t) limit1.t = limit2.t;
+            if (limit2.b > limit1.b) limit1.b = limit2.b;
+        }
+        return limit1 ? limit1 : limit2
+    },
+
+    moveSegment(segment, delta) {
+        if (this.tacks.some(tack => tack.is.endpoint && tack.segment == segment)) return
+
+        let p = this.wire;
+        const dx = delta.x;
+        const dy = delta.y;
+
+        const adjacentTacks = this.tacks.filter(tack => tack.segment == segment - 1 || tack.segment == segment + 1);
+
+        const canMoveHorizontal = y => {
+            const next = y + dy;
+
+            for (const tack of adjacentTacks) {
+                const rc = tack.rect;
+                const center = rc.y + rc.h / 2;
+
+                if (center >= y) {
+                    if (y >= rc.y && y <= rc.y + rc.h) {
+                        if (next >= y) return false
+                    }
+                    else if (y < rc.y && next >= rc.y) return false
+                }
+                else {
+                    if (y >= rc.y && y <= rc.y + rc.h) {
+                        if (next <= y) return false
+                    }
+                    else if (y > rc.y + rc.h && next <= rc.y + rc.h) return false
+                }
+            }
+
+            return true
+        };
+
+        const canMoveVertical = x => {
+            const next = x + dx;
+
+            for (const tack of adjacentTacks) {
+                const rc = tack.rect;
+                const center = rc.x + rc.w / 2;
+
+                if (center >= x) {
+                    if (x >= rc.x && x <= rc.x + rc.w) {
+                        if (next >= x) return false
+                    }
+                    else if (x < rc.x && next >= rc.x) return false
+                }
+                else {
+                    if (x >= rc.x && x <= rc.x + rc.w) {
+                        if (next <= x) return false
+                    }
+                    else if (x > rc.x + rc.w && next <= rc.x + rc.w) return false
+                }
+            }
+
+            return true
+        };
+
+        let a = p[segment-1];
+        let b = p[segment];
+
+        if (a.y == b.y) {
+            if (canMoveHorizontal(a.y)) {
+                a.y += dy;
+                b.y += dy;
+                for (const tack of this.tacks) if (tack.segment == segment) tack.moveY(dy);
+            }
+        }
+        else if (a.x == b.x) {
+            if (canMoveVertical(a.x)) {
+                a.x += dx;
+                b.x += dx;
+                for (const tack of this.tacks) if (tack.segment == segment) tack.moveX(dx);
+            }
+        }
+    },
+
+    removeTwoPoints(segment) {
+        const p = this.wire;
+        const L = p.length;
+
+        for (let i = segment; i < L-2; i++) p[i] = p[i+2];
+
+        p.pop();
+        p.pop();
+
+        this.tacks.forEach(w => { if (w.segment > segment) w.segment -= 2; });
+    },
+
+    fuseSegment(s) {
+        let p = this.wire;
+        if (p.length < 3) return
+
+        const deltaMin = style.bus.tooClose;
+
+        if (p[s-1].y == p[s].y) {
+            if ((s < p.length-2)&&(Math.abs(p[s+1].y - p[s].y) < deltaMin)) {
+                p[s-1].y = p[s+1].y;
+                this.removeTwoPoints(s);
+            }
+            else if ((s > 1)&&(Math.abs(p[s-2].y - p[s-1].y) < deltaMin)) {
+                p[s].y = p[s-2].y;
+                this.removeTwoPoints(s-2);
+            }
+        }
+        else if (p[s-1].x == p[s].x) {
+            if ((s < p.length-2)&&(Math.abs(p[s+1].x - p[s].x) < deltaMin)) {
+                p[s-1].x = p[s+1].x;
+                this.removeTwoPoints(s);
+            }
+            else if ((s > 1)&&(Math.abs(p[s-2].x - p[s-1].x) < deltaMin)) {
+                p[s].x = p[s-2].x;
+                this.removeTwoPoints(s-2);
+            }
+        }
+    },
+
+    adjustRoutes() {
+        for(const tack of this.tacks) tack.route.adjust();
+    },
+
+    straightConnections() {
+        for(const tack of this.tacks) {
+            const route = tack.route;
+            const other = route.to == tack ? route.from : route.to;
+
+            let a = this.wire[tack.segment-1];
+            let b = this.wire[tack.segment];
+
+            if (a.x == b.x) {
+                [a, b] = a.y > b.y ? [b, a] : [a, b];
+
+                if (other.rect.y > a.y && other.rect.y < b.y) {
+                    tack.rect.y = other.rect.y + other.rect.h/2 - tack.rect.h/2;
+                    for(const p of route.wire) p.y = other.rect.y + other.rect.h/2;
+                }
+            }
+        }
+    },
+
+    sources() {
+        return this.tacks.filter(tack => tack.incoming())
+    },
+
+    targets() {
+        return this.tacks.filter(tack => !tack.incoming())
+    },
+
+    topology() {
+        const sources = this.sources().length;
+        const targets = this.targets().length;
+
+        if (sources === 1 && targets === 1) return 'one-to-one'
+        if (sources === 1 && targets > 1) return 'one-to-many'
+        if (sources > 1 && targets === 1) return 'many-to-one'
+        if (sources > 1 && targets > 1) return 'many-to-many'
+        return 'incomplete'
+    },
+
+    collapseIfOnlyEndpointTacks(node) {
+        if (this.tacks.length !== 2) return null
+        if (!this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)) return null
+        if (!node) return null
+
+        const wire = this.copyWire();
+        const start = wire[0];
+
+        const [startTack, endTack] =
+            Math.hypot(this.tacks[0].center().x - start.x, this.tacks[0].center().y - start.y) <=
+            Math.hypot(this.tacks[1].center().x - start.x, this.tacks[1].center().y - start.y)
+                ? [this.tacks[0], this.tacks[1]]
+                : [this.tacks[1], this.tacks[0]];
+
+        const startWidget = startTack.getOther();
+        const endWidget = endTack.getOther();
+        if (!startWidget || !endWidget || startWidget.is.tack || endWidget.is.tack) return null
+
+        const connectDirect = (from, to, routeWire) => {
+            const route = new Route(from, null);
+            route.wire = routeWire.map(point => ({...point}));
+            from.routes.push(route);
+
+            if (route.connect(to)) return route
+
+            from.routes.pop();
+            return null
+        };
+
+        const endpointTacks = this.tacks.slice();
+        for (const tack of endpointTacks) tack.route.disconnect();
+        node.removeCable(this);
+
+        const route = connectDirect(startWidget, endWidget, wire) ?? connectDirect(endWidget, startWidget, wire.slice().reverse());
+        return route ? {route} : null
+    },
+};
+
+const padRouteFunctions = {
+
+    adjustRoutes() {
+        for(const route of this.routes) route.adjust();
+    },
+
+    routeToPin(pin) {
+
+        // create a route between the pin and this pad
+        let route = new Route(pin, this);
+
+        // make a simple route between the two pins
+        route.fourPointRoute();
+
+        // save the route
+        this.routes.push(route);
+
+        // also in the pin
+        pin.routes.push(route);
+    },
+
+    shortConnection(actual) {
+
+        // create a route between the actual widget and this pad
+        let route = new Route(actual, this);
+
+        // make a simple route between the two pins
+        route.twoPointRoute();
+
+        // save the route
+        this.routes.push(route);
+
+        // also in the actual
+        actual.routes.push(route);
+    },    
+
+    canConnect(widget) {
+
+        // inputs connect to inputs and outputs to outputs !
+        if (widget.is.pin) {
+
+            // the proxy and the widget mùust both be inputs or outputs
+            if (this.proxy.is.input != widget.is.input) return false
+
+            // if the widget is a channel, then the proxy must be a channel also
+            if (widget.is.channel && !this.proxy.is.channel) return false
+
+        }
+
+        // no duplicates
+        if (this.routes.find( route => (route.from == widget)||(route.to == widget))) return false
+
+        return true
+    },
+
+    // disconnect all routes to and from a pad
+    disconnect() {
+
+        // make a copy of the routes - the pad.routes array will be modified during this proc
+        const routes = this.routes.slice();    
+
+        // go through all the routes
+        for (const route of routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // a pad can be connected to a pin or bus
+            other.is.pin ? route.rxtxPinPadDisconnect() : route.rxtxPadBusDisconnect();
+
+            // remove the route at both ends
+            route.remove();
+        }
+    },
+
+    reconnect(routes) {
+
+        this.routes = routes;
+
+        for(const route of routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // a pad can be attached to a pin or a bus
+            if (other.is.pin) other.routes.push(route);
+            else other.bus.push(other);
+        }
+    },
+
+    // before dragging the pad we want to make sure the pad is the to widget
+    checkRoutesDirection() {
+        this.routes.forEach( route => { if (route.from == this) route.reverse(); });
+    },
+
+    drag(next, delta) {
+
+        // if there are routes ...
+        if (this.routes.length > 0) {
+
+            // get the last two points of the first route
+            const wire = this.routes[0].wire;
+
+            // get the first or last points of the route
+            const [a, b] = this.routes[0].from == this ?  [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
+
+            // calculate the next position
+            const realNext = a.y == b.y ? {x: a.x + delta.x, y: next.y} : {x: next.x, y: a.y + delta.y};
+
+            // add a new point to the routes
+            for (const route of this.routes) route.drawXY( realNext ); 
+
+            // check if we have to switch the left/right text position
+            if (a.y == b.y) this.is.leftText = (a.x < b.x);
+
+            // notation
+            const rc = this.rect;
+
+            // y position is independent of left/right
+            rc.y = a.y - rc.h/2;
+
+            //x depends on left right
+            rc.x = this.is.leftText ? a.x - rc.w : a.x; 
+        }
+        else {
+            // just move the pad
+            this.rect.x += delta.x;
+            this.rect.y += delta.y;           
+        }
+    },
+
+    xdrag(next, delta) {
+
+        // if there are routes ...
+        if (this.routes.length > 0) {
+
+            // get the last two points of the first route
+            const wire = this.routes[0].wire;
+
+            // get the last two points of the wire
+            if (wire.length > 0) {
+                const last = wire.at(-1);
+                const prev = wire.at(-2);
+
+                // use the direction to calculate a new value for the next point
+                next = prev.y == last.y ? {x: last.x + delta.x, y: next.y} : {x: next.x, y: last.y + delta.y};
+            }
+
+            // add a new point to the routes
+            for (const route of this.routes) route.drawXY( next ); 
+
+            // place the pad again
+            this.place();
+        }
+        else {
+            // just move the pad
+            this.rect.x += delta.x;
+            this.rect.y += delta.y;           
+        }
+    },
+
+    endDrag() {
+        //if (this.routes.length == 1) this.routes[0].endpoint(this)
+        this.routes.forEach( route => route.endpoint(this));
+    },
+
+    slide(delta) {
+
+        // all the routes are attached horizontally
+        this.routes.forEach( route => {
+
+            // notation
+            const p = route.wire;
+
+            // to slide a route it must have at least three segments
+            // make a copy of teh wire ! Points in the point array are overwritten !
+            if (p.length == 2) {
+                //route.addTwoSegments({...p[0]},{...p[1]})
+                route.fourPointRoute();
+            }
+
+            // notation
+            const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
+
+            // move the segment
+            a.y += delta.y;
+            b.y += delta.y;
+        });
+        // finally move the pad
+        this.rect.y += delta.y;
+    },
+
+    fuseEndSegment() {
+
+        // only one route can fuse
+        let fusedRoute = null;
+        let dy = 0;
+
+        // all the routes are attached horizontally
+        for (const route of this.routes) {
+        // this.routes.forEach( route => {
+
+            // at least three segments required
+            if (route.wire.length < 4) continue
+
+            // notation
+            const p = route.wire;
+            const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
+
+            // check if we can fuse segments 
+            if (Math.abs(c.y - b.y) < style.route.tooClose) {
+                dy = c.y - a.y;
+                a.y = c.y;
+                front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
+                fusedRoute = route;
+                break
+            }
+        }
+
+        // if we have fused we will move all the routes and pad 
+        if (fusedRoute) {
+            for (const route of this.routes) {
+            //this.routes.forEach( route => {
+
+                // the fused route is already ok
+                if (route == fusedRoute) continue
+
+                // notation
+                const p = route.wire;
+                const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
+
+                // move the segment
+                a.y += dy;
+                b.y += dy;
+            }
+            // finally move the pad
+            this.rect.y += dy;
+        }
+    },
+
+    // when we copy the pad-pin routes, we already have copied all the nodes so we can set both ends of the route correctly
+    // we use the uid that was also copied as the search element - the final uid is set after calling this routine
+    copyPadPinRoutes(pad, root) {
+
+        // copy the routes
+        for(const route of pad.routes) {
+
+            // get the other widget
+            const other = route.from == pad ? route.to : route.from;
+
+            // only routes to/from pins are considered
+            if (!other.is.pin) continue
+
+            // clone the route
+            const clone = route.clone();
+
+            // the pad - part of the route can be set
+            clone.to == pad ?  clone.to = this : clone.from = this;
+
+            // and save the cloned route
+            this.routes.push(clone);
+
+            // now find the node for the 'other'
+            const node = root.nodes.find( node => node.uid == other.node.uid);
+
+            // find the pin in that node
+            const pin = node.look.findPin(other.name, other.is.input);
+
+            // set the other part of the route
+            clone.from == this ? clone.to = pin : clone.from = pin;
+
+            // also save the new route in the pin
+            pin.routes.push(clone);
+        }
+    },
+
+    // remove a route from the routes array
+    removeRoute(route) {
+
+        eject(this.routes, route);
+    },
+
+    // copy the routes for the undo operation (see redox)
+    copyWires() {
+
+        const wires = [];
+        for (const route of this.routes) wires.push(route.copyWire());
+        return wires
+    },
+
+    restoreWires(wires) {
+
+        const L = this.routes.length;
+        for(let i = 0; i < L; i++) this.routes[i].restoreWire(wires[i]);
+    },
+
+    highLightRoutes() {
+
+        // highlight the connections of the pqd
+        for (const route of this.routes) {
+
+            // check the other part of the route - note that it might be missing during a disconnect operation !
+            const other = route.from == this ? route.to : route.from;
+
+            //check
+            if (!other) continue
+
+            if (other.is.pin) {
+
+                if (!this.areConnected(other)) continue
+                    
+                // ok - highlight the route
+                route.highLight();
+            }
+
+            // if the other is a bustack also highlight the routes that go via the bus
+            if (other.is.tack) other.highLightRoutes();
+        }
+    },
+
+    unHighLightRoutes() {
+
+        // highlight the connections of the pin
+        for (const route of this.routes) {
+
+            //unhighlight the route
+            route.unHighLight();
+
+            // check the other part of the route - note that it might be missing during a disconnect operation !
+            const other = route.from == this ? route.to : route.from;
+
+            // check
+            if (!other) continue
+
+            // check the 
+            //if (other.is.proxy) other.pad.unHighLightRoutes()
+
+            // if the other is a bustack also highlight the routes that go via the bus
+            if (other?.is.tack) other.unHighLightRoutes();
+        }
+    },
+
+    checkRouteUsage() {
+
+        // reset all the routes to used
+        for(const route of this.routes) route.is.notUsed = false;
+
+        // get the proxy for this pad
+        this.proxy;
+
+        // check the routes
+        for(const route of this.routes) {
+
+            // get the other side of the route
+            const other = route.from == this ? route.to : route.from;
+
+            if (other.is.tack) {
+
+                // check all the bus routes
+                let found = false;
+                for(const tack of other.bus.tacks) {
+
+                    // skip 
+                    if (tack == other) continue
+
+                    // get the pin or pad at the other end 
+                    const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to;
+
+                    // it could be that the route was not used
+                    if (other.bus.areConnected(this, busWidget)) {
+                        tack.route.is.notUsed = false;
+                        found = true;
+                    }
+                }
+                // if we have not found one connection..
+                if (!found) route.is.notUsed = true;
+            }
+        }
+    },
+
+    rank() {
+        return {up:1, down:1}
+    }
+
+};
+
+function Pad(rect, proxy, uid=null) {
+
+    // unique id
+    this.uid = uid;
+
+    // constructor chaining
+    this.rect = {...rect}; 
+
+    // set h if necessary - we will set w when the pad is rendered
+    // this.rect.h = rect.h > 0 ? rect.h : style.pad.hPad
+
+    this.is = {
+        pad: true,
+        selected: false,
+        highLighted: false,
+        leftText: proxy.is.left,
+        hoverOk: false,
+        hoverNok: false,
+        beingEdited: false,
+        placed: false
+    };
+
+    // set the text
+    this.text = proxy.name;
+
+    // the widget on the look
+    this.proxy = proxy;
+
+    // the routes to the pad (inside the group!)
+    this.routes = [];
+}
+Pad.prototype = {
+
+    copy() {
+        return new Pad(this.rect, this.proxy, this.uid)
+    },
+
+    render(ctx, look) {
+        
+        // notation
+        let st = style.pad;
+        const rc = this.rect;
+        const proxy = this.proxy;
+
+        // use a different color for selected pads
+        const cPad =  this.is.hoverNok ? st.cBad : st.cBackground;
+
+        // the text and arrow color change when connected
+        let cText =     this.is.highLighted ? st.cHighLighted
+                        : this.is.selected || this.is.hoverOk ? st.cSelected
+                        : this.routes?.length > 0 ? st.cConnected 
+                        : st.cText;
+
+        // color of the arrow
+        const cArrow = cText;
+        
+        // the y position of the arrow
+        let yArrow = rc.y+(st.hPad - st.wArrow)/2;
+
+        // when being edited we recalculate the width of the rectangle
+        if (this.is.beingEdited) {
+            rc.w = style.pad.wExtra + ctx.measureText(this.text).width;
+            this.place();
+        }
+
+        // render the pin  - note that x and y give the center of the triangle
+        if (this.is.leftText) {
+
+            // the x-position of the arrow
+            const xArrow =  rc.x + rc.w - st.rBullet/2 - st.hArrow; 
+
+            // draw a rectangle and a circle
+            shape.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+
+            if (proxy.is.channel) {
+                // draw a triangle
+                proxy.is.input  ? shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+            }
+            else {
+                // draw a triangle
+                proxy.is.input  ? shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+            }
+
+            // write the text in the rectangle
+            shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
+        }
+        else {
+            // The x-position of the arrow
+            const xArrow = rc.x + st.rBullet/2;
+
+            // draw the rectangle and the bullet
+            shape.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
+
+            if (proxy.is.channel) {
+                // draw a triangle
+                proxy.is.input  ? shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
+                                : shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
+            }
+            else {
+                // draw a triangle
+                proxy.is.input  ? shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
+                                : shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
+            }
+
+            // write the text in the rectangle
+            shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
+        }
+    },
+
+    cursorPos(ctx, i) {
+        const rc = this.rect;
+        const xText = this.is.leftText
+            ? rc.x + style.pad.wMargin
+            : rc.x + rc.w - ctx.measureText(this.text).width;
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: rc.y }
+    },
+
+    // returns the center of the pad bullet
+    center() {
+        const rc = this.rect;
+        return this.is.leftText     ? {x: rc.x + rc.w ,  y: rc.y + rc.h/2} 
+                                    : {x: rc.x ,         y: rc.y + rc.h/2}
+    },
+
+    // place the widget so that the center is on pos
+    place() {
+        // take the first route
+        const route = this.routes[0];
+
+        // check
+        if ( ! route?.wire.length ) return
+
+        // get the first or last point of the route
+        const [pa, pb] = route.from == this ?  [route.wire[0], route.wire[1]] : [route.wire.at(-1), route.wire.at(-2)];
+
+        // check
+        this.is.leftText = (pa.x < pb.x);
+
+        // notation
+        const rc = this.rect;
+
+        // y position is independent of left/right
+        rc.y = pa.y - rc.h/2;
+
+        //x depends on left right
+        rc.x = this.is.leftText ? pa.x - rc.w : pa.x; 
+    },
+
+    // the edit functions
+    startEdit(ctx, click = null) {
+
+        this.is.beingEdited = true;
+
+        const xText = this.is.leftText
+            ? this.rect.x + style.pad.wMargin
+            : this.rect.x + this.rect.w - ctx.measureText(this.text).width;
+        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
+        return { prop: 'text', index }
+    },
+
+    getWidth() {
+        const proxy = this.proxy;
+        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text)
+    },
+
+    endEdit(saved) {
+
+        // notation
+        const proxy = this.proxy;
+
+        // no more editing
+        this.is.beingEdited = false;
+
+        // if the name has not zero length...
+        if (this.text.length > 0) {
+
+            // set the name of the proxy
+            proxy.name = this.text;
+
+            // check the name and reset if not ok
+            if ( ! proxy.checkNewName()) {
+                proxy.name = this.text = saved;
+                return
+            }
+
+            // the name might have been normalized
+            this.text = proxy.name;
+
+            // check for route usage
+            this.checkRouteUsage();
+
+            // recalculate the width of the pad
+            this.rect.w = this.getWidth();
+            //this.place()
+
+            // done
+            return
+        }
+
+        // zero length : The pin can only be removed if there are no routes
+        if (proxy.routes.length == 0) {
+
+            // remove the proxy
+            proxy.node.look.removePin(proxy);
+
+            // and remove the pad
+            proxy.node.removePad(this);
+
+            // done
+            return
+        }
+
+        // restore the old name
+        this.text = saved;
+    },
+
+    // the name of the proxy has changed - length of the pad must also change
+    nameChange( newName ) {
+        // change
+        this.text = newName;
+
+        // force a recalculation of the rectangle
+        this.rect.w = this.getWidth();
+    },
+
+    overlap(rect) {
+        const rc = this.rect;
+
+        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
+        return true
+    },
+
+    makeRaw() {
+        const raw = {
+            wid: this.proxy.wid,
+            text: this.text,
+            left: this.is.leftText,
+            rect: this.rect
+        };
+
+        if (this.is.placed) raw.placed = true;
+
+        return raw
+    },
+
+    // unzip() {
+
+    //     return {
+    //         blu: null,
+    //         viz: convert.padToString(this)
+    //     }
+    // },
+
+    moveTo(x,y) {
+
+        this.rect.x = x;
+        this.rect.y = y;
+
+        this.adjustRoutes();
+    },
+
+    move(delta) {
+
+        this.rect.x += delta.x;
+        this.rect.y += delta.y;
+
+        //this.adjustRoutes()
+    },
+
+    // checks if the widget and the pad are logically connected
+    areConnected(widget) {
+        return true
+    },
+
+    makeConxList(list) {
+
+        for(const route of this.routes) {
+
+            // get the other widget
+            const other = route.from == this ? route.to : route.from;
+
+            // check if connected
+            if ( ! this.areConnected(other)) continue
+
+            // if the actual is also a proxy, take it to the next level, else save in list
+            if (other.is.pin) {
+                other.is.proxy ?  other.pad?.makeConxList(list) : list.push( other );
+            }
+            // get all the connections to the bus that can reach the pad
+            else if (other.is.tack) {
+
+                // continue to complete the list
+                other.makeConxList(list);
+            }
+        }
+    },
+
+    highLight() {
+        this.is.highLighted = true;
+    },
+
+    unHighLight() {
+        this.is.highLighted = false;
+    },
+
+    hitTest(pos) {
+
+        // check if we have hit the rectangle
+        if (! inside(pos, this.rect))  return [zap.nothing, null]
+
+        // we have hit the pad - check if we have hit the arrow (left or right)
+        if (this.is.leftText) {
+            return (pos.x > this.rect.x + this.rect.w - 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+        }
+        else {
+            return (pos.x < this.rect.x + 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
+        }
+    },
+
+    hitRoute(pos) {
+
+        let segment = 0;
+
+        // go through all the routes..
+        for (const route of this.routes) {
+
+            // only routes from this pad
+            if ((route.from == this)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
+        }
+        // nothing
+        return [zap.nothing, null, 0]
+    }
+
+};
+Object.assign(  Pad.prototype, padRouteFunctions);
+
 const jsonHandling$1 = {
 
     makeRaw(refArl) {
@@ -15634,6 +20180,9 @@ const jsonHandling$1 = {
         // The nodes
         if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw(refArl));
 
+        // Give route serialization a stable cable reference without naming cables.
+        this.cables.forEach((cable, index) => cable._rawIndex = index);
+
         // get the routes and connections inside this group node
         const [routes, conx] = this.getRoutesAndConnections();
 
@@ -15645,6 +20194,11 @@ const jsonHandling$1 = {
 
         // the buses
         if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw(refArl));
+
+        // the cables
+        if (this.cables.length) raw.cables = this.cables.map( cable => cable.makeRaw(refArl));
+
+        this.cables.forEach(cable => delete cable._rawIndex);
 
         // save the routes (they are already in the raw format)
         if (routes.length) raw.routes = routes;
@@ -15713,6 +20267,16 @@ const jsonHandling$1 = {
             this.buses.push(bus);
         }
 
+        // get the cables
+        if (raw.cables) for(const rawCable of raw.cables) {
+
+            const cable = new Cable({x:0, y:0});
+
+            cable.cook(rawCable, modcom);
+
+            this.cables.push(cable);
+        }
+
         // temp storage for the routes
         const routes = [];
 
@@ -15777,15 +20341,37 @@ const jsonHandling$1 = {
             return null;
         }
 
-        // if the endpoint is a bus, make a tack
-        if (from.is.bus) from = from.newTack(source.alias);
-        if (to.is.bus) to = to.newTack(target.alias);
+        const defaultSelectivity = (trunk, widget) => trunk.defaultTackSelectivity?.(widget) ?? false;
+
+        // if the endpoint is a bus or cable, make a tack
+        if (from.is.bus) from = from.newTack(source.alias, source.selective ?? defaultSelectivity(from, to));
+        if (from.is.cable) {
+            from = from.newTack(null, source.selective ?? defaultSelectivity(from, to));
+            from.is.endpoint = !!source.endpoint;
+            from.is.bridge = !!source.bridge;
+        }
+        if (to.is.bus) to = to.newTack(target.alias, target.selective ?? defaultSelectivity(to, from));
+        if (to.is.cable) {
+            to = to.newTack(null, target.selective ?? defaultSelectivity(to, from));
+            to.is.endpoint = !!target.endpoint;
+            to.is.bridge = !!target.bridge;
+        }
+
+        if (from.is.tack && to.is.tack) {
+            from.is.bridge = true;
+            to.is.bridge = true;
+        }
 
         // create the route
         const route = new Route(from, to);
 
-        // get the wire (for bustacks the center will be null, but that is not a problem)
-        route.wire = convert.stringToWire(from.center(), to.center(), rawRoute.wire);
+        // Tacks are placed from the restored wire, so their center is not meaningful yet.
+        // Build the wire from the concrete endpoint when one side is a bus/cable tack.
+        route.wire = convert.stringToWire(
+            from.is.tack ? null : from.center(),
+            to.is.tack ? null : to.center(),
+            rawRoute.wire
+        );
 
         // check if we have a route - otherwise make a route
         if (route.wire.length < 2) route.autoRoute(this.nodes);
@@ -15831,6 +20417,9 @@ const jsonHandling$1 = {
         };
 
         const findBus = (raw) => this.buses.find( bus => bus.name === raw.bus);
+        const findCable = (raw) => this.cables[raw.index ?? 0];
+        const hasBus = (raw) => Object.hasOwn(raw, 'bus');
+        const hasCable = (raw) => Object.hasOwn(raw, 'cable');
         // ---------
 
         let from = null, to = null;
@@ -15838,16 +20427,21 @@ const jsonHandling$1 = {
         if (source.pin) {
 
             from = findPin(source, false);
-            to = target.pin ? findPin(target, true) : target.pad ? findPad(target,false) : target.bus ? findBus(target) : null;
+            to = target.pin ? findPin(target, true) : target.pad ? findPad(target,false) : hasBus(target) ? findBus(target) : hasCable(target) ? findCable(target) : null;
         }
         else if (source.pad) {
 
-            from = target.pin ? findPad(source,true) : target.bus ? findPad(source,false) : null;
-            to =   target.pin ? findPin(target, true)  : target.bus ? findBus(target) : null;
+            from = target.pin ? findPad(source,true) : (hasBus(target) || hasCable(target)) ? findPad(source,false) : null;
+            to =   target.pin ? findPin(target, true)  : hasBus(target) ? findBus(target) : hasCable(target) ? findCable(target) : null;
         }
-        else if (source.bus) {
+        else if (hasBus(source)) {
 
             from = findBus(source);
+            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+        }
+        else if (hasCable(source)) {
+
+            from = findCable(source);
             to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
         }
 
@@ -15868,6 +20462,9 @@ const jsonHandling$1 = {
 
         // take the buses
         this.buses = otherNode.buses;
+
+        // take the cables
+        this.cables = otherNode.cables;
 
         // take the pads
         this.pads = otherNode.pads;
@@ -16595,6 +21192,15 @@ const proxyHandling = {
         return bus
     },
 
+    addCable(pos, uid=null) {
+
+        const cable = new Cable(pos, uid);
+
+        this.cables.push(cable);
+
+        return cable
+    },
+
     deleteBus(bus) {
 
         // first disconnect every connection to the bus
@@ -16618,6 +21224,25 @@ const proxyHandling = {
 
         // put in the list again
         this.buses.push(bus);
+    },
+
+    deleteCable(cable) {
+
+        cable.disconnect();
+
+        this.removeCable(cable);
+    },
+
+    removeCable(cable) {
+
+        eject(this.cables, cable);
+    },
+
+    restoreCable(cable) {
+
+        if (this.cables.find(cp => cp.uid == cable.uid)) return
+
+        this.cables.push(cable);
     }
 };
 
@@ -16638,10 +21263,10 @@ const conxHandling = {
             return
         }
 
-        // If the destination is a bus we have to find the actual connected pins and pads
+        // If the destination is a bus/cable we have to find the actual connected pins and pads
         const fanout = [];
 
-        // check the connections to the bus
+        // check the connections to the bus/cable
         for(const tack of dst.bus.tacks) {
 
             // skip the to tack
@@ -16714,6 +21339,18 @@ const conxHandling = {
 
             // convert each tack
             for(const tack of bus.tacks) {
+
+                const other = tack.getOther();
+                if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route));
+                if (other.is.pad && !other.proxy.is.input) routes.push(convert.routeToRaw(tack.route));
+            }
+        }
+
+        // What remains are the routes from the cable to incoming pins and from the cable to outgoing pads
+        // Note that routes from a cable are **not** added to the connections array.
+        for(const cable of this.cables) {
+
+            for(const tack of cable.tacks) {
 
                 const other = tack.getOther();
                 if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route));
@@ -16846,7 +21483,7 @@ const conxHandling = {
         // if there are no connections the route is new
         if ( conx.length == 0) {
 
-            // we always accept routes to buses 
+            // we always accept routes to buses/cables
             route.is.noConx = dst.is.tack ? false : true;
             return
         }
@@ -16854,7 +21491,7 @@ const conxHandling = {
         // check the routes 
         if (src.is.tack){
 
-            // we do not check routes that come from a bus...
+            // we do not check routes that come from a bus/cable...
             route.is.noConx = false;
         }
         // pin or pad
@@ -16930,6 +21567,69 @@ const conxHandling = {
         }
     },
 
+    convertRouteToCable(route, segment = 1, xyLocal = null, createPending = false) {
+
+        if (!route?.from || !route?.to) return null
+        if (route.from.is.tack || route.to.is.tack) return null
+        if (route.wire.length < 2) return null
+
+        const oldRoute = route.clone();
+        const wire = route.copyWire();
+        const clickSegment = Math.min(Math.max(segment, 1), wire.length - 1);
+
+        const cable = this.addCable(wire[0]);
+        cable.wire = wire.map(point => ({...point}));
+
+        route.disconnect();
+
+        const attach = (widget, point, tackSegment, endpoint = false) => {
+            const tack = cable.newTack();
+            tack.is.endpoint = endpoint;
+            tack.placeOnSegment(point, tackSegment);
+
+            const leg = new Route(widget, tack);
+            leg.wire = [widget.center(), {...point}];
+            widget.routes.push(leg);
+            tack.restore(leg);
+
+            widget.is.pin ? leg.rxtxPinBus() : leg.rxtxPadBus();
+
+            return leg
+        };
+
+        const pointOnSegment = (wire, segment, point) => {
+            const a = wire[segment - 1];
+            const b = wire[segment];
+
+            if (!point) return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
+            if (a.x === b.x) return {x: a.x, y: Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))}
+            if (a.y === b.y) return {x: Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x)), y: a.y}
+            return {x: point.x, y: point.y}
+        };
+
+        const makePendingBranch = () => {
+            const point = pointOnSegment(cable.wire, clickSegment, xyLocal);
+            const tack = cable.newTack();
+            tack.placeOnSegment(point, clickSegment);
+
+            const pendingRoute = new Route(tack, null);
+            pendingRoute.wire = [{...point}, {...point}];
+            tack.route = pendingRoute;
+
+            return {route: pendingRoute, tack}
+        };
+
+        const first = cable.wire[0];
+        const last = cable.wire.at(-1);
+        const routes = [
+            attach(oldRoute.from, first, 1, true),
+            attach(oldRoute.to, last, cable.wire.length - 1, true)
+        ];
+
+        const pending = createPending ? makePendingBranch() : null;
+        return {node: this, route, oldRoute, cable, routes, tacks: routes.map(leg => leg.from.is.tack ? leg.from : leg.to), pending}
+    },
+
     getInternalRoutes(nodes) {
 
         const routes = [];
@@ -16981,6 +21681,9 @@ function GroupNode (look=null, name=defaultGroupNodeName, uid=null) {
 
     // the buses that are part of this group
     this.buses = [];
+
+    // the cables that are part of this group
+    this.cables = [];
 
     // inside a group node there is a pad for every outside connection
     this.pads = [];
@@ -17180,6 +21883,16 @@ const groupFunctions = {
 
             // save in the new node..
             newNode.buses.push(newBus);
+        });
+
+        // copy the cables
+        this.cables?.forEach( cable => {
+
+            const newCable = cable.copy();
+
+            cable.copyTacks(newCable, newNode);
+
+            newNode.cables.push(newCable);
         });
 
         // the txrx tables for the copy must be filled in
@@ -17603,3470 +22316,6 @@ const sourceFunctions = {
 
 };
 Object.assign(SourceNode.prototype, Node.prototype, sourceFunctions, jsonHandling);
-
-// the route used for a connection between an output and an input
-
-const routeDrawing = {
-
-    // Returns true when the connector point is on the left side of the widget.
-    // For pads, `leftText` means the text is on the left and the bullet/connector is on the right.
-    connectorOnLeft(widget) {
-        if (!widget?.is) return false
-        if (widget.is.pad) return !widget.is.leftText
-        if (typeof widget.is.left === 'boolean') return widget.is.left
-        if (typeof widget.is.leftText === 'boolean') return widget.is.leftText
-        return false
-    },
-
-    ownerNode(widget) {
-        if (!widget) return null
-        if (widget.node) return widget.node
-        if (widget.proxy?.node) return widget.proxy.node
-        if (widget.bus?.node) return widget.bus.node
-        return null
-    },
-
-    // For autoroute collision on endpoint legs, pads belong to the enclosing group and
-    // are allowed to route inside that group. Only real node-owned widgets (pins/tacks)
-    // should reject routes that cut through their own node body.
-    endpointBlockRect(widget) {
-        if (!widget?.is) return null
-        if (widget.is.pad) return null
-        const node = this.ownerNode(widget);
-        return node?.look?.rect ?? null
-    },
-
-    routeCutsEndpointBody(wire, rc, allowSegmentIndex) {
-        if (!rc || !wire || wire.length < 2) return false
-        for (let i = 0; i < wire.length - 1; i++) {
-            if (i === allowSegmentIndex) continue
-            if (cutsRectangle(wire[i], wire[i + 1], rc)) return true
-        }
-        return false
-    },
-
-    // Collect orthogonal segments from already routed connections so autoroute can
-    // prefer less crowded lanes. Routes are deduplicated because the same route can
-    // be reachable from multiple widgets.
-    collectRouteSegments(nodes=[]) {
-        const routes = new Set();
-        const segments = [];
-
-        for (const node of nodes ?? []) {
-            const widgets = node?.look?.widgets ?? [];
-            for (const widget of widgets) {
-                if (!widget?.routes?.length) continue
-                for (const route of widget.routes) {
-                    if (!route || route === this || routes.has(route) || route.wire.length < 2) continue
-                    routes.add(route);
-
-                    for (let i = 0; i < route.wire.length - 1; i++) {
-                        const a = route.wire[i];
-                        const b = route.wire[i + 1];
-                        if (a.x === b.x) {
-                            segments.push({dir:'v', x: a.x, y1: Math.min(a.y, b.y), y2: Math.max(a.y, b.y)});
-                        }
-                        else if (a.y === b.y) {
-                            segments.push({dir:'h', y: a.y, x1: Math.min(a.x, b.x), x2: Math.max(a.x, b.x)});
-                        }
-                    }
-                }
-            }
-        }
-
-        return segments
-    },
-
-    rangeOverlap(a1, a2, b1, b2) {
-        return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1))
-    },
-
-    quantizeLane(value, step = 1) {
-        const s = Math.max(1, step || 1);
-        return Math.round(value / s) * s
-    },
-
-    collectLaneUsage(segments, xStep = 5, yStep = 5) {
-        const vertical = new Map();
-        const horizontal = new Map();
-
-        for (const seg of segments ?? []) {
-            if (seg.dir === 'v') {
-                const key = this.quantizeLane(seg.x, xStep);
-                vertical.set(key, (vertical.get(key) ?? 0) + 1);
-            }
-            else if (seg.dir === 'h') {
-                const key = this.quantizeLane(seg.y, yStep);
-                horizontal.set(key, (horizontal.get(key) ?? 0) + 1);
-            }
-        }
-
-        return {vertical, horizontal}
-    },
-
-    laneRegistryPenaltyVertical(x, laneUsage, laneStep = 5) {
-        if (!laneUsage?.vertical) return 0
-        const key = this.quantizeLane(x, laneStep);
-        let penalty = (laneUsage.vertical.get(key) ?? 0) * 120;
-
-        const left = key - laneStep;
-        const right = key + laneStep;
-        penalty += (laneUsage.vertical.get(left) ?? 0) * 25;
-        penalty += (laneUsage.vertical.get(right) ?? 0) * 25;
-
-        return penalty
-    },
-
-    laneRegistryPenaltyHorizontal(y, laneUsage, laneStep = 5) {
-        if (!laneUsage?.horizontal) return 0
-        const key = this.quantizeLane(y, laneStep);
-        let penalty = (laneUsage.horizontal.get(key) ?? 0) * 120;
-
-        const up = key - laneStep;
-        const down = key + laneStep;
-        penalty += (laneUsage.horizontal.get(up) ?? 0) * 25;
-        penalty += (laneUsage.horizontal.get(down) ?? 0) * 25;
-
-        return penalty
-    },
-
-    lanePenaltyVertical(x, y1, y2, segments, laneStep = 5) {
-        let penalty = 0;
-        const yy1 = Math.min(y1, y2);
-        const yy2 = Math.max(y1, y2);
-
-        for (const seg of segments) {
-            if (seg.dir !== 'v') continue
-            const overlap = this.rangeOverlap(yy1, yy2, seg.y1, seg.y2);
-            if (overlap <= 0) continue
-
-            const dx = Math.abs(seg.x - x);
-            if (dx < 1) penalty += 1000 + overlap;
-            else if (dx < laneStep) penalty += 200 + overlap;
-            else if (dx < laneStep * 2) penalty += 20;
-        }
-
-        return penalty
-    },
-
-    lanePenaltyHorizontal(y, x1, x2, segments, laneStep = 5) {
-        let penalty = 0;
-        const xx1 = Math.min(x1, x2);
-        const xx2 = Math.max(x1, x2);
-
-        for (const seg of segments) {
-            if (seg.dir !== 'h') continue
-            const overlap = this.rangeOverlap(xx1, xx2, seg.x1, seg.x2);
-            if (overlap <= 0) continue
-
-            const dy = Math.abs(seg.y - y);
-            if (dy < 1) penalty += 1000 + overlap;
-            else if (dy < laneStep) penalty += 200 + overlap;
-            else if (dy < laneStep * 2) penalty += 20;
-        }
-
-        return penalty
-    },
-
-    // draw freely with x/y segments
-    // we always assume that the route is extended at the last point (i.e. the to widget !)
-    drawXY(next) {
-
-        // notation
-        const wire = this.wire;
-        let L = wire.length;
-
-        // if there is no line segment push two points - start in the x -direction !
-        if (L == 0) {
-            let c = this.from.center();
-            wire.push({x: c.x, y: c.y});
-            wire.push({x: next.x, y: c.y});
-            return
-        }
-
-        // take the two last points b a 
-        let b = wire[L - 2];
-        let a = wire[L - 1];
-
-        // moving in x direction
-        if (a.y == b.y) {
-
-            // need to split ?
-            if (Math.abs(next.y - a.y) > style.route.split) {
-
-                // create a new segment
-                wire.push({x:a.x, y:next.y});
-            }
-            else {
-                // just adapt the x value
-                a.x = next.x;
-
-                // check if points are getting too close, if so drop 
-                if ((L>2) && (Math.abs(a.x - b.x) < style.route.tooClose)) wire.pop();
-            }
-        }
-        // moving in the y-direction
-        else {
-
-            // need to split ?
-            if (Math.abs(next.x - a.x) > style.route.split) {
-
-                // create a new segment
-                wire.push({x:next.x, y:a.y});
-            }
-            else {
-                // just adapt the y value
-                a.y = next.y;
-
-                // check if points are getting too close
-                if ((L>2) && (Math.abs(a.y - b.y) < style.route.tooClose)) wire.pop();
-            }
-        }
-    },
-
-    // // make a route between from and to
-    // builder() {
-
-    //     const conx = this.typeString()
-
-    //     switch (conx) {
-
-    //         case 'PIN-PIN':
-    //             this.fourPointRoute()
-    //             break
-
-    //         case 'PIN-PAD':
-    //             this.fourPointRoute()
-    //             break
-
-    //         case 'PAD-PIN':
-    //             this.fourPointRoute()
-    //             break
-
-    //         case 'PIN-BUS':
-    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-    //             break
-
-    //         case 'BUS-PIN':
-    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-    //             break
-
-    //         case 'PAD-BUS':
-    //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-    //             break
-
-    //         case 'BUS-PAD':
-    //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
-    //             break
-    //     }
-    // },
-
-    sixPointRoute(nodes=[]) {
-
-        // reset points
-        if (this.wire.length > 0) this.wire.length = 0;
-
-        // create a simple route between the two widgets
-        const wire = this.wire;
-        const from = this.from;
-        const to = this.to;
-        const f = from.center();
-        const t = to.center();
-
-        // deterministic offsets away from node bodies
-        
-        const dpx = style.autoroute.xDelta;
-        const mg = style.autoroute.xMargin;
-
-        const fromNode = this.ownerNode(from);
-        const toNode = this.ownerNode(to);
-        const frc = fromNode?.look?.rect;
-        const trc = toNode?.look?.rect;
-        if (!frc || !trc) return this.fourPointRoute(nodes)
-        let yMid = f.y + (frc.h/4 + trc.h/4);
-
-        const fromLeft = this.connectorOnLeft(from);
-        const toLeft = this.connectorOnLeft(to);
-
-        const fRank = from.rank();
-        const fRankValue = yMid < f.y ? fRank.up : fRank.down;
-        const xBase1 = fromLeft ? f.x - mg - dpx * fRankValue : f.x + mg + dpx * fRankValue;
-
-        const tRank = to.rank();
-        const tRankValue = yMid < t.y ? tRank.up : tRank.down;
-        const xBase2 = toLeft ? t.x - mg - dpx * tRankValue : t.x + mg + dpx * tRankValue;
-
-        let x1 = xBase1;
-        let x2 = xBase2;
-
-        const blockers = nodes.filter(n => n && n.look?.rect && n !== fromNode && n !== toNode);
-        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
-        const expandY = style.autoroute.yDelta;
-        const routeSegments = this.collectRouteSegments(nodes);
-        const laneUsage = this.collectLaneUsage(routeSegments, dpx, expandY);
-
-        const buildWire = () => {
-            wire.length = 0;
-        wire.push(f);
-        wire.push({x:x1, y:f.y});
-        wire.push({x:x1, y:yMid});
-        wire.push({x:x2, y:yMid});
-        wire.push({x:x2, y:t.y});
-        wire.push(t);
-
-        // Endpoint owner nodes are excluded from generic blockers, but the route may
-        // still not cut through them with non-adjacent segments.
-        const fromRc = this.endpointBlockRect(from);
-        const toRc = this.endpointBlockRect(to);
-        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
-        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
-        };
-
-        const firstHorizontalCut = () => {
-            const p1 = {x:x1, y:yMid};
-            const p2 = {x:x2, y:yMid};
-            for (const node of blockers) {
-                if (segmentCuts(p1, p2, node.look.rect)) return node
-            }
-            return null
-        };
-
-        let guard = 0;
-        buildWire();
-        let hit = firstHorizontalCut();
-        while (hit && guard < 30) {
-            const rc = hit.look.rect;
-            const distTop = yMid - rc.y;
-            const distBottom = (rc.y + rc.h) - yMid;
-            if (distTop < distBottom) yMid -= expandY;
-            else yMid += expandY;
-            buildWire();
-            hit = firstHorizontalCut();
-            guard++;
-        }
-
-        // If multiple y lanes are available, prefer the less crowded horizontal lane.
-        if (!hit && routeSegments.length) {
-            const yBase = yMid;
-            const yCandidates = [0, 1, -1, 2, -2, 3, -3].map(step => yBase + step * expandY);
-            let bestY = yMid;
-            let bestScore = Infinity;
-
-            for (const candidateY of yCandidates) {
-                const p1 = {x:x1, y:candidateY};
-                const p2 = {x:x2, y:candidateY};
-                if (blockers.some(node => segmentCuts(p1, p2, node.look.rect))) continue
-
-                const score =
-                    this.lanePenaltyVertical(x1, f.y, candidateY, routeSegments, dpx) +
-                    this.lanePenaltyHorizontal(candidateY, x1, x2, routeSegments, expandY) +
-                    this.lanePenaltyVertical(x2, candidateY, t.y, routeSegments, dpx) +
-                    this.laneRegistryPenaltyHorizontal(candidateY, laneUsage, expandY) +
-                    this.laneRegistryPenaltyVertical(x1, laneUsage, dpx) +
-                    this.laneRegistryPenaltyVertical(x2, laneUsage, dpx);
-
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestY = candidateY;
-                }
-            }
-
-            yMid = bestY;
-            buildWire();
-        }
-
-        return true
-    },
-
-    fourPointRoute(nodes=[]) {
-
-        // reset points
-        if (this.wire.length > 0) this.wire.length = 0;
-
-        // create a simple orthogonal route between the two widgets
-        const wire = this.wire;
-        const from = this.from;
-        const to = this.to;
-        const f = from.center();
-        const t = to.center();
-
-        // helper data for collision checks and gentle nudges
-        const margin = style.look.dxCopy;
-        const blockers = nodes.filter(n => n && n.look?.rect && n !== from.node && n !== to.node);
-        const segmentCuts = (p1, p2, rect) => cutsRectangle(p1, p2, rect);
-        const routeSegments = this.collectRouteSegments(nodes);
-
-        // choose the x for the vertical leg (xNew):
-        // - prefer the middle when pins face each other with no node overlap in x
-        // - otherwise, push the vertical leg away from the "from" side
-        const dpx = style.autoroute.xDelta;
-        const mg = style.autoroute.xMargin;
-        const laneUsage = this.collectLaneUsage(routeSegments, dpx, style.autoroute.yDelta);
-        const isBusRoute = from.is?.tack || to.is?.tack;
-        let fromLeft = this.connectorOnLeft(from);
-        let toLeft = this.connectorOnLeft(to);
-        if (isBusRoute) {
-            // For bus connections, infer "facing" by relative position to avoid routing past the bus.
-            fromLeft = f.x > t.x;
-            toLeft = t.x > f.x;
-        }
-        const rank = from.rank ? from.rank() : {up: 1, down: 1};
-        const rankValue = t.y < f.y ? rank.up : rank.down;
-        let xNew = fromLeft ? f.x - mg - dpx * rankValue : f.x + mg + dpx * rankValue;
-
-        // if the nodes are clearly separated in x and the pins face each other,
-        // keep the vertical leg between the pins for a clean, direct route
-        const frc = from.node?.look?.rect;
-        const trc = to.node?.look?.rect;
-        const xOverlap = frc && trc ? !((frc.x + frc.w < trc.x) || (trc.x + trc.w < frc.x)) : true;
-        const pinsFaceEachOther = fromLeft !== toLeft;
-        if (!xOverlap && pinsFaceEachOther) {
-            xNew = (f.x + t.x) / 2;
-        }
-
-        // enforce the "shape" rule:
-        // - opposite sides: keep the vertical leg between the two endpoints
-        // - same side: push the vertical leg outside both endpoints (left or right)
-        const minX = Math.min(f.x, t.x);
-        const maxX = Math.max(f.x, t.x);
-        const enforceShapeRule = (xCandidate) => {
-            if (fromLeft !== toLeft) {
-                if (xCandidate < minX) return minX
-                if (xCandidate > maxX) return maxX
-                return xCandidate
-            }
-            return fromLeft ? Math.min(xCandidate, minX - mg) : Math.max(xCandidate, maxX + mg)
-        };
-        xNew = enforceShapeRule(xNew);
-
-        // nudge xNew left/right if the vertical legs would cut through other nodes
-        const tryClearX = (xCandidate) => {
-            const pA = {x:xCandidate, y:f.y};
-            const pB = {x:xCandidate, y:t.y};
-            return blockers.some(n => segmentCuts(pA, pB, n.look.rect))
-        };
-        if (tryClearX(xNew)) {
-            const shifts = [margin, -margin, margin*2, -margin*2];
-            const base = xNew;
-            for (const dx of shifts) {
-                const candidate = enforceShapeRule(base + dx);
-                if (!tryClearX(candidate)) { xNew = candidate; break }
-            }
-        }
-
-        // Prefer a less crowded vertical lane when several valid lanes exist.
-        if (routeSegments.length) {
-            const xBase = xNew;
-            const shifts = [0, dpx, -dpx, dpx*2, -dpx*2, margin, -margin];
-            let bestX = xNew;
-            let bestScore = Infinity;
-
-            for (const dx of shifts) {
-                const candidate = enforceShapeRule(xBase + dx);
-                if (tryClearX(candidate)) continue
-
-                const score =
-                    this.lanePenaltyVertical(candidate, f.y, t.y, routeSegments, dpx) +
-                    this.laneRegistryPenaltyVertical(candidate, laneUsage, dpx);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestX = candidate;
-                }
-            }
-
-            xNew = bestX;
-        }
-        
-        // build a 4-point orthogonal wire: horizontal, vertical, horizontal
-        wire.push(f);
-        wire.push({ x: xNew, y: f.y});
-        wire.push({ x: xNew, y: t.y});
-        wire.push(t);
-
-        // Endpoint owner nodes are excluded from generic blockers, but the route may
-        // still not cut through them with non-adjacent segments.
-        const fromRc = this.endpointBlockRect(from);
-        const toRc = this.endpointBlockRect(to);
-        if (this.routeCutsEndpointBody(wire, fromRc, 0)) return false
-        if (this.routeCutsEndpointBody(wire, toRc, wire.length - 2)) return false
-
-        // check for collisions with other nodes; if any, signal failure
-        for (let i=0; i<wire.length-1; i++) {
-            const a = wire[i], b = wire[i+1];
-            if (blockers.some(n => segmentCuts(a, b, n.look.rect))) return false
-        }
-        return true
-    },
-
-    threePointRoute(horizontal) {
-
-        // reset points
-        if (this.wire.length > 0) this.wire.length = 0;
-
-        const p = this.wire;
-        const f = this.from.center();
-        const t = this.to.center();
-
-        p.push(f);
-        horizontal ? p.push({x:t.x, y:f.y}) : p.push({x:f.x, y:t.y});
-        p.push(t);
-    },
-
-    twoPointRoute() {
-
-        // reset points
-        if (this.wire.length > 0) this.wire.length = 0;
-
-       // create a simple route between the two widgets
-       const p = this.wire;
-       const f = this.from.center();
-       const t = this.to.center();
-       
-       p.push(f);
-       p.push({x:t.x, y:f.y});
-    },
-   
-    // x,y is the endpoint - adjust some segment coordinates as required
-    endpoint(widget) {
-
-        let p = this.wire;
-        let L = p.length;
-
-        // there are at least two points...
-        if (L<2) return
-
-        // get the point to connect to on the widget
-        let {x,y} = widget.center();
-
-        // only two points...
-        if (L == 2) {
-            // if the two points are not at the same y..
-            if (p[0].y != y) {
-
-                //..we adjust point 1 and add two extra points 
-                p[1].x = (p[0].x + x)/2;      //1
-                p[1].y = p[0].y;
-                p.push({x:p[1].x, y:y});      //2
-                p.push({x,y});                //3
-            }
-            else
-                // we just adjust the x to the endpoint
-                p[1].x = x;
-
-            // done
-            return
-        }
-
-        // L > 2
-        if (p[L-1].x== p[L-2].x) {
-
-            // adjust the last y to the y of the widget
-            p[L-1].y = y;
-
-            // and push the endpoint on the route
-            p.push({x,y});
-        }
-        else {
-            //save the coordinates of the last line segment
-            p[L-1].x = x;
-            p[L-1].y = y;
-
-            // if the segment before is vertical 
-            p[L-2].x == p[L-3].x    ? p[L-2].y = p[L-1].y 
-                                    : p[L-2].x = p[L-1].x;
-        }
-    },
-
-    resumeDrawing(segment,xyLocal) {
-
-        // get the center points of the widgets
-        let xyFrom = this.from.center();
-        let xyTo = this.to.center();
-
-        const distanceFrom = Math.hypot( xyFrom.x - xyLocal.x, xyFrom.y - xyLocal.y );
-        const distanceTo = Math.hypot( xyTo.x - xyLocal.x, xyTo.y - xyLocal.y);
-
-        // choose where to disconnect based on the distance to the from/to pin
-        if (distanceFrom < distanceTo) {
-            
-            // reverse if we are closer to 'from'
-            this.reverse();
-            segment = this.wire.length - segment;
-        }
-
-        // Detach the existing connection before turning the same route into a
-        // half-drawn route. Redox keeps the clone for undo; this mutates live state.
-        this.disconnect();
-
-        // we have to take a few segments away - if only one point left set length to 0 !
-        this.wire.length = segment > 1 ? segment : 0;
-
-        // now we can store the route again in the from widget
-        if (this.from.is.pin || this.from.is.pad) {
-            this.from.routes.push(this);
-        }
-        else if (this.from.is.tack) {
-            this.from.route = this; 
-            this.from.bus.tacks.push(this.from);
-        }
-
-        // we also set the 'to' to null for good measure
-        this.to = null;
-
-        // and draw the next point using the xy
-        this.drawXY(xyLocal);
-    },
-
-    autoRoute(nodes) {
-        
-        // get the type of connection
-        const conx = this.typeString();
-
-        switch (conx) {
-
-            case 'PIN-PIN':
-
-                // if there is no route yet we can swap left/right to have a better fit
-                this.checkLeftRight();
-
-                // try a 4-point route first; fall back to 6-point if it intersects nodes
-                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
-
-                break
-
-            case 'PIN-PAD':
-            case 'PAD-PIN':
-                
-               // try a 4-point route first; fall back to 6-point if it intersects nodes
-                this.fourPointRoute(nodes) || this.sixPointRoute(nodes);
-                break
-
-            case 'PIN-BUS':
-            case 'PAD-BUS':
-                this.autoBusRoute(this.to, nodes);
-                break
-
-            case 'BUS-PIN':
-            case 'BUS-PAD':
-                this.autoBusRoute(this.from, nodes);
-                break
-        }
-    },
-
-    autoBusRoute(tack, nodes) {
-        tack.horizontal() ? this.fourPointRoute(nodes) || this.sixPointRoute(nodes) : this.threePointRoute(true);      
-    },
-
-    checkLeftRight() {
-
-        // from and to already contain the route ! so 1 is ok.
-        if ( (this.from.routes.length > 1) && (this.to.routes.length > 1)) return;
-
-        // sort according to x 
-        const [near, far] = this.from.center().x < this.to.center().x ? [this.from, this.to] : [this.to, this.from];
-
-        const nrc = near.node.look.rect;
-        const frc = far.node.look.rect;
-
-        // no x-overlap make right-left
-        if ((nrc.x + nrc.w < frc.x) || (frc.x + frc.w < nrc.x)) {
-
-            if ( near.is.left && near.routes.length < 2) near.leftRightSwap();
-            if ( !far.is.left && far.routes.length < 2) far.leftRightSwap();
-        }
-        // x-overlap make left-left or right-right
-        else {
-            if (near.is.left != far.is.left) {
-
-                if (near.routes.length < 2) near.leftRightSwap();
-                else if (far.routes.length < 2) far.leftRightSwap();
-            }
-        }
-    },
-
-    // sometimes a route can be pathological - this is a fix for that
-    healWire(){
-
-        if (this.wire.length == 3) {
-
-            const p0 = this.wire[0];
-            const p1 = this.wire[1];
-            const p2 = this.wire[2];
-
-            // rebuild as a clean orthogonal path
-            this.wire.length = 0;
-            this.wire.push(
-                {x:p0.x, y:p0.y},
-                {x:p1.x, y:p0.y},
-                {x:p1.x, y:p2.y},
-                {x:p2.x, y:p2.y},
-            );
-        }
-
-    }
-    
-};
-
-// the route used for a connection between an output and an input
-
-const routeMoving = {
-
-    // moves a segment horizontally or vertically
-    moveSegment(s,delta) {
-
-        const from = this.from;
-        const to = this.to;
-
-        let p1 = this.wire[s-1];
-        let p2 = this.wire[s];
-
-        // if there is only one segment and one of the endpoints is a bus, add two segments
-        if (this.wire.length == 2) {
-            if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2);
-        }
-
-        // first segment...
-        if (s == 1) {
-            // if one of the end points is a tack or pad - it can slide
-            return (from.is.tack || from.is.pad) ? from.slide(delta) : null
-        }
-
-        // last segment...
-        if (s == this.wire.length-1) {
-            return (to.is.tack || to.is.pad) ? to.slide(delta) : null
-        }
-
-        // otherwise just move the segment
-        if (p1.x == p2.x) {
-            p1.x += delta.x;
-            p2.x += delta.x;
-        }
-        else {
-            p1.y += delta.y;
-            p2.y += delta.y;
-        }
-    },
-
-    moveAllPoints(dx,dy) {
-        this.wire.forEach( p => {
-            p.x += dx;
-            p.y += dy;
-        });
-    },
-
-    removeOnePoint(n,p) {
-        let last = p.length-1;
-        for (let i = n; i<last; i++)  p[i] = p[i+1];
-        p.length = last;      
-    },
-
-    removeTwoPoints(n,p) {
-        let last = p.length-2;
-        for (let i = n; i<last; i++)  p[i] = p[i+2];
-        p.length = last;      
-    },
-
-    endDrag(s) {
-
-        // the last point is 
-        const L = this.wire.length;
-
-        // segments 1 and 2 and L-1 and L-2 are special...
-        if (s==1) {
-            if (this.from.is.tack || this.from.is.pad) this.from.fuseEndSegment();
-        }
-        else if (s==2) {
-            if (this.from.is.pin) this.fuseSegmentAfter(s);
-            else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
-        }
-        else if (s == L-1) {
-            if (this.to.is.tack || this.to.is.pad) this.to.fuseEndSegment();
-        }
-        else if (s == L-2) {
-            if (this.to.is.pin) this.fuseSegmentBefore(s);
-            else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
-        }
-        else this.fuseSegmentBefore(s) || this.fuseSegmentAfter(s);
-    },
-
-    // check if the segment has to be fused wit previous
-    fuseSegmentBefore(s) {
-
-        // notation - a and b are the points on the segment
-        const p = this.wire;  
-
-        // check
-        if (s-2 < 0) return false
-
-        const [before, a, b] = [p[s-2], p[s-1], p[s]];
-        const min = style.route.tooClose;
-
-        // horizontal segment
-        if (a.y == b.y) {
-            // check the point before the segment
-            if (Math.abs(before.y - a.y) < min) {
-                b.y = before.y;
-                this.removeTwoPoints(s-2,p);
-                return true
-            }
-        }
-        // vertical segment
-        else if (a.x == b.x) {
-            // check the point before
-            if (Math.abs(before.x - a.x) < min) {
-                b.x = before.x;
-                this.removeTwoPoints(s-2,p);
-                return true
-            }
-        }
-        return false
-    },
-
-    // check if the segment has to be fused with next 
-    fuseSegmentAfter(s) {
-
-        // notation - a and b are the points on the segment
-        const p = this.wire;  
-
-        // check
-        if (s+1 > p.length-1) return false
-
-        // notation
-        const [a, b, after] = [p[s-1], p[s], p[s+1]];
-        const min = style.route.tooClose;
-
-        // horizontal segment
-        if (a.y == b.y) {
-
-            // check the point after the segment
-            if (Math.abs(after.y - b.y) < min) {
-                a.y = after.y;
-                this.removeTwoPoints(s,p);
-                return true
-            }
-        }
-        // vertical segment
-        else if (a.x == b.x) {
-
-            // check the point after
-            if (Math.abs(after.x - b.x) < min) {
-                a.x = after.x;
-                this.removeTwoPoints(s,p);
-                return true
-            }
-        }
-        return false
-    },
-
-    // moves an endpoint of a route to a new widget position
-    clampToWidget( widget ) {
-
-        const p = this.wire;
-        const L = this.wire.length;
-        const center = widget.center();
-
-        // if the segment is too short, change it to a four point route
-        if (L < 3) return this.fourPointRoute()
-
-        // clamp 'from' or 'to' to the center
-        if (this.from == widget) {
-            p[0].x = center.x;
-            p[0].y = center.y;
-            p[1].y = center.y;
-        }
-        else if (this.to == widget) {
-            p[L-1].x = center.x;
-            p[L-1].y = center.y;
-            p[L-2].y = center.y;
-        }
-    },
-
-    // The endpoint(s) of the route have changed - make a better route
-    adjust() {
-
-        // in autoroute situations the wire can be missing
-        if (!this.wire.length) return
-
-        // notation
-        const from = this.from;
-        const to = this.to;
-
-        // check that there are two valid endpoints
-        if ( ! to?.center || !from?.center) return
-
-        // from new - to new
-        const fn = from.center();
-        const tn = to.center();
-
-        // from previous - to previous
-        const fp = this.wire[0];
-        const tp = this.wire.at(-1);
-
-        // the deltas
-        const df = {x: fn.x - fp.x, y: fn.y - fp.y};
-        const dt = {x: tn.x - tp.x, y: tn.y - tp.y};
-
-        // check if both endpoints moved over the same distance - just move the route
-        if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
-
-        // adjust the routes - there are 3 topologies
-        if (to.is.tack) {
-            ( to.dir == "up"   || to.dir == "down")   ? this.adjustHV(fn,tn) : this.adjustHH(fn,tn);
-        }
-        else if (from.is.tack) {
-            ( from.dir == "up" || from.dir == "down") ? this.adjustVH(fn,tn) : this.adjustHH(fn,tn);
-        }
-        else {
-            this.adjustHH(fn,tn);      
-        }  
-    },
-
-    // Starts and ends horizontally
-    // Only one of the end points moves
-    // a and be are the next position of the end points of the wire
-    adjustHH(a, b) {
-
-        // notation
-        let p = this.wire;
-
-        // For HH there have to be at least three segments
-        if (p.length < 4) return this.makeThreeSegments(a,b)
-
-        // notation
-        let last = p.length - 1;
-        const sMax = p.length-1;
-        const xMin = style.route.tooClose + 5;
-
-        // if we move the start of the route
-        if (p[0].x != a.x || p[0].y != a.y) {
-
-            // adjust the starting point
-            p[0].x = a.x;
-            p[0].y = a.y;
-            p[1].y = a.y;
-
-            // check the horizontal = uneven segments, starting from the front
-            for(let s = 1; s < sMax; s += 2) {
-                const dx = p[s].x - p[s-1].x;
-
-                // if the segment is too short
-                if (Math.abs(dx) < xMin ) {
-
-                    // s-1 <S> s <S+1> s+1   make the segment <S> minimal length
-                    p[s].x = dx > 0 ? p[s-1].x + xMin : p[s-1].x - xMin;
-
-                    // and collapse segment <S+1>
-                    p[s+1].x = p[s].x;
-                }
-            }
-        }
-
-        // move the route at the end
-        if (p[last].x != b.x || p[last].y != b.y) {
-
-            // adjust the end point
-            p[last].x = b.x;
-            p[last].y = b.y;
-            p[last-1].y = b.y;
-
-            //check the horizontal = uneven segments, starting from the back
-            for(let s = sMax; s > 1; s -= 2) {
-                const dx = p[s].x - p[s-1].x;
-                if (Math.abs(dx) < xMin) {
-                    p[s-1].x = dx > 0 ? p[s].x - xMin : p[s].x + xMin;
-                    p[s-2].x = p[s-1].x;
-                }
-            }
-        }
-    },
-
-    // horizontal / vertical
-    adjustHV(a, b) {
-        // maybe create an extra segment
-        if (this.wire.length == 2) return this.makeTwoSegments(a, b)
-
-        const p = this.wire;
-        const last = p.length-1;
-
-        p[0].x = a.x;
-        p[0].y = a.y;
-        p[1].y = a.y;
-        p[last].x = b.x;
-        p[last].y = b.y;
-        p[last-1].x = b.x;
-        p[last-1].y = p[last-2].y;
-    },
-
-    // horizontal / vertical
-    adjustVH(a, b) {
-        // maybe create an extra segment
-        if (this.wire.length == 2) return this.makeTwoSegments(a, b)
-
-        const p = this.wire;
-        const last = p.length-1;
-
-        p[0].x = a.x;
-        p[0].y = a.y;
-        p[1].x = a.x;
-        p[last].x = b.x;
-        p[last].y = b.y;
-        p[last-1].x = p[last-2].x;
-        p[last-1].y = b.y;
-    },
-
-    makeTwoSegments(a, b) {
-
-        // notation
-        const w = this.wire;
-
-        // reset the wire
-        w.length = 0;
-
-        // set 3 points
-        w.push({x: a.x, y: a.y});
-        w.push({x: b.x, y: a.y});
-        w.push({x: b.x, y: b.y});
-    },
-
-    makeThreeSegments(a, b) {
-
-        // notation
-        const w = this.wire;
-
-        // reset the wire
-        w.length = 0;
-
-        // set four points
-        w.push({x: a.x, y: a.y});
-        w.push({x: (a.x+b.x)/2, y: a.y});
-        w.push({x: (a.x+b.x)/2, y: b.y});
-        w.push({x: b.x, y: b.y});
-    },
-
-};
-
-const connectHandling = {
-
-// if no parameter is given, take to
-conxString(from, to) {
-    // set the type of connection that needs to be made
-
-    let conxStr =     from.is.pin  ? 'PIN'
-                    : from.is.tack || from.is.bus ? 'BUS'
-                    : from.is.pad ? 'PAD'
-                    : '';
-
-    //if (!conxTo) conxTo = this.to
-    if (!to) return conxStr
-
-    conxStr +=        to.is.pin  ? '-PIN'
-                    : to.is.tack || to.is.bus ? '-BUS'
-                    : to.is.pad ? '-PAD'
-                    : '';
-
-    return conxStr
-},
-
-// checks if a connection is possible - used for hover-feedback
-checkConxType(from, to) {
-
-    // set the type of connection that needs to be made
-    const conxStr = this.conxString(from, to);
-
-    switch (conxStr) {
-
-        case 'PIN-PIN':
-
-            // from and to are the same - but avoid bad 'hover' feedback at the start of the route
-            if (from === to) return (this.wire.length < 3) ? true : false
-            
-            // else check
-            return from.canConnect(to)  
-
-        case 'PIN-BUS':
-            // multiple connections are refused !
-            return to.findTack(from) ? false : true
-
-        case 'BUS-PIN':
-            // multiple connections are refused !
-            return from.bus.findTack(to) ? false : true
-
-        case 'PIN-PAD':
-            // only accept new connections of the right type
-            return to.canConnect(from)
-
-        case 'PAD-PIN':
-            // only accept new connections
-            return from.canConnect(to)
-
-        case 'BUS-PAD': 
-            return false
-
-        case 'PAD-BUS': 
-            // multiple connections are refused !
-            return to.findTack(from) ? false : true
-
-        case 'BUS-BUS': return false
-        case 'PAD-PAD': return false
-
-        default : return false
-    }
-},
-
-// make the actual connection
-connect(conxTo) {
-
-    // we do the check here
-    if (! this.checkConxType(this.from, conxTo)) return false
-
-    // set the type of connection that needs to be made
-    const conxStr = this.conxString(this.from, conxTo);
-    
-    switch (conxStr) {
-
-        case 'PIN-PIN':
-            this.to = conxTo;
-            conxTo.routes.push(this);
-            this.rxtxPinPin();
-            return true
-
-        case 'PIN-PAD':
-            this.to = conxTo;
-            conxTo.routes.push(this);
-            this.rxtxPinPad();
-            return true
-
-        case 'PAD-PIN':
-            this.to = conxTo;
-            conxTo.routes.push(this);   
-            this.rxtxPinPad();           
-            return true
-
-        case 'PIN-BUS':
-            conxTo.addTack(this);
-            this.rxtxPinBus(); 
-            return true
-
-        case 'BUS-PIN':
-            this.to = conxTo;
-            conxTo.routes.push(this);            
-            this.rxtxPinBus(); 
-            return true
-
-        case 'BUS-PAD': 
-            this.to = conxTo;
-            conxTo.routes.push(this);
-            this.rxtxPadBus();
-            return true    
-
-        case 'PAD-BUS': 
-            conxTo.addTack(this);
-            this.rxtxPadBus(); 
-            return true        
-
-        case 'PAD-PAD': 
-            return false
-
-        case 'BUS-BUS': 
-            return false
-
-        default : return false
-    }
-},
-
-// disconnects a route at both ends 
-disconnect() {
-
-    // set the type of connection that needs to be made
-    let conx = this.conxString(this.from, this.to);
-
-    switch (conx) {
-
-        case 'PIN-PIN':
-            this.rxtxPinPinDisconnect();
-            break
-
-        case 'PIN-PAD':
-        case 'PAD-PIN':
-            this.rxtxPinPadDisconnect();
-            break        
-
-        case 'PIN-BUS':
-        case 'BUS-PIN':
-            this.rxtxPinBusDisconnect();
-            break        
-
-        case 'PAD-BUS':
-        case 'BUS-PAD':
-            this.rxtxPadBusDisconnect();
-            break
-
-        default: 
-            console.error('Impossible combination in route.disconnect:',conx);
-            return false
-    }
-
-    // remove the route
-    this.remove();
-    return true
-},
-
-// used in undo operations - the route has been removed in the to and from widgets 
-// and has to be reconnected there. It is possible that a route appears twice in the list
-// so we always check if we have already handled the route or not
-// Reconnecting is a two stage process: first connect the route in the from widget (we do this here)
-// and then connect in the to-widget by calling the connect function
-reconnect() {
-
-    // check if we have already handled the route. Could be a pin..
-    if (this.from.is.pin) {
-
-        // check if already handled
-        if (this.from.routes.includes(this)) return
-
-        // save the route in from
-        this.from.routes.push(this);
-    }
-
-    // ..or a pad
-    else if (this.from.is.pad) {
-
-        // check if already handled
-        if (this.from.routes.includes(this)) return
-
-        // no, save the route
-        this.from.routes.push(this);
-    }
-
-    // ..or could be a bus tack
-    else if (this.from.is.tack) { 
-
-        // check if already handled
-        if (this.from.bus.tacks.includes(this.from)) return
-
-        // add it to the bus tacks again
-        this.from.bus.tacks.push(this.from);
-    }
-
-    // for buses we need to use the bus to connect to
-    const conxTo = this.to.is.tack ? this.to.bus : this.to;
-
-    // set to in the route to null
-    this.to = null;
-    
-    // and connect again
-    this.connect(conxTo);
-},
-
-// also used in undo/redo - copies the content of a temp copy into this route
-connectFromClone(clone) {
-    
-    // save the old route details in the route
-    this.wire = clone.wire;
-    this.from = clone.from;
-    this.from.routes.push(this);
-
-    // and reconnect
-    const other = clone.to.is.tack ? clone.to.bus : clone.to;
-    this.connect(other);   
-},
-
-};
-
-const rxtxHandling = {
-
-// return how messages can arrow between two widgets
-// There are actually ony two cases to consider: pin pin | pin pad | pin bus | pad bus
-// right = A->B, left = A<-B
-arrow(A, B) {
-
-    // pin pin
-    if (B.is.pin) return {right: B.is.input, left: !B.is.input}
-
-    // pin pad
-    if (B.is.pad) return {right: !B.proxy.is.input, left: B.proxy.is.input}
-
-    // pin bus | pad bus
-    if (B.is.bus) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
-                                    : {right: A.proxy.is.input, left: !A.proxy.is.input}
-},
-
-// A and B are two pin widgets (actual or proxy)
-rxtxPinPin() {
-
-    // messages are flowing from the src list to the dst list
-    const srcList = [];
-    const dstList = [];
-
-    // get the arrow
-    const arrow = this.arrow(this.from, this.to);
-
-    // get source and destination
-    const src = arrow.right ? this.from : this.to;
-    const dst = arrow.right ? this.to : this.from;
-
-    // proxies require possibly many connections
-    if (dst.is.proxy || src.is.proxy) {
-
-        // find all the pins that can generate input via src - incoming to src
-        src.is.proxy ? src.pad?.makeConxList( srcList ) : srcList.push( src );
-
-        // Find all the pins that can receive input via dst - outgoing from dst
-        dst.is.proxy ? dst.pad?.makeConxList( dstList ) : dstList.push( dst );
-
-        // do a full connection...
-        this.fullConnect(srcList, dstList);
-    }
-    // if the two are pins, we have to add one destination in one table
-    else this.singleConnect(src, dst);
-
-},
-
-rxtxPinPad() {
-
-    // messages are flowing from the inlist to the outlist (list = list of source node widgets)
-    const srcList = [];
-    const dstList = [];
-
-    // get the pin and the pad
-    const [pin, pad] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
-
-    // if the pin that we connect has a channel, the proxy also allows channels
-    if (pin.is.channel) pad.proxy.is.channel = true;
-
-    // determine the arrow over the route: left or right
-    const arrow = this.arrow(pin, pad);
-
-    // from pin to pad
-    if (arrow.right) {
-
-        // get all the incoming connections to the pin (that can be a proxy)
-        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);
-
-        // get all the outgoing connections on the proxy of the pad
-        pad.proxy.makeConxList(dstList);    
-        
-        // fully connect
-        this.fullConnect(srcList, dstList);
-    }
-
-    // from pad to pin
-    if (arrow.left) {
-
-        // get all the incoming connections on the proxy of the pad
-        pad.proxy.makeConxList(srcList);   
-
-        // get all the outgoing connections of the pin
-        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
-        
-        // and fully connect
-        this.fullConnect(srcList, dstList);
-    }
-},
-
-// connect to the bus
-rxtxPinBus() {
-
-    // we will build an output/input list with of actual widgets
-    const dstList = [];
-    const srcList = [];
-
-    // get the pin and the tack
-    const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
-
-    // get the arrow
-    const arrow = this.arrow(pin, tack.bus);
-
-    // arrow is from pin to bus
-    if (arrow.right) {
-
-        // now make the source list 
-        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin); 
-
-        // make the list of destinations connected to this bus for this pin
-        tack.makeConxList(dstList);
-        
-        // and do a full connect
-        this.fullConnect(srcList, dstList);
-    }
-
-    // left 
-    if (arrow.left) {
-
-        // now make the inlist
-        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
-
-        // make the list of outputs of connected to this bus
-        tack.makeConxList(srcList);
-
-        // and do a full connect between source and destination list
-        this.fullConnect(srcList, dstList);
-    }
-},
-
-// connect to the bus
-rxtxPadBus() {
-
-    // we will build an output/input list with of actual widgets
-    const dstList = [];
-    const srcList = [];
-
-    // get the pin and the bus
-    const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from];
-
-    const arrow = this.arrow(pad, tack.bus);
-
-    // from pad to bus
-    if (arrow.right) {
-
-        pad.proxy.makeConxList(srcList);
-
-        // find the connections from the tack
-        tack.makeConxList(dstList);
-
-        // and do a full connect
-        this.fullConnect(srcList, dstList);
-    }
-    // from bus to pad
-    if (arrow.left) {
-
-        pad.proxy.makeConxList(dstList);
-
-        // find the incoming connections on the bus that lead to the pad 
-        tack.makeConxList(srcList);
-
-        // and do a full connect
-        this.fullConnect(srcList, dstList);
-    }
-},
-
-// disconnect a pin
-rxtxPinPinDisconnect() {
-
-    const srcList = [];
-    const dstList = [];
-
-    const arrow = this.arrow(this.from, this.to);
-
-    const src = arrow.right ? this.from : this.to;
-    const dst = arrow.right ? this.to : this.from;
-
-    // if one of the two is a proxy, we have to remove many destinations
-    if (src.is.proxy || dst.is.proxy) {
-
-        // make the list of actual in and out widgets
-        src.is.proxy ? src.pad?.makeConxList( srcList)  : srcList.push( src );
-        dst.is.proxy ? dst.pad?.makeConxList( dstList ) : dstList.push( dst );
- 
-        // and now do a full disconnection of the pins
-        this.fullDisconnect(srcList, dstList);
-     }
-    // if the two are actual pins we have to remove one destination from one table
-    else {
-        // remove the destination from the specified output-pin of the node
-        src.node.rxtxRemoveFromTxTable(src, dst);
-    }
-},
-
-// disconnect a pin from a pad
-rxtxPinPadDisconnect() {
-
-    // messages are flowing from the inlist to the outlist (list = list of source node widgets)
-    const srcList = [];
-    const dstList = [];
-
-    // get the pin and the pad
-    const [pin, pad] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
-
-    // check if we still need to keep the channel
-    if (pad.proxy.is.channel) {
-
-        // find the first other route that also has a channel
-        const route = pad.routes.find( route => {
-                                if (route != this) {
-                                    const other = route.from == pad ? route.to : route.from;
-                                    if (other.is.pin && other.is.channel) return true
-                                    if (other.is.pad && other.proxy.is.channel) return true
-                                }
-                            });
-        
-        pad.proxy.is.channel = route ? true : false;
-    }
-
-    // determine the arrow over the route
-    const arrow = this.arrow(pin, pad);
-
-    // from pin to pad
-    if (arrow.right) {
-        // get all the incoming connections to the pin (that can be a proxy)
-        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);
-
-        // get all the outgoing connections on the proxy of the pad
-        pad.proxy.makeConxList(dstList);    
-        
-        // fully disconnect
-        this.fullDisconnect(srcList, dstList);
-    }
-
-    // from pad to pin
-    if (arrow.left) {
-        // get all the incoming connections on the proxy of the pad
-        pad.proxy.makeConxList(srcList); 
-
-        // get all the outgoing connections of the pin
-        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
-        
-        // and fully disconnect
-        this.fullDisconnect(srcList, dstList);
-    }
-},
-
-// disconnect from the bus
-rxtxPinBusDisconnect() {
-
-     // we will build an output/input list with of actual widgets
-    const dstList = [];
-    const srcList = [];
-
-    // get the pin and the bus
-    const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from];
-
-    // get the arrow
-    const arrow = this.arrow(pin, tack.bus);
-
-    // right
-    if (arrow.right) {
-        // now make the output list 
-        pin.is.proxy ? pin.pad?.makeConxList(srcList) : srcList.push(pin);   
-
-        // make the list of inputs connected to this bus of the same name
-        tack.makeConxList(dstList);
-
-        // and do a full disconnect 
-        this.fullDisconnect(srcList, dstList);
-    }
-
-    // left 
-    if (arrow.left) {
-
-        // make the list of outputs of the same name connected to this bus
-        tack.makeConxList(srcList);
-
-        // now make the inlist
-        pin.is.proxy ? pin.pad?.makeConxList(dstList) : dstList.push(pin);
-
-        // and do a full disconnect 
-        this.fullDisconnect(srcList, dstList);
-    }
-},
-
-rxtxPadBusDisconnect() {
-
-    // we will build an output/input list with of actual widgets
-    const dstList = [];
-    const srcList = [];
-
-    // get the pin and the bus
-    const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from];
-
-    // get the arrow
-    const arrow = this.arrow(pad, tack.bus);
-
-    if (arrow.right) {
-
-        pad.proxy.makeConxList(srcList);
-        tack.makeConxList(dstList);
-        this.fullDisconnect(srcList, dstList);
-    }
-    if (arrow.left) {
-
-        tack.makeConxList(srcList);
-        pad.proxy.makeConxList(dstList);
-        this.fullDisconnect(srcList, dstList);
-    }
-},
-
-// just need to make a single connection
-singleConnect(src, dst){
-
-    // find the entry in the txTable 
-    let tx = src.node.txTable.find( tx => tx.pin.name == src.name);
-
-    // check
-    if (!tx) return;
-
-    // and add it to the array of destinations
-    tx.targets.push(dst);        
-},
-
-// for each resolved rx and tx pair, add an entry to the table
-fullConnect(srcList, dstList) {
-
-    // we have a list of out and ins that we have to connect 
-    for(const src of srcList) {
-
-        if (src.is.pin) {
-
-            // find the entry in the conx table that corresponds to the pin 
-            const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name );
-
-            /** debug should not happen */
-            if (!txRecord) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullConnect', src.name, src.node.name);
-                continue
-            }
-
-            // for each entry in the dstlist, add a destination
-            for(const dst of dstList) txRecord.targets.push(dst);
-        }
-        // a tack here means that the route is connected through a bus
-        else if (src.is.tack) {
-
-            // find the entry in the conx table that corresponds to the tack
-            const txTack = src.bus.txTable.find( txTack => txTack.tack == src );    
-
-            /** debug should not happen */
-            if (!txTack) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullConnect', src.bus.name);
-                continue
-            }            
-
-            // for each entry in the dstlist, add a destination
-            for(const dst of dstList) {
-                txTack.fanout.push(dst);
-            }
-        }
-    }
-},
-
-// for each resolved rx and tx pair, remove the entry in the table
-fullDisconnect(srcList, dstList) {
-
-    for(const src of srcList) {
-
-        // The source can be a tack or a pin
-        if (src.is.pin) {
-
-            // find the entry in the conx table that corresponds to the pin 
-            const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name );
-
-            /** debug should not happen */
-            if (!txRecord) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name);
-                continue
-            }
-
-            // remove all the targets that are in the list of destinations
-            for(const dst of dstList) txRecord.dropTarget(dst);
-    
-        }
-        else if (src.is.tack) {
-
-            // find the entry in the conx table that corresponds to the tack
-            const txTack = src.bus.txTable.find( txTack => txTack.tack == src );    
-
-            /** debug should not happen */
-            if (!txTack) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name);
-                continue
-            }            
-
-            // remove all the dst in the fanout that are in the list of destinations
-            for(const dst of dstList) txTack.dropTarget(dst);
-        }
-    }
-},
-
-};
-
-// the route used for a connection between an output and an input
-
-function Route(from, to) {
-
-    this.from = from;                    // ref to widget - from is just the draw direction, it can be input or output
-    this.to = to;                        // ref to widget
-    this.is = {
-        selected: false,
-        highLighted: false,
-        notUsed: false,
-        newConx: false,                 // the route is there because of a new conx
-        noConx: false                   // there is no corresponding connection anymore
-    };
-    // The wire between the two widgets
-    this.wire = [];                    
-}
-Route.prototype = {
-
-    render(ctx) {
-
-        // check
-        if (this.wire.length < 2) return 
-
-        // color
-        let color = this.is.selected      ? style.route.cSelected 
-                    : this.is.highLighted   ? style.route.cHighLighted
-                    : this.is.newConx       ? style.route.cAdded
-                    : this.is.noConx        ? style.route.cDeleted
-                    : this.is.notUsed       ? style.route.cNotUsed
-                    : style.route.cNormal;
-
-        //linewidth
-        const width = this.is.selected ? style.route.wSelected : style.route.wNormal;
-
-        // draw the line segments
-        shape.drawWire(ctx,color, width, this.wire);
-    },
-
-    // change the route direction
-    reverse() {
-        // reverse the from to pair
-        [this.from, this.to] = [this.to, this.from];
-
-        let p = this.wire;
-        let l = p.length;
-
-        // reverse the points - if l is uneven the middle point stays, which is ok
-        for (let i=0; i<l/2; i++) [p[i], p[l-i-1]] = [p[l-i-1], p[i]];
-    },
-
-    select() {
-        this.is.selected = true;
-        if (this.from) this.from.is.selected = true;
-        if (this.to) this.to.is.selected = true;
-    },
-
-    unSelect() {
-        this.is.selected = false;
-        if (this.from) this.from.is.selected = false;
-        if (this.to) this.to.is.selected = false;
-    },
-
-    // highlight is simple
-    highLight() {
-        this.is.highLighted = true;
-        if (this.from) this.from.is.highLighted = true;
-        if (this.to) this.to.is.highLighted = true;
-    },
-
-    // unhighlight is a bit more complicated
-    unHighLight(){
-
-        // if the other look is still highlighted and it belongs to a different node, do not turn off
-        if ( (this.from?.node?.is.highLighted || this.to?.node?.is.highLighted) && this.from.node != this.to.node) return
-
-        // turn off
-        this.is.highLighted = false;
-        if (this.from) this.from.is.highLighted = false;
-        if (this.to) this.to.is.highLighted = false;
-    },
-
-    // generates the type string for a route
-    typeString() {
-
-        const from = this.from.is;
-        const to = this.to.is;
-
-        let str =     from.pin ? 'PIN' 
-                    : from.tack ? 'BUS' 
-                    : from.pad ? 'PAD' : '';
-        str +=        to.pin ? '-PIN' 
-                    : to.tack ? '-BUS' 
-                    : to.pad ? '-PAD' : '';
-
-        return str
-    },
-
-    // returns the segment 1, 2 etc - 0 means failure
-    hitSegment(pos) {
-
-        // notation
-        const last = this.wire.length-1;
-        const x = pos.x, y = pos.y;
-
-        // the precision in pixels
-        const delta = 5;
-
-        // check if the point lies on the route
-        for (let i=0; i<last; i++) {
-
-            const a = this.wire[i];
-            const b = this.wire[i+1];
-            
-            // horizontal segment
-            if (a.y == b.y) {
-                if ((y < a.y + delta) && (y > a.y - delta) && ((a.x-x)*(b.x-x) <= 0)) return i+1
-            }
-            // vertical segment
-            else {
-                if ((x < a.x + delta) && (x > a.x - delta) && ((a.y-y)*(b.y-y) <= 0)) return i+1
-            }         
-        }
-        // no hit
-        return 0
-    },
-
-    remove() {
-        this.from.removeRoute(this);
-        this.to.removeRoute(this);
-    },
-
-    popFromRoute() {
-        this.from.is.tack ? this.from.bus.tacks.pop() : this.from.routes.pop(); 
-    },
-
-    clone() {
-        // make a new route
-        let newRoute = new Route(this.from, this.to);
-
-        // copy the points array
-        for (const point of this.wire) newRoute.wire.push({...point});
-
-        // done
-        return newRoute
-    },
-
-    restore() {
-
-    },
-
-    // used for undo/redo
-    copyWire() {
-        const copy = [];
-        for (const point of this.wire) copy.push({...point});
-        return copy
-    },
-
-    restoreWire(copy) {
-        this.wire = [];
-        for (const point of copy) this.wire.push({...point});
-    },
-
-    // returns A, B where the message flow is from A to B
-    messageFlow() {
-
-        const from = this.from;
-        const to = this.to;
-
-        if (from.is.pin) return from.is.input ?  [to, from] : [from, to]
-        if (to.is.pin) return to.is.input ? [from, to] : [to, from]
-        if (from.is.pad) return from.proxy.is.input ? [from, to] : [to, from]
-        if (to.is.pad) return to.proxy.is.input ? [to, from] : [from, to]
-        return [to, from]
-    }
-
-};
-Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling);
-
-const padRouteFunctions = {
-
-    adjustRoutes() {
-        for(const route of this.routes) route.adjust();
-    },
-
-    routeToPin(pin) {
-
-        // create a route between the pin and this pad
-        let route = new Route(pin, this);
-
-        // make a simple route between the two pins
-        route.fourPointRoute();
-
-        // save the route
-        this.routes.push(route);
-
-        // also in the pin
-        pin.routes.push(route);
-    },
-
-    shortConnection(actual) {
-
-        // create a route between the actual widget and this pad
-        let route = new Route(actual, this);
-
-        // make a simple route between the two pins
-        route.twoPointRoute();
-
-        // save the route
-        this.routes.push(route);
-
-        // also in the actual
-        actual.routes.push(route);
-    },    
-
-    canConnect(widget) {
-
-        // inputs connect to inputs and outputs to outputs !
-        if (widget.is.pin) {
-
-            // the proxy and the widget mùust both be inputs or outputs
-            if (this.proxy.is.input != widget.is.input) return false
-
-            // if the widget is a channel, then the proxy must be a channel also
-            if (widget.is.channel && !this.proxy.is.channel) return false
-
-        }
-
-        // no duplicates
-        if (this.routes.find( route => (route.from == widget)||(route.to == widget))) return false
-
-        return true
-    },
-
-    // disconnect all routes to and from a pad
-    disconnect() {
-
-        // make a copy of the routes - the pad.routes array will be modified during this proc
-        const routes = this.routes.slice();    
-
-        // go through all the routes
-        for (const route of routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // a pad can be connected to a pin or bus
-            other.is.pin ? route.rxtxPinPadDisconnect() : route.rxtxPadBusDisconnect();
-
-            // remove the route at both ends
-            route.remove();
-        }
-    },
-
-    reconnect(routes) {
-
-        this.routes = routes;
-
-        for(const route of routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // a pad can be attached to a pin or a bus
-            if (other.is.pin) other.routes.push(route);
-            else other.bus.push(other);
-        }
-    },
-
-    // before dragging the pad we want to make sure the pad is the to widget
-    checkRoutesDirection() {
-        this.routes.forEach( route => { if (route.from == this) route.reverse(); });
-    },
-
-    drag(next, delta) {
-
-        // if there are routes ...
-        if (this.routes.length > 0) {
-
-            // get the last two points of the first route
-            const wire = this.routes[0].wire;
-
-            // get the first or last points of the route
-            const [a, b] = this.routes[0].from == this ?  [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)];
-
-            // calculate the next position
-            const realNext = a.y == b.y ? {x: a.x + delta.x, y: next.y} : {x: next.x, y: a.y + delta.y};
-
-            // add a new point to the routes
-            for (const route of this.routes) route.drawXY( realNext ); 
-
-            // check if we have to switch the left/right text position
-            if (a.y == b.y) this.is.leftText = (a.x < b.x);
-
-            // notation
-            const rc = this.rect;
-
-            // y position is independent of left/right
-            rc.y = a.y - rc.h/2;
-
-            //x depends on left right
-            rc.x = this.is.leftText ? a.x - rc.w : a.x; 
-        }
-        else {
-            // just move the pad
-            this.rect.x += delta.x;
-            this.rect.y += delta.y;           
-        }
-    },
-
-    xdrag(next, delta) {
-
-        // if there are routes ...
-        if (this.routes.length > 0) {
-
-            // get the last two points of the first route
-            const wire = this.routes[0].wire;
-
-            // get the last two points of the wire
-            if (wire.length > 0) {
-                const last = wire.at(-1);
-                const prev = wire.at(-2);
-
-                // use the direction to calculate a new value for the next point
-                next = prev.y == last.y ? {x: last.x + delta.x, y: next.y} : {x: next.x, y: last.y + delta.y};
-            }
-
-            // add a new point to the routes
-            for (const route of this.routes) route.drawXY( next ); 
-
-            // place the pad again
-            this.place();
-        }
-        else {
-            // just move the pad
-            this.rect.x += delta.x;
-            this.rect.y += delta.y;           
-        }
-    },
-
-    endDrag() {
-        //if (this.routes.length == 1) this.routes[0].endpoint(this)
-        this.routes.forEach( route => route.endpoint(this));
-    },
-
-    slide(delta) {
-
-        // all the routes are attached horizontally
-        this.routes.forEach( route => {
-
-            // notation
-            const p = route.wire;
-
-            // to slide a route it must have at least three segments
-            // make a copy of teh wire ! Points in the point array are overwritten !
-            if (p.length == 2) {
-                //route.addTwoSegments({...p[0]},{...p[1]})
-                route.fourPointRoute();
-            }
-
-            // notation
-            const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
-
-            // move the segment
-            a.y += delta.y;
-            b.y += delta.y;
-        });
-        // finally move the pad
-        this.rect.y += delta.y;
-    },
-
-    fuseEndSegment() {
-
-        // only one route can fuse
-        let fusedRoute = null;
-        let dy = 0;
-
-        // all the routes are attached horizontally
-        for (const route of this.routes) {
-        // this.routes.forEach( route => {
-
-            // at least three segments required
-            if (route.wire.length < 4) continue
-
-            // notation
-            const p = route.wire;
-            const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]; 
-
-            // check if we can fuse segments 
-            if (Math.abs(c.y - b.y) < style.route.tooClose) {
-                dy = c.y - a.y;
-                a.y = c.y;
-                front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p);
-                fusedRoute = route;
-                break
-            }
-        }
-
-        // if we have fused we will move all the routes and pad 
-        if (fusedRoute) {
-            for (const route of this.routes) {
-            //this.routes.forEach( route => {
-
-                // the fused route is already ok
-                if (route == fusedRoute) continue
-
-                // notation
-                const p = route.wire;
-                const [a,b] = this == route.from ? [p[0],p[1]] : [p.at(-1),p.at(-2)]; 
-
-                // move the segment
-                a.y += dy;
-                b.y += dy;
-            }
-            // finally move the pad
-            this.rect.y += dy;
-        }
-    },
-
-    // when we copy the pad-pin routes, we already have copied all the nodes so we can set both ends of the route correctly
-    // we use the uid that was also copied as the search element - the final uid is set after calling this routine
-    copyPadPinRoutes(pad, root) {
-
-        // copy the routes
-        for(const route of pad.routes) {
-
-            // get the other widget
-            const other = route.from == pad ? route.to : route.from;
-
-            // only routes to/from pins are considered
-            if (!other.is.pin) continue
-
-            // clone the route
-            const clone = route.clone();
-
-            // the pad - part of the route can be set
-            clone.to == pad ?  clone.to = this : clone.from = this;
-
-            // and save the cloned route
-            this.routes.push(clone);
-
-            // now find the node for the 'other'
-            const node = root.nodes.find( node => node.uid == other.node.uid);
-
-            // find the pin in that node
-            const pin = node.look.findPin(other.name, other.is.input);
-
-            // set the other part of the route
-            clone.from == this ? clone.to = pin : clone.from = pin;
-
-            // also save the new route in the pin
-            pin.routes.push(clone);
-        }
-    },
-
-    // remove a route from the routes array
-    removeRoute(route) {
-
-        eject(this.routes, route);
-    },
-
-    // copy the routes for the undo operation (see redox)
-    copyWires() {
-
-        const wires = [];
-        for (const route of this.routes) wires.push(route.copyWire());
-        return wires
-    },
-
-    restoreWires(wires) {
-
-        const L = this.routes.length;
-        for(let i = 0; i < L; i++) this.routes[i].restoreWire(wires[i]);
-    },
-
-    highLightRoutes() {
-
-        // highlight the connections of the pqd
-        for (const route of this.routes) {
-
-            // check the other part of the route - note that it might be missing during a disconnect operation !
-            const other = route.from == this ? route.to : route.from;
-
-            //check
-            if (!other) continue
-
-            if (other.is.pin) {
-
-                if (!this.areConnected(other)) continue
-                    
-                // ok - highlight the route
-                route.highLight();
-            }
-
-            // if the other is a bustack also highlight the routes that go via the bus
-            if (other.is.tack) other.highLightRoutes();
-        }
-    },
-
-    unHighLightRoutes() {
-
-        // highlight the connections of the pin
-        for (const route of this.routes) {
-
-            //unhighlight the route
-            route.unHighLight();
-
-            // check the other part of the route - note that it might be missing during a disconnect operation !
-            const other = route.from == this ? route.to : route.from;
-
-            // check
-            if (!other) continue
-
-            // check the 
-            //if (other.is.proxy) other.pad.unHighLightRoutes()
-
-            // if the other is a bustack also highlight the routes that go via the bus
-            if (other?.is.tack) other.unHighLightRoutes();
-        }
-    },
-
-    checkRouteUsage() {
-
-        // reset all the routes to used
-        for(const route of this.routes) route.is.notUsed = false;
-
-        // get the proxy for this pad
-        this.proxy;
-
-        // check the routes
-        for(const route of this.routes) {
-
-            // get the other side of the route
-            const other = route.from == this ? route.to : route.from;
-
-            if (other.is.tack) {
-
-                // check all the bus routes
-                let found = false;
-                for(const tack of other.bus.tacks) {
-
-                    // skip 
-                    if (tack == other) continue
-
-                    // get the pin or pad at the other end 
-                    const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to;
-
-                    // it could be that the route was not used
-                    if (other.bus.areConnected(this, busWidget)) {
-                        tack.route.is.notUsed = false;
-                        found = true;
-                    }
-                }
-                // if we have not found one connection..
-                if (!found) route.is.notUsed = true;
-            }
-        }
-    },
-
-    rank() {
-        return {up:1, down:1}
-    }
-
-};
-
-function Pad(rect, proxy, uid=null) {
-
-    // unique id
-    this.uid = uid;
-
-    // constructor chaining
-    this.rect = {...rect}; 
-
-    // set h if necessary - we will set w when the pad is rendered
-    // this.rect.h = rect.h > 0 ? rect.h : style.pad.hPad
-
-    this.is = {
-        pad: true,
-        selected: false,
-        highLighted: false,
-        leftText: proxy.is.left,
-        hoverOk: false,
-        hoverNok: false,
-        beingEdited: false,
-        placed: false
-    };
-
-    // set the text
-    this.text = proxy.name;
-
-    // the widget on the look
-    this.proxy = proxy;
-
-    // the routes to the pad (inside the group!)
-    this.routes = [];
-}
-Pad.prototype = {
-
-    copy() {
-        return new Pad(this.rect, this.proxy, this.uid)
-    },
-
-    render(ctx, look) {
-        
-        // notation
-        let st = style.pad;
-        const rc = this.rect;
-        const proxy = this.proxy;
-
-        // use a different color for selected pads
-        const cPad =  this.is.hoverNok ? st.cBad : st.cBackground;
-
-        // the text and arrow color change when connected
-        let cText =     this.is.highLighted ? st.cHighLighted
-                        : this.is.selected || this.is.hoverOk ? st.cSelected
-                        : this.routes?.length > 0 ? st.cConnected 
-                        : st.cText;
-
-        // color of the arrow
-        const cArrow = cText;
-        
-        // the y position of the arrow
-        let yArrow = rc.y+(st.hPad - st.wArrow)/2;
-
-        // when being edited we recalculate the width of the rectangle
-        if (this.is.beingEdited) {
-            rc.w = style.pad.wExtra + ctx.measureText(this.text).width;
-            this.place();
-        }
-
-        // render the pin  - note that x and y give the center of the triangle
-        if (this.is.leftText) {
-
-            // the x-position of the arrow
-            const xArrow =  rc.x + rc.w - st.rBullet/2 - st.hArrow; 
-
-            // draw a rectangle and a circle
-            shape.rectBullet(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
-
-            if (proxy.is.channel) {
-                // draw a triangle
-                proxy.is.input  ? shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
-            }
-            else {
-                // draw a triangle
-                proxy.is.input  ? shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
-            }
-
-            // write the text in the rectangle
-            shape.leftText(ctx,this.text,cText,rc.x + style.pad.wMargin,rc.y, rc.w,rc.h);
-        }
-        else {
-            // The x-position of the arrow
-            const xArrow = rc.x + st.rBullet/2;
-
-            // draw the rectangle and the bullet
-            shape.bulletRect(ctx,rc.x, rc.y, rc.w, rc.h, cPad, st.rBullet);
-
-            if (proxy.is.channel) {
-                // draw a triangle
-                proxy.is.input  ? shape.triangleBall( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow)
-                                : shape.ballTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow); 
-            }
-            else {
-                // draw a triangle
-                proxy.is.input  ? shape.leftTriangle(  ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow) 
-                                : shape.rightTriangle( ctx, xArrow, yArrow, st.hArrow, st.wArrow,cArrow);
-            }
-
-            // write the text in the rectangle
-            shape.rightText(ctx,this.text,cText,rc.x,rc.y,rc.w,rc.h);
-        }
-    },
-
-    cursorPos(ctx, i) {
-        const rc = this.rect;
-        const xText = this.is.leftText
-            ? rc.x + style.pad.wMargin
-            : rc.x + rc.w - ctx.measureText(this.text).width;
-        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: rc.y }
-    },
-
-    // returns the center of the pad bullet
-    center() {
-        const rc = this.rect;
-        return this.is.leftText     ? {x: rc.x + rc.w ,  y: rc.y + rc.h/2} 
-                                    : {x: rc.x ,         y: rc.y + rc.h/2}
-    },
-
-    // place the widget so that the center is on pos
-    place() {
-        // take the first route
-        const route = this.routes[0];
-
-        // check
-        if ( ! route?.wire.length ) return
-
-        // get the first or last point of the route
-        const [pa, pb] = route.from == this ?  [route.wire[0], route.wire[1]] : [route.wire.at(-1), route.wire.at(-2)];
-
-        // check
-        this.is.leftText = (pa.x < pb.x);
-
-        // notation
-        const rc = this.rect;
-
-        // y position is independent of left/right
-        rc.y = pa.y - rc.h/2;
-
-        //x depends on left right
-        rc.x = this.is.leftText ? pa.x - rc.w : pa.x; 
-    },
-
-    // the edit functions
-    startEdit(ctx, click = null) {
-
-        this.is.beingEdited = true;
-
-        const xText = this.is.leftText
-            ? this.rect.x + style.pad.wMargin
-            : this.rect.x + this.rect.w - ctx.measureText(this.text).width;
-        const index = click ? shape.cursorIndex(ctx, this.text, xText, click.x) : this.text.length;
-        return { prop: 'text', index }
-    },
-
-    getWidth() {
-        const proxy = this.proxy;
-        return style.pad.wExtra + proxy.node.look.getTextWidth(this.text)
-    },
-
-    endEdit(saved) {
-
-        // notation
-        const proxy = this.proxy;
-
-        // no more editing
-        this.is.beingEdited = false;
-
-        // if the name has not zero length...
-        if (this.text.length > 0) {
-
-            // set the name of the proxy
-            proxy.name = this.text;
-
-            // check the name and reset if not ok
-            if ( ! proxy.checkNewName()) {
-                proxy.name = this.text = saved;
-                return
-            }
-
-            // the name might have been normalized
-            this.text = proxy.name;
-
-            // check for route usage
-            this.checkRouteUsage();
-
-            // recalculate the width of the pad
-            this.rect.w = this.getWidth();
-            //this.place()
-
-            // done
-            return
-        }
-
-        // zero length : The pin can only be removed if there are no routes
-        if (proxy.routes.length == 0) {
-
-            // remove the proxy
-            proxy.node.look.removePin(proxy);
-
-            // and remove the pad
-            proxy.node.removePad(this);
-
-            // done
-            return
-        }
-
-        // restore the old name
-        this.text = saved;
-    },
-
-    // the name of the proxy has changed - length of the pad must also change
-    nameChange( newName ) {
-        // change
-        this.text = newName;
-
-        // force a recalculation of the rectangle
-        this.rect.w = this.getWidth();
-    },
-
-    overlap(rect) {
-        const rc = this.rect;
-
-        if (( rc.x > rect.x + rect.w) || (rc.x + rc.w < rect.x) || (rc.y > rect.y + rect.h) || (rc.y + rc.h  < rect.y)) return false
-        return true
-    },
-
-    makeRaw() {
-        const raw = {
-            wid: this.proxy.wid,
-            text: this.text,
-            left: this.is.leftText,
-            rect: this.rect
-        };
-
-        if (this.is.placed) raw.placed = true;
-
-        return raw
-    },
-
-    // unzip() {
-
-    //     return {
-    //         blu: null,
-    //         viz: convert.padToString(this)
-    //     }
-    // },
-
-    moveTo(x,y) {
-
-        this.rect.x = x;
-        this.rect.y = y;
-
-        this.adjustRoutes();
-    },
-
-    move(delta) {
-
-        this.rect.x += delta.x;
-        this.rect.y += delta.y;
-
-        //this.adjustRoutes()
-    },
-
-    // checks if the widget and the pad are logically connected
-    areConnected(widget) {
-        return true
-    },
-
-    makeConxList(list) {
-
-        for(const route of this.routes) {
-
-            // get the other widget
-            const other = route.from == this ? route.to : route.from;
-
-            // check if connected
-            if ( ! this.areConnected(other)) continue
-
-            // if the actual is also a proxy, take it to the next level, else save in list
-            if (other.is.pin) {
-                other.is.proxy ?  other.pad?.makeConxList(list) : list.push( other );
-            }
-            // get all the connections to the bus that can reach the pad
-            else if (other.is.tack) {
-
-                // continue to complete the list
-                other.makeConxList(list);
-            }
-        }
-    },
-
-    highLight() {
-        this.is.highLighted = true;
-    },
-
-    unHighLight() {
-        this.is.highLighted = false;
-    },
-
-    hitTest(pos) {
-
-        // check if we have hit the rectangle
-        if (! inside(pos, this.rect))  return [zap.nothing, null]
-
-        // we have hit the pad - check if we have hit the arrow (left or right)
-        if (this.is.leftText) {
-            return (pos.x > this.rect.x + this.rect.w - 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
-        }
-        else {
-            return (pos.x < this.rect.x + 2*style.pad.rBullet) ? [zap.padArrow, this] : [zap.pad, this]
-        }
-    },
-
-    hitRoute(pos) {
-
-        let segment = 0;
-
-        // go through all the routes..
-        for (const route of this.routes) {
-
-            // only routes from this pad
-            if ((route.from == this)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
-        }
-        // nothing
-        return [zap.nothing, null, 0]
-    }
-
-};
-Object.assign(  Pad.prototype, padRouteFunctions);
-
-// a bus groups a number of connections
-
-const busConnect = {
-
-    // disconnect all routes to and from a bus
-    disconnect() {
-
-        // make a copy - the original array will be modified
-        const tacks = this.tacks.slice();
-
-        // remove the tacks
-        for (const tack of tacks) {
-
-            // what is the tack connected to..
-            const other = tack.route.from == tack ? tack.route.to : tack.route.from;
-
-            // disconnect
-            other.is.pin ? tack.route.rxtxPinBusDisconnect() : tack.route.rxtxPadBusDisconnect();
-            
-            // remove the route at the pin also
-            tack.route.remove();
-        }
-    },
-
-    // undo a disconnect action
-    reconnect(tacks) {
-
-        for (const tack of tacks) {
-
-            // add the tack to the bus again
-            this.tacks.push(tack);
-
-            // place it (probably not necessary)
-            tack.orient();
-
-            // the tack is connected to...
-            const other = tack.route.to == tack ? tack.route.from : tack.route.to;
-
-            // add the route to the pin
-            other.routes.push(tack.route);
-
-            // change the rxtx tables...
-            other.is.pin ? tack.route.rxtxPinBus() : tack.route.rxtxPadBus();
-        }
-    },
-
-    // every connection of the old bus that starts from a node in the selection is transferred to the new bus
-    splitTacks(newBus, newGroup) {
-
-        this.tacks.forEach( (tack,index) => {
-
-            // if the arrow comes from a node in the new group
-            if (tack.route.from.is.pin && newGroup.nodes.includes(tack.route.from.node)) {
-
-                // push the arrow on the new bus
-                newBus.tacks.push(tack);
-
-                // take it from this bus
-                this.tacks[index] = null;
-
-                // adjust the bus
-                tack.bus = newBus;
-            }
-        });
-
-        // close the holes..
-        this.tacks = this.tacks.filter( w => w != null);
-    },
-
-    // transfer the tacks from this buses (inside a group) to the same bus outside - used in undo group
-    transferTacks(outsiders) {
-
-        // for all tacks
-        for(const tack of this.tacks) {
-
-            // find the corresponding bus
-            for(const outside of outsiders) {
-
-                if (this.uid == outside.uid) {
-                    tack.bus = outside;
-                    break
-                }
-            }
-        }
-    },
-
-    // make a route from the widget to the bus - the widget is a pin or a pad
-    makeRoute(widget) {
-
-        // select a point on the bus wire closest = {point, segment nr, endPoint}
-        const closest = closestPointOnCurve(this.wire, widget.center());
-
-        // if the closest point is an endpoint, we interpollate close to that point
-        const point = closest.endPoint ? interpolateSegment(closest.point, closest.segment, this.wire) : closest.point;
-
-        // create a tack
-        const tack = new BusTack(this);
-
-        // place the tack at a the selected position on the bus
-        tack.placeOnSegment(point, closest.segment);
-
-        // a new route between the widget and the tack
-        const route = new Route(widget, tack);
-
-        // make a smart connection between the two destinations
-        route.autoRoute();
-
-        // and save the route in the new proxy...
-        widget.routes.push(route);
-
-        // set the route in the tack, the tack in the bus and orient the tack
-        tack.restore(route);
-    },
-
-    rxtxPrepareTables() {
-    },
-    
-    rxtxResetTables() {
-    
-        this.txTable = [];
-        this.rxTable = [];
-    },
-
-    // follow the routes to build the tx tables - recursive function
-    rxtxBuildRxTxTable() {
-    
-        // for all the incoming tacks
-        for (const tack of this.tacks) {
-
-            if (tack.incoming()) {
-
-                this.rxtxAddRxTack(tack);
-            }
-            else {
-
-                const outgoing = [];
-
-                const other = tack.getOther();
-
-                other.is.proxy ? other.pad.makeConxList(outgoing) : (other.is.pad ? other.proxy.makeConxList(outgoing) : outgoing.push(other));
-
-                this.rxtxAddTxTack(tack, outgoing);
-            }
-        }
-    },
-    
-    // For an outgoing tack, we save the incoming connections
-    rxtxAddTxTack(tack, outgoing) {
-    
-        // make a record for the tack
-        const txTack = new TxTack(tack);
-    
-        // now add the list to the tx record (make a copy !)
-        txTack.fanout = outgoing.slice();
-    
-        // push the target to the txTable
-        this.txTable.push(txTack);
-    },
-    
-    // removes a connection
-    rxtxRemoveTxTack(tack) {
-        
-        // find the destination targets that corresponds with the transmitter and remove the enrty
-        const index = this.txTable.findIndex( tx => tx.tack == tack);
-        if (index > -1) this.txTable.splice(index, 1);
-    },
-
-    // For an incoming tack, we save the outgoing connections
-    rxtxAddRxTack(tack) {
-
-        this.rxTable.push(new RxTack(tack));
-    },
-
-    // removes a connection
-    rxtxRemoveRxTack(tack) {
-
-        // find the destination targets that corresponds with the transmitter and remove the enrty
-        const index = this.rxTable.findIndex( tx => tx.tack == tack);
-        if (index > -1) this.rxTable.splice(index, 1);
-    },
-
-
-};
-
-const busJsonHandling = {
-
-makeRaw(refArl) {
-
-    const json = {
-        name: this.name
-    };
-
-    // the wire
-    json.start = convert.pointToString(this.wire[0]);
-    json.wire = convert.wireToString(this.wire);
-
-    // done
-    return json
-},
-
- 
-cook(raw, modcom) {
-    
-    // set the name
-    this.name = raw.name;
-
-    // save the path and labels for this bus
-    this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire);
-
-    // ** pathological ** should not happen
-    if (this.wire.length == 1) this.wire.push(this.wire[0]);
-
-    // place the labels..
-    this.startLabel.place();
-    this.endLabel.place();
-},
-
-
-};
-
-const busDrawing = {
-    
-    // draw freely with x/y segments - do not pass beyond arrows that are attached to the bus
-    drawXY(next) {
-
-        const L = this.wire.length;
-
-        // notation
-        const r1 = this.wire[L - 2];
-        const r2 = this.wire[L - 1];
-        const wBus = style.bus.wCable;
-        const hLabel = this.endLabel.rect.h;
-        let limit = null;
-
-        const vertical = r2.x == r1.x;
-        const horizontal = r2.y == r1.y;
-
-        // the first segment x==y
-        if (vertical && horizontal) {
-
-            // the first two points of the wire are the same, so seperate them...
-            (Math.abs(next.x - r1.x) < Math.abs(next.y - r1.y)) ? r2.y = next.y : r2.x = next.x;
-        }
-        // Horizontal - moving in x direction
-        else if (horizontal) {
-
-            // change to vertical ?
-            if (Math.abs(next.y - r2.y) > style.bus.split) {
-
-                // create a new segment
-                this.wire.push({x:r2.x, y:next.y});
-            }
-            else {
-
-                // if there are widgets we have to do an additional check - we do not move beyond widgets
-                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
-                    if ((r1.x < r2.x)&&(next.x < limit.r + wBus/2)) next.x = limit.r + wBus/2;
-                    if ((r1.x > r2.x)&&(next.x > limit.l - wBus/2)) next.x = limit.l - wBus/2;
-                }
-
-                // set the next x value
-                r2.x = next.x;
-
-                // remove the segment if too small 
-                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.bus.tooClose)) this.wire.pop();
-            }
-        }
-        // Vertical - moving in the y-direction
-        else if (vertical) {
-
-            // change to horizontal ?
-            if (Math.abs(next.x - r2.x) > style.bus.split) {
-
-                // new segment
-                this.wire.push({x:next.x, y:r2.y});
-            }
-            else {
-                // if there are widgets we have to do an additional check - we do not move beyond widgets
-                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
-                    if ((r1.y < r2.y)&&(next.y < limit.b )) next.y = limit.b;
-                    if ((r1.y > r2.y)&&(next.y > limit.t - hLabel/2)) next.y = limit.t - hLabel/2;
-                }
-
-                // set the next y value
-                r2.y = next.y;
-
-                // check if points are getting too close
-                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.bus.tooClose)) this.wire.pop();
-            }
-        }
-
-        // reposition the labels of the bus
-        this.startLabel.place();
-        this.endLabel.place();
-    },
-
-    resumeDrawXY(label,pos,delta) {
-        // switch the direction of the bus if the startlabel is moved
-        if (label == this.startLabel) this.reverse();
-
-        // notation
-        const p = this.wire;
-        const pa = p[p.length-2];
-        const pb = p[p.length-1];
-
-        // check is we need to switch horizontal/vertical
-        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.bus.split) ? pos.x : pb.x + delta.x;
-        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.bus.split) ? pos.y : pb.y + delta.y;
-
-        // draw the bus
-        this.drawXY({x,y});
-    },
-
-    // reverses the path of the bus - switches end and start label
-    reverse() {
-        [this.startLabel, this.endLabel] = [this.endLabel, this.startLabel];
-
-        const p = this.wire;
-        const L = p.length;
-
-        // reverse the points - if l is uneven the middle point stays, which is ok
-        for (let i=0; i<L/2; i++) [p[i], p[L-i-1]] = [p[L-i-1], p[i]];
-
-        // the segment number for the arrows has to be adapted as well
-        this.tacks.forEach( tack => tack.segment = L - tack.segment);
-    },
-
-    // returns the zone where there are widgets on the segment
-    getLimit(segment) {
-
-        let limit=null;
-
-        this.tacks.forEach( tack => {
-            if (tack.segment == segment) {
-                const rc = tack.rect;
-                if (limit) {
-                    if (rc.x < limit.l)         limit.l = rc.x;
-                    if (rc.x + rc.w > limit.r)  limit.r = rc.x + rc.w;
-                    if (rc.y < limit.t)         limit.t = rc.y;
-                    if (rc.y + rc.h > limit.b)  limit.b = rc.y + rc.h;
-
-                }
-                else limit = {l: rc.x, r:rc.x + rc.w, t: rc.y, b:rc.y + rc.h};
-            }
-        });
-        return limit
-    },
-
-    // move the bus and the tacks - but not the routes - used in selection move
-    move(dx, dy) {
-
-        // move all segments
-        for(const point of this.wire) {
-            point.x += dx;
-            point.y += dy;
-        }
-
-        // move the labels
-        this.startLabel.move(dx,dy);
-        this.endLabel.move(dx,dy);
-
-        // move the tacks
-        for(const tack of this.tacks) {
-            tack.rect.x += dx;
-            tack.rect.y += dy;
-        }
-    },
-
-    // 
-    drag(delta) {
-
-       // move all segments
-       for(const point of this.wire) {
-            point.x += delta.x;
-            point.y += delta.y;
-        }
-
-        // move the labels
-        this.startLabel.move(delta.x, delta.y);
-        this.endLabel.move(delta.x, delta.y);
-
-        // move the tacks and the route
-        for(const tack of this.tacks) tack.moveXY(delta.x, delta.y);
-    },
-
-    // move the routes that originated from the bus
-    moveRoutes(x,y) {
-        this.tacks.forEach( (tack) => { 
-            if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y);
-        });
-    },
-
-    // returns the widget zone of the two adjacent segments
-    getCombinedLimit(s1,s2) {
-
-        let limit1 = this.getLimit(s1);
-        let limit2 = this.getLimit(s2);
-
-        if (limit1 && limit2) {
-            if (limit2.l < limit1.l) limit1.l = limit2.l;
-            if (limit2.r > limit1.r) limit1.r = limit2.r;
-            if (limit2.t < limit1.t) limit1.t = limit2.t;
-            if (limit2.b > limit1.b) limit1.b = limit2.b;
-        }
-        return limit1 ? limit1 : limit2
-    },
-
-    // move the segment if possible
-    moveSegment(segment, delta) {
-
-        // notation
-        let p = this.wire;
-        const dx = delta.x;
-        const dy = delta.y;
-
-        // get the forbidden zone in which the segment cannot move
-        let limit = this.getCombinedLimit(segment-1, segment+1);
-
-        // segment is defined by two points
-        let a = p[segment-1];
-        let b = p[segment];
-
-        // horizontal segment
-        if (a.y == b.y) {
-            // if the new point is not in the forbidden zone, it can move
-            if ((limit == null) || (a.y > limit.b)&&(a.y+dy > limit.b) || (a.y < limit.t)&&(a.y+dy < limit.t)) {
-                a.y += dy;
-                b.y += dy;
-
-                for (const tack of this.tacks) if (tack.segment == segment) tack.moveY(dy);
-            }
-        }
-        // vertical segment
-        else if (a.x == b.x) {
-           // if the new point is not in the forbidden zone, it can move
-            if ((limit == null) || (a.x > limit.r)&&(a.x+dx > limit.r) || (a.x < limit.l)&&(a.x+dx < limit.l)) {
-                a.x += dx;
-                b.x += dx;
-
-                for (const tack of this.tacks) if (tack.segment == segment) tack.moveX(dx);
-            }
-        }
-        // labels have to be moved if the first or last segment has been moved
-        if (segment == 1) this.startLabel.place(); 
-        if (segment == p.length - 1) this.endLabel.place(); 
-    },
-
-    placeTacks(segment,dx,dy) {
-        for (const tack of this.tacks) tack.orient();
-    },
-
-    removeTwoPoints(segment) {
-
-        // remove  the segment from the bus
-        const p = this.wire;
-        const L = p.length;
-
-        // we remove two points from the array
-        for (let i = segment; i < L-2; i++) p[i] = p[i+2];
-
-        // remove the two last points..
-        p.pop();
-        p.pop();
-
-        // ..and reassign widgets to a different segment...
-        this.tacks.forEach( w => { if (w.segment > segment) w.segment -= 2; });
-    },
-
-    // check if the segment has to be fused wit previous/next
-    fuseSegment(s) {
-
-        let p = this.wire;  
-
-        // check
-        if (p.length < 3) return
-        
-        // notation
-        const deltaMin = style.bus.tooClose;
-
-        // horizontal segment
-        if (p[s-1].y == p[s].y) {
-
-            // check next
-            if ((s < p.length-2)&&(Math.abs(p[s+1].y - p[s].y) < deltaMin)) {
-                p[s-1].y = p[s+1].y;
-                this.removeTwoPoints(s);
-            }
-            // or previous
-            else if ((s > 1)&&(Math.abs(p[s-2].y - p[s-1].y) < deltaMin)) {
-                p[s].y = p[s-2].y;
-                this.removeTwoPoints(s-2);
-            }
-        }
-        // vertical segment
-        else if (p[s-1].x == p[s].x) {
-
-            // check next
-            if ((s < p.length-2)&&(Math.abs(p[s+1].x - p[s].x) < deltaMin)) {
-                p[s-1].x = p[s+1].x;
-                this.removeTwoPoints(s);
-            }
-            // or previous
-            else if ((s > 1)&&(Math.abs(p[s-2].x - p[s-1].x) < deltaMin)) {
-                p[s].x = p[s-2].x;
-                this.removeTwoPoints(s-2);
-            }
-        }
-        // place the labels - not always necessary but saves time ...
-        this.startLabel.place(); 
-        this.endLabel.place(); 
-    },
-
-    // after a bus move 
-    adjustRoutes() {
-
-        for(const tack of this.tacks) {
-            tack.route.adjust();
-        }
-    },
-
-    // closest tack
-    closestTack(widget) {
-    },
-
-    straightConnections() {
-
-        for(const tack of this.tacks) {
-
-            // take the route
-            const route = tack.route;
-
-            // other end of the route
-            const other = route.to == tack ? route.from : route.to;
-
-            // get the two points of the bus segment
-            let a = this.wire[tack.segment-1];
-            let b = this.wire[tack.segment];
-
-            // only vertical segment
-            if (a.x == b.x) {
-
-                // arrange
-                [a, b] = a.y > b.y ? [b, a] : [a, b];
-
-                // check 
-                if (other.rect.y > a.y && other.rect.y < b.y) {
-
-                    // move the tack
-                    tack.rect.y = other.rect.y + other.rect.h/2 - tack.rect.h/2;
-
-                    // straighten the route
-                    for(const p of route.wire) p.y = other.rect.y + other.rect.h/2;
-                }
-            }
-        }
-    }
-    
-};
-
-// a bus groups a number of connections
-
-function Bus(name, from, uid = null) {
-
-    // unique identifier for the bus
-    this.uid = uid;
-
-    // save the name
-    this.name = name ?? '';
-
-    // note that a widget id is never 0 ! currently not used
-    this.widGenerator = 0;
-
-    // state
-    this.is = {
-        bus: true,
-        selected: false,
-        hoverOk: false,
-        hoverNok : false,
-        highLighted: false
-    };
-
-    // incoming connections
-    this.rxTable = [];
-
-    // outgoing connections
-    this.txTable = [];
-
-    // set the start and endpoint of the bus before defining the labels
-    this.wire = [];
-    this.wire.push({x:from.x, y:from.y});
-    this.wire.push({x:from.x, y:from.y});
-
-    // w and h for the labels - w is set by place()
-    const h = style.bus.hLabel;
-    const w = 0;
-
-    // now set the labels
-    this.startLabel  = new BusLabel({x:0, y:0, w,h}, this);
-    this.endLabel = new BusLabel({x:0, y:0, w,h}, this);
-
-    // place the two labels
-    this.startLabel.place();
-    this.endLabel.place();
-
-    // the contacts on the bus
-    this.tacks = [];
-}
-Bus.prototype = {
-
-    render(ctx) {
-
-        if (this.wire.length < 2) return
-
-        const st = style.bus;
-
-        const cLine =     this.is.hoverNok ? st.cBad 
-                        : this.is.selected || this.is.hoverOk ? st.cSelected
-                        : this.is.highLighted ? st.cHighLighted
-                        : st.cNormal;
-
-        // Draw a bus or a cable...
-        shape.drawBus(ctx,this.wire, cLine, st.wCable);
-
-        // render the two labels
-        this.startLabel.render(ctx);
-        this.endLabel.render(ctx);
-
-        // also render the tacks
-        this.tacks.forEach( tack => tack.render(ctx) );
-    },
-
-    generateWid() {
-        return ++this.widGenerator
-    },
-
-    highLight() {
-
-        // the bus itself
-        this.is.highLighted = true;
-
-        // the labels
-        this.startLabel.highLight();
-        this.endLabel.highLight();
-
-        // the tacks and routes
-        for (const tack of this.tacks) tack.route.highLight();
-    },
-
-    unHighLight() {
-        
-        this.is.highLighted = false;
-
-        this.startLabel.unHighLight();
-        this.endLabel.unHighLight();
-
-        for (const tack of this.tacks) tack.route.unHighLight();
-    },
-
-    // returns zap, bus, label, tack, segment
-    hitTest(pos) {
-
-        // check the label
-        let label =   inside(pos, this.startLabel.rect) ? this.startLabel 
-                    : inside(pos, this.endLabel.rect) ? this.endLabel 
-                    : null;
-                    
-        if (label) return [zap.busLabel, this, label, null, 0]
-
-        // check the segments
-        let segment = this.hitSegment(pos);
-        if (segment) return [zap.busSegment, this, null, null, segment]
-
-        // check the tacks
-        for (const tack of this.tacks) {
-
-            // check if inside the rectangle
-            if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
-
-            if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
-        }
-
-        // nothing
-        return [zap.nothing, null, null, null, 0]
-    },
-
-    // returns the segment that was hit
-    hitSegment(pos) {
-        
-        // notation
-        const L = this.wire.length;
-        const x = pos.x;
-        const y = pos.y;
-
-        // check if the point lies on the route
-        for (let i=0; i<L-1; i++) {
-
-            const a = this.wire[i];
-            const b = this.wire[i+1];
-
-            // the precision in pixels
-            const d = 5;
-
-
-            // horizontal
-            if (a.y == b.y) {
-                if ((y > a.y - d) && (y < a.y + d))
-                    if (((x >= a.x) && (x <= b.x)) || ((x >= b.x) && (x <= a.x))) return i+1
-            }
-            // vertical
-            else {
-                if ((x > a.x - d) && (x < a.x + d))
-                    if (((y >= a.y) && (y <= b.y)) || ((y >= b.y) && (y <= a.y))) return i+1
-            }
-        }
-        // no hit
-        return 0
-    },
-
-    singleSegment() {
-        return (this.wire.length === 2)
-    },
-
-    hitRoute(pos) {
-
-        let segment = 0;
-        for (const tack of this.tacks) {
-            if ((tack.route.from == tack)&&(segment = tack.route.hitSegment(pos)))  return [zap.route, tack.route, segment]
-        }
-        return [zap.nothing, null, 0]
-    },
-
-    // check if (part of) the bus is inside the rectangle
-    overlap(rect) {
-        return segmentsInside(this.wire, rect)?.length > 0 ? true : false
-    },
-
-    findTack(from) {
-        return this.tacks.find( tack => (tack.route.from == from) || (tack.route.to == from))
-    },
-
-    removeTack(tack) {
-
-        eject(this.tacks, tack);
-    },
-
-    // make a connection netween a route and the bus segment 
-    // the route is conected at the route.to, i.e. route.to is null
-    addTack(route) {
-
-        // the other terminal of the route
-        const other = route.to == null ? route.from : route.to;
-
-        // we only accept one connection to the bus from the same pin/pad
-        if (this.findTack(other)) return null
-
-        // create the widget
-        const newTack = new BusTack(this);
-
-        // set the route for this tack
-        newTack.setRoute(route);
-
-        // save the tack on this bus
-        this.tacks.push(newTack);
-
-        // return the widget
-        return newTack
-    },
-
-    newTack(alias = null) {
-        // make a tack
-        const tack = new BusTack(this);
-
-        // set the alias if any
-        if (alias) tack.alias = alias;
-
-        // set the tack
-        this.tacks.push(tack);
-
-        // done
-        return tack
-    },
-
-    // copies labels and points - after cloning both buses are still conncted to the same tacks !
-    copy() {
-        // create a new bus
-        const newBus = new Bus( this.name, this.wire[0], this.uid);
-
-        // copy the wire 
-        newBus.wire = this.copyWire();
-
-        // place the labels again
-        newBus.startLabel.place();
-        newBus.endLabel.place();
-
-        // done
-        return newBus
-    },
-
-    copyTacks(newBus, newRoot) {
-
-        // copy the tacks
-        for (const tack of this.tacks) {
-
-            // clone the route - the from and to widgets are still the old ones
-            const newRoute = tack.route.clone();
-
-            // make a new tack
-            const newTack = new BusTack(newBus);
-
-            // replace the old tack with the new
-            newRoute.to.is.tack ?  newRoute.to = newTack : newRoute.from = newTack;
-
-            // set the route
-            newTack.setRoute(newRoute);
-
-            // now find the copied node where the route starts - first shorten the notation
-            const other = newRoute.to.is.tack ? newRoute.from : newRoute.to;
-
-            // the other end can be a pin or a pad
-            if (other.is.pin) {
-
-                // find the other node in the new root 
-                const node = newRoot.nodes.find( node => node.uid == other.node.uid);
-
-                // find the other widget
-                const pin = node.look.findPin(other.name, other.is.input);
-
-                // and save the newly found other again in the route itself
-                newRoute.to.is.tack ? newRoute.from = pin : newRoute.to = pin;
-
-                // save the route also in the other
-                pin.routes.push( newRoute );
-            }
-            else if (other.is.pad) {
-
-                // find the corresponding pad in the newRoot
-                const pad = newRoot.pads.find( pd => pd.proxy.name == other.proxy.name);
-
-                // and save the newly found other again in the route itself
-                newRoute.to.is.tack ? newRoute.from = pad : newRoute.to = pad;
-
-                // save the route also
-                pad.routes.push(newRoute);
-            }
-
-            // save the widget in the new bus
-            newBus.tacks.push(newTack);
-        }
-    },
-
-    // used for undo/redo
-    copyWire() {
-        const copy = [];
-        for (const point of this.wire) copy.push({...point});
-        return copy
-    },
-
-    restoreWire(copy) {
-        this.wire = [];
-        for (const point of copy) this.wire.push({...point});
-    },
-
-    // make a copy of the segment and the route points of the links on the bus
-    copyTackWires() {
-
-        const copy = [];
-        for (const tack of this.tacks) {
-            const track = tack.route.copyWire();
-            copy.push({segment: tack.segment, track});
-        }
-        return copy
-    },
-
-    restoreTackWires(copy) {
-
-        // the links and the copy array have the same size !!
-        const tacks = this.tacks;
-        const L = tacks.length;
-        for(let i = 0; i < L; i++) {
-
-            tacks[i].segment = copy[i].segment;
-            tacks[i].route.restoreWire(copy[i].track);
-        }
-    },
-};
-Object.assign(Bus.prototype, busConnect, busJsonHandling, busDrawing);
 
 // The x values of the elements of the test model
 const X = {

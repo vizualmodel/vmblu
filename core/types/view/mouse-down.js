@@ -1,6 +1,7 @@
 import {zap, NONE, SHIFT, CTRL, ALT} from './mouse.js'
 import {doing} from './view-base.js'
 import {selex} from './selection.js'
+import {Route} from '../node/index.js'
 
 export const mouseDownHandling = {
 
@@ -31,7 +32,7 @@ export const mouseDownHandling = {
         keys === (CTRL|ALT) ?  this.mouseHitRoutes(xyLocal) : this.mouseHit(xyLocal)
 
         // check if we need to cancel the selection
-        if (this.selection.canCancel(hit)) this.selection.reset()
+        if (this.selection.canCancel(hit, keys)) this.selection.reset()
 
         // check what we have to do
         switch(hit.what){
@@ -301,8 +302,8 @@ export const mouseDownHandling = {
 
                     case SHIFT:{
 
-                        //The mouse down route is deleted but saved if it would need to be restored
-                        this.doEdit(tx,'deleteRoute',{route: hit.route, oldRoute: hit.route.clone()})
+                        // Save the original route so undo can restore it after rerouting.
+                        this.doEdit(tx,'deleteRoute',{view: this, route: hit.route, oldRoute: hit.route.clone()})
                     
                         // and start rerouting
                         hit.route.resumeDrawing(hit.routeSegment, xyLocal)
@@ -317,6 +318,16 @@ export const mouseDownHandling = {
                     break
 
                     case CTRL:{
+                        const conversion = this.root.convertRouteToCable(hit.route, hit.routeSegment, xyLocal, true)
+                        const pendingRoute = conversion?.pending?.route
+
+                        if (!pendingRoute) break
+
+                        this.doEdit(tx,'routeToCable',{conversion})
+
+                        pendingRoute.select()
+                        this.stateSwitch(doing.routeDraw)
+                        state.route = pendingRoute
                     }
                     break
 
@@ -600,16 +611,48 @@ export const mouseDownHandling = {
                     break
 
                     case SHIFT:{
+                        if (hit.bus.is.cable) {
+                            state.bus = hit.bus
+                            state.busSegment = hit.busSegment
+                            state.bus.is.selected = true
+                            state.modo.wire = hit.bus.copyWire()
+                            state.modo.tacks = hit.bus.tacks.slice()
+                            state.modo.tackWires = hit.bus.copyTackWires()
+
+                            hit.bus.resumeDrawing(hit.busSegment, xyLocal)
+
+                            this.stateSwitch(doing.busDraw)
+                        }
                     }
                     break
 
                     case CTRL:{
 
-                        state.bus = hit.bus
-                        state.bus.is.selected = true
-                        state.modo.wire = hit.bus.copyWire()
-                        state.modo.wires = hit.bus.copyTackWires()
-                        this.stateSwitch(doing.busDrag)
+                        const trunk = hit.bus
+                        const segment = hit.busSegment
+                        const a = trunk.wire[segment - 1]
+                        const b = trunk.wire[segment]
+                        const point = {x: xyLocal.x, y: xyLocal.y}
+
+                        if (a.x === b.x) {
+                            point.x = a.x
+                            point.y = Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))
+                        }
+                        else {
+                            point.x = Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x))
+                            point.y = a.y
+                        }
+
+                        const tack = trunk.newTack()
+                        tack.placeOnSegment(point, segment)
+
+                        const route = new Route(tack, null)
+                        route.wire = [{...tack.center()}, {...tack.center()}]
+                        tack.route = route
+
+                        route.select()
+                        this.stateSwitch(doing.routeDraw)
+                        state.route = route
                     }
                     break
 
@@ -642,8 +685,8 @@ export const mouseDownHandling = {
                         // stateswitch
                         state.route = route
 
-                        //delete the mouse down route
-                        this.doEdit(tx,'deleteRoute',{route, oldRoute: route.clone()})
+                        // Save the original route so undo can restore it after rerouting.
+                        this.doEdit(tx,'deleteRoute',{view: this, route, oldRoute: route.clone()})
 
                         // and start rerouting from the last segment
                         route.resumeDrawing(route.wire.length-1, xyLocal)      

@@ -11,9 +11,9 @@ arrow(A, B) {
     // pin pad
     if (B.is.pad) return {right: !B.proxy.is.input, left: B.proxy.is.input}
 
-    // pin bus | pad bus
-    if (B.is.bus) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
-                                    : {right: A.proxy.is.input, left: !A.proxy.is.input}
+    // pin/pad to shared trunk (bus or cable)
+    if (B.is.bus || B.is.cable) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
+                                                : {right: A.proxy.is.input, left: !A.proxy.is.input}
 },
 
 // A and B are two pin widgets (actual or proxy)
@@ -311,6 +311,70 @@ rxtxPadBusDisconnect() {
     }
 },
 
+rxtxBusBus() {
+    const [A, B] = [this.from, this.to]
+    const listA = this.endpointTacksAcrossBridge(A, this)
+    const listB = this.endpointTacksAcrossBridge(B, this)
+    const {srcList, dstList} = this.connectedEndpointsFromTacks(listA, listB)
+
+    this.fullConnect(srcList, dstList)
+},
+
+rxtxBusBusDisconnect() {
+    const [A, B] = [this.from, this.to]
+    const listA = this.endpointTacksAcrossBridge(A, this)
+    const listB = this.endpointTacksAcrossBridge(B, this)
+    const {srcList, dstList} = this.connectedEndpointsFromTacks(listA, listB)
+
+    this.fullDisconnect(srcList, dstList)
+},
+
+endpointTacksAcrossBridge(start, blockedRoute, visited = new Set()) {
+    const list = []
+
+    if (!start?.is?.tack || visited.has(start)) return list
+    visited.add(start)
+
+    for (const tack of start.bus.tacks) {
+        if (tack === start) continue
+        if (!tack.route?.from || !tack.route?.to) continue
+        if (tack.route === blockedRoute) continue
+
+        const other = tack.getOther()
+
+        if (other.is.tack) {
+            list.push(...this.endpointTacksAcrossBridge(other, blockedRoute, visited))
+        }
+        else {
+            list.push(tack)
+        }
+    }
+
+    return list
+},
+
+actualEndpoint(widget) {
+    if (widget?.is?.pin) return widget
+    if (widget?.is?.pad) return widget.proxy
+    return null
+},
+
+connectedEndpointsFromTacks(listA, listB) {
+    const srcList = []
+    const dstList = []
+
+    for (const tackA of listA) for (const tackB of listB) {
+        if (!tackA.areConnected(tackB)) continue
+
+        const actualA = this.actualEndpoint(tackA.getOther())
+        const actualB = this.actualEndpoint(tackB.getOther())
+
+        actualA.is.input ? (srcList.push(actualB), dstList.push(actualA)) : (srcList.push(actualA), dstList.push(actualB))
+    }
+
+    return {srcList, dstList}
+},
+
 // just need to make a single connection
 singleConnect(src, dst){
 
@@ -330,37 +394,17 @@ fullConnect(srcList, dstList) {
     // we have a list of out and ins that we have to connect 
     for(const src of srcList) {
 
-        if (src.is.pin) {
+        // find the entry in the conx table that corresponds to the pin 
+        const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name )
 
-            // find the entry in the conx table that corresponds to the pin 
-            const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name )
-
-            /** debug should not happen */
-            if (!txRecord) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullConnect', src.name, src.node.name)
-                continue
-            }
-
-            // for each entry in the dstlist, add a destination
-            for(const dst of dstList) txRecord.targets.push(dst)
+        /** debug should not happen */
+        if (!txRecord) {
+            console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullConnect', src.name, src.node.name)
+            continue
         }
-        // a tack here means that the route is connected through a bus
-        else if (src.is.tack) {
 
-            // find the entry in the conx table that corresponds to the tack
-            const txTack = src.bus.txTable.find( txTack => txTack.tack == src )    
-
-            /** debug should not happen */
-            if (!txTack) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullConnect', src.bus.name)
-                continue
-            }            
-
-            // for each entry in the dstlist, add a destination
-            for(const dst of dstList) {
-                txTack.fanout.push(dst)
-            }
-        }
+        // for each entry in the dstlist, add a destination
+        for(const dst of dstList) txRecord.targets.push(dst)
     }
 },
 
@@ -369,36 +413,17 @@ fullDisconnect(srcList, dstList) {
 
     for(const src of srcList) {
 
-        // The source can be a tack or a pin
-        if (src.is.pin) {
+        // find the entry in the conx table that corresponds to the pin 
+        const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name )
 
-            // find the entry in the conx table that corresponds to the pin 
-            const txRecord = src.node.txTable.find( txRecord => txRecord.pin.name == src.name )
-
-            /** debug should not happen */
-            if (!txRecord) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name)
-                continue
-            }
-
-            // remove all the targets that are in the list of destinations
-            for(const dst of dstList) txRecord.dropTarget(dst)
-    
+        /** debug should not happen */
+        if (!txRecord) {
+            console.warn('*** SHOULD NOT HAPPEN *** Could not find txRecord in fullDisconnect', src.name, src.node.name)
+            continue
         }
-        else if (src.is.tack) {
 
-            // find the entry in the conx table that corresponds to the tack
-            const txTack = src.bus.txTable.find( txTack => txTack.tack == src )    
-
-            /** debug should not happen */
-            if (!txTack) {
-                console.warn('*** SHOULD NOT HAPPEN *** Could not find txTack in fullDisconnect', src.bus.name)
-                continue
-            }            
-
-            // remove all the dst in the fanout that are in the list of destinations
-            for(const dst of dstList) txTack.dropTarget(dst)
-        }
+        // remove all the targets that are in the list of destinations
+        for(const dst of dstList) txRecord.dropTarget(dst)
     }
 },
 

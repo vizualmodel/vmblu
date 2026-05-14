@@ -275,7 +275,7 @@ undoTransferToSelection(group, shift, padRoutes) {
         node.look.moveRoutes(dx, dy)
 
         // take them out of the nodes array
-        view.root.removeNode(node)
+        this.root.removeNode(node)
     }
 
     // move the buses to the parent node as well
@@ -287,15 +287,15 @@ undoTransferToSelection(group, shift, padRoutes) {
         // move the routes
         bus.moveRoutes(dx, dy)
 
-        // remove the bcakplane
-        group.removeBus(bus)
+        // remove it from the parent view again
+        this.root.removeBus(bus)
     }
 
     // reconnect all the pad routes
     for(const route of padRoutes) route.reconnect()
 
     // put the node back in the view
-    view.root.restoreNode(group)
+    this.root.restoreNode(group)
 }
 
 

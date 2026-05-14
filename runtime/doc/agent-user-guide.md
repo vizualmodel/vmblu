@@ -36,42 +36,22 @@ agent
 
 ## Configure An Agent
 
-Use the `rt-agent` runtime and add a `header.agent` block to the model:
+Use the `rt-agent` runtime and point `header.agent` at an agent sidecar:
 
 ```json
 {
   "header": {
     "runtime": "@vizualmodel/vmblu-runtime/rt-agent",
     "agent": {
-      "enabled": true,
-      "id": "solar-system-agent",
-      "title": "Solar System Agent",
-      "instructions": "Help the user operate the application through published vmblu capabilities.",
-      "llm": {
-        "provider": "openai",
-        "model": "gpt-4.1-mini",
-        "endpoint": "http://127.0.0.1:8080/v1"
-      },
-      "ui": {
-        "mode": "overlay",
-        "trace": true,
-        "traceWindow": "overlay"
-      },
-      "runtime": {
-        "environment": "browser"
-      },
-      "capabilities": {
-        "tools": ["camera_control"],
-        "probes": ["camera.active"],
-        "events": ["camera.changed"]
-      },
-      "limits": {
-        "maxToolCallsPerTurn": 10
-      }
+      "path": "./solar-system.agent.json"
     }
   }
 }
 ```
+
+The agent sidecar contains the enabled flag, identity, instructions, provider
+settings, UI settings and runtime limits. The generated capability manifest
+remains model-derived and is written separately as `<model-name>.cap.json`.
 
 Do not store provider secrets or API keys in `.mod.blu`. In the browser demo,
 the app talks to a local OpenAI-compatible bridge via `endpoint`.
@@ -226,6 +206,14 @@ vmblu make-app solar-system.mod.blu
 For `rt-agent` models, the generated app should contain:
 
 ```js
+import capabilities from './solar-system.cap.json' with { type: 'json' }
+import agent from './solar-system.agent.json' with { type: 'json' }
+
+const agentRuntimeOptions = {
+  capabilities,
+  agent
+}
+
 const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
 ```
 

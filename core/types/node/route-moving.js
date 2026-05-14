@@ -3,6 +3,71 @@ import {style} from '../util/index.js'
 
 export const routeMoving = {
 
+    tackOnHorizontalTrunk(tack) {
+        const trunk = tack?.bus
+        const a = trunk?.wire?.[tack.segment - 1]
+        const b = trunk?.wire?.[tack.segment]
+
+        return !!(a && b && a.y === b.y)
+    },
+
+    adjustCableEndpoint(tack, otherCenter) {
+        if (!tack?.bus?.is?.cable || !tack.is.endpoint) return false
+
+        const cable = tack.bus
+        const wire = cable?.wire
+        if (!wire || wire.length < 2) return false
+
+        const moveTacksOnSegment = (segment, delta, axis) => {
+            for (const otherTack of cable.tacks) {
+                if (otherTack.is.endpoint || otherTack.segment != segment) continue
+
+                axis == 'x' ? otherTack.moveX(delta) : otherTack.moveY(delta)
+            }
+        }
+
+        const tackCenter = tack.center()
+        const first = wire[0]
+        const last = wire.at(-1)
+        const firstDistance = Math.hypot(tackCenter.x - first.x, tackCenter.y - first.y)
+        const lastDistance = Math.hypot(tackCenter.x - last.x, tackCenter.y - last.y)
+
+        if (firstDistance <= lastDistance) {
+            const next = wire[1]
+            const horizontal = first.y === next.y
+            const delta = horizontal ? otherCenter.y - first.y : otherCenter.x - first.x
+
+            first.x = otherCenter.x
+            first.y = otherCenter.y
+            horizontal ? next.y = otherCenter.y : next.x = otherCenter.x
+            moveTacksOnSegment(1, delta, horizontal ? 'y' : 'x')
+            tack.placeOnSegment(otherCenter, 1)
+        }
+        else {
+            const previous = wire.at(-2)
+            const horizontal = previous.y === last.y
+            const segment = wire.length - 1
+            const delta = horizontal ? otherCenter.y - last.y : otherCenter.x - last.x
+
+            last.x = otherCenter.x
+            last.y = otherCenter.y
+            horizontal ? previous.y = otherCenter.y : previous.x = otherCenter.x
+            moveTacksOnSegment(segment, delta, horizontal ? 'y' : 'x')
+            tack.placeOnSegment(otherCenter, segment)
+        }
+
+        const tackPoint = tack.center()
+        this.wire.length = 0
+        if (this.from === tack) {
+            this.wire.push({...tackPoint}, {...otherCenter})
+        }
+        else {
+            this.wire.push({...otherCenter}, {...tackPoint})
+        }
+
+        return true
+    },
+
     // moves a segment horizontally or vertically
     moveSegment(s,delta) {
 
@@ -198,15 +263,37 @@ export const routeMoving = {
         const df = {x: fn.x - fp.x, y: fn.y - fp.y}
         const dt = {x: tn.x - tp.x, y: tn.y - tp.y}
 
+        if (from.is.tack && this.adjustCableEndpoint(from, tn)) return
+        if (to.is.tack && this.adjustCableEndpoint(to, fn)) return
+
         // check if both endpoints moved over the same distance - just move the route
         if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
 
         // adjust the routes - there are 3 topologies
-        if (to.is.tack) {
-            ( to.dir == "up"   || to.dir == "down")   ? this.adjustHV(fn,tn) : this.adjustHH(fn,tn)
+        if (from.is.tack && to.is.tack) {
+            if (this.tackOnHorizontalTrunk(from)) {
+                this.adjustTH(fn, tn)
+                return
+            }
+            if (this.tackOnHorizontalTrunk(to)) {
+                this.adjustHT(fn, tn)
+                return
+            }
+            this.adjustHH(fn, tn)
+        }
+        else if (to.is.tack) {
+            if (this.tackOnHorizontalTrunk(to)) {
+                this.adjustHT(fn, tn)
+                return
+            }
+            (to.bus?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
         }
         else if (from.is.tack) {
-            ( from.dir == "up" || from.dir == "down") ? this.adjustVH(fn,tn) : this.adjustHH(fn,tn)
+            if (this.tackOnHorizontalTrunk(from)) {
+                this.adjustTH(fn, tn)
+                return
+            }
+            (from.bus?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
         }
         else {
             this.adjustHH(fn,tn)      
@@ -335,5 +422,30 @@ export const routeMoving = {
         w.push({x: b.x, y: b.y})
     },
 
-}
+    // tack on horizontal trunk -> widget
+    adjustTH(a, b) {
+        const p = this.wire
+        if (p.length !== 3) return this.threePointRoute(false)
 
+        p[0].x = a.x
+        p[0].y = a.y
+        p[1].x = a.x
+        p[1].y = b.y
+        p[2].x = b.x
+        p[2].y = b.y
+    },
+
+    // widget -> tack on horizontal trunk
+    adjustHT(a, b) {
+        const p = this.wire
+        if (p.length !== 3) return this.threePointRoute(true)
+
+        p[0].x = a.x
+        p[0].y = a.y
+        p[1].x = b.x
+        p[1].y = a.y
+        p[2].x = b.x
+        p[2].y = b.y
+    },
+
+}

@@ -18,7 +18,9 @@ export const busConnect = {
             const other = tack.route.from == tack ? tack.route.to : tack.route.from
 
             // disconnect
-            other.is.pin ? tack.route.rxtxPinBusDisconnect() : tack.route.rxtxPadBusDisconnect()
+            other.is.tack ? tack.route.rxtxBusBusDisconnect()
+            : other.is.pin ? tack.route.rxtxPinBusDisconnect()
+            : tack.route.rxtxPadBusDisconnect()
             
             // remove the route at the pin also
             tack.route.remove()
@@ -34,16 +36,18 @@ export const busConnect = {
             this.tacks.push(tack)
 
             // place it (probably not necessary)
-            tack.orient()
+            tack.setRoute(tack.route)
 
             // the tack is connected to...
             const other = tack.route.to == tack ? tack.route.from : tack.route.to
 
             // add the route to the pin
-            other.routes.push(tack.route)
+            if (!other.is.tack) other.routes.push(tack.route)
 
             // change the rxtx tables...
-            other.is.pin ? tack.route.rxtxPinBus() : tack.route.rxtxPadBus()
+            other.is.tack ? tack.route.rxtxBusBus()
+            : other.is.pin ? tack.route.rxtxPinBus()
+            : tack.route.rxtxPadBus()
         }
     },
 
@@ -98,6 +102,7 @@ export const busConnect = {
 
         // create a tack
         const tack = new Widget.BusTack(this)
+        tack.setSelective(this.defaultTackSelectivity(widget))
 
         // place the tack at a the selected position on the bus
         tack.placeOnSegment(point, closest.segment)
@@ -118,14 +123,14 @@ export const busConnect = {
     rxtxPrepareTables() {
     },
     
-    rxtxResetTables() {
+    xxxrxtxResetTables() {
     
         this.txTable = []
         this.rxTable = []
     },
 
     // follow the routes to build the tx tables - recursive function
-    rxtxBuildRxTxTable() {
+    xxxrxtxBuildRxTxTable() {
     
         // for all the incoming tacks
         for (const tack of this.tacks) {
@@ -148,7 +153,7 @@ export const busConnect = {
     },
     
     // For an outgoing tack, we save the incoming connections
-    rxtxAddTxTack(tack, outgoing) {
+    xxxrxtxAddTxTack(tack, outgoing) {
     
         // make a record for the tack
         const txTack = new TxTack(tack)
@@ -161,7 +166,7 @@ export const busConnect = {
     },
     
     // removes a connection
-    rxtxRemoveTxTack(tack) {
+    xxxrxtxRemoveTxTack(tack) {
         
         // find the destination targets that corresponds with the transmitter and remove the enrty
         const index = this.txTable.findIndex( tx => tx.tack == tack)
@@ -169,13 +174,13 @@ export const busConnect = {
     },
 
     // For an incoming tack, we save the outgoing connections
-    rxtxAddRxTack(tack) {
+    xxxrxtxAddRxTack(tack) {
 
         this.rxTable.push(new RxTack(tack))
     },
 
     // removes a connection
-    rxtxRemoveRxTack(tack) {
+    xxxrxtxRemoveRxTack(tack) {
 
         // find the destination targets that corresponds with the transmitter and remove the enrty
         const index = this.rxTable.findIndex( tx => tx.tack == tack)

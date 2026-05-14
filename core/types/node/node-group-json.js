@@ -1,4 +1,7 @@
-import {Route, Bus, Pad} from './index.js'
+import {Route} from './route.js'
+import {Bus} from './bus.js'
+import {Cable} from './cable.js'
+import {Pad} from './pad.js'
 import {convert} from '../util/index.js'
 
 export const jsonHandling = {
@@ -23,6 +26,9 @@ export const jsonHandling = {
         // The nodes
         if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw(refArl))
 
+        // Give route serialization a stable cable reference without naming cables.
+        this.cables.forEach((cable, index) => cable._rawIndex = index)
+
         // get the routes and connections inside this group node
         const [routes, conx] = this.getRoutesAndConnections()
 
@@ -34,6 +40,11 @@ export const jsonHandling = {
 
         // the buses
         if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw(refArl))
+
+        // the cables
+        if (this.cables.length) raw.cables = this.cables.map( cable => cable.makeRaw(refArl))
+
+        this.cables.forEach(cable => delete cable._rawIndex)
 
         // save the routes (they are already in the raw format)
         if (routes.length) raw.routes = routes
@@ -102,6 +113,16 @@ export const jsonHandling = {
             this.buses.push(bus)
         }
 
+        // get the cables
+        if (raw.cables) for(const rawCable of raw.cables) {
+
+            const cable = new Cable({x:0, y:0})
+
+            cable.cook(rawCable, modcom)
+
+            this.cables.push(cable)
+        }
+
         // temp storage for the routes
         const routes = []
 
@@ -166,15 +187,37 @@ export const jsonHandling = {
             return null;
         }
 
-        // if the endpoint is a bus, make a tack
-        if (from.is.bus) from = from.newTack(source.alias);
-        if (to.is.bus) to = to.newTack(target.alias);
+        const defaultSelectivity = (trunk, widget) => trunk.defaultTackSelectivity?.(widget) ?? false
+
+        // if the endpoint is a bus or cable, make a tack
+        if (from.is.bus) from = from.newTack(source.alias, source.selective ?? defaultSelectivity(from, to));
+        if (from.is.cable) {
+            from = from.newTack(null, source.selective ?? defaultSelectivity(from, to));
+            from.is.endpoint = !!source.endpoint
+            from.is.bridge = !!source.bridge
+        }
+        if (to.is.bus) to = to.newTack(target.alias, target.selective ?? defaultSelectivity(to, from));
+        if (to.is.cable) {
+            to = to.newTack(null, target.selective ?? defaultSelectivity(to, from));
+            to.is.endpoint = !!target.endpoint
+            to.is.bridge = !!target.bridge
+        }
+
+        if (from.is.tack && to.is.tack) {
+            from.is.bridge = true
+            to.is.bridge = true
+        }
 
         // create the route
         const route = new Route(from, to)
 
-        // get the wire (for bustacks the center will be null, but that is not a problem)
-        route.wire = convert.stringToWire(from.center(), to.center(), rawRoute.wire)
+        // Tacks are placed from the restored wire, so their center is not meaningful yet.
+        // Build the wire from the concrete endpoint when one side is a bus/cable tack.
+        route.wire = convert.stringToWire(
+            from.is.tack ? null : from.center(),
+            to.is.tack ? null : to.center(),
+            rawRoute.wire
+        )
 
         // check if we have a route - otherwise make a route
         if (route.wire.length < 2) route.autoRoute(this.nodes)
@@ -220,6 +263,9 @@ export const jsonHandling = {
         }
 
         const findBus = (raw) => this.buses.find( bus => bus.name === raw.bus);
+        const findCable = (raw) => this.cables[raw.index ?? 0];
+        const hasBus = (raw) => Object.hasOwn(raw, 'bus')
+        const hasCable = (raw) => Object.hasOwn(raw, 'cable')
         // ---------
 
         let from = null, to = null;
@@ -227,16 +273,21 @@ export const jsonHandling = {
         if (source.pin) {
 
             from = findPin(source, false)
-            to = target.pin ? findPin(target, true) : target.pad ? findPad(target,false) : target.bus ? findBus(target) : null;
+            to = target.pin ? findPin(target, true) : target.pad ? findPad(target,false) : hasBus(target) ? findBus(target) : hasCable(target) ? findCable(target) : null;
         }
         else if (source.pad) {
 
-            from = target.pin ? findPad(source,true) : target.bus ? findPad(source,false) : null;
-            to =   target.pin ? findPin(target, true)  : target.bus ? findBus(target) : null;
+            from = target.pin ? findPad(source,true) : (hasBus(target) || hasCable(target)) ? findPad(source,false) : null;
+            to =   target.pin ? findPin(target, true)  : hasBus(target) ? findBus(target) : hasCable(target) ? findCable(target) : null;
         }
-        else if (source.bus) {
+        else if (hasBus(source)) {
 
             from = findBus(source)
+            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+        }
+        else if (hasCable(source)) {
+
+            from = findCable(source)
             to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
         }
 
@@ -257,6 +308,9 @@ export const jsonHandling = {
 
         // take the buses
         this.buses = otherNode.buses
+
+        // take the cables
+        this.cables = otherNode.cables
 
         // take the pads
         this.pads = otherNode.pads

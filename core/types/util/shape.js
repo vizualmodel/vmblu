@@ -45,6 +45,13 @@ circle(ctx, x,y,r, color) {
     ctx.stroke()
 },
 
+bullet(ctx,x,y,R,cFill) {
+    ctx.beginPath()
+    ctx.arc(x,y,R,0,2*Math.PI)
+    ctx.fillStyle = cFill
+    ctx.fill()
+},
+
 diamond(ctx,x,y,w,h,cFill) {
     ctx.beginPath()
     ctx.fillStyle = cFill
@@ -170,19 +177,7 @@ grid(ctx, x, y, w, h, dx, dy, cLine, cAxis) {
     ctx.stroke()
 },
 
-bullet(ctx,x,y,R,cLine,cFill) {
-    ctx.beginPath()
-    ctx.arc(x,y,R,0,2*Math.PI)
-    if (cFill) {
-        ctx.fillStyle = cFill
-        ctx.fill()
-    }
-    if (cLine) {
-        ctx.lineWidth = 1
-        ctx.strokeStyle = cLine
-        ctx.stroke()
-    }
-},
+
 
 textWidth(ctx,text) {
     return ctx.measureText(text).width
@@ -461,9 +456,41 @@ triangle(ctx, x,y,w,h,type,cFill) {
     ctx.fill()
 },
 
+bridge(ctx, x, y, r, color) {            
+
+    ctx.beginPath()
+
+    ctx.fillStyle = '#000000'
+    ctx.strokeStyle = color
+    ctx.lineWidth = 2
+    ctx.rect(x - r, y - r, 2 * r, 2 * r)
+    ctx.stroke()
+    ctx.fill()
+},
+
+selectiveTack(ctx, x, y, r, color) {
+
+    ctx.beginPath()
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1
+    ctx.arc(x,y,r,0,2*Math.PI)
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.fillStyle = '#000000'
+    ctx.arc(x,y,Math.max(1, r-1),0,2*Math.PI)
+    ctx.fill()
+},
+
+tack(ctx, x, y, r, color) {
+    ctx.beginPath()
+    ctx.fillStyle = color
+    ctx.arc(x,y,r,0,2*Math.PI)
+    ctx.fill()
+},
 
 // t is the width of the top segment
-tack(ctx, type, channel, top, rc,t,cFill) {
+xtack(ctx, type, channel, top, rc,t,cFill) {
 
     ctx.beginPath()
     ctx.fillStyle = cFill
@@ -516,34 +543,34 @@ tack(ctx, type, channel, top, rc,t,cFill) {
     ctx.fill()
 },
 
-// the text is centered in the label 
-hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+// // the text is centered in the label 
+// hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
-    ctx.beginPath();
-    ctx.fillStyle = cRect
-    shape._roundedRect(ctx,x,y,w,h,r)
-    ctx.fill();
+//     ctx.beginPath();
+//     ctx.fillStyle = cRect
+//     shape._roundedRect(ctx,x,y,w,h,r)
+//     ctx.fill();
 
-    // center the text
-    ctx.fillStyle = cText
-    ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h)  
-},
+//     // center the text
+//     ctx.fillStyle = cText
+//     ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h)  
+// },
 
-// the text is centered in the label 
-vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+// // the text is centered in the label 
+// vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
-    ctx.beginPath();
-    ctx.fillStyle = cRect
-    shape._roundedRect(ctx,x,y,w,h,r)
-    ctx.fill();
+//     ctx.beginPath();
+//     ctx.fillStyle = cRect
+//     shape._roundedRect(ctx,x,y,w,h,r)
+//     ctx.fill();
 
-    ctx.save();                 // Save the current state
-    ctx.translate(x,y);         // the rectangle is at the origin
-    ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
-    ctx.fillStyle = cText
-    ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w)  // center the text
-    ctx.restore();              // Restore the state
-},
+//     ctx.save();                 // Save the current state
+//     ctx.translate(x,y);         // the rectangle is at the origin
+//     ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
+//     ctx.fillStyle = cText
+//     ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w)  // center the text
+//     ctx.restore();              // Restore the state
+// },
 
 // draws three arches
 wirelessSymbol(ctx, x, y,r,color) {
@@ -565,13 +592,25 @@ wirelessSymbol(ctx, x, y,r,color) {
     ctx.stroke()
 },
 
+emptyLabel(ctx, x,y,r, color) {
+
+    ctx.beginPath()
+    ctx.fillStyle = color
+    ctx.arc(x,y,r,0,2*Math.PI)
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.strokeStyle = '#000000'
+    ctx.arc(x,y,r-2,0,2*Math.PI)
+    ctx.stroke()
+},
+
 // the text is centered in the label 
-hCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+hBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     // big filled oval
     ctx.beginPath();
     ctx.fillStyle = cRect
-    //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
     shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2)
     ctx.fill();
 
@@ -587,12 +626,11 @@ hCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 },
 
 // the text is centered in the label 
-vCableLabel(ctx,text,x,y,w,h,r,cRect,cText) {
+vBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
 
     // big filled oval
     ctx.beginPath();
     ctx.fillStyle = cRect
-    //shape._roundedRect(ctx, x-3, y-3, w+6, h+6, r+3)
     shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2)
     ctx.fill();
 

@@ -208,11 +208,11 @@ tackDrag: {
     },
     undo({tack, oldWire, newWire}) {
         tack.route.restoreWire(oldWire)
-        tack.orient()
+        tack.setRoute(tack.route)
     },
     redo({tack, oldWire, newWire}) {
         tack.route.restoreWire(newWire)
-        tack.orient()
+        tack.setRoute(tack.route)
     }
 },
 }

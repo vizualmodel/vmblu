@@ -121,6 +121,7 @@ function saveToLink() {
 }          		
 
 function unGroup() {
+	cm.doEdit('disconnectNode',{node: cm.node})
 	cm.doEdit('unGroup', {view: cm.view, node: cm.node})
 }
 

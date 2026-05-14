@@ -228,7 +228,7 @@ export const busDrawing = {
     },
 
     placeTacks(segment,dx,dy) {
-        for (const tack of this.tacks) tack.orient()
+        for (const tack of this.tacks) tack.setRoute(tack.route)
     },
 
     removeTwoPoints(segment) {

@@ -4,7 +4,7 @@ import {justKeyTable, ctrlKeyTable} from './view-keytable.js'
 
 export const keyboardHandling = {
 
-    // helper function
+    // helper function for debugging
     _logKey(e) {
         let keyStr = 'Key = '
         if (e.ctrlKey)  keyStr += 'ctrl ' 

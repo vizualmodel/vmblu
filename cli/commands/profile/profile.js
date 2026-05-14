@@ -70,7 +70,10 @@ export async function profile(argv = process.argv.slice(2)) {
     const model = new ModelBlueprint(arl);
 
     // Load raw model and types for contract checks.
-    await model.getRaw();
+    const raw = await model.getRaw();
+    if (!raw) {
+        throw new Error(`Could not load model raw data from ${modelPath}`);
+    }
     model.preCook();
 
     // create a model compile object - we do not need a uid generator

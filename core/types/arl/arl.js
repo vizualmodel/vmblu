@@ -103,7 +103,8 @@ resolve(path) {
 resolve_dbg(path) {
 
     const arl = this.resolve(path)
-    console.log(`%cresolved: ${path} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
+    //DEV ONLY
+    //console.log(`%cresolved: ${path} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
     return arl
 },
 

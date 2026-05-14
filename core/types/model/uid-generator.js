@@ -32,7 +32,7 @@ UIDGenerator.prototype = {
             // after 5 times we increase the length of the uid
             if (count > 4) this.uidLength++
         }
-        console.eror('*** FAILED TO MAKE A UNIQUE UID ***')
+        console.error('*** FAILED TO MAKE A UNIQUE UID ***')
 
         // return some value
         return '????'

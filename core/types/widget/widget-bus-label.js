@@ -7,12 +7,15 @@ export function BusLabel(rect, bus) {
     this.is = {
         busLabel: true,
         beingEdited: false,
-        highLighted: false,   
-        horizontal: true
+        highLighted: false
+//        horizontal: true
     }
 
     // the label text
     this.text = bus.name
+
+    // the zone for the label
+    this.zone = 'N' // N S E W
 
     // save the bus
     this.bus = bus
@@ -21,7 +24,20 @@ export function BusLabel(rect, bus) {
 // specific bullet functions
 const BusLabelFunctions = {
 
-    makeRect(a, b, w, h) {
+    makeRect(w, h) {
+
+        const wire = this.bus.wire
+        let [a,b] = (this == this.bus.startLabel) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)]
+        const zone = this.zone = (a.x === b.x) ? (a.y < b.y ? 'N' : 'S') : (a.x < b.x ? 'W' : 'E')
+
+        this.rect = zone == 'N' ? {x: a.x - h/2, y: a.y-w, h:w, w:h}
+                :   zone == 'S' ? {x: a.x - h/2, y: a.y, h:w, w:h}
+                :   zone == 'E' ? {x: a.x, y: a.y-h/2, h, w}
+                :   zone == 'W' ? {x: a.x - w, y: a.y-h/2, h, w}
+                :   {x:0,y:0,h, w}
+    },
+
+    xxmakeRect(a, b, w, h) {
 
         const rc = this.rect
 
@@ -50,13 +66,12 @@ const BusLabelFunctions = {
     place() {
         //notation
         const st = style.bus
-        const wire = this.bus.wire
 
         // set the size of the label
-        const sText = this.text.length * st.sChar + 2*st.hLabel;
+        const sText = this.text.length > 0 ? this.text.length * st.sChar + 2*st.hLabel : st.hLabel
 
-        // vertical or horizontal
-        (this == this.bus.startLabel) ? this.makeRect(wire[0], wire[1], sText, st.hLabel) : this.makeRect(wire.at(-1), wire.at(-2), sText, st.hLabel) 
+        // make the rectangle
+        this.makeRect(sText, st.hLabel)
     },
 
     // called when the editing starts
@@ -122,9 +137,17 @@ const BusLabelFunctions = {
                         : state.highLighted ? st.cHighLighted
                         : st.cNormal
 
+        // If there is no name we draw a small circular label
+        if (!this.text.length && !this.is.beingEdited) {
+
+            const rc = this.rect
+            shape.emptyLabel(ctx,rc.x + rc.w/2, rc.y + rc.h/2, st.radius,cLabel)
+            return
+        }
+
         // draw the label
-        this.is.horizontal  ? shape.hCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
-                            : shape.vCableLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
+        (this.zone == 'E' || this.zone == 'W')  ? shape.hBusLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
+                                                : shape.vBusLabel(ctx, this.text, rc.x, rc.y, rc.w, rc.h, st.radius,cLabel,st.cText)
     },
 
     setSize(ctx) {

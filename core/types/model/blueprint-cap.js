@@ -49,7 +49,7 @@ makeAndSaveCapabilities(capPath, root = null) {
     if (!capPath) return null
 
     const capArl = this.getArl().resolve(capPath)
-    capArl.save(this.makeCapabilityString(root))
+    capArl.save(this.makeCapabilityString(root)).catch(error => console.error(`Failed to save ${capArl.getPath()}:`, error))
 
     return capArl
 },

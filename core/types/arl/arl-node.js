@@ -38,8 +38,8 @@ sameDir(arl) {
 
     if (!this.url || !arl.url) return false
 
-    const slash1 = this.url.href.lastIndexOf('/')
-    const slash2 = arl.url.href.lastIndexOf('/')
+    const slash1 = this.url.lastIndexOf('/')
+    const slash2 = arl.url.lastIndexOf('/')
 
     return this.url.slice(0,slash1) === arl.url.slice(0, slash2)
 },
@@ -113,7 +113,8 @@ resolve(filePath) {
 resolve_dbg(filePath) {
 
     const arl = this.resolve(filePath)
-    console.log(`%cresolved: ${filePath} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
+    //DEV ONLY
+    //console.log(`%cresolved: ${filePath} using ${this._locator} to ${arl._locator}`, 'background: #ff0; color: #00f')
     return arl
 },
 

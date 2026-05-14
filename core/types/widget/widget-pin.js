@@ -78,7 +78,7 @@ Pin.prototype = {
         const pointRight = this.is.channel ? shape.ballTriangle : shape.rightTriangle;
 
         // debug : draws a green rectangle around the pin
-        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,cText, null)
+        // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,'#11aa77', null)
 
         const icons = this.is.capability ? (this.is.input ? 'T' : 'E') : null
 
