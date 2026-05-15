@@ -87,7 +87,7 @@ export const padRouteFunctions = {
 
             // a pad can be attached to a pin or a bus
             if (other.is.pin) other.routes.push(route)
-            else other.bus.push(other)
+            else other.cable.push(other)
         }
     },
 
@@ -316,7 +316,7 @@ export const padRouteFunctions = {
                 route.highLight()
             }
 
-            // if the other is a bustack also highlight the routes that go via the bus
+            // if the other is a CableTack also highlight the routes that go via the bus
             if (other.is.tack) other.highLightRoutes()
         }
     },
@@ -338,7 +338,7 @@ export const padRouteFunctions = {
             // check the 
             //if (other.is.proxy) other.pad.unHighLightRoutes()
 
-            // if the other is a bustack also highlight the routes that go via the bus
+            // if the other is a CableTack also highlight the routes that go via the bus
             if (other?.is.tack) other.unHighLightRoutes()
         }
     },
@@ -361,7 +361,7 @@ export const padRouteFunctions = {
 
                 // check all the bus routes
                 let found = false
-                for(const tack of other.bus.tacks) {
+                for(const tack of other.cable.tacks) {
 
                     // skip 
                     if (tack == other) continue
@@ -370,7 +370,7 @@ export const padRouteFunctions = {
                     const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to
 
                     // it could be that the route was not used
-                    if (other.bus.areConnected(this, busWidget)) {
+                    if (other.cable.areConnected(this, busWidget)) {
                         tack.route.is.notUsed = false
                         found = true
                     }

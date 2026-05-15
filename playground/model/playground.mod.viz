@@ -375,7 +375,7 @@
         "view": {
           "state": "closed",
           "rect": "x 1133 y -233 w 1488 h 1311",
-          "transform": "sx 1.000 sy 1.000 dx 1338.662 dy -587.602"
+          "transform": "sx 0.900 sy 0.900 dx 1355.060 dy -242.712"
         },
         "interfaces": [
           {
@@ -409,8 +409,8 @@
           "(5 L)x -101 y 388 w 98 h 15|node prompt",
           "(8 L)x -82 y 768 w 103 h 15|context menu",
           "(4 L)x -82 y 261 w 110 h 15|name and path",
-          "(12 R)x 700 y 293 w 71 h 15|folder.get",
-          "(2 R)x 791 y 206 w 81 h 15|modal div"
+          "(12 R)x 799 y 291 w 71 h 15|folder.get",
+          "(2 R)x 791 y 207 w 81 h 15|modal div"
         ],
         "nodes": [
           {
@@ -570,78 +570,78 @@
             ]
           }
         ],
-        "buses": [
+        "cables": [
           {
-            "name": "div",
-            "start": "x 546.6839516298635 y 124.5339663512093",
-            "wire": "y 1259.7"
+            "start": "x 613.6839516298635 y 119.5339663512093",
+            "wire": "y 1259.7",
+            "floating": true
           }
         ],
         "routes": [
           {
             "from": "(pin 4) folder.get @ path request",
             "to": "(pad 12) folder.get",
-            "wire": "x 35.0 y 129.0 x 316.0"
+            "wire": "x 118.3 y 127.0 x 331.7"
           },
           {
             "from": "(pin 2) modal div @ path request",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ node settings",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ name and path",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 4) folder.get @ name and path",
             "to": "(pad 12) folder.get",
-            "wire": "x 15.0 y 2.0 x 336.0"
+            "wire": "x 450.0"
           },
           {
             "from": "(pin 2) modal div @ pin profile",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ text block",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ doc settings",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ context menu",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 1) modal div @ runtime settings",
-            "to": "(bus) div",
-            "wire": "x 197.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 264.7"
           },
           {
             "from": "(pin 2) modal div @ confirm box",
-            "to": "(bus) div",
-            "wire": "x 190.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 257.7"
           },
           {
             "from": "(pin 4) modal div @ tool settings",
-            "to": "(bus) div",
-            "wire": "x 206.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 273.7"
           },
           {
             "from": "(pin 4) modal div @ event settings",
-            "to": "(bus) div",
-            "wire": "x 185.7"
+            "to": "(cable 0 nonselective)",
+            "wire": "x 252.7"
           },
           {
             "from": "(pad 11) confirm",
@@ -700,8 +700,8 @@
           },
           {
             "from": "(pad 2) modal div",
-            "to": "(bus) div",
-            "wire": "x -244.3"
+            "to": "(cable 0 nonselective)",
+            "wire": "x -177.3"
           }
         ]
       }
@@ -755,7 +755,7 @@
       {
         "from": "(pin 4) content size change @ editor page",
         "to": "(pin 38) size change @ view manager",
-        "wire": "x 113.7 y 50.0 x 422.3"
+        "wire": "x 102.8 y 50.0 x 433.2"
       },
       {
         "from": "(pin 8) div @ editor page",
@@ -830,7 +830,7 @@
       {
         "from": "(pin 14) save as @ side menu",
         "to": "(pin 37) file.save as @ document manager",
-        "wire": "x 160.6 y 701.0 x 82.4"
+        "wire": "x 169.3 y 701.0 x 73.7"
       },
       {
         "from": "(pin 2) div @ side menu",
@@ -895,7 +895,7 @@
       {
         "from": "(pin 37) canvas @ view manager",
         "to": "(pin 3) content div @ editor page",
-        "wire": "x -413.2 y -50.0 x -122.8"
+        "wire": "x -426.3 y -50.0 x -109.7"
       },
       {
         "from": "(pin 25) node settings (sx) @ view manager",
@@ -975,12 +975,12 @@
       {
         "from": "(pin 12) folder.get @ popups",
         "to": "(pin 40) folder.get @ workspace",
-        "wire": "x 50.2 y 558.0 x -1692.2"
+        "wire": "x 54.6 y 558.0 x -1696.6"
       },
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 5) modal div @ editor page",
-        "wire": "x 24.2 y 529.4 x -1291.0 y -572.4 x -50.2"
+        "wire": "x 39.5 y 529.4 x -1306.3 y -572.4 x -50.2"
       }
     ]
   }

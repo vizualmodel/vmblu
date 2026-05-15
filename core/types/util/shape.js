@@ -489,89 +489,6 @@ tack(ctx, x, y, r, color) {
     ctx.fill()
 },
 
-// t is the width of the top segment
-xtack(ctx, type, channel, top, rc,t,cFill) {
-
-    ctx.beginPath()
-    ctx.fillStyle = cFill
-
-    let {x,y,w,h} = rc
-
-    const r = 3
-    let cx = x + w/2
-    let cy = y + h/2
-
-    switch (type) {
-
-    case "up":
-        ctx.moveTo(x, y+h)
-        ctx.lineTo(x+w,y+h)
-        ctx.lineTo(x+(w+t)/2,y)
-        ctx.lineTo(x+(w-t)/2,y)
-        ctx.lineTo(x,y+h)
-        if (channel) cy = top ? y - r : y + h + r
-        break
-
-    case "down" :
-        ctx.moveTo(x,y)
-        ctx.lineTo(x+(w-t)/2,y+h)
-        ctx.lineTo(x+(w+t)/2,y+h)
-        ctx.lineTo(x+w,y)
-        ctx.lineTo(x,y)
-        if (channel) cy = top ? y + h + r : y - r
-        break
-
-    case "left" :
-        ctx.moveTo(x,y+(h-t)/2)
-        ctx.lineTo(x,y+(h+t)/2)
-        ctx.lineTo(x+w,y+h)
-        ctx.lineTo(x+w,y)
-        ctx.lineTo(x,y+(h-t)/2)
-        if (channel) cx = top ? x - r : x + w + r
-        break
-
-    case "right" :
-        ctx.moveTo(x,y)
-        ctx.lineTo(x,y+h)
-        ctx.lineTo(x+w,y+(h+t)/2)
-        ctx.lineTo(x+w,y+(h-t)/2)
-        ctx.lineTo(x,y)
-        if (channel) cx = top ? x + w + r : x - r
-        break
-    }
-    if (channel) ctx.arc(cx,cy,r,0,2*Math.PI)
-    ctx.fill()
-},
-
-// // the text is centered in the label 
-// hBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
-
-//     ctx.beginPath();
-//     ctx.fillStyle = cRect
-//     shape._roundedRect(ctx,x,y,w,h,r)
-//     ctx.fill();
-
-//     // center the text
-//     ctx.fillStyle = cText
-//     ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h)  
-// },
-
-// // the text is centered in the label 
-// vBusbarLabel(ctx,text,x,y,w,h,r,cRect,cText) {
-
-//     ctx.beginPath();
-//     ctx.fillStyle = cRect
-//     shape._roundedRect(ctx,x,y,w,h,r)
-//     ctx.fill();
-
-//     ctx.save();                 // Save the current state
-//     ctx.translate(x,y);         // the rectangle is at the origin
-//     ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
-//     ctx.fillStyle = cText
-//     ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w)  // center the text
-//     ctx.restore();              // Restore the state
-// },
-
 // draws three arches
 wirelessSymbol(ctx, x, y,r,color) {
 
@@ -601,102 +518,20 @@ emptyLabel(ctx, x,y,r, color) {
 
     ctx.beginPath()
     ctx.strokeStyle = '#000000'
-    ctx.arc(x,y,r-2,0,2*Math.PI)
+    ctx.arc(x,y,r-2.5,0,2*Math.PI)
     ctx.stroke()
 },
 
-// the text is centered in the label 
-hBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
-
-    // big filled oval
-    ctx.beginPath();
-    ctx.fillStyle = cRect
-    shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2)
-    ctx.fill();
-
-    // black line inside
-    ctx.beginPath()
-    ctx.strokeStyle = cText
-    shape._roundedRect(ctx,x,y,w,h,r)
-    ctx.stroke();    
-
-    // text
-    ctx.fillStyle = cText
-    ctx.fillText(text,x + w/2 - ctx.measureText(text).width/2, y + 0.75*h)  
-},
-
-// the text is centered in the label 
-vBusLabel(ctx,text,x,y,w,h,r,cRect,cText) {
-
-    // big filled oval
-    ctx.beginPath();
-    ctx.fillStyle = cRect
-    shape._roundedRect(ctx, x-2, y-2, w+4, h+4, r+2)
-    ctx.fill();
-
-    // black line inside
-    ctx.beginPath()
-    ctx.strokeStyle = cText
-    shape._roundedRect(ctx,x,y,w,h,r)
-    ctx.stroke();    
-
-    ctx.save();                 // Save the current state
-    ctx.translate(x,y);         // the rectangle is at the origin
-    ctx.rotate(-Math.PI / 2);   // Rotate the canvas 90 degrees counterclockwise
-    ctx.fillStyle = cText
-    ctx.fillText(text, -h/2 - ctx.measureText(text).width/2  , 0.75*w)  // center the text
-    ctx.restore();              // Restore the state
-},
-
-// draw straigth 
-drawBus(ctx, p, cLine, wLine) {
-
-    const wSave = ctx.lineWidth
-
-    if (p.len < 2) return
-    ctx.beginPath()
-    ctx.lineWidth = wLine
-    ctx.strokeStyle = cLine
-    ctx.moveTo(p[0].x, p[0].y)
-    for (let i=1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y)
-    ctx.stroke()
-
-    ctx.lineWidth = wSave
-},
-
-drawCable(ctx, p, cLine, wLine) {
-
-    if (p.len < 2) return
-
-    const wSave = ctx.lineWidth
-
-    ctx.beginPath()
-    ctx.lineWidth = wLine 
-    ctx.strokeStyle = cLine
-    ctx.moveTo(p[0].x, p[0].y)
-    for (let i=1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y)
-    ctx.stroke()
-
-    ctx.lineWidth = wLine - 4
-    ctx.strokeStyle = '#000000'
-    ctx.moveTo(p[0].x, p[0].y)
-    for (let i=1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y)
-    ctx.stroke()
-
-    ctx.lineWidth = wLine - 6
-    ctx.strokeStyle = cLine
-    ctx.moveTo(p[0].x, p[0].y)
-    for (let i=1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y)
-    ctx.stroke()
-
-    ctx.lineWidth = wSave
-},
-
-drawPoints(ctx,points) {
+drawWire(ctx, color, width, points) {
 
     // check
     let l = points.length
     if (l < 2) return
+
+    ctx.beginPath()
+
+    ctx.lineWidth = width
+    ctx.strokeStyle = color
 
     const arcRadius = 7.5
     const arcSpace = 15
@@ -728,16 +563,6 @@ drawPoints(ctx,points) {
     ctx.stroke()
 },
 
-drawWire(ctx, color, width, points) {
-
-    ctx.beginPath()
-
-    ctx.lineWidth = width
-    ctx.strokeStyle = color
-
-    this.drawPoints(ctx, points)
-},
-
 // get the rectangle of the alias - x, y are the position of the tack
 // and dir tells where to put the alias wrt the tack
 rcAlias(ctx, text, zone, x, y, font) {
@@ -750,7 +575,7 @@ rcAlias(ctx, text, zone, x, y, font) {
     const w = ctx.measureText(text).width
 
     // shift away from the tack
-    const d = {x:10, y:20}
+    const d = {x:20, y:20}
 
     // small shift to center on wire
     const m = {x:5, y:2.5}

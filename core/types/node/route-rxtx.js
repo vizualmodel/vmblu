@@ -12,7 +12,7 @@ arrow(A, B) {
     if (B.is.pad) return {right: !B.proxy.is.input, left: B.proxy.is.input}
 
     // pin/pad to shared trunk (bus or cable)
-    if (B.is.bus || B.is.cable) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
+    if (B.is.cable) return A.is.pin   ? {right: !A.is.input, left: A.is.input} 
                                                 : {right: A.proxy.is.input, left: !A.proxy.is.input}
 },
 
@@ -100,7 +100,7 @@ rxtxPinBus() {
     const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from]
 
     // get the arrow
-    const arrow = this.arrow(pin, tack.bus)
+    const arrow = this.arrow(pin, tack.cable)
 
     // arrow is from pin to bus
     if (arrow.right) {
@@ -139,7 +139,7 @@ rxtxPadBus() {
     // get the pin and the bus
     const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from]
 
-    const arrow = this.arrow(pad, tack.bus)
+    const arrow = this.arrow(pad, tack.cable)
 
     // from pad to bus
     if (arrow.right) {
@@ -257,7 +257,7 @@ rxtxPinBusDisconnect() {
     const [pin, tack] = this.from.is.pin ? [this.from, this.to] : [this.to, this.from]
 
     // get the arrow
-    const arrow = this.arrow(pin, tack.bus)
+    const arrow = this.arrow(pin, tack.cable)
 
     // right
     if (arrow.right) {
@@ -295,7 +295,7 @@ rxtxPadBusDisconnect() {
     const [pad, tack] = this.from.is.pad ? [this.from, this.to] : [this.to, this.from]
 
     // get the arrow
-    const arrow = this.arrow(pad, tack.bus)
+    const arrow = this.arrow(pad, tack.cable)
 
     if (arrow.right) {
 
@@ -335,7 +335,7 @@ endpointTacksAcrossBridge(start, blockedRoute, visited = new Set()) {
     if (!start?.is?.tack || visited.has(start)) return list
     visited.add(start)
 
-    for (const tack of start.bus.tacks) {
+    for (const tack of start.cable.tacks) {
         if (tack === start) continue
         if (!tack.route?.from || !tack.route?.to) continue
         if (tack.route === blockedRoute) continue
@@ -359,6 +359,12 @@ actualEndpoint(widget) {
     return null
 },
 
+endpointIsInput(widget) {
+    if (widget?.is?.pin) return widget.is.input
+    if (widget?.is?.pad) return !widget.proxy.is.input
+    return null
+},
+
 connectedEndpointsFromTacks(listA, listB) {
     const srcList = []
     const dstList = []
@@ -368,8 +374,9 @@ connectedEndpointsFromTacks(listA, listB) {
 
         const actualA = this.actualEndpoint(tackA.getOther())
         const actualB = this.actualEndpoint(tackB.getOther())
+        const inputA = this.endpointIsInput(tackA.getOther())
 
-        actualA.is.input ? (srcList.push(actualB), dstList.push(actualA)) : (srcList.push(actualA), dstList.push(actualB))
+        inputA ? (srcList.push(actualB), dstList.push(actualA)) : (srcList.push(actualA), dstList.push(actualB))
     }
 
     return {srcList, dstList}

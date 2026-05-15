@@ -296,8 +296,8 @@ export const ctrlKeyTable = {
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
-        // create a new busbar
-        view.doEdit(tx,'busCreate', { view,pos: view.hit.xyLocal});
+        // create a new floating cable
+        view.doEdit(tx,'cableCreate', {view, pos: view.hit.xyLocal, floating: true});
     },
 
     // copy

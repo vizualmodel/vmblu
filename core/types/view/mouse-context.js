@@ -6,7 +6,7 @@ import { pinCxMenu } from './context-pin.js';
 import { ifCxMenu } from './context-interface.js';
 import { selectFreeCxMenu } from './context-select-free.js';
 import { pinAreaCxMenu } from './context-pin-area.js';
-import { busCxMenu } from './context-bus.js';
+import { cableCxMenu } from './context-cable.js';
 import { tackCxMenu } from './context-tack.js';
 import { padCxMenu } from './context-pad.js';
 
@@ -50,7 +50,7 @@ export const contextHandling = {
 
             case zap.busSegment:
             case zap.busLabel:
-                cxMenu = busCxMenu;
+                cxMenu = cableCxMenu;
             break;
 
             case zap.tack:

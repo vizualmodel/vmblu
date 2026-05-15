@@ -76,15 +76,9 @@ export const mouseHandling = {
             if (hit.what != zap.nothing) return
         }
         
-        // search the buses
-        for(const bus of this.root.buses) {
-            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = bus.hitTest(xyLocal)
-            if (hit.what != zap.nothing) return
-        }
-
         // search the cables
         for(const cable of this.root.cables) {
-            [hit.what, hit.bus, hit.busLabel, hit.tack, hit.busSegment] = cable.hitTest(xyLocal)
+            [hit.what, hit.cable, hit.busLabel, hit.tack, hit.busSegment] = cable.hitTest(xyLocal)
             if (hit.what != zap.nothing) return
         }
 
@@ -108,12 +102,6 @@ export const mouseHandling = {
             if (hit.what != zap.nothing) return
         }
         
-        // search the buses
-        for(const bus of this.root.buses) {
-            [hit.what, hit.route, hit.routeSegment] = bus.hitRoute(xyLocal)
-            if (hit.what != zap.nothing) return
-        }
-
         // search the cables
         for(const cable of this.root.cables) {
             [hit.what, hit.route, hit.routeSegment] = cable.hitRoute(xyLocal)
@@ -146,10 +134,6 @@ export const mouseHandling = {
 
             case zap.label:
                 widget = hit.lookWidget
-                break;
-
-            case zap.busLabel:
-                widget = hit.busLabel
                 break;
 
             case zap.pad:

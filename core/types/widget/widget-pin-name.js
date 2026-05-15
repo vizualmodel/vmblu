@@ -250,7 +250,8 @@ export const pinNameHandling = {
         }
 
         // strip away the old prefix and add the plus to make combine work !
-        const baseName = this.pxlen > 0 ?  '+' + this.name.slice(this.pxlen+1) : this.name.slice(0, this.pxlen-1) + '+'
+        //const baseName = this.pxlen > 0 ?  '+' + this.name.slice(this.pxlen+1) : this.name.slice(0, this.pxlen-1) + '+'
+        const baseName = this.pxlen > 0 ?  this.name.slice(this.pxlen) : this.name.slice(0, this.pxlen)
 
         // recombine with the new prefix
         this.name = convert.combineWithPrefix(newPrefix, baseName)
@@ -274,7 +275,7 @@ export const pinNameHandling = {
 
                 // check all the bus routes
                 let found = false
-                for(const tack of other.bus.tacks) {
+                for(const tack of other.cable.tacks) {
 
                     // skip 
                     if (tack == other) continue
@@ -283,7 +284,7 @@ export const pinNameHandling = {
                     const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to
 
                     // it could be that the route was not used
-                    if (other.bus.areConnected(this, busWidget)) {
+                    if (other.cable.areConnected(this, busWidget)) {
                         tack.route.is.notUsed = false
                         found = true
                     }

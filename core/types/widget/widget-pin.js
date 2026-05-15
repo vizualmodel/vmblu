@@ -310,7 +310,7 @@ Pin.prototype = {
                 other.routes.push(route);
                 route.rxtxPinPad();
             } else if (other.is.tack) {
-                other.bus.tacks.push(other);
+                other.cable.tacks.push(other);
                 route.rxtxPinBus();
             }
         }

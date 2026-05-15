@@ -24,7 +24,7 @@ ActualTarget.prototype = {
             return `${this.variant} @ ${this.target.proxy.node.name} (${this.target.proxy.node.uid})` 
         }
         else if (this.target.is.tack) {
-            return `${this.variant} @ ${this.target.bus.name} (${this.target.bus.uid})`
+            return `${this.variant} @ bus (${this.target.cable.uid})`
         }
         return '- unknown -'
     }

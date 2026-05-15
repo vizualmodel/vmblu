@@ -4,7 +4,7 @@ import {style} from '../util/index.js'
 export const routeMoving = {
 
     tackOnHorizontalTrunk(tack) {
-        const trunk = tack?.bus
+        const trunk = tack?.cable
         const a = trunk?.wire?.[tack.segment - 1]
         const b = trunk?.wire?.[tack.segment]
 
@@ -12,9 +12,9 @@ export const routeMoving = {
     },
 
     adjustCableEndpoint(tack, otherCenter) {
-        if (!tack?.bus?.is?.cable || !tack.is.endpoint) return false
+        if (!tack?.cable?.is?.cable || !tack.is.endpoint) return false
 
-        const cable = tack.bus
+        const cable = tack.cable
         const wire = cable?.wire
         if (!wire || wire.length < 2) return false
 
@@ -286,14 +286,14 @@ export const routeMoving = {
                 this.adjustHT(fn, tn)
                 return
             }
-            (to.bus?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
+            (to.cable?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
         }
         else if (from.is.tack) {
             if (this.tackOnHorizontalTrunk(from)) {
                 this.adjustTH(fn, tn)
                 return
             }
-            (from.bus?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
+            (from.cable?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
         }
         else {
             this.adjustHH(fn,tn)      

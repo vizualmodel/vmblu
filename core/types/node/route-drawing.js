@@ -17,7 +17,7 @@ export const routeDrawing = {
         if (!widget) return null
         if (widget.node) return widget.node
         if (widget.proxy?.node) return widget.proxy.node
-        if (widget.bus?.node) return widget.bus.node
+        if (widget.cable?.node) return widget.cable.node
         return null
     },
 
@@ -41,7 +41,7 @@ export const routeDrawing = {
     },
 
     tackOnHorizontalTrunk(tack) {
-        const trunk = tack?.bus
+        const trunk = tack?.cable
         const a = trunk?.wire?.[tack.segment - 1]
         const b = trunk?.wire?.[tack.segment]
 
@@ -246,19 +246,19 @@ export const routeDrawing = {
     //             this.fourPointRoute()
     //             break
 
-    //         case 'PIN-BUS':
+    //         case 'PIN-CBL':
     //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
     //             break
 
-    //         case 'BUS-PIN':
+    //         case 'CBL-PIN':
     //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
     //             break
 
-    //         case 'PAD-BUS':
+    //         case 'PAD-CBL':
     //             this.to.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
     //             break
 
-    //         case 'BUS-PAD':
+    //         case 'CBL-PAD':
     //             this.from.horizontal() ? this.fourPointRoute() : this.threePointRoute(true)
     //             break
     //     }
@@ -642,7 +642,7 @@ export const routeDrawing = {
         }
         else if (this.from.is.tack) {
             this.from.route = this 
-            this.from.bus.tacks.push(this.from)
+            this.from.cable.tacks.push(this.from)
         }
 
         // we also set the 'to' to null for good measure
@@ -676,24 +676,24 @@ export const routeDrawing = {
                 this.fourPointRoute(nodes) || this.sixPointRoute(nodes)
                 break
 
-            case 'PIN-BUS':
-            case 'PAD-BUS':
+            case 'PIN-CBL':
+            case 'PAD-CBL':
                 this.autoBusRoute(this.to, nodes)
                 break
 
-            case 'BUS-PIN':
-            case 'BUS-PAD':
+            case 'CBL-PIN':
+            case 'CBL-PAD':
                 this.autoBusRoute(this.from, nodes)
                 break
 
-            case 'BUS-BUS':
+            case 'CBL-CBL':
                 this.autoBridgeRoute(nodes)
                 break
         }
     },
 
     autoBusRoute(tack, nodes) {
-        const trunk = tack.bus
+        const trunk = tack.cable
         const a = trunk?.wire?.[tack.segment - 1]
         const b = trunk?.wire?.[tack.segment]
         const verticalTrunk = a && b ? a.x === b.x : tack.horizontal()
