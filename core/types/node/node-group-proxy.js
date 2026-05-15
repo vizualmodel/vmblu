@@ -1,4 +1,4 @@
-import {Route, Bus, Cable, Pad} from './index.js'
+import {Route, Cable, Pad} from './index.js'
 import {style, eject} from '../util/index.js'
 import {Widget} from '../widget/index.js'
 
@@ -190,13 +190,19 @@ export const proxyHandling = {
         for(const widget of widgets) if (widget.is.proxy) this.addPad(widget)
     },
 
-    addBus(name, pos, uid=null) {
+    addBus(pos, uid=null) {
 
-        //we create a bus
-        const bus = new Bus(name ?? '',pos, uid)
+        // Backward-compatible call shape: addBus(name, pos, uid).
+        if (typeof pos === 'string') {
+            uid = arguments[2] ?? null
+            pos = arguments[1]
+        }
+
+        // A bus is now a floating cable.
+        const bus = new Cable(pos, uid, true)
 
         // save it
-        this.buses.push(bus)
+        this.cables.push(bus)
 
         // done
         return bus
@@ -217,23 +223,23 @@ export const proxyHandling = {
         bus.disconnect()
 
         // remove the bus
-        this.removeBus(bus)
+        this.removeCable(bus)
     },
 
     // removes a bus from the bus array
     removeBus(bus) {
 
-        eject(this.buses, bus)		        
+        eject(this.cables, bus)		        
     },
 
     // restores a bus
     restoreBus(bus) {
 
         // a bus can be in the list already
-        if (this.buses.find( bp => bp.uid == bus.uid)) return
+        if (this.cables.find( bp => bp.uid == bus.uid)) return
 
         // put in the list again
-        this.buses.push(bus)
+        this.cables.push(bus)
     },
 
     deleteCable(cable) {

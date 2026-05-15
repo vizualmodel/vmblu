@@ -251,6 +251,7 @@
       {
         "kind": "source",
         "name": "workspace",
+        "label": "list of folders and files at the left",
         "factory": {
           "path": "../nodes/workspace/factory.js",
           "function": "Workspace"
@@ -521,6 +522,7 @@
       {
         "kind": "dock",
         "name": "editor page",
+        "label": "The main editor window",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vertical menu tabs content"
@@ -600,6 +602,7 @@
       {
         "kind": "dock",
         "name": "tab ribbon",
+        "label": "selects between open documents",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "tab ribbon"
@@ -685,6 +688,7 @@
       {
         "kind": "source",
         "name": "side menu",
+        "label": "icon menu top left of the window",
         "factory": {
           "path": "../../ui-svelte/index.js",
           "function": "VscodeSideMenuFactory"
@@ -1031,6 +1035,7 @@
       {
         "kind": "dock",
         "name": "view manager",
+        "label": "windows + ui",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "view manager"
@@ -1223,6 +1228,7 @@
       {
         "kind": "dock",
         "name": "model manager",
+        "label": "changes to the model",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "model manager"
@@ -2512,20 +2518,16 @@
           "pin": "doc.set active",
           "node": "document manager"
         },
-        "dst": {
-          "pin": "top level view",
-          "node": "view manager"
-        }
-      },
-      {
-        "src": {
-          "pin": "doc.set active",
-          "node": "document manager"
-        },
-        "dst": {
-          "pin": "model.set",
-          "node": "model manager"
-        }
+        "dst": [
+          {
+            "pin": "top level view",
+            "node": "view manager"
+          },
+          {
+            "pin": "model.set",
+            "node": "model manager"
+          }
+        ]
       },
       {
         "src": {

@@ -36,7 +36,7 @@ selectionToGroup(UID) {
         //..and remove it from the root in this view
         this.root.removeNode(node)
     }
-    // now we add the buses and keep track of the buses that were transferred
+    // now we add the cables and keep track of the floating cables that were transferred
     const transfers = this.busTransfer(newGroup)
 
     // create the proxies for this group type and make the interconnections inside + outside of the group
@@ -51,12 +51,12 @@ selectionToGroup(UID) {
     return newGroup
 },
 
-// some buses might have to be copied or moved completely to the group
+// some cables might have to be copied or moved completely to the group
 busTransfer(newGroup) {
 
     const transfers=[]
 
-    for(const bus of this.selection.buses) {
+    for(const bus of this.selection.cables) {
 
         // notation
         const selNodes = this.selection.nodes
@@ -77,11 +77,11 @@ busTransfer(newGroup) {
         // if all connections to/from the bus are inside the selection -> just move the bus to the new node
         if (outside.length == 0) {
 
-            // add the bus to the new group
-            newGroup.buses.push(bus)
+            // add the cable to the new group
+            newGroup.cables.push(bus)
 
             // remove it from this group
-            this.root.removeBus(bus)
+            this.root.removeCable(bus)
         }
         // otherwise duplicate the bus in the new group and remove the unnecessary connections on each bus
         else {
@@ -89,7 +89,7 @@ busTransfer(newGroup) {
             const newBus = bus.copy()
 
             // and store the *new* bus
-            newGroup.buses.push(newBus)
+            newGroup.cables.push(newBus)
 
             // distribute the tacks over both buses
             bus.splitTacks(newBus, newGroup)
@@ -192,7 +192,7 @@ undoSelectionToGroup(selection, newGroup, shift, allRoutes) {
     this.restoreSelection(selection)
 
     // for every busbar inside the newGroup we have to transfer the tacks to the corresponding 'outside' bus !
-    for(const inside of newGroup.buses) inside.transferTacks(selection.buses)
+    for(const inside of newGroup.cables) inside.transferTacks(selection.cables)
 
     // disconnect all the nodes
     for (const node of selection.nodes)  node.disconnect()
@@ -240,8 +240,8 @@ transferToSelection(group, shift) {
         this.selection.nodes.push(node)
     }
 
-    // move the buses to the parent node as well
-    for(const bus of group.buses) {
+    // move the cables to the parent node as well
+    for(const bus of group.cables) {
 
         // move the bus
         bus.move(dx, dy)
@@ -249,11 +249,11 @@ transferToSelection(group, shift) {
         // move the routes
         bus.moveRoutes(dx, dy)
 
-        // save the buses at the parent node
-        this.root.buses.push(bus)
+        // save the cables at the parent node
+        this.root.cables.push(bus)
 
         // also add to the selection
-        this.selection.buses.push(bus)
+        this.selection.cables.push(bus)
     }
 
     // and remove the node from this root
@@ -278,8 +278,8 @@ undoTransferToSelection(group, shift, padRoutes) {
         this.root.removeNode(node)
     }
 
-    // move the buses to the parent node as well
-    for(const bus of group.buses) {
+    // move the cables to the parent node as well
+    for(const bus of group.cables) {
 
         // move the bus
         bus.move(dx, dy)
@@ -288,7 +288,7 @@ undoTransferToSelection(group, shift, padRoutes) {
         bus.moveRoutes(dx, dy)
 
         // remove it from the parent view again
-        this.root.removeBus(bus)
+        this.root.removeCable(bus)
     }
 
     // reconnect all the pad routes

@@ -1,6 +1,6 @@
 function cableForRoute(route) {
-    const fromCable = route.from?.bus?.is?.cable ? route.from.bus : null
-    const toCable = route.to?.bus?.is?.cable ? route.to.bus : null
+    const fromCable = route.from?.cable?.is?.cable ? route.from.cable : null
+    const toCable = route.to?.cable?.is?.cable ? route.to.cable : null
     return fromCable ?? toCable
 }
 

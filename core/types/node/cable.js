@@ -3,14 +3,22 @@ import {Widget} from '../widget/index.js'
 import {convert, closestPointOnCurve, interpolateSegment, style, shape, inside, segmentsInside, eject} from '../util/index.js'
 import {zap} from '../view/index.js'
 
-export function Cable(from = {x:0, y:0}, uid = null) {
+export function Cable(from = {x:0, y:0}, uid = null, floating = false) {
+
+    if (uid && typeof uid === 'object') {
+        floating = !!uid.floating
+        uid = uid.uid ?? null
+    }
 
     // unique identifier for the cable
     this.uid = uid
 
+    this.widGenerator = 0
+
     // state
     this.is = {
         cable: true,
+        floating,
         selected: false,
         hoverOk: false,
         hoverNok : false,
@@ -32,22 +40,42 @@ Cable.prototype = {
 
         if (this.wire.length < 2) return
 
-        const st = style.bus
+        const st = style.cable
 
         const cLine =     this.is.hoverNok ? st.cBad 
                         : this.is.selected || this.is.hoverOk ? st.cSelected
                         : this.is.highLighted ? st.cHighLighted
                         : st.cNormal
 
-        // Draw a bus or a cable...
-        shape.drawBus(ctx,this.wire, cLine, st.wCable)
+        shape.drawWire(ctx,cLine, this.is.floating ? st.wBus : st.wCable, this.wire)
+
+        if (this.is.floating) {
+            this.renderEndpoint(ctx, this.wire[0], cLine)
+            this.renderEndpoint(ctx, this.wire.at(-1), cLine)
+        }
 
         // also render the tacks
         this.tacks.forEach( tack => tack.render(ctx) )
     },
 
     defaultTackSelectivity(widget) {
-        return false
+        const input = widget?.is?.pin ? widget.is.input
+                    : widget?.is?.pad ? !widget.proxy.is.input
+                    : false
+        return this.is.floating ? !!input : false
+    },
+
+    renderEndpoint(ctx, point, color) {
+        shape.emptyLabel(ctx, point.x, point.y, style.cable.radius, color)
+    },
+
+    endpointRect(point) {
+        const r = style.cable.radius
+        return {x: point.x - r, y: point.y - r, w: 2 * r, h: 2 * r}
+    },
+
+    generateWid() {
+        return ++this.widGenerator
     },
 
     isKeyed() {
@@ -55,13 +83,16 @@ Cable.prototype = {
     },
 
     makeRaw() {
-        return {
+        const raw = {
             start: convert.pointToString(this.wire[0]),
             wire: convert.wireToString(this.wire)
         }
+        if (this.is.floating) raw.floating = true
+        return raw
     },
 
     cook(raw) {
+        this.is.floating = raw.floating === undefined ? this.is.floating : !!raw.floating
         this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire)
         if (this.wire.length == 1) this.wire.push(this.wire[0])
     },
@@ -77,8 +108,16 @@ Cable.prototype = {
     },
 
     hitTest(pos) {
+        if (this.is.floating) {
+            const endpoint =   inside(pos, this.endpointRect(this.wire[0])) ? 'start'
+                             : inside(pos, this.endpointRect(this.wire.at(-1))) ? 'end'
+                             : null
+            if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
+        }
+
         for (const tack of this.tacks) {
             if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
+            if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
         }
 
         const segment = this.hitSegment(pos)
@@ -138,7 +177,7 @@ Cable.prototype = {
         const other = route.to == null ? route.from : route.to
         if (this.findTack(other)) return null
 
-        const newTack = new Widget.BusTack(this)
+        const newTack = new Widget.CableTack(this)
         newTack.setSelective(this.defaultTackSelectivity(other))
         newTack.setRoute(route)
         this.tacks.push(newTack)
@@ -146,7 +185,8 @@ Cable.prototype = {
     },
 
     newTack(alias = null, selective = false) {
-        const tack = new Widget.BusTack(this)
+        const tack = new Widget.CableTack(this)
+        if (alias) tack.alias = alias
         tack.setSelective(selective)
         this.tacks.push(tack)
         return tack
@@ -156,7 +196,7 @@ Cable.prototype = {
 
         const closest = closestPointOnCurve(this.wire, widget.center())
         const point = closest.endPoint ? interpolateSegment(closest.point, closest.segment, this.wire) : closest.point
-        const tack = new Widget.BusTack(this)
+        const tack = new Widget.CableTack(this)
 
         tack.placeOnSegment(point, closest.segment)
 
@@ -196,7 +236,7 @@ Cable.prototype = {
     },
 
     copy() {
-        const newCable = new Cable(this.wire[0], this.uid)
+        const newCable = new Cable(this.wire[0], this.uid, this.is.floating)
         newCable.wire = this.copyWire()
         return newCable
     },
@@ -206,10 +246,11 @@ Cable.prototype = {
         for (const tack of this.tacks) {
 
             const newRoute = tack.route.clone()
-            const newTack = new Widget.BusTack(newCable)
+            const newTack = new Widget.CableTack(newCable)
             newTack.is.endpoint = tack.is.endpoint
             newTack.is.bridge = tack.is.bridge
             newTack.is.selective = tack.is.selective
+            newTack.alias = tack.alias
 
             newRoute.to.is.tack ? newRoute.to = newTack : newRoute.from = newTack
             newTack.setRoute(newRoute)
@@ -290,7 +331,7 @@ Cable.prototype = {
         const L = this.wire.length
         const r1 = this.wire[L - 2]
         const r2 = this.wire[L - 1]
-        const wCable = style.bus.wCable
+        const wCable = style.cable.wCable
         let limit = null
 
         const vertical = r2.x == r1.x
@@ -300,7 +341,7 @@ Cable.prototype = {
             (Math.abs(next.x - r1.x) < Math.abs(next.y - r1.y)) ? r2.y = next.y : r2.x = next.x
         }
         else if (horizontal) {
-            if (Math.abs(next.y - r2.y) > style.bus.split) {
+            if (Math.abs(next.y - r2.y) > style.cable.split) {
                 this.wire.push({x:r2.x, y:next.y})
             }
             else {
@@ -310,11 +351,11 @@ Cable.prototype = {
                 }
 
                 r2.x = next.x
-                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.bus.tooClose)) this.wire.pop()
+                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.cable.tooClose)) this.wire.pop()
             }
         }
         else if (vertical) {
-            if (Math.abs(next.x - r2.x) > style.bus.split) {
+            if (Math.abs(next.x - r2.x) > style.cable.split) {
                 this.wire.push({x:next.x, y:r2.y})
             }
             else {
@@ -324,7 +365,7 @@ Cable.prototype = {
                 }
 
                 r2.y = next.y
-                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.bus.tooClose)) this.wire.pop()
+                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.cable.tooClose)) this.wire.pop()
             }
         }
     },
@@ -334,8 +375,8 @@ Cable.prototype = {
         const pa = p[p.length-2]
         const pb = p[p.length-1]
 
-        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.bus.split) ? pos.x : pb.x + delta.x
-        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.bus.split) ? pos.y : pb.y + delta.y
+        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.cable.split) ? pos.x : pb.x + delta.x
+        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.cable.split) ? pos.y : pb.y + delta.y
 
         this.drawXY({x,y})
     },
@@ -442,7 +483,7 @@ Cable.prototype = {
             point.y += delta.y
         }
 
-        for(const tack of this.tacks) tack.moveXY(delta.x, delta.y)
+        for(const tack of this.tacks) tack.moveWithCable(delta.x, delta.y)
     },
 
     moveRoutes(x,y) {
@@ -465,7 +506,7 @@ Cable.prototype = {
     },
 
     moveSegment(segment, delta) {
-        if (this.tacks.some(tack => tack.is.endpoint && tack.segment == segment)) return
+        if (!this.is.floating && this.tacks.some(tack => tack.is.endpoint && tack.segment == segment)) return
 
         let p = this.wire
         const dx = delta.x
@@ -556,7 +597,7 @@ Cable.prototype = {
         let p = this.wire
         if (p.length < 3) return
 
-        const deltaMin = style.bus.tooClose
+        const deltaMin = style.cable.tooClose
 
         if (p[s-1].y == p[s].y) {
             if ((s < p.length-2)&&(Math.abs(p[s+1].y - p[s].y) < deltaMin)) {
@@ -598,6 +639,29 @@ Cable.prototype = {
                 if (other.rect.y > a.y && other.rect.y < b.y) {
                     tack.rect.y = other.rect.y + other.rect.h/2 - tack.rect.h/2
                     for(const p of route.wire) p.y = other.rect.y + other.rect.h/2
+                }
+            }
+        }
+    },
+
+    splitTacks(newCable, newGroup) {
+        this.tacks.forEach((tack, index) => {
+            if (tack.route.from.is.pin && newGroup.nodes.includes(tack.route.from.node)) {
+                newCable.tacks.push(tack)
+                this.tacks[index] = null
+                tack.cable = newCable
+            }
+        })
+
+        this.tacks = this.tacks.filter(tack => tack != null)
+    },
+
+    transferTacks(outsiders) {
+        for(const tack of this.tacks) {
+            for(const outside of outsiders) {
+                if (this.uid == outside.uid) {
+                    tack.cable = outside
+                    break
                 }
             }
         }

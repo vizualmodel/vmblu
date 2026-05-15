@@ -199,8 +199,8 @@
         "rect": "x 1280 y 416 w 150 h 191",
         "view": {
           "state": "closed",
-          "rect": "x 1133 y -234 w 1062 h 1232",
-          "transform": "sx 1.000 sy 1.000 dx 1310.662 dy -275.602"
+          "rect": "x 632 y -169 w 1062 h 1232",
+          "transform": "sx 1.000 sy 1.000 dx 809.662 dy -210.602"
         },
         "interfaces": [
           {
@@ -221,7 +221,7 @@
           }
         ],
         "pads": [
-          "(11 L)x -48 y 1102 w 70 h 15|confirm",
+          "(11 L)x -84 y 1102 w 70 h 15|confirm",
           "(9 L)x -82 y 880 w 67 h 15|header",
           "(6 L)x -82 y 515 w 83 h 15|pin profile",
           "(3 L)x -107 y 149 w 79 h 15|path only",
@@ -363,11 +363,11 @@
             ]
           }
         ],
-        "buses": [
+        "cables": [
           {
-            "name": "div",
             "start": "x 546.6839516298635 y 124.5339663512093",
-            "wire": "y 1037.7"
+            "wire": "y 1037.7",
+            "floating": true
           }
         ],
         "routes": [
@@ -377,18 +377,13 @@
             "wire": "x 222.0 y 0.0 x 222.0"
           },
           {
-            "from": "(pin 2) modal div @ path request",
-            "to": "(bus) div",
-            "wire": "x 197.7"
-          },
-          {
             "from": "(pin 2) modal div @ node settings",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 2) modal div @ name and path",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
@@ -398,38 +393,38 @@
           },
           {
             "from": "(pin 2) modal div @ pin profile",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 2) modal div @ text block",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 2) modal div @ doc settings",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 2) modal div @ context menu",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 1) modal div @ runtime settings",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 197.7"
           },
           {
             "from": "(pin 2) modal div @ confirm box",
-            "to": "(bus) div",
+            "to": "(cable 0 nonselective)",
             "wire": "x 190.7"
           },
           {
             "from": "(pad 11) confirm",
             "to": "(pin 1) show @ confirm box",
-            "wire": "x 92.0 y 0.0 x 92.0"
+            "wire": "x 128.0 y 0.0 x 92.0"
           },
           {
             "from": "(pad 9) header",
@@ -473,7 +468,7 @@
           },
           {
             "from": "(pad 2) modal div",
-            "to": "(bus) div",
+            "to": "(cable 0 selective)",
             "wire": "x -244.3"
           }
         ]

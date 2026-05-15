@@ -549,15 +549,19 @@ export const mouseDownHandling = {
 
                     case NONE:{
  
-                        state.bus = hit.bus
-                        state.busLabel = hit.busLabel
-                        state.bus.is.selected = true
+                        state.cable = hit.cable
+                        state.cable.is.selected = true
 
                         // highlight the bus and its connections
-                        state.bus.highLight()
+                        state.cable.highLight()
 
                         // save the current wire
-                        state.modo.wire = hit.bus.copyWire()
+                        state.modo.wire = hit.cable.copyWire()
+                        state.modo.wires = hit.cable.copyTackWires()
+
+                        // Orient the cable so redraw always extends from the last point.
+                        if (hit.busLabel == 'start') hit.cable.reverse()
+                        state.busLabel = 'end'
 
                         // change state
                         this.stateSwitch(doing.busRedraw)
@@ -588,38 +592,38 @@ export const mouseDownHandling = {
                     case NONE:{
 
                         // save state
-                        state.bus = hit.bus
+                        state.cable = hit.cable
                         state.busSegment = hit.busSegment
-                        state.bus.is.selected = true
+                        state.cable.is.selected = true
 
                         // highlight the bus and its connections
-                        hit.bus.highLight()
+                        hit.cable.highLight()
 
                         // allow free movement for a single segment...
-                        if (hit.bus.singleSegment()) {
+                        if (hit.cable.singleSegment()) {
 
-                            state.modo.wire = hit.bus.copyWire()
-                            state.modo.wires = hit.bus.copyTackWires()
+                            state.modo.wire = hit.cable.copyWire()
+                            state.modo.wires = hit.cable.copyTackWires()
                             this.stateSwitch(doing.busDrag) 
                         }
                         else {
-                            state.modo.wire = hit.bus.copyWire()
-                            state.modo.wires = hit.bus.copyTackWires()
+                            state.modo.wire = hit.cable.copyWire()
+                            state.modo.wires = hit.cable.copyTackWires()
                             this.stateSwitch(doing.busSegmentDrag)
                         }
                     }
                     break
 
                     case SHIFT:{
-                        if (hit.bus.is.cable) {
-                            state.bus = hit.bus
+                        if (!hit.cable.is.floating) {
+                            state.cable = hit.cable
                             state.busSegment = hit.busSegment
-                            state.bus.is.selected = true
-                            state.modo.wire = hit.bus.copyWire()
-                            state.modo.tacks = hit.bus.tacks.slice()
-                            state.modo.tackWires = hit.bus.copyTackWires()
+                            state.cable.is.selected = true
+                            state.modo.wire = hit.cable.copyWire()
+                            state.modo.tacks = hit.cable.tacks.slice()
+                            state.modo.tackWires = hit.cable.copyTackWires()
 
-                            hit.bus.resumeDrawing(hit.busSegment, xyLocal)
+                            hit.cable.resumeDrawing(hit.busSegment, xyLocal)
 
                             this.stateSwitch(doing.busDraw)
                         }
@@ -628,7 +632,7 @@ export const mouseDownHandling = {
 
                     case CTRL:{
 
-                        const trunk = hit.bus
+                        const trunk = hit.cable
                         const segment = hit.busSegment
                         const a = trunk.wire[segment - 1]
                         const b = trunk.wire[segment]
@@ -740,8 +744,8 @@ export const mouseDownHandling = {
 
                     case CTRL|SHIFT:{
 
-                        //create a new *cable* bus (will set state.bus)
-                        this.doEdit(tx,'busCreate',{view: this, pos: xyLocal})
+                        // create a new floating cable
+                        this.doEdit(tx,'cableCreate',{view: this, pos: xyLocal, floating: true})
                     }
                     break
                 }
