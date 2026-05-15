@@ -250,14 +250,14 @@ deleteSelection: {
             view.root.look.removePin(pad.proxy)
         }
 
-        // remove the buses in the selection, but only the ones that have no connections anymore
-        for (const bus of selection.buses) {
+        // remove the cables in the selection, but only the ones that have no connections anymore
+        for (const bus of selection.cables) {
 
             // check
             if (bus.tacks.length != 0) continue
 
             // remove the bus
-            view.root.removeBus(bus)
+            view.root.removeCable(bus)
         }
 
         // save the edit
@@ -284,14 +284,14 @@ deleteSelection: {
             node.look.restorePin(pad.proxy)
         }
 
-        // add the buses again
-        for (const bus of selection.buses) {
+        // add the cables again
+        for (const bus of selection.cables) {
 
             // only the buses without connections were removed
             if (bus.tacks.length != 0) continue
 
             // remove the bus
-            view.root.restoreBus(bus)
+            view.root.restoreCable(bus)
         }
 
         // add all the routes again
@@ -330,14 +330,14 @@ deleteSelection: {
             view.root.look.removePin(pad.proxy)
         }
 
-        // remove the buses in the selection, but only the ones that have no connections anymore
-        for (const bus of selection.buses) {
+        // remove the cables in the selection, but only the ones that have no connections anymore
+        for (const bus of selection.cables) {
 
             // check
             if (bus.tacks.length != 0) continue
 
             // remove the bus
-            view.root.removeBus(bus)
+            view.root.removeCable(bus)
         }
     }
 },

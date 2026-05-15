@@ -31,7 +31,7 @@ Route.prototype = {
         if (this.wire.length < 2) return
 
         // color
-        let color = this.is.hoverNok      ? style.bus.cBad
+        let color = this.is.hoverNok      ? style.cable.cBad
                     : this.is.selected || this.is.hoverOk ? style.route.cSelected 
                     : this.is.highLighted   ? style.route.cHighLighted
                     : this.is.newConx       ? style.route.cAdded
@@ -96,10 +96,10 @@ Route.prototype = {
         const to = this.to.is
 
         let str =     from.pin ? 'PIN' 
-                    : from.tack ? 'BUS' 
+                    : from.tack ? 'CBL' 
                     : from.pad ? 'PAD' : ''
         str +=        to.pin ? '-PIN' 
-                    : to.tack ? '-BUS' 
+                    : to.tack ? '-CBL' 
                     : to.pad ? '-PAD' : ''
 
         return str
@@ -140,7 +140,7 @@ Route.prototype = {
     },
 
     popFromRoute() {
-        this.from.is.tack ? this.from.bus.tacks.pop() : this.from.routes.pop() 
+        this.from.is.tack ? this.from.cable.tacks.pop() : this.from.routes.pop() 
     },
 
     clone() {

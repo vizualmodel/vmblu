@@ -16,16 +16,6 @@ export const selectionHandling = {
         // check all pads
         for( const pad of this.root.pads) if (pad.overlap(rect)) slct.pads.push(pad)
 
-        // check the buses and the individual tacks
-        for( const bus of this.root.buses) if (bus.overlap(rect)) {
-
-            // ..if so select the bus
-            slct.buses.push(bus)
-
-            // ...and select the tacks in the selection
-            for( const tack of bus.tacks) if (tack.overlap(rect)) slct.tacks.push(tack)
-        }
-
         // check the cables and the individual tacks
         for( const cable of this.root.cables) if (cable.overlap(rect)) {
 
@@ -93,12 +83,9 @@ export const selectionHandling = {
             this.root.addNode(node)
             this.selection.nodes.push(node)
         }
-        const pasteBus = (bus, delta) => {
-            bus.move(delta.x, delta.y)
-            this.selection.buses.push(bus)           
-        }
         const pasteCable = (cable, delta) => {
             cable.move(delta.x, delta.y)
+            this.root.restoreCable(cable)
             this.selection.cables.push(cable)           
         }
 
@@ -107,9 +94,8 @@ export const selectionHandling = {
 
             case selex.freeRect:
 
-               // paste
+                // paste
                 for (const node of content.root.nodes) pasteNode(node, delta)
-                for (const bus of content.root.buses) pasteBus(bus, delta)
                 for (const cable of content.root.cables ?? []) pasteCable(cable, delta)
                 for (const pad of content.root.pads) {}
 
@@ -188,7 +174,6 @@ export const selectionHandling = {
 
         // remove all the nodes etc.
         for (const node of selection.nodes) this.root.removeNode(node)
-        for (const bus of selection.buses) this.root.removeBus(bus)
         for (const cable of selection.cables) this.root.removeCable(cable)
         for (const pad of selection.pads) this.root.removePad(pad)
     },
@@ -198,7 +183,6 @@ export const selectionHandling = {
 
         // restore all the nodes etc.
         for (const node of selection.nodes) this.root.restoreNode(node)
-        for (const bus of selection.buses) this.root.restoreBus(bus)
         for (const cable of selection.cables) this.root.restoreCable(cable)
         for (const pad of selection.pads) this.root.restorePad(pad)
 
@@ -208,7 +192,6 @@ export const selectionHandling = {
 
         // and put the restored nodes in the selection again
         for (const node of selection.nodes) sel.nodes.push(node)
-        for (const bus of selection.buses) sel.buses.push(bus)
         for (const cable of selection.cables) sel.cables.push(cable)
         for (const pad of selection.pads) sel.pads.push(pad)        
 

@@ -12,7 +12,7 @@ The current runtime can still receive the same normalized one-to-one connection 
 
 - make models clearer for coding agents and humans;
 - preserve fanout/grouping intent instead of flattening it immediately;
-- allow agents to reason with interfaces as first-class connection endpoints;
+- keep persisted connections stable under small edits;
 - allow the editor to create sensible cables/buses automatically when no `.mod.viz` layout exists.
 
 ## Separation From `.mod.viz`
@@ -93,18 +93,11 @@ Meaning:
 
 This is not just shorter syntax. It preserves the author's intent that the destinations belong together.
 
-## Proposed Address Extension: Interfaces
+## Interfaces Are Not Connection Endpoints
 
-The current `Address` only identifies a pin:
+Interfaces should remain semantic groups of pins, not persisted connection endpoints.
 
-```json
-{
-  "node": "Rendering",
-  "pin": "sim.tick"
-}
-```
-
-Proposed extension:
+Earlier versions of this proposal considered allowing addresses such as:
 
 ```json
 {
@@ -113,16 +106,21 @@ Proposed extension:
 }
 ```
 
-An address should identify exactly one of:
+This is no longer recommended.
 
-- `pin`
-- `interface`
+Reasoning:
 
-If `node` is omitted, the containing group node is implied, same as for current pin addresses.
+- a node may implement an interface completely or partially;
+- the interface name is useful for agents and humans, but it does not guarantee that two nodes can communicate;
+- disconnecting one pin from an interface-level connection would force a large rewrite of the persisted model;
+- partial edits would need exclusions, overrides, or expansion into many explicit pin connections;
+- explicit pin connections make small model changes produce small file changes.
 
-## Proposed Form: Interface To Interface
+The editor or an agent may still use interfaces as authoring aids. For example, a "connect interface" gesture can create the matching explicit pin fanouts. The saved `.mod.blu` connection model should still contain pin addresses only.
 
-Proposed shape:
+## Rejected Form: Interface To Interface
+
+Do not persist interface-to-interface connections:
 
 ```json
 {
@@ -137,62 +135,62 @@ Proposed shape:
 }
 ```
 
-Meaning:
-
-- connect compatible pins from the source interface to compatible pins on the destination interface;
-- compatibility should be resolved by pin name and direction;
-- this should normalize to explicit one-to-one pin connections;
-- the interface-level declaration should remain available for agent reasoning.
-
-Example expansion:
-
-```json
-{
-  "src": {"node": "SolarSystem", "pin": "scene.patch"},
-  "dst": {"node": "Rendering", "pin": "scene.patch"}
-}
-```
-
-The exact matching rule still needs to be implemented, but the intended baseline is:
-
-- source side contributes output-like pins;
-- destination side contributes input-like pins;
-- matching is by compatible pin names after interface naming conventions are resolved;
-- contracts can be used as an additional validation check.
-
-## Proposed Form: Interface To Many Interfaces
-
-Proposed shape:
+Instead, store the actual pin connections:
 
 ```json
 {
   "src": {
-    "node": "SimulationClock",
-    "interface": "clock"
+    "node": "SolarSystem",
+    "pin": "scene.patch"
   },
+  "dst": {
+    "node": "Rendering",
+    "pin": "scene.patch"
+  }
+}
+```
+
+Or, when one source pin fans out:
+
+```json
+{
+  "src": { "node": "SolarSystem", "pin": "scene.patch" },
   "dst": [
-    {
-      "node": "Rendering",
-      "interface": "sim"
-    },
-    {
-      "node": "SolarSystem",
-      "interface": "sim"
-    },
-    {
-      "node": "Charts",
-      "interface": "sim"
-    }
+    { "node": "Rendering", "pin": "scene.patch" },
+    { "node": "Recorder", "pin": "scene.patch" }
   ]
 }
 ```
 
-Meaning:
+## Rejected Form: Many To Many
 
-- one source interface is broadcast to a logical group of destination interfaces;
-- each destination interface is expanded independently;
-- the group helps an agent answer questions such as "where is this interface connected?";
-- the editor may visualize this with a bus-like layout if it needs to create routes.
+Do not add `src` arrays.
+
+This shape is intentionally not part of the model:
+
+```json
+{
+  "src": [
+    { "node": "SolarSystem", "pin": "scene.patch" },
+    { "node": "SolarSystem", "pin": "scene.camera" }
+  ],
+  "dst": [
+    { "node": "Rendering", "pin": "scene.patch" },
+    { "node": "Rendering", "pin": "scene.camera" },
+    { "node": "Charts", "pin": "scene.patch" },
+    { "node": "Charts", "pin": "scene.camera" }
+  ]
+}
+```
+
+Even if this were defined as "connect only pins with matching full names", it is not helpful enough:
+
+- it introduces extra mental processing;
+- it makes the reader infer pairings across two arrays;
+- it is harder to diff and validate by eye;
+- it does not create meaningful notation economy for common interface fanout cases.
+
+Use repeated one-to-many pin fanouts instead. They keep each message path explicit and answer "where does this output pin go?" directly.
 
 ## Selectivity
 
@@ -202,7 +200,6 @@ Reasoning:
 
 - an agent declares intended logical connections;
 - if it connects two pins explicitly, the connection is intended;
-- if it connects two interfaces, matching names/contracts determine which pin pairs are intended;
 - tack selectivity is a `.mod.viz`/editor concern used to implement and display bus/cable behavior.
 
 In other words, `.mod.blu` should express connection intent, not tack filtering mechanics.
@@ -212,14 +209,11 @@ In other words, `.mod.blu` should express connection intent, not tack filtering 
 The higher-level forms help answer forward questions directly:
 
 - "Where is this output pin connected to?"
-- "Where is this interface connected to?"
-- "Which subsystems receive this interface?"
 - "Is this fanout intentional or just a set of unrelated edges?"
 
 Reverse questions still require derived indexing:
 
 - "Where does this input pin receive messages from?"
-- "Which source interfaces can reach this destination interface?"
 
 That is acceptable. Tooling can build a derived normalized graph and reverse index from the authored connection declarations.
 
@@ -232,11 +226,14 @@ Suggested pipeline:
 1. Parse authored `.mod.blu` connections.
 2. Validate addresses.
 3. Expand one-to-many into repeated destination groups.
-4. Expand interface addresses into compatible pin pairs.
-5. Produce the same normalized one-to-one connection list used by the current runtime/compiler.
-6. Keep enough source mapping to explain where each normalized edge came from.
+4. Produce the same normalized one-to-one connection list used by the current runtime/compiler.
+5. Keep enough source mapping to explain where each normalized edge came from.
 
 The source mapping is useful for agents and editor operations. For example, an agent can update one fanout group without losing the fact that it was originally authored as a group.
+
+The normalization pipeline is an implementation concern, not part of the authored model semantics. The `.mod.blu` model should specify valid connection intent. Editors, loaders, compilers, and runtimes may derive explicit pin-to-pin edges internally as needed.
+
+Model-aware tools should preserve authored higher-level connection declarations when saving, unless the user explicitly edits them into separate lower-level connections. A one-to-many connection is not merely shorthand; it records that the destinations belong together as a logical fanout group.
 
 ## Schema Direction
 
@@ -256,7 +253,7 @@ Proposed direction:
 
 - `src`: one `Address`;
 - `dst`: either one `Address` or an array of `Address`;
-- `Address`: exactly one of `pin` or `interface`, plus optional `node`.
+- `Address`: one pin address, plus optional `node`.
 
 Sketch:
 
@@ -282,13 +279,9 @@ Sketch:
     "type": "object",
     "properties": {
       "node": { "type": "string" },
-      "pin": { "type": "string" },
-      "interface": { "type": "string" }
+      "pin": { "type": "string" }
     },
-    "oneOf": [
-      { "required": ["pin"] },
-      { "required": ["interface"] }
-    ]
+    "required": ["pin"]
   }
 }
 ```
@@ -297,13 +290,6 @@ The final schema should keep the existing name restrictions and `additionalPrope
 
 ## Open Questions
 
-- Exact interface pin matching rule:
-  - by full pin name;
-  - by suffix after interface prefix;
-  - by explicit interface membership name;
-  - by contract compatibility as a secondary check.
-- Whether request/reply pins need special expansion rules.
-- Whether one source interface may connect to one destination pin, or one source pin to one destination interface. This can be useful but should be specified deliberately.
 - Whether authored one-to-many groups should be preserved on save or rewritten by the editor after manual route edits.
 - How much normalized source mapping should be exposed to agents.
 
@@ -312,8 +298,6 @@ The final schema should keep the existing name restrictions and `additionalPrope
 Start by updating the schema and loader to accept:
 
 - current one-to-one pin connections;
-- one-to-many pin fanout;
-- interface-to-interface;
-- interface-to-many-interfaces.
+- one-to-many pin fanout.
 
-Then add a normalizer that expands all forms into the existing one-to-one connection list before runtime/compiler use. Do not change runtime semantics first.
+Then let the editor, loader, or compiler derive explicit one-to-one pin connections internally where needed. Do not change runtime semantics first.

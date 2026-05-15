@@ -238,8 +238,9 @@ splitNode(rNode) {
         if (interfaces.viz.length) viz.interfaces = interfaces.viz;
         if (rNode.pads) viz.pads = rNode.pads.map( pad => convert.padToString(pad))
         if (splitNodes.length) viz.nodes = splitNodes.map( node => node.viz )
-        if (rNode.buses) viz.buses = rNode.buses
-        if (rNode.cables) viz.cables = rNode.cables
+        const legacyBuses = rNode.buses?.map(bus => ({...bus, floating: true})) ?? []
+        const cables = rNode.cables ?? []
+        if (legacyBuses.length || cables.length) viz.cables = [...legacyBuses, ...cables]
         if (rNode.routes) viz.routes = rNode.routes
     }
 
@@ -277,10 +278,7 @@ joinNode(bNode, vNode) {
             return bn;
         })
 
-        // copy the buses
         bNode.buses = vNode.buses
-
-        // copy the cables
         bNode.cables = vNode.cables
 
         // copy the routes

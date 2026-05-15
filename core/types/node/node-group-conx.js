@@ -8,11 +8,25 @@ export const conxHandling = {
 
         // helper function
         const makeAddress = (A) => A.is.pin ? {pin: A.name, node: A.node.name} : A.is.pad ? {pin: A.proxy.name} : {pin: '?', node: '?'};
+        const pushConnection = (rawSrc, rawDst) => {
+
+            const cx = conx.find(cx => sameAddress(cx.src, rawSrc))
+            if (!cx) {
+                conx.push({src: rawSrc, dst: rawDst})
+                return
+            }
+
+            const dstList = Array.isArray(cx.dst) ? cx.dst : [cx.dst]
+            if (dstList.some(dst => sameAddress(dst, rawDst))) return
+
+            cx.dst = [...dstList, rawDst]
+        }
+        const sameAddress = (A, B) => (A?.pin === B?.pin) && ((A?.node ?? null) === (B?.node ?? null))
 
         // simple case - no a tack (pin or pad)
         if ( ! dst.is.tack) {
             // save 
-            conx.push({src: makeAddress(src), dst: makeAddress(dst)})  
+            pushConnection(makeAddress(src), makeAddress(dst))  
 
             // done
             return
@@ -22,7 +36,7 @@ export const conxHandling = {
         const fanout = []
 
         // check the connections to the bus/cable
-        for(const tack of dst.bus.tacks) {
+        for(const tack of dst.cable.tacks) {
 
             // skip the to tack
             if (tack == dst) continue
@@ -35,7 +49,7 @@ export const conxHandling = {
         for(const busDst of fanout) {
 
             // save 
-            conx.push({src: makeAddress(src), dst: makeAddress(busDst)})
+            pushConnection(makeAddress(src), makeAddress(busDst))
         }
     },
 
@@ -88,19 +102,6 @@ export const conxHandling = {
             }
         }        
 
-        // What remains are the routes from the bus to incoming pins and from the bus to the outgoing pads
-        // Note that routes from a bus are **not** added to the connections array !!
-        for(const bus of this.buses) {
-
-            // convert each tack
-            for(const tack of bus.tacks) {
-
-                const other = tack.getOther()
-                if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route))
-                if (other.is.pad && !other.proxy.is.input) routes.push(convert.routeToRaw(tack.route))
-            }
-        }
-
         // What remains are the routes from the cable to incoming pins and from the cable to outgoing pads
         // Note that routes from a cable are **not** added to the connections array.
         for(const cable of this.cables) {
@@ -131,8 +132,8 @@ export const conxHandling = {
 
         const showError = (error, raw) => {
 
-                const sFrom = `${raw.from?.pin} ${raw.from?.node ? ' @ ' + raw.from?.node : '(pad)'}`
-                const sTo = `${raw.to?.pin} ${raw.to?.node ? ' @ ' + raw.to?.node : '(pad)'}`
+                const sFrom = `${raw.src?.pin} ${raw.src?.node ? ' @ ' + raw.src?.node : '(pad)'}`
+                const sTo = `${raw.dst?.pin} ${raw.dst?.node ? ' @ ' + raw.dst?.node : '(pad)'}`
                 console.error(error + sFrom + ' -> ' + sTo);
         }
 
@@ -162,39 +163,48 @@ export const conxHandling = {
 
         const conx = []
 
+        const rawPairs = (raw) => {
+
+            // Backward compatibility with older raw files.
+            const rawsrc = raw.src ?? raw.from
+            const rawdst = raw.dst ?? raw.to
+
+            if (!rawsrc || !rawdst) return []
+
+            return (Array.isArray(rawdst) ? rawdst : [rawdst])
+                .map(dst => ({src: rawsrc, dst}))
+        }
+
         let src = null, dst = null;
         for (const raw of rawConx) {
 
-            // *** CHANGE THIS TO ONLY SRC DST *** //
-            const rawsrc = raw.from ?? raw.src
-            const rawdst = raw.to ?? raw.dst
+            for (const rawPair of rawPairs(raw)) {
 
-            if (!rawsrc || !rawdst) continue
+                // find from and to and give an error message if not found
+                src = rawPair.src.node ? resolvePin(rawPair.src, false) : resolvePad(rawPair.src, true)
+                if (!src) showError('Connection <src> not found: ', rawPair)
 
-            // find from and to and give an error message if not found
-            src = rawsrc.node ? resolvePin(rawsrc, false) : resolvePad(rawsrc, true)
-            if (!src) showError('Connection <src> not found: ', raw)
+                dst = rawPair.dst.node ? resolvePin(rawPair.dst, true) : resolvePad(rawPair.dst, false)
+                if (!dst) showError('Connection <dst> not found: ', rawPair)
 
-            dst = rawdst.node ? resolvePin(rawdst, true) : resolvePad(rawdst, false)
-            if (!dst) showError('Connection <dst> not found: ', raw)
+                // check
+                if (!src || !dst) continue;
 
-            // check
-            if (!src || !dst) continue;
+                // check i/o mismatch
+                if (ioMismatch(src, dst)) {
+                    showError('Input/output mismatch: ', rawPair)
+                    continue;
+                }
 
-            // check i/o mismatch
-            if (ioMismatch(src, dst)) {
-                showError('Input/output mismatch: ', raw)
-                continue;
+                // check rq/rp mismatch
+                if (rqrpMismatch(src, dst)) {
+                    showError('request/reply mismatch: ', rawPair)
+                    continue;
+                }
+
+                // add to the array
+                conx.push({src, dst, is: {new:true}})
             }
-
-            // check rq/rp mismatch
-            if (rqrpMismatch(src, dst)) {
-                showError('request/reply mismatch: ', raw)
-                continue;
-            }
-
-            // add to the array
-            conx.push({src, dst, is: {new:true}})
         }
         return conx
     },
@@ -209,7 +219,7 @@ export const conxHandling = {
         const checkBus = (src, dst) => {
 
             // check for the connections to the bus..
-            for(const tack of dst.bus.tacks) {
+            for(const tack of dst.cable.tacks) {
 
                 // skip this tack of the route...
                 if (tack == dst) continue
@@ -279,19 +289,29 @@ export const conxHandling = {
 
             if (!cx.is.new) continue
 
-            // create a new route
-            const route = new Route(cx.src, cx.dst)
-
-            // The route is for a new connection
-            route.is.newConx = true
-            
-            // and save the route in the endpoints
-            route.from.routes.push(route)
-            route.to.routes.push(route)
-
-            // make a smart connection between the two destinations
-            route.autoRoute(this.nodes)
+            this.createNewRoute(cx)
         }
+    },
+
+    createNewRoute(cx) {
+
+        // check
+        if (!cx?.is?.new || !cx.src || !cx.dst) return null
+
+        // create a new route
+        const route = new Route(cx.src, cx.dst)
+
+        // The route is for a new connection
+        route.is.newConx = true
+        
+        // and save the route in the endpoints
+        route.from.routes.push(route)
+        route.to.routes.push(route)
+
+        // make a smart connection between the two destinations
+        route.autoRoute(this.nodes)
+
+        return route
     },
 
     // create a single route between src and dst

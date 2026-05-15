@@ -39,7 +39,6 @@ export function Selection(view = null) {
     // the selected elements
     this.nodes = [];
     this.pads = [];
-    this.buses = [];
     this.cables = [];
     this.tacks = [];
     this.widgets = [];
@@ -73,7 +72,6 @@ Selection.prototype = {
         // clear the selected objects
         this.nodes.length = 0;
         this.pads.length = 0;
-        this.buses.length = 0;
         this.cables.length = 0;
         this.widgets.length = 0;
         this.tacks.length = 0;
@@ -89,7 +87,6 @@ Selection.prototype = {
         selection.viewPath = this.viewPath;
         selection.nodes = this.nodes?.slice();
         selection.pads = this.pads?.slice();
-        selection.buses = this.buses?.slice();
         selection.cables = this.cables?.slice();
         selection.tacks = this.tacks?.slice();
         selection.widgets = this.widgets?.slice();
@@ -318,9 +315,8 @@ Selection.prototype = {
         // also move the pads
         for (const pad of this.pads) pad.move(delta);
 
-        // move the buses if there are nodes in the selection
+        // move the cables if there are nodes in the selection
         if (this.nodes.length > 0) {
-            for (const bus of this.buses) bus.move(delta.x, delta.y);
             for (const cable of this.cables) cable.move(delta.x, delta.y);
         }
         // or otherwise just the bus tacks
@@ -336,8 +332,7 @@ Selection.prototype = {
         // adjust the routes for the pads
         for (const pad of this.pads) pad.adjustRoutes();
 
-        // also for the buses
-        for (const bus of this.buses) bus.adjustRoutes();
+        // also for the cables
         for (const cable of this.cables) cable.adjustRoutes();
 
         // *3* move the selection rectangle

@@ -159,7 +159,7 @@ Clipboard.prototype = {
 
                 // set the target
                 root.nodes = this.selection.nodes.slice()
-                root.buses = this.selection.buses.slice()
+                root.cables = this.selection.cables.slice()
                 root.pads = this.selection.pads.slice()
 
                 // We have to encode the root
@@ -192,7 +192,16 @@ Clipboard.prototype = {
 
         const newConnections = []
         if (raw.connections) for (const cx of raw.connections) {
-            if (findNode(cx.src.node) && findNode(cx.dst.node)) newConnections.push(cx)
+            if (!findNode(cx.src?.node)) continue
+
+            const dstList = Array.isArray(cx.dst) ? cx.dst : [cx.dst]
+            const selectedDst = dstList.filter(dst => findNode(dst?.node))
+            if (!selectedDst.length) continue
+
+            newConnections.push({
+                ...cx,
+                dst: selectedDst.length === 1 ? selectedDst[0] : selectedDst
+            })
         }
 
         const newRoutes = []

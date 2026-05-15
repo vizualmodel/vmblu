@@ -21,7 +21,7 @@ export function GroupNode (look=null, name=defaultGroupNodeName, uid=null) {
     // the nodes that are part of this group
     this.nodes = []
 
-    // the buses that are part of this group
+    // legacy compatibility; bus topology is now stored as floating cables
     this.buses = []
 
     // the cables that are part of this group
@@ -212,19 +212,6 @@ const groupFunctions = {
 
             // and save the new pad
             newNode.pads.push(newPad)
-        })
-
-        // copy the buses
-        this.buses?.forEach( bus => {
-
-            // make a clone of the bus
-            const newBus = bus.copy()
-
-            // copy the arrows and the routes - set from and to in the copies !
-            bus.copyTacks(newBus, newNode)
-
-            // save in the new node..
-            newNode.buses.push(newBus)
         })
 
         // copy the cables

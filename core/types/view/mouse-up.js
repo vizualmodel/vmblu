@@ -10,7 +10,7 @@ export const mouseUpHandling = {
 
         // if we need to adjust the undo parameters...
         const state = this.state
-        let bus = null
+        let cable = null
 
         // check the state state
         switch (state.action) {
@@ -29,7 +29,7 @@ export const mouseUpHandling = {
                 this.stopHover()
 
                 // what did we hit..
-                const conx = this.hit.lookWidget ?? this.hit.bus ?? this.hit.pad ?? this.hit.route ?? null;
+                const conx = this.hit.lookWidget ?? this.hit.cable ?? this.hit.pad ?? this.hit.route ?? null;
 
                 // complete the route or cancel it...
                 if (conx?.is?.route && route.checkConxType(route.from, conx)) {
@@ -80,33 +80,31 @@ export const mouseUpHandling = {
             case doing.busDraw:
             case doing.busRedraw:
 
-                bus = state.bus;
-                bus.is.selected = false
-                bus.unHighLight()
+                cable = state.cable;
+                cable.is.selected = false
+                cable.unHighLight()
                 this.stopHover()
                 const cableConx = this.hit.lookWidget ?? this.hit.pad ?? null
-                bus.is.cable 
-                    ? this.doEdit(tx,'cableDraw',{view: this, cable: bus, conx: cableConx, oldWire: state.modo.wire, newWire: bus.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires, newTacks: bus.tacks.slice(), newTackWires: bus.copyTackWires()})
-                    : this.doEdit(tx,'busDraw',{bus, oldWire: state.modo.wire, newWire:bus.copyWire()})
+                this.doEdit(tx,'cableDraw',{view: this, cable, conx: cableConx, oldWire: state.modo.wire, newWire: cable.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires ?? state.modo.wires, newTacks: cable.tacks.slice(), newTackWires: cable.copyTackWires()})
                 break
 
             case doing.busSegmentDrag:
 
-                bus = state.bus;
-                bus.fuseSegment(state.busSegment)
-                bus.is.selected = false
-                bus.unHighLight()
-                this.doEdit(tx,'busSegmentDrag', {bus, oldWire: state.modo.wire, oldWires: state.modo.wires, newWire: bus.copyWire(), newTackWires: bus.copyTackWires()})
+                cable = state.cable;
+                cable.fuseSegment(state.busSegment)
+                cable.is.selected = false
+                cable.unHighLight()
+                this.doEdit(tx,'cableSegmentDrag', {cable, oldWire: state.modo.wire, oldTackWires: state.modo.wires, newWire: cable.copyWire(), newTackWires: cable.copyTackWires()})
                 break
 
             case doing.busDrag:
 
-                bus = state.bus;
-                bus.is.selected = false
+                cable = state.cable;
+                cable.is.selected = false
 
                 // remove highlight
-                state.bus.unHighLight()
-                this.doEdit(tx,'busDrag', {bus, oldWire: state.modo.wire, oldWires: state.modo.wires, newWire: bus.copyWire(), newTackWires: bus.copyTackWires()})
+                state.cable.unHighLight()
+                this.doEdit(tx,'cableDrag', {cable, oldWire: state.modo.wire, oldTackWires: state.modo.wires, newWire: cable.copyWire(), newTackWires: cable.copyTackWires()})
 
                 break
 

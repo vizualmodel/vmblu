@@ -1,6 +1,6 @@
 import {shape, convert, style, closestPointOnCurve} from '../util/index.js'
 
-export function BusTack(bus, wid = null) {
+export function CableTack(cable, wid = null) {
 
     this.rect = {x:0, y:0, w: 0, h: 0}
 
@@ -13,47 +13,54 @@ export function BusTack(bus, wid = null) {
         selective: false,
     }
 
-    // Owner trunk. This can be a bus or a cable.
-    this.bus = bus
-    this.wid = wid ?? bus.generateWid?.() ?? null
+    // Owner trunk.
+    this.cable = cable
+    Object.defineProperty(this, 'bus', {
+        get: () => this.cable,
+        set: value => { this.cable = value }
+    })
+
+    this.wid = wid ?? cable.generateWid?.() ?? null
     this.segment = 0
     this.alias = null
     this.rcAlias = null
     this.route = null
 }
 
-BusTack.prototype = {
+CableTack.prototype = {
 
     render(ctx) {
 
         if (this.is.endpoint) return
 
-        const color =  this.is.selected ? style.bus.cSelected
-                     : this.is.highLighted ? style.bus.cHighLighted
-                     : style.bus.cNormal
+        const color =  this.is.selected ? style.cable.cSelected
+                     : this.is.highLighted ? style.cable.cHighLighted
+                     : style.cable.cNormal
 
         const center = this.visualCenter()
         if (!center) return;
 
         this.is.bridge 
-            ? shape.bridge(ctx, center.x, center.y, style.bus.rTack, color)
+            ? shape.bridge(ctx, center.x, center.y, style.cable.rTack, color)
             : this.isSelective()
-                ? shape.selectiveTack(ctx, center.x, center.y, style.bus.rTack, color)
-                : shape.tack(ctx, center.x, center.y, style.bus.rTack, color);
+                ? shape.selectiveTack(ctx, center.x, center.y, style.cable.rTack, color)
+                : shape.tack(ctx, center.x, center.y, style.cable.rTack, color);
 
         if (this.alias && this.route) {
             if (!this.rcAlias) {
-                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
+                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.cable.fAlias)
             }
 
-            shape.drawAlias(ctx, this.alias, this.rcAlias, color, style.bus.fAlias)
+            shape.drawAlias(ctx, this.alias, this.rcAlias, color, style.cable.fAlias)
         }
     },
 
     aliasZone() {
         if (!this.route) return
         const wire = this.route.wire
+        if (!wire || wire.length < 2) return 'E'
         let [a,b] = (this.route.from == this) ? [wire[0], wire[1]] : [wire.at(-1), wire.at(-2)]
+        if (!a || !b) return 'E'
         return (a.x === b.x) ? (a.y < b.y ? 'S' : 'N') : (a.x < b.x ? 'E' : 'W')
     },
 
@@ -79,11 +86,11 @@ BusTack.prototype = {
         const [a,b] = this.route.to == this ? [ wire.at(-1), wire.at(-2) ] : [wire[0], wire[1]];
 
         // a hits the bus
-        let segment = this.bus.hitSegment(a)
+        let segment = this.cable.hitSegment(a)
 
         // if no hit find the closest
         if (segment == 0) {
-            const closest = closestPointOnCurve(this.bus.wire, a)
+            const closest = closestPointOnCurve(this.cable.wire, a)
             segment = closest?.segment ?? 1
             if (closest?.point) {
                 a.x = closest.point.x
@@ -92,8 +99,8 @@ BusTack.prototype = {
         }
 
         // get the endpoints of the segment
-        const A = this.bus.wire[segment-1]
-        const B = this.bus.wire[segment]
+        const A = this.cable.wire[segment-1]
+        const B = this.cable.wire[segment]
 
         // place the point exactly on the segment
         const point = (A.x == B.x) ? {x: A.x, y: a.y} : {x: a.x, y: A.y}
@@ -110,14 +117,14 @@ BusTack.prototype = {
 
         this.segment = inter.segment
 
-        this.rect.w = 2 * style.bus.rTack
-        this.rect.h = 2 * style.bus.rTack
+        this.rect.w = 2 * style.cable.rTack
+        this.rect.h = 2 * style.cable.rTack
         this.rect.x = inter.point.x - this.rect.w/2
         this.rect.y = inter.point.y - this.rect.h/2
     },
 
     zoneDelta() {
-        const r = style.bus.rTack
+        const r = style.cable.rTack
         const zone = this.aliasZone()
         return zone == 'N' ? {x: r, y: 2*r} : zone == 'S' ? {x: r, y: 0}: zone == 'E' ? {x: 0, y: r}: {x: 2*r, y: r}
     },
@@ -128,7 +135,7 @@ BusTack.prototype = {
 
         this.segment = inter.segment
 
-        const r = style.bus.rTack
+        const r = style.cable.rTack
         const rc = this.rect
         const delta =  this.zoneDelta()
 
@@ -141,8 +148,8 @@ BusTack.prototype = {
     placeOnSegment(point, segment) {
 
         this.segment = segment
-        this.rect.w = 2 * style.bus.rTack
-        this.rect.h = 2 * style.bus.rTack
+        this.rect.w = 2 * style.cable.rTack
+        this.rect.h = 2 * style.cable.rTack
 
         // place the bridge on the crossing 
         if (this.is.bridge) {
@@ -159,7 +166,7 @@ BusTack.prototype = {
 
     horizontal() {
         const s = this.segment
-        const w = this.bus.wire
+        const w = this.cable.wire
         return Math.floor(w[s-1].y) === Math.floor(w[s].y)
     },
 
@@ -191,7 +198,7 @@ BusTack.prototype = {
     },
 
     removeRoute(route) {
-        this.bus.removeTack(this)
+        this.cable.removeTack(this)
     },
 
     moveX(dx) {
@@ -249,10 +256,36 @@ BusTack.prototype = {
         this.placeOnSegment(a, this.segment)
     },
 
+    moveWithCable(dx, dy) {
+        this.rect.x += dx
+        this.rect.y += dy
+
+        if (this.is.bridge) {
+            this.route.autoRoute()
+            return
+        }
+
+        this.alignRouteEndpoint()
+    },
+
+    ensureSegment() {
+        const wire = this.cable?.wire
+        if (wire?.[this.segment - 1] && wire?.[this.segment]) return true
+        if (!this.route) return false
+
+        const inter = this.intersection()
+        if (!inter?.segment) return false
+
+        this.placeOnSegment(inter.point, inter.segment)
+        return !!(wire?.[this.segment - 1] && wire?.[this.segment])
+    },
+
     slide(delta) {
-        const [a,b] = [this.bus.wire[this.segment -1], this.bus.wire[this.segment]]
+        if (!this.ensureSegment()) return
+
+        const [a,b] = [this.cable.wire[this.segment -1], this.cable.wire[this.segment]]
         const rc = this.rect
-        const wTrunk = this.bus.is.cable ? style.bus.wCable : style.bus.wBus
+        const wTrunk = this.cable.is.floating ? style.cable.wBus : style.cable.wCable
 
         if (a.y == b.y) {
             let xMax = Math.max(a.x, b.x) - rc.w - wTrunk/2
@@ -273,15 +306,19 @@ BusTack.prototype = {
     },
 
     alignRouteEndpoint() {
+        if (!this.ensureSegment()) return
+
         const route = this.route
         const p = route.wire
 
-        if (p.length < 3) route.threePointRoute(this === route.to)
-
         const center = this.center()
-        const trunk = this.bus.wire
+        const trunk = this.cable.wire
         const [a,b] = [trunk[this.segment - 1], trunk[this.segment]]
         const horizontal = a.y === b.y
+
+        if (p.length < 3) {
+            horizontal ? route.threePointRoute(this === route.to) : route.fourPointRoute()
+        }
 
         if (route.from === this) {
             p[0].x = center.x
@@ -320,20 +357,20 @@ BusTack.prototype = {
 
     restore(route) {
         this.route = route
-        if (!this.bus.tacks.includes(this)) this.bus.tacks.push(this)
+        if (!this.cable.tacks.includes(this)) this.cable.tacks.push(this)
         this.setRoute(route)
     },
 
     startEdit(ctx, click = null) {
         if (!this.alias) this.alias = ''
 
-        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
+        const rc = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.cable.fAlias)
         const index = click ? shape.cursorIndex(ctx, this.alias, rc.x, click.x) : this.alias.length
         return { prop: 'alias', index }
     },
 
     cursorPos(ctx, i) {
-        const rc = shape.rcAlias(ctx, this.alias ?? '', this.aliasZone(), this.rect.x, this.rect.y, style.bus.fAlias)
+        const rc = shape.rcAlias(ctx, this.alias ?? '', this.aliasZone(), this.rect.x, this.rect.y, style.cable.fAlias)
         return { x: rc.x + ctx.measureText((this.alias ?? '').slice(0, i)).width, y: rc.y }
     },
 
@@ -363,18 +400,28 @@ BusTack.prototype = {
         return null
     },
 
+    endpointIsInput(widget = this.getOther()) {
+        if (widget?.is?.pin) return widget.is.input
+        if (widget?.is?.pad) return !widget.proxy.is.input
+        return null
+    },
+
     setSelective(selective) {
         this.is.selective = !!selective
     },
 
     incoming() {
-        const actual = this.actualEndpoint()
-        return actual ? !actual.is.input : false
+        const input = this.endpointIsInput()
+        return input === null ? false : !input
     },
 
     key() {
         const actual = this.actualEndpoint()
         return this.alias ?? actual?.name ?? null
+    },
+
+    canBeSelective() {
+        return this.endpointIsInput() === true
     },
 
     isSelective() {
@@ -393,15 +440,15 @@ BusTack.prototype = {
         if (!A || !B) return false
         if (A.is.tack || B.is.tack) return false
 
-        const actualA = A.is.pin ? A : A.proxy
-        const actualB = B.is.pin ? B : B.proxy
+        const inputA = this.endpointIsInput(A)
+        const inputB = tack.endpointIsInput(B)
 
-        if (!actualA || !actualB) return false
-        if (actualA.is.input === actualB.is.input) return false
+        if (inputA === null || inputB === null) return false
+        if (inputA === inputB) return false
         if (A.is.pin && B.is.pin && A.node === B.node) return false
 
-        const inputTack = actualA.is.input ? this : tack
-        const outputTack = actualA.is.input ? tack : this
+        const inputTack = inputA ? this : tack
+        const outputTack = inputA ? tack : this
 
         return inputTack.acceptsFrom(outputTack)
     },
@@ -410,7 +457,7 @@ BusTack.prototype = {
         if (visited.has(this)) return
         visited.add(this)
 
-        for(const tack of this.bus.tacks) {
+        for(const tack of this.cable.tacks) {
             if (tack === this) continue
             if (!tack.route?.from || !tack.route?.to) continue
             if (tack.route === blockedRoute) continue
@@ -432,23 +479,49 @@ BusTack.prototype = {
         }
     },
 
-    highLightRoutes() {
-        this.bus.is.highLighted = true
+    highLightRoutes(visited = new Set(), origin = this) {
+        if (visited.has(this)) return
+        visited.add(this)
+
+        this.cable.is.highLighted = true
         this.route.highLight()
 
-        for(const tack of this.bus.tacks) {
+        for(const tack of this.cable.tacks) {
             if (tack === this) continue
-            if (this.areConnected(tack)) tack.route.highLight()
+            if (!tack.route?.from || !tack.route?.to) continue
+
+            const other = tack.getOther()
+
+            if (other?.is?.tack) {
+                tack.route.highLight()
+                other.highLightRoutes(visited, origin)
+            }
+            else if (origin.areConnected(tack)) {
+                tack.route.highLight()
+            }
         }
     },
 
-    unHighLightRoutes() {
-        this.bus.is.highLighted = false
+    unHighLightRoutes(visited = new Set(), origin = this) {
+        if (visited.has(this)) return
+        visited.add(this)
+
+        this.cable.is.highLighted = false
         this.route.unHighLight()
 
-        for(const tack of this.bus.tacks) {
+        for(const tack of this.cable.tacks) {
             if (tack === this) continue
-            if (this.areConnected(tack)) tack.route.unHighLight()
+            if (!tack.route?.from || !tack.route?.to) continue
+
+            const other = tack.getOther()
+
+            if (other?.is?.tack) {
+                tack.route.unHighLight()
+                other.unHighLightRoutes(visited, origin)
+            }
+            else if (origin.areConnected(tack)) {
+                tack.route.unHighLight()
+            }
         }
     },
 

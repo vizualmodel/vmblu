@@ -2,14 +2,16 @@ export const connectHandling = {
 
 trunkOfTack(tack) {
     if (!tack?.is?.tack) return null
-    return tack.bus
+    return tack.cable
 },
 
 bridgeParts(from, to) {
-    if (!from?.is?.tack || !(to?.is?.bus || to?.is?.cable)) return null
-    if (from.bus?.is?.cable && to.is.bus) return {cable: from.bus, bus: to}
-    if (from.bus?.is?.bus && to.is.cable) return {cable: to, bus: from.bus}
-    return null
+    if (!from?.is?.tack || !to?.is?.cable) return null
+    if (!from.cable?.is?.cable) return null
+    if (from.cable.is.floating === to.is.floating) return null
+    return from.cable.is.floating
+        ? {cable: to, bus: from.cable}
+        : {cable: from.cable, bus: to}
 },
 
 bridgeNeighbors(trunk) {
@@ -58,7 +60,7 @@ canConnectPromotedRoute(from, route) {
     if (from.is.pin || from.is.pad) return true
     if (!from.is.tack) return false
 
-    return !from.bus?.is?.cable
+    return !!from.cable?.is?.floating
 },
 
 conxString(from, to) {
@@ -67,13 +69,13 @@ conxString(from, to) {
     if (!from || !to) return null
 
     let conxStr =     from.is.pin  ? 'PIN'
-                    : from.is.tack || from.is.bus || from.is.cable ? 'BUS'
+                    : from.is.tack || from.is.cable ? 'CBL'
                     : from.is.route ? 'ROUTE'
                     : from.is.pad ? 'PAD'
                     : ''
 
     conxStr +=        to.is.pin  ? '-PIN'
-                    : to.is.tack || to.is.bus || to.is.cable ? '-BUS'
+                    : to.is.tack || to.is.cable ? '-CBL'
                     : to.is.route ? '-ROUTE'
                     : to.is.pad ? '-PAD'
                     : ''
@@ -99,13 +101,13 @@ checkConxType(from, to) {
             // else check
             return from.canConnect(to)  
 
-        case 'PIN-BUS':
+        case 'PIN-CBL':
             // multiple connections are refused !
             return to.findTack(from) ? false : true
 
-        case 'BUS-PIN':
+        case 'CBL-PIN':
             // multiple connections are refused !
-            return from.bus.findTack(to) ? false : true
+            return from.cable.findTack(to) ? false : true
 
         case 'PIN-PAD':
             // only accept new connections of the right type
@@ -115,17 +117,18 @@ checkConxType(from, to) {
             // only accept new connections
             return from.canConnect(to)
 
-        case 'BUS-PAD': 
-            return false
+        case 'CBL-PAD': 
+            // multiple connections are refused !
+            return from.cable.findTack(to) ? false : true
 
-        case 'PAD-BUS': 
+        case 'PAD-CBL': 
             // multiple connections are refused !
             return to.findTack(from) ? false : true
 
-        case 'BUS-BUS': return this.canBridge(from, to)
+        case 'CBL-CBL': return this.canBridge(from, to)
         case 'PIN-ROUTE':
         case 'PAD-ROUTE':
-        case 'BUS-ROUTE': return this.canConnectPromotedRoute(from, to)
+        case 'CBL-ROUTE': return this.canConnectPromotedRoute(from, to)
         case 'PAD-PAD': return false
 
         default : return false
@@ -161,28 +164,28 @@ connect(conxTo) {
             this.rxtxPinPad()           
             return true
 
-        case 'PIN-BUS':
+        case 'PIN-CBL':
             conxTo.addTack(this)
             this.rxtxPinBus() 
             return true
 
-        case 'BUS-PIN':
+        case 'CBL-PIN':
             this.to = conxTo
             conxTo.routes.push(this)            
-            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo))
+            this.from.setSelective(this.from.cable.defaultTackSelectivity(conxTo))
             this.from.setRoute(this)
             this.rxtxPinBus() 
             return true
 
-        case 'BUS-PAD': 
+        case 'CBL-PAD': 
             this.to = conxTo
             conxTo.routes.push(this)
-            this.from.setSelective(this.from.bus.defaultTackSelectivity(conxTo))
+            this.from.setSelective(this.from.cable.defaultTackSelectivity(conxTo))
             this.from.setRoute(this)
             this.rxtxPadBus()
             return true    
 
-        case 'PAD-BUS': 
+        case 'PAD-CBL': 
             conxTo.addTack(this)
             this.rxtxPadBus() 
             return true        
@@ -190,7 +193,7 @@ connect(conxTo) {
         case 'PAD-PAD': 
             return false
 
-        case 'BUS-BUS': 
+        case 'CBL-CBL': 
             if (!conxTo.addTack(this)) return false
             this.autoRoute()
             this.rxtxBusBus()
@@ -217,17 +220,17 @@ disconnect() {
             this.rxtxPinPadDisconnect()
             break        
 
-        case 'PIN-BUS':
-        case 'BUS-PIN':
+        case 'PIN-CBL':
+        case 'CBL-PIN':
             this.rxtxPinBusDisconnect()
             break        
 
-        case 'PAD-BUS':
-        case 'BUS-PAD':
+        case 'PAD-CBL':
+        case 'CBL-PAD':
             this.rxtxPadBusDisconnect()
             break
 
-        case 'BUS-BUS':
+        case 'CBL-CBL':
             this.rxtxBusBusDisconnect()
             break
 
@@ -272,14 +275,14 @@ reconnect() {
     else if (this.from.is.tack) { 
 
         // check if already handled
-        if (this.from.bus.tacks.includes(this.from)) return
+        if (this.from.cable.tacks.includes(this.from)) return
 
         // add it to the bus tacks again
-        this.from.bus.tacks.push(this.from)
+        this.from.cable.tacks.push(this.from)
     }
 
     // for buses we need to use the bus to connect to
-    const conxTo = this.to.is.tack ? this.to.bus : this.to
+    const conxTo = this.to.is.tack ? this.to.cable : this.to
 
     // set to in the route to null
     this.to = null
@@ -300,11 +303,11 @@ connectFromClone(clone) {
     }
     else if (this.from.is.tack) {
         this.from.route = this
-        if (!this.from.bus.tacks.includes(this.from)) this.from.bus.tacks.push(this.from)
+        if (!this.from.cable.tacks.includes(this.from)) this.from.cable.tacks.push(this.from)
     }
 
     // and reconnect
-    const other = clone.to.is.tack ? clone.to.bus : clone.to
+    const other = clone.to.is.tack ? clone.to.cable : clone.to
     this.connect(other)   
 },
 
