@@ -47,7 +47,7 @@ function newSourceNode() {
 }
 
 function newBus() {
-	cm.doEdit('busCreate',{view: cm.view, pos: cm.xyLocal})
+	cm.doEdit('cableCreate',{view: cm.view, pos: cm.xyLocal, floating: true})
 }
 
 function newCable() {

@@ -213,10 +213,8 @@ export const convert = {
 
         //const pinString = (pin) =>  '(pin) ' + pin.name + ' @ ' + pin.node.name
         const pinString = (pin) =>  `(pin ${pin.wid}) ${pin.name} @ ${pin.node.name}`
-        //const busString = (tack) => '(bus) ' + tack.bus.name
         const selectiveFlag = tack => tack.is.selective ? 'selective' : 'nonselective'
-        const busString = (tack) => tack.alias?.length ? `(bus ${selectiveFlag(tack)}) ${tack.alias} @ ${tack.bus.name}` : `(bus ${selectiveFlag(tack)}) ${tack.bus.name}`
-        const cableString = (tack) => `(cable ${tack.bus._rawIndex ?? 0}${tack.is.endpoint ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})`
+        const cableString = (tack) => `(cable ${tack.cable._rawIndex ?? 0}${tack.is.endpoint ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})${tack.alias?.length ? ' ' + tack.alias : ''}`
         const padString = (pad) =>  `(pad ${pad.proxy.wid}) ${pad.proxy.name}`
         const itfString = (itf) =>  '(itf) ' + itf.name + ' @ ' + itf.node.name
 
@@ -235,11 +233,11 @@ export const convert = {
 
             from.is.pin ? strRoute.from = pinString(from) :
             from.is.pad ? strRoute.from = padString(from) : 
-            from.is.tack ? strRoute.from = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null
+            from.is.tack ? strRoute.from = cableString(from) : null
 
             to.is.pin ? strRoute.to = pinString(to) :
             to.is.pad ? strRoute.to = padString(to) : 
-            to.is.tack ? strRoute.to = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null
+            to.is.tack ? strRoute.to = cableString(to) : null
 
             strRoute.wire = convert.wireToString(route.wire)
         }
@@ -247,11 +245,11 @@ export const convert = {
 
             to.is.pin ? strRoute.from = pinString(to) :
             to.is.pad ? strRoute.from = padString(to) : 
-            to.is.tack ? strRoute.from = (to.bus?.is?.cable ? cableString(to) : busString(to)) : null
+            to.is.tack ? strRoute.from = cableString(to) : null
 
             from.is.pin ? strRoute.to = pinString(from) :
             from.is.pad ? strRoute.to = padString(from) : 
-            from.is.tack ? strRoute.to = (from.bus?.is?.cable ? cableString(from) : busString(from)) : null
+            from.is.tack ? strRoute.to = cableString(from) : null
 
             strRoute.wire = convert.wireToString(route.wire.slice().reverse())
         }
@@ -293,10 +291,13 @@ export const convert = {
             case 'bus': 
                 at = raw.indexOf('@')
                 const busParts = raw.slice(4, clbr).trim().split(/\s+/).filter(part => part.length)
+                const busIndex = busParts.find(part => /^\d+$/.test(part))
+                const busText = raw.slice(clbr+1).trim()
                 const busEndPoint = {
-                    bus: at > 0 ? raw.slice(at+1).trim() : raw.slice(clbr+1).trim(),
-                    alias: at > 0 ? raw.slice(clbr+1, at).trim() : null
+                    bus: at > 0 ? raw.slice(at+1).trim() : busIndex === undefined ? busText : null,
+                    alias: at > 0 ? raw.slice(clbr+1, at).trim() : busIndex !== undefined && busText.length ? busText : null
                 }
+                if (busIndex !== undefined) busEndPoint.index = +busIndex
                 if (busParts.includes('selective')) busEndPoint.selective = true
                 if (busParts.includes('nonselective')) busEndPoint.selective = false
                 return busEndPoint
@@ -309,6 +310,8 @@ export const convert = {
                     endpoint: cableParts.includes('endpoint'),
                     bridge: cableParts.includes('bridge')
                 }
+                const cableAlias = raw.slice(clbr+1).trim()
+                if (cableAlias.length) cableEndPoint.alias = cableAlias
                 if (cableParts.includes('selective')) cableEndPoint.selective = true
                 if (cableParts.includes('nonselective')) cableEndPoint.selective = false
                 return cableEndPoint

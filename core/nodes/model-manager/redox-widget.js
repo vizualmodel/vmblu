@@ -165,6 +165,9 @@ export const redoxWidget = {
         doit({ tack }) {
             if (!tack?.is?.tack) return
 
+            // check that the tack can be selective
+            if (! tack.canBeSelective()) return
+
             const oldSelective = tack.is.selective
             const newSelective = !oldSelective
 

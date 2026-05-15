@@ -69,11 +69,11 @@ export const TestHandling = {
     connectViaBus(root, sequencer, mirrorList) {
 
         // add a bus
-        const bus = root.addBus('sequencer.bus', {x:X.bus, y:Y.headroom})
+        const bus = root.addBus('sequencer.cable', {x:X.cable, y:Y.headroom})
 
         // make it as long as the mirror list
         const rc = mirrorList.at(-1).look.rect 
-        bus.drawXY({x:X.bus, y:rc.y + rc.h + Y.gap})
+        bus.drawXY({x:X.cable, y:rc.y + rc.h + Y.gap})
 
         // connect the sequencer
         for (const pinName of ['sequence.start', 'sequence.stop', 'sequence.result']) {
@@ -214,8 +214,8 @@ export const TestHandling = {
         testRoot.addNode(sequencer)
 
         // position of the mirror nodes
-        X.bus = X.sequencer + sequencer.look.rect.w + X.gap
-        X.mirror = X.bus + X.gap
+        X.cable = X.sequencer + sequencer.look.rect.w + X.gap
+        X.mirror = X.cable + X.gap
 
         // make a copy of all source nodes
         const mirrorList = []

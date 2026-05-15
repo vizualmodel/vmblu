@@ -331,12 +331,12 @@ export function interpolateSegment(point, segment, curve) {
     // vertical
     if (a.x == b.x) {
         // closer to a or b ?
-        newY = (Math.abs(a.y - p.y) < Math(b.y - p.y)) ? a.y + fr*(b.y-a.y) : b.y - fr*(b.y - a.y)
+        newY = (Math.abs(a.y - point.y) < Math.abs(b.y - point.y)) ? a.y + fr*(b.y-a.y) : b.y - fr*(b.y - a.y)
     }
     // horizontal
     else {
         // closer to a or b ?
-        newX = (Math.abs(a.x - p.x) < Math(b.x - p.x)) ? a.x + fr*(b.x-a.x) : b.x - fr*(b.x - a.x)
+        newX = (Math.abs(a.x - point.x) < Math.abs(b.x - point.x)) ? a.x + fr*(b.x-a.x) : b.x - fr*(b.x - a.x)
     }
 
     return {x:newX, y:newY}

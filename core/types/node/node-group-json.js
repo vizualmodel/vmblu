@@ -1,5 +1,4 @@
 import {Route} from './route.js'
-import {Bus} from './bus.js'
 import {Cable} from './cable.js'
 import {Pad} from './pad.js'
 import {convert} from '../util/index.js'
@@ -26,7 +25,7 @@ export const jsonHandling = {
         // The nodes
         if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw(refArl))
 
-        // Give route serialization a stable cable reference without naming cables.
+        // Give route serialization stable trunk references without naming them.
         this.cables.forEach((cable, index) => cable._rawIndex = index)
 
         // get the routes and connections inside this group node
@@ -37,9 +36,6 @@ export const jsonHandling = {
 
         // The pads
         if (this.pads.length) raw.pads = this.pads.map( pad => pad.makeRaw())
-
-        // the buses
-        if (this.buses.length) raw.buses = this.buses.map( bus => bus.makeRaw(refArl))
 
         // the cables
         if (this.cables.length) raw.cables = this.cables.map( cable => cable.makeRaw(refArl))
@@ -100,20 +96,26 @@ export const jsonHandling = {
         // cook the connections inside this group node - retuns an array of {from, to, status} - from/to are pins or pads
         const conx = raw.connections ? this.cookConx(raw.connections) : [];
      
-        // get the buses
+        const legacyBuses = []
+        this._legacyBuses = legacyBuses
+
+        // Legacy buses are now floating cables.
         if (raw.buses) for(const rawBus of raw.buses) {
 
-            // the name is also used for the bus labels !
-            const bus = new Bus(rawBus.name, {x:0, y:0})
+            const bus = new Cable({x:0, y:0}, null, true)
+            bus._rawIndex = legacyBuses.length
+            bus._rawName = rawBus.name
 
             // cook it 
             bus.cook(rawBus, modcom)
 
             // save it
-            this.buses.push(bus)
+            this.cables.push(bus)
+            legacyBuses.push(bus)
         }
 
         // get the cables
+        this._rawCableStart = this.cables.length
         if (raw.cables) for(const rawCable of raw.cables) {
 
             const cable = new Cable({x:0, y:0})
@@ -143,6 +145,13 @@ export const jsonHandling = {
             // create the routes for the connections that were not found
             this.createNewRoutes(conx)
         }
+
+        legacyBuses.forEach(bus => {
+            delete bus._rawIndex
+            delete bus._rawName
+        })
+        delete this._legacyBuses
+        delete this._rawCableStart
     },
 
 
@@ -190,15 +199,13 @@ export const jsonHandling = {
         const defaultSelectivity = (trunk, widget) => trunk.defaultTackSelectivity?.(widget) ?? false
 
         // if the endpoint is a bus or cable, make a tack
-        if (from.is.bus) from = from.newTack(source.alias, source.selective ?? defaultSelectivity(from, to));
         if (from.is.cable) {
-            from = from.newTack(null, source.selective ?? defaultSelectivity(from, to));
+            from = from.newTack(source.alias, source.selective ?? defaultSelectivity(from, to));
             from.is.endpoint = !!source.endpoint
             from.is.bridge = !!source.bridge
         }
-        if (to.is.bus) to = to.newTack(target.alias, target.selective ?? defaultSelectivity(to, from));
         if (to.is.cable) {
-            to = to.newTack(null, target.selective ?? defaultSelectivity(to, from));
+            to = to.newTack(target.alias, target.selective ?? defaultSelectivity(to, from));
             to.is.endpoint = !!target.endpoint
             to.is.bridge = !!target.bridge
         }
@@ -262,8 +269,12 @@ export const jsonHandling = {
             return pad
         }
 
-        const findBus = (raw) => this.buses.find( bus => bus.name === raw.bus);
-        const findCable = (raw) => this.cables[raw.index ?? 0];
+        const findBus = (raw) => {
+            const legacyBuses = this._legacyBuses ?? []
+            if (Number.isInteger(raw.index)) return legacyBuses[raw.index] ?? this.cables[raw.index]
+            return legacyBuses.find(bus => bus._rawName === raw.cable)
+        };
+        const findCable = (raw) => this.cables[(this._rawCableStart ?? 0) + (raw.index ?? 0)];
         const hasBus = (raw) => Object.hasOwn(raw, 'bus')
         const hasCable = (raw) => Object.hasOwn(raw, 'cable')
         // ---------
@@ -305,9 +316,6 @@ export const jsonHandling = {
 
         // take the nodes from the linked node
         this.nodes = otherNode.nodes
-
-        // take the buses
-        this.buses = otherNode.buses
 
         // take the cables
         this.cables = otherNode.cables

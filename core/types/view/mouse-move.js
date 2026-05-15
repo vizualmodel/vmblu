@@ -58,24 +58,24 @@ export const mouseMoveHandling = {
                 return true
 
             case doing.busDraw:
-                state.bus.drawXY(xyLocal)
-                if (state.bus.is.cable) {
+                state.cable.drawXY(xyLocal)
+                if (!state.cable.is.floating) {
                     this.mouseHit(xyLocal)
                     const conx = this.hit.lookWidget ?? this.hit.pad ?? null
-                    this.hover(conx, conx ? !state.bus.findTack(conx) : false)
+                    this.hover(conx, conx ? !state.cable.findTack(conx) : false)
                 }
                 return true
 
             case doing.busRedraw:
-                state.bus.resumeDrawXY(state.busLabel,xyLocal,dxdyLocal)
+                state.cable.resumeDrawXY(state.busLabel,xyLocal,dxdyLocal)
                 return true
 
             case doing.busSegmentDrag:
-                state.bus.moveSegment(state.busSegment,dxdyLocal)
+                state.cable.moveSegment(state.busSegment,dxdyLocal)
                 return true
 
             case doing.busDrag:
-                state.bus.drag(dxdyLocal)
+                state.cable.drag(dxdyLocal)
                 return true
 
             case doing.tackDrag:
@@ -255,7 +255,7 @@ export const mouseMoveHandling = {
         const hit = this.hit
         const conx =  hit.what == zap.pin ? hit.lookWidget 
                     : hit.what == zap.pad ? hit.pad 
-                    : hit.what == zap.busSegment ? hit.bus
+                    : hit.what == zap.busSegment ? hit.cable
                     : hit.what == zap.route ? hit.route
                     : null
 

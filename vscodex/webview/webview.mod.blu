@@ -1088,15 +1088,6 @@
           {
             "src": {
               "pin": "modal div",
-              "node": "path request"
-            },
-            "dst": {
-              "pin": "modal div"
-            }
-          },
-          {
-            "src": {
-              "pin": "modal div",
               "node": "node settings"
             },
             "dst": {
@@ -1421,20 +1412,16 @@
           "pin": "set document",
           "node": "message broker"
         },
-        "dst": {
-          "pin": "top level view",
-          "node": "view manager"
-        }
-      },
-      {
-        "src": {
-          "pin": "set document",
-          "node": "message broker"
-        },
-        "dst": {
-          "pin": "model.set",
-          "node": "model manager"
-        }
+        "dst": [
+          {
+            "pin": "top level view",
+            "node": "view manager"
+          },
+          {
+            "pin": "model.set",
+            "node": "model manager"
+          }
+        ]
       },
       {
         "src": {
@@ -1661,20 +1648,16 @@
           "pin": "redox.done",
           "node": "model manager"
         },
-        "dst": {
-          "pin": "redox.done",
-          "node": "view manager"
-        }
-      },
-      {
-        "src": {
-          "pin": "redox.done",
-          "node": "model manager"
-        },
-        "dst": {
-          "pin": "new edit",
-          "node": "message broker"
-        }
+        "dst": [
+          {
+            "pin": "redox.done",
+            "node": "view manager"
+          },
+          {
+            "pin": "new edit",
+            "node": "message broker"
+          }
+        ]
       },
       {
         "src": {

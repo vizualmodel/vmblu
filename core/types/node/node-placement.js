@@ -28,10 +28,13 @@ placeNodesRowFirst(rawConnections) {
     const degree = new Map()
     for (const raw of rawConnections ?? []) {
         const src = raw.src ?? raw.from
-        const dst = raw.dst ?? raw.to
-        if (!src?.node || !dst?.node) continue
-        degree.set(src.node, (degree.get(src.node) ?? 0) + 1)
-        degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1)
+        const dstList = Array.isArray(raw.dst) ? raw.dst : [raw.dst ?? raw.to]
+
+        for (const dst of dstList) {
+            if (!src?.node || !dst?.node) continue
+            degree.set(src.node, (degree.get(src.node) ?? 0) + 1)
+            degree.set(dst.node, (degree.get(dst.node) ?? 0) + 1)
+        }
     }
 
     const placedNodes = this.nodes.filter(node => node?.look && node.is.placed)
@@ -118,23 +121,26 @@ placeNodesColumnFirst(rawConnections) {
 
     for (const raw of rawConnections ?? []) {
         const src = raw.src ?? raw.from
-        const dst = raw.dst ?? raw.to
+        const dstList = Array.isArray(raw.dst) ? raw.dst : [raw.dst ?? raw.to]
 
-        if (src?.node && dst?.node) {
-            if (src.node === dst.node) continue
-            addEdge(src.node, dst.node)
-            continue
-        }
+        for (const dst of dstList) {
 
-        if (src?.node && dst?.pad) {
-            const leftSide = findPadSide(dst)
-            if (leftSide != null) addPadAffinity(src.node, leftSide)
-            continue
-        }
+            if (src?.node && dst?.node) {
+                if (src.node === dst.node) continue
+                addEdge(src.node, dst.node)
+                continue
+            }
 
-        if (src?.pad && dst?.node) {
-            const leftSide = findPadSide(src)
-            if (leftSide != null) addPadAffinity(dst.node, leftSide)
+            if (src?.node && dst?.pad) {
+                const leftSide = findPadSide(dst)
+                if (leftSide != null) addPadAffinity(src.node, leftSide)
+                continue
+            }
+
+            if (src?.pad && dst?.node) {
+                const leftSide = findPadSide(src)
+                if (leftSide != null) addPadAffinity(dst.node, leftSide)
+            }
         }
     }
 

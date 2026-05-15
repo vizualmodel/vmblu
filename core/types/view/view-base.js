@@ -78,6 +78,7 @@ export function View(rect, node=null, parent=null) {
         route: null,
         routeSegment: 0,
         cursorInterval: null,
+        cable: null,
         bus: null,
         busSegment: 0,
         busLabel: null,
@@ -112,6 +113,7 @@ export function View(rect, node=null, parent=null) {
         lookWidget: null,
         route: null,
         routeSegment: 0,
+        cable:null,
         bus:null,
         busSegment: 0,
         busLabel:null,
@@ -224,9 +226,6 @@ View.prototype = {
             // move the routes (only the routes that start at this node)
             node.look.moveRoutes(dx,dy)
         })
-
-        // the buses
-        this.root.buses.forEach( bus => bus.move(dx, dy))
 
         // the cables
         this.root.cables.forEach( cable => cable.move(dx, dy))
@@ -371,13 +370,6 @@ View.prototype = {
             }
         }
 
-        // draw all the bus routes
-        for(const bus of root.buses) {
-            for(const tack of bus.tacks) {
-                if(tack.route?.from == tack) tack.route.render(ctx)
-            }
-        }
-
         // draw all the cable routes
         for(const cable of root.cables) {
             for(const tack of cable.tacks) {
@@ -385,11 +377,10 @@ View.prototype = {
             }
         }
 
-        // now render the nodes, pads, buses and cables
+        // now render the cables, nodes, pads 
+        for(const cable of root.cables) cable.render(ctx)
         for(const node of root.nodes) node.render(ctx)
         for(const pad of root.pads) pad.render(ctx)
-        for(const bus of root.buses) bus.render(ctx)
-        for(const cable of root.cables) cable.render(ctx)
     },
 
 
