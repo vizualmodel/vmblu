@@ -869,6 +869,72 @@ textarea.svelte-1ylwq8l {
 
 
 
+:root {
+    --md-bg: #000;
+    --md-fg: #fff;
+    --md-border: #333;
+    --md-link: #7fc7ff;
+    --md-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --md-editor-font: "Cascadia Code", Consolas, "Courier New", monospace;
+}
+
+.wrapper.svelte-1dybe9r {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.preview.svelte-1dybe9r,
+textarea.svelte-1dybe9r {
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    background: var(--md-bg);
+    color: var(--md-fg);
+    outline: none;
+    border: 1px solid var(--md-border);
+    border-radius: 4px;
+}
+
+.preview.svelte-1dybe9r {
+    font-family: var(--md-font);
+    line-height: 1.35;
+    overflow: auto;
+    white-space: normal;
+}
+
+.preview.svelte-1dybe9r a {
+    color: var(--md-link);
+}
+
+.preview.svelte-1dybe9r p {
+    margin: 0 0 0.7rem;
+}
+
+.preview.svelte-1dybe9r p:last-child {
+    margin-bottom: 0;
+}
+
+.preview.svelte-1dybe9r pre {
+    overflow: auto;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    border: 1px solid var(--md-border);
+}
+
+.preview.svelte-1dybe9r code {
+    color: inherit;
+}
+
+textarea.svelte-1dybe9r {
+    font-family: var(--md-editor-font);
+    line-height: 1.35;
+    resize: vertical;
+}
+
+
+
+
 .profile.svelte-1oswn12 {
     display: grid;
     gap: 0.45rem;

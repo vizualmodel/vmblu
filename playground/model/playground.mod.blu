@@ -12,7 +12,7 @@
   ],
   "factories": [
     {
-      "path": "../nodes/launcher/app-launcher.js",
+      "path": "../nodes/launcher/model/app-launcher.js",
       "function": "ApplicationLauncher"
     },
     {
@@ -165,7 +165,7 @@
         "name": "application launcher",
         "label": "launches the app in a separate tab or an iframe",
         "factory": {
-          "path": "../nodes/launcher/app-launcher.js",
+          "path": "../nodes/launcher/model/app-launcher.js",
           "function": "ApplicationLauncher"
         },
         "interfaces": [
@@ -1650,16 +1650,16 @@
                     }
                   },
                   {
-                    "name": "folder.get",
-                    "kind": "request",
+                    "name": "modal div",
+                    "kind": "output",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
                     }
                   },
                   {
-                    "name": "modal div",
-                    "kind": "output",
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1721,16 +1721,16 @@
                     }
                   },
                   {
-                    "name": "modal div",
-                    "kind": "output",
+                    "name": "folder.get",
+                    "kind": "request",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
                     }
                   },
                   {
-                    "name": "folder.get",
-                    "kind": "request",
+                    "name": "modal div",
+                    "kind": "output",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1774,18 +1774,18 @@
           },
           {
             "kind": "dock",
-            "name": "text block",
+            "name": "markdown input",
             "label": "comment  about the node",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
-              "node": "text block"
+              "node": "markdown input"
             },
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
-                    "name": "text",
+                    "name": "markdown",
                     "kind": "input",
                     "contract": {
                       "role": "follower",
@@ -1995,20 +1995,20 @@
         "connections": [
           {
             "src": {
-              "pin": "folder.get",
-              "node": "path request"
-            },
-            "dst": {
-              "pin": "folder.get"
-            }
-          },
-          {
-            "src": {
               "pin": "modal div",
               "node": "path request"
             },
             "dst": {
               "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "folder.get",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "folder.get"
             }
           },
           {
@@ -2022,20 +2022,20 @@
           },
           {
             "src": {
-              "pin": "modal div",
-              "node": "name and path"
-            },
-            "dst": {
-              "pin": "modal div"
-            }
-          },
-          {
-            "src": {
               "pin": "folder.get",
               "node": "name and path"
             },
             "dst": {
               "pin": "folder.get"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "name and path"
+            },
+            "dst": {
+              "pin": "modal div"
             }
           },
           {
@@ -2050,7 +2050,7 @@
           {
             "src": {
               "pin": "modal div",
-              "node": "text block"
+              "node": "markdown input"
             },
             "dst": {
               "pin": "modal div"
@@ -2187,8 +2187,8 @@
               "pin": "node prompt"
             },
             "dst": {
-              "pin": "text",
-              "node": "text block"
+              "pin": "markdown",
+              "node": "markdown input"
             }
           },
           {
@@ -2520,12 +2520,12 @@
         },
         "dst": [
           {
-            "pin": "top level view",
-            "node": "view manager"
-          },
-          {
             "pin": "model.set",
             "node": "model manager"
+          },
+          {
+            "pin": "top level view",
+            "node": "view manager"
           }
         ]
       },

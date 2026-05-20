@@ -89,6 +89,9 @@ export const JsonInputFactory = getFactory(JsonAreaInputSvelte)
 import TextAreaInputSvelte from './nodes/text-area-input/text-area-input.svelte'
 export const TextBlockFactory = getFactory(TextAreaInputSvelte)
 
+import MarkdownInputSvelte from './nodes/markdown-input/markdown-input.svelte'
+export const MarkdownInputFactory = getFactory(MarkdownInputSvelte)
+
 import PinProfileSvelte from './nodes/pin-profile/pin-profile.svelte'
 export const PinProfileFactory = getFactory(PinProfileSvelte)
 
@@ -115,4 +118,3 @@ export const DocumentSettingsFactory = getFactory(DocumentSettingsSvelte)
 
 import NodeSelectorSvelte from './nodes/node-selector/node-selector.svelte'
 export const NodeSelectorFactory = getFactory(NodeSelectorSvelte)
-

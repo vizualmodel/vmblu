@@ -7771,31 +7771,775 @@ function Text_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_5$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc"> </span><span class="punct svelte-1y335rc">:</span></p>`);
-var root_8 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">summary</span><span class="punct svelte-1y335rc">:</span><span class="summary svelte-1y335rc"> </span></p>`);
-var root_7 = template(`<p class="line contract-line svelte-1y335rc"><span class="field svelte-1y335rc"> </span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!>`, 1);
-var root_10 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">kind</span><span class="punct svelte-1y335rc">:</span><span class="kind svelte-1y335rc"> </span></p>`);
-var root_11$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">summary</span><span class="punct svelte-1y335rc">:</span><span class="summary svelte-1y335rc"> </span></p>`);
-var root_9$1 = template(`<p class="line contract-line svelte-1y335rc"><span class="contract-key svelte-1y335rc">type</span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!> <!>`, 1);
-var root_3 = template(`<p class="line brace svelte-1y335rc"></p> <p class="line contract-line svelte-1y335rc" style="--indent:1"><span class="contract-key svelte-1y335rc">role</span><span class="punct svelte-1y335rc">:</span><span class="type svelte-1y335rc"> </span></p> <!> <p class="line brace svelte-1y335rc"></p>`, 1);
-var root_13 = template(`<pre class="line svelte-1y335rc"> </pre>`);
-var root_2$4 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Contract</p> <div class="box contract svelte-1y335rc"><!></div></div>`);
-var root_19 = template(`<p class="line meta svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span></p>`);
-var root_21$1 = template(`<p class="line meta svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span></p>`);
-var root_22 = template(`<p class="line empty svelte-1y335rc">No source profile entry for this internal pin.</p>`);
-var root_16$1 = template(`<p class="line endpoint svelte-1y335rc"> </p> <!>`, 1);
-var root_23 = template(`<p class="line empty svelte-1y335rc">No internal pins are currently resolved behind this proxy.</p>`);
-var root_14$1 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc"> </p> <div class="box lines svelte-1y335rc"><!></div></div>`);
-var root_28 = template(`<p class="line status-warning svelte-1y335rc"> </p>`);
-var root_29 = template(`<p class="line status-ok svelte-1y335rc">contract match</p>`);
-var root_30 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Description</p> <div class="box svelte-1y335rc"><pre class="line summary svelte-1y335rc"> </pre></div></div>`);
-var root_26 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"><p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p> <!></div></div> <!>`, 1);
-var root_25 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Handler and parameters</p></div> <!>`, 1);
-var root_34 = template(`<p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p>`);
-var root_32 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"></div></div>`);
-var root_36 = template(`<div class="box svelte-1y335rc"><div class="lines svelte-1y335rc"><p class="line svelte-1y335rc"><span class="clickable svelte-1y335rc"> </span> </p></div></div>`);
-var root_31 = template(`<div class="section svelte-1y335rc"><p class="section-title svelte-1y335rc">Sent at</p></div> <!>`, 1);
-var root_1$7 = template(`<div class="profile svelte-1y335rc"><!> <!></div>`);
+var P = /[!-#%-\*,-\/:;\?@\[-\]_\{\}\xA1\xA7\xAB\xB6\xB7\xBB\xBF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061D-\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u09FD\u0A76\u0AF0\u0C77\u0C84\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1B7D\u1B7E\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2308-\u230B\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E4F\u2E52-\u2E5D\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA8FC\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65]|\uD800[\uDD00-\uDD02\uDF9F\uDFD0]|\uD801\uDD6F|\uD802[\uDC57\uDD1F\uDD3F\uDE50-\uDE58\uDE7F\uDEF0-\uDEF6\uDF39-\uDF3F\uDF99-\uDF9C]|\uD803[\uDEAD\uDF55-\uDF59\uDF86-\uDF89]|\uD804[\uDC47-\uDC4D\uDCBB\uDCBC\uDCBE-\uDCC1\uDD40-\uDD43\uDD74\uDD75\uDDC5-\uDDC8\uDDCD\uDDDB\uDDDD-\uDDDF\uDE38-\uDE3D\uDEA9]|\uD805[\uDC4B-\uDC4F\uDC5A\uDC5B\uDC5D\uDCC6\uDDC1-\uDDD7\uDE41-\uDE43\uDE60-\uDE6C\uDEB9\uDF3C-\uDF3E]|\uD806[\uDC3B\uDD44-\uDD46\uDDE2\uDE3F-\uDE46\uDE9A-\uDE9C\uDE9E-\uDEA2\uDF00-\uDF09]|\uD807[\uDC41-\uDC45\uDC70\uDC71\uDEF7\uDEF8\uDF43-\uDF4F\uDFFF]|\uD809[\uDC70-\uDC74]|\uD80B[\uDFF1\uDFF2]|\uD81A[\uDE6E\uDE6F\uDEF5\uDF37-\uDF3B\uDF44]|\uD81B[\uDE97-\uDE9A\uDFE2]|\uD82F\uDC9F|\uD836[\uDE87-\uDE8B]|\uD83A[\uDD5E\uDD5F]/;
+
+var regex = /[\$\+<->\^`\|~\xA2-\xA6\xA8\xA9\xAC\xAE-\xB1\xB4\xB8\xD7\xF7\u02C2-\u02C5\u02D2-\u02DF\u02E5-\u02EB\u02ED\u02EF-\u02FF\u0375\u0384\u0385\u03F6\u0482\u058D-\u058F\u0606-\u0608\u060B\u060E\u060F\u06DE\u06E9\u06FD\u06FE\u07F6\u07FE\u07FF\u0888\u09F2\u09F3\u09FA\u09FB\u0AF1\u0B70\u0BF3-\u0BFA\u0C7F\u0D4F\u0D79\u0E3F\u0F01-\u0F03\u0F13\u0F15-\u0F17\u0F1A-\u0F1F\u0F34\u0F36\u0F38\u0FBE-\u0FC5\u0FC7-\u0FCC\u0FCE\u0FCF\u0FD5-\u0FD8\u109E\u109F\u1390-\u1399\u166D\u17DB\u1940\u19DE-\u19FF\u1B61-\u1B6A\u1B74-\u1B7C\u1FBD\u1FBF-\u1FC1\u1FCD-\u1FCF\u1FDD-\u1FDF\u1FED-\u1FEF\u1FFD\u1FFE\u2044\u2052\u207A-\u207C\u208A-\u208C\u20A0-\u20C0\u2100\u2101\u2103-\u2106\u2108\u2109\u2114\u2116-\u2118\u211E-\u2123\u2125\u2127\u2129\u212E\u213A\u213B\u2140-\u2144\u214A-\u214D\u214F\u218A\u218B\u2190-\u2307\u230C-\u2328\u232B-\u2426\u2440-\u244A\u249C-\u24E9\u2500-\u2767\u2794-\u27C4\u27C7-\u27E5\u27F0-\u2982\u2999-\u29D7\u29DC-\u29FB\u29FE-\u2B73\u2B76-\u2B95\u2B97-\u2BFF\u2CE5-\u2CEA\u2E50\u2E51\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u2FF0-\u2FFF\u3004\u3012\u3013\u3020\u3036\u3037\u303E\u303F\u309B\u309C\u3190\u3191\u3196-\u319F\u31C0-\u31E3\u31EF\u3200-\u321E\u322A-\u3247\u3250\u3260-\u327F\u328A-\u32B0\u32C0-\u33FF\u4DC0-\u4DFF\uA490-\uA4C6\uA700-\uA716\uA720\uA721\uA789\uA78A\uA828-\uA82B\uA836-\uA839\uAA77-\uAA79\uAB5B\uAB6A\uAB6B\uFB29\uFBB2-\uFBC2\uFD40-\uFD4F\uFDCF\uFDFC-\uFDFF\uFE62\uFE64-\uFE66\uFE69\uFF04\uFF0B\uFF1C-\uFF1E\uFF3E\uFF40\uFF5C\uFF5E\uFFE0-\uFFE6\uFFE8-\uFFEE\uFFFC\uFFFD]|\uD800[\uDD37-\uDD3F\uDD79-\uDD89\uDD8C-\uDD8E\uDD90-\uDD9C\uDDA0\uDDD0-\uDDFC]|\uD802[\uDC77\uDC78\uDEC8]|\uD805\uDF3F|\uD807[\uDFD5-\uDFF1]|\uD81A[\uDF3C-\uDF3F\uDF45]|\uD82F\uDC9C|\uD833[\uDF50-\uDFC3]|\uD834[\uDC00-\uDCF5\uDD00-\uDD26\uDD29-\uDD64\uDD6A-\uDD6C\uDD83\uDD84\uDD8C-\uDDA9\uDDAE-\uDDEA\uDE00-\uDE41\uDE45\uDF00-\uDF56]|\uD835[\uDEC1\uDEDB\uDEFB\uDF15\uDF35\uDF4F\uDF6F\uDF89\uDFA9\uDFC3]|\uD836[\uDC00-\uDDFF\uDE37-\uDE3A\uDE6D-\uDE74\uDE76-\uDE83\uDE85\uDE86]|\uD838[\uDD4F\uDEFF]|\uD83B[\uDCAC\uDCB0\uDD2E\uDEF0\uDEF1]|\uD83C[\uDC00-\uDC2B\uDC30-\uDC93\uDCA0-\uDCAE\uDCB1-\uDCBF\uDCC1-\uDCCF\uDCD1-\uDCF5\uDD0D-\uDDAD\uDDE6-\uDE02\uDE10-\uDE3B\uDE40-\uDE48\uDE50\uDE51\uDE60-\uDE65\uDF00-\uDFFF]|\uD83D[\uDC00-\uDED7\uDEDC-\uDEEC\uDEF0-\uDEFC\uDF00-\uDF76\uDF7B-\uDFD9\uDFE0-\uDFEB\uDFF0]|\uD83E[\uDC00-\uDC0B\uDC10-\uDC47\uDC50-\uDC59\uDC60-\uDC87\uDC90-\uDCAD\uDCB0\uDCB1\uDD00-\uDE53\uDE60-\uDE6D\uDE70-\uDE7C\uDE80-\uDE88\uDE90-\uDEBD\uDEBF-\uDEC5\uDECE-\uDEDB\uDEE0-\uDEE8\uDEF0-\uDEF8\uDF00-\uDF92\uDF94-\uDFCA]/;
+
+// Utilities
+//
+
+
+function isSpace (code) {
+  switch (code) {
+    case 0x09:
+    case 0x20:
+      return true
+  }
+  return false
+}
+
+// Zs (unicode class) || [\t\f\v\r\n]
+function isWhiteSpace (code) {
+  if (code >= 0x2000 && code <= 0x200A) { return true }
+  switch (code) {
+    case 0x09: // \t
+    case 0x0A: // \n
+    case 0x0B: // \v
+    case 0x0C: // \f
+    case 0x0D: // \r
+    case 0x20:
+    case 0xA0:
+    case 0x1680:
+    case 0x202F:
+    case 0x205F:
+    case 0x3000:
+      return true
+  }
+  return false
+}
+
+/* eslint-disable max-len */
+
+// Currently without astral characters support.
+function isPunctChar (ch) {
+  return P.test(ch) || regex.test(ch)
+}
+
+// Markdown ASCII punctuation characters.
+//
+// !, ", #, $, %, &, ', (, ), *, +, ,, -, ., /, :, ;, <, =, >, ?, @, [, \, ], ^, _, `, {, |, }, or ~
+// http://spec.commonmark.org/0.15/#ascii-punctuation-character
+//
+// Don't confuse with unicode punctuation !!! It lacks some chars in ascii range.
+//
+function isMdAsciiPunct (ch) {
+  switch (ch) {
+    case 0x21/* ! */:
+    case 0x22/* " */:
+    case 0x23/* # */:
+    case 0x24/* $ */:
+    case 0x25/* % */:
+    case 0x26/* & */:
+    case 0x27/* ' */:
+    case 0x28/* ( */:
+    case 0x29/* ) */:
+    case 0x2A/* * */:
+    case 0x2B/* + */:
+    case 0x2C/* , */:
+    case 0x2D/* - */:
+    case 0x2E/* . */:
+    case 0x2F/* / */:
+    case 0x3A/* : */:
+    case 0x3B/* ; */:
+    case 0x3C/* < */:
+    case 0x3D/* = */:
+    case 0x3E/* > */:
+    case 0x3F/* ? */:
+    case 0x40/* @ */:
+    case 0x5B/* [ */:
+    case 0x5C/* \ */:
+    case 0x5D/* ] */:
+    case 0x5E/* ^ */:
+    case 0x5F/* _ */:
+    case 0x60/* ` */:
+    case 0x7B/* { */:
+    case 0x7C/* | */:
+    case 0x7D/* } */:
+    case 0x7E/* ~ */:
+      return true
+    default:
+      return false
+  }
+}
+
+// Token class
+
+/**
+ * class Token
+ **/
+
+/**
+ * new Token(type, tag, nesting)
+ *
+ * Create new token and fill passed properties.
+ **/
+function Token (type, tag, nesting) {
+  /**
+   * Token#type -> String
+   *
+   * Type of the token (string, e.g. "paragraph_open")
+   **/
+  this.type     = type;
+
+  /**
+   * Token#tag -> String
+   *
+   * html tag name, e.g. "p"
+   **/
+  this.tag      = tag;
+
+  /**
+   * Token#attrs -> Array
+   *
+   * Html attributes. Format: `[ [ name1, value1 ], [ name2, value2 ] ]`
+   **/
+  this.attrs    = null;
+
+  /**
+   * Token#map -> Array
+   *
+   * Source map info. Format: `[ line_begin, line_end ]`
+   **/
+  this.map      = null;
+
+  /**
+   * Token#nesting -> Number
+   *
+   * Level change (number in {-1, 0, 1} set), where:
+   *
+   * -  `1` means the tag is opening
+   * -  `0` means the tag is self-closing
+   * - `-1` means the tag is closing
+   **/
+  this.nesting  = nesting;
+
+  /**
+   * Token#level -> Number
+   *
+   * nesting level, the same as `state.level`
+   **/
+  this.level    = 0;
+
+  /**
+   * Token#children -> Array
+   *
+   * An array of child nodes (inline and img tokens)
+   **/
+  this.children = null;
+
+  /**
+   * Token#content -> String
+   *
+   * In a case of self-closing tag (code, html, fence, etc.),
+   * it has contents of this tag.
+   **/
+  this.content  = '';
+
+  /**
+   * Token#markup -> String
+   *
+   * '*' or '_' for emphasis, fence string for fence, etc.
+   **/
+  this.markup   = '';
+
+  /**
+   * Token#info -> String
+   *
+   * Additional information:
+   *
+   * - Info string for "fence" tokens
+   * - The value "auto" for autolink "link_open" and "link_close" tokens
+   * - The string value of the item marker for ordered-list "list_item_open" tokens
+   **/
+  this.info     = '';
+
+  /**
+   * Token#meta -> Object
+   *
+   * A place for plugins to store an arbitrary data
+   **/
+  this.meta     = null;
+
+  /**
+   * Token#block -> Boolean
+   *
+   * True for block-level tokens, false for inline tokens.
+   * Used in renderer to calculate line breaks
+   **/
+  this.block    = false;
+
+  /**
+   * Token#hidden -> Boolean
+   *
+   * If it's true, ignore this element when rendering. Used for tight lists
+   * to hide paragraphs.
+   **/
+  this.hidden   = false;
+}
+
+/**
+ * Token.attrIndex(name) -> Number
+ *
+ * Search attribute index by name.
+ **/
+Token.prototype.attrIndex = function attrIndex (name) {
+  if (!this.attrs) { return -1 }
+
+  const attrs = this.attrs;
+
+  for (let i = 0, len = attrs.length; i < len; i++) {
+    if (attrs[i][0] === name) { return i }
+  }
+  return -1
+};
+
+/**
+ * Token.attrPush(attrData)
+ *
+ * Add `[ name, value ]` attribute to list. Init attrs if necessary
+ **/
+Token.prototype.attrPush = function attrPush (attrData) {
+  if (this.attrs) {
+    this.attrs.push(attrData);
+  } else {
+    this.attrs = [attrData];
+  }
+};
+
+/**
+ * Token.attrSet(name, value)
+ *
+ * Set `name` attribute to `value`. Override old value if exists.
+ **/
+Token.prototype.attrSet = function attrSet (name, value) {
+  const idx = this.attrIndex(name);
+  const attrData = [name, value];
+
+  if (idx < 0) {
+    this.attrPush(attrData);
+  } else {
+    this.attrs[idx] = attrData;
+  }
+};
+
+/**
+ * Token.attrGet(name)
+ *
+ * Get the value of attribute `name`, or null if it does not exist.
+ **/
+Token.prototype.attrGet = function attrGet (name) {
+  const idx = this.attrIndex(name);
+  let value = null;
+  if (idx >= 0) {
+    value = this.attrs[idx][1];
+  }
+  return value
+};
+
+/**
+ * Token.attrJoin(name, value)
+ *
+ * Join value to existing attribute via space. Or create new attribute if not
+ * exists. Useful to operate with token classes.
+ **/
+Token.prototype.attrJoin = function attrJoin (name, value) {
+  const idx = this.attrIndex(name);
+
+  if (idx < 0) {
+    this.attrPush([name, value]);
+  } else {
+    this.attrs[idx][1] = this.attrs[idx][1] + ' ' + value;
+  }
+};
+
+// Core state object
+//
+
+
+function StateCore (src, md, env) {
+  this.src = src;
+  this.env = env;
+  this.tokens = [];
+  this.inlineMode = false;
+  this.md = md; // link to parser instance
+}
+
+// re-export Token class to use in core rules
+StateCore.prototype.Token = Token;
+
+// Parser state class
+
+
+function StateBlock (src, md, env, tokens) {
+  this.src = src;
+
+  // link to parser instance
+  this.md     = md;
+
+  this.env = env;
+
+  //
+  // Internal state vartiables
+  //
+
+  this.tokens = tokens;
+
+  this.bMarks = [];  // line begin offsets for fast jumps
+  this.eMarks = [];  // line end offsets for fast jumps
+  this.tShift = [];  // offsets of the first non-space characters (tabs not expanded)
+  this.sCount = [];  // indents for each line (tabs expanded)
+
+  // An amount of virtual spaces (tabs expanded) between beginning
+  // of each line (bMarks) and real beginning of that line.
+  //
+  // It exists only as a hack because blockquotes override bMarks
+  // losing information in the process.
+  //
+  // It's used only when expanding tabs, you can think about it as
+  // an initial tab length, e.g. bsCount=21 applied to string `\t123`
+  // means first tab should be expanded to 4-21%4 === 3 spaces.
+  //
+  this.bsCount = [];
+
+  // block parser variables
+
+  // required block content indent (for example, if we are
+  // inside a list, it would be positioned after list marker)
+  this.blkIndent  = 0;
+  this.line       = 0; // line index in src
+  this.lineMax    = 0; // lines count
+  this.tight      = false;  // loose/tight mode for lists
+  this.ddIndent   = -1; // indent of the current dd block (-1 if there isn't any)
+  this.listIndent = -1; // indent of the current list block (-1 if there isn't any)
+
+  // can be 'blockquote', 'list', 'root', 'paragraph' or 'reference'
+  // used in lists to determine if they interrupt a paragraph
+  this.parentType = 'root';
+
+  this.level = 0;
+
+  // Create caches
+  // Generate markers.
+  const s = this.src;
+
+  for (let start = 0, pos = 0, indent = 0, offset = 0, len = s.length, indent_found = false; pos < len; pos++) {
+    const ch = s.charCodeAt(pos);
+
+    if (!indent_found) {
+      if (isSpace(ch)) {
+        indent++;
+
+        if (ch === 0x09) {
+          offset += 4 - offset % 4;
+        } else {
+          offset++;
+        }
+        continue
+      } else {
+        indent_found = true;
+      }
+    }
+
+    if (ch === 0x0A || pos === len - 1) {
+      if (ch !== 0x0A) { pos++; }
+      this.bMarks.push(start);
+      this.eMarks.push(pos);
+      this.tShift.push(indent);
+      this.sCount.push(offset);
+      this.bsCount.push(0);
+
+      indent_found = false;
+      indent = 0;
+      offset = 0;
+      start = pos + 1;
+    }
+  }
+
+  // Push fake entry to simplify cache bounds checks
+  this.bMarks.push(s.length);
+  this.eMarks.push(s.length);
+  this.tShift.push(0);
+  this.sCount.push(0);
+  this.bsCount.push(0);
+
+  this.lineMax = this.bMarks.length - 1; // don't count last fake line
+}
+
+// Push new token to "stream".
+//
+StateBlock.prototype.push = function (type, tag, nesting) {
+  const token = new Token(type, tag, nesting);
+  token.block = true;
+
+  if (nesting < 0) this.level--; // closing tag
+  token.level = this.level;
+  if (nesting > 0) this.level++; // opening tag
+
+  this.tokens.push(token);
+  return token
+};
+
+StateBlock.prototype.isEmpty = function isEmpty (line) {
+  return this.bMarks[line] + this.tShift[line] >= this.eMarks[line]
+};
+
+StateBlock.prototype.skipEmptyLines = function skipEmptyLines (from) {
+  for (let max = this.lineMax; from < max; from++) {
+    if (this.bMarks[from] + this.tShift[from] < this.eMarks[from]) {
+      break
+    }
+  }
+  return from
+};
+
+// Skip spaces from given position.
+StateBlock.prototype.skipSpaces = function skipSpaces (pos) {
+  for (let max = this.src.length; pos < max; pos++) {
+    const ch = this.src.charCodeAt(pos);
+    if (!isSpace(ch)) { break }
+  }
+  return pos
+};
+
+// Skip spaces from given position in reverse.
+StateBlock.prototype.skipSpacesBack = function skipSpacesBack (pos, min) {
+  if (pos <= min) { return pos }
+
+  while (pos > min) {
+    if (!isSpace(this.src.charCodeAt(--pos))) { return pos + 1 }
+  }
+  return pos
+};
+
+// Skip char codes from given position
+StateBlock.prototype.skipChars = function skipChars (pos, code) {
+  for (let max = this.src.length; pos < max; pos++) {
+    if (this.src.charCodeAt(pos) !== code) { break }
+  }
+  return pos
+};
+
+// Skip char codes reverse from given position - 1
+StateBlock.prototype.skipCharsBack = function skipCharsBack (pos, code, min) {
+  if (pos <= min) { return pos }
+
+  while (pos > min) {
+    if (code !== this.src.charCodeAt(--pos)) { return pos + 1 }
+  }
+  return pos
+};
+
+// cut lines range from source.
+StateBlock.prototype.getLines = function getLines (begin, end, indent, keepLastLF) {
+  if (begin >= end) {
+    return ''
+  }
+
+  const queue = new Array(end - begin);
+
+  for (let i = 0, line = begin; line < end; line++, i++) {
+    let lineIndent = 0;
+    const lineStart = this.bMarks[line];
+    let first = lineStart;
+    let last;
+
+    if (line + 1 < end || keepLastLF) {
+      // No need for bounds check because we have fake entry on tail.
+      last = this.eMarks[line] + 1;
+    } else {
+      last = this.eMarks[line];
+    }
+
+    while (first < last && lineIndent < indent) {
+      const ch = this.src.charCodeAt(first);
+
+      if (isSpace(ch)) {
+        if (ch === 0x09) {
+          lineIndent += 4 - (lineIndent + this.bsCount[line]) % 4;
+        } else {
+          lineIndent++;
+        }
+      } else if (first - lineStart < this.tShift[line]) {
+        // patched tShift masked characters to look like spaces (blockquotes, list markers)
+        lineIndent++;
+      } else {
+        break
+      }
+
+      first++;
+    }
+
+    if (lineIndent > indent) {
+      // partially expanding tabs in code blocks, e.g '\t\tfoobar'
+      // with indent=2 becomes '  \tfoobar'
+      queue[i] = new Array(lineIndent - indent + 1).join(' ') + this.src.slice(first, last);
+    } else {
+      queue[i] = this.src.slice(first, last);
+    }
+  }
+
+  return queue.join('')
+};
+
+// re-export Token class to use in block rules
+StateBlock.prototype.Token = Token;
+
+// List of valid html blocks names, according to commonmark spec
+// https://spec.commonmark.org/0.30/#html-blocks
+
+var block_names = [
+  'address',
+  'article',
+  'aside',
+  'base',
+  'basefont',
+  'blockquote',
+  'body',
+  'caption',
+  'center',
+  'col',
+  'colgroup',
+  'dd',
+  'details',
+  'dialog',
+  'dir',
+  'div',
+  'dl',
+  'dt',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'frame',
+  'frameset',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'head',
+  'header',
+  'hr',
+  'html',
+  'iframe',
+  'legend',
+  'li',
+  'link',
+  'main',
+  'menu',
+  'menuitem',
+  'nav',
+  'noframes',
+  'ol',
+  'optgroup',
+  'option',
+  'p',
+  'param',
+  'search',
+  'section',
+  'summary',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'title',
+  'tr',
+  'track',
+  'ul'
+];
+
+// Regexps to match html elements
+
+const attr_name     = '[a-zA-Z_:][a-zA-Z0-9:._-]*';
+
+const unquoted      = '[^"\'=<>`\\x00-\\x20]+';
+const single_quoted = "'[^']*'";
+const double_quoted = '"[^"]*"';
+
+const attr_value  = '(?:' + unquoted + '|' + single_quoted + '|' + double_quoted + ')';
+
+const attribute   = '(?:\\s+' + attr_name + '(?:\\s*=\\s*' + attr_value + ')?)';
+
+const open_tag    = '<[A-Za-z][A-Za-z0-9\\-]*' + attribute + '*\\s*\\/?>';
+
+const close_tag   = '<\\/[A-Za-z][A-Za-z0-9\\-]*\\s*>';
+const HTML_OPEN_CLOSE_TAG_RE = new RegExp('^(?:' + open_tag + '|' + close_tag + ')');
+
+// HTML block
+
+
+// An array of opening and corresponding closing sequences for html tags,
+// last argument defines whether it can terminate a paragraph or not
+//
+[
+  [/^<(script|pre|style|textarea)(?=(\s|>|$))/i, /<\/(script|pre|style|textarea)>/i, true],
+  [/^<!--/,        /-->/,   true],
+  [/^<\?/,         /\?>/,   true],
+  [/^<![A-Z]/,     />/,     true],
+  [/^<!\[CDATA\[/, /\]\]>/, true],
+  [new RegExp('^</?(' + block_names.join('|') + ')(?=(\\s|/?>|$))', 'i'), /^$/, true],
+  [new RegExp(HTML_OPEN_CLOSE_TAG_RE.source + '\\s*$'),  /^$/, false]
+];
+
+// Inline parser state
+
+
+function StateInline (src, md, env, outTokens) {
+  this.src = src;
+  this.env = env;
+  this.md = md;
+  this.tokens = outTokens;
+  this.tokens_meta = Array(outTokens.length);
+
+  this.pos = 0;
+  this.posMax = this.src.length;
+  this.level = 0;
+  this.pending = '';
+  this.pendingLevel = 0;
+
+  // Stores { start: end } pairs. Useful for backtrack
+  // optimization of pairs parse (emphasis, strikes).
+  this.cache = {};
+
+  // List of emphasis-like delimiters for current tag
+  this.delimiters = [];
+
+  // Stack of delimiter lists for upper level tags
+  this._prev_delimiters = [];
+
+  // backtick length => last seen position
+  this.backticks = {};
+  this.backticksScanned = false;
+
+  // Counter used to disable inline linkify-it execution
+  // inside <a> and markdown links
+  this.linkLevel = 0;
+}
+
+// Flush pending text
+//
+StateInline.prototype.pushPending = function () {
+  const token = new Token('text', '', 0);
+  token.content = this.pending;
+  token.level = this.pendingLevel;
+  this.tokens.push(token);
+  this.pending = '';
+  return token
+};
+
+// Push new token to "stream".
+// If pending text exists - flush it as text token
+//
+StateInline.prototype.push = function (type, tag, nesting) {
+  if (this.pending) {
+    this.pushPending();
+  }
+
+  const token = new Token(type, tag, nesting);
+  let token_meta = null;
+
+  if (nesting < 0) {
+    // closing tag
+    this.level--;
+    this.delimiters = this._prev_delimiters.pop();
+  }
+
+  token.level = this.level;
+
+  if (nesting > 0) {
+    // opening tag
+    this.level++;
+    this._prev_delimiters.push(this.delimiters);
+    this.delimiters = [];
+    token_meta = { delimiters: this.delimiters };
+  }
+
+  this.pendingLevel = this.level;
+  this.tokens.push(token);
+  this.tokens_meta.push(token_meta);
+  return token
+};
+
+// Scan a sequence of emphasis-like markers, and determine whether
+// it can start an emphasis sequence or end an emphasis sequence.
+//
+//  - start - position to scan from (it should point at a valid marker);
+//  - canSplitWord - determine if these markers can be found inside a word
+//
+StateInline.prototype.scanDelims = function (start, canSplitWord) {
+  const max = this.posMax;
+  const marker = this.src.charCodeAt(start);
+
+  // treat beginning of the line as a whitespace
+  const lastChar = start > 0 ? this.src.charCodeAt(start - 1) : 0x20;
+
+  let pos = start;
+  while (pos < max && this.src.charCodeAt(pos) === marker) { pos++; }
+
+  const count = pos - start;
+
+  // treat end of the line as a whitespace
+  const nextChar = pos < max ? this.src.charCodeAt(pos) : 0x20;
+
+  const isLastPunctChar = isMdAsciiPunct(lastChar) || isPunctChar(String.fromCharCode(lastChar));
+  const isNextPunctChar = isMdAsciiPunct(nextChar) || isPunctChar(String.fromCharCode(nextChar));
+
+  const isLastWhiteSpace = isWhiteSpace(lastChar);
+  const isNextWhiteSpace = isWhiteSpace(nextChar);
+
+  const left_flanking =
+    !isNextWhiteSpace && (!isNextPunctChar || isLastWhiteSpace || isLastPunctChar);
+  const right_flanking =
+    !isLastWhiteSpace && (!isLastPunctChar || isNextWhiteSpace || isNextPunctChar);
+
+  const can_open  = left_flanking  && (canSplitWord || !right_flanking || isLastPunctChar);
+  const can_close = right_flanking && (canSplitWord || !left_flanking  || isNextPunctChar);
+
+  return { can_open, can_close, length: count }
+};
+
+// re-export Token class to use in block rules
+StateInline.prototype.Token = Token;
+
+// Process escaped chars and hardbreaks
+
+
+const ESCAPED = [];
+
+for (let i = 0; i < 256; i++) { ESCAPED.push(0); }
+
+'\\!"#$%&\'()*+,./:;<=>?@[]^_`{|}~-'
+  .split('').forEach(function (ch) { ESCAPED[ch.charCodeAt(0)] = 1; });
+
+var root_5$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw"> </span><span class="punct svelte-m7l4mw">:</span></p>`);
+var root_8 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
+var root_7 = template(`<p class="line contract-line svelte-m7l4mw"><span class="field svelte-m7l4mw"> </span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!>`, 1);
+var root_10 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">kind</span><span class="punct svelte-m7l4mw">:</span><span class="kind svelte-m7l4mw"> </span></p>`);
+var root_11$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
+var root_9$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">type</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <!>`, 1);
+var root_3 = template(`<p class="line brace svelte-m7l4mw"></p> <p class="line contract-line svelte-m7l4mw" style="--indent:1"><span class="contract-key svelte-m7l4mw">role</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <p class="line brace svelte-m7l4mw"></p>`, 1);
+var root_13 = template(`<pre class="line svelte-m7l4mw"> </pre>`);
+var root_2$4 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Contract</p> <div class="box contract svelte-m7l4mw"><!></div></div>`);
+var root_19 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
+var root_21$1 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
+var root_22 = template(`<p class="line empty svelte-m7l4mw">No source profile entry for this internal pin.</p>`);
+var root_16$1 = template(`<p class="line endpoint svelte-m7l4mw"> </p> <!>`, 1);
+var root_23 = template(`<p class="line empty svelte-m7l4mw">No internal pins are currently resolved behind this proxy.</p>`);
+var root_14$1 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw"> </p> <div class="box lines svelte-m7l4mw"><!></div></div>`);
+var root_28 = template(`<p class="line status-warning svelte-m7l4mw"> </p>`);
+var root_29 = template(`<p class="line status-ok svelte-m7l4mw">&#x2714 contract match</p>`);
+var root_30 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Description</p> <div class="box svelte-m7l4mw"><pre class="line summary svelte-m7l4mw"> </pre></div></div>`);
+var root_26 = template(`<div class="box svelte-m7l4mw"><div class="lines svelte-m7l4mw"><p class="line svelte-m7l4mw"> <span class="clickable svelte-m7l4mw"> </span></p> <!></div></div> <!>`, 1);
+var root_25 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Handler</p></div> <!>`, 1);
+var root_34 = template(`<p class="line svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
+var root_32 = template(`<div class="box svelte-m7l4mw"><div class="lines svelte-m7l4mw"></div></div>`);
+var root_36 = template(`<div class="box svelte-m7l4mw"><div class="lines svelte-m7l4mw"><p class="line svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p></div></div>`);
+var root_31 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Sent at</p></div> <!>`, 1);
+var root_1$7 = template(`<div class="profile svelte-m7l4mw"><!> <!></div>`);
 
 function Pin_profile($$anchor, $$props) {
 	push($$props, false);
@@ -7820,17 +8564,18 @@ function Pin_profile($$anchor, $$props) {
 	let _open = mutable_state(null);
 	let _contract = mutable_state(null);
 
+	// small helper
+	const closeBox = () => {
+		set(_pin, null);
+		get(box).hide();
+	};
+
 	const handlers = {
 		onShow(
 			{ pos, pin, contract, profile, open = null }
 		) {
 			// check and just hide if repeat
-			if (get(_pin) && pin === get(_pin)) {
-				set(_pin, null);
-				get(box).hide();
-				return;
-			}
-
+			if (get(_pin) && pin === get(_pin)) return closeBox();
 			mutate(box, get(box).title = pin.name + ' @ ' + pin.node.name + (pin.is.input ? ' (in)' : ' (out)'));
 			set(_pin, pin);
 			set(_contract, contract);
@@ -8172,10 +8917,9 @@ function Pin_profile($$anchor, $$props) {
 								var div_5 = first_child(fragment_14);
 								var div_6 = child(div_5);
 								var p_15 = child(div_6);
-								var span_10 = child(p_15);
-								var text_14 = child(span_10);
-
-								var text_15 = sibling(span_10);
+								var text_14 = child(p_15);
+								var span_10 = sibling(text_14);
+								var text_15 = child(span_10);
 
 								var node_18 = sibling(p_15, 2);
 
@@ -8214,8 +8958,8 @@ function Pin_profile($$anchor, $$props) {
 								});
 
 								template_effect(() => {
-									set_text(text_14, get(_profile).handler);
-									set_text(text_15, `  in ${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`);
+									set_text(text_14, `${get(_profile).handler + ' ' ?? ""} `);
+									set_text(text_15, `${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`);
 								});
 
 								event("click", span_10, () => get(_open)?.({
@@ -8248,13 +8992,7 @@ function Pin_profile($$anchor, $$props) {
 											var p_18 = root_34();
 											var span_11 = child(p_18);
 											var text_18 = child(span_11);
-
-											var text_19 = sibling(span_11);
-
-											template_effect(() => {
-												set_text(text_18, get(singleProfile).pin);
-												set_text(text_19, `  ${get(singleProfile).file ?? ""} (${get(singleProfile).line ?? ""})`);
-											});
+											template_effect(() => set_text(text_18, `${get(singleProfile).file ?? ""} (${get(singleProfile).line ?? ""})`));
 
 											event("click", span_11, () => get(_open)?.({
 												file: get(singleProfile).file,
@@ -8278,14 +9016,8 @@ function Pin_profile($$anchor, $$props) {
 										var div_12 = child(div_11);
 										var p_19 = child(div_12);
 										var span_12 = child(p_19);
-										var text_20 = child(span_12);
-
-										var text_21 = sibling(span_12);
-
-										template_effect(() => {
-											set_text(text_20, get(_profile).pin);
-											set_text(text_21, `  ${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`);
-										});
+										var text_19 = child(span_12);
+										template_effect(() => set_text(text_19, `${get(_profile).file ?? ""} (${get(_profile).line ?? ""})`));
 
 										event("click", span_12, () => get(_open)?.({
 											file: get(_profile).file,
@@ -8346,8 +9078,16 @@ function Pin_tool($$anchor, $$props) {
 		tx().send('modal div', get(box).div);
 	});
 
+	// small helper
+	const closeBox = () => {
+		pin = null;
+		get(box).hide();
+	};
+
 	const handlers = {
 		onShow({ pos, pin: shownPin, ok: okFn, cancel }) {
+			// toggle behaviour for repeat key press
+			if (pin && pin == shownPin) return closeBox();
 			pin = shownPin;
 			ok = okFn;
 			set(settings, makeSettings(pin));
@@ -8602,8 +9342,16 @@ function Pin_event($$anchor, $$props) {
 		tx().send('modal div', get(box).div);
 	});
 
+	// small helper
+	const closeBox = () => {
+		pin = null;
+		get(box).hide();
+	};
+
 	const handlers = {
 		onShow({ pos, pin: shownPin, ok: okFn, cancel }) {
+			// toggle behaviour for repeat key press
+			if (pin && pin == shownPin) return closeBox();
 			pin = shownPin;
 			ok = okFn;
 			set(settings, makeSettings(pin));
