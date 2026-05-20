@@ -4,11 +4,11 @@
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
-    "runtime": "../../runtime/rt-base/scaffold.js"
+    "runtime": "../../../runtime/rt-base/scaffold.js"
   },
   "imports": [
-    "../../core/model/core.mod.blu",
-    "../../ui-svelte/model/ui-svelte.mod.blu"
+    "../../../core/model/core.mod.blu",
+    "../../../ui-svelte/model/ui-svelte.mod.blu"
   ],
   "factories": [
     {
@@ -199,7 +199,7 @@
         "kind": "dock",
         "name": "view manager",
         "link": {
-          "path": "../../core/model/core.mod.blu",
+          "path": "../../../core/model/core.mod.blu",
           "node": "view manager"
         },
         "interfaces": [
@@ -391,7 +391,7 @@
         "kind": "dock",
         "name": "model manager",
         "link": {
-          "path": "../../core/model/core.mod.blu",
+          "path": "../../../core/model/core.mod.blu",
           "node": "model manager"
         },
         "interfaces": [
@@ -615,7 +615,7 @@
         "kind": "dock",
         "name": "clipboard",
         "link": {
-          "path": "../../core/model/core.mod.blu",
+          "path": "../../../core/model/core.mod.blu",
           "node": "clipboard"
         },
         "interfaces": [
@@ -714,6 +714,22 @@
                 }
               },
               {
+                "name": "tool settings",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "event settings",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "node settings (sx)",
                 "kind": "input",
                 "contract": {
@@ -779,7 +795,7 @@
             "label": "ask for filename to save",
             "prompt": "We use the callback parameter for this node, so we can disregard the path return message.",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "path request"
             },
             "interfaces": [
@@ -819,7 +835,7 @@
             "name": "node settings",
             "label": "node settings in json format",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "json input"
             },
             "interfaces": [
@@ -850,7 +866,7 @@
             "kind": "dock",
             "name": "name and path",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "name and path"
             },
             "interfaces": [
@@ -890,7 +906,7 @@
             "name": "pin profile",
             "label": " the message parameters and prompt",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "pin profile"
             },
             "interfaces": [
@@ -919,18 +935,18 @@
           },
           {
             "kind": "dock",
-            "name": "text block",
+            "name": "markdown prompt",
             "label": "comment  about the node",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
-              "node": "text block"
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "markdown input"
             },
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
-                    "name": "text",
+                    "name": "markdown",
                     "kind": "input",
                     "contract": {
                       "role": "follower",
@@ -953,7 +969,7 @@
             "kind": "dock",
             "name": "doc settings",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "document settings"
             },
             "interfaces": [
@@ -985,7 +1001,7 @@
             "name": "context menu",
             "label": "uses callbacks",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "context menu"
             },
             "interfaces": [
@@ -1016,8 +1032,70 @@
             "kind": "dock",
             "name": "runtime settings",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "runtime settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "tool settings",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "tool settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "event settings",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "event settings"
             },
             "interfaces": [
               {
@@ -1047,7 +1125,7 @@
             "kind": "dock",
             "name": "confirm box",
             "link": {
-              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "confirm box"
             },
             "interfaces": [
@@ -1083,6 +1161,15 @@
             },
             "dst": {
               "pin": "folder.get"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "path request"
+            },
+            "dst": {
+              "pin": "modal div"
             }
           },
           {
@@ -1124,7 +1211,7 @@
           {
             "src": {
               "pin": "modal div",
-              "node": "text block"
+              "node": "markdown prompt"
             },
             "dst": {
               "pin": "modal div"
@@ -1152,6 +1239,24 @@
             "src": {
               "pin": "modal div",
               "node": "runtime settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "tool settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "event settings"
             },
             "dst": {
               "pin": "modal div"
@@ -1204,6 +1309,24 @@
           },
           {
             "src": {
+              "pin": "tool settings"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "tool settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "event settings"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "event settings"
+            }
+          },
+          {
+            "src": {
               "pin": "node settings (sx)"
             },
             "dst": {
@@ -1225,8 +1348,8 @@
               "pin": "node prompt"
             },
             "dst": {
-              "pin": "text",
-              "node": "text block"
+              "pin": "markdown",
+              "node": "markdown prompt"
             }
           },
           {
@@ -1253,7 +1376,7 @@
         "kind": "dock",
         "name": "vscode side menu",
         "link": {
-          "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+          "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vscode side menu"
         },
         "interfaces": [
@@ -1414,12 +1537,12 @@
         },
         "dst": [
           {
-            "pin": "top level view",
-            "node": "view manager"
-          },
-          {
             "pin": "model.set",
             "node": "model manager"
+          },
+          {
+            "pin": "top level view",
+            "node": "view manager"
           }
         ]
       },
@@ -1676,6 +1799,26 @@
         },
         "dst": {
           "pin": "path only",
+          "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "tool settings",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "tool settings",
+          "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "event settings",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "event settings",
           "node": "popups"
         }
       },

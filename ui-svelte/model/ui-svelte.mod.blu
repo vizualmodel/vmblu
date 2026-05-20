@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "no version",
+    "version": "0.9.6",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "12/16/2025, 1:00:06 PM",
     "utc": "2025-12-16T12:00:06.433Z",
@@ -587,6 +587,37 @@
                 "pins": [
                   {
                     "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "markdown input",
+            "factory": {
+              "path": "../index.js",
+              "function": "MarkdownInputFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "markdown",
                     "kind": "input",
                     "contract": {
                       "role": "follower",

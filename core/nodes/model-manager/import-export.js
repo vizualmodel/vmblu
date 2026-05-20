@@ -61,6 +61,10 @@ async importFromModel(node, lName, userPath = null) {
 
     // fuse the existing node with the new one - showing new and zombie pins...
     node.fuse(newNode)
+
+    // A link change can replace pin objects while preserving visible routes.
+    // Rebuild only the imported node's derived transmission tables.
+    node.rxtxBuildTxTable()
 },
 
 // export a node to a model and set the link in the node

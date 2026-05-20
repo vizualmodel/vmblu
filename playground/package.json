@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "@vizualmodel/vmblu-cli": "^0.5.2",
+    "@vizualmodel/vmblu-cli": "file:../cli",
     "typescript": "^5.9.3",
     "vite": "^6.0.0"
   },

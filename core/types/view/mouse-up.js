@@ -1,4 +1,5 @@
 import {doing} from './view-base.js'
+import {zap} from './mouse.js'
 import {blockDistance, style} from '../util/index.js'
 
 export const mouseUpHandling = {
@@ -28,8 +29,12 @@ export const mouseUpHandling = {
                 // no more hovering
                 this.stopHover()
 
-                // what did we hit..
-                const conx = this.hit.lookWidget ?? this.hit.cable ?? this.hit.pad ?? this.hit.route ?? null;
+                // Use the active hit kind to avoid stale hit fields from an earlier mouse target.
+                const conx = this.hit.what == zap.pin ? this.hit.lookWidget
+                            : this.hit.what == zap.pad ? this.hit.pad
+                            : this.hit.what == zap.busSegment ? this.hit.cable
+                            : this.hit.what == zap.route ? this.hit.route
+                            : null
 
                 // complete the route or cancel it...
                 if (conx?.is?.route && route.checkConxType(route.from, conx)) {

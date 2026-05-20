@@ -315,14 +315,14 @@ changeNodeDynamics: {
     }
 },
 
-changeNodeComment: {
-    doit({node,comment}) {
+changeNodePrompt: {
+    doit({node,prompt}) {
 
-        if ( !comment || comment.length == 0) {
+        if ( !prompt || prompt.length == 0) {
             node.prompt = null
         }
-        else if (comment !== node.prompt) {
-            node.prompt = comment
+        else if (prompt !== node.prompt) {
+            node.prompt = prompt
         }
     },
     undo({}) {

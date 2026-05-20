@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "no version",
+    "version": "0.9.6",
     "utc": "2025-12-16T12:00:06.433Z",
     "style": "#656134"
   },
@@ -20,7 +20,7 @@
         "rect": "x 999 y 90 w 200 h 26",
         "view": {
           "state": "open",
-          "rect": "x 748 y -148 w 793 h 643",
+          "rect": "x 748 y -148 w 793 h 704",
           "transform": "sx 1.000 sy 1.000 dx 762.500 dy -164.000"
         },
         "nodes": [
@@ -98,7 +98,7 @@
           {
             "kind": "source",
             "name": "text block",
-            "rect": "x 72 y 289 w 150 h 56",
+            "rect": "x 74 y 265 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -112,7 +112,7 @@
           {
             "kind": "source",
             "name": "node selector",
-            "rect": "x 75 y 496 w 150 h 131",
+            "rect": "x 80 y 549 w 150 h 131",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -146,7 +146,7 @@
           {
             "kind": "source",
             "name": "document settings",
-            "rect": "x 70 y 404 w 200 h 56",
+            "rect": "x 69 y 449 w 200 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -223,6 +223,20 @@
                 "pins": [
                   "(3 R)show",
                   "(4 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "markdown input",
+            "rect": "x 72 y 345 w 165 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)markdown",
+                  "(2 L)modal div"
                 ]
               }
             ]

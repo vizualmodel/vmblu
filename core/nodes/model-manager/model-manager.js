@@ -252,7 +252,11 @@ ModelManager.prototype = {
             path: appPath,
             startFolder: this.model.getArl(),
             pos: pos,
-            ok: (appPath) => this.model.makeAndSaveApp(appPath, this.model.root),
+            ok: (appPath) => {
+                // Ensure generated output reflects the current route graph.
+                this.model.root.rxtxBuildTxTable()
+                return this.model.makeAndSaveApp(appPath, this.model.root)
+            },
             cancel: () => {},
         });
     },
@@ -337,6 +341,7 @@ ModelManager.prototype = {
         
         // check
         if (newRoot) {
+            newRoot.rxtxBuildTxTable()
             this.model.root = newRoot
             this.tx.send('model.root', newRoot)
         }
