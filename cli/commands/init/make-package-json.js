@@ -38,7 +38,7 @@ export async function makePackageJson({
     version: "0.0.0",
     type: "module",
     dependencies: {
-      "@vizualmodel/vmblu-runtime": "^0.3.0"
+      "@vizualmodel/vmblu-runtime": "^0.4.0"
     },
     devDependencies : {
       "@vizualmodel/vmblu-cli": cliVersion,
