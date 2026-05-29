@@ -4101,7 +4101,7 @@ const AppHandling = {
         const jsSource = 
 `
 // import the runtime code
-import * as VMBLU from "${runtime}"
+import {Runtime} from "${runtime}"
 
 ${sImports}
 
@@ -4112,7 +4112,7 @@ ${sNodeList}
 ${runtimeOptions.options}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, [], runtimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
 
 // and start the app
 runtime.start()
@@ -4174,7 +4174,10 @@ runtime.start()
     },
 
     isAgentRuntime(runtime) {
-        return runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
+        return runtime === '@vizualmodel/vmblu-runtime/rt-agent'
+            || runtime.endsWith('/rt-agent')
+            || runtime === '@vizualmodel/vmblu-runtime/rt-browser-agent'
+            || runtime.endsWith('/rt-browser-agent')
     },
 
     agentRuntimeAgentImportPath(srcArl) {
@@ -4787,11 +4790,13 @@ const nodeClickHandling = {
 
             case 'pulse': {
 
-                const runtime = view?.getManager?.()?.getModel?.()?.header?.runtime ?? '@vizualmodel/vmblu-runtime/rt-base';
+                const header = view?.getManager?.()?.getModel?.()?.header;
+                const runtime = header?.runtime ?? '@vizualmodel/vmblu-runtime/rt-base';
 
                 tx.send("runtime settings (dx)",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
                                                 runtime,
+                                                modelRuntimeSettings: header?.runtimeSettings ?? null,
                                                 dx: node.dx,
                                                 ok: (dx) => doEdit(tx,"changeNodeDynamics",{node, dx})
                                             });
@@ -14780,7 +14785,7 @@ const defaultSecurity$1 = () => ({
     enabled: false,
 });
 
-function makeRuntimeSettings$1() {
+function make$1() {
     return {
         run: defaultRun$1(),
         monitor: defaultMonitor$1(),
@@ -14788,9 +14793,9 @@ function makeRuntimeSettings$1() {
     }
 }
 
-function normalizeRuntimeSettings$2(dx = null) {
+function normalize$1(dx = null) {
 
-    const defaults = makeRuntimeSettings$1();
+    const defaults = make$1();
 
     if (!dx || typeof dx !== 'object') return defaults
 
@@ -14823,22 +14828,22 @@ function normalizeRuntimeSettings$2(dx = null) {
     return normalized
 }
 
-function cloneRuntimeSettings$1(dx = null) {
-    return normalizeRuntimeSettings$2(dx)
+function clone$1(dx = null) {
+    return normalize$1(dx)
 }
 
-function resetRuntimeSettings$1(target) {
+function reset$1(target) {
 
-    const defaults = makeRuntimeSettings$1();
+    const defaults = make$1();
 
-    assignRuntimeSettings$1(target, defaults);
+    assign$1(target, defaults);
 
     return target
 }
 
-function assignRuntimeSettings$1(target, dx = null) {
+function assign$1(target, dx = null) {
 
-    const normalized = normalizeRuntimeSettings$2(dx);
+    const normalized = normalize$1(dx);
 
     target.run = structuredClone(normalized.run);
     target.monitor = structuredClone(normalized.monitor);
@@ -14850,14 +14855,14 @@ function assignRuntimeSettings$1(target, dx = null) {
     return target
 }
 
-function isDefaultRuntimeSettings$1(dx = null) {
+function isDefault$1(dx = null) {
 
-    const normalized = normalizeRuntimeSettings$2(dx);
+    const normalized = normalize$1(dx);
 
-    return JSON.stringify(normalized) === JSON.stringify(makeRuntimeSettings$1())
+    return JSON.stringify(normalized) === JSON.stringify(make$1())
 }
 
-function makeModelRuntimeSettings$1() {
+function makeModel$1() {
     return {
         run: {},
         monitor: {},
@@ -14870,8 +14875,8 @@ function makeModelRuntimeSettings$1() {
     }
 }
 
-function normalizeModelRuntimeSettings$1(settings = null) {
-    const defaults = makeModelRuntimeSettings$1();
+function normalizeModel$1(settings = null) {
+    const defaults = makeModel$1();
     if (!settings || typeof settings !== 'object') return defaults
 
     return {
@@ -14898,25 +14903,24 @@ function normalizeModelRuntimeSettings$1(settings = null) {
     }
 }
 
-function effectiveRuntimePolicy$1(modelSettings = null, nodeDx = null) {
+function effectivePolicy$1(modelSettings = null, nodeDx = null) {
     return {
-        model: normalizeModelRuntimeSettings$1(modelSettings),
-        node: normalizeRuntimeSettings$2(nodeDx),
+        model: normalizeModel$1(modelSettings),
+        node: normalize$1(nodeDx),
     }
 }
 
-var baseRuntimeSettings = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    assignRuntimeSettings: assignRuntimeSettings$1,
-    cloneRuntimeSettings: cloneRuntimeSettings$1,
-    effectiveRuntimePolicy: effectiveRuntimePolicy$1,
-    isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
-    makeModelRuntimeSettings: makeModelRuntimeSettings$1,
-    makeRuntimeSettings: makeRuntimeSettings$1,
-    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings$1,
-    normalizeRuntimeSettings: normalizeRuntimeSettings$2,
-    resetRuntimeSettings: resetRuntimeSettings$1
-});
+const runtimeSettings$1 = {
+    make: make$1,
+    normalize: normalize$1,
+    clone: clone$1,
+    reset: reset$1,
+    assign: assign$1,
+    isDefault: isDefault$1,
+    makeModel: makeModel$1,
+    normalizeModel: normalizeModel$1,
+    effectivePolicy: effectivePolicy$1,
+};
 
 const defaultWorker = () => ({
     on: false,
@@ -14949,7 +14953,7 @@ const defaultSecurity = () => ({
     request: defaultSecurityRequest(),
 });
 
-function makeRuntimeSettings() {
+function make() {
     return {
         run: defaultRun(),
         monitor: defaultMonitor(),
@@ -14957,9 +14961,9 @@ function makeRuntimeSettings() {
     }
 }
 
-function normalizeRuntimeSettings$1(dx = null) {
+function normalize(dx = null) {
 
-    const defaults = makeRuntimeSettings();
+    const defaults = make();
 
     if (!dx || typeof dx !== 'object') return defaults
 
@@ -14990,22 +14994,22 @@ function normalizeRuntimeSettings$1(dx = null) {
     return normalized
 }
 
-function cloneRuntimeSettings(dx = null) {
-    return normalizeRuntimeSettings$1(dx)
+function clone(dx = null) {
+    return normalize(dx)
 }
 
-function resetRuntimeSettings(target) {
+function reset(target) {
 
-    const defaults = makeRuntimeSettings();
+    const defaults = make();
 
-    assignRuntimeSettings(target, defaults);
+    assign(target, defaults);
 
     return target
 }
 
-function assignRuntimeSettings(target, dx = null) {
+function assign(target, dx = null) {
 
-    const normalized = normalizeRuntimeSettings$1(dx);
+    const normalized = normalize(dx);
 
     target.run = structuredClone(normalized.run);
     target.monitor = structuredClone(normalized.monitor);
@@ -15018,11 +15022,11 @@ function assignRuntimeSettings(target, dx = null) {
     return target
 }
 
-function isDefaultRuntimeSettings(dx = null) {
+function isDefault(dx = null) {
 
-    const normalized = normalizeRuntimeSettings$1(dx);
+    const normalized = normalize(dx);
 
-    return JSON.stringify(normalized) === JSON.stringify(makeRuntimeSettings())
+    return JSON.stringify(normalized) === JSON.stringify(make())
 }
 
 const defaultModelSecurity = () => ({
@@ -15039,7 +15043,7 @@ const defaultModelSecurity = () => ({
     },
 });
 
-function makeModelRuntimeSettings() {
+function makeModel() {
     return {
         run: {},
         monitor: {},
@@ -15047,8 +15051,8 @@ function makeModelRuntimeSettings() {
     }
 }
 
-function normalizeModelRuntimeSettings(settings = null) {
-    const defaults = makeModelRuntimeSettings();
+function normalizeModel(settings = null) {
+    const defaults = makeModel();
     if (!settings || typeof settings !== 'object') return defaults
 
     const security = settings.security ?? {};
@@ -15086,9 +15090,9 @@ function normalizeModelRuntimeSettings(settings = null) {
     return normalized
 }
 
-function effectiveRuntimePolicy(modelSettings = null, nodeDx = null) {
-    const model = normalizeModelRuntimeSettings(modelSettings);
-    const node = normalizeRuntimeSettings$1(nodeDx);
+function effectivePolicy(modelSettings = null, nodeDx = null) {
+    const model = normalizeModel(modelSettings);
+    const node = normalize(nodeDx);
     const request = node.security?.enabled ? node.security.request : defaultSecurityRequest();
 
     return {
@@ -15164,51 +15168,47 @@ function intersect(modelValues = [], nodeValues = []) {
     return nodeValues.filter(value => allowed.has(value))
 }
 
-var alsRuntimeSettings = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    assignRuntimeSettings: assignRuntimeSettings,
-    cloneRuntimeSettings: cloneRuntimeSettings,
-    effectiveRuntimePolicy: effectiveRuntimePolicy,
-    isDefaultRuntimeSettings: isDefaultRuntimeSettings,
-    makeModelRuntimeSettings: makeModelRuntimeSettings,
-    makeRuntimeSettings: makeRuntimeSettings,
-    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings,
-    normalizeRuntimeSettings: normalizeRuntimeSettings$1,
-    resetRuntimeSettings: resetRuntimeSettings
-});
-
-var agentRuntimeSettings = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    assignRuntimeSettings: assignRuntimeSettings,
-    cloneRuntimeSettings: cloneRuntimeSettings,
-    effectiveRuntimePolicy: effectiveRuntimePolicy,
-    isDefaultRuntimeSettings: isDefaultRuntimeSettings,
-    makeModelRuntimeSettings: makeModelRuntimeSettings,
-    makeRuntimeSettings: makeRuntimeSettings,
-    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings,
-    normalizeRuntimeSettings: normalizeRuntimeSettings$1,
-    resetRuntimeSettings: resetRuntimeSettings
-});
+const runtimeSettings = {
+    make,
+    normalize,
+    clone,
+    reset,
+    assign,
+    isDefault,
+    makeModel,
+    normalizeModel,
+    effectivePolicy,
+};
 
 const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base';
 const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
+const RT_BROWSER_AGENT = '@vizualmodel/vmblu-runtime/rt-browser-agent';
 const RT_AGENT = '@vizualmodel/vmblu-runtime/rt-agent';
 
 const RUNTIME_DESCRIPTORS = [
     {
         id: RT_BASE,
         name: 'rt-base',
-        settings: baseRuntimeSettings,
+        settings: runtimeSettings$1,
+        supportsAgents: false,
     },
     {
         id: RT_ALS,
         name: 'rt-als',
-        settings: alsRuntimeSettings,
+        settings: runtimeSettings,
+        supportsAgents: false,
+    },
+    {
+        id: RT_BROWSER_AGENT,
+        name: 'rt-browser-agent',
+        settings: runtimeSettings$1,
+        supportsAgents: true,
     },
     {
         id: RT_AGENT,
         name: 'rt-agent',
-        settings: agentRuntimeSettings,
+        settings: runtimeSettings,
+        supportsAgents: true,
     },
 ];
 
@@ -15216,12 +15216,8 @@ function getRuntimeDescriptor(runtime) {
     return RUNTIME_DESCRIPTORS.find(candidate => candidate.id === runtime || candidate.name === runtime) ?? RUNTIME_DESCRIPTORS[0]
 }
 
-function selectRuntimeSettings(runtime) {
+function getRuntimeSettings(runtime) {
     return getRuntimeDescriptor(runtime).settings
-}
-
-function normalizeRuntimeSettings(runtime, dx = null) {
-    return selectRuntimeSettings(runtime).normalizeRuntimeSettings(dx)
 }
 
 // The node in a nodegraph
@@ -15452,7 +15448,7 @@ Node.prototype = {
         // check if the node has dynamics
         if (raw.dx) {
             const runtime = modcom?.getCurrentModel?.()?.header?.runtime;
-            this.dx = normalizeRuntimeSettings(runtime, raw.dx);
+            this.dx = getRuntimeSettings(runtime).normalize(raw.dx);
         }
     },
 
