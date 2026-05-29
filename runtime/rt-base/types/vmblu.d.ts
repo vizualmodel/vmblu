@@ -1,3 +1,8 @@
 declare module '@vizualmodel/vmblu-runtime/rt-base' {
-  export function scaffold(nodeList: unknown[], filterList?: unknown[]): any;
+  export class Runtime {
+    constructor(nodeList?: unknown[], options?: Record<string, unknown>);
+    scaffold(nodeList?: unknown[]): this;
+    start(): void;
+    stop(): void;
+  }
 }

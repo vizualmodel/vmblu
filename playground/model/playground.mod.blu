@@ -4,17 +4,48 @@
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "12/16/2025, 10:49:03 AM",
     "utc": "2025-12-16T09:49:03.571Z",
-    "runtime": "@vizualmodel/vmblu-runtime/rt-agent"
+    "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
+    "agent": {
+      "schema": "https://vmblu.dev/schemas/agents.v1.json",
+      "version": 1,
+      "defaultAgent": "operator",
+      "agents": [
+        {
+          "id": "operator",
+          "title": "Operator",
+          "enabled": true,
+          "instructions": "Operate the application through published tools.",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-4.1-mini",
+            "endpoint": "http://127.0.0.1:8080/v1"
+          },
+          "ui": {
+            "mode": "overlay"
+          },
+          "permissions": {
+            "tools": {
+              "allow": [],
+              "deny": []
+            },
+            "probes": {
+              "allow": [],
+              "deny": []
+            },
+            "events": {
+              "allow": [],
+              "deny": []
+            }
+          }
+        }
+      ]
+    }
   },
   "imports": [
     "../../ui-svelte/model/ui-svelte.mod.blu",
     "../../core/model/core.mod.blu"
   ],
   "factories": [
-    {
-      "path": "../nodes/launcher/model/app-launcher.js",
-      "function": "ApplicationLauncher"
-    },
     {
       "path": "../nodes/workspace/factory.js",
       "function": "Workspace"
@@ -160,54 +191,6 @@
     "kind": "group",
     "name": "hv-layout",
     "nodes": [
-      {
-        "kind": "source",
-        "name": "application launcher",
-        "label": "launches the app in a separate tab or an iframe",
-        "factory": {
-          "path": "../nodes/launcher/model/app-launcher.js",
-          "function": "ApplicationLauncher"
-        },
-        "interfaces": [
-          {
-            "interface": "",
-            "pins": [
-              {
-                "name": "run application",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "RunApplication"
-                }
-              },
-              {
-                "name": "iframe",
-                "kind": "output",
-                "contract": {
-                  "role": "follower",
-                  "payload": "IFrameElement"
-                }
-              },
-              {
-                "name": "size change",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "IFrameSizeChange"
-                }
-              },
-              {
-                "name": "show",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "Void"
-                }
-              }
-            ]
-          }
-        ]
-      },
       {
         "kind": "dock",
         "name": "column-main layout",
@@ -698,7 +681,7 @@
             "interface": "menu items",
             "pins": [
               {
-                "name": "sync",
+                "name": "sync model",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -823,7 +806,7 @@
           {
             "icon": "bolt",
             "color": "#0fb2e4",
-            "message": "sync",
+            "message": "sync model",
             "help": "sync model"
           },
           {
@@ -1238,7 +1221,7 @@
             "interface": "actions",
             "pins": [
               {
-                "name": "sync links",
+                "name": "sync model",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -1278,7 +1261,7 @@
                 }
               },
               {
-                "name": "reload model",
+                "name": "sync links",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -1345,6 +1328,14 @@
               },
               {
                 "name": "model.header",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "model.resolved",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -1830,6 +1821,84 @@
                       "role": "follower",
                       "payload": "any"
                     }
+                  },
+                  {
+                    "name": "agent settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "model runtime settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "model runtime settings",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "model runtime settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "agent settings",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "agent settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
                   }
                 ]
               }
@@ -2060,6 +2129,44 @@
             "src": {
               "pin": "modal div",
               "node": "doc settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "agent settings",
+              "node": "doc settings"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "agent settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "model runtime settings",
+              "node": "doc settings"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "model runtime settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "model runtime settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "agent settings"
             },
             "dst": {
               "pin": "modal div"
@@ -2355,11 +2462,11 @@
       },
       {
         "src": {
-          "pin": "sync",
+          "pin": "sync model",
           "node": "side menu"
         },
         "dst": {
-          "pin": "sync links",
+          "pin": "sync model",
           "node": "model manager"
         }
       },

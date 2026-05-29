@@ -12,6 +12,14 @@ export default defineConfig({
       emitCss: true,
     }),
   ],
+  optimizeDeps: {
+    exclude: [
+      '@vizualmodel/vmblu-runtime/rt-base',
+      '@vizualmodel/vmblu-runtime/rt-als',
+      '@vizualmodel/vmblu-runtime/rt-browser-agent',
+      '@vizualmodel/vmblu-runtime/rt-agent',
+    ],
+  },
   build: {
     sourcemap: true,
     minify: production ? 'esbuild' : false,

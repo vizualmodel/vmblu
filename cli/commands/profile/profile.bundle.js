@@ -2209,6 +2209,7 @@ function ModelHeader() {
     this.utc = today.toJSON();
     this.style = style;
     this.runtime = '@vizualmodel/vmblu-runtime/rt-base';
+    this.runtimeSettings = null;
     this.agent = null;
 }
 ModelHeader.prototype = {
@@ -2230,6 +2231,9 @@ ModelHeader.prototype = {
         // get the runtime
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base';
 
+        // get runtime configuration
+        this.runtimeSettings = raw.runtimeSettings ? JSON.parse(JSON.stringify(raw.runtimeSettings)) : null;
+
         // get the agent configuration
         this.agent = raw.agent ? JSON.parse(JSON.stringify(raw.agent)) : null;
     },
@@ -2247,6 +2251,7 @@ ModelHeader.prototype = {
             runtime: this.runtime
         };
 
+        if (this.runtimeSettings) raw.runtimeSettings = JSON.parse(JSON.stringify(this.runtimeSettings));
         if (this.agent) raw.agent = JSON.parse(JSON.stringify(this.agent));
 
         return raw
@@ -3099,11 +3104,12 @@ splitRaw(raw) {
 
 splitHeader(rHeader) {
 
-    const {version, created, saved, utc, runtime, agent, style} = {...rHeader};
+    const {version, created, saved, utc, runtime, runtimeSettings, agent, style} = {...rHeader};
     const headerVersion = version ?? 'no version';
     const styleRgb = (typeof style === 'string') ? style : style?.rgb ?? style?.color ?? null;
 
     const blu = {version: headerVersion, created, saved, utc, runtime};
+    if (runtimeSettings) blu.runtimeSettings = runtimeSettings;
     if (agent) blu.agent = agent;
 
     return { 
@@ -4089,7 +4095,7 @@ const AppHandling = {
         // close the nodeList
         sNodeList += '\n]';
 
-        const agentRuntime = this.JSAgentRuntimeOptions(runtime, node, srcArl);
+        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl);
 
         // combine all..
         const jsSource = 
@@ -4099,14 +4105,14 @@ import * as VMBLU from "${runtime}"
 
 ${sImports}
 
-${agentRuntime.imports}
+${runtimeOptions.imports}
 
 ${sNodeList}
 
-${agentRuntime.options}
+${runtimeOptions.options}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
+const runtime = VMBLU.scaffold(nodeList, [], runtimeOptions)
 
 // and start the app
 runtime.start()
@@ -4130,32 +4136,40 @@ runtime.start()
         return capArl
     },
 
-    JSAgentRuntimeOptions(runtime, node, srcArl) {
+    JSRuntimeOptions(runtime, node, srcArl) {
 
-        if (!this.isAgentRuntime(runtime)) {
-            return {
-                imports: '',
-                options: 'const agentRuntimeOptions = {}'
+        const imports = [];
+        const optionLines = [];
+
+        const runtimeSettings = this.header.runtimeSettings;
+        const runtimeSettingsPath = this.runtimeSettingsImportPath(srcArl);
+        if (runtimeSettingsPath) {
+            imports.push(`import runtimeSettings from '${runtimeSettingsPath}' with { type: 'json' }`);
+            optionLines.push('    runtimeSettings');
+        }
+        else if (runtimeSettings && typeof runtimeSettings === 'object' && !Array.isArray(runtimeSettings)) {
+            optionLines.push(`    runtimeSettings: ${JSON.stringify(runtimeSettings, null, 4).replaceAll('\n', '\n    ')}`);
+        }
+
+        if (this.isAgentRuntime(runtime)) {
+            const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap');
+            imports.push(`import capabilities from '${capPath}' with { type: 'json' }`);
+            optionLines.push('    capabilities');
+
+            const agentPath = this.agentRuntimeAgentImportPath(srcArl);
+            if (agentPath) {
+                imports.push(`import agent from '${agentPath}' with { type: 'json' }`);
+                optionLines.push('    agent');
             }
         }
 
-        const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap');
-        const imports = [
-            `import capabilities from '${capPath}' with { type: 'json' }`
-        ];
-        const optionLines = ['    capabilities'];
-
-        const agentPath = this.agentRuntimeAgentImportPath(srcArl);
-        if (agentPath) {
-            imports.push(`import agent from '${agentPath}' with { type: 'json' }`);
-            optionLines.push('    agent');
-        }
-
-        const options = `const agentRuntimeOptions = {\n${optionLines.join(',\n')}\n}`;
+        const options = optionLines.length
+            ? `const runtimeOptions = {\n${optionLines.join(',\n')}\n}`
+            : 'const runtimeOptions = {}';
 
         return {
-            imports: `// Agent runtime sidecars\n${imports.join('\n')}`,
-            options: `// Agent runtime options\n${options}`
+            imports: imports.length ? `// Runtime sidecars\n${imports.join('\n')}` : '',
+            options: `// Runtime options\n${options}`
         }
     },
 
@@ -4173,6 +4187,19 @@ runtime.start()
         if (typeof agent === 'object' && !Array.isArray(agent)) {
             if (agent.path) return relative(this.getArl().resolve(agent.path).getFullPath(), srcArl.getFullPath())
             return this.agentRuntimeArtifactPath(srcArl, 'agent')
+        }
+
+        return null
+    },
+
+    runtimeSettingsImportPath(srcArl) {
+        const settings = this.header.runtimeSettings;
+        if (!settings) return null
+
+        if (typeof settings === 'string') return relative(this.getArl().resolve(settings).getFullPath(), srcArl.getFullPath())
+
+        if (typeof settings === 'object' && !Array.isArray(settings) && settings.path) {
+            return relative(this.getArl().resolve(settings.path).getFullPath(), srcArl.getFullPath())
         }
 
         return null
@@ -14740,10 +14767,24 @@ const defaultWorker$1 = () => ({
     path: '',
 });
 
+const defaultRun$1 = () => ({
+    worker: defaultWorker$1(),
+});
+
+const defaultMonitor$1 = () => ({
+    logMessages: false,
+    logTimings: false,
+});
+
+const defaultSecurity$1 = () => ({
+    enabled: false,
+});
+
 function makeRuntimeSettings$1() {
     return {
-        logMessages: false,
-        worker: defaultWorker$1(),
+        run: defaultRun$1(),
+        monitor: defaultMonitor$1(),
+        security: defaultSecurity$1(),
     }
 }
 
@@ -14754,16 +14795,30 @@ function normalizeRuntimeSettings$2(dx = null) {
     if (!dx || typeof dx !== 'object') return defaults
 
     const normalized = {
-        ...dx,
-        logMessages: !!dx.logMessages,
-        worker: {
-            ...defaults.worker,
-            ...(dx.worker ?? {}),
-        }
+        run: {
+            ...defaults.run,
+            ...(dx.run ?? {}),
+            worker: {
+                ...defaults.run.worker,
+                ...(dx.run?.worker ?? dx.worker ?? {}),
+            },
+        },
+        monitor: {
+            ...defaults.monitor,
+            ...(dx.monitor ?? {}),
+            logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
+        },
+        security: {
+            ...defaults.security,
+            ...(dx.security ?? {}),
+        },
     };
 
-    normalized.worker.on = !!normalized.worker.on;
-    normalized.worker.path = normalized.worker.path ?? '';
+    normalized.run.worker.on = !!normalized.run.worker.on;
+    normalized.run.worker.path = normalized.run.worker.path ?? '';
+    normalized.monitor.logMessages = !!normalized.monitor.logMessages;
+    normalized.monitor.logTimings = !!normalized.monitor.logTimings;
+    normalized.security.enabled = !!normalized.security.enabled;
 
     return normalized
 }
@@ -14776,10 +14831,7 @@ function resetRuntimeSettings$1(target) {
 
     const defaults = makeRuntimeSettings$1();
 
-    target.logMessages = defaults.logMessages;
-    target.worker = target.worker ?? {};
-    target.worker.on = defaults.worker.on;
-    target.worker.path = defaults.worker.path;
+    assignRuntimeSettings$1(target, defaults);
 
     return target
 }
@@ -14788,30 +14840,12 @@ function assignRuntimeSettings$1(target, dx = null) {
 
     const normalized = normalizeRuntimeSettings$2(dx);
 
-    target.logMessages = normalized.logMessages;
-    target.worker = target.worker ?? {};
-    target.worker.on = normalized.worker.on;
-    target.worker.path = normalized.worker.path;
+    target.run = structuredClone(normalized.run);
+    target.monitor = structuredClone(normalized.monitor);
+    target.security = structuredClone(normalized.security);
 
-    for (const key of Object.keys(normalized)) {
-        if ((key === 'logMessages') || (key === 'worker')) continue
-        target[key] = normalized[key];
-    }
-
-    for (const key of Object.keys(target)) {
-        if ((key === 'logMessages') || (key === 'worker')) continue
-        if (!(key in normalized)) delete target[key];
-    }
-
-    for (const key of Object.keys(normalized.worker)) {
-        if ((key === 'on') || (key === 'path')) continue
-        target.worker[key] = normalized.worker[key];
-    }
-
-    for (const key of Object.keys(target.worker)) {
-        if ((key === 'on') || (key === 'path')) continue
-        if (!(key in normalized.worker)) delete target.worker[key];
-    }
+    delete target.logMessages;
+    delete target.worker;
 
     return target
 }
@@ -14819,24 +14853,67 @@ function assignRuntimeSettings$1(target, dx = null) {
 function isDefaultRuntimeSettings$1(dx = null) {
 
     const normalized = normalizeRuntimeSettings$2(dx);
-    const workerKeys = Object.keys(normalized.worker ?? {});
-    const topKeys = Object.keys(normalized);
 
-    if (normalized.logMessages) return false
-    if (normalized.worker?.on) return false
-    if ((normalized.worker?.path ?? '') !== '') return false
-    if (topKeys.some(key => !['logMessages', 'worker'].includes(key))) return false
-    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
+    return JSON.stringify(normalized) === JSON.stringify(makeRuntimeSettings$1())
+}
 
-    return true
+function makeModelRuntimeSettings$1() {
+    return {
+        run: {},
+        monitor: {},
+        security: {
+            mode: 'warn',
+            forwardEvents: true,
+            defaults: {},
+            allow: {},
+        },
+    }
+}
+
+function normalizeModelRuntimeSettings$1(settings = null) {
+    const defaults = makeModelRuntimeSettings$1();
+    if (!settings || typeof settings !== 'object') return defaults
+
+    return {
+        run: {
+            ...defaults.run,
+            ...(settings.run ?? {}),
+        },
+        monitor: {
+            ...defaults.monitor,
+            ...(settings.monitor ?? {}),
+        },
+        security: {
+            ...defaults.security,
+            ...(settings.security ?? {}),
+            defaults: {
+                ...defaults.security.defaults,
+                ...(settings.security?.defaults ?? {}),
+            },
+            allow: {
+                ...defaults.security.allow,
+                ...(settings.security?.allow ?? {}),
+            },
+        },
+    }
+}
+
+function effectiveRuntimePolicy$1(modelSettings = null, nodeDx = null) {
+    return {
+        model: normalizeModelRuntimeSettings$1(modelSettings),
+        node: normalizeRuntimeSettings$2(nodeDx),
+    }
 }
 
 var baseRuntimeSettings = /*#__PURE__*/Object.freeze({
     __proto__: null,
     assignRuntimeSettings: assignRuntimeSettings$1,
     cloneRuntimeSettings: cloneRuntimeSettings$1,
+    effectiveRuntimePolicy: effectiveRuntimePolicy$1,
     isDefaultRuntimeSettings: isDefaultRuntimeSettings$1,
+    makeModelRuntimeSettings: makeModelRuntimeSettings$1,
     makeRuntimeSettings: makeRuntimeSettings$1,
+    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings$1,
     normalizeRuntimeSettings: normalizeRuntimeSettings$2,
     resetRuntimeSettings: resetRuntimeSettings$1
 });
@@ -14846,17 +14923,37 @@ const defaultWorker = () => ({
     path: '',
 });
 
-const defaultSafety = () => ({
-    on: false,
+const defaultRun = () => ({
+    worker: defaultWorker(),
+});
+
+const defaultMonitor = () => ({
+    logMessages: false,
+    logTimings: false,
+});
+
+const defaultSecurityRequest = () => ({
+    fs: 'inherit',
+    net: 'inherit',
+    process: 'inherit',
+    allow: {
+        netHosts: [],
+        fsRoots: [],
+    },
+});
+
+const defaultSecurity = () => ({
+    enabled: false,
     mode: 'warn',
     forward: true,
+    request: defaultSecurityRequest(),
 });
 
 function makeRuntimeSettings() {
     return {
-        logMessages: false,
-        worker: defaultWorker(),
-        safety: defaultSafety(),
+        run: defaultRun(),
+        monitor: defaultMonitor(),
+        security: defaultSecurity(),
     }
 }
 
@@ -14866,24 +14963,29 @@ function normalizeRuntimeSettings$1(dx = null) {
 
     if (!dx || typeof dx !== 'object') return defaults
 
+    const legacySafety = dx.safety ?? {};
+
     const normalized = {
-        ...dx,
-        logMessages: !!dx.logMessages,
-        worker: {
-            ...defaults.worker,
-            ...(dx.worker ?? {}),
+        run: {
+            ...defaults.run,
+            ...(dx.run ?? {}),
+            worker: {
+                ...defaults.run.worker,
+                ...(dx.run?.worker ?? dx.worker ?? {}),
+            },
         },
-        safety: {
-            ...defaults.safety,
-            ...(dx.safety ?? {}),
-        }
+        monitor: {
+            ...defaults.monitor,
+            ...(dx.monitor ?? {}),
+            logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
+        },
+        security: normalizeSecuritySettings(dx.security, legacySafety, defaults.security),
     };
 
-    normalized.worker.on = !!normalized.worker.on;
-    normalized.worker.path = normalized.worker.path ?? '';
-    normalized.safety.on = !!normalized.safety.on;
-    normalized.safety.forward = normalized.safety.forward !== false;
-    normalized.safety.mode = ['off', 'warn', 'enforce'].includes(normalized.safety.mode) ? normalized.safety.mode : defaults.safety.mode;
+    normalized.run.worker.on = !!normalized.run.worker.on;
+    normalized.run.worker.path = normalized.run.worker.path ?? '';
+    normalized.monitor.logMessages = !!normalized.monitor.logMessages;
+    normalized.monitor.logTimings = !!normalized.monitor.logTimings;
 
     return normalized
 }
@@ -14896,14 +14998,7 @@ function resetRuntimeSettings(target) {
 
     const defaults = makeRuntimeSettings();
 
-    target.logMessages = defaults.logMessages;
-    target.worker = target.worker ?? {};
-    target.worker.on = defaults.worker.on;
-    target.worker.path = defaults.worker.path;
-    target.safety = target.safety ?? {};
-    target.safety.on = defaults.safety.on;
-    target.safety.mode = defaults.safety.mode;
-    target.safety.forward = defaults.safety.forward;
+    assignRuntimeSettings(target, defaults);
 
     return target
 }
@@ -14912,44 +15007,13 @@ function assignRuntimeSettings(target, dx = null) {
 
     const normalized = normalizeRuntimeSettings$1(dx);
 
-    target.logMessages = normalized.logMessages;
-    target.worker = target.worker ?? {};
-    target.worker.on = normalized.worker.on;
-    target.worker.path = normalized.worker.path;
-    target.safety = target.safety ?? {};
-    target.safety.on = normalized.safety.on;
-    target.safety.mode = normalized.safety.mode;
-    target.safety.forward = normalized.safety.forward;
+    target.run = structuredClone(normalized.run);
+    target.monitor = structuredClone(normalized.monitor);
+    target.security = structuredClone(normalized.security);
 
-    for (const key of Object.keys(normalized)) {
-        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
-        target[key] = normalized[key];
-    }
-
-    for (const key of Object.keys(target)) {
-        if ((key === 'logMessages') || (key === 'worker') || (key === 'safety')) continue
-        if (!(key in normalized)) delete target[key];
-    }
-
-    for (const key of Object.keys(normalized.worker)) {
-        if ((key === 'on') || (key === 'path')) continue
-        target.worker[key] = normalized.worker[key];
-    }
-
-    for (const key of Object.keys(target.worker)) {
-        if ((key === 'on') || (key === 'path')) continue
-        if (!(key in normalized.worker)) delete target.worker[key];
-    }
-
-    for (const key of Object.keys(normalized.safety)) {
-        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
-        target.safety[key] = normalized.safety[key];
-    }
-
-    for (const key of Object.keys(target.safety)) {
-        if ((key === 'on') || (key === 'mode') || (key === 'forward')) continue
-        if (!(key in normalized.safety)) delete target.safety[key];
-    }
+    delete target.logMessages;
+    delete target.worker;
+    delete target.safety;
 
     return target
 }
@@ -14957,29 +15021,158 @@ function assignRuntimeSettings(target, dx = null) {
 function isDefaultRuntimeSettings(dx = null) {
 
     const normalized = normalizeRuntimeSettings$1(dx);
-    const workerKeys = Object.keys(normalized.worker ?? {});
-    const safetyKeys = Object.keys(normalized.safety ?? {});
-    const topKeys = Object.keys(normalized);
 
-    if (normalized.logMessages) return false
-    if (normalized.worker?.on) return false
-    if ((normalized.worker?.path ?? '') !== '') return false
-    if (normalized.safety?.on) return false
-    if (normalized.safety?.mode !== 'warn') return false
-    if (normalized.safety?.forward !== true) return false
-    if (topKeys.some(key => !['logMessages', 'worker', 'safety'].includes(key))) return false
-    if (workerKeys.some(key => !['on', 'path'].includes(key))) return false
-    if (safetyKeys.some(key => !['on', 'mode', 'forward'].includes(key))) return false
+    return JSON.stringify(normalized) === JSON.stringify(makeRuntimeSettings())
+}
 
-    return true
+const defaultModelSecurity = () => ({
+    mode: 'warn',
+    forwardEvents: true,
+    defaults: {
+        fs: 'warn',
+        net: 'warn',
+        process: 'deny',
+    },
+    allow: {
+        netHosts: [],
+        fsRoots: [],
+    },
+});
+
+function makeModelRuntimeSettings() {
+    return {
+        run: {},
+        monitor: {},
+        security: defaultModelSecurity(),
+    }
+}
+
+function normalizeModelRuntimeSettings(settings = null) {
+    const defaults = makeModelRuntimeSettings();
+    if (!settings || typeof settings !== 'object') return defaults
+
+    const security = settings.security ?? {};
+    const normalized = {
+        run: {
+            ...defaults.run,
+            ...(settings.run ?? {}),
+        },
+        monitor: {
+            ...defaults.monitor,
+            ...(settings.monitor ?? {}),
+        },
+        security: {
+            ...defaults.security,
+            ...security,
+            defaults: {
+                ...defaults.security.defaults,
+                ...(security.defaults ?? {}),
+            },
+            allow: {
+                ...defaults.security.allow,
+                ...(security.allow ?? {}),
+            },
+        },
+    };
+
+    normalized.security.mode = ['off', 'warn', 'enforce'].includes(normalized.security.mode) ? normalized.security.mode : defaults.security.mode;
+    normalized.security.forwardEvents = normalized.security.forwardEvents !== false;
+    normalized.security.defaults.fs = normalizePermission(normalized.security.defaults.fs);
+    normalized.security.defaults.net = normalizePermission(normalized.security.defaults.net);
+    normalized.security.defaults.process = normalizePermission(normalized.security.defaults.process);
+    normalized.security.allow.netHosts = Array.isArray(normalized.security.allow.netHosts) ? normalized.security.allow.netHosts : [];
+    normalized.security.allow.fsRoots = Array.isArray(normalized.security.allow.fsRoots) ? normalized.security.allow.fsRoots : [];
+
+    return normalized
+}
+
+function effectiveRuntimePolicy(modelSettings = null, nodeDx = null) {
+    const model = normalizeModelRuntimeSettings(modelSettings);
+    const node = normalizeRuntimeSettings$1(nodeDx);
+    const request = node.security?.enabled ? node.security.request : defaultSecurityRequest();
+
+    return {
+        mode: node.security?.enabled ? node.security.mode : model.security.mode,
+        forward: node.security?.enabled ? node.security.forward : model.security.forwardEvents,
+        security: {
+            fs: clipPermission(resolvePermission(request.fs, model.security.defaults.fs), model.security.defaults.fs),
+            net: clipPermission(resolvePermission(request.net, model.security.defaults.net), model.security.defaults.net),
+            process: clipPermission(resolvePermission(request.process, model.security.defaults.process), model.security.defaults.process),
+            allow: intersectAllowLists(model.security.allow, request.allow),
+        },
+        model,
+        node,
+    }
+}
+
+function normalizeSecuritySettings(security = null, legacySafety = {}, defaults = defaultSecurity()) {
+    const source = security ?? {};
+    const request = source.request ?? {};
+    const allow = request.allow ?? {};
+    const normalized = {
+        ...defaults,
+        ...source,
+        enabled: source.enabled ?? legacySafety.on ?? defaults.enabled,
+        mode: source.mode ?? legacySafety.mode ?? defaults.mode,
+        forward: source.forward ?? legacySafety.forward ?? defaults.forward,
+        request: {
+            ...defaults.request,
+            ...request,
+            allow: {
+                ...defaults.request.allow,
+                ...allow,
+            },
+        },
+    };
+
+    normalized.enabled = !!normalized.enabled;
+    normalized.forward = normalized.forward !== false;
+    normalized.mode = ['off', 'warn', 'enforce'].includes(normalized.mode) ? normalized.mode : defaults.mode;
+    normalized.request.fs = normalizePermission(normalized.request.fs);
+    normalized.request.net = normalizePermission(normalized.request.net);
+    normalized.request.process = normalizePermission(normalized.request.process);
+    normalized.request.allow.netHosts = Array.isArray(normalized.request.allow.netHosts) ? normalized.request.allow.netHosts : [];
+    normalized.request.allow.fsRoots = Array.isArray(normalized.request.allow.fsRoots) ? normalized.request.allow.fsRoots : [];
+
+    return normalized
+}
+
+function normalizePermission(value) {
+    return ['inherit', 'allow', 'warn', 'deny'].includes(value) ? value : 'inherit'
+}
+
+function resolvePermission(requested, fallback) {
+    return requested === 'inherit' ? fallback : requested
+}
+
+function clipPermission(requested, envelope) {
+    const order = {deny: 0, warn: 1, allow: 2, inherit: 1};
+    return order[requested] <= order[envelope] ? requested : envelope
+}
+
+function intersectAllowLists(modelAllow = {}, nodeAllow = {}) {
+    return {
+        netHosts: intersect(modelAllow.netHosts, nodeAllow.netHosts),
+        fsRoots: intersect(modelAllow.fsRoots, nodeAllow.fsRoots),
+    }
+}
+
+function intersect(modelValues = [], nodeValues = []) {
+    if (!Array.isArray(modelValues) || !modelValues.length) return []
+    if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice()
+    const allowed = new Set(modelValues);
+    return nodeValues.filter(value => allowed.has(value))
 }
 
 var alsRuntimeSettings = /*#__PURE__*/Object.freeze({
     __proto__: null,
     assignRuntimeSettings: assignRuntimeSettings,
     cloneRuntimeSettings: cloneRuntimeSettings,
+    effectiveRuntimePolicy: effectiveRuntimePolicy,
     isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+    makeModelRuntimeSettings: makeModelRuntimeSettings,
     makeRuntimeSettings: makeRuntimeSettings,
+    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings,
     normalizeRuntimeSettings: normalizeRuntimeSettings$1,
     resetRuntimeSettings: resetRuntimeSettings
 });
@@ -14988,18 +15181,43 @@ var agentRuntimeSettings = /*#__PURE__*/Object.freeze({
     __proto__: null,
     assignRuntimeSettings: assignRuntimeSettings,
     cloneRuntimeSettings: cloneRuntimeSettings,
+    effectiveRuntimePolicy: effectiveRuntimePolicy,
     isDefaultRuntimeSettings: isDefaultRuntimeSettings,
+    makeModelRuntimeSettings: makeModelRuntimeSettings,
     makeRuntimeSettings: makeRuntimeSettings,
+    normalizeModelRuntimeSettings: normalizeModelRuntimeSettings,
     normalizeRuntimeSettings: normalizeRuntimeSettings$1,
     resetRuntimeSettings: resetRuntimeSettings
 });
 
+const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base';
 const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
 const RT_AGENT = '@vizualmodel/vmblu-runtime/rt-agent';
 
+const RUNTIME_DESCRIPTORS = [
+    {
+        id: RT_BASE,
+        name: 'rt-base',
+        settings: baseRuntimeSettings,
+    },
+    {
+        id: RT_ALS,
+        name: 'rt-als',
+        settings: alsRuntimeSettings,
+    },
+    {
+        id: RT_AGENT,
+        name: 'rt-agent',
+        settings: agentRuntimeSettings,
+    },
+];
+
+function getRuntimeDescriptor(runtime) {
+    return RUNTIME_DESCRIPTORS.find(candidate => candidate.id === runtime || candidate.name === runtime) ?? RUNTIME_DESCRIPTORS[0]
+}
+
 function selectRuntimeSettings(runtime) {
-    if (runtime === RT_AGENT) return agentRuntimeSettings
-    return runtime === RT_ALS ? alsRuntimeSettings : baseRuntimeSettings
+    return getRuntimeDescriptor(runtime).settings
 }
 
 function normalizeRuntimeSettings(runtime, dx = null) {

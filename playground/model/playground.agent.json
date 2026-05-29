@@ -1,0 +1,35 @@
+{
+  "schema": "https://vmblu.dev/schemas/agents.v1.json",
+  "version": 1,
+  "defaultAgent": "operator",
+  "agents": [
+    {
+      "id": "operator",
+      "title": "Operator",
+      "enabled": true,
+      "instructions": "Operate the application through published tools.",
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "endpoint": "http://127.0.0.1:8080/v1"
+      },
+      "ui": {
+        "mode": "overlay"
+      },
+      "permissions": {
+        "tools": {
+          "allow": [],
+          "deny": []
+        },
+        "probes": {
+          "allow": [],
+          "deny": []
+        },
+        "events": {
+          "allow": [],
+          "deny": []
+        }
+      }
+    }
+  ]
+}

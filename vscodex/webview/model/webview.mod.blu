@@ -4,7 +4,7 @@
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
-    "runtime": "../../../runtime/rt-base/scaffold.js"
+    "runtime": "../../../runtime/rt-base/runtime.js"
   },
   "imports": [
     "../../../core/model/core.mod.blu",
@@ -12,7 +12,7 @@
   ],
   "factories": [
     {
-      "path": "./message-broker.js",
+      "path": "../message-broker.js",
       "function": "MessageBroker"
     }
   ],
@@ -25,7 +25,7 @@
         "name": "message broker",
         "label": "The broker communicates with vscode",
         "factory": {
-          "path": "./message-broker.js",
+          "path": "../message-broker.js",
           "function": "MessageBroker"
         },
         "interfaces": [
@@ -95,6 +95,14 @@
               },
               {
                 "name": "new edit",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "model.resolved",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -399,7 +407,7 @@
             "interface": "actions",
             "pins": [
               {
-                "name": "sync links",
+                "name": "sync model",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -439,7 +447,7 @@
                 }
               },
               {
-                "name": "reload model",
+                "name": "sync links",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -527,6 +535,14 @@
               },
               {
                 "name": "model.header",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "model.resolved",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -967,37 +983,6 @@
           },
           {
             "kind": "dock",
-            "name": "doc settings",
-            "link": {
-              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
-              "node": "document settings"
-            },
-            "interfaces": [
-              {
-                "interface": "",
-                "pins": [
-                  {
-                    "name": "show",
-                    "kind": "input",
-                    "contract": {
-                      "role": "follower",
-                      "payload": "any"
-                    }
-                  },
-                  {
-                    "name": "modal div",
-                    "kind": "output",
-                    "contract": {
-                      "role": "follower",
-                      "payload": "any"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "kind": "dock",
             "name": "context menu",
             "label": "uses callbacks",
             "link": {
@@ -1151,6 +1136,115 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "dock",
+            "name": "doc settings(0)",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "document settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "agent settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "model runtime settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "model runtime settings",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "model runtime settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "agent settings",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "agent settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ],
         "connections": [
@@ -1220,15 +1314,6 @@
           {
             "src": {
               "pin": "modal div",
-              "node": "doc settings"
-            },
-            "dst": {
-              "pin": "modal div"
-            }
-          },
-          {
-            "src": {
-              "pin": "modal div",
               "node": "context menu"
             },
             "dst": {
@@ -1273,6 +1358,53 @@
           },
           {
             "src": {
+              "pin": "modal div",
+              "node": "doc settings(0)"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "agent settings",
+              "node": "doc settings(0)"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "agent settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "model runtime settings",
+              "node": "doc settings(0)"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "model runtime settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "model runtime settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "agent settings"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
               "pin": "confirm"
             },
             "dst": {
@@ -1286,7 +1418,7 @@
             },
             "dst": {
               "pin": "show",
-              "node": "doc settings"
+              "node": "doc settings(0)"
             }
           },
           {
@@ -1397,7 +1529,7 @@
             "interface": "menu items",
             "pins": [
               {
-                "name": "sync",
+                "name": "sync model",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -1493,7 +1625,7 @@
           {
             "icon": "bolt",
             "color": "#0fb2e4",
-            "message": "sync",
+            "message": "sync model",
             "help": "sync model"
           },
           {
@@ -1545,6 +1677,16 @@
             "node": "view manager"
           }
         ]
+      },
+      {
+        "src": {
+          "pin": "reload model",
+          "node": "message broker"
+        },
+        "dst": {
+          "pin": "sync model",
+          "node": "model manager"
+        }
       },
       {
         "src": {
@@ -1768,6 +1910,16 @@
       },
       {
         "src": {
+          "pin": "model.resolved",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "model.resolved",
+          "node": "message broker"
+        }
+      },
+      {
+        "src": {
           "pin": "redox.done",
           "node": "model manager"
         },
@@ -1874,11 +2026,11 @@
       },
       {
         "src": {
-          "pin": "sync",
+          "pin": "sync model",
           "node": "vscode side menu"
         },
         "dst": {
-          "pin": "sync links",
+          "pin": "sync model",
           "node": "model manager"
         }
       },

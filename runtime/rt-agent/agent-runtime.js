@@ -29,6 +29,10 @@ export class AgentRuntime {
             waitFor: (eventId, options = {}) => this.waitForEvent(eventId, options),
             query: (options = {}) => this.queryEvents(options),
         }
+        this.approvals = {
+            approve: (approvalId, options = {}) => this.resolveApproval(approvalId, true, options),
+            deny: (approvalId, options = {}) => this.resolveApproval(approvalId, false, options),
+        }
 
         if (broker) broker.registerAgent(this)
         this.mountConfiguredOverlay()
@@ -166,6 +170,15 @@ export class AgentRuntime {
         })
     }
 
+    resolveApproval(approvalId, approved, options = {}) {
+        return this.request({
+            type: BrokerRequestTypes.APPROVAL_RESOLVE,
+            approvalId,
+            approved,
+            ...options,
+        })
+    }
+
     submitUserMessage(text, options = {}) {
         const userText = String(text ?? '').trim()
         if (!userText) return Promise.resolve({role: 'assistant', content: ''})
@@ -268,7 +281,7 @@ export class AgentRuntime {
     }
 
     buildSystemPrompt() {
-        const capabilities = this.broker?.registry?.list?.()
+        const capabilities = this.broker?.capabilityView?.(this.id) ?? this.broker?.registry?.list?.()
         const usage = capabilities?.usageGuidance
         const guidance = Array.isArray(usage?.rules) ? usage.rules.join('\n') : ''
         return [
@@ -294,7 +307,7 @@ export class AgentRuntime {
     }
 
     buildOpenAICapabilityTools() {
-        const capabilities = this.broker?.registry?.list?.() ?? {}
+        const capabilities = this.broker?.capabilityView?.(this.id) ?? this.broker?.registry?.list?.() ?? {}
         const appTools = capabilities.tools ?? []
         const probes = capabilities.probes ?? []
         this.openAICapabilityMap = new Map()

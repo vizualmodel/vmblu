@@ -1,6 +1,8 @@
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 var __export = (target, all) => {
@@ -15,25 +17,35 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // rt-agent/index.js
 var index_exports = {};
 __export(index_exports, {
   AgentOverlay: () => AgentOverlay,
+  AgentPolicy: () => AgentPolicy,
   AgentRuntime: () => AgentRuntime,
   BrokerRequestTypes: () => BrokerRequestTypes,
   BrokerResultTypes: () => BrokerResultTypes,
   CapabilityRegistry: () => CapabilityRegistry,
   OpenAIChatProvider: () => OpenAIChatProvider,
+  Runtime: () => Runtime3,
   SecurityReporterFactory: () => SecurityReporterFactory,
   ToolBroker: () => ToolBroker,
   ToolResultStatus: () => ToolResultStatus,
   TraceRecorder: () => TraceRecorder,
   VERSION: () => VERSION,
   brokerError: () => brokerError,
-  enableSafety: () => enableSafety,
-  scaffold: () => scaffold
+  safety: () => safety,
+  validateJsonSchema: () => validateJsonSchema
 });
 module.exports = __toCommonJS(index_exports);
 
@@ -49,8 +61,8 @@ Deferred.prototype = {
   resolve(value) {
     this._resolve(value);
   },
-  reject(error) {
-    this._reject(error);
+  reject(error2) {
+    this._reject(error2);
   }
 };
 function PromiseHandler(defs) {
@@ -167,8 +179,8 @@ var convert = {
       return rawTarget ? { output, channel, targets: [rawTarget] } : { output, channel, targets: [] };
     }
     const regex = /"(?:\\.|[^"\\])*"/g;
-    const matches = targetString.match(regex);
-    const targetStringArray = matches ? matches.map((part) => part.slice(1, -1).replace(/\\"/g, '"')) : [];
+    const matches2 = targetString.match(regex);
+    const targetStringArray = matches2 ? matches2.map((part) => part.slice(1, -1).replace(/\\"/g, '"')) : [];
     const rawTargets = [];
     for (const target of targetStringArray) {
       const rawTarget = convert.stringToTarget(target);
@@ -197,17 +209,210 @@ var convert = {
   }
 };
 
-// shared/runtime.js
-var rtFlags = {
-  LOGMSG: 1
-};
-var LOGMSG = rtFlags.LOGMSG;
-function defaultInvokeHandler(dest, hix, param) {
-  return dest.rxSink[hix].handler.call(dest.cell, param);
+// shared/runtime-node.js
+function RX(pin, channel = false) {
+  this.pin = pin;
+  this.channel = channel;
+  this.handler = null;
 }
-__name(defaultInvokeHandler, "defaultInvokeHandler");
-function createRuntime({ invokeHandler = defaultInvokeHandler } = {}) {
-  function Runtime2() {
+__name(RX, "RX");
+function TX(pin, channel = false) {
+  this.pin = pin;
+  this.channel = channel;
+  this.targets = [];
+}
+__name(TX, "TX");
+function missingHandler(param) {
+  const names = Object.getOwnPropertyNames(this);
+  console.warn(`Missing handler for cell: ${names} - parameters: ${param}`);
+}
+__name(missingHandler, "missingHandler");
+function shouldUseNew(factory) {
+  if (typeof factory !== "function" || !factory.prototype) return false;
+  const protoKeys = Object.getOwnPropertyNames(factory.prototype);
+  return protoKeys.length !== 1 || protoKeys[0] !== "constructor" || factory.prototype.constructor !== factory;
+}
+__name(shouldUseNew, "shouldUseNew");
+function RuntimeNode(runtime, { name, uid, factory, inputs, outputs, sx, dx }) {
+  this.name = name;
+  this.uid = uid;
+  this.factory = factory;
+  this.useNew = shouldUseNew(factory);
+  this.rxSink = [];
+  this.txMap = /* @__PURE__ */ new Map();
+  this.sx = sx ?? null;
+  this.dx = dx ? runtime.settings.normalize(dx) : null;
+  this.cell = null;
+  this.msg = null;
+  this.tx = createTx(runtime, this);
+  this.initRxTx({ inputs, outputs });
+}
+__name(RuntimeNode, "RuntimeNode");
+RuntimeNode.prototype = {
+  logsMessages() {
+    var _a, _b, _c;
+    return !!(((_b = (_a = this.dx) == null ? void 0 : _a.monitor) == null ? void 0 : _b.logMessages) || ((_c = this.dx) == null ? void 0 : _c.logMessages));
+  },
+  initRxTx({ inputs, outputs }) {
+    for (const inputString of inputs) {
+      const input = convert.stringToInput(inputString);
+      if (input) this.rxSink.push(new RX(input.pin, input.channel));
+    }
+    for (const outputString of outputs) {
+      const raw = convert.stringToOutput(outputString);
+      if (!raw) continue;
+      const tx = new TX(raw.output, raw.channel);
+      this.txMap.set(tx.pin, tx);
+      for (const rawTarget of raw.targets) {
+        tx.targets.push(new Target(rawTarget.uid, rawTarget.pinName, raw.channel));
+      }
+    }
+  },
+  makeCell() {
+    try {
+      if (this.useNew) {
+        this.cell = new this.factory(this.getTx(), this.sx);
+      } else {
+        this.cell = this.factory(this.getTx(), this.sx);
+      }
+    } catch (err) {
+      if (err instanceof TypeError && typeof this.factory === "function" && /class constructor/i.test(err.message)) {
+        this.useNew = true;
+        this.cell = new this.factory(this.getTx(), this.sx);
+      } else throw err;
+    }
+    this.addHandlersForCell();
+  },
+  addHandlersForCell() {
+    if (!this.cell) {
+      if (this.rxSink.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
+      return;
+    }
+    const entries = Object.entries(this.cell);
+    const proto = Object.getPrototypeOf(this.cell);
+    const protoNames = Object.getOwnPropertyNames(proto) ?? [];
+    for (const protoName of protoNames) {
+      if (typeof proto[protoName] === "function") entries.push([protoName, proto[protoName]]);
+    }
+    entries.forEach(([name, fn]) => {
+      if (typeof fn === "function") {
+        const rx = this.getRx(name);
+        if (rx) rx.handler = fn;
+      }
+    });
+    for (const rx of this.rxSink) {
+      if (!rx.handler) {
+        console.warn(`** NO HANDLER ** Node "${this.name}" has input pin "${rx.pin}" but no handler for it.`);
+        rx.handler = missingHandler;
+      }
+    }
+  },
+  getRx(functionName) {
+    if (functionName.startsWith("-> ") || functionName.startsWith("=> ")) {
+      const handlerName = functionName.slice(3);
+      return this.rxSink.find((rx) => rx.pin == handlerName);
+    }
+    for (const rx of this.rxSink) {
+      if (convert.pinToHandler(rx.pin) == functionName) return rx;
+    }
+    return null;
+  },
+  resolveUIDs(actors) {
+    for (const tx of this.txMap.values()) {
+      for (const target of tx.targets) {
+        target.actor = actors.find((actor) => actor.uid == target.uid);
+        if (!target.actor) return console.error(`** ERROR ** target node ${target.uid} in ${this.name} not found`);
+        const hix = target.actor.rxSink.findIndex((rx) => rx.pin == target.pin);
+        if (hix < 0) return console.error(`** ERROR ** target pin ${target.pin} in ${target.actor.name} not found`);
+        target.hix = HIX_HANDLER | hix;
+      }
+    }
+  },
+  findTx(pin) {
+    if (!pin) return null;
+    return this.txMap.get(pin) ?? null;
+  },
+  getTx() {
+    return this.tx;
+  }
+};
+function createTx(runtime, source) {
+  return {
+    get pin() {
+      var _a;
+      return (_a = source.msg) == null ? void 0 : _a.txPin;
+    },
+    send(pin, param) {
+      if (pin) {
+        const tx = source.findTx(pin);
+        if (tx) return runtime.sendTo(tx, source, param);
+      }
+      console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+      return 0;
+    },
+    request(pin, param, timeout = 0) {
+      if (pin) {
+        const tx = source.findTx(pin);
+        if (tx) return runtime.requestFrom(tx, source, param, timeout);
+      }
+      console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+      return runtime.reject("No such output pin");
+    },
+    reply(param) {
+      return runtime.reply(source, param);
+    },
+    next(param, timeout = 0) {
+      return runtime.next(source, param, timeout);
+    },
+    reschedule() {
+      if (source.msg) runtime.reschedule(source.msg);
+    },
+    select(nodeName) {
+      const _nodeName = nodeName;
+      return {
+        send(pin, param) {
+          if (pin) {
+            const tx = source.findTx(pin);
+            if (tx) {
+              const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+              if (actualTarget) {
+                const txCopy = new TX(tx.pin, tx.channel);
+                txCopy.targets = [actualTarget];
+                return runtime.sendTo(txCopy, source, param);
+              }
+              console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+              return 0;
+            }
+          }
+          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
+          return 0;
+        },
+        request(pin, param, timeout = 0) {
+          if (pin) {
+            const tx = source.findTx(pin);
+            if (tx) {
+              const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
+              if (actualTarget) {
+                const txCopy = new TX(tx.pin, tx.channel);
+                txCopy.targets = [actualTarget];
+                return runtime.requestFrom(txCopy, source, param, timeout);
+              }
+              console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
+              return runtime.reject("selected node not connected");
+            }
+          }
+          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
+          return runtime.reject("No such output pin");
+        }
+      };
+    }
+  };
+}
+__name(createTx, "createTx");
+
+// shared/runtime.js
+var _Runtime = class _Runtime {
+  constructor(nodeList = [], options = {}) {
     this.actors = [];
     this.receiveTimer = 0;
     this.idleTimer = 0;
@@ -219,225 +424,752 @@ function createRuntime({ invokeHandler = defaultInvokeHandler } = {}) {
     this.qOut = [];
     this.qIn = [];
     this.qResolve = new ResolveQueue();
+    this.options = options ?? {};
+    this.runtimeSettings = (options == null ? void 0 : options.runtimeSettings) ?? null;
+    this.scaffold(nodeList);
   }
-  __name(Runtime2, "Runtime");
-  Runtime2.prototype = {
-    clearReceiveTimer() {
-      clearTimeout(this.receiveTimer);
+  scaffold(nodeList = []) {
+    this.actors = [];
+    for (const rawNode of nodeList) {
+      this.actors.push(new RuntimeNode(this, rawNode));
+    }
+    this.actors.forEach((actor) => actor.resolveUIDs(this.actors));
+    this.configure(this.options);
+    return this;
+  }
+  configure(options = {}) {
+  }
+  clearReceiveTimer() {
+    clearTimeout(this.receiveTimer);
+    this.receiveTimer = 0;
+  }
+  clearIdleTimer() {
+    clearTimeout(this.idleTimer);
+    this.idleTimer = 0;
+  }
+  scheduleReceive() {
+    if (this.receiveTimer) return;
+    this.clearIdleTimer();
+    this.receiveTimer = setTimeout(() => {
       this.receiveTimer = 0;
-    },
-    clearIdleTimer() {
-      clearTimeout(this.idleTimer);
-      this.idleTimer = 0;
-    },
-    scheduleReceive() {
-      if (this.receiveTimer) return;
-      this.clearIdleTimer();
-      this.receiveTimer = setTimeout(() => {
-        this.receiveTimer = 0;
-        this.receive();
-      }, this.receiveDelay);
-    },
-    scheduleIdleCheck() {
-      if (this.idleTimer || this.receiveTimer || this.qOut.length) return;
-      this.idleTimer = setTimeout(() => {
-        this.idleTimer = 0;
-        this.idle();
-      }, this.idleDelay);
-    },
-    start() {
-      this.clearReceiveTimer();
-      this.clearIdleTimer();
-      this.qOut = [];
-      this.qIn = [];
-      this.msgCount = 0;
-      this.idleCount = 0;
-      for (const actor of this.actors) actor.makeCell();
-      this.startTime = Date.now();
-      this.scheduleIdleCheck();
-    },
-    stop() {
-      this.clearReceiveTimer();
-      this.clearIdleTimer();
-      this.msgCount = 0;
-      this.idleCount = 0;
-      this.actors.forEach((actor) => actor.cell = null);
-      this.qOut = [];
-      this.qIn = [];
-    },
-    halt() {
-      this.clearReceiveTimer();
-      this.clearIdleTimer();
-    },
-    continue() {
-      if (this.qOut.length) this.scheduleReceive();
-      else this.scheduleIdleCheck();
-    },
-    switch() {
-      const temp = this.qIn;
-      this.qIn = this.qOut;
-      this.qOut = temp;
-      this.qOut.length = 0;
-    },
-    idle() {
-      this.idleCount++;
-      const now = Date.now();
-      this.qResolve.checkTimeouts(now);
-      if (this.idleCount % 600 == 0) {
-        const min = (now - this.startTime) / 6e4;
-        console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`);
-      }
-      this.scheduleIdleCheck();
-    },
-    reject(reason) {
-      return new Promise((resolve, reject) => {
-        reject(new Error(reason));
-      });
-    },
-    logMessage(msg) {
-      console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`);
-    },
-    logReqReply(msg, what) {
-      console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`);
-    },
-    logNotConnected(nodeName, pinName) {
-      console.log(`${nodeName}[${pinName}] : not connected.`);
-    },
-    sendTo(tx, source, param) {
-      if (tx.targets.length < 1) {
-        if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
-        return 0;
-      }
-      ++this.msgCount;
-      const log = source.flags & LOGMSG;
-      for (const target of tx.targets) {
-        this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
-        if (log) this.logMessage(this.qOut.at(-1));
-      }
-      this.idleCount = 0;
-      if (!this.receiveTimer) this.scheduleReceive();
-      return tx.targets.length;
-    },
-    requestFrom(tx, source, param, timeout) {
-      if (tx.targets.length < 1) {
-        if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin);
-        return this.reject("Not connected");
-      }
-      const txRef = ++this.msgCount;
-      let channelCount = 0;
-      const log = source.flags & LOGMSG;
-      for (const target of tx.targets) {
-        this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
-        if (log) this.logReqReply(this.qOut.at(-1), "request");
-        if (target.channel) channelCount++;
-      }
-      this.idleCount = 0;
-      if (!this.receiveTimer) this.scheduleReceive();
-      if (channelCount == 0) return this.reject("No channel");
-      return this.qResolve.addPromiseHandler(txRef, timeout, channelCount);
-    },
-    reply(source, param) {
-      var _a;
-      if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return 0;
-      ++this.msgCount;
-      this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef: 0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
-      if (source.flags & LOGMSG) this.logReqReply(this.qOut.at(-1), "reply");
-      this.idleCount = 0;
-      if (!this.receiveTimer) this.scheduleReceive();
-      return 1;
-    },
-    next(source, param, timeout) {
-      var _a;
-      if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return this.reject("No target");
-      const txRef = ++this.msgCount;
-      this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
-      this.idleCount = 0;
-      if (!this.receiveTimer) this.scheduleReceive();
-      return this.qResolve.addPromiseHandler(txRef, timeout);
-    },
-    receive() {
-      if (!this.qOut.length) return this.scheduleIdleCheck();
-      this.switch();
-      this.handleReceiveQueue();
-      if (this.qOut.length && !this.receiveTimer) this.scheduleReceive();
-      else this.scheduleIdleCheck();
-    },
-    handleReceiveQueue() {
-      for (const msg of this.qIn) {
-        const dest = msg.dest;
-        switch (msg.hix & HIX_TYPE_MASK) {
-          case HIX_HANDLER:
-            {
-              dest.msg = msg;
-              if (dest.flags & LOGMSG) this.logMessage(msg);
-              invokeHandler(dest, msg.hix, msg.param);
-            }
-            break;
-          case HIX_REPLY:
-            {
-              if (dest.flags & LOGMSG) this.logReqReply(msg, "incoming reply");
-              this.qResolve.trigger(msg.rxRef, msg.param);
-            }
-            break;
-        }
-      }
-    },
-    reschedule(msg) {
-      this.qOut.push(msg);
-      this.idleCount = 0;
-      if (!this.receiveTimer) this.scheduleReceive();
-    }
-  };
-  return Runtime2;
-}
-__name(createRuntime, "createRuntime");
-
-// rt-agent/node-context.js
-var currentNode = null;
-var suppressed = /* @__PURE__ */ new Set();
-function runAsNode(nodeName, fn) {
-  const previousNode = currentNode;
-  currentNode = nodeName;
-  try {
-    const result = fn();
-    if (result == null ? void 0 : result.then) {
-      return result.finally(() => {
-        currentNode = previousNode;
-      });
-    }
-    currentNode = previousNode;
-    return result;
-  } catch (err) {
-    currentNode = previousNode;
-    throw err;
+      this.receive();
+    }, this.receiveDelay);
   }
+  scheduleIdleCheck() {
+    if (this.idleTimer || this.receiveTimer || this.qOut.length) return;
+    this.idleTimer = setTimeout(() => {
+      this.idleTimer = 0;
+      this.idle();
+    }, this.idleDelay);
+  }
+  start() {
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
+    this.qOut = [];
+    this.qIn = [];
+    this.msgCount = 0;
+    this.idleCount = 0;
+    for (const actor of this.actors) actor.makeCell();
+    this.startTime = Date.now();
+    this.scheduleIdleCheck();
+  }
+  stop() {
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
+    this.msgCount = 0;
+    this.idleCount = 0;
+    this.actors.forEach((actor) => actor.cell = null);
+    this.qOut = [];
+    this.qIn = [];
+  }
+  halt() {
+    this.clearReceiveTimer();
+    this.clearIdleTimer();
+  }
+  continue() {
+    if (this.qOut.length) this.scheduleReceive();
+    else this.scheduleIdleCheck();
+  }
+  switch() {
+    const temp = this.qIn;
+    this.qIn = this.qOut;
+    this.qOut = temp;
+    this.qOut.length = 0;
+  }
+  idle() {
+    this.idleCount++;
+    const now = Date.now();
+    this.qResolve.checkTimeouts(now);
+    if (this.idleCount % 600 == 0) {
+      const min = (now - this.startTime) / 6e4;
+      console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`);
+    }
+    this.scheduleIdleCheck();
+  }
+  reject(reason) {
+    return new Promise((resolve, reject) => {
+      reject(new Error(reason));
+    });
+  }
+  logMessage(msg) {
+    console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`);
+  }
+  logReqReply(msg, what) {
+    console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`);
+  }
+  logNotConnected(nodeName, pinName) {
+    console.log(`${nodeName}[${pinName}] : not connected.`);
+  }
+  sendTo(tx, source, param) {
+    var _a, _b;
+    if (tx.targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+      return 0;
+    }
+    ++this.msgCount;
+    const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
+    for (const target of tx.targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+      if (log) this.logMessage(this.qOut.at(-1));
+    }
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+    return tx.targets.length;
+  }
+  requestFrom(tx, source, param, timeout) {
+    var _a, _b;
+    if (tx.targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+      return this.reject("Not connected");
+    }
+    const txRef = ++this.msgCount;
+    let channelCount = 0;
+    const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
+    for (const target of tx.targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+      if (log) this.logReqReply(this.qOut.at(-1), "request");
+      if (target.channel) channelCount++;
+    }
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+    if (channelCount == 0) return this.reject("No channel");
+    return this.qResolve.addPromiseHandler(txRef, timeout, channelCount);
+  }
+  reply(source, param) {
+    var _a, _b;
+    if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return 0;
+    ++this.msgCount;
+    this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef: 0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+    if ((_b = source.logsMessages) == null ? void 0 : _b.call(source)) this.logReqReply(this.qOut.at(-1), "reply");
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+    return 1;
+  }
+  next(source, param, timeout) {
+    var _a;
+    if (!((_a = source.msg) == null ? void 0 : _a.txRef)) return this.reject("No target");
+    const txRef = ++this.msgCount;
+    this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin });
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+    return this.qResolve.addPromiseHandler(txRef, timeout);
+  }
+  receive() {
+    if (!this.qOut.length) return this.scheduleIdleCheck();
+    this.switch();
+    this.handleReceiveQueue();
+    if (this.qOut.length && !this.receiveTimer) this.scheduleReceive();
+    else this.scheduleIdleCheck();
+  }
+  handleReceiveQueue() {
+    var _a, _b;
+    for (const msg of this.qIn) {
+      const dest = msg.dest;
+      switch (msg.hix & HIX_TYPE_MASK) {
+        case HIX_HANDLER:
+          {
+            dest.msg = msg;
+            if ((_a = dest.logsMessages) == null ? void 0 : _a.call(dest)) this.logMessage(msg);
+            dest.rxSink[msg.hix].handler.call(dest.cell, msg.param);
+          }
+          break;
+        case HIX_REPLY:
+          {
+            if ((_b = dest.logsMessages) == null ? void 0 : _b.call(dest)) this.logReqReply(msg, "incoming reply");
+            this.qResolve.trigger(msg.rxRef, msg.param);
+          }
+          break;
+      }
+    }
+  }
+  reschedule(msg) {
+    this.qOut.push(msg);
+    this.idleCount = 0;
+    if (!this.receiveTimer) this.scheduleReceive();
+  }
+};
+__name(_Runtime, "Runtime");
+var Runtime = _Runtime;
+
+// rt-als/node-context.js
+var import_node_async_hooks = require("async_hooks");
+var nodeStorage = new import_node_async_hooks.AsyncLocalStorage();
+function cloneStore() {
+  const store = nodeStorage.getStore();
+  return store ? { node: store.node, suppressCaps: new Set(store.suppressCaps ?? []) } : { node: "UNKNOWN", suppressCaps: /* @__PURE__ */ new Set() };
+}
+__name(cloneStore, "cloneStore");
+function runAsNode(nodeName, fn) {
+  const store = cloneStore();
+  store.node = nodeName ?? "UNKNOWN";
+  return nodeStorage.run(store, fn);
 }
 __name(runAsNode, "runAsNode");
 function getCurrentNode() {
-  return currentNode;
+  var _a;
+  return ((_a = nodeStorage.getStore()) == null ? void 0 : _a.node) ?? "UNKNOWN";
 }
 __name(getCurrentNode, "getCurrentNode");
-function suppressCapability(capability, fn) {
-  suppressed.add(capability);
-  try {
-    const result = fn();
-    if (result == null ? void 0 : result.then) {
-      return result.finally(() => {
-        suppressed.delete(capability);
-      });
-    }
-    suppressed.delete(capability);
-    return result;
-  } catch (err) {
-    suppressed.delete(capability);
-    throw err;
-  }
+function suppressCapability(cap, fn) {
+  const store = cloneStore();
+  store.suppressCaps.add(cap);
+  return nodeStorage.run(store, fn);
 }
 __name(suppressCapability, "suppressCapability");
-function isCapabilitySuppressed(capability) {
-  return suppressed.has(capability);
+function isCapabilitySuppressed(cap) {
+  var _a, _b;
+  return ((_b = (_a = nodeStorage.getStore()) == null ? void 0 : _a.suppressCaps) == null ? void 0 : _b.has(cap)) ?? false;
 }
 __name(isCapabilitySuppressed, "isCapabilitySuppressed");
+
+// rt-als/runtime-settings.js
+var defaultWorker = /* @__PURE__ */ __name(() => ({
+  on: false,
+  path: ""
+}), "defaultWorker");
+var defaultRun = /* @__PURE__ */ __name(() => ({
+  worker: defaultWorker()
+}), "defaultRun");
+var defaultMonitor = /* @__PURE__ */ __name(() => ({
+  logMessages: false,
+  logTimings: false
+}), "defaultMonitor");
+var defaultSecurityRequest = /* @__PURE__ */ __name(() => ({
+  fs: "inherit",
+  net: "inherit",
+  process: "inherit",
+  allow: {
+    netHosts: [],
+    fsRoots: []
+  }
+}), "defaultSecurityRequest");
+var defaultSecurity = /* @__PURE__ */ __name(() => ({
+  enabled: false,
+  mode: "warn",
+  forward: true,
+  request: defaultSecurityRequest()
+}), "defaultSecurity");
+function make() {
+  return {
+    run: defaultRun(),
+    monitor: defaultMonitor(),
+    security: defaultSecurity()
+  };
+}
+__name(make, "make");
+function normalize(dx = null) {
+  var _a, _b;
+  const defaults = make();
+  if (!dx || typeof dx !== "object") return defaults;
+  const legacySafety = dx.safety ?? {};
+  const normalized = {
+    run: {
+      ...defaults.run,
+      ...dx.run ?? {},
+      worker: {
+        ...defaults.run.worker,
+        ...((_a = dx.run) == null ? void 0 : _a.worker) ?? dx.worker ?? {}
+      }
+    },
+    monitor: {
+      ...defaults.monitor,
+      ...dx.monitor ?? {},
+      logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
+    },
+    security: normalizeSecuritySettings(dx.security, legacySafety, defaults.security)
+  };
+  normalized.run.worker.on = !!normalized.run.worker.on;
+  normalized.run.worker.path = normalized.run.worker.path ?? "";
+  normalized.monitor.logMessages = !!normalized.monitor.logMessages;
+  normalized.monitor.logTimings = !!normalized.monitor.logTimings;
+  return normalized;
+}
+__name(normalize, "normalize");
+function clone(dx = null) {
+  return normalize(dx);
+}
+__name(clone, "clone");
+function reset(target) {
+  const defaults = make();
+  assign(target, defaults);
+  return target;
+}
+__name(reset, "reset");
+function assign(target, dx = null) {
+  const normalized = normalize(dx);
+  target.run = structuredClone(normalized.run);
+  target.monitor = structuredClone(normalized.monitor);
+  target.security = structuredClone(normalized.security);
+  delete target.logMessages;
+  delete target.worker;
+  delete target.safety;
+  return target;
+}
+__name(assign, "assign");
+function isDefault(dx = null) {
+  const normalized = normalize(dx);
+  return JSON.stringify(normalized) === JSON.stringify(make());
+}
+__name(isDefault, "isDefault");
+var defaultModelSecurity = /* @__PURE__ */ __name(() => ({
+  mode: "warn",
+  forwardEvents: true,
+  defaults: {
+    fs: "warn",
+    net: "warn",
+    process: "deny"
+  },
+  allow: {
+    netHosts: [],
+    fsRoots: []
+  }
+}), "defaultModelSecurity");
+function makeModel() {
+  return {
+    run: {},
+    monitor: {},
+    security: defaultModelSecurity()
+  };
+}
+__name(makeModel, "makeModel");
+function normalizeModel(settings = null) {
+  const defaults = makeModel();
+  if (!settings || typeof settings !== "object") return defaults;
+  const security = settings.security ?? {};
+  const normalized = {
+    run: {
+      ...defaults.run,
+      ...settings.run ?? {}
+    },
+    monitor: {
+      ...defaults.monitor,
+      ...settings.monitor ?? {}
+    },
+    security: {
+      ...defaults.security,
+      ...security,
+      defaults: {
+        ...defaults.security.defaults,
+        ...security.defaults ?? {}
+      },
+      allow: {
+        ...defaults.security.allow,
+        ...security.allow ?? {}
+      }
+    }
+  };
+  normalized.security.mode = ["off", "warn", "enforce"].includes(normalized.security.mode) ? normalized.security.mode : defaults.security.mode;
+  normalized.security.forwardEvents = normalized.security.forwardEvents !== false;
+  normalized.security.defaults.fs = normalizePermission(normalized.security.defaults.fs);
+  normalized.security.defaults.net = normalizePermission(normalized.security.defaults.net);
+  normalized.security.defaults.process = normalizePermission(normalized.security.defaults.process);
+  normalized.security.allow.netHosts = Array.isArray(normalized.security.allow.netHosts) ? normalized.security.allow.netHosts : [];
+  normalized.security.allow.fsRoots = Array.isArray(normalized.security.allow.fsRoots) ? normalized.security.allow.fsRoots : [];
+  return normalized;
+}
+__name(normalizeModel, "normalizeModel");
+function effectivePolicy(modelSettings = null, nodeDx = null) {
+  var _a, _b, _c;
+  const model = normalizeModel(modelSettings);
+  const node = normalize(nodeDx);
+  const request = ((_a = node.security) == null ? void 0 : _a.enabled) ? node.security.request : defaultSecurityRequest();
+  return {
+    mode: ((_b = node.security) == null ? void 0 : _b.enabled) ? node.security.mode : model.security.mode,
+    forward: ((_c = node.security) == null ? void 0 : _c.enabled) ? node.security.forward : model.security.forwardEvents,
+    security: {
+      fs: clipPermission(resolvePermission(request.fs, model.security.defaults.fs), model.security.defaults.fs),
+      net: clipPermission(resolvePermission(request.net, model.security.defaults.net), model.security.defaults.net),
+      process: clipPermission(resolvePermission(request.process, model.security.defaults.process), model.security.defaults.process),
+      allow: intersectAllowLists(model.security.allow, request.allow)
+    },
+    model,
+    node
+  };
+}
+__name(effectivePolicy, "effectivePolicy");
+function normalizeSecuritySettings(security = null, legacySafety = {}, defaults = defaultSecurity()) {
+  const source = security ?? {};
+  const request = source.request ?? {};
+  const allow = request.allow ?? {};
+  const normalized = {
+    ...defaults,
+    ...source,
+    enabled: source.enabled ?? legacySafety.on ?? defaults.enabled,
+    mode: source.mode ?? legacySafety.mode ?? defaults.mode,
+    forward: source.forward ?? legacySafety.forward ?? defaults.forward,
+    request: {
+      ...defaults.request,
+      ...request,
+      allow: {
+        ...defaults.request.allow,
+        ...allow
+      }
+    }
+  };
+  normalized.enabled = !!normalized.enabled;
+  normalized.forward = normalized.forward !== false;
+  normalized.mode = ["off", "warn", "enforce"].includes(normalized.mode) ? normalized.mode : defaults.mode;
+  normalized.request.fs = normalizePermission(normalized.request.fs);
+  normalized.request.net = normalizePermission(normalized.request.net);
+  normalized.request.process = normalizePermission(normalized.request.process);
+  normalized.request.allow.netHosts = Array.isArray(normalized.request.allow.netHosts) ? normalized.request.allow.netHosts : [];
+  normalized.request.allow.fsRoots = Array.isArray(normalized.request.allow.fsRoots) ? normalized.request.allow.fsRoots : [];
+  return normalized;
+}
+__name(normalizeSecuritySettings, "normalizeSecuritySettings");
+function normalizePermission(value) {
+  return ["inherit", "allow", "warn", "deny"].includes(value) ? value : "inherit";
+}
+__name(normalizePermission, "normalizePermission");
+function resolvePermission(requested, fallback) {
+  return requested === "inherit" ? fallback : requested;
+}
+__name(resolvePermission, "resolvePermission");
+function clipPermission(requested, envelope) {
+  const order = { deny: 0, warn: 1, allow: 2, inherit: 1 };
+  return order[requested] <= order[envelope] ? requested : envelope;
+}
+__name(clipPermission, "clipPermission");
+function intersectAllowLists(modelAllow = {}, nodeAllow = {}) {
+  return {
+    netHosts: intersect(modelAllow.netHosts, nodeAllow.netHosts),
+    fsRoots: intersect(modelAllow.fsRoots, nodeAllow.fsRoots)
+  };
+}
+__name(intersectAllowLists, "intersectAllowLists");
+function intersect(modelValues = [], nodeValues = []) {
+  if (!Array.isArray(modelValues) || !modelValues.length) return [];
+  if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice();
+  const allowed = new Set(modelValues);
+  return nodeValues.filter((value) => allowed.has(value));
+}
+__name(intersect, "intersect");
+var runtimeSettings = {
+  make,
+  normalize,
+  clone,
+  reset,
+  assign,
+  isDefault,
+  makeModel,
+  normalizeModel,
+  effectivePolicy
+};
+
+// rt-als/safety.js
+var import_node_child_process = __toESM(require("child_process"), 1);
+var import_node_fs = __toESM(require("fs"), 1);
+var import_node_http = __toESM(require("http"), 1);
+var import_node_https = __toESM(require("https"), 1);
+var STATE_KEY = Symbol.for("vmblu.rt-als.safetyHooks");
+var WRAPPED = Symbol.for("vmblu.rt-als.wrapped");
+var _Safety = class _Safety {
+  constructor() {
+    this.emitter = null;
+    this.policyClassifier = null;
+  }
+  setEmitter(fn = null) {
+    this.emitter = typeof fn === "function" ? fn : null;
+  }
+  setPolicyClassifier(fn = null) {
+    this.policyClassifier = typeof fn === "function" ? fn : null;
+  }
+  emit(event) {
+    if (!this.emitter) return;
+    try {
+      this.emitter(event);
+    } catch (error2) {
+      console.warn("vmblu safety emitter failed:", error2);
+    }
+  }
+  makePolicyClassifier({ runtime, runtimeSettings: modelRuntimeSettings } = {}) {
+    return (event) => {
+      var _a, _b, _c, _d;
+      const actor = (_b = (_a = runtime == null ? void 0 : runtime.actors) == null ? void 0 : _a.find) == null ? void 0 : _b.call(_a, (candidate) => candidate.name === (event == null ? void 0 : event.node));
+      const effectivePolicy2 = (_d = (_c = runtime == null ? void 0 : runtime.settings) == null ? void 0 : _c.effectivePolicy) == null ? void 0 : _d.call(_c, modelRuntimeSettings, actor == null ? void 0 : actor.dx);
+      if (!(effectivePolicy2 == null ? void 0 : effectivePolicy2.security)) return null;
+      const domain = capabilityDomain(event.cap ?? event.capability);
+      const permission = effectivePolicy2.security[domain];
+      const allowListDecision = classifyAllowList(domain, event.detail, effectivePolicy2.security.allow);
+      const decision = (allowListDecision == null ? void 0 : allowListDecision.decision) ?? (permission === "deny" ? "denied" : permission === "warn" ? "warning" : "allowed");
+      return {
+        decision,
+        domain,
+        permission,
+        mode: effectivePolicy2.mode,
+        forward: effectivePolicy2.forward,
+        ...(allowListDecision == null ? void 0 : allowListDecision.reason) ? { reason: allowListDecision.reason } : {}
+      };
+    };
+  }
+  report(cap, detail = {}) {
+    const event = {
+      ts: Date.now(),
+      node: getCurrentNode(),
+      cap,
+      detail
+    };
+    const policy = this.classify(event);
+    if (policy) event.policy = policy;
+    this.emit(event);
+  }
+  classify(event) {
+    if (!this.policyClassifier) return null;
+    try {
+      return this.policyClassifier(event) ?? null;
+    } catch (error2) {
+      return {
+        decision: "error",
+        reason: "policy_classifier_failed",
+        message: (error2 == null ? void 0 : error2.message) || String(error2)
+      };
+    }
+  }
+  emitCapability(cap, detail) {
+    if (isCapabilitySuppressed(cap)) return;
+    this.report(cap, detail);
+  }
+  installHooks({ mode = "off" } = {}) {
+    if (mode === "off") return () => {
+    };
+    const state = getState();
+    state.count += 1;
+    if (state.count === 1) {
+      state.restores = [];
+      this.installProcessHooks(state.restores);
+      this.installFetchHook(state.restores);
+      this.installHttpHooks(state.restores);
+      this.installFsHooks(state.restores);
+    }
+    return () => {
+      state.count = Math.max(0, state.count - 1);
+      if (state.count > 0) return;
+      for (const restore of state.restores.splice(0).reverse()) restore();
+    };
+  }
+  installProcessHooks(restores) {
+    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
+    wrapMethod(import_node_child_process.default, "exec", (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
+      report("proc:exec", { command: safeString(command) });
+      return original.call(this, command, ...args);
+    }, "wrappedExec"), restores);
+    wrapMethod(import_node_child_process.default, "execFile", (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, args, options, callback) {
+      const argv = Array.isArray(args) ? args : [];
+      report("proc:exec", { command: safeString(file), args: argv.slice() });
+      return original.call(this, file, args, options, callback);
+    }, "wrappedExecFile"), restores);
+    wrapMethod(import_node_child_process.default, "spawn", (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, args, options) {
+      report("proc:exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
+      return original.call(this, command, args, options);
+    }, "wrappedSpawn"), restores);
+    wrapMethod(import_node_child_process.default, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, args, options) {
+      report("proc:exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
+      return original.call(this, modulePath, args, options);
+    }, "wrappedFork"), restores);
+  }
+  installFsHooks(restores) {
+    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
+    for (const key of ["writeFile", "writeFileSync", "appendFile", "appendFileSync"]) {
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path, ...args) {
+        report("fs:write", { path: safeString(path) });
+        return original.call(this, path, ...args);
+      }, "wrappedFs"), restores);
+    }
+    for (const key of ["rm", "rmSync", "unlink", "unlinkSync"]) {
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path, ...args) {
+        report("fs:delete", { path: safeString(path) });
+        return original.call(this, path, ...args);
+      }, "wrappedDelete"), restores);
+    }
+  }
+  installFetchHook(restores) {
+    if (typeof globalThis.fetch !== "function") return;
+    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
+    wrapMethod(globalThis, "fetch", (original) => /* @__PURE__ */ __name(function wrappedFetch(input, init) {
+      const detail = {
+        url: describeRequestUrl(input),
+        method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
+      };
+      report("net:egress", detail);
+      return suppressCapability("net:egress", () => original.call(this, input, init));
+    }, "wrappedFetch"), restores);
+  }
+  installHttpHooks(restores) {
+    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
+    wrapMethod(import_node_http.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpRequest(input, options, callback) {
+      report("net:egress", {
+        url: describeRequestUrl(input, options, "http:"),
+        method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
+      });
+      return original.call(this, input, options, callback);
+    }, "wrappedHttpRequest"), restores);
+    wrapMethod(import_node_https.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpsRequest(input, options, callback) {
+      report("net:egress", {
+        url: describeRequestUrl(input, options, "https:"),
+        method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
+      });
+      return original.call(this, input, options, callback);
+    }, "wrappedHttpsRequest"), restores);
+  }
+  enable({ mode = "off" } = {}, tx = null) {
+    if (mode === "off") {
+      this.setEmitter(null);
+      return { uninstall() {
+      } };
+    }
+    this.setEmitter((event) => {
+      var _a;
+      (_a = tx == null ? void 0 : tx.send) == null ? void 0 : _a.call(tx, "security.event", event);
+    });
+    const uninstallHooks = this.installHooks({ mode });
+    return {
+      uninstall: /* @__PURE__ */ __name(() => {
+        uninstallHooks();
+        this.setEmitter(null);
+      }, "uninstall")
+    };
+  }
+};
+__name(_Safety, "Safety");
+var Safety = _Safety;
+function getState() {
+  if (!globalThis[STATE_KEY]) {
+    globalThis[STATE_KEY] = {
+      count: 0,
+      restores: []
+    };
+  }
+  return globalThis[STATE_KEY];
+}
+__name(getState, "getState");
+function wrapMethod(target, key, wrapFactory, restores) {
+  const original = target[key];
+  if (typeof original !== "function") return;
+  if (original[WRAPPED]) return;
+  const wrapped = wrapFactory(original);
+  wrapped[WRAPPED] = true;
+  target[key] = wrapped;
+  restores.push(() => {
+    if (target[key] === wrapped) target[key] = original;
+  });
+}
+__name(wrapMethod, "wrapMethod");
+function safeString(value) {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (value instanceof URL) return value.toString();
+  return String(value);
+}
+__name(safeString, "safeString");
+function describeRequestUrl(input, options = null, protocol = "") {
+  if (input instanceof URL) return input.toString();
+  if (typeof input === "string") return input;
+  if (input && typeof input === "object") {
+    const actualProtocol = input.protocol ?? (options == null ? void 0 : options.protocol) ?? protocol;
+    const host = input.hostname ?? input.host ?? (options == null ? void 0 : options.hostname) ?? (options == null ? void 0 : options.host) ?? "";
+    const port = input.port ?? (options == null ? void 0 : options.port);
+    const path = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
+    const authority = port ? `${host}:${port}` : host;
+    return authority ? `${actualProtocol}//${authority}${path}` : path;
+  }
+  return safeString(input);
+}
+__name(describeRequestUrl, "describeRequestUrl");
+function capabilityDomain(cap) {
+  var _a, _b, _c;
+  if ((_a = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _a.call(cap, "fs:")) return "fs";
+  if ((_b = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _b.call(cap, "net:")) return "net";
+  if ((_c = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _c.call(cap, "proc:")) return "process";
+  return "unknown";
+}
+__name(capabilityDomain, "capabilityDomain");
+function classifyAllowList(domain, detail = {}, allow = {}) {
+  var _a, _b;
+  if (domain === "fs" && ((_a = allow.fsRoots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
+    return isPathAllowed(detail.path, allow.fsRoots) ? null : { decision: "denied", reason: "fs_root_not_allowed" };
+  }
+  if (domain === "net" && ((_b = allow.netHosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
+    return isHostAllowed(detail.url, allow.netHosts) ? null : { decision: "denied", reason: "net_host_not_allowed" };
+  }
+  return null;
+}
+__name(classifyAllowList, "classifyAllowList");
+function isPathAllowed(value, roots = []) {
+  const target = normalizePath(value);
+  return roots.some((root) => {
+    const normalizedRoot = normalizePath(root);
+    return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`);
+  });
+}
+__name(isPathAllowed, "isPathAllowed");
+function normalizePath(value) {
+  return String(value ?? "").replaceAll("\\", "/").replace(/\/+$/, "");
+}
+__name(normalizePath, "normalizePath");
+function isHostAllowed(value, hosts = []) {
+  try {
+    const host = new URL(String(value)).hostname;
+    return hosts.includes(host);
+  } catch {
+    return false;
+  }
+}
+__name(isHostAllowed, "isHostAllowed");
+var safety = new Safety();
+
+// rt-als/runtime.js
+var _Runtime2 = class _Runtime2 extends Runtime {
+  configure(options = {}) {
+    safety.setPolicyClassifier(safety.makePolicyClassifier({
+      runtime: this,
+      runtimeSettings: options.runtimeSettings
+    }));
+  }
+  handleReceiveQueue() {
+    var _a, _b;
+    for (const msg of this.qIn) {
+      const dest = msg.dest;
+      switch (msg.hix & HIX_TYPE_MASK) {
+        case HIX_HANDLER:
+          {
+            dest.msg = msg;
+            if ((_a = dest.logsMessages) == null ? void 0 : _a.call(dest)) this.logMessage(msg);
+            runAsNode(dest.name, () => dest.rxSink[msg.hix].handler.call(dest.cell, msg.param));
+          }
+          break;
+        case HIX_REPLY:
+          {
+            if ((_b = dest.logsMessages) == null ? void 0 : _b.call(dest)) this.logReqReply(msg, "incoming reply");
+            this.qResolve.trigger(msg.rxRef, msg.param);
+          }
+          break;
+      }
+    }
+  }
+};
+__name(_Runtime2, "Runtime");
+var Runtime2 = _Runtime2;
+Runtime2.prototype.settings = runtimeSettings;
 
 // rt-agent/broker-protocol.js
 var BrokerRequestTypes = Object.freeze({
@@ -445,7 +1177,8 @@ var BrokerRequestTypes = Object.freeze({
   TOOL_CALL: "tool.call",
   PROBE_READ: "probe.read",
   EVENT_WAIT: "event.wait",
-  EVENTS_QUERY: "events.query"
+  EVENTS_QUERY: "events.query",
+  APPROVAL_RESOLVE: "approval.resolve"
 });
 var BrokerResultTypes = Object.freeze({
   CAPABILITIES_RESULT: "capabilities.result",
@@ -459,6 +1192,8 @@ var ToolResultStatus = Object.freeze({
   ACCEPTED: "accepted",
   COMPLETED: "completed",
   VERIFIED: "verified",
+  UNVERIFIED: "unverified",
+  PENDING: "pending",
   FAILED: "failed",
   TIMEOUT: "timeout",
   DENIED: "denied"
@@ -475,508 +1210,6 @@ function brokerError(request, code, message, details = void 0) {
   };
 }
 __name(brokerError, "brokerError");
-
-// rt-agent/capability-registry.js
-var _CapabilityRegistry = class _CapabilityRegistry {
-  constructor(capabilities = null) {
-    this.capabilities = this.normalizeCapabilities(capabilities);
-    this.tools = /* @__PURE__ */ new Map();
-    this.probes = /* @__PURE__ */ new Map();
-    this.events = /* @__PURE__ */ new Map();
-    this.index();
-  }
-  normalizeCapabilities(capabilities) {
-    return {
-      schema: (capabilities == null ? void 0 : capabilities.schema) ?? "https://vmblu.dev/schemas/capabilities.v1.json",
-      version: (capabilities == null ? void 0 : capabilities.version) ?? 1,
-      application: (capabilities == null ? void 0 : capabilities.application) ?? {},
-      tools: Array.isArray(capabilities == null ? void 0 : capabilities.tools) ? capabilities.tools : [],
-      probes: Array.isArray(capabilities == null ? void 0 : capabilities.probes) ? capabilities.probes : [],
-      events: Array.isArray(capabilities == null ? void 0 : capabilities.events) ? capabilities.events : [],
-      policies: (capabilities == null ? void 0 : capabilities.policies) ?? {},
-      usageGuidance: (capabilities == null ? void 0 : capabilities.usageGuidance) ?? {}
-    };
-  }
-  index() {
-    for (const tool of this.capabilities.tools) {
-      if (tool == null ? void 0 : tool.id) this.tools.set(tool.id, tool);
-    }
-    for (const probe of this.capabilities.probes) {
-      if (probe == null ? void 0 : probe.id) this.probes.set(probe.id, probe);
-    }
-    for (const event of this.capabilities.events) {
-      if (event == null ? void 0 : event.id) this.events.set(event.id, event);
-    }
-  }
-  list() {
-    return {
-      ...this.capabilities,
-      tools: [...this.tools.values()],
-      probes: [...this.probes.values()],
-      events: [...this.events.values()]
-    };
-  }
-  getTool(id) {
-    return this.tools.get(id) ?? null;
-  }
-  getProbe(id) {
-    return this.probes.get(id) ?? null;
-  }
-  getEvent(id) {
-    return this.events.get(id) ?? null;
-  }
-};
-__name(_CapabilityRegistry, "CapabilityRegistry");
-var CapabilityRegistry = _CapabilityRegistry;
-
-// rt-agent/trace-recorder.js
-var _TraceRecorder = class _TraceRecorder {
-  constructor({ clock = /* @__PURE__ */ __name(() => /* @__PURE__ */ new Date(), "clock") } = {}) {
-    this.clock = clock;
-    this.records = [];
-    this.listeners = /* @__PURE__ */ new Set();
-    this.nextId = 1;
-  }
-  record(entry) {
-    const record = {
-      traceId: (entry == null ? void 0 : entry.traceId) ?? `trace_${String(this.nextId++).padStart(6, "0")}`,
-      timestamp: (entry == null ? void 0 : entry.timestamp) ?? this.clock().toISOString(),
-      type: (entry == null ? void 0 : entry.type) ?? "trace",
-      ...entry
-    };
-    this.records.push(record);
-    this.emit(record);
-    return record;
-  }
-  all() {
-    return this.records.slice();
-  }
-  clear() {
-    this.records.length = 0;
-  }
-  subscribe(listener) {
-    if (typeof listener !== "function") throw new Error("Trace listener must be a function");
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-  emit(record) {
-    for (const listener of this.listeners) listener(record);
-  }
-};
-__name(_TraceRecorder, "TraceRecorder");
-var TraceRecorder = _TraceRecorder;
-
-// rt-agent/tool-broker.js
-var _ToolBroker = class _ToolBroker {
-  constructor({ runtime: runtime2, capabilities, registry, traceRecorder } = {}) {
-    this.runtime = null;
-    this.registry = registry ?? new CapabilityRegistry(capabilities);
-    this.trace = traceRecorder ?? new TraceRecorder();
-    this.probeReaders = /* @__PURE__ */ new Map();
-    this.events = [];
-    this.agents = /* @__PURE__ */ new Map();
-    this.listeners = /* @__PURE__ */ new Map();
-    this.nextCallId = 1;
-    this.source = null;
-    this.actor = null;
-    if (runtime2) this.attachRuntime(runtime2);
-  }
-  attachRuntime(runtime2) {
-    if (!runtime2) throw new Error("ToolBroker requires a runtime");
-    this.runtime = runtime2;
-    this.actor = this.makeRuntimeActor();
-    this.source = this.actor;
-    return this;
-  }
-  makeRuntimeActor() {
-    const broker = this;
-    const actor = {
-      name: "ToolBroker",
-      uid: "__vmblu_tool_broker__",
-      flags: 0,
-      msg: null,
-      txMap: /* @__PURE__ */ new Map(),
-      rxSink: [
-        {
-          pin: "event",
-          channel: false,
-          handler(param) {
-            return broker.recordRuntimeEvent(actor.msg, param);
-          }
-        }
-      ],
-      cell: null,
-      makeCell() {
-        this.cell = { event: this.rxSink[0].handler };
-      },
-      resolveUIDs() {
-      }
-    };
-    actor.cell = { event: actor.rxSink[0].handler };
-    return actor;
-  }
-  registerAgent(agent) {
-    if (!(agent == null ? void 0 : agent.id)) throw new Error("Agent must have an id");
-    this.agents.set(agent.id, agent);
-    if (typeof agent.attachBroker === "function") agent.attachBroker(this);
-    this.trace.record({ type: "agent.registered", agentId: agent.id, status: "ok" });
-    return this;
-  }
-  unregisterAgent(agentOrId) {
-    const agentId = typeof agentOrId === "string" ? agentOrId : agentOrId == null ? void 0 : agentOrId.id;
-    if (!agentId) return false;
-    const removed = this.agents.delete(agentId);
-    if (removed) this.trace.record({ type: "agent.unregistered", agentId, status: "ok" });
-    return removed;
-  }
-  subscribe(agentId, listener) {
-    if (typeof listener !== "function") throw new Error("Broker listener must be a function");
-    const key = agentId || "*";
-    if (!this.listeners.has(key)) this.listeners.set(key, /* @__PURE__ */ new Set());
-    this.listeners.get(key).add(listener);
-    return () => {
-      var _a;
-      return (_a = this.listeners.get(key)) == null ? void 0 : _a.delete(listener);
-    };
-  }
-  publish(message) {
-    if (!message) return message;
-    const targets = new Set(this.listeners.get("*") ?? []);
-    if (message.agentId) {
-      for (const listener of this.listeners.get(message.agentId) ?? []) targets.add(listener);
-    } else {
-      for (const [key, listeners] of this.listeners.entries()) {
-        if (key === "*") continue;
-        for (const listener of listeners) targets.add(listener);
-      }
-    }
-    for (const listener of targets) listener(message);
-    return message;
-  }
-  emitResult(request, result) {
-    if (request == null ? void 0 : request.agentId) {
-      this.publish({
-        kind: "broker.result",
-        agentId: request.agentId,
-        requestId: request.requestId,
-        callId: result == null ? void 0 : result.callId,
-        result,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    }
-    return result;
-  }
-  registerProbe(probeId, reader) {
-    if (typeof reader !== "function") throw new Error("Probe reader must be a function");
-    this.probeReaders.set(probeId, reader);
-    return this;
-  }
-  recordEvent(eventId, payload, callId = void 0) {
-    const event = {
-      eventId,
-      payload,
-      callId,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    this.events.push(event);
-    this.trace.record({ type: "event.observed", eventId, callId, details: { payload } });
-    this.publish({
-      kind: "event.observed",
-      eventId,
-      callId,
-      payload,
-      timestamp: event.timestamp
-    });
-    return event;
-  }
-  recordRuntimeEvent(msg, payload) {
-    var _a;
-    const event = this.registry.list().events.find((candidate) => {
-      var _a2, _b, _c;
-      return ((_a2 = candidate == null ? void 0 : candidate.source) == null ? void 0 : _a2.node) === ((_b = msg == null ? void 0 : msg.source) == null ? void 0 : _b.name) && ((_c = candidate == null ? void 0 : candidate.source) == null ? void 0 : _c.pin) === (msg == null ? void 0 : msg.txPin);
-    });
-    if (!event) {
-      this.trace.record({
-        type: "event.ignored",
-        status: "ignored",
-        details: { node: (_a = msg == null ? void 0 : msg.source) == null ? void 0 : _a.name, pin: msg == null ? void 0 : msg.txPin, payload }
-      });
-      return null;
-    }
-    return this.recordEvent(event.id, payload);
-  }
-  async handle(request) {
-    switch (request == null ? void 0 : request.type) {
-      case BrokerRequestTypes.CAPABILITIES_LIST:
-        return this.emitResult(request, this.listCapabilities(request));
-      case BrokerRequestTypes.TOOL_CALL:
-        return this.callTool(request);
-      case BrokerRequestTypes.PROBE_READ:
-        return this.readProbe(request);
-      case BrokerRequestTypes.EVENT_WAIT:
-        return this.waitForEvent(request);
-      case BrokerRequestTypes.EVENTS_QUERY:
-        return this.emitResult(request, this.queryEvents(request));
-      default:
-        return this.emitResult(request, brokerError(request, "unknown_request", `Unknown broker request type: ${request == null ? void 0 : request.type}`));
-    }
-  }
-  listCapabilities(request = {}) {
-    this.trace.record({
-      type: "capabilities.list",
-      agentId: request.agentId,
-      requestId: request.requestId,
-      status: "ok"
-    });
-    return {
-      type: BrokerResultTypes.CAPABILITIES_RESULT,
-      requestId: request.requestId,
-      capabilities: this.registry.list()
-    };
-  }
-  async callTool(request) {
-    var _a;
-    const tool = this.registry.getTool(request == null ? void 0 : request.toolId);
-    const callId = this.newCallId();
-    this.trace.record({
-      type: "tool.call",
-      agentId: request == null ? void 0 : request.agentId,
-      requestId: request == null ? void 0 : request.requestId,
-      callId,
-      toolId: request == null ? void 0 : request.toolId,
-      status: "requested",
-      details: { args: request == null ? void 0 : request.args }
-    });
-    if (!tool) return this.toolError(request, callId, "unknown_tool", `Unknown tool: ${request == null ? void 0 : request.toolId}`);
-    if (!this.runtime) return this.toolError(request, callId, "runtime_not_attached", "ToolBroker is not attached to a runtime", tool.id);
-    const policy = this.checkPolicy(tool);
-    this.trace.record({
-      type: "policy.decision",
-      agentId: request == null ? void 0 : request.agentId,
-      requestId: request == null ? void 0 : request.requestId,
-      callId,
-      toolId: tool.id,
-      status: policy.allowed ? "allowed" : "denied",
-      details: policy
-    });
-    if (!policy.allowed) {
-      return this.toolResult(request, callId, tool.id, ToolResultStatus.DENIED, {
-        error: { code: "denied", message: policy.reason }
-      });
-    }
-    const target = this.resolveInputTarget(tool.input);
-    if (!target) return this.toolError(request, callId, "target_not_found", `No runtime target for ${(_a = tool.input) == null ? void 0 : _a.ref}`);
-    try {
-      const wait = request.wait ?? "accepted";
-      const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0;
-      const tx = this.makeRuntimeTx(tool.input.pin, target);
-      const payload = this.makeRuntimePayload(tool, request, callId);
-      this.trace.record({
-        type: "message.dispatch",
-        agentId: request == null ? void 0 : request.agentId,
-        requestId: request == null ? void 0 : request.requestId,
-        callId,
-        toolId: tool.id,
-        status: "dispatching",
-        details: { target: tool.input }
-      });
-      if (wait === "none" || wait === "accepted" || !target.channel) {
-        this.runtime.sendTo(tx, this.source, payload);
-        return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED);
-      }
-      const reply = await this.runtime.requestFrom(tx, this.source, payload, timeout);
-      return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, { result: reply });
-    } catch (error) {
-      return this.toolError(request, callId, "dispatch_failed", (error == null ? void 0 : error.message) || String(error), tool.id);
-    }
-  }
-  async readProbe(request) {
-    const probe = this.registry.getProbe(request == null ? void 0 : request.probeId);
-    if (!probe) {
-      return this.emitResult(request, {
-        type: BrokerResultTypes.PROBE_RESULT,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: request == null ? void 0 : request.probeId,
-        status: "failed",
-        error: { code: "unknown_probe", message: `Unknown probe: ${request == null ? void 0 : request.probeId}` }
-      });
-    }
-    const reader = this.probeReaders.get(probe.id);
-    if (!reader) {
-      this.trace.record({
-        type: "probe.read",
-        agentId: request == null ? void 0 : request.agentId,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: probe.id,
-        status: "failed",
-        details: { reason: "no_reader" }
-      });
-      return this.emitResult(request, {
-        type: BrokerResultTypes.PROBE_RESULT,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: probe.id,
-        status: "failed",
-        error: { code: "probe_not_registered", message: `No reader registered for probe: ${probe.id}` }
-      });
-    }
-    try {
-      const value = makeJsonSafe(await reader(request.args, probe));
-      const text = stringifyProbeValue(value);
-      this.trace.record({
-        type: "probe.read",
-        agentId: request == null ? void 0 : request.agentId,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: probe.id,
-        status: "ok",
-        details: { value, text }
-      });
-      return this.emitResult(request, {
-        type: BrokerResultTypes.PROBE_RESULT,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: probe.id,
-        status: "ok",
-        value,
-        text
-      });
-    } catch (error) {
-      return this.emitResult(request, {
-        type: BrokerResultTypes.PROBE_RESULT,
-        requestId: request == null ? void 0 : request.requestId,
-        probeId: probe.id,
-        status: "failed",
-        error: { code: "probe_failed", message: (error == null ? void 0 : error.message) || String(error) }
-      });
-    }
-  }
-  async waitForEvent(request) {
-    const timeoutMs = (request == null ? void 0 : request.timeoutMs) ?? 1e3;
-    const started = Date.now();
-    while (Date.now() - started <= timeoutMs) {
-      const found = this.findEvent(request);
-      if (found) {
-        return this.emitResult(request, {
-          type: BrokerResultTypes.EVENT_RESULT,
-          requestId: request.requestId,
-          eventId: request.eventId,
-          status: "observed",
-          callId: found.callId,
-          payload: found.payload
-        });
-      }
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    return this.emitResult(request, {
-      type: BrokerResultTypes.EVENT_RESULT,
-      requestId: request == null ? void 0 : request.requestId,
-      eventId: request == null ? void 0 : request.eventId,
-      status: "timeout"
-    });
-  }
-  queryEvents(request = {}) {
-    const events = this.events.filter((event) => {
-      if (request.eventId && event.eventId !== request.eventId) return false;
-      if (request.callId && event.callId !== request.callId) return false;
-      return true;
-    });
-    return {
-      type: BrokerResultTypes.EVENTS_RESULT,
-      requestId: request.requestId,
-      events
-    };
-  }
-  findEvent(request) {
-    return this.events.find((event) => {
-      if (event.eventId !== request.eventId) return false;
-      if (request.callId && event.callId !== request.callId) return false;
-      return true;
-    }) ?? null;
-  }
-  checkPolicy(tool) {
-    if (tool.approval === "always") {
-      return { allowed: false, reason: "approval_required" };
-    }
-    return { allowed: true, risk: tool.risk ?? "low", approval: tool.approval ?? "never" };
-  }
-  resolveInputTarget(input) {
-    const actor = this.runtime.actors.find((candidate) => candidate.name === (input == null ? void 0 : input.node));
-    if (!actor) return null;
-    const hix = actor.rxSink.findIndex((rx2) => rx2.pin === (input == null ? void 0 : input.pin));
-    if (hix < 0) return null;
-    const rx = actor.rxSink[hix];
-    return {
-      actor,
-      hix: HIX_HANDLER | hix,
-      pin: rx.pin,
-      channel: rx.channel
-    };
-  }
-  makeRuntimeTx(pin, target) {
-    return {
-      pin,
-      channel: target.channel,
-      targets: [target]
-    };
-  }
-  makeRuntimePayload(tool, request, callId) {
-    var _a;
-    if (((_a = tool == null ? void 0 : tool.input) == null ? void 0 : _a.payload) === "ToolInvocation") {
-      return {
-        callId,
-        tool: tool.id,
-        arguments: (request == null ? void 0 : request.args) ?? {}
-      };
-    }
-    return request == null ? void 0 : request.args;
-  }
-  toolResult(request, callId, toolId, status, extra = {}) {
-    const result = {
-      type: BrokerResultTypes.TOOL_RESULT,
-      requestId: request == null ? void 0 : request.requestId,
-      callId,
-      toolId,
-      status,
-      ...extra
-    };
-    this.trace.record({
-      type: "tool.result",
-      agentId: request == null ? void 0 : request.agentId,
-      requestId: request == null ? void 0 : request.requestId,
-      callId,
-      toolId,
-      status,
-      details: extra
-    });
-    return this.emitResult(request, result);
-  }
-  toolError(request, callId, code, message, toolId = request == null ? void 0 : request.toolId) {
-    return this.toolResult(request, callId, toolId, ToolResultStatus.FAILED, {
-      error: { code, message }
-    });
-  }
-  newCallId() {
-    return `call_${String(this.nextCallId++).padStart(6, "0")}`;
-  }
-};
-__name(_ToolBroker, "ToolBroker");
-var ToolBroker = _ToolBroker;
-function makeJsonSafe(value) {
-  if (value == null) return value;
-  try {
-    return JSON.parse(JSON.stringify(value));
-  } catch {
-    throw new Error("Probe returned a value that cannot be serialized as JSON");
-  }
-}
-__name(makeJsonSafe, "makeJsonSafe");
-function stringifyProbeValue(value) {
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-__name(stringifyProbeValue, "stringifyProbeValue");
 
 // rt-agent/agent-overlay.js
 var STORAGE_PREFIX = "vmblu.rt-agent.overlay.";
@@ -1088,6 +1321,8 @@ var _AgentOverlay = class _AgentOverlay {
     this.elements.theme.addEventListener("click", () => this.toggleTheme());
     this.elements.maximize.addEventListener("click", () => this.toggleMaximize());
     this.elements.header.addEventListener("pointerdown", (event) => this.startDrag(event));
+    this.root.addEventListener("keydown", (event) => event.stopPropagation());
+    this.root.addEventListener("keyup", (event) => event.stopPropagation());
     this.elements.chatForm.addEventListener("submit", (event) => this.submitChat(event));
     this.elements.traceClear.addEventListener("click", () => this.clearTrace());
     for (const tab of this.elements.tabs) {
@@ -1503,6 +1738,10 @@ var _AgentRuntime = class _AgentRuntime {
       waitFor: /* @__PURE__ */ __name((eventId, options = {}) => this.waitForEvent(eventId, options), "waitFor"),
       query: /* @__PURE__ */ __name((options = {}) => this.queryEvents(options), "query")
     };
+    this.approvals = {
+      approve: /* @__PURE__ */ __name((approvalId, options = {}) => this.resolveApproval(approvalId, true, options), "approve"),
+      deny: /* @__PURE__ */ __name((approvalId, options = {}) => this.resolveApproval(approvalId, false, options), "deny")
+    };
     if (broker) broker.registerAgent(this);
     this.mountConfiguredOverlay();
   }
@@ -1568,7 +1807,7 @@ var _AgentRuntime = class _AgentRuntime {
     this.recentEvents.push({
       eventId: message.eventId,
       callId: message.callId,
-      payload: makeJsonSafe2(message.payload),
+      payload: makeJsonSafe(message.payload),
       timestamp: message.timestamp ?? (/* @__PURE__ */ new Date()).toISOString()
     });
     this.recentEvents = this.recentEvents.slice(-20);
@@ -1621,6 +1860,14 @@ var _AgentRuntime = class _AgentRuntime {
   queryEvents(options = {}) {
     return this.request({
       type: BrokerRequestTypes.EVENTS_QUERY,
+      ...options
+    });
+  }
+  resolveApproval(approvalId, approved, options = {}) {
+    return this.request({
+      type: BrokerRequestTypes.APPROVAL_RESOLVE,
+      approvalId,
+      approved,
       ...options
     });
   }
@@ -1691,16 +1938,16 @@ var _AgentRuntime = class _AgentRuntime {
           });
         }
       }
-    } catch (error) {
-      const content = `LLM request failed: ${(error == null ? void 0 : error.message) || String(error)}`;
+    } catch (error2) {
+      const content = `LLM request failed: ${(error2 == null ? void 0 : error2.message) || String(error2)}`;
       this.trace({
         type: "llm.error",
         status: "failed",
-        details: { message: (error == null ? void 0 : error.message) || String(error) }
+        details: { message: (error2 == null ? void 0 : error2.message) || String(error2) }
       });
       this.addTranscriptMessage({ role: "assistant", content });
       this.publish({ kind: "chat.assistant", agentId: this.id, content, timestamp: (/* @__PURE__ */ new Date()).toISOString() });
-      return { role: "assistant", content, error };
+      return { role: "assistant", content, error: error2 };
     }
   }
   buildProviderMessages() {
@@ -1710,12 +1957,12 @@ var _AgentRuntime = class _AgentRuntime {
     ];
   }
   buildSystemPrompt() {
-    var _a, _b, _c, _d;
-    const capabilities = (_c = (_b = (_a = this.broker) == null ? void 0 : _a.registry) == null ? void 0 : _b.list) == null ? void 0 : _c.call(_b);
+    var _a, _b, _c, _d, _e, _f;
+    const capabilities = ((_b = (_a = this.broker) == null ? void 0 : _a.capabilityView) == null ? void 0 : _b.call(_a, this.id)) ?? ((_e = (_d = (_c = this.broker) == null ? void 0 : _c.registry) == null ? void 0 : _d.list) == null ? void 0 : _e.call(_d));
     const usage = capabilities == null ? void 0 : capabilities.usageGuidance;
     const guidance = Array.isArray(usage == null ? void 0 : usage.rules) ? usage.rules.join("\n") : "";
     return [
-      ((_d = this.config) == null ? void 0 : _d.instructions) || "Help the user operate this vmblu application through the published tools.",
+      ((_f = this.config) == null ? void 0 : _f.instructions) || "Help the user operate this vmblu application through the published tools.",
       "When an app action is needed, call a provided tool instead of inventing state changes.",
       this.formatRecentEventsForPrompt(),
       guidance
@@ -1735,8 +1982,8 @@ ${lines.join("\n")}`;
     this.transcript = this.transcript.slice(-30);
   }
   buildOpenAICapabilityTools() {
-    var _a, _b, _c;
-    const capabilities = ((_c = (_b = (_a = this.broker) == null ? void 0 : _a.registry) == null ? void 0 : _b.list) == null ? void 0 : _c.call(_b)) ?? {};
+    var _a, _b, _c, _d, _e;
+    const capabilities = ((_b = (_a = this.broker) == null ? void 0 : _a.capabilityView) == null ? void 0 : _b.call(_a, this.id)) ?? ((_e = (_d = (_c = this.broker) == null ? void 0 : _c.registry) == null ? void 0 : _d.list) == null ? void 0 : _e.call(_d)) ?? {};
     const appTools = capabilities.tools ?? [];
     const probes = capabilities.probes ?? [];
     this.openAICapabilityMap = /* @__PURE__ */ new Map();
@@ -1845,7 +2092,7 @@ function normalizeOpenAIJsonSchema(schema) {
   return normalized;
 }
 __name(normalizeOpenAIJsonSchema, "normalizeOpenAIJsonSchema");
-function makeJsonSafe2(value) {
+function makeJsonSafe(value) {
   if (value == null) return value;
   try {
     return JSON.parse(JSON.stringify(value));
@@ -1853,7 +2100,7 @@ function makeJsonSafe2(value) {
     return String(value);
   }
 }
-__name(makeJsonSafe2, "makeJsonSafe");
+__name(makeJsonSafe, "makeJsonSafe");
 function compactJson(value, limit = 700) {
   let text = "";
   try {
@@ -1865,457 +2112,1157 @@ function compactJson(value, limit = 700) {
 }
 __name(compactJson, "compactJson");
 
-// rt-agent/runtime.js
-var Runtime = createRuntime({
-  invokeHandler(dest, hix, param) {
-    return runAsNode(dest.name, () => dest.rxSink[hix].handler.call(dest.cell, param));
+// rt-agent/capability-registry.js
+var _CapabilityRegistry = class _CapabilityRegistry {
+  constructor(capabilities = null) {
+    this.capabilities = this.normalizeCapabilities(capabilities);
+    this.tools = /* @__PURE__ */ new Map();
+    this.probes = /* @__PURE__ */ new Map();
+    this.events = /* @__PURE__ */ new Map();
+    this.index();
   }
-});
-var baseStop = Runtime.prototype.stop;
-Runtime.prototype.configureAgentRuntime = /* @__PURE__ */ __name(function configureAgentRuntime({ capabilities = null, traceRecorder = null, agent = null } = {}) {
-  this.traceRecorder = traceRecorder ?? this.traceRecorder ?? new TraceRecorder();
-  this.toolBroker = new ToolBroker({ capabilities, traceRecorder: this.traceRecorder });
-  this.toolBroker.attachRuntime(this);
-  this.attachToolBrokerActor();
-  this.wireToolBrokerEvents();
-  this.registerNodeProbes();
-  this.agent = null;
-  if (agent && agent.enabled !== false) {
-    this.agent = new AgentRuntime({
-      id: agent == null ? void 0 : agent.id,
-      broker: this.toolBroker,
-      config: agent ?? {}
-    });
-  }
-  return this;
-}, "configureAgentRuntime");
-Runtime.prototype.stop = /* @__PURE__ */ __name(function stop() {
-  var _a, _b;
-  (_b = (_a = this.agent) == null ? void 0 : _a.unmountOverlay) == null ? void 0 : _b.call(_a);
-  return baseStop.call(this);
-}, "stop");
-Runtime.prototype.registerNodeProbes = /* @__PURE__ */ __name(function registerNodeProbes() {
-  var _a;
-  if (!((_a = this.toolBroker) == null ? void 0 : _a.registry)) return 0;
-  let count = 0;
-  for (const probe of this.toolBroker.registry.list().probes) {
-    const binding = (probe == null ? void 0 : probe.binding) ?? {};
-    const nodeName = binding.node;
-    if (!nodeName) continue;
-    const actor = this.actors.find((candidate) => candidate.name === nodeName);
-    if (!actor) continue;
-    this.toolBroker.registerProbe(probe.id, async (args, currentProbe) => {
-      var _a2;
-      const probeFn = (_a2 = actor.cell) == null ? void 0 : _a2.probe;
-      if (typeof probeFn !== "function") {
-        throw new Error(`Node ${nodeName} does not implement probe(name, args)`);
-      }
-      const probeName = (currentProbe == null ? void 0 : currentProbe.name) || (currentProbe == null ? void 0 : currentProbe.id);
-      return probeFn.call(actor.cell, probeName, args ?? {});
-    });
-    count++;
-  }
-  return count;
-}, "registerNodeProbes");
-Runtime.prototype.attachToolBrokerActor = /* @__PURE__ */ __name(function attachToolBrokerActor() {
-  var _a;
-  if (!((_a = this.toolBroker) == null ? void 0 : _a.actor)) return null;
-  if (!this.actors.includes(this.toolBroker.actor)) this.actors.push(this.toolBroker.actor);
-  return this.toolBroker.actor;
-}, "attachToolBrokerActor");
-Runtime.prototype.wireToolBrokerEvents = /* @__PURE__ */ __name(function wireToolBrokerEvents() {
-  var _a, _b;
-  const brokerActor = (_a = this.toolBroker) == null ? void 0 : _a.actor;
-  if (!brokerActor) return 0;
-  let count = 0;
-  for (const event of this.toolBroker.registry.list().events) {
-    const source = event == null ? void 0 : event.source;
-    if (!(source == null ? void 0 : source.node) || !(source == null ? void 0 : source.pin)) continue;
-    const actor = this.actors.find((candidate) => candidate !== brokerActor && candidate.name === source.node);
-    const tx = (_b = actor == null ? void 0 : actor.findTx) == null ? void 0 : _b.call(actor, source.pin);
-    if (!tx) continue;
-    const alreadyWired = tx.targets.some((target) => target.actor === brokerActor && target.pin === "event");
-    if (alreadyWired) continue;
-    tx.targets.push({
-      actor: brokerActor,
-      hix: HIX_HANDLER | 0,
-      pin: "event",
-      channel: false
-    });
-    count++;
-  }
-  return count;
-}, "wireToolBrokerEvents");
-
-// rt-als/runtime-settings.js
-var defaultWorker = /* @__PURE__ */ __name(() => ({
-  on: false,
-  path: ""
-}), "defaultWorker");
-var defaultSafety = /* @__PURE__ */ __name(() => ({
-  on: false,
-  mode: "warn",
-  forward: true
-}), "defaultSafety");
-function makeRuntimeSettings() {
-  return {
-    logMessages: false,
-    worker: defaultWorker(),
-    safety: defaultSafety()
-  };
-}
-__name(makeRuntimeSettings, "makeRuntimeSettings");
-function normalizeRuntimeSettings(dx = null) {
-  const defaults = makeRuntimeSettings();
-  if (!dx || typeof dx !== "object") return defaults;
-  const normalized = {
-    ...dx,
-    logMessages: !!dx.logMessages,
-    worker: {
-      ...defaults.worker,
-      ...dx.worker ?? {}
-    },
-    safety: {
-      ...defaults.safety,
-      ...dx.safety ?? {}
-    }
-  };
-  normalized.worker.on = !!normalized.worker.on;
-  normalized.worker.path = normalized.worker.path ?? "";
-  normalized.safety.on = !!normalized.safety.on;
-  normalized.safety.forward = normalized.safety.forward !== false;
-  normalized.safety.mode = ["off", "warn", "enforce"].includes(normalized.safety.mode) ? normalized.safety.mode : defaults.safety.mode;
-  return normalized;
-}
-__name(normalizeRuntimeSettings, "normalizeRuntimeSettings");
-
-// shared/runtime-node.js
-function RX(pin, channel = false) {
-  this.pin = pin;
-  this.channel = channel;
-  this.handler = null;
-}
-__name(RX, "RX");
-function TX(pin, channel = false) {
-  this.pin = pin;
-  this.channel = channel;
-  this.targets = [];
-}
-__name(TX, "TX");
-function missingHandler(param) {
-  const names = Object.getOwnPropertyNames(this);
-  console.warn(`Missing handler for cell: ${names} - parameters: ${param}`);
-}
-__name(missingHandler, "missingHandler");
-function shouldUseNew(factory) {
-  if (typeof factory !== "function" || !factory.prototype) return false;
-  const protoKeys = Object.getOwnPropertyNames(factory.prototype);
-  return protoKeys.length !== 1 || protoKeys[0] !== "constructor" || factory.prototype.constructor !== factory;
-}
-__name(shouldUseNew, "shouldUseNew");
-function createRuntimeNode({ getRuntime, normalizeRuntimeSettings: normalizeRuntimeSettings2, rtFlags: rtFlags2 }) {
-  function RuntimeNode2({ name, uid, factory, inputs, outputs, sx, dx }) {
-    this.name = name;
-    this.uid = uid;
-    this.factory = factory;
-    this.useNew = shouldUseNew(factory);
-    this.rxSink = [];
-    this.txMap = /* @__PURE__ */ new Map();
-    this.sx = sx ?? null;
-    this.dx = dx ? normalizeRuntimeSettings2(dx) : null;
-    this.flags = 0;
-    this.cell = null;
-    this.msg = null;
-    this.setFlags();
-    this.initRxTx({ inputs, outputs });
-  }
-  __name(RuntimeNode2, "RuntimeNode");
-  RuntimeNode2.prototype = {
-    setFlags() {
-      if (!this.dx) return;
-      if (this.dx.logMessages) this.flags |= rtFlags2.LOGMSG;
-    },
-    initRxTx({ inputs, outputs }) {
-      for (const inputString of inputs) {
-        const input = convert.stringToInput(inputString);
-        if (input) this.rxSink.push(new RX(input.pin, input.channel));
-      }
-      for (const outputString of outputs) {
-        const raw = convert.stringToOutput(outputString);
-        if (!raw) continue;
-        const tx = new TX(raw.output, raw.channel);
-        this.txMap.set(tx.pin, tx);
-        for (const rawTarget of raw.targets) {
-          tx.targets.push(new Target(rawTarget.uid, rawTarget.pinName, raw.channel));
-        }
-      }
-    },
-    makeCell() {
-      try {
-        if (this.useNew) {
-          this.cell = new this.factory(this.getTx(), this.sx);
-        } else {
-          this.cell = this.factory(this.getTx(), this.sx);
-        }
-      } catch (err) {
-        if (err instanceof TypeError && typeof this.factory === "function" && /class constructor/i.test(err.message)) {
-          this.useNew = true;
-          this.cell = new this.factory(this.getTx(), this.sx);
-        } else throw err;
-      }
-      this.addHandlersForCell();
-    },
-    addHandlersForCell() {
-      if (!this.cell) {
-        if (this.rxSink.length > 0) console.warn(`** NO HANDLERS ** Node ${this.name} has input pins but no implementation.`);
-        return;
-      }
-      const entries = Object.entries(this.cell);
-      const proto = Object.getPrototypeOf(this.cell);
-      const protoNames = Object.getOwnPropertyNames(proto) ?? [];
-      for (const protoName of protoNames) {
-        if (typeof proto[protoName] === "function") entries.push([protoName, proto[protoName]]);
-      }
-      entries.forEach(([name, fn]) => {
-        if (typeof fn === "function") {
-          const rx = this.getRx(name);
-          if (rx) rx.handler = fn;
-        }
-      });
-      for (const rx of this.rxSink) {
-        if (!rx.handler) {
-          console.warn(`** NO HANDLER ** Node "${this.name}" has input pin "${rx.pin}" but no handler for it.`);
-          rx.handler = missingHandler;
-        }
-      }
-    },
-    getRx(functionName) {
-      if (functionName.startsWith("-> ") || functionName.startsWith("=> ")) {
-        const handlerName = functionName.slice(3);
-        return this.rxSink.find((rx) => rx.pin == handlerName);
-      }
-      for (const rx of this.rxSink) {
-        if (convert.pinToHandler(rx.pin) == functionName) return rx;
-      }
-      return null;
-    },
-    resolveUIDs(actors) {
-      for (const tx of this.txMap.values()) {
-        for (const target of tx.targets) {
-          target.actor = actors.find((actor) => actor.uid == target.uid);
-          if (!target.actor) return console.error(`** ERROR ** target node ${target.uid} in ${this.name} not found`);
-          const hix = target.actor.rxSink.findIndex((rx) => rx.pin == target.pin);
-          if (hix < 0) return console.error(`** ERROR ** target pin ${target.pin} in ${target.actor.name} not found`);
-          target.hix = HIX_HANDLER | hix;
-        }
-      }
-    },
-    findTx(pin) {
-      if (!pin) return null;
-      return this.txMap.get(pin) ?? null;
-    },
-    getTx() {
-      const source = this;
-      return {
-        get pin() {
-          var _a;
-          return (_a = source.msg) == null ? void 0 : _a.txPin;
-        },
-        send(pin, param) {
-          if (pin) {
-            const tx = source.findTx(pin);
-            if (tx) return getRuntime().sendTo(tx, source, param);
-          }
-          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
-          return 0;
-        },
-        request(pin, param, timeout = 0) {
-          if (pin) {
-            const tx = source.findTx(pin);
-            if (tx) return getRuntime().requestFrom(tx, source, param, timeout);
-          }
-          console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
-          return getRuntime().reject("No such output pin");
-        },
-        reply(param) {
-          return getRuntime().reply(source, param);
-        },
-        next(param, timeout = 0) {
-          return getRuntime().next(source, param, timeout);
-        },
-        reschedule() {
-          if (source.msg) getRuntime().reschedule(source.msg);
-        },
-        select(nodeName) {
-          const _nodeName = nodeName;
-          return {
-            send(pin, param) {
-              if (pin) {
-                const tx = source.findTx(pin);
-                if (tx) {
-                  const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
-                  if (actualTarget) {
-                    const txCopy = new TX(tx.pin, tx.channel);
-                    txCopy.targets = [actualTarget];
-                    return getRuntime().sendTo(txCopy, source, param);
-                  }
-                  console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
-                  return 0;
-                }
-              }
-              console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
-              return 0;
-            },
-            request(pin, param, timeout = 0) {
-              if (pin) {
-                const tx = source.findTx(pin);
-                if (tx) {
-                  const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
-                  if (actualTarget) {
-                    const txCopy = new TX(tx.pin, tx.channel);
-                    txCopy.targets = [actualTarget];
-                    return getRuntime().requestFrom(txCopy, source, param, timeout);
-                  }
-                  console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
-                  return getRuntime().reject("selected node not connected");
-                }
-              }
-              console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
-              return getRuntime().reject("No such output pin");
-            }
-          };
-        }
-      };
-    }
-  };
-  return RuntimeNode2;
-}
-__name(createRuntimeNode, "createRuntimeNode");
-
-// rt-agent/runtime-node.js
-var RuntimeNode = createRuntimeNode({
-  getRuntime: /* @__PURE__ */ __name(() => runtime, "getRuntime"),
-  normalizeRuntimeSettings,
-  rtFlags
-});
-
-// rt-agent/scaffold.js
-var runtime = null;
-function scaffold(nodeList, filterList = [], options = {}) {
-  runtime = new Runtime();
-  for (const rawNode of nodeList) {
-    runtime.actors.push(new RuntimeNode(rawNode));
-  }
-  runtime.actors.forEach((actor) => actor.resolveUIDs(runtime.actors));
-  runtime.configureAgentRuntime(options);
-  return runtime;
-}
-__name(scaffold, "scaffold");
-
-// rt-agent/safety.js
-var STATE_KEY = Symbol.for("vmblu.rt-agent.safetyHooks");
-var WRAPPED = Symbol.for("vmblu.rt-agent.wrapped");
-var safetyEmitter = null;
-function getState() {
-  if (!globalThis[STATE_KEY]) {
-    globalThis[STATE_KEY] = {
-      count: 0,
-      restores: []
+  normalizeCapabilities(capabilities) {
+    return {
+      schema: (capabilities == null ? void 0 : capabilities.schema) ?? "https://vmblu.dev/schemas/capabilities.v1.json",
+      version: (capabilities == null ? void 0 : capabilities.version) ?? 1,
+      application: (capabilities == null ? void 0 : capabilities.application) ?? {},
+      tools: Array.isArray(capabilities == null ? void 0 : capabilities.tools) ? capabilities.tools : [],
+      probes: Array.isArray(capabilities == null ? void 0 : capabilities.probes) ? capabilities.probes : [],
+      events: Array.isArray(capabilities == null ? void 0 : capabilities.events) ? capabilities.events : [],
+      policies: (capabilities == null ? void 0 : capabilities.policies) ?? {},
+      usageGuidance: (capabilities == null ? void 0 : capabilities.usageGuidance) ?? {}
     };
   }
-  return globalThis[STATE_KEY];
-}
-__name(getState, "getState");
-function setSafetyEmitter(emitter) {
-  safetyEmitter = emitter;
-}
-__name(setSafetyEmitter, "setSafetyEmitter");
-function reportSafetyEvent(capability, detail = {}) {
-  safetyEmitter == null ? void 0 : safetyEmitter({
-    kind: "security.event",
-    capability,
-    node: getCurrentNode(),
-    detail,
-    timestamp: (/* @__PURE__ */ new Date()).toISOString()
-  });
-}
-__name(reportSafetyEvent, "reportSafetyEvent");
-function wrapMethod(target, key, wrapFactory, restores) {
-  const original = target[key];
-  if (typeof original !== "function") return;
-  if (original[WRAPPED]) return;
-  const wrapped = wrapFactory(original);
-  wrapped[WRAPPED] = true;
-  target[key] = wrapped;
-  restores.push(() => {
-    if (target[key] === wrapped) target[key] = original;
-  });
-}
-__name(wrapMethod, "wrapMethod");
-function describeRequestUrl(input) {
-  if (input instanceof URL) return input.toString();
-  if (typeof input === "string") return input;
-  if (input == null ? void 0 : input.url) return String(input.url);
-  return String(input ?? "");
-}
-__name(describeRequestUrl, "describeRequestUrl");
-function emitCapability(capability, detail) {
-  if (isCapabilitySuppressed(capability)) return;
-  reportSafetyEvent(capability, detail);
-}
-__name(emitCapability, "emitCapability");
-function installFetchHook(restores) {
-  if (typeof globalThis.fetch !== "function") return;
-  wrapMethod(globalThis, "fetch", (original) => /* @__PURE__ */ __name(function wrappedFetch(input, init) {
-    emitCapability("net:egress", {
-      url: describeRequestUrl(input),
-      method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
-    });
-    return suppressCapability("net:egress", () => original.call(this, input, init));
-  }, "wrappedFetch"), restores);
-}
-__name(installFetchHook, "installFetchHook");
-function installSafetyHooks({ mode = "off" } = {}) {
-  if (mode === "off") return () => {
-  };
-  const state = getState();
-  state.count += 1;
-  if (state.count === 1) {
-    state.restores = [];
-    installFetchHook(state.restores);
-  }
-  return () => {
-    state.count = Math.max(0, state.count - 1);
-    if (state.count > 0) return;
-    for (const restore of state.restores.splice(0).reverse()) restore();
-  };
-}
-__name(installSafetyHooks, "installSafetyHooks");
-function enableSafety({ mode = "off" } = {}, tx = null) {
-  if (mode === "off") {
-    setSafetyEmitter(null);
-    return { uninstall() {
-    } };
-  }
-  setSafetyEmitter((event) => {
-    var _a;
-    (_a = tx == null ? void 0 : tx.send) == null ? void 0 : _a.call(tx, "security.event", event);
-  });
-  const uninstallHooks = installSafetyHooks({ mode });
-  return {
-    uninstall() {
-      uninstallHooks();
-      setSafetyEmitter(null);
+  index() {
+    for (const tool of this.capabilities.tools) {
+      if (tool == null ? void 0 : tool.id) this.tools.set(tool.id, tool);
     }
+    for (const probe of this.capabilities.probes) {
+      if (probe == null ? void 0 : probe.id) this.probes.set(probe.id, probe);
+    }
+    for (const event of this.capabilities.events) {
+      if (event == null ? void 0 : event.id) this.events.set(event.id, event);
+    }
+  }
+  list() {
+    return {
+      ...this.capabilities,
+      tools: [...this.tools.values()],
+      probes: [...this.probes.values()],
+      events: [...this.events.values()]
+    };
+  }
+  getTool(id) {
+    return this.tools.get(id) ?? null;
+  }
+  getProbe(id) {
+    return this.probes.get(id) ?? null;
+  }
+  getEvent(id) {
+    return this.events.get(id) ?? null;
+  }
+};
+__name(_CapabilityRegistry, "CapabilityRegistry");
+var CapabilityRegistry = _CapabilityRegistry;
+
+// rt-agent/agent-policy.js
+var _AgentPolicy = class _AgentPolicy {
+  static fromAgent(agent = {}) {
+    return new _AgentPolicy((agent == null ? void 0 : agent.config) ?? agent);
+  }
+  constructor(agent = {}) {
+    const permissions = (agent == null ? void 0 : agent.permissions) ?? {};
+    this.agentId = (agent == null ? void 0 : agent.id) ?? null;
+    this.enabled = (agent == null ? void 0 : agent.enabled) !== false;
+    this.permissions = {
+      tools: normalizePermissionSet(permissions.tools),
+      probes: normalizePermissionSet(permissions.probes),
+      events: normalizePermissionSet(permissions.events)
+    };
+  }
+  canUse(kind, id) {
+    var _a;
+    const set = (_a = this.permissions) == null ? void 0 : _a[kind];
+    if (!set || !id) return { allowed: true, reason: "no_policy" };
+    if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
+    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
+    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
+  }
+  approvalDecision(tool = {}) {
+    if ((tool == null ? void 0 : tool.approval) === "always") {
+      return { required: true, reason: "approval_required", rule: "tool.approval" };
+    }
+    return { required: false, reason: "approval_not_required", rule: "tool.approval" };
+  }
+  filterCapabilities(capabilities = {}) {
+    return {
+      ...capabilities,
+      tools: ((capabilities == null ? void 0 : capabilities.tools) ?? []).filter((tool) => this.canUse("tools", tool == null ? void 0 : tool.id).allowed),
+      probes: ((capabilities == null ? void 0 : capabilities.probes) ?? []).filter((probe) => this.canUse("probes", probe == null ? void 0 : probe.id).allowed),
+      events: ((capabilities == null ? void 0 : capabilities.events) ?? []).filter((event) => this.canUse("events", event == null ? void 0 : event.id).allowed)
+    };
+  }
+  traceDetails() {
+    return {
+      agentId: this.agentId,
+      enabled: this.enabled,
+      permissions: this.permissions
+    };
+  }
+  toJSON() {
+    return this.traceDetails();
+  }
+};
+__name(_AgentPolicy, "AgentPolicy");
+var AgentPolicy = _AgentPolicy;
+function normalizePermissionSet(value = {}) {
+  const hasAllowList = Array.isArray(value == null ? void 0 : value.allow);
+  return {
+    allow: normalizeStringList(value == null ? void 0 : value.allow),
+    deny: normalizeStringList(value == null ? void 0 : value.deny),
+    hasAllowList
   };
 }
-__name(enableSafety, "enableSafety");
+__name(normalizePermissionSet, "normalizePermissionSet");
+function normalizeStringList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+}
+__name(normalizeStringList, "normalizeStringList");
+function matches(patterns, id) {
+  return patterns.includes("*") || patterns.includes(id);
+}
+__name(matches, "matches");
+
+// rt-agent/json-schema.js
+function validateJsonSchema(schema, value, { path = "$" } = {}) {
+  const errors = [];
+  validate(schema, value, path, errors);
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+__name(validateJsonSchema, "validateJsonSchema");
+function validate(schema, value, path, errors) {
+  if (!schema || typeof schema !== "object" || Array.isArray(schema)) return;
+  if (schema.oneOf) {
+    const matches2 = schema.oneOf.filter((candidate) => {
+      const candidateErrors = [];
+      validate(candidate, value, path, candidateErrors);
+      return candidateErrors.length === 0;
+    });
+    if (matches2.length !== 1) errors.push(error(path, "oneOf", `Expected exactly one matching schema, found ${matches2.length}`));
+    return;
+  }
+  if (schema.anyOf) {
+    const matches2 = schema.anyOf.some((candidate) => {
+      const candidateErrors = [];
+      validate(candidate, value, path, candidateErrors);
+      return candidateErrors.length === 0;
+    });
+    if (!matches2) errors.push(error(path, "anyOf", "Expected at least one matching schema"));
+    return;
+  }
+  if (schema.allOf) {
+    for (const candidate of schema.allOf) validate(candidate, value, path, errors);
+  }
+  if (schema.const !== void 0 && value !== schema.const) {
+    errors.push(error(path, "const", `Expected ${JSON.stringify(schema.const)}`));
+  }
+  if (Array.isArray(schema.enum) && !schema.enum.some((item) => item === value)) {
+    errors.push(error(path, "enum", `Expected one of: ${schema.enum.map((item) => JSON.stringify(item)).join(", ")}`));
+  }
+  if (schema.type && !matchesType(schema.type, value)) {
+    errors.push(error(path, "type", `Expected ${Array.isArray(schema.type) ? schema.type.join(" or ") : schema.type}`));
+    return;
+  }
+  if (isObject(value)) validateObject(schema, value, path, errors);
+  if (Array.isArray(value)) validateArray(schema, value, path, errors);
+  if (typeof value === "number") validateNumber(schema, value, path, errors);
+  if (typeof value === "string") validateString(schema, value, path, errors);
+}
+__name(validate, "validate");
+function validateObject(schema, value, path, errors) {
+  const properties = isObject(schema.properties) ? schema.properties : {};
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  for (const key of required) {
+    if (!Object.hasOwn(value, key)) errors.push(error(`${path}.${key}`, "required", "Missing required property"));
+  }
+  for (const [key, item] of Object.entries(value)) {
+    if (properties[key]) {
+      validate(properties[key], item, `${path}.${key}`, errors);
+      continue;
+    }
+    if (schema.additionalProperties === false) {
+      errors.push(error(`${path}.${key}`, "additionalProperties", "Unexpected property"));
+    } else if (isObject(schema.additionalProperties)) {
+      validate(schema.additionalProperties, item, `${path}.${key}`, errors);
+    }
+  }
+}
+__name(validateObject, "validateObject");
+function validateArray(schema, value, path, errors) {
+  if (Number.isInteger(schema.minItems) && value.length < schema.minItems) {
+    errors.push(error(path, "minItems", `Expected at least ${schema.minItems} items`));
+  }
+  if (Number.isInteger(schema.maxItems) && value.length > schema.maxItems) {
+    errors.push(error(path, "maxItems", `Expected at most ${schema.maxItems} items`));
+  }
+  if (schema.items) {
+    value.forEach((item, index) => validate(schema.items, item, `${path}[${index}]`, errors));
+  }
+}
+__name(validateArray, "validateArray");
+function validateNumber(schema, value, path, errors) {
+  if (typeof schema.minimum === "number" && value < schema.minimum) {
+    errors.push(error(path, "minimum", `Expected >= ${schema.minimum}`));
+  }
+  if (typeof schema.maximum === "number" && value > schema.maximum) {
+    errors.push(error(path, "maximum", `Expected <= ${schema.maximum}`));
+  }
+}
+__name(validateNumber, "validateNumber");
+function validateString(schema, value, path, errors) {
+  if (Number.isInteger(schema.minLength) && value.length < schema.minLength) {
+    errors.push(error(path, "minLength", `Expected length >= ${schema.minLength}`));
+  }
+  if (Number.isInteger(schema.maxLength) && value.length > schema.maxLength) {
+    errors.push(error(path, "maxLength", `Expected length <= ${schema.maxLength}`));
+  }
+  if (schema.pattern) {
+    try {
+      if (!new RegExp(schema.pattern).test(value)) errors.push(error(path, "pattern", `Expected to match ${schema.pattern}`));
+    } catch {
+      errors.push(error(path, "pattern", `Invalid schema pattern ${schema.pattern}`));
+    }
+  }
+}
+__name(validateString, "validateString");
+function matchesType(type, value) {
+  const types = Array.isArray(type) ? type : [type];
+  return types.some((item) => {
+    if (item === "array") return Array.isArray(value);
+    if (item === "integer") return Number.isInteger(value);
+    if (item === "number") return typeof value === "number" && Number.isFinite(value);
+    if (item === "object") return isObject(value);
+    if (item === "null") return value === null;
+    return typeof value === item;
+  });
+}
+__name(matchesType, "matchesType");
+function isObject(value) {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
+__name(isObject, "isObject");
+function error(path, keyword, message) {
+  return { path, keyword, message };
+}
+__name(error, "error");
+
+// rt-agent/trace-recorder.js
+var _TraceRecorder = class _TraceRecorder {
+  constructor({ clock = /* @__PURE__ */ __name(() => /* @__PURE__ */ new Date(), "clock") } = {}) {
+    this.clock = clock;
+    this.records = [];
+    this.listeners = /* @__PURE__ */ new Set();
+    this.nextId = 1;
+  }
+  record(entry) {
+    const record = {
+      traceId: (entry == null ? void 0 : entry.traceId) ?? `trace_${String(this.nextId++).padStart(6, "0")}`,
+      timestamp: (entry == null ? void 0 : entry.timestamp) ?? this.clock().toISOString(),
+      type: (entry == null ? void 0 : entry.type) ?? "trace",
+      ...entry
+    };
+    this.records.push(record);
+    this.emit(record);
+    return record;
+  }
+  all() {
+    return this.records.slice();
+  }
+  clear() {
+    this.records.length = 0;
+  }
+  subscribe(listener) {
+    if (typeof listener !== "function") throw new Error("Trace listener must be a function");
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+  emit(record) {
+    for (const listener of this.listeners) listener(record);
+  }
+};
+__name(_TraceRecorder, "TraceRecorder");
+var TraceRecorder = _TraceRecorder;
+
+// rt-agent/tool-broker.js
+var _ToolBroker = class _ToolBroker {
+  constructor({ runtime, capabilities, registry, traceRecorder } = {}) {
+    this.runtime = null;
+    this.registry = registry ?? new CapabilityRegistry(capabilities);
+    this.trace = traceRecorder ?? new TraceRecorder();
+    this.probeReaders = /* @__PURE__ */ new Map();
+    this.events = [];
+    this.agents = /* @__PURE__ */ new Map();
+    this.approvalRequests = /* @__PURE__ */ new Map();
+    this.listeners = /* @__PURE__ */ new Map();
+    this.nextCallId = 1;
+    this.nextApprovalId = 1;
+    this.source = null;
+    this.actor = null;
+    if (runtime) this.attachRuntime(runtime);
+  }
+  attachRuntime(runtime) {
+    if (!runtime) throw new Error("ToolBroker requires a runtime");
+    this.runtime = runtime;
+    this.actor = this.makeRuntimeActor();
+    this.source = this.actor;
+    return this;
+  }
+  makeRuntimeActor() {
+    const broker = this;
+    const actor = {
+      name: "ToolBroker",
+      uid: "__vmblu_tool_broker__",
+      msg: null,
+      txMap: /* @__PURE__ */ new Map(),
+      rxSink: [
+        {
+          pin: "event",
+          channel: false,
+          handler(param) {
+            return broker.recordRuntimeEvent(actor.msg, param);
+          }
+        }
+      ],
+      cell: null,
+      makeCell() {
+        this.cell = { event: this.rxSink[0].handler };
+      },
+      resolveUIDs() {
+      }
+    };
+    actor.cell = { event: actor.rxSink[0].handler };
+    return actor;
+  }
+  registerAgent(agent) {
+    if (!(agent == null ? void 0 : agent.id)) throw new Error("Agent must have an id");
+    agent.policy = AgentPolicy.fromAgent(agent);
+    this.agents.set(agent.id, agent);
+    if (typeof agent.attachBroker === "function") agent.attachBroker(this);
+    this.trace.record({ type: "agent.registered", agentId: agent.id, status: "ok", details: { policy: agent.policy.traceDetails() } });
+    return this;
+  }
+  unregisterAgent(agentOrId) {
+    const agentId = typeof agentOrId === "string" ? agentOrId : agentOrId == null ? void 0 : agentOrId.id;
+    if (!agentId) return false;
+    const removed = this.agents.delete(agentId);
+    if (removed) this.trace.record({ type: "agent.unregistered", agentId, status: "ok" });
+    return removed;
+  }
+  subscribe(agentId, listener) {
+    if (typeof listener !== "function") throw new Error("Broker listener must be a function");
+    const key = agentId || "*";
+    if (!this.listeners.has(key)) this.listeners.set(key, /* @__PURE__ */ new Set());
+    this.listeners.get(key).add(listener);
+    return () => {
+      var _a;
+      return (_a = this.listeners.get(key)) == null ? void 0 : _a.delete(listener);
+    };
+  }
+  publish(message) {
+    if (!message) return message;
+    const targets = new Set(this.listeners.get("*") ?? []);
+    if (message.agentId) {
+      for (const listener of this.listeners.get(message.agentId) ?? []) targets.add(listener);
+    } else {
+      for (const [key, listeners] of this.listeners.entries()) {
+        if (key === "*") continue;
+        for (const listener of listeners) targets.add(listener);
+      }
+    }
+    for (const listener of targets) listener(message);
+    return message;
+  }
+  emitResult(request, result) {
+    if (request == null ? void 0 : request.agentId) {
+      this.publish({
+        kind: "broker.result",
+        agentId: request.agentId,
+        requestId: request.requestId,
+        callId: result == null ? void 0 : result.callId,
+        result,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
+    return result;
+  }
+  registerProbe(probeId, reader) {
+    if (typeof reader !== "function") throw new Error("Probe reader must be a function");
+    this.probeReaders.set(probeId, reader);
+    return this;
+  }
+  recordEvent(eventId, payload, callId = void 0) {
+    const event = {
+      eventId,
+      payload,
+      callId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    this.events.push(event);
+    this.trace.record({ type: "event.observed", eventId, callId, details: { payload } });
+    this.publish({
+      kind: "event.observed",
+      eventId,
+      callId,
+      payload,
+      timestamp: event.timestamp
+    });
+    return event;
+  }
+  recordRuntimeEvent(msg, payload) {
+    var _a;
+    const event = this.registry.list().events.find((candidate) => {
+      var _a2, _b, _c;
+      return ((_a2 = candidate == null ? void 0 : candidate.source) == null ? void 0 : _a2.node) === ((_b = msg == null ? void 0 : msg.source) == null ? void 0 : _b.name) && ((_c = candidate == null ? void 0 : candidate.source) == null ? void 0 : _c.pin) === (msg == null ? void 0 : msg.txPin);
+    });
+    if (!event) {
+      this.trace.record({
+        type: "event.ignored",
+        status: "ignored",
+        details: { node: (_a = msg == null ? void 0 : msg.source) == null ? void 0 : _a.name, pin: msg == null ? void 0 : msg.txPin, payload }
+      });
+      return null;
+    }
+    return this.recordEvent(event.id, payload, payload == null ? void 0 : payload.callId);
+  }
+  async handle(request) {
+    switch (request == null ? void 0 : request.type) {
+      case BrokerRequestTypes.CAPABILITIES_LIST:
+        return this.emitResult(request, this.listCapabilities(request));
+      case BrokerRequestTypes.TOOL_CALL:
+        return this.callTool(request);
+      case BrokerRequestTypes.PROBE_READ:
+        return this.readProbe(request);
+      case BrokerRequestTypes.EVENT_WAIT:
+        return this.waitForEvent(request);
+      case BrokerRequestTypes.EVENTS_QUERY:
+        return this.emitResult(request, this.queryEvents(request));
+      case BrokerRequestTypes.APPROVAL_RESOLVE:
+        return this.resolveApproval(request);
+      default:
+        return this.emitResult(request, brokerError(request, "unknown_request", `Unknown broker request type: ${request == null ? void 0 : request.type}`));
+    }
+  }
+  listCapabilities(request = {}) {
+    const policy = this.getAgentPolicy(request.agentId);
+    const capabilities = policy.filterCapabilities(this.registry.list());
+    this.trace.record({
+      type: "capabilities.list",
+      agentId: request.agentId,
+      requestId: request.requestId,
+      status: "ok",
+      details: {
+        policy: policy.traceDetails(),
+        counts: {
+          tools: capabilities.tools.length,
+          probes: capabilities.probes.length,
+          events: capabilities.events.length
+        }
+      }
+    });
+    return {
+      type: BrokerResultTypes.CAPABILITIES_RESULT,
+      requestId: request.requestId,
+      capabilities
+    };
+  }
+  capabilityView(agentId) {
+    return this.getAgentPolicy(agentId).filterCapabilities(this.registry.list());
+  }
+  async callTool(request) {
+    var _a;
+    const tool = this.registry.getTool(request == null ? void 0 : request.toolId);
+    const callId = this.newCallId();
+    this.trace.record({
+      type: "tool.call",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: request == null ? void 0 : request.toolId,
+      status: "requested",
+      details: { args: request == null ? void 0 : request.args }
+    });
+    if (!tool) return this.toolError(request, callId, "unknown_tool", `Unknown tool: ${request == null ? void 0 : request.toolId}`);
+    if (!this.runtime) return this.toolError(request, callId, "runtime_not_attached", "ToolBroker is not attached to a runtime", tool.id);
+    const policy = this.checkToolPolicy(request, tool);
+    this.trace.record({
+      type: "policy.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: tool.id,
+      status: policy.allowed ? "allowed" : "denied",
+      details: policy
+    });
+    if (!policy.allowed) {
+      return this.toolResult(request, callId, tool.id, ToolResultStatus.DENIED, {
+        error: { code: "denied", message: policy.reason }
+      });
+    }
+    const validation = this.validateArgs("tool", tool.id, (_a = tool.input) == null ? void 0 : _a.schema, request == null ? void 0 : request.args);
+    this.trace.record({
+      type: "validation.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: tool.id,
+      status: validation.valid ? "ok" : "failed",
+      details: validation
+    });
+    if (!validation.valid) {
+      return this.toolResult(request, callId, tool.id, ToolResultStatus.FAILED, {
+        error: { code: "invalid_args", message: validation.message, details: validation.errors }
+      });
+    }
+    const approval = this.checkToolApproval(request, callId, tool);
+    this.trace.record({
+      type: "approval.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: tool.id,
+      status: approval.required ? "required" : "not_required",
+      details: approval
+    });
+    if (approval.required) {
+      const approvalRequest = this.createApprovalRequest(request, callId, tool, approval);
+      return this.toolResult(request, callId, tool.id, ToolResultStatus.PENDING, {
+        approval: approvalRequest
+      });
+    }
+    return this.executeTool(request, tool, callId);
+  }
+  async executeTool(request, tool, callId) {
+    var _a;
+    const target = this.resolveInputTarget(tool.input);
+    if (!target) return this.toolError(request, callId, "target_not_found", `No runtime target for ${(_a = tool.input) == null ? void 0 : _a.ref}`);
+    try {
+      const wait = request.wait ?? "accepted";
+      const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0;
+      const tx = this.makeRuntimeTx(tool.input.pin, target);
+      const payload = this.makeRuntimePayload(tool, request, callId);
+      this.trace.record({
+        type: "message.dispatch",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        callId,
+        toolId: tool.id,
+        status: "dispatching",
+        details: { target: tool.input }
+      });
+      if (wait === "none" || wait === "accepted" || wait !== "verified" && !target.channel) {
+        this.runtime.sendTo(tx, this.source, payload);
+        return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED);
+      }
+      if (wait === "verified") {
+        if (target.channel) await this.runtime.requestFrom(tx, this.source, payload, timeout);
+        else this.runtime.sendTo(tx, this.source, payload);
+        return this.verifyToolResult(request, tool, callId, timeout);
+      }
+      const reply = await this.runtime.requestFrom(tx, this.source, payload, timeout);
+      return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, { result: reply });
+    } catch (error2) {
+      return this.toolError(request, callId, "dispatch_failed", (error2 == null ? void 0 : error2.message) || String(error2), tool.id);
+    }
+  }
+  async verifyToolResult(request, tool, callId, timeoutMs = 1e3) {
+    const verifyWith = normalizeVerifyWith(tool);
+    const evidence = {
+      events: [],
+      probes: []
+    };
+    if (!verifyWith.events.length && !verifyWith.probes.length) {
+      return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED, {
+        verification: { status: "not_requested", evidence }
+      });
+    }
+    for (const eventId of verifyWith.events) {
+      const event = await this.waitForEventEvidence(eventId, callId, timeoutMs);
+      evidence.events.push(event);
+    }
+    for (const probeSpec of verifyWith.probes) {
+      const probeId = typeof probeSpec === "string" ? probeSpec : probeSpec == null ? void 0 : probeSpec.id;
+      if (!probeId) continue;
+      const result = await this.readProbe({
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId,
+        args: typeof probeSpec === "object" ? probeSpec.args : void 0
+      });
+      evidence.probes.push({
+        probeId,
+        status: result == null ? void 0 : result.status,
+        value: result == null ? void 0 : result.value,
+        error: result == null ? void 0 : result.error
+      });
+    }
+    const verified = evidence.events.every((item) => item.status === "observed") && evidence.probes.every((item) => item.status === "ok");
+    this.trace.record({
+      type: "verification.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: tool.id,
+      status: verified ? "verified" : "unverified",
+      details: evidence
+    });
+    return this.toolResult(request, callId, tool.id, verified ? ToolResultStatus.VERIFIED : ToolResultStatus.UNVERIFIED, {
+      verification: {
+        status: verified ? "verified" : "unverified",
+        evidence
+      }
+    });
+  }
+  async waitForEventEvidence(eventId, callId, timeoutMs) {
+    const started = Date.now();
+    while (Date.now() - started <= timeoutMs) {
+      const found = this.findEvent({ eventId, callId });
+      if (found) {
+        return {
+          eventId,
+          status: "observed",
+          callId: found.callId,
+          payload: found.payload
+        };
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    return { eventId, status: "timeout", callId };
+  }
+  async resolveApproval(request = {}) {
+    const approval = this.approvalRequests.get(request.approvalId);
+    if (!approval) {
+      return this.emitResult(request, brokerError(request, "unknown_approval", `Unknown approval request: ${request.approvalId}`));
+    }
+    if (approval.status !== "requested") {
+      return this.emitResult(request, brokerError(request, "approval_already_resolved", `Approval request is already ${approval.status}`));
+    }
+    approval.status = request.approved === true ? "approved" : "denied";
+    approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+    approval.resolvedBy = request.agentId ?? approval.agentId;
+    this.trace.record({
+      type: "approval.resolved",
+      agentId: approval.agentId,
+      requestId: request.requestId,
+      callId: approval.callId,
+      toolId: approval.toolId,
+      status: approval.status,
+      details: approval
+    });
+    this.publish({
+      kind: "approval.resolved",
+      agentId: approval.agentId,
+      approval,
+      timestamp: approval.resolvedAt
+    });
+    const tool = this.registry.getTool(approval.toolId);
+    if (approval.status !== "approved") {
+      return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
+        approval,
+        error: { code: "approval_denied", message: "Approval was denied" }
+      });
+    }
+    if (!tool) return this.toolError(request, approval.callId, "unknown_tool", `Unknown tool: ${approval.toolId}`, approval.toolId);
+    return this.executeTool(approval.request, tool, approval.callId);
+  }
+  async readProbe(request) {
+    var _a, _b;
+    const probe = this.registry.getProbe(request == null ? void 0 : request.probeId);
+    if (!probe) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: request == null ? void 0 : request.probeId,
+        status: "failed",
+        error: { code: "unknown_probe", message: `Unknown probe: ${request == null ? void 0 : request.probeId}` }
+      });
+    }
+    const policy = this.checkCapabilityPolicy(request, "probes", probe.id);
+    this.trace.record({
+      type: "policy.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      probeId: probe.id,
+      status: policy.allowed ? "allowed" : "denied",
+      details: policy
+    });
+    if (!policy.allowed) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "denied",
+        error: { code: "denied", message: policy.reason }
+      });
+    }
+    const validation = this.validateArgs("probe", probe.id, probe.argsSchema ?? ((_a = probe.arguments) == null ? void 0 : _a.schema) ?? ((_b = probe.input) == null ? void 0 : _b.schema), request == null ? void 0 : request.args);
+    this.trace.record({
+      type: "validation.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      probeId: probe.id,
+      status: validation.valid ? "ok" : "failed",
+      details: validation
+    });
+    if (!validation.valid) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "failed",
+        error: { code: "invalid_args", message: validation.message, details: validation.errors }
+      });
+    }
+    const reader = this.probeReaders.get(probe.id);
+    if (!reader) {
+      this.trace.record({
+        type: "probe.read",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "failed",
+        details: { reason: "no_reader" }
+      });
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "failed",
+        error: { code: "probe_not_registered", message: `No reader registered for probe: ${probe.id}` }
+      });
+    }
+    try {
+      const value = makeJsonSafe2(await reader(request.args, probe));
+      const text = stringifyProbeValue(value);
+      this.trace.record({
+        type: "probe.read",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "ok",
+        details: { value, text }
+      });
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "ok",
+        value,
+        text
+      });
+    } catch (error2) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.PROBE_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: probe.id,
+        status: "failed",
+        error: { code: "probe_failed", message: (error2 == null ? void 0 : error2.message) || String(error2) }
+      });
+    }
+  }
+  async waitForEvent(request) {
+    const event = this.registry.getEvent(request == null ? void 0 : request.eventId);
+    if (!event) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.EVENT_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        eventId: request == null ? void 0 : request.eventId,
+        status: "failed",
+        error: { code: "unknown_event", message: `Unknown event: ${request == null ? void 0 : request.eventId}` }
+      });
+    }
+    const policy = this.checkCapabilityPolicy(request, "events", event.id);
+    this.trace.record({
+      type: "policy.decision",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      eventId: event.id,
+      status: policy.allowed ? "allowed" : "denied",
+      details: policy
+    });
+    if (!policy.allowed) {
+      return this.emitResult(request, {
+        type: BrokerResultTypes.EVENT_RESULT,
+        requestId: request == null ? void 0 : request.requestId,
+        eventId: event.id,
+        status: "denied",
+        error: { code: "denied", message: policy.reason }
+      });
+    }
+    const timeoutMs = (request == null ? void 0 : request.timeoutMs) ?? 1e3;
+    const started = Date.now();
+    while (Date.now() - started <= timeoutMs) {
+      const found = this.findEvent(request);
+      if (found) {
+        return this.emitResult(request, {
+          type: BrokerResultTypes.EVENT_RESULT,
+          requestId: request.requestId,
+          eventId: request.eventId,
+          status: "observed",
+          callId: found.callId,
+          payload: found.payload
+        });
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    return this.emitResult(request, {
+      type: BrokerResultTypes.EVENT_RESULT,
+      requestId: request == null ? void 0 : request.requestId,
+      eventId: request == null ? void 0 : request.eventId,
+      status: "timeout"
+    });
+  }
+  queryEvents(request = {}) {
+    const policy = this.getAgentPolicy(request.agentId);
+    const events = this.events.filter((event) => {
+      if (request.eventId && event.eventId !== request.eventId) return false;
+      if (request.callId && event.callId !== request.callId) return false;
+      if (!policy.canUse("events", event.eventId).allowed) return false;
+      return true;
+    });
+    return {
+      type: BrokerResultTypes.EVENTS_RESULT,
+      requestId: request.requestId,
+      events
+    };
+  }
+  findEvent(request) {
+    return this.events.find((event) => {
+      if (event.eventId !== request.eventId) return false;
+      if (request.callId && event.callId !== request.callId) return false;
+      return true;
+    }) ?? null;
+  }
+  checkToolPolicy(request, tool) {
+    const permission = this.checkCapabilityPolicy(request, "tools", tool.id);
+    if (!permission.allowed) return permission;
+    return { allowed: true, risk: tool.risk ?? "low", approval: tool.approval ?? "never" };
+  }
+  checkToolApproval(request, callId, tool) {
+    const policy = this.getAgentPolicy(request == null ? void 0 : request.agentId);
+    return {
+      ...policy.approvalDecision(tool),
+      agentId: (request == null ? void 0 : request.agentId) ?? null,
+      callId,
+      toolId: tool.id
+    };
+  }
+  createApprovalRequest(request, callId, tool, decision) {
+    const approval = {
+      approvalId: this.newApprovalId(),
+      agentId: (request == null ? void 0 : request.agentId) ?? null,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId: tool.id,
+      status: "requested",
+      reason: decision.reason,
+      rule: decision.rule,
+      risk: tool.risk ?? "low",
+      effects: Array.isArray(tool.effects) ? tool.effects : [],
+      request: {
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        toolId: tool.id,
+        args: request == null ? void 0 : request.args,
+        wait: request == null ? void 0 : request.wait,
+        timeoutMs: request == null ? void 0 : request.timeoutMs
+      },
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    this.approvalRequests.set(approval.approvalId, approval);
+    this.trace.record({
+      type: "approval.requested",
+      agentId: approval.agentId,
+      requestId: approval.requestId,
+      callId,
+      toolId: tool.id,
+      status: "requested",
+      details: approval
+    });
+    this.publish({
+      kind: "approval.requested",
+      agentId: approval.agentId,
+      approval,
+      timestamp: approval.createdAt
+    });
+    return approval;
+  }
+  checkCapabilityPolicy(request, kind, id) {
+    const policy = this.getAgentPolicy(request == null ? void 0 : request.agentId);
+    return {
+      ...policy.canUse(kind, id),
+      agentId: (request == null ? void 0 : request.agentId) ?? null,
+      kind,
+      capabilityId: id
+    };
+  }
+  getAgentPolicy(agentId) {
+    if (!agentId) return new AgentPolicy({ id: null });
+    const agent = this.agents.get(agentId);
+    if (!agent) return new AgentPolicy({ id: agentId });
+    agent.policy = AgentPolicy.fromAgent(agent);
+    return agent.policy;
+  }
+  validateArgs(kind, capabilityId, schema, args) {
+    if (!schema) return { valid: true, kind, capabilityId, reason: "no_schema" };
+    const value = args ?? {};
+    const validation = validateJsonSchema(schema, value);
+    return {
+      kind,
+      capabilityId,
+      schemaPresent: true,
+      valid: validation.valid,
+      errors: validation.errors,
+      message: validation.valid ? "Arguments are valid" : `Invalid ${kind} arguments for ${capabilityId}`
+    };
+  }
+  resolveInputTarget(input) {
+    const actor = this.runtime.actors.find((candidate) => candidate.name === (input == null ? void 0 : input.node));
+    if (!actor) return null;
+    const hix = actor.rxSink.findIndex((rx2) => rx2.pin === (input == null ? void 0 : input.pin));
+    if (hix < 0) return null;
+    const rx = actor.rxSink[hix];
+    return {
+      actor,
+      hix: HIX_HANDLER | hix,
+      pin: rx.pin,
+      channel: rx.channel
+    };
+  }
+  makeRuntimeTx(pin, target) {
+    return {
+      pin,
+      channel: target.channel,
+      targets: [target]
+    };
+  }
+  makeRuntimePayload(tool, request, callId) {
+    var _a;
+    if (((_a = tool == null ? void 0 : tool.input) == null ? void 0 : _a.payload) === "ToolInvocation") {
+      return {
+        callId,
+        tool: tool.id,
+        arguments: (request == null ? void 0 : request.args) ?? {}
+      };
+    }
+    return request == null ? void 0 : request.args;
+  }
+  toolResult(request, callId, toolId, status, extra = {}) {
+    const result = {
+      type: BrokerResultTypes.TOOL_RESULT,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId,
+      status,
+      ...extra
+    };
+    this.trace.record({
+      type: "tool.result",
+      agentId: request == null ? void 0 : request.agentId,
+      requestId: request == null ? void 0 : request.requestId,
+      callId,
+      toolId,
+      status,
+      details: extra
+    });
+    return this.emitResult(request, result);
+  }
+  toolError(request, callId, code, message, toolId = request == null ? void 0 : request.toolId) {
+    return this.toolResult(request, callId, toolId, ToolResultStatus.FAILED, {
+      error: { code, message }
+    });
+  }
+  newCallId() {
+    return `call_${String(this.nextCallId++).padStart(6, "0")}`;
+  }
+  newApprovalId() {
+    return `approval_${String(this.nextApprovalId++).padStart(6, "0")}`;
+  }
+};
+__name(_ToolBroker, "ToolBroker");
+var ToolBroker = _ToolBroker;
+function makeJsonSafe2(value) {
+  if (value == null) return value;
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    throw new Error("Probe returned a value that cannot be serialized as JSON");
+  }
+}
+__name(makeJsonSafe2, "makeJsonSafe");
+function stringifyProbeValue(value) {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+__name(stringifyProbeValue, "stringifyProbeValue");
+function normalizeVerifyWith(tool = {}) {
+  const specs = [];
+  if (tool.verifyWith) specs.push(tool.verifyWith);
+  for (const effect of tool.effects ?? []) {
+    if (effect == null ? void 0 : effect.verifyWith) specs.push(effect.verifyWith);
+  }
+  const events = [];
+  const probes = [];
+  for (const spec of specs) {
+    if (Array.isArray(spec == null ? void 0 : spec.events)) events.push(...spec.events);
+    if (Array.isArray(spec == null ? void 0 : spec.probes)) probes.push(...spec.probes);
+  }
+  return {
+    events: events.map((item) => typeof item === "string" ? item : item == null ? void 0 : item.id).filter(Boolean),
+    probes
+  };
+}
+__name(normalizeVerifyWith, "normalizeVerifyWith");
+
+// rt-agent/agent-runtime-support.js
+var _AgentRuntimeSupport = class _AgentRuntimeSupport {
+  constructor(runtime) {
+    this.runtime = runtime;
+  }
+  configure({ capabilities = null, traceRecorder = null, agent = null } = {}) {
+    const runtime = this.runtime;
+    runtime.traceRecorder = traceRecorder ?? runtime.traceRecorder ?? new TraceRecorder();
+    runtime.toolBroker = new ToolBroker({ capabilities, traceRecorder: runtime.traceRecorder });
+    runtime.toolBroker.attachRuntime(runtime);
+    this.attachToolBrokerActor();
+    this.wireToolBrokerEvents();
+    this.registerNodeProbes();
+    runtime.agent = null;
+    const selectedAgent = selectAgentConfig(agent);
+    if (selectedAgent && selectedAgent.enabled !== false) {
+      runtime.agent = new AgentRuntime({
+        id: selectedAgent == null ? void 0 : selectedAgent.id,
+        broker: runtime.toolBroker,
+        config: selectedAgent ?? {}
+      });
+    }
+    return runtime;
+  }
+  stop() {
+    var _a, _b;
+    (_b = (_a = this.runtime.agent) == null ? void 0 : _a.unmountOverlay) == null ? void 0 : _b.call(_a);
+  }
+  registerNodeProbes() {
+    var _a;
+    const runtime = this.runtime;
+    if (!((_a = runtime.toolBroker) == null ? void 0 : _a.registry)) return 0;
+    let count = 0;
+    for (const probe of runtime.toolBroker.registry.list().probes) {
+      const binding = (probe == null ? void 0 : probe.binding) ?? {};
+      const nodeName = binding.node;
+      if (!nodeName) continue;
+      const actor = runtime.actors.find((candidate) => candidate.name === nodeName);
+      if (!actor) continue;
+      runtime.toolBroker.registerProbe(probe.id, async (args, currentProbe) => {
+        var _a2;
+        const probeFn = (_a2 = actor.cell) == null ? void 0 : _a2.probe;
+        if (typeof probeFn !== "function") {
+          throw new Error(`Node ${nodeName} does not implement probe(name, args)`);
+        }
+        const probeName = (currentProbe == null ? void 0 : currentProbe.name) || (currentProbe == null ? void 0 : currentProbe.id);
+        return probeFn.call(actor.cell, probeName, args ?? {});
+      });
+      count++;
+    }
+    return count;
+  }
+  attachToolBrokerActor() {
+    var _a;
+    const runtime = this.runtime;
+    if (!((_a = runtime.toolBroker) == null ? void 0 : _a.actor)) return null;
+    if (!runtime.actors.includes(runtime.toolBroker.actor)) runtime.actors.push(runtime.toolBroker.actor);
+    return runtime.toolBroker.actor;
+  }
+  wireToolBrokerEvents() {
+    var _a, _b;
+    const runtime = this.runtime;
+    const brokerActor = (_a = runtime.toolBroker) == null ? void 0 : _a.actor;
+    if (!brokerActor) return 0;
+    let count = 0;
+    for (const event of runtime.toolBroker.registry.list().events) {
+      const source = event == null ? void 0 : event.source;
+      if (!(source == null ? void 0 : source.node) || !(source == null ? void 0 : source.pin)) continue;
+      const actor = runtime.actors.find((candidate) => candidate !== brokerActor && candidate.name === source.node);
+      const tx = (_b = actor == null ? void 0 : actor.findTx) == null ? void 0 : _b.call(actor, source.pin);
+      if (!tx) continue;
+      const alreadyWired = tx.targets.some((target) => target.actor === brokerActor && target.pin === "event");
+      if (alreadyWired) continue;
+      tx.targets.push({
+        actor: brokerActor,
+        hix: HIX_HANDLER | 0,
+        pin: "event",
+        channel: false
+      });
+      count++;
+    }
+    return count;
+  }
+};
+__name(_AgentRuntimeSupport, "AgentRuntimeSupport");
+var AgentRuntimeSupport = _AgentRuntimeSupport;
+function selectAgentConfig(agent) {
+  if (!agent) return null;
+  if (Array.isArray(agent == null ? void 0 : agent.agents)) {
+    return agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.id) === agent.defaultAgent) ?? agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.enabled) !== false) ?? agent.agents[0] ?? null;
+  }
+  return agent;
+}
+__name(selectAgentConfig, "selectAgentConfig");
+
+// rt-agent/runtime.js
+var _Runtime3 = class _Runtime3 extends Runtime2 {
+  get settings() {
+    return runtimeSettings;
+  }
+  get agentSupport() {
+    return this._agentSupport ??= new AgentRuntimeSupport(this);
+  }
+  configure(options = {}) {
+    super.configure(options);
+    this.configureAgentRuntime(options);
+  }
+  configureAgentRuntime(options = {}) {
+    return this.agentSupport.configure(options);
+  }
+  stop() {
+    this.agentSupport.stop();
+    return super.stop();
+  }
+  registerNodeProbes() {
+    return this.agentSupport.registerNodeProbes();
+  }
+  attachToolBrokerActor() {
+    return this.agentSupport.attachToolBrokerActor();
+  }
+  wireToolBrokerEvents() {
+    return this.agentSupport.wireToolBrokerEvents();
+  }
+};
+__name(_Runtime3, "Runtime");
+var Runtime3 = _Runtime3;
 
 // rt-agent/security-reporter.js
 function SecurityReporterFactory(tx, sx = null) {
   const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
   let currentTx = tx;
-  let safetyControl = enableSafety({ mode }, {
+  let safetyControl = safety.enable({ mode }, {
     send(name, payload) {
       if (name !== "security.event") return 0;
       return currentTx.send("security.event", payload);
@@ -2325,7 +3272,7 @@ function SecurityReporterFactory(tx, sx = null) {
     configure(nextSettings = null) {
       const nextMode = (nextSettings == null ? void 0 : nextSettings.mode) ?? mode;
       safetyControl.uninstall();
-      safetyControl = enableSafety({ mode: nextMode }, {
+      safetyControl = safety.enable({ mode: nextMode }, {
         send(name, payload) {
           if (name !== "security.event") return 0;
           return currentTx.send("security.event", payload);
@@ -2344,18 +3291,20 @@ var VERSION = "0.1.1-agent";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgentOverlay,
+  AgentPolicy,
   AgentRuntime,
   BrokerRequestTypes,
   BrokerResultTypes,
   CapabilityRegistry,
   OpenAIChatProvider,
+  Runtime,
   SecurityReporterFactory,
   ToolBroker,
   ToolResultStatus,
   TraceRecorder,
   VERSION,
   brokerError,
-  enableSafety,
-  scaffold
+  safety,
+  validateJsonSchema
 });
 //# sourceMappingURL=index.cjs.map

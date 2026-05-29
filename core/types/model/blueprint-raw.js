@@ -148,11 +148,12 @@ splitRaw(raw) {
 
 splitHeader(rHeader) {
 
-    const {version, created, saved, utc, runtime, agent, style} = {...rHeader}
+    const {version, created, saved, utc, runtime, runtimeSettings, agent, style} = {...rHeader}
     const headerVersion = version ?? 'no version'
     const styleRgb = (typeof style === 'string') ? style : style?.rgb ?? style?.color ?? null
 
     const blu = {version: headerVersion, created, saved, utc, runtime}
+    if (runtimeSettings) blu.runtimeSettings = runtimeSettings
     if (agent) blu.agent = agent
 
     return { 

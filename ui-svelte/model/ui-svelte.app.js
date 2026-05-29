@@ -1,11 +1,11 @@
 // ------------------------------------------------------------------
 // Model: 
 // Path: C:/dev/vmblu/ui-svelte/model/ui-svelte.app.js
-// Creation date 5/4/2026, 11:15:15 AM
+// Creation date 5/29/2026, 10:09:22 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
-import * as VMBLU from "@vizualmodel/vmblu-runtime/rt-base"
+import {Runtime} from "@vizualmodel/vmblu-runtime/rt-base"
 
 
 //Imports
@@ -18,11 +18,14 @@ import { ContextMenuFactory,
 		 NodeSelectorFactory,
 		 NameAndPathFactory,
 		 DocumentSettingsFactory,
+		 ModelRuntimeSettingsFactory,
+		 AgentSettingsFactory,
 		 ConfirmBox,
 		 RuntimeSettingsFactory,
 		 PinProfileFactory,
 		 PinToolFactory,
 		 PinEventFactory,
+		 MarkdownInputFactory,
 		 CanvasLayoutFactory,
 		 MenuTabsWindow,
 		 LeftMenuLayoutFactory,
@@ -33,12 +36,14 @@ import { ContextMenuFactory,
 		 SideMenuFactory,
 		 VscodeSideMenuFactory } from '../index.js'
 
+
+
 //The runtime nodes
 const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "ALvG", 
+	uid: "Rahz", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -50,7 +55,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "CmQX", 
+	uid: "Najb", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -63,7 +68,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field", 
-	uid: "cPCR", 
+	uid: "cAOO", 
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -75,7 +80,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box", 
-	uid: "lAxf", 
+	uid: "bCec", 
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -87,7 +92,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input", 
-	uid: "lOuj", 
+	uid: "UTfO", 
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -99,7 +104,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block", 
-	uid: "eHpa", 
+	uid: "pgdK", 
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -111,7 +116,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector", 
-	uid: "OhIc", 
+	uid: "DJWw", 
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -128,7 +133,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path", 
-	uid: "RDAl", 
+	uid: "ihKL", 
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -141,8 +146,34 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings", 
-	uid: "WmBb", 
+	uid: "YvzX", 
 	factory: DocumentSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()",
+		"model runtime settings -> ()",
+		"agent settings -> ()"
+		]
+	},
+	//______________________________________MODEL RUNTIME SETTINGS
+	{
+	name: "model runtime settings", 
+	uid: "gflc", 
+	factory: ModelRuntimeSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//______________________________________________AGENT SETTINGS
+	{
+	name: "agent settings", 
+	uid: "LAfG", 
+	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
@@ -153,7 +184,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box", 
-	uid: "UhiS", 
+	uid: "DTDV", 
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -165,7 +196,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings", 
-	uid: "yVJT", 
+	uid: "RNxd", 
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -177,7 +208,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile", 
-	uid: "jTQo", 
+	uid: "ylzp", 
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -189,7 +220,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings", 
-	uid: "KYkJ", 
+	uid: "MmgG", 
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -201,7 +232,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings", 
-	uid: "yESR", 
+	uid: "qvLk", 
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -210,10 +241,22 @@ const nodeList = [
 		"modal div -> ()"
 		]
 	},
+	//______________________________________________MARKDOWN INPUT
+	{
+	name: "markdown input", 
+	uid: "kmtS", 
+	factory: MarkdownInputFactory,
+	inputs: [
+		"-> markdown"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout", 
-	uid: "rWmC", 
+	uid: "lyRj", 
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -229,7 +272,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window", 
-	uid: "yduf", 
+	uid: "nlwi", 
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -247,7 +290,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout", 
-	uid: "VakN", 
+	uid: "EOCw", 
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -264,7 +307,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout", 
-	uid: "UbGq", 
+	uid: "ENCY", 
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -277,7 +320,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content", 
-	uid: "PzJY", 
+	uid: "FVYe", 
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> menu div",
@@ -295,7 +338,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon", 
-	uid: "kmxS", 
+	uid: "TzIY", 
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -312,7 +355,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu", 
-	uid: "WPlK", 
+	uid: "QvDh", 
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -336,7 +379,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu", 
-	uid: "MiUG", 
+	uid: "FkAJ", 
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -344,7 +387,7 @@ const nodeList = [
 		"save as -> ()",
 		"save all -> ()",
 		"accept changes -> ()",
-		"sync model -> ()",
+		"sync -> ()",
 		"recalibrate -> ()",
 		"grid on-off -> ()",
 		"make app page -> ()",
@@ -360,7 +403,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu", 
-	uid: "ZThq", 
+	uid: "QweY", 
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -374,14 +417,14 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu", 
-	uid: "mBfE", 
+	uid: "STGJ", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
 		"div -> ()",
 		"accept changes -> ()",
 		"recalibrate -> ()",
-		"sync -> ()",
+		"sync model -> ()",
 		"grid on-off -> ()",
 		"show settings -> ()",
 		"set save point -> ()",
@@ -392,14 +435,11 @@ const nodeList = [
 	},
 ]
 
-//The filters
-const filterList = [
-]
-
-const agentRuntimeOptions = {}
+// Runtime options
+const runtimeOptions = {}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
 
 // and start the app
 runtime.start()

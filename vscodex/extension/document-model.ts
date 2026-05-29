@@ -42,7 +42,8 @@ export class VmbluDocument implements vscode.CustomDocument {
 	// The webview panel for this document - we do not support multi tab for the same document
 	public panel: any = null;
 	// Optional model watcher for suppressing local-save change notifications
-	public modelWatcher: { setLocalSave?: () => void } | null = null;
+	public modelWatcher: { setLocalSave?: () => void; setModelFile?: (modelArl: any) => void } | null = null;
+	public resolvedModelArl: any = null;
 
 	// The disposable (event listeners) for this document
 	public disposables: vscode.Disposable[] = [];

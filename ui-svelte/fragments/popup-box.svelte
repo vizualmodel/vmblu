@@ -8,12 +8,18 @@
 	// dragging behaviour
 	let startX, startY, initialLeft, initialTop;
 	let dragging = false;
+	let pendingShowPos = null;
 
 	onMount(() => {
 		// set the show, hide and update functions
 		box.show = show;
 		box.hide = hide;
 		box.update = () => (box = box);
+		if (pendingShowPos !== null) {
+			const pos = pendingShowPos;
+			pendingShowPos = null;
+			queueMicrotask(() => show(pos));
+		}
 	});
 
 	function onMouseDown(e) {
@@ -43,6 +49,11 @@
 	}
 
 	function show(pos) {
+		if (!box.div) {
+			pendingShowPos = pos ?? box.pos ?? {};
+			return;
+		}
+
 		if (!pos) pos = box.pos;
 
 		if (pos) {
@@ -54,6 +65,7 @@
 	}
 
 	function hide() {
+		if (!box.div) return;
 		box.div.style.display = 'none';
 	}
 

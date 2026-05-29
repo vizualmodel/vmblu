@@ -38,7 +38,7 @@
         "vite-plugin-string": "^1.2.3"
     },
     "dependencies": {
-        "@vizualmodel/vmblu-cli": "^0.5.2",
+        "@vizualmodel/vmblu-cli": "^0.5.3",
         "@vizualmodel/vmblu-runtime": "file:runtime",
         "markdown-it": "^14.1.1",
         "ts-morph": "^26.0.0",

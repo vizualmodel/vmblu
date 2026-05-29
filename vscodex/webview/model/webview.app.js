@@ -1,11 +1,11 @@
 // ------------------------------------------------------------------
 // Model: 
-// Path: /c:/dev/vmblu/vscodex/webview/webview.app.js
-// Creation date 5/19/2026, 9:41:50 AM
+// Path: /c:/dev/vmblu/vscodex/webview/model/webview.app.js
+// Creation date 5/29/2026, 10:31:32 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
-import * as VMBLU from "../../../runtime/rt-base/scaffold.js"
+import {Runtime} from "../../../runtime/rt-base/runtime.js"
 
 
 //Imports
@@ -18,12 +18,14 @@ import { PathRequestFactory,
 		 NameAndPathFactory,
 		 PinProfileFactory,
 		 MarkdownInputFactory,
-		 DocumentSettingsFactory,
 		 ContextMenuFactory,
 		 RuntimeSettingsFactory,
 		 PinToolFactory,
 		 PinEventFactory,
 		 ConfirmBox,
+		 DocumentSettingsFactory,
+		 ModelRuntimeSettingsFactory,
+		 AgentSettingsFactory,
 		 VscodeSideMenuFactory } from '../../../ui-svelte/index.js'
 
 
@@ -33,12 +35,13 @@ const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker", 
-	uid: "yhMY", 
+	uid: "Ksns", 
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
 		"-> reply document",
 		"-> new edit",
+		"-> model.resolved",
 		"-> open js file",
 		"=> folder.get",
 		"-> canvas",
@@ -49,21 +52,21 @@ const nodeList = [
 		],
 	outputs: [
 		`set document -> [ 
-			"model.set @ model manager (YDvE)",
-			"top level view @ view manager (KwGh)" ]`,
+			"model.set @ model manager (WNAt)",
+			"top level view @ view manager (ecaZ)" ]`,
 		"get document -> ()",
-		"reload model -> ()",
-		"model.save -> model.save @ model manager (YDvE)",
-		"sync links -> sync links @ model manager (YDvE)",
-		"canvas resize -> size change @ view manager (KwGh)",
-		"clipboard.local => local @ clipboard (aaQe)",
-		"clipboard.switched -> switched @ clipboard (aaQe)"
+		"reload model -> sync model @ model manager (WNAt)",
+		"model.save -> model.save @ model manager (WNAt)",
+		"sync links -> sync links @ model manager (WNAt)",
+		"canvas resize -> size change @ view manager (ecaZ)",
+		"clipboard.local => local @ clipboard (tjra)",
+		"clipboard.switched -> switched @ clipboard (tjra)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager", 
-	uid: "KwGh", 
+	uid: "ecaZ", 
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -74,33 +77,33 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (YDvE)",
-		"redox.undo -> redox.undo @ model manager (YDvE)",
-		"redox.redo -> redox.redo @ model manager (YDvE)",
-		"canvas -> canvas @ message broker (yhMY)",
-		"node settings (sx) -> json @ node settings (QvPq)",
-		"runtime settings (dx) -> show @ runtime settings (ZuPV)",
-		"node prompt -> markdown @ markdown prompt (WZhm)",
-		"context menu -> context menu @ context menu (iMvg)",
-		"name and path -> name and path @ name and path (DEHq)",
-		"open model -> open document @ message broker (yhMY)",
-		"open source file -> open js file @ message broker (yhMY)",
-		"clipboard.get => get @ clipboard (aaQe)",
-		"clipboard.set -> set @ clipboard (aaQe)"
+		"redox.doit -> redox.doit @ model manager (WNAt)",
+		"redox.undo -> redox.undo @ model manager (WNAt)",
+		"redox.redo -> redox.redo @ model manager (WNAt)",
+		"canvas -> canvas @ message broker (Ksns)",
+		"node settings (sx) -> json @ node settings (dEDy)",
+		"runtime settings (dx) -> show @ runtime settings (Izcj)",
+		"node prompt -> markdown @ markdown prompt (HGXo)",
+		"context menu -> context menu @ context menu (tBSh)",
+		"name and path -> name and path @ name and path (PCre)",
+		"open model -> open document @ message broker (Ksns)",
+		"open source file -> open js file @ message broker (Ksns)",
+		"clipboard.get => get @ clipboard (tjra)",
+		"clipboard.set -> set @ clipboard (tjra)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager", 
-	uid: "YDvE", 
+	uid: "WNAt", 
 	factory: ModelManager,
 	inputs: [
-		"-> sync links",
+		"-> sync model",
 		"-> accept changes",
 		"-> show settings",
 		"-> make app",
 		"-> make lib",
-		"-> reload model",
+		"-> sync links",
 		"-> save point.set",
 		"-> save point.back",
 		"-> model.save",
@@ -110,24 +113,25 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (hIgm)",
-		"open source file -> open js file @ message broker (yhMY)",
+		"save point.confirm -> show @ confirm box (gJzZ)",
+		"open source file -> open js file @ message broker (Ksns)",
 		"open model -> ()",
-		"model.root -> root @ view manager (KwGh)",
-		"model.header -> show @ doc settings (RpUo)",
+		"model.root -> root @ view manager (ecaZ)",
+		"model.header -> show @ doc settings(0) (jVZV)",
+		"model.resolved -> model.resolved @ message broker (Ksns)",
 		`redox.done -> [ 
-			"redox.done @ view manager (KwGh)",
-			"new edit @ message broker (yhMY)" ]`,
-		"pin profile -> show @ pin profile (wFNt)",
-		"get path -> path @ path request (Wuka)",
-		"tool settings -> show @ tool settings (fNen)",
-		"event settings -> show @ event settings (upZA)"
+			"redox.done @ view manager (ecaZ)",
+			"new edit @ message broker (Ksns)" ]`,
+		"pin profile -> show @ pin profile (kZqQ)",
+		"get path -> path @ path request (cbcn)",
+		"tool settings -> show @ tool settings (oPup)",
+		"event settings -> show @ event settings (Qslw)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "aaQe", 
+	uid: "tjra", 
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -136,161 +140,187 @@ const nodeList = [
 		"-> switched"
 		],
 	outputs: [
-		"remote => clipboard.remote @ message broker (yhMY)",
-		"switch -> clipboard.switch @ message broker (yhMY)"
+		"remote => clipboard.remote @ message broker (Ksns)",
+		"switch -> clipboard.switch @ message broker (Ksns)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "Wuka", 
+	uid: "cbcn", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"folder.get => folder.get @ message broker (yhMY)",
-		"modal div -> modal div @ message broker (yhMY)"
+		"folder.get => folder.get @ message broker (Ksns)",
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings", 
-	uid: "QvPq", 
+	uid: "dEDy", 
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path", 
-	uid: "DEHq", 
+	uid: "PCre", 
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)",
-		"folder.get => folder.get @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)",
+		"folder.get => folder.get @ message broker (Ksns)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile", 
-	uid: "wFNt", 
+	uid: "kZqQ", 
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//_____________________________________________MARKDOWN PROMPT
 	{
 	name: "markdown prompt", 
-	uid: "WZhm", 
+	uid: "HGXo", 
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
-		]
-	},
-	//________________________________________________DOC SETTINGS
-	{
-	name: "doc settings", 
-	uid: "RpUo", 
-	factory: DocumentSettingsFactory,
-	inputs: [
-		"-> show"
-		],
-	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "iMvg", 
+	uid: "tBSh", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings", 
-	uid: "ZuPV", 
+	uid: "Izcj", 
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings", 
-	uid: "fNen", 
+	uid: "oPup", 
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings", 
-	uid: "upZA", 
+	uid: "Qslw", 
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box", 
-	uid: "hIgm", 
+	uid: "gJzZ", 
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (yhMY)"
+		"modal div -> modal div @ message broker (Ksns)"
+		]
+	},
+	//_____________________________________________DOC SETTINGS(0)
+	{
+	name: "doc settings(0)", 
+	uid: "jVZV", 
+	factory: DocumentSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (Ksns)",
+		"agent settings -> show @ agent settings (UipE)",
+		"model runtime settings -> show @ model runtime settings (UoEH)"
+		]
+	},
+	//______________________________________MODEL RUNTIME SETTINGS
+	{
+	name: "model runtime settings", 
+	uid: "UoEH", 
+	factory: ModelRuntimeSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (Ksns)"
+		]
+	},
+	//______________________________________________AGENT SETTINGS
+	{
+	name: "agent settings", 
+	uid: "UipE", 
+	factory: AgentSettingsFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu", 
-	uid: "Fuzm", 
+	uid: "HyVX", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (yhMY)",
-		"sync -> sync links @ model manager (YDvE)",
-		"accept changes -> accept changes @ model manager (YDvE)",
-		"show settings -> show settings @ model manager (YDvE)",
-		"make app -> make app @ model manager (YDvE)",
-		"make lib -> make lib @ model manager (YDvE)",
-		"set save point -> save point.set @ model manager (YDvE)",
-		"back to save point -> save point.back @ model manager (YDvE)",
-		"recalibrate -> recalibrate @ view manager (KwGh)",
-		"grid on-off -> grid on-off @ view manager (KwGh)"
+		"div -> floating menu @ message broker (Ksns)",
+		"sync model -> sync model @ model manager (WNAt)",
+		"accept changes -> accept changes @ model manager (WNAt)",
+		"show settings -> show settings @ model manager (WNAt)",
+		"make app -> make app @ model manager (WNAt)",
+		"make lib -> make lib @ model manager (WNAt)",
+		"set save point -> save point.set @ model manager (WNAt)",
+		"back to save point -> save point.back @ model manager (WNAt)",
+		"recalibrate -> recalibrate @ view manager (ecaZ)",
+		"grid on-off -> grid on-off @ view manager (ecaZ)"
 		],
 	sx:	[
 		    {
@@ -314,7 +344,7 @@ const nodeList = [
 		    {
 		        "icon": "bolt",
 		        "color": "#0fb2e4",
-		        "message": "sync",
+		        "message": "sync model",
 		        "help": "sync model"
 		    },
 		    {
@@ -351,10 +381,11 @@ const nodeList = [
 	},
 ]
 
-const agentRuntimeOptions = {}
+// Runtime options
+const runtimeOptions = {}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
 
 // and start the app
 runtime.start()

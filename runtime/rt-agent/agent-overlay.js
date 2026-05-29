@@ -114,6 +114,8 @@ export class AgentOverlay {
         this.elements.theme.addEventListener('click', () => this.toggleTheme())
         this.elements.maximize.addEventListener('click', () => this.toggleMaximize())
         this.elements.header.addEventListener('pointerdown', event => this.startDrag(event))
+        this.root.addEventListener('keydown', event => event.stopPropagation())
+        this.root.addEventListener('keyup', event => event.stopPropagation())
         this.elements.chatForm.addEventListener('submit', event => this.submitChat(event))
         this.elements.traceClear.addEventListener('click', () => this.clearTrace())
 

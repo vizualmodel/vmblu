@@ -1,6 +1,8 @@
-export {rtFlags} from '../shared/runtime.js'
 export {Runtime}
 
-import {createRuntime} from '../shared/runtime.js'
+import {Runtime as SharedRuntime} from '../shared/runtime.js'
+import {runtimeSettings} from './runtime-settings.js'
 
-const Runtime = createRuntime()
+class Runtime extends SharedRuntime {}
+
+Runtime.prototype.settings = runtimeSettings

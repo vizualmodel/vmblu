@@ -41,7 +41,7 @@ function keydown(e) {}
 
     display:flex;
     position: absolute;
-    z-index: 10;
+    z-index: 1;
     top:0px;
     left:32px;
     flex-direction:column;

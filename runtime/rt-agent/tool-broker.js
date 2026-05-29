@@ -1,6 +1,8 @@
 import {HIX_HANDLER} from '../shared/target.js'
 import {BrokerRequestTypes, BrokerResultTypes, ToolResultStatus, brokerError} from './broker-protocol.js'
 import {CapabilityRegistry} from './capability-registry.js'
+import {AgentPolicy} from './agent-policy.js'
+import {validateJsonSchema} from './json-schema.js'
 import {TraceRecorder} from './trace-recorder.js'
 
 export class ToolBroker {
@@ -11,8 +13,10 @@ export class ToolBroker {
         this.probeReaders = new Map()
         this.events = []
         this.agents = new Map()
+        this.approvalRequests = new Map()
         this.listeners = new Map()
         this.nextCallId = 1
+        this.nextApprovalId = 1
         this.source = null
         this.actor = null
 
@@ -32,7 +36,6 @@ export class ToolBroker {
         const actor = {
             name: 'ToolBroker',
             uid: '__vmblu_tool_broker__',
-            flags: 0,
             msg: null,
             txMap: new Map(),
             rxSink: [
@@ -56,9 +59,10 @@ export class ToolBroker {
 
     registerAgent(agent) {
         if (!agent?.id) throw new Error('Agent must have an id')
+        agent.policy = AgentPolicy.fromAgent(agent)
         this.agents.set(agent.id, agent)
         if (typeof agent.attachBroker === 'function') agent.attachBroker(this)
-        this.trace.record({type: 'agent.registered', agentId: agent.id, status: 'ok'})
+        this.trace.record({type: 'agent.registered', agentId: agent.id, status: 'ok', details: {policy: agent.policy.traceDetails()}})
         return this
     }
 
@@ -147,7 +151,7 @@ export class ToolBroker {
             return null
         }
 
-        return this.recordEvent(event.id, payload)
+        return this.recordEvent(event.id, payload, payload?.callId)
     }
 
     async handle(request) {
@@ -162,24 +166,41 @@ export class ToolBroker {
                 return this.waitForEvent(request)
             case BrokerRequestTypes.EVENTS_QUERY:
                 return this.emitResult(request, this.queryEvents(request))
+            case BrokerRequestTypes.APPROVAL_RESOLVE:
+                return this.resolveApproval(request)
             default:
                 return this.emitResult(request, brokerError(request, 'unknown_request', `Unknown broker request type: ${request?.type}`))
         }
     }
 
     listCapabilities(request = {}) {
+        const policy = this.getAgentPolicy(request.agentId)
+        const capabilities = policy.filterCapabilities(this.registry.list())
+
         this.trace.record({
             type: 'capabilities.list',
             agentId: request.agentId,
             requestId: request.requestId,
             status: 'ok',
+            details: {
+                policy: policy.traceDetails(),
+                counts: {
+                    tools: capabilities.tools.length,
+                    probes: capabilities.probes.length,
+                    events: capabilities.events.length,
+                },
+            },
         })
 
         return {
             type: BrokerResultTypes.CAPABILITIES_RESULT,
             requestId: request.requestId,
-            capabilities: this.registry.list(),
+            capabilities,
         }
+    }
+
+    capabilityView(agentId) {
+        return this.getAgentPolicy(agentId).filterCapabilities(this.registry.list())
     }
 
     async callTool(request) {
@@ -199,7 +220,7 @@ export class ToolBroker {
         if (!tool) return this.toolError(request, callId, 'unknown_tool', `Unknown tool: ${request?.toolId}`)
         if (!this.runtime) return this.toolError(request, callId, 'runtime_not_attached', 'ToolBroker is not attached to a runtime', tool.id)
 
-        const policy = this.checkPolicy(tool)
+        const policy = this.checkToolPolicy(request, tool)
         this.trace.record({
             type: 'policy.decision',
             agentId: request?.agentId,
@@ -215,6 +236,43 @@ export class ToolBroker {
             })
         }
 
+        const validation = this.validateArgs('tool', tool.id, tool.input?.schema, request?.args)
+        this.trace.record({
+            type: 'validation.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            callId,
+            toolId: tool.id,
+            status: validation.valid ? 'ok' : 'failed',
+            details: validation,
+        })
+        if (!validation.valid) {
+            return this.toolResult(request, callId, tool.id, ToolResultStatus.FAILED, {
+                error: {code: 'invalid_args', message: validation.message, details: validation.errors},
+            })
+        }
+
+        const approval = this.checkToolApproval(request, callId, tool)
+        this.trace.record({
+            type: 'approval.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            callId,
+            toolId: tool.id,
+            status: approval.required ? 'required' : 'not_required',
+            details: approval,
+        })
+        if (approval.required) {
+            const approvalRequest = this.createApprovalRequest(request, callId, tool, approval)
+            return this.toolResult(request, callId, tool.id, ToolResultStatus.PENDING, {
+                approval: approvalRequest,
+            })
+        }
+
+        return this.executeTool(request, tool, callId)
+    }
+
+    async executeTool(request, tool, callId) {
         const target = this.resolveInputTarget(tool.input)
         if (!target) return this.toolError(request, callId, 'target_not_found', `No runtime target for ${tool.input?.ref}`)
 
@@ -234,9 +292,15 @@ export class ToolBroker {
                 details: {target: tool.input},
             })
 
-            if (wait === 'none' || wait === 'accepted' || !target.channel) {
+            if (wait === 'none' || wait === 'accepted' || (wait !== 'verified' && !target.channel)) {
                 this.runtime.sendTo(tx, this.source, payload)
                 return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED)
+            }
+
+            if (wait === 'verified') {
+                if (target.channel) await this.runtime.requestFrom(tx, this.source, payload, timeout)
+                else this.runtime.sendTo(tx, this.source, payload)
+                return this.verifyToolResult(request, tool, callId, timeout)
             }
 
             const reply = await this.runtime.requestFrom(tx, this.source, payload, timeout)
@@ -245,6 +309,120 @@ export class ToolBroker {
         catch (error) {
             return this.toolError(request, callId, 'dispatch_failed', error?.message || String(error), tool.id)
         }
+    }
+
+    async verifyToolResult(request, tool, callId, timeoutMs = 1000) {
+        const verifyWith = normalizeVerifyWith(tool)
+        const evidence = {
+            events: [],
+            probes: [],
+        }
+
+        if (!verifyWith.events.length && !verifyWith.probes.length) {
+            return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED, {
+                verification: {status: 'not_requested', evidence},
+            })
+        }
+
+        for (const eventId of verifyWith.events) {
+            const event = await this.waitForEventEvidence(eventId, callId, timeoutMs)
+            evidence.events.push(event)
+        }
+
+        for (const probeSpec of verifyWith.probes) {
+            const probeId = typeof probeSpec === 'string' ? probeSpec : probeSpec?.id
+            if (!probeId) continue
+            const result = await this.readProbe({
+                agentId: request?.agentId,
+                requestId: request?.requestId,
+                probeId,
+                args: typeof probeSpec === 'object' ? probeSpec.args : undefined,
+            })
+            evidence.probes.push({
+                probeId,
+                status: result?.status,
+                value: result?.value,
+                error: result?.error,
+            })
+        }
+
+        const verified = evidence.events.every(item => item.status === 'observed')
+            && evidence.probes.every(item => item.status === 'ok')
+
+        this.trace.record({
+            type: 'verification.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            callId,
+            toolId: tool.id,
+            status: verified ? 'verified' : 'unverified',
+            details: evidence,
+        })
+
+        return this.toolResult(request, callId, tool.id, verified ? ToolResultStatus.VERIFIED : ToolResultStatus.UNVERIFIED, {
+            verification: {
+                status: verified ? 'verified' : 'unverified',
+                evidence,
+            },
+        })
+    }
+
+    async waitForEventEvidence(eventId, callId, timeoutMs) {
+        const started = Date.now()
+        while (Date.now() - started <= timeoutMs) {
+            const found = this.findEvent({eventId, callId})
+            if (found) {
+                return {
+                    eventId,
+                    status: 'observed',
+                    callId: found.callId,
+                    payload: found.payload,
+                }
+            }
+            await new Promise(resolve => setTimeout(resolve, 10))
+        }
+        return {eventId, status: 'timeout', callId}
+    }
+
+    async resolveApproval(request = {}) {
+        const approval = this.approvalRequests.get(request.approvalId)
+        if (!approval) {
+            return this.emitResult(request, brokerError(request, 'unknown_approval', `Unknown approval request: ${request.approvalId}`))
+        }
+        if (approval.status !== 'requested') {
+            return this.emitResult(request, brokerError(request, 'approval_already_resolved', `Approval request is already ${approval.status}`))
+        }
+
+        approval.status = request.approved === true ? 'approved' : 'denied'
+        approval.resolvedAt = new Date().toISOString()
+        approval.resolvedBy = request.agentId ?? approval.agentId
+
+        this.trace.record({
+            type: 'approval.resolved',
+            agentId: approval.agentId,
+            requestId: request.requestId,
+            callId: approval.callId,
+            toolId: approval.toolId,
+            status: approval.status,
+            details: approval,
+        })
+        this.publish({
+            kind: 'approval.resolved',
+            agentId: approval.agentId,
+            approval,
+            timestamp: approval.resolvedAt,
+        })
+
+        const tool = this.registry.getTool(approval.toolId)
+        if (approval.status !== 'approved') {
+            return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
+                approval,
+                error: {code: 'approval_denied', message: 'Approval was denied'},
+            })
+        }
+        if (!tool) return this.toolError(request, approval.callId, 'unknown_tool', `Unknown tool: ${approval.toolId}`, approval.toolId)
+
+        return this.executeTool(approval.request, tool, approval.callId)
     }
 
     async readProbe(request) {
@@ -256,6 +434,44 @@ export class ToolBroker {
                 probeId: request?.probeId,
                 status: 'failed',
                 error: {code: 'unknown_probe', message: `Unknown probe: ${request?.probeId}`},
+            })
+        }
+
+        const policy = this.checkCapabilityPolicy(request, 'probes', probe.id)
+        this.trace.record({
+            type: 'policy.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            probeId: probe.id,
+            status: policy.allowed ? 'allowed' : 'denied',
+            details: policy,
+        })
+        if (!policy.allowed) {
+            return this.emitResult(request, {
+                type: BrokerResultTypes.PROBE_RESULT,
+                requestId: request?.requestId,
+                probeId: probe.id,
+                status: 'denied',
+                error: {code: 'denied', message: policy.reason},
+            })
+        }
+
+        const validation = this.validateArgs('probe', probe.id, probe.argsSchema ?? probe.arguments?.schema ?? probe.input?.schema, request?.args)
+        this.trace.record({
+            type: 'validation.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            probeId: probe.id,
+            status: validation.valid ? 'ok' : 'failed',
+            details: validation,
+        })
+        if (!validation.valid) {
+            return this.emitResult(request, {
+                type: BrokerResultTypes.PROBE_RESULT,
+                requestId: request?.requestId,
+                probeId: probe.id,
+                status: 'failed',
+                error: {code: 'invalid_args', message: validation.message, details: validation.errors},
             })
         }
 
@@ -310,6 +526,36 @@ export class ToolBroker {
     }
 
     async waitForEvent(request) {
+        const event = this.registry.getEvent(request?.eventId)
+        if (!event) {
+            return this.emitResult(request, {
+                type: BrokerResultTypes.EVENT_RESULT,
+                requestId: request?.requestId,
+                eventId: request?.eventId,
+                status: 'failed',
+                error: {code: 'unknown_event', message: `Unknown event: ${request?.eventId}`},
+            })
+        }
+
+        const policy = this.checkCapabilityPolicy(request, 'events', event.id)
+        this.trace.record({
+            type: 'policy.decision',
+            agentId: request?.agentId,
+            requestId: request?.requestId,
+            eventId: event.id,
+            status: policy.allowed ? 'allowed' : 'denied',
+            details: policy,
+        })
+        if (!policy.allowed) {
+            return this.emitResult(request, {
+                type: BrokerResultTypes.EVENT_RESULT,
+                requestId: request?.requestId,
+                eventId: event.id,
+                status: 'denied',
+                error: {code: 'denied', message: policy.reason},
+            })
+        }
+
         const timeoutMs = request?.timeoutMs ?? 1000
         const started = Date.now()
 
@@ -337,9 +583,11 @@ export class ToolBroker {
     }
 
     queryEvents(request = {}) {
+        const policy = this.getAgentPolicy(request.agentId)
         const events = this.events.filter(event => {
             if (request.eventId && event.eventId !== request.eventId) return false
             if (request.callId && event.callId !== request.callId) return false
+            if (!policy.canUse('events', event.eventId).allowed) return false
             return true
         })
 
@@ -358,11 +606,93 @@ export class ToolBroker {
         }) ?? null
     }
 
-    checkPolicy(tool) {
-        if (tool.approval === 'always') {
-            return {allowed: false, reason: 'approval_required'}
-        }
+    checkToolPolicy(request, tool) {
+        const permission = this.checkCapabilityPolicy(request, 'tools', tool.id)
+        if (!permission.allowed) return permission
         return {allowed: true, risk: tool.risk ?? 'low', approval: tool.approval ?? 'never'}
+    }
+
+    checkToolApproval(request, callId, tool) {
+        const policy = this.getAgentPolicy(request?.agentId)
+        return {
+            ...policy.approvalDecision(tool),
+            agentId: request?.agentId ?? null,
+            callId,
+            toolId: tool.id,
+        }
+    }
+
+    createApprovalRequest(request, callId, tool, decision) {
+        const approval = {
+            approvalId: this.newApprovalId(),
+            agentId: request?.agentId ?? null,
+            requestId: request?.requestId,
+            callId,
+            toolId: tool.id,
+            status: 'requested',
+            reason: decision.reason,
+            rule: decision.rule,
+            risk: tool.risk ?? 'low',
+            effects: Array.isArray(tool.effects) ? tool.effects : [],
+            request: {
+                agentId: request?.agentId,
+                requestId: request?.requestId,
+                toolId: tool.id,
+                args: request?.args,
+                wait: request?.wait,
+                timeoutMs: request?.timeoutMs,
+            },
+            createdAt: new Date().toISOString(),
+        }
+        this.approvalRequests.set(approval.approvalId, approval)
+        this.trace.record({
+            type: 'approval.requested',
+            agentId: approval.agentId,
+            requestId: approval.requestId,
+            callId,
+            toolId: tool.id,
+            status: 'requested',
+            details: approval,
+        })
+        this.publish({
+            kind: 'approval.requested',
+            agentId: approval.agentId,
+            approval,
+            timestamp: approval.createdAt,
+        })
+        return approval
+    }
+
+    checkCapabilityPolicy(request, kind, id) {
+        const policy = this.getAgentPolicy(request?.agentId)
+        return {
+            ...policy.canUse(kind, id),
+            agentId: request?.agentId ?? null,
+            kind,
+            capabilityId: id,
+        }
+    }
+
+    getAgentPolicy(agentId) {
+        if (!agentId) return new AgentPolicy({id: null})
+        const agent = this.agents.get(agentId)
+        if (!agent) return new AgentPolicy({id: agentId})
+        agent.policy = AgentPolicy.fromAgent(agent)
+        return agent.policy
+    }
+
+    validateArgs(kind, capabilityId, schema, args) {
+        if (!schema) return {valid: true, kind, capabilityId, reason: 'no_schema'}
+        const value = args ?? {}
+        const validation = validateJsonSchema(schema, value)
+        return {
+            kind,
+            capabilityId,
+            schemaPresent: true,
+            valid: validation.valid,
+            errors: validation.errors,
+            message: validation.valid ? 'Arguments are valid' : `Invalid ${kind} arguments for ${capabilityId}`,
+        }
     }
 
     resolveInputTarget(input) {
@@ -432,6 +762,10 @@ export class ToolBroker {
     newCallId() {
         return `call_${String(this.nextCallId++).padStart(6, '0')}`
     }
+
+    newApprovalId() {
+        return `approval_${String(this.nextApprovalId++).padStart(6, '0')}`
+    }
 }
 
 function makeJsonSafe(value) {
@@ -451,5 +785,25 @@ function stringifyProbeValue(value) {
     }
     catch {
         return String(value)
+    }
+}
+
+function normalizeVerifyWith(tool = {}) {
+    const specs = []
+    if (tool.verifyWith) specs.push(tool.verifyWith)
+    for (const effect of tool.effects ?? []) {
+        if (effect?.verifyWith) specs.push(effect.verifyWith)
+    }
+
+    const events = []
+    const probes = []
+    for (const spec of specs) {
+        if (Array.isArray(spec?.events)) events.push(...spec.events)
+        if (Array.isArray(spec?.probes)) probes.push(...spec.probes)
+    }
+
+    return {
+        events: events.map(item => typeof item === 'string' ? item : item?.id).filter(Boolean),
+        probes,
     }
 }

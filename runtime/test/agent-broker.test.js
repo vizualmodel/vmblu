@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {scaffold} from '../rt-agent/scaffold.js'
+import {Runtime} from '../rt-agent/runtime.js'
+import {Runtime as BrowserAgentRuntime} from '../rt-browser-agent/runtime.js'
 
 function waitFor(predicate, timeoutMs = 1000) {
     const start = Date.now()
@@ -58,7 +59,7 @@ test('rt-agent wires broker, agent shell, tool dispatch, and event capture', asy
         ],
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'Source',
             uid: 'source',
@@ -73,7 +74,7 @@ test('rt-agent wires broker, agent shell, tool dispatch, and event capture', asy
             inputs: ['-> set'],
             outputs: [],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -143,7 +144,7 @@ test('recent app events are included in the next provider turn', async () => {
         ],
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'Source',
             uid: 'source',
@@ -151,7 +152,7 @@ test('recent app events are included in the next provider turn', async () => {
             inputs: [],
             outputs: ['changed -> ()'],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -241,7 +242,7 @@ test('agent chat turn calls provider and routes tool calls through broker', asyn
         },
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'Sink',
             uid: 'sink',
@@ -249,7 +250,7 @@ test('agent chat turn calls provider and routes tool calls through broker', asyn
             inputs: ['-> set'],
             outputs: [],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -302,7 +303,7 @@ test('broker wraps calls for ToolInvocation target pins', async () => {
         events: [],
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'Router',
             uid: 'router',
@@ -310,7 +311,7 @@ test('broker wraps calls for ToolInvocation target pins', async () => {
             inputs: ['-> cmd.tool'],
             outputs: [],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -360,7 +361,7 @@ test('rt-agent auto-registers published node probes', async () => {
         events: [],
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'State',
             uid: 'state',
@@ -368,7 +369,7 @@ test('rt-agent auto-registers published node probes', async () => {
             inputs: [],
             outputs: [],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -459,7 +460,7 @@ test('agent chat can route provider probe calls through broker', async () => {
         },
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'State',
             uid: 'state',
@@ -467,7 +468,7 @@ test('agent chat can route provider probe calls through broker', async () => {
             inputs: [],
             outputs: [],
         },
-    ], [], {
+    ], {
         capabilities,
         agent: {id: 'mainAssistant', enabled: true},
     })
@@ -484,6 +485,440 @@ test('agent chat can route provider probe calls through broker', async () => {
         assert.ok(toolMessage)
         assert.match(toolMessage.content, /state\.current/)
         assert.match(toolMessage.content, /ready/)
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('rt-browser-agent wires broker and dispatches tools without ALS runtime', async () => {
+    let received = null
+
+    function SinkFactory() {
+        return {
+            onSet(param) {
+                received = param
+            }
+        }
+    }
+
+    const runtime = new BrowserAgentRuntime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: ['-> set'],
+            outputs: [],
+        },
+    ], {
+        capabilities: {
+            tools: [
+                {
+                    id: 'set @ Sink',
+                    input: {node: 'Sink', pin: 'set', ref: 'set@Sink', schema: {type: 'object'}},
+                    risk: 'low',
+                    approval: 'never',
+                }
+            ],
+            probes: [],
+            events: [],
+        },
+        agent: {id: 'browserAssistant', enabled: true},
+    })
+
+    runtime.start()
+
+    try {
+        assert.ok(runtime.toolBroker)
+        assert.ok(runtime.agent)
+        assert.equal(runtime.agent.broker, runtime.toolBroker)
+
+        const result = await runtime.agent.tools.call('set @ Sink', {value: 23})
+        assert.equal(result.status, 'accepted')
+
+        await waitFor(() => received)
+        assert.deepEqual(received, {value: 23})
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('rt-agent selects default agent from multi-agent config', async () => {
+    const runtime = new Runtime([], {
+        capabilities: {
+            tools: [
+                {id: 'operator_tool', input: {node: 'None', pin: 'none', schema: {type: 'object'}}, approval: 'never'},
+                {id: 'observer_tool', input: {node: 'None', pin: 'none', schema: {type: 'object'}}, approval: 'never'},
+            ],
+            probes: [],
+            events: [],
+        },
+        agent: {
+            version: 1,
+            defaultAgent: 'observer',
+            agents: [
+                {
+                    id: 'operator',
+                    enabled: true,
+                    permissions: {
+                        tools: {allow: ['operator_tool'], deny: []},
+                        probes: {allow: [], deny: []},
+                        events: {allow: [], deny: []},
+                    },
+                },
+                {
+                    id: 'observer',
+                    enabled: true,
+                    permissions: {
+                        tools: {allow: ['observer_tool'], deny: []},
+                        probes: {allow: [], deny: []},
+                        events: {allow: [], deny: []},
+                    },
+                },
+            ],
+        },
+    })
+
+    runtime.start()
+
+    try {
+        assert.equal(runtime.agent.id, 'observer')
+        const capabilities = await runtime.agent.listCapabilities()
+        assert.deepEqual(capabilities.capabilities.tools.map(tool => tool.id), ['observer_tool'])
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('broker filters capabilities and denies tool, probe, and event access by agent policy', async () => {
+    let received = null
+
+    function SourceFactory(tx) {
+        return {
+            emit() {
+                tx.send('visible', {ok: true})
+                tx.send('hidden', {secret: true})
+            }
+        }
+    }
+
+    function SinkFactory() {
+        return {
+            onSet(param) {
+                received = param
+            },
+            onReset() {},
+            probe(name) {
+                return {name}
+            }
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'Source',
+            uid: 'source',
+            factory: SourceFactory,
+            inputs: [],
+            outputs: ['visible -> ()', 'hidden -> ()'],
+        },
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: ['-> set', '-> reset'],
+            outputs: [],
+        },
+    ], {
+        capabilities: {
+            tools: [
+                {id: 'set', input: {node: 'Sink', pin: 'set', schema: {type: 'object'}}, approval: 'never'},
+                {id: 'reset', input: {node: 'Sink', pin: 'reset', schema: {type: 'object'}}, approval: 'never'},
+            ],
+            probes: [
+                {id: 'state.visible', name: 'state.visible', schema: {type: 'object'}, binding: {kind: 'node', node: 'Sink'}},
+                {id: 'state.hidden', name: 'state.hidden', schema: {type: 'object'}, binding: {kind: 'node', node: 'Sink'}},
+            ],
+            events: [
+                {id: 'visible.event', source: {node: 'Source', pin: 'visible'}, schema: {type: 'object'}},
+                {id: 'hidden.event', source: {node: 'Source', pin: 'hidden'}, schema: {type: 'object'}},
+            ],
+        },
+        agent: {
+            id: 'operator',
+            enabled: true,
+            permissions: {
+                tools: {allow: ['set'], deny: ['reset']},
+                probes: {allow: ['state.visible']},
+                events: {allow: ['visible.event']},
+            },
+        },
+    })
+
+    runtime.start()
+
+    try {
+        const capabilities = await runtime.agent.listCapabilities()
+        assert.deepEqual(capabilities.capabilities.tools.map(tool => tool.id), ['set'])
+        assert.deepEqual(capabilities.capabilities.probes.map(probe => probe.id), ['state.visible'])
+        assert.deepEqual(capabilities.capabilities.events.map(event => event.id), ['visible.event'])
+
+        const deniedTool = await runtime.agent.tools.call('reset', {})
+        assert.equal(deniedTool.status, 'denied')
+        assert.equal(deniedTool.error.code, 'denied')
+
+        const deniedProbe = await runtime.agent.probes.read('state.hidden', {})
+        assert.equal(deniedProbe.status, 'denied')
+
+        const deniedEvent = await runtime.agent.events.waitFor('hidden.event', {timeoutMs: 10})
+        assert.equal(deniedEvent.status, 'denied')
+
+        const allowed = await runtime.agent.tools.call('set', {value: 41})
+        assert.equal(allowed.status, 'accepted')
+        await waitFor(() => received)
+        assert.deepEqual(received, {value: 41})
+
+        const policyTrace = runtime.traceRecorder.all().find(record => record.type === 'policy.decision' && record.toolId === 'reset')
+        assert.equal(policyTrace.status, 'denied')
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('broker validates tool and probe arguments before dispatch', async () => {
+    let received = null
+
+    function SinkFactory() {
+        return {
+            onSet(param) {
+                received = param
+            },
+            probe(name, args) {
+                return {name, args}
+            }
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: ['-> set'],
+            outputs: [],
+        },
+    ], {
+        capabilities: {
+            tools: [
+                {
+                    id: 'set',
+                    input: {
+                        node: 'Sink',
+                        pin: 'set',
+                        schema: {
+                            type: 'object',
+                            required: ['value'],
+                            properties: {value: {type: 'number'}},
+                            additionalProperties: false,
+                        },
+                    },
+                    approval: 'never',
+                },
+            ],
+            probes: [
+                {
+                    id: 'state.current',
+                    name: 'state.current',
+                    argsSchema: {
+                        type: 'object',
+                        properties: {filter: {enum: ['small', 'large']}},
+                        additionalProperties: false,
+                    },
+                    binding: {kind: 'node', node: 'Sink'},
+                },
+            ],
+            events: [],
+        },
+        agent: {id: 'operator', enabled: true},
+    })
+
+    runtime.start()
+
+    try {
+        const invalidTool = await runtime.agent.tools.call('set', {value: 'bad'})
+        assert.equal(invalidTool.status, 'failed')
+        assert.equal(invalidTool.error.code, 'invalid_args')
+        assert.equal(received, null)
+
+        const invalidProbe = await runtime.agent.probes.read('state.current', {filter: 'medium'})
+        assert.equal(invalidProbe.status, 'failed')
+        assert.equal(invalidProbe.error.code, 'invalid_args')
+
+        const validProbe = await runtime.agent.probes.read('state.current', {filter: 'small'})
+        assert.equal(validProbe.status, 'ok')
+        assert.deepEqual(validProbe.value.args, {filter: 'small'})
+
+        const validationTrace = runtime.traceRecorder.all().find(record => record.type === 'validation.decision' && record.toolId === 'set')
+        assert.equal(validationTrace.status, 'failed')
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('broker can approve and execute a tool that requires approval', async () => {
+    let received = null
+
+    function SinkFactory() {
+        return {
+            onDelete(param) {
+                received = param
+            }
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: ['-> delete'],
+            outputs: [],
+        },
+    ], {
+        capabilities: {
+            tools: [
+                {
+                    id: 'delete_document',
+                    input: {
+                        node: 'Sink',
+                        pin: 'delete',
+                        schema: {
+                            type: 'object',
+                            required: ['documentId'],
+                            properties: {documentId: {type: 'string'}},
+                            additionalProperties: false,
+                        },
+                    },
+                    risk: 'high',
+                    approval: 'always',
+                },
+            ],
+            probes: [],
+            events: [],
+        },
+        agent: {id: 'operator', enabled: true},
+    })
+
+    runtime.start()
+
+    try {
+        const result = await runtime.agent.tools.call('delete_document', {documentId: 'doc-1'})
+
+        assert.equal(result.status, 'pending')
+        assert.equal(received, null)
+        assert.equal(runtime.toolBroker.approvalRequests.size, 1)
+
+        const approval = [...runtime.toolBroker.approvalRequests.values()][0]
+        assert.equal(approval.toolId, 'delete_document')
+        assert.equal(approval.status, 'requested')
+
+        const agentMessage = runtime.agent.messages.find(message => message.kind === 'approval.requested')
+        assert.equal(agentMessage.approval.approvalId, approval.approvalId)
+
+        const trace = runtime.traceRecorder.all().find(record => record.type === 'approval.requested')
+        assert.equal(trace.status, 'requested')
+
+        const approved = await runtime.agent.approvals.approve(approval.approvalId)
+        assert.equal(approved.status, 'accepted')
+        assert.equal(approval.status, 'approved')
+
+        await waitFor(() => received)
+        assert.deepEqual(received, {documentId: 'doc-1'})
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('broker verifies a tool call with event and probe evidence', async () => {
+    let current = null
+
+    function AppFactory(tx) {
+        return {
+            onUpdateTool(param) {
+                current = param.arguments
+                tx.send('changed', {callId: param.callId, value: current.value})
+            },
+            probe(name) {
+                if (name === 'state.current') return current
+                return null
+            }
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'App',
+            uid: 'app',
+            factory: AppFactory,
+            inputs: ['-> update.tool'],
+            outputs: ['changed -> ()'],
+        },
+    ], {
+        capabilities: {
+            tools: [
+                {
+                    id: 'update',
+                    input: {
+                        node: 'App',
+                        pin: 'update.tool',
+                        payload: 'ToolInvocation',
+                        schema: {
+                            type: 'object',
+                            required: ['value'],
+                            properties: {value: {type: 'number'}},
+                        },
+                    },
+                    approval: 'never',
+                    verifyWith: {
+                        events: ['app.changed'],
+                        probes: [{id: 'state.current'}],
+                    },
+                },
+            ],
+            probes: [
+                {
+                    id: 'state.current',
+                    name: 'state.current',
+                    binding: {kind: 'node', node: 'App'},
+                    schema: {
+                        type: 'object',
+                        required: ['value'],
+                        properties: {value: {type: 'number'}},
+                    },
+                },
+            ],
+            events: [
+                {
+                    id: 'app.changed',
+                    source: {node: 'App', pin: 'changed'},
+                    schema: {type: 'object'},
+                },
+            ],
+        },
+        agent: {id: 'operator', enabled: true},
+    })
+
+    runtime.start()
+
+    try {
+        const result = await runtime.agent.tools.call('update', {value: 9}, {wait: 'verified', timeoutMs: 500})
+
+        assert.equal(result.status, 'verified')
+        assert.equal(result.verification.status, 'verified')
+        assert.deepEqual(result.verification.evidence.probes[0].value, {value: 9})
+        assert.equal(result.verification.evidence.events[0].status, 'observed')
+
+        const trace = runtime.traceRecorder.all().find(record => record.type === 'verification.decision')
+        assert.equal(trace.status, 'verified')
     } finally {
         runtime.stop()
     }

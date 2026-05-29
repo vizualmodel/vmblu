@@ -170,8 +170,15 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			getExtensionContext()?.subscriptions.push(modelWatcher);
 			modelWatcher.setModelFile(message.model);
 			modelWatcher.start();
+			if (this.resolvedModelArl) modelWatcher.setModelFile(this.resolvedModelArl);
 			this.modelWatcher = modelWatcher;
 
+			return;
+		}
+
+		case 'model resolved': {
+			this.resolvedModelArl = message.model;
+			this.modelWatcher?.setModelFile?.(message.model);
 			return;
 		}
 

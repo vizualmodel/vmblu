@@ -106,24 +106,24 @@ export const AppHandling = {
         // close the nodeList
         sNodeList += '\n]'
 
-        const agentRuntime = this.JSAgentRuntimeOptions(runtime, node, srcArl)
+        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl)
 
         // combine all..
         const jsSource = 
 `
 // import the runtime code
-import * as VMBLU from "${runtime}"
+import {Runtime} from "${runtime}"
 
 ${sImports}
 
-${agentRuntime.imports}
+${runtimeOptions.imports}
 
 ${sNodeList}
 
-${agentRuntime.options}
+${runtimeOptions.options}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
 
 // and start the app
 runtime.start()
@@ -147,37 +147,48 @@ runtime.start()
         return capArl
     },
 
-    JSAgentRuntimeOptions(runtime, node, srcArl) {
+    JSRuntimeOptions(runtime, node, srcArl) {
 
-        if (!this.isAgentRuntime(runtime)) {
-            return {
-                imports: '',
-                options: 'const agentRuntimeOptions = {}'
+        const imports = []
+        const optionLines = []
+
+        const runtimeSettings = this.header.runtimeSettings
+        const runtimeSettingsPath = this.runtimeSettingsImportPath(srcArl)
+        if (runtimeSettingsPath) {
+            imports.push(`import runtimeSettings from '${runtimeSettingsPath}' with { type: 'json' }`)
+            optionLines.push('    runtimeSettings')
+        }
+        else if (runtimeSettings && typeof runtimeSettings === 'object' && !Array.isArray(runtimeSettings)) {
+            optionLines.push(`    runtimeSettings: ${JSON.stringify(runtimeSettings, null, 4).replaceAll('\n', '\n    ')}`)
+        }
+
+        if (this.isAgentRuntime(runtime)) {
+            const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap')
+            imports.push(`import capabilities from '${capPath}' with { type: 'json' }`)
+            optionLines.push('    capabilities')
+
+            const agentPath = this.agentRuntimeAgentImportPath(srcArl)
+            if (agentPath) {
+                imports.push(`import agent from '${agentPath}' with { type: 'json' }`)
+                optionLines.push('    agent')
             }
         }
 
-        const capPath = this.agentRuntimeArtifactPath(srcArl, 'cap')
-        const imports = [
-            `import capabilities from '${capPath}' with { type: 'json' }`
-        ]
-        const optionLines = ['    capabilities']
-
-        const agentPath = this.agentRuntimeAgentImportPath(srcArl)
-        if (agentPath) {
-            imports.push(`import agent from '${agentPath}' with { type: 'json' }`)
-            optionLines.push('    agent')
-        }
-
-        const options = `const agentRuntimeOptions = {\n${optionLines.join(',\n')}\n}`
+        const options = optionLines.length
+            ? `const runtimeOptions = {\n${optionLines.join(',\n')}\n}`
+            : 'const runtimeOptions = {}'
 
         return {
-            imports: `// Agent runtime sidecars\n${imports.join('\n')}`,
-            options: `// Agent runtime options\n${options}`
+            imports: imports.length ? `// Runtime sidecars\n${imports.join('\n')}` : '',
+            options: `// Runtime options\n${options}`
         }
     },
 
     isAgentRuntime(runtime) {
-        return runtime === '@vizualmodel/vmblu-runtime/rt-agent' || runtime.endsWith('/rt-agent')
+        return runtime === '@vizualmodel/vmblu-runtime/rt-agent'
+            || runtime.endsWith('/rt-agent')
+            || runtime === '@vizualmodel/vmblu-runtime/rt-browser-agent'
+            || runtime.endsWith('/rt-browser-agent')
     },
 
     agentRuntimeAgentImportPath(srcArl) {
@@ -190,6 +201,19 @@ runtime.start()
         if (typeof agent === 'object' && !Array.isArray(agent)) {
             if (agent.path) return Path.relative(this.getArl().resolve(agent.path).getFullPath(), srcArl.getFullPath())
             return this.agentRuntimeArtifactPath(srcArl, 'agent')
+        }
+
+        return null
+    },
+
+    runtimeSettingsImportPath(srcArl) {
+        const settings = this.header.runtimeSettings
+        if (!settings) return null
+
+        if (typeof settings === 'string') return Path.relative(this.getArl().resolve(settings).getFullPath(), srcArl.getFullPath())
+
+        if (typeof settings === 'object' && !Array.isArray(settings) && settings.path) {
+            return Path.relative(this.getArl().resolve(settings.path).getFullPath(), srcArl.getFullPath())
         }
 
         return null

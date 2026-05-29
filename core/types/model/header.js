@@ -13,6 +13,7 @@ export function ModelHeader() {
     this.utc = today.toJSON()
     this.style = style
     this.runtime = '@vizualmodel/vmblu-runtime/rt-base'
+    this.runtimeSettings = null
     this.agent = null
 }
 ModelHeader.prototype = {
@@ -34,6 +35,9 @@ ModelHeader.prototype = {
         // get the runtime
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base'
 
+        // get runtime configuration
+        this.runtimeSettings = raw.runtimeSettings ? JSON.parse(JSON.stringify(raw.runtimeSettings)) : null
+
         // get the agent configuration
         this.agent = raw.agent ? JSON.parse(JSON.stringify(raw.agent)) : null
     },
@@ -51,6 +55,7 @@ ModelHeader.prototype = {
             runtime: this.runtime
         }
 
+        if (this.runtimeSettings) raw.runtimeSettings = JSON.parse(JSON.stringify(this.runtimeSettings))
         if (this.agent) raw.agent = JSON.parse(JSON.stringify(this.agent))
 
         return raw
