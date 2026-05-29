@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "0.1.30",
+    "version": "0.1.40",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -113,7 +113,7 @@
         "eslint": "^8.26.0",
         "rollup": "^4.6.1",
         "rollup-plugin-css-only": "^4.5.2",
-        "rollup-plugin-svelte": "^7.1.6",
+        "rollup-plugin-svelte": "^7.2.3",
         "svelte": "^5.0.0"
     },
     "dependencies": {
