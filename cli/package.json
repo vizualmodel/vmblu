@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "schemaVersion": "0.9.7",
   "type": "module",
   "bin": {
