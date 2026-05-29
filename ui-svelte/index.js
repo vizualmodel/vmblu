@@ -77,6 +77,9 @@ export  const VscodeSideMenuFactory = getFactory(VscodeSideMenuSvelte)
 import RuntimeSettingsSvelte from './nodes/runtime-settings/runtime-settings.svelte'
 export const RuntimeSettingsFactory = getFactory(RuntimeSettingsSvelte)
 
+import ModelRuntimeSettingsSvelte from './nodes/model-runtime-settings/model-runtime-settings.svelte'
+export const ModelRuntimeSettingsFactory = getFactory(ModelRuntimeSettingsSvelte)
+
 import ConfirmBoxSvelte from './nodes/confirm-box/confirm-box.svelte'
 export const ConfirmBox = getFactory(ConfirmBoxSvelte)
 
@@ -115,6 +118,9 @@ export const SingleTextFieldFactory = getFactory(SingleTextFieldSvelte)
 
 import DocumentSettingsSvelte from './nodes/document-settings/document-settings.svelte'
 export const DocumentSettingsFactory = getFactory(DocumentSettingsSvelte)
+
+import AgentSettingsSvelte from './nodes/agent-settings/agent-settings.svelte'
+export const AgentSettingsFactory = getFactory(AgentSettingsSvelte)
 
 import NodeSelectorSvelte from './nodes/node-selector/node-selector.svelte'
 export const NodeSelectorFactory = getFactory(NodeSelectorSvelte)

@@ -963,7 +963,7 @@
                 }
               },
               {
-                "name": "reload model",
+                "name": "sync model",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -1029,6 +1029,14 @@
                 "contract": {
                   "role": "follower",
                   "payload": "ModelNode"
+                }
+              },
+              {
+                "name": "model.resolved",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
                 }
               },
               {

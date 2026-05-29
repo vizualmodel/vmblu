@@ -53,16 +53,19 @@ ModelManager.prototype = {
 
     async onModelSet(doc) {
 
-        const model = doc?.model ?? null;
+        let model = doc?.model ?? null;
 
         if (!model) return
 
+        model = this.models.findArl(model.getArl()) ?? model
+        doc.model = model
         this.model = model
 
         // rest the main flag
         this.setMainFlag(model)
 
         await this.modcom.refreshRaw(model)
+        this.tx.send('model.resolved', model.getArl())
 
         // set a save point if there is none yet
         if (!model.savePoint) model.savePoint = model.raw
@@ -145,13 +148,23 @@ ModelManager.prototype = {
             title: 'Model Settings',
             path: this.model.getArl()?.getFullPath() ?? '- unspecified -',
             settings: header,
+            capabilities: this.model.makeCapabilityObject?.(this.model.root) ?? null,
             pos: { x: 25, y: 25 },
             onColor(rgb) {
                 header.style.adapt(rgb);
                 tx.send('redox.done', {verb: 'accept changes'})
             },
-            ok(runtime) {
-                header.runtime = runtime;
+            ok(settings) {
+                if (typeof settings === 'string') {
+                    header.runtime = settings;
+                    return
+                }
+
+                header.runtime = settings.runtime;
+                if (settings.runtimeSettings) header.runtimeSettings = settings.runtimeSettings;
+                else delete header.runtimeSettings;
+                if (settings.agent) header.agent = settings.agent;
+                else delete header.agent;
             },
             cancel() {
                 header.style.adapt(oldRgb);
@@ -160,12 +173,12 @@ ModelManager.prototype = {
         });
     },
 
-    async onSyncLinks() {
-        await this.refreshModel({verb: 'sync links'})
+    async onSyncModel() {
+        await this.refreshModel({verb: 'sync model', forceReloadMain: true, reloadLibraries: true})
     },
 
-    async onReloadModel() {
-        await this.refreshModel({verb: 'reload model', forceReloadMain: true, reloadLibraries: true})
+    async onSyncLinks() {
+        await this.refreshModel({verb: 'sync links'})
     },
 
     async refreshModel({verb = 'sync links', forceReloadMain = false, reloadLibraries = false} = {}) {
@@ -203,9 +216,6 @@ ModelManager.prototype = {
 
         // check if libraries need to be reloaded
         if (reloadLibraries) model.libraries?.load()
-    },
-
-    onSyncModel() {
     },
 
     onMakeLib(e) {

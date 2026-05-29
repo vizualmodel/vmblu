@@ -1,9 +1,9 @@
-import {enableSafety} from './safety.js'
+import {safety} from './safety.js'
 
 export function SecurityReporterFactory(tx, sx = null) {
     const mode = sx?.mode ?? 'warn'
     let currentTx = tx
-    let safetyControl = enableSafety({mode}, {
+    let safetyControl = safety.enable({mode}, {
         send(name, payload) {
             if (name !== 'security.event') return 0
             return currentTx.send('security.event', payload)
@@ -15,7 +15,7 @@ export function SecurityReporterFactory(tx, sx = null) {
             const nextMode = nextSettings?.mode ?? mode
 
             safetyControl.uninstall()
-            safetyControl = enableSafety({mode: nextMode}, {
+            safetyControl = safety.enable({mode: nextMode}, {
                 send(name, payload) {
                     if (name !== 'security.event') return 0
                     return currentTx.send('security.event', payload)

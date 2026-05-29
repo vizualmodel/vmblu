@@ -21,10 +21,10 @@ If you do want to bootstrap manually:
 
 ```js
 // ESM
-import * as VMBLU from "@vizualmodel/vmblu-runtime/rt-base";
+import {Runtime} from "@vizualmodel/vmblu-runtime/rt-base";
 
-// prepare all the nodes in the application - returns the runtime
-const runtime = VMBLU.scaffold(nodeList, filterList)
+// prepare all the nodes in the application
+const runtime = new Runtime(nodeList)
 
 // run the application
 runtime.start();
@@ -33,18 +33,18 @@ runtime.start();
 CommonJS usage:
 
 ```js
-const VMBLU = require("@vizualmodel/vmblu-runtime/rt-base");
-const app = VMBLU.scaffold(nodeList, filterList);
+const {Runtime} = require("@vizualmodel/vmblu-runtime/rt-base");
+const runtime = new Runtime(nodeList);
 ```
 
 ## API (minimal)
 
-### `scaffold(nodeList, filterList)`
+### `new Runtime(nodeList, options)`
 
 Bootstraps the runtime for a vmblu model.
 
 * `nodeList`: vmblu JSON model (nodes, routes, pins)
-* `filterList` *(optional)* optional filter for a bus
+* `options` *(optional)* runtime-specific configuration
 
 Returns a runtime object:
 
@@ -52,10 +52,18 @@ Returns a runtime object:
 
 ### Runtime variants
 
-* `@vizualmodel/vmblu-runtime/rt-base`: baseline runtime with no safety instrumentation
-* `@vizualmodel/vmblu-runtime/rt-als`: runtime with AsyncLocalStorage-based node attribution and privileged API instrumentation
+| Runtime | Browser | Node.js | Safety/ALS | Agent |
+|---|---:|---:|---:|---:|
+| `@vizualmodel/vmblu-runtime/rt-base` | yes | yes | no | no |
+| `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
+| `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
+| `@vizualmodel/vmblu-runtime/rt-agent` | no | yes | yes | yes |
 
-### `enableSafety({ mode }, tx)`
+Use `rt-browser-agent` for browser apps that need the agent/tool broker without
+Node.js safety instrumentation. Use `rt-agent` for Node.js apps that need both
+agent features and ALS-based safety attribution.
+
+### `safety.enable({ mode }, tx)`
 
 Available from `@vizualmodel/vmblu-runtime/rt-als`.
 

@@ -1,0 +1,662 @@
+{
+  "version": "0.5.3",
+  "generatedAt": "2026-05-29T08:27:48.542Z",
+  "entries": [
+    {
+      "node": "document manager",
+      "handles": [
+        {
+          "pin": "doc selected",
+          "handler": "onDocSelected",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 97,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "ARL",
+              "description": "- The ARL of the selected document."
+            }
+          ]
+        },
+        {
+          "pin": "doc new",
+          "handler": "onDocNew",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 122,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "arl",
+              "type": "ARL",
+              "description": "- ARL for the new document to be created."
+            }
+          ]
+        },
+        {
+          "pin": "doc renamed",
+          "handler": "onDocRenamed",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 149,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "oldName",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "newName",
+              "type": "string",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "save as",
+          "handler": "onFileSaveAs",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 163,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "object",
+              "description": "- the event"
+            }
+          ]
+        },
+        {
+          "pin": "save all",
+          "handler": "onFileSaveAll",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 196,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "get open models",
+          "handler": "onGetOpenModels",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 202,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "tab request to close",
+          "handler": "onTabRequestToClose",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 220,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "name",
+              "type": "string",
+              "description": "- Name of the tab to close."
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "tab.new",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 134
+        },
+        {
+          "pin": "doc set active",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 137
+        },
+        {
+          "pin": "file.save as filename",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 178
+        },
+        {
+          "pin": "file.save",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 184
+        },
+        {
+          "pin": "tab.rename",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 187
+        },
+        {
+          "pin": "open models",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 212
+        },
+        {
+          "pin": "tab.remove",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 238
+        },
+        {
+          "pin": "tab.select",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 250
+        },
+        {
+          "pin": "tab.select",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 259
+        },
+        {
+          "pin": "doc.set active",
+          "file": "../nodes/document-manager/document-manager.js",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "node": "clipboard",
+      "handles": [
+        {
+          "pin": "set",
+          "handler": "onSet",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 44,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "model",
+              "type": "any",
+              "description": ""
+            },
+            {
+              "name": "selection",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: expected ClipboardData but handler uses destructured params"
+          ]
+        },
+        {
+          "pin": "get",
+          "handler": "onGet",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 68,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "local",
+          "handler": "onLocal",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 101,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "switched",
+          "handler": "onSwitched",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 116,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "switch",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 65
+        },
+        {
+          "pin": "remote",
+          "file": "../nodes/clipboard/clipboard.js",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "node": "view manager",
+      "handles": [
+        {
+          "pin": "top.level-view",
+          "handler": "onTopLevelView",
+          "file": "../nodes/view-manager/message.js",
+          "line": 8,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "root",
+          "handler": "onRoot",
+          "file": "../nodes/view-manager/message.js",
+          "line": 35,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "root",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: expected AnyPayload but got any"
+          ]
+        },
+        {
+          "pin": "redox.done",
+          "handler": "onRedoxDone",
+          "file": "../nodes/view-manager/message.js",
+          "line": 41,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "recalibrate",
+          "handler": "onRecalibrate",
+          "file": "../nodes/view-manager/message.js",
+          "line": 45,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "grid.on-off",
+          "handler": "onGridOnOff",
+          "file": "../nodes/view-manager/message.js",
+          "line": 54,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "size.change",
+          "handler": "onSizeChange",
+          "file": "../nodes/view-manager/message.js",
+          "line": 66,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "rect",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": []
+    },
+    {
+      "node": "view manager",
+      "handles": [],
+      "transmits": [
+        {
+          "pin": "canvas",
+          "file": "../nodes/view-manager/view-manager.js",
+          "line": 52
+        },
+        {
+          "pin": "show context menu",
+          "file": "../nodes/view-manager/view-manager.js",
+          "line": 188
+        }
+      ]
+    },
+    {
+      "node": "model manager",
+      "handles": [
+        {
+          "pin": "model.set",
+          "handler": "onModelSet",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 54,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: unexpected field \"doc\""
+          ]
+        },
+        {
+          "pin": "redox.doit",
+          "handler": "onRedoxDoit",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 87,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "verb",
+              "type": "any",
+              "description": ""
+            },
+            {
+              "name": "param",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: verb expected string but got any",
+            "typeWarning: param expected AnyPayload but got any"
+          ]
+        },
+        {
+          "pin": "redox.undo",
+          "handler": "onRedoxUndo",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 97,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "redox.redo",
+          "handler": "onRedoxRedo",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 108,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "accept.changes",
+          "handler": "onAcceptChanges",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 120,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "show.settings",
+          "handler": "onShowSettings",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 133,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sync.model",
+          "handler": "onSyncModel",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 176,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sync.links",
+          "handler": "onSyncLinks",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 180,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "make.lib",
+          "handler": "onMakeLib",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 221,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "make.app",
+          "handler": "onMakeApp",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 246,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "e",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "model.save",
+          "handler": "onModelSave",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 367,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "path",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "save.point-set",
+          "handler": "onSavePointSet",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 396,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "save.point-back",
+          "handler": "onSavePointBack",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 423,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "model.resolved",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 68
+        },
+        {
+          "pin": "model.root",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 79
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 94
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 105
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 117
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 129
+        },
+        {
+          "pin": "model.header",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 146
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 155
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 171
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 211
+        },
+        {
+          "pin": "get path",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 260
+        },
+        {
+          "pin": "model.root",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 356
+        },
+        {
+          "pin": "model.root",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 361
+        },
+        {
+          "pin": "save point.confirm",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 401
+        },
+        {
+          "pin": "save point.confirm",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 429
+        },
+        {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 441
+        }
+      ]
+    },
+    {
+      "node": "view manager",
+      "handles": [],
+      "transmits": [
+        {
+          "pin": "redox.doit",
+          "file": "../types/node/node-icon-click.js",
+          "line": 5
+        },
+        {
+          "pin": "name and path",
+          "file": "../types/node/node-icon-click.js",
+          "line": 18
+        },
+        {
+          "pin": "name and path",
+          "file": "../types/node/node-icon-click.js",
+          "line": 41
+        },
+        {
+          "pin": "open model",
+          "file": "../types/node/node-icon-click.js",
+          "line": 60
+        },
+        {
+          "pin": "name and path",
+          "file": "../types/node/node-icon-click.js",
+          "line": 91
+        },
+        {
+          "pin": "open source file",
+          "file": "../types/node/node-icon-click.js",
+          "line": 111
+        },
+        {
+          "pin": "node settings (sx)",
+          "file": "../types/node/node-icon-click.js",
+          "line": 148
+        },
+        {
+          "pin": "runtime settings (dx)",
+          "file": "../types/node/node-icon-click.js",
+          "line": 160
+        },
+        {
+          "pin": "node prompt",
+          "file": "../types/node/node-icon-click.js",
+          "line": 173
+        },
+        {
+          "pin": "open model",
+          "file": "../types/node/node-icon-click.js",
+          "line": 195
+        },
+        {
+          "pin": "open source file",
+          "file": "../types/node/node-icon-click.js",
+          "line": 208
+        }
+      ]
+    }
+  ]
+}

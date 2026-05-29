@@ -28,9 +28,30 @@ DocumentManager.prototype = {
      * @node document manager
      */
 
+    async resolveDocumentArl(arl) {
+
+        if (!arl) return null
+
+        const path = arl.getPath?.()
+        if (!path) return arl
+
+        const split = Path.split(path)
+
+        if (split.ext === '.blu') {
+            const raw = await arl.get?.('json').catch(() => null)
+            const modelPath = raw?.kind === 'vmblu.entrypoint' ? raw.model : null
+            const modelArl = typeof modelPath === 'string' ? arl.resolve?.(modelPath) : null
+            if (modelArl) return modelArl
+        }
+
+        return arl
+    },
+
     haveDocument(arl) {
 
-        return this.documents.find( doc => doc.model.getArl()?.equals(arl))
+        return this.documents.find(doc =>
+            doc.model.getArl()?.equals(arl)
+        )
     },
 
     openDocument(arl) {
@@ -73,20 +94,22 @@ DocumentManager.prototype = {
      * @pin doc selected @ document manager
      * @param {ARL} arl - The ARL of the selected document.
      */
-    onDocSelected(arl) {
+    async onDocSelected(arl) {
 
-        const doc = this.haveDocument(arl)
-        doc ? this.toForeground(doc) : this.openDocument(arl)
+        const docArl = await this.resolveDocumentArl(arl)
+        const doc = this.haveDocument(docArl)
+        doc ? this.toForeground(doc) : this.openDocument(docArl)
 	},
 
     /**
      * @prompt Open a document using its ARL.
      * @param {ARL} arl - The ARL of the document to open.
      */
-    onDocOpen(arl) {
+    async onDocOpen(arl) {
 
-        const doc = this.haveDocument(arl)
-        doc ? this.toForeground(doc) : this.openDocument(arl)
+        const docArl = await this.resolveDocumentArl(arl)
+        const doc = this.haveDocument(docArl)
+        doc ? this.toForeground(doc) : this.openDocument(docArl)
     },
 
     onDocGet(){},
@@ -291,7 +314,7 @@ DocumentManager.prototype = {
         arl.url = new URL(modelPath, origin)
 
         // open the document
-        this.openDocument(arl)
+        this.onDocOpen(arl)
     }
 
 } // document manager.prototype

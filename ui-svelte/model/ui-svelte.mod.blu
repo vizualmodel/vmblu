@@ -445,6 +445,84 @@
                       "role": "follower",
                       "payload": "DomElement"
                     }
+                  },
+                  {
+                    "name": "model runtime settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "agent settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "model runtime settings",
+            "factory": {
+              "path": "../index.js",
+              "function": "ModelRuntimeSettingsFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "agent settings",
+            "factory": {
+              "path": "../index.js",
+              "function": "AgentSettingsFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
                   }
                 ]
               }
@@ -1239,7 +1317,7 @@
                     }
                   },
                   {
-                    "name": "sync model",
+                    "name": "sync",
                     "kind": "output",
                     "contract": {
                       "role": "follower",
@@ -1426,7 +1504,7 @@
                     }
                   },
                   {
-                    "name": "sync",
+                    "name": "sync model",
                     "kind": "output",
                     "contract": {
                       "role": "follower",

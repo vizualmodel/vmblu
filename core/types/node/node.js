@@ -7,7 +7,7 @@ import {routeHandling} from './node-routes.js'
 import {compareHandling} from './node-compare.js'
 import {Look} from './look.js'
 import {zap} from '../view/index.js'
-import {normalizeRuntimeSettings} from '../../../runtime/runtime-settings-registry.js'
+import {getRuntimeSettings} from '../../../runtime/runtime-settings-registry.js'
 
 // The node in a nodegraph
 export function Node (look=null, name=null, uid=null) {
@@ -237,7 +237,7 @@ Node.prototype = {
         // check if the node has dynamics
         if (raw.dx) {
             const runtime = modcom?.getCurrentModel?.()?.header?.runtime
-            this.dx = normalizeRuntimeSettings(runtime, raw.dx)
+            this.dx = getRuntimeSettings(runtime).normalize(raw.dx)
         }
     },
 

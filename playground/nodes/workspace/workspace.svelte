@@ -123,10 +123,13 @@ async function getRemoteFS() {
     arl.url = new URL(remoteFolder,serverUrl)
 
     // get the simulated folder
-    const rawFolder = await arl.get('json');
+    const rawFolder = await arl.get('json').catch(() => null)
 
     // check
-    if (!rawFolder) return
+    if (!rawFolder) {
+        remoteFS = null
+        return
+    }
 
     // The server arl
     const serverArl = new ARL('')
@@ -137,7 +140,6 @@ async function getRemoteFS() {
 
     // set the root of the file system
     remoteFS.root = new WSFolder(fsArl, remoteFS)
-    //remoteFS.root.is.expanded = true;
 
     // now get the folder/file 
     expandRemoteFS(rawFolder, remoteFS.root)

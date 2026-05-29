@@ -154,11 +154,13 @@ export const nodeClickHandling = {
 
             case 'pulse': {
 
-                const runtime = view?.getManager?.()?.getModel?.()?.header?.runtime ?? '@vizualmodel/vmblu-runtime/rt-base'
+                const header = view?.getManager?.()?.getModel?.()?.header
+                const runtime = header?.runtime ?? '@vizualmodel/vmblu-runtime/rt-base'
 
                 tx.send("runtime settings (dx)",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
                                                 runtime,
+                                                modelRuntimeSettings: header?.runtimeSettings ?? null,
                                                 dx: node.dx,
                                                 ok: (dx) => doEdit(tx,"changeNodeDynamics",{node, dx})
                                             })

@@ -7,10 +7,9 @@ import os from 'node:os'
 import path from 'node:path'
 import {exec as execCallback} from 'node:child_process'
 import {promisify} from 'node:util'
-import {scaffold} from '../rt-als/scaffold.js'
+import {Runtime} from '../rt-als/runtime.js'
 import {runAsNode} from '../rt-als/node-context.js'
-import {setSafetyEmitter} from '../rt-als/safety-events.js'
-import {installSafetyHooks} from '../rt-als/safety-hooks.js'
+import {safety} from '../rt-als/safety.js'
 
 const exec = promisify(execCallback)
 const uninstallers = []
@@ -20,18 +19,19 @@ afterEach(async () => {
         uninstallers.pop()()
     }
 
-    setSafetyEmitter(null)
+    safety.setEmitter(null)
+    safety.setPolicyClassifier(null)
 })
 
 function install(mode = 'warn') {
-    const uninstall = installSafetyHooks({mode})
+    const uninstall = safety.installHooks({mode})
     uninstallers.push(uninstall)
     return uninstall
 }
 
 function createCollector() {
     const events = []
-    setSafetyEmitter((event) => {
+    safety.setEmitter((event) => {
         events.push(event)
     })
     return events
@@ -83,7 +83,7 @@ test('attributes fs writes to the active node across await in runtime dispatch',
         }
     }
 
-    const runtime = scaffold([
+    const runtime = new Runtime([
         {
             name: 'Trigger',
             uid: 'trigger',
@@ -217,4 +217,157 @@ test('installing hooks twice does not double report', async () => {
 
     const writeEvents = events.filter((item) => item.cap === 'fs:write')
     assert.equal(writeEvents.length, 1)
+})
+
+test('classifies safety events against model runtime security settings', async () => {
+    install('warn')
+    const events = createCollector()
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
+    const targetFile = path.join(tmpDir, 'classified.txt')
+
+    class SinkFactory {
+        onWrite() {
+            fs.writeFileSync(targetFile, 'classified')
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: [],
+            outputs: [],
+        }
+    ], {
+        runtimeSettings: {
+            security: {
+                defaults: {
+                    fs: 'deny',
+                    net: 'warn',
+                    process: 'deny',
+                }
+            }
+        }
+    })
+
+    runtime.start()
+
+    try {
+        await runAsNode('Sink', async () => {
+            fs.writeFileSync(targetFile, 'classified')
+        })
+
+        const event = events.find((item) => item.cap === 'fs:write')
+        assert.ok(event)
+        assert.equal(event.node, 'Sink')
+        assert.equal(event.policy.decision, 'denied')
+        assert.equal(event.policy.domain, 'fs')
+        assert.equal(event.policy.permission, 'deny')
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('does not let node security settings broaden the model security envelope', async () => {
+    install('warn')
+    const events = createCollector()
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
+    const targetFile = path.join(tmpDir, 'clipped.txt')
+
+    class SinkFactory {
+        onWrite() {
+            fs.writeFileSync(targetFile, 'clipped')
+        }
+    }
+
+    const runtime = new Runtime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: SinkFactory,
+            inputs: [],
+            outputs: [],
+            dx: {
+                security: {
+                    enabled: true,
+                    request: {
+                        fs: 'allow',
+                    }
+                }
+            }
+        }
+    ], {
+        runtimeSettings: {
+            security: {
+                defaults: {
+                    fs: 'warn',
+                    net: 'warn',
+                    process: 'deny',
+                }
+            }
+        }
+    })
+
+    runtime.start()
+
+    try {
+        await runAsNode('Sink', async () => {
+            fs.writeFileSync(targetFile, 'clipped')
+        })
+
+        const event = events.find((item) => item.cap === 'fs:write')
+        assert.ok(event)
+        assert.equal(event.node, 'Sink')
+        assert.equal(event.policy.decision, 'warning')
+        assert.equal(event.policy.domain, 'fs')
+        assert.equal(event.policy.permission, 'warn')
+    } finally {
+        runtime.stop()
+    }
+})
+
+test('classifies safety events outside fs allow-list as denied', async () => {
+    install('warn')
+    const events = createCollector()
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
+    const targetFile = path.join(tmpDir, 'outside.txt')
+
+    const runtime = new Runtime([
+        {
+            name: 'Sink',
+            uid: 'sink',
+            factory: class SinkFactory {},
+            inputs: [],
+            outputs: [],
+        }
+    ], {
+        runtimeSettings: {
+            security: {
+                defaults: {
+                    fs: 'allow',
+                    net: 'warn',
+                    process: 'deny',
+                },
+                allow: {
+                    fsRoots: ['./approved'],
+                },
+            },
+        },
+    })
+
+    runtime.start()
+
+    try {
+        await runAsNode('Sink', async () => {
+            fs.writeFileSync(targetFile, 'outside')
+        })
+
+        const event = events.find((item) => item.cap === 'fs:write')
+        assert.ok(event)
+        assert.equal(event.policy.decision, 'denied')
+        assert.equal(event.policy.reason, 'fs_root_not_allowed')
+    } finally {
+        runtime.stop()
+    }
 })

@@ -1,4 +1,11 @@
 declare module '@vizualmodel/vmblu-runtime/rt-als' {
-  export function scaffold(nodeList: unknown[], filterList?: unknown[]): any;
-  export function enableSafety(options?: { mode?: string }, tx?: { send?: (name: string, payload: unknown) => unknown }): { uninstall: () => void };
+  export class Runtime {
+    constructor(nodeList?: unknown[], options?: Record<string, unknown>);
+    scaffold(nodeList?: unknown[]): this;
+    start(): void;
+    stop(): void;
+  }
+  export const safety: {
+    enable(options?: { mode?: string }, tx?: { send?: (name: string, payload: unknown) => unknown }): { uninstall: () => void };
+  };
 }

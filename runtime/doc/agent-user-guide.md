@@ -34,14 +34,29 @@ agent
   -> application node
 ```
 
+## Choose A Runtime
+
+Agent support is available in two runtime variants:
+
+| Runtime | Browser | Node.js | Safety/ALS | Agent |
+|---|---:|---:|---:|---:|
+| `@vizualmodel/vmblu-runtime/rt-base` | yes | yes | no | no |
+| `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
+| `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
+| `@vizualmodel/vmblu-runtime/rt-agent` | no | yes | yes | yes |
+
+Use `rt-browser-agent` for browser applications that need agent tools, probes,
+events and the overlay UI. Use `rt-agent` for Node.js applications that need the
+same agent layer plus ALS-based safety attribution and Node API instrumentation.
+
 ## Configure An Agent
 
-Use the `rt-agent` runtime and point `header.agent` at an agent sidecar:
+Use an agent runtime and point `header.agent` at an agent sidecar:
 
 ```json
 {
   "header": {
-    "runtime": "@vizualmodel/vmblu-runtime/rt-agent",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
     "agent": {
       "path": "./solar-system.agent.json"
     }
@@ -146,7 +161,7 @@ probe(name, args) {
 }
 ```
 
-`rt-agent` auto-registers declared probes against matching source nodes. The
+Agent runtimes auto-register declared probes against matching source nodes. The
 broker returns both JSON-safe `value` and a text representation for LLM context.
 
 ## Add An Event
@@ -203,22 +218,25 @@ Generate the app:
 vmblu make-app solar-system.mod.blu
 ```
 
-For `rt-agent` models, the generated app should contain:
+For agent runtime models, the generated app should contain:
 
 ```js
+import {Runtime} from '@vizualmodel/vmblu-runtime/rt-browser-agent'
 import capabilities from './solar-system.cap.json' with { type: 'json' }
 import agent from './solar-system.agent.json' with { type: 'json' }
 
-const agentRuntimeOptions = {
+const runtimeOptions = {
   capabilities,
   agent
 }
 
-const runtime = VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
+runtime.start()
 ```
 
-If it only calls `VMBLU.scaffold(nodeList, filterList)`, the generated app will
-not mount the agent overlay.
+If `runtimeOptions` does not include `agent`, the generated app will not create
+the agent runtime. If it does not include `capabilities`, the broker will have no
+tools, probes or events to expose.
 
 When regenerating from the VS Code extension after updating generator code,
 reload the VS Code window or reopen the vmblu editor so the webview uses the

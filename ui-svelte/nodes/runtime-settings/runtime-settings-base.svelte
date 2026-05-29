@@ -1,8 +1,6 @@
 <script>
-import SameLine from '../../fragments/same-line.svelte'
-import Label from '../../fragments/label.svelte'
 import TextField from '../../fragments/text-field.svelte'
-import CheckBox from '../../fragments/checkbox.svelte'
+import LabelCheckbox from '../../fragments/label-checkbox.svelte'
 
 export let dx
 </script>
@@ -10,12 +8,12 @@ export let dx
 <style>
 </style>
 
-<SameLine>
-    <CheckBox bind:on={dx.logMessages} />
-    <Label text="log messages"/>
-</SameLine>
-<SameLine>
-    <CheckBox bind:on={dx.worker.on} />
-    <Label text="use worker script:" style="margin-right: 0.5rem;"/>
-    <TextField bind:text={dx.worker.path} />
-</SameLine>
+<h4>Run</h4>
+<LabelCheckbox label="use worker script:" bind:on={dx.run.worker.on}>
+    <TextField bind:text={dx.run.worker.path} />
+</LabelCheckbox>
+<h4>Monitor</h4>
+<LabelCheckbox label="log messages" bind:on={dx.monitor.logMessages} />
+<LabelCheckbox label="log timings" bind:on={dx.monitor.logTimings} />
+<h4>Security</h4>
+<LabelCheckbox label="custom security settings" bind:on={dx.security.enabled} />

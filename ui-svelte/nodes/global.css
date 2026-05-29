@@ -2,10 +2,17 @@
   --ui-font-family: "Verdana", "Geneva", sans-serif;
   --ui-text-color: black;
   --ui-bg-color: white;
+  --ui-h4-color: yellow;
 }
 
 body {
   font-family: var(--ui-font-family);
   color: var(--ui-text-color);
   background-color: var(--ui-bg-color);
+}
+h4 {
+    margin: 1rem 0 0.5rem 0;
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: var(--ui-h4-color);
 }

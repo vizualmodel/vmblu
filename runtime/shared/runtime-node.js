@@ -30,32 +30,27 @@ function shouldUseNew(factory) {
     return (protoKeys.length !== 1 || protoKeys[0] !== 'constructor' || factory.prototype.constructor !== factory)
 }
 
-export function createRuntimeNode({getRuntime, normalizeRuntimeSettings, rtFlags}) {
+export function RuntimeNode(runtime, {name, uid, factory, inputs, outputs, sx, dx}) {
 
-    function RuntimeNode({name, uid, factory, inputs, outputs, sx, dx}) {
+    this.name = name
+    this.uid = uid
+    this.factory = factory
+    this.useNew = shouldUseNew(factory)
+    this.rxSink = []
+    this.txMap = new Map()
+    this.sx = sx ?? null
+    this.dx = dx ? runtime.settings.normalize(dx) : null
+    this.cell = null
+    this.msg = null
+    this.tx = createTx(runtime, this)
 
-        this.name = name
-        this.uid = uid
-        this.factory = factory
-        this.useNew = shouldUseNew(factory)
-        this.rxSink = []
-        this.txMap = new Map()
-        this.sx = sx ?? null
-        this.dx = dx ? normalizeRuntimeSettings(dx) : null
-        this.flags = 0x0
-        this.cell = null
-        this.msg = null
+    this.initRxTx({inputs, outputs})
+}
 
-        this.setFlags()
-        this.initRxTx({inputs, outputs})
-    }
-    RuntimeNode.prototype = {
+RuntimeNode.prototype = {
 
-        setFlags() {
-
-            if (!this.dx) return
-
-            if (this.dx.logMessages) this.flags |= rtFlags.LOGMSG
+        logsMessages() {
+            return !!(this.dx?.monitor?.logMessages || this.dx?.logMessages)
         },
 
         initRxTx({inputs, outputs}) {
@@ -171,11 +166,58 @@ export function createRuntimeNode({getRuntime, normalizeRuntimeSettings, rtFlags
         },
 
         getTx() {
+            return this.tx
+        },
+}
 
-            const source = this
+function createTx(runtime, source) {
+
+    return {
+        get pin() {return source.msg?.txPin},
+
+        send(pin, param) {
+
+            if (pin) {
+
+                const tx = source.findTx(pin)
+
+                if (tx) return runtime.sendTo(tx, source, param)
+            }
+
+            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
+            return 0
+        },
+
+        request(pin, param, timeout = 0) {
+
+            if (pin) {
+
+                const tx = source.findTx(pin)
+
+                if (tx) return runtime.requestFrom(tx, source, param, timeout)
+            }
+
+            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)
+            return runtime.reject('No such output pin')
+        },
+
+        reply(param) {
+            return runtime.reply(source, param)
+        },
+
+        next(param, timeout = 0) {
+            return runtime.next(source, param, timeout)
+        },
+
+        reschedule() {
+            if (source.msg) runtime.reschedule(source.msg)
+        },
+
+        select(nodeName) {
+
+            const _nodeName = nodeName
 
             return {
-                get pin() {return source.msg?.txPin},
 
                 send(pin, param) {
 
@@ -183,7 +225,20 @@ export function createRuntimeNode({getRuntime, normalizeRuntimeSettings, rtFlags
 
                         const tx = source.findTx(pin)
 
-                        if (tx) return getRuntime().sendTo(tx, source, param)
+                        if (tx) {
+
+                            const actualTarget = tx.targets.find(target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+
+                            if (actualTarget) {
+
+                                const txCopy = new TX(tx.pin, tx.channel)
+                                txCopy.targets = [actualTarget]
+                                return runtime.sendTo(txCopy, source, param)
+                            }
+
+                            console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
+                            return 0
+                        }
                     }
 
                     console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
@@ -196,87 +251,26 @@ export function createRuntimeNode({getRuntime, normalizeRuntimeSettings, rtFlags
 
                         const tx = source.findTx(pin)
 
-                        if (tx) return getRuntime().requestFrom(tx, source, param, timeout)
+                        if (tx) {
+
+                            const actualTarget = tx.targets.find(target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
+
+                            if (actualTarget) {
+
+                                const txCopy = new TX(tx.pin, tx.channel)
+                                txCopy.targets = [actualTarget]
+                                return runtime.requestFrom(txCopy, source, param, timeout)
+                            }
+
+                            console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
+                            return runtime.reject('selected node not connected')
+                        }
                     }
 
                     console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)
-                    return getRuntime().reject('No such output pin')
+                    return runtime.reject('No such output pin')
                 },
-
-                reply(param) {
-                    return getRuntime().reply(source, param)
-                },
-
-                next(param, timeout = 0) {
-                    return getRuntime().next(source, param, timeout)
-                },
-
-                reschedule() {
-                    if (source.msg) getRuntime().reschedule(source.msg)
-                },
-
-                select(nodeName) {
-
-                    const _nodeName = nodeName
-
-                    return {
-
-                        send(pin, param) {
-
-                            if (pin) {
-
-                                const tx = source.findTx(pin)
-
-                                if (tx) {
-
-                                    const actualTarget = tx.targets.find(target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
-
-                                    if (actualTarget) {
-
-                                        const txCopy = new TX(tx.pin, tx.channel)
-                                        txCopy.targets = [actualTarget]
-                                        return getRuntime().sendTo(txCopy, source, param)
-                                    }
-
-                                    console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
-                                    return 0
-                                }
-                            }
-
-                            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
-                            return 0
-                        },
-
-                        request(pin, param, timeout = 0) {
-
-                            if (pin) {
-
-                                const tx = source.findTx(pin)
-
-                                if (tx) {
-
-                                    const actualTarget = tx.targets.find(target => target.actor.name.toLowerCase() == _nodeName.toLowerCase())
-
-                                    if (actualTarget) {
-
-                                        const txCopy = new TX(tx.pin, tx.channel)
-                                        txCopy.targets = [actualTarget]
-                                        return getRuntime().requestFrom(txCopy, source, param, timeout)
-                                    }
-
-                                    console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
-                                    return getRuntime().reject('selected node not connected')
-                                }
-                            }
-
-                            console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)
-                            return getRuntime().reject('No such output pin')
-                        },
-                    }
-                }
             }
-        },
+        }
     }
-
-    return RuntimeNode
 }

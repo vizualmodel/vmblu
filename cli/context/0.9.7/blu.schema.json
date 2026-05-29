@@ -51,10 +51,59 @@
         "utc": { "type": "string", "format": "date-time" },
         "style": { "type": "string" },
         "runtime": { "type": "string" },
+        "runtimeSettings": { "$ref": "#/$defs/RuntimeSettingsConfig" },
         "agent": { "$ref": "#/$defs/AgentConfig" }
       },
       "additionalProperties": false,
       "required": ["version", "created", "saved", "utc"]
+    },
+
+    "RuntimeSettingsConfig": {
+      "description": "Optional model-level runtime configuration. Inline object for simple cases, string or {path} reference for a <model-name>.rt.json sidecar.",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "run": { "type": "object" },
+            "monitor": { "type": "object" },
+            "security": { "$ref": "#/$defs/ModelRuntimeSecurity" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+
+    "ModelRuntimeSecurity": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["off", "warn", "enforce"] },
+        "forwardEvents": { "type": "boolean" },
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "fs": { "$ref": "#/$defs/RuntimePermission" },
+            "net": { "$ref": "#/$defs/RuntimePermission" },
+            "process": { "$ref": "#/$defs/RuntimePermission" }
+          },
+          "additionalProperties": false
+        },
+        "allow": {
+          "type": "object",
+          "properties": {
+            "netHosts": { "type": "array", "items": { "type": "string" } },
+            "fsRoots": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "RuntimePermission": {
+      "type": "string",
+      "enum": ["inherit", "allow", "warn", "deny"]
     },
 
     "AgentConfig": {

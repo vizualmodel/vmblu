@@ -4,6 +4,7 @@ export const BrokerRequestTypes = Object.freeze({
     PROBE_READ: 'probe.read',
     EVENT_WAIT: 'event.wait',
     EVENTS_QUERY: 'events.query',
+    APPROVAL_RESOLVE: 'approval.resolve',
 })
 
 export const BrokerResultTypes = Object.freeze({
@@ -19,6 +20,8 @@ export const ToolResultStatus = Object.freeze({
     ACCEPTED: 'accepted',
     COMPLETED: 'completed',
     VERIFIED: 'verified',
+    UNVERIFIED: 'unverified',
+    PENDING: 'pending',
     FAILED: 'failed',
     TIMEOUT: 'timeout',
     DENIED: 'denied',

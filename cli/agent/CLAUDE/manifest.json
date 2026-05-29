@@ -4,14 +4,14 @@
   "install": {
     "files": [
       {
-        "from": "VMblu.md",
-        "toHomeRelative": ".claude/vmblu/VMblu.md"
+        "from": "SKILL.md",
+        "toHomeRelative": ".claude/skills/vmblu/SKILL.md"
       }
     ],
     "dirs": [
       {
         "fromCliRelative": "context",
-        "toHomeRelative": ".claude/vmblu/context"
+        "toHomeRelative": ".claude/skills/vmblu/context"
       }
     ]
   }

@@ -1,20 +1,9 @@
 import {ResolveQueue} from './resolve-queue.js'
 import {HIX_HANDLER, HIX_REPLY, HIX_TYPE_MASK} from './target.js'
+import {RuntimeNode} from './runtime-node.js'
 
-export const rtFlags = {
-    LOGMSG: 0x1
-}
-
-const LOGMSG = rtFlags.LOGMSG
-
-function defaultInvokeHandler(dest, hix, param) {
-    return dest.rxSink[hix].handler.call(dest.cell, param)
-}
-
-export function createRuntime({invokeHandler = defaultInvokeHandler} = {}) {
-
-    function Runtime() {
-
+export class Runtime {
+    constructor(nodeList = [], options = {}) {
         this.actors = []
         this.receiveTimer = 0
         this.idleTimer = 0
@@ -26,247 +15,263 @@ export function createRuntime({invokeHandler = defaultInvokeHandler} = {}) {
         this.qOut = []
         this.qIn = []
         this.qResolve = new ResolveQueue()
+        this.options = options ?? {}
+        this.runtimeSettings = options?.runtimeSettings ?? null
+
+        this.scaffold(nodeList)
     }
-    Runtime.prototype = {
 
-        clearReceiveTimer() {
-            clearTimeout(this.receiveTimer)
+    scaffold(nodeList = []) {
+        this.actors = []
+
+        for (const rawNode of nodeList) {
+            this.actors.push(new RuntimeNode(this, rawNode))
+        }
+
+        this.actors.forEach(actor => actor.resolveUIDs(this.actors))
+        this.configure(this.options)
+
+        return this
+    }
+
+    configure(options = {}) {
+    }
+
+    clearReceiveTimer() {
+        clearTimeout(this.receiveTimer)
+        this.receiveTimer = 0
+    }
+
+    clearIdleTimer() {
+        clearTimeout(this.idleTimer)
+        this.idleTimer = 0
+    }
+
+    scheduleReceive() {
+
+        if (this.receiveTimer) return
+
+        this.clearIdleTimer()
+
+        this.receiveTimer = setTimeout(() => {
             this.receiveTimer = 0
-        },
+            this.receive()
+        }, this.receiveDelay)
+    }
 
-        clearIdleTimer() {
-            clearTimeout(this.idleTimer)
+    scheduleIdleCheck() {
+
+        if (this.idleTimer || this.receiveTimer || this.qOut.length) return
+
+        this.idleTimer = setTimeout(() => {
             this.idleTimer = 0
-        },
+            this.idle()
+        }, this.idleDelay)
+    }
 
-        scheduleReceive() {
+    start() {
 
-            if (this.receiveTimer) return
+        this.clearReceiveTimer()
+        this.clearIdleTimer()
 
-            this.clearIdleTimer()
+        this.qOut = []
+        this.qIn = []
 
-            this.receiveTimer = setTimeout(() => {
-                this.receiveTimer = 0
-                this.receive()
-            }, this.receiveDelay)
-        },
+        this.msgCount = 0
+        this.idleCount = 0
 
-        scheduleIdleCheck() {
+        for (const actor of this.actors) actor.makeCell()
 
-            if (this.idleTimer || this.receiveTimer || this.qOut.length) return
+        this.startTime = Date.now()
 
-            this.idleTimer = setTimeout(() => {
-                this.idleTimer = 0
-                this.idle()
-            }, this.idleDelay)
-        },
+        this.scheduleIdleCheck()
+    }
 
-        start() {
+    stop() {
+        this.clearReceiveTimer()
+        this.clearIdleTimer()
 
-            this.clearReceiveTimer()
-            this.clearIdleTimer()
+        this.msgCount = 0
+        this.idleCount = 0
 
-            this.qOut = []
-            this.qIn = []
+        this.actors.forEach(actor => actor.cell = null)
 
-            this.msgCount = 0
-            this.idleCount = 0
+        this.qOut = []
+        this.qIn = []
+    }
 
-            for (const actor of this.actors) actor.makeCell()
+    halt() {
+        this.clearReceiveTimer()
+        this.clearIdleTimer()
+    }
 
-            this.startTime = Date.now()
+    continue() {
+        if (this.qOut.length) this.scheduleReceive()
+        else this.scheduleIdleCheck()
+    }
 
-            this.scheduleIdleCheck()
-        },
+    switch() {
+        const temp = this.qIn
+        this.qIn = this.qOut
+        this.qOut = temp
+        this.qOut.length = 0
+    }
 
-        stop() {
-            this.clearReceiveTimer()
-            this.clearIdleTimer()
+    idle() {
+        this.idleCount++
 
-            this.msgCount = 0
-            this.idleCount = 0
+        const now = Date.now()
 
-            this.actors.forEach(actor => actor.cell = null)
+        this.qResolve.checkTimeouts(now)
 
-            this.qOut = []
-            this.qIn = []
-        },
+        if (this.idleCount % 600 == 0) {
+            const min = (now - this.startTime)/60000
+            console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`)
+        }
 
-        halt() {
-            this.clearReceiveTimer()
-            this.clearIdleTimer()
-        },
+        this.scheduleIdleCheck()
+    }
 
-        continue() {
-            if (this.qOut.length) this.scheduleReceive()
-            else this.scheduleIdleCheck()
-        },
+    reject(reason) {
+        return new Promise((resolve, reject) => {
+            reject(new Error(reason))
+        })
+    }
 
-        switch() {
-            const temp = this.qIn
-            this.qIn = this.qOut
-            this.qOut = temp
-            this.qOut.length = 0
-        },
+    logMessage(msg) {
+        console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`)
+    }
 
-        idle() {
-            this.idleCount++
+    logReqReply(msg, what) {
+        console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`)
+    }
 
-            const now = Date.now()
+    logNotConnected(nodeName, pinName) {
+        console.log(`${nodeName}[${pinName}] : not connected.`)
+    }
 
-            this.qResolve.checkTimeouts(now)
+    sendTo(tx, source, param) {
 
-            if (this.idleCount % 600 == 0) {
-                const min = (now - this.startTime)/60000
-                console.log(`<idle> ${this.idleCount} cycles - nr of messages: ${this.msgCount} - running time:${min.toFixed(0)} min`)
-            }
+        if (tx.targets.length < 1) {
+            if (source.logsMessages?.()) this.logNotConnected(source.name, tx.pin)
+            return 0
+        }
 
-            this.scheduleIdleCheck()
-        },
+        ++this.msgCount
 
-        reject(reason) {
-            return new Promise((resolve, reject) => {
-                reject(new Error(reason))
-            })
-        },
+        const log = source.logsMessages?.()
+        for (const target of tx.targets) {
+            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
+            if (log) this.logMessage(this.qOut.at(-1))
+        }
 
-        logMessage(msg) {
-            console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}]`)
-        },
+        this.idleCount = 0
+        if (!this.receiveTimer) this.scheduleReceive()
 
-        logReqReply(msg, what) {
-            console.log(`${msg.source.name}[${msg.txPin}] -> ${msg.dest.name}[${msg.rxPin}] (${what})`)
-        },
+        return tx.targets.length
+    }
 
-        logNotConnected(nodeName, pinName) {
-            console.log(`${nodeName}[${pinName}] : not connected.`)
-        },
+    requestFrom(tx, source, param, timeout) {
 
-        sendTo(tx, source, param) {
+        if (tx.targets.length < 1) {
+            if (source.logsMessages?.()) this.logNotConnected(source.name, tx.pin)
+            return this.reject('Not connected')
+        }
 
-            if (tx.targets.length < 1) {
-                if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin)
-                return 0
-            }
+        const txRef = ++this.msgCount
+        let channelCount = 0
 
-            ++this.msgCount
+        const log = source.logsMessages?.()
+        for (const target of tx.targets) {
 
-            const log = source.flags & LOGMSG
-            for (const target of tx.targets) {
-                this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
-                if (log) this.logMessage(this.qOut.at(-1))
-            }
+            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
 
-            this.idleCount = 0
-            if (!this.receiveTimer) this.scheduleReceive()
+            if (log) this.logReqReply(this.qOut.at(-1), 'request')
 
-            return tx.targets.length
-        },
+            if (target.channel) channelCount++
+        }
 
-        requestFrom(tx, source, param, timeout) {
+        this.idleCount = 0
+        if (!this.receiveTimer) this.scheduleReceive()
 
-            if (tx.targets.length < 1) {
-                if (source.flags & LOGMSG) this.logNotConnected(source.name, tx.pin)
-                return this.reject('Not connected')
-            }
+        if (channelCount == 0) return this.reject('No channel')
 
-            const txRef = ++this.msgCount
-            let channelCount = 0
+        return this.qResolve.addPromiseHandler(txRef, timeout, channelCount)
+    }
 
-            const log = (source.flags & LOGMSG)
-            for (const target of tx.targets) {
+    reply(source, param) {
 
-                this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
+        if (!source.msg?.txRef) return 0
 
-                if (log) this.logReqReply(this.qOut.at(-1), 'request')
+        ++this.msgCount
 
-                if (target.channel) channelCount++
-            }
+        this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef:0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin})
 
-            this.idleCount = 0
-            if (!this.receiveTimer) this.scheduleReceive()
+        if (source.logsMessages?.()) this.logReqReply(this.qOut.at(-1), 'reply')
 
-            if (channelCount == 0) return this.reject('No channel')
+        this.idleCount = 0
+        if (!this.receiveTimer) this.scheduleReceive()
 
-            return this.qResolve.addPromiseHandler(txRef, timeout, channelCount)
-        },
+        return 1
+    }
 
-        reply(source, param) {
+    next(source, param, timeout) {
 
-            if (!source.msg?.txRef) return 0
+        if (!source.msg?.txRef) return this.reject('No target')
 
-            ++this.msgCount
+        const txRef = ++this.msgCount
 
-            this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef:0, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin})
+        this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin})
 
-            if (source.flags & LOGMSG) this.logReqReply(this.qOut.at(-1), 'reply')
+        this.idleCount = 0
+        if (!this.receiveTimer) this.scheduleReceive()
 
-            this.idleCount = 0
-            if (!this.receiveTimer) this.scheduleReceive()
+        return this.qResolve.addPromiseHandler(txRef, timeout)
+    }
 
-            return 1
-        },
+    receive() {
 
-        next(source, param, timeout) {
+        if (!this.qOut.length) return this.scheduleIdleCheck()
 
-            if (!source.msg?.txRef) return this.reject('No target')
+        this.switch()
+        this.handleReceiveQueue()
 
-            const txRef = ++this.msgCount
+        if (this.qOut.length && !this.receiveTimer) this.scheduleReceive()
+        else this.scheduleIdleCheck()
+    }
 
-            this.qOut.push({ source, dest: source.msg.source, hix: HIX_REPLY, param, txRef, txPin: source.msg.rxPin, rxRef: source.msg.txRef, rxPin: source.msg.txPin})
+    handleReceiveQueue() {
 
-            this.idleCount = 0
-            if (!this.receiveTimer) this.scheduleReceive()
+        for (const msg of this.qIn) {
 
-            return this.qResolve.addPromiseHandler(txRef, timeout)
-        },
+            const dest = msg.dest
 
-        receive() {
+            switch(msg.hix & HIX_TYPE_MASK) {
 
-            if (!this.qOut.length) return this.scheduleIdleCheck()
+                case HIX_HANDLER : {
 
-            this.switch()
-            this.handleReceiveQueue()
+                    dest.msg = msg
 
-            if (this.qOut.length && !this.receiveTimer) this.scheduleReceive()
-            else this.scheduleIdleCheck()
-        },
+                    if (dest.logsMessages?.()) this.logMessage(msg)
 
-        handleReceiveQueue() {
-
-            for (const msg of this.qIn) {
-
-                const dest = msg.dest
-
-                switch(msg.hix & HIX_TYPE_MASK) {
-
-                    case HIX_HANDLER : {
-
-                        dest.msg = msg
-
-                        if (dest.flags & LOGMSG) this.logMessage(msg)
-
-                        invokeHandler(dest, msg.hix, msg.param)
-                    }
-                    break
-
-                    case HIX_REPLY : {
-
-                        if (dest.flags & LOGMSG) this.logReqReply(msg, 'incoming reply')
-
-                        this.qResolve.trigger(msg.rxRef, msg.param)
-                    }
-                    break
+                    dest.rxSink[msg.hix].handler.call(dest.cell, msg.param)
                 }
-            }
-        },
+                break
 
-        reschedule(msg) {
-            this.qOut.push(msg)
-            this.idleCount = 0
-            if (!this.receiveTimer) this.scheduleReceive()
+                case HIX_REPLY : {
+
+                    if (dest.logsMessages?.()) this.logReqReply(msg, 'incoming reply')
+
+                    this.qResolve.trigger(msg.rxRef, msg.param)
+                }
+                break
+            }
         }
     }
 
-    return Runtime
+    reschedule(msg) {
+        this.qOut.push(msg)
+        this.idleCount = 0
+        if (!this.receiveTimer) this.scheduleReceive()
+    }
 }

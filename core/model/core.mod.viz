@@ -153,7 +153,7 @@
                 "interface": "(0)",
                 "pins": [
                   "(1 L)path",
-                  "(3 R)folder.get",
+                  "(4 R)folder.get",
                   "(2 R)modal div"
                 ]
               }
@@ -247,14 +247,14 @@
             ]
           },
           {
-            "interface": "(55) files",
+            "interface": "(53) files",
             "pins": [
               "(26 R)open source file",
               "(28 R)open model"
             ]
           },
           {
-            "interface": "(56) redox",
+            "interface": "(54) redox",
             "pins": [
               "(17 R)redox.doit",
               "(18 R)redox.undo",
@@ -270,27 +270,27 @@
         "rect": "x 676 y -11 w 165 h 461",
         "interfaces": [
           {
-            "interface": "(89) actions",
+            "interface": "(99) actions",
             "pins": [
               "(73 R)accept changes",
-              "(74 R)reload model",
-              "(75 R)sync links",
+              "(96 R)sync model",
               "(76 R)show settings",
               "(53 R)make app",
               "(54 R)make lib"
             ]
           },
           {
-            "interface": "(90) model",
+            "interface": "(100) model",
             "pins": [
               "(78 R)model.set",
               "(79 R)model.header",
               "(60 R)model.root",
+              "(98 R)model.resolved",
               "(64 R)model.save"
             ]
           },
           {
-            "interface": "(91) save point",
+            "interface": "(101) save point",
             "pins": [
               "(81 R)save point.set",
               "(82 R)save point.back",
@@ -298,7 +298,7 @@
             ]
           },
           {
-            "interface": "(92) info",
+            "interface": "(102) info",
             "pins": [
               "(84 R)pin profile",
               "(93 R)tool settings",
@@ -307,7 +307,7 @@
             ]
           },
           {
-            "interface": "(95) redox",
+            "interface": "(103) redox",
             "pins": [
               "(56 R)redox.doit",
               "(57 R)redox.undo",
@@ -316,7 +316,7 @@
             ]
           },
           {
-            "interface": "(96) files",
+            "interface": "(104) files",
             "pins": [
               "(88 R)open source file",
               "(62 R)open model"

@@ -7,7 +7,7 @@
     "@vizualmodel/vmblu-runtime": "file:../runtime"
   },
   "devDependencies": {
-    "@vizualmodel/vmblu-cli": "^0.5.2",
+    "@vizualmodel/vmblu-cli": "^0.5.3",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
   },

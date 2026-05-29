@@ -180,9 +180,9 @@ Examples:
 
 Implement a module that installs hooks once and returns an uninstall function.
 
-Recommended public function:
+Recommended object method:
 
-* `installSafetyHooks({ mode })`
+* `safety.installHooks({ mode })`
 
 Behavior:
 
@@ -253,7 +253,7 @@ Make this reusable so the test harness can enable it easily.
 
 A good shape would be a helper like:
 
-* `enableSafety({ mode }, tx)`
+* `safety.enable({ mode }, tx)`
 
 which:
 

@@ -1,11 +1,11 @@
 // ------------------------------------------------------------------
 // Model: node-editor
 // Path: C:/dev/vmblu/core/model/core.app.js
-// Creation date 5/4/2026, 11:15:15 AM
+// Creation date 5/29/2026, 10:10:52 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
-import * as VMBLU from "@vizualmodel/vmblu-runtime/rt-base"
+import {Runtime} from "@vizualmodel/vmblu-runtime/rt-base"
 
 
 //Imports
@@ -17,12 +17,14 @@ import { NodeSelectorFactory,
 import { ViewManager } from '../nodes/view-manager/view-manager.js'
 import { ModelManager } from '../nodes/model-manager/model-manager.js'
 
+
+
 //The runtime nodes
 const nodeList = [
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager", 
-	uid: "Kcps", 
+	uid: "cBsd", 
 	factory: LibraryManager,
 	inputs: [
 		"-> add file",
@@ -36,7 +38,7 @@ const nodeList = [
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager", 
-	uid: "avwn", 
+	uid: "huEe", 
 	factory: DocumentManager,
 	inputs: [
 		"-> doc.selected",
@@ -63,7 +65,7 @@ const nodeList = [
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "IoMS", 
+	uid: "TnBO", 
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -79,7 +81,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector", 
-	uid: "SukQ", 
+	uid: "HLsU", 
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
@@ -87,16 +89,16 @@ const nodeList = [
 		],
 	outputs: [
 		"selected node -> ()",
-		"remove file -> remove file @ library manager (baUK)",
-		"add file -> add file @ library manager (baUK)",
-		"get path -> path @ path request (PDRO)",
+		"remove file -> remove file @ library manager (KZQK)",
+		"add file -> add file @ library manager (KZQK)",
+		"get path -> path @ path request (FaFb)",
 		"modal div -> ()"
 		]
 	},
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager", 
-	uid: "baUK", 
+	uid: "KZQK", 
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -104,13 +106,13 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (SukQ)"
+		"build table -> build table @ node selector (HLsU)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "PDRO", 
+	uid: "FaFb", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -123,7 +125,7 @@ const nodeList = [
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager", 
-	uid: "rxby", 
+	uid: "gqDg", 
 	factory: ViewManager,
 	inputs: [
 		"-> size change",
@@ -152,11 +154,11 @@ const nodeList = [
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager", 
-	uid: "Ydvc", 
+	uid: "UdeM", 
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",
-		"-> reload model",
+		"-> sync model",
 		"-> sync links",
 		"-> show settings",
 		"-> make app",
@@ -172,6 +174,7 @@ const nodeList = [
 	outputs: [
 		"model.header -> ()",
 		"model.root -> ()",
+		"model.resolved -> ()",
 		"save point.confirm -> ()",
 		"pin profile -> ()",
 		"tool settings -> ()",
@@ -184,10 +187,11 @@ const nodeList = [
 	},
 ]
 
-const agentRuntimeOptions = {}
+// Runtime options
+const runtimeOptions = {}
 
 // prepare the runtime
-const runtime = VMBLU.scaffold(nodeList, [], agentRuntimeOptions)
+const runtime = new Runtime(nodeList, runtimeOptions)
 
 // and start the app
 runtime.start()

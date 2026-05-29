@@ -2,7 +2,7 @@
   "header": {
     "version": "0.9.6",
     "utc": "2025-12-16T12:00:06.433Z",
-    "style": "#656134"
+    "style": "#00aaff"
   },
   "root": {
     "kind": "group",
@@ -20,8 +20,8 @@
         "rect": "x 999 y 90 w 200 h 26",
         "view": {
           "state": "open",
-          "rect": "x 748 y -148 w 793 h 704",
-          "transform": "sx 1.000 sy 1.000 dx 762.500 dy -164.000"
+          "rect": "x 773 y -154 w 793 h 704",
+          "transform": "sx 1.000 sy 1.000 dx 787.500 dy -159.000"
         },
         "nodes": [
           {
@@ -146,12 +146,42 @@
           {
             "kind": "source",
             "name": "document settings",
-            "rect": "x 69 y 449 w 200 h 56",
+            "rect": "x 69 y 449 w 200 h 86",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)show",
+                  "(2 L)modal div",
+                  "(3 R)model runtime settings",
+                  "(4 R)agent settings"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "model runtime settings",
+            "rect": "x 358 y 460 w 210 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "agent settings",
+            "rect": "x 362 y 542 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
                   "(2 L)modal div"
                 ]
               }
@@ -160,7 +190,7 @@
           {
             "kind": "source",
             "name": "confirm box",
-            "rect": "x 363 y 418 w 150 h 56",
+            "rect": "x 362 y 385 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -174,7 +204,7 @@
           {
             "kind": "source",
             "name": "runtime settings",
-            "rect": "x 361 y 519 w 150 h 56",
+            "rect": "x 364 y 630 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -216,7 +246,7 @@
           {
             "kind": "source",
             "name": "event settings",
-            "rect": "x 574 y 417 w 150 h 56",
+            "rect": "x 573 y 359 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -249,8 +279,8 @@
         "rect": "x 114 y -101 w 200 h 26",
         "view": {
           "state": "open",
-          "rect": "x 20 y -143 w 685 h 585",
-          "transform": "sx 0.960 sy 0.960 dx 49.076 dy -130.706"
+          "rect": "x -3 y -194 w 651 h 552",
+          "transform": "sx 0.960 sy 0.960 dx 26.076 dy -181.706"
         },
         "nodes": [
           {
@@ -358,8 +388,8 @@
         "rect": "x 325 y 672 w 200 h 26",
         "view": {
           "state": "open",
-          "rect": "x 23 y 493 w 680 h 609",
-          "transform": "sx 1.000 sy 1.000 dx 39.000 dy 494.000"
+          "rect": "x 7 y 403 w 656 h 609",
+          "transform": "sx 1.000 sy 1.000 dx 23.000 dy 404.000"
         },
         "nodes": [
           {
@@ -425,7 +455,7 @@
                   "(2 R)save as",
                   "(3 R)save all",
                   "(4 R)accept changes",
-                  "(5 R)sync model",
+                  "(5 R)sync",
                   "(6 R)recalibrate",
                   "(7 R)grid on-off",
                   "(8 R)make app page",
@@ -473,7 +503,7 @@
                 "pins": [
                   "(3 L)accept changes",
                   "(4 L)recalibrate",
-                  "(5 L)sync",
+                  "(5 L)sync model",
                   "(6 L)grid on-off",
                   "(7 L)show settings",
                   "(8 L)set save point",

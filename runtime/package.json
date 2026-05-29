@@ -17,6 +17,11 @@
       "require": "./dist/rt-als/index.cjs",
       "default": "./dist/rt-als/index.js"
     },
+    "./rt-browser-agent": {
+      "import": "./dist/rt-browser-agent/index.js",
+      "require": "./dist/rt-browser-agent/index.cjs",
+      "default": "./dist/rt-browser-agent/index.js"
+    },
     "./rt-agent": {
       "import": "./dist/rt-agent/index.js",
       "require": "./dist/rt-agent/index.cjs",
@@ -36,8 +41,9 @@
   "scripts": {
     "build:base": "tsup rt-base/index.js --format esm,cjs --out-dir dist/rt-base --sourcemap --splitting false --keep-names",
     "build:als": "tsup rt-als/index.js --format esm,cjs --out-dir dist/rt-als --sourcemap --splitting false --keep-names",
+    "build:browser-agent": "tsup rt-browser-agent/index.js --format esm,cjs --out-dir dist/rt-browser-agent --sourcemap --splitting false --keep-names",
     "build:agent": "tsup rt-agent/index.js --format esm,cjs --out-dir dist/rt-agent --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als && npm run build:agent",
+    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:agent",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },
