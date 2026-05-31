@@ -17,7 +17,7 @@ export default defineConfig({
       '@vizualmodel/vmblu-runtime/rt-base',
       '@vizualmodel/vmblu-runtime/rt-als',
       '@vizualmodel/vmblu-runtime/rt-browser-agent',
-      '@vizualmodel/vmblu-runtime/rt-agent',
+      '@vizualmodel/vmblu-runtime/rt-nodejs-agent',
     ],
   },
   build: {

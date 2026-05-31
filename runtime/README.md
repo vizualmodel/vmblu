@@ -57,10 +57,10 @@ Returns a runtime object:
 | `@vizualmodel/vmblu-runtime/rt-base` | yes | yes | no | no |
 | `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
 | `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
-| `@vizualmodel/vmblu-runtime/rt-agent` | no | yes | yes | yes |
+| `@vizualmodel/vmblu-runtime/rt-nodejs-agent` | no | yes | yes | yes |
 
 Use `rt-browser-agent` for browser apps that need the agent/tool broker without
-Node.js safety instrumentation. Use `rt-agent` for Node.js apps that need both
+Node.js safety instrumentation. Use `rt-nodejs-agent` for Node.js apps that need both
 agent features and ALS-based safety attribution.
 
 ### `safety.enable({ mode }, tx)`

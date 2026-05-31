@@ -32,7 +32,7 @@ called, observed, and read.
 - Source nodes can expose read-only probes with node-level `probes` metadata.
 - Tools, probes, and events are normalized into `<model>.cap.json`.
 - Capability generation is a separate CLI command: `vmblu make-capabilities`.
-- Generated `rt-agent` apps inline the capability manifest into
+- Generated `rt-nodejs-agent` apps inline the capability manifest into
   `agentRuntimeOptions`.
 - Agent config v1 lives in `header.agent`, directly after `header.runtime`.
 - LLM connection config lives under `header.agent.llm` with `provider`, `model`,
@@ -64,24 +64,24 @@ called, observed, and read.
   - `cli/templates/0.9.5/*`,
   - project-local `.vmblu/capabilities.schema.json`.
 - Updated `vmblu init` to copy `capabilities.schema.json`.
-- Updated app generation for `rt-agent`:
+- Updated app generation for `rt-nodejs-agent`:
   - generated apps pass `agentRuntimeOptions` into
     `VMBLU.scaffold(nodeList, filterList, agentRuntimeOptions)`,
   - capabilities are generated inline from the model,
   - `header.agent` is passed when present.
 - Rebuilt the VS Code webview bundle so generation from the extension uses the
   same `agentRuntimeOptions` path as the CLI.
-- Added `runtime/rt-agent`:
+- Added `runtime/rt-nodejs-agent`:
   - `CapabilityRegistry`,
   - `ToolBroker`,
   - `TraceRecorder`,
   - `AgentRuntime`,
   - broker protocol constants,
   - browser-safe context/safety helpers,
-  - `./rt-agent` package export and build script.
+  - `./rt-nodejs-agent` package export and build script.
 - Added runtime startup integration:
-  - `rt-agent/scaffold.js` accepts runtime options,
-  - `rt-agent/runtime.js` creates and attaches the broker,
+  - `rt-nodejs-agent/scaffold.js` accepts runtime options,
+  - `rt-nodejs-agent/runtime.js` creates and attaches the broker,
   - the broker is attached as an internal runtime actor,
   - declared events are wired by appending broker targets to matching output
     tx tables,
@@ -121,7 +121,7 @@ called, observed, and read.
 
 The solar-system example is the current end-to-end demo.
 
-- `header.runtime` is `@vizualmodel/vmblu-runtime/rt-agent`.
+- `header.runtime` is `@vizualmodel/vmblu-runtime/rt-nodejs-agent`.
 - `header.agent` defines `solar-system-agent`.
 - `header.agent.llm` is configured for the existing local OpenAI-compatible
   bridge:
@@ -259,7 +259,7 @@ Possible multi-agent model:
 ### Runtime/Tooling
 
 - Add focused tests for `blueprint-cap.js`.
-- Add tests that generated `rt-agent` apps include `agentRuntimeOptions`.
+- Add tests that generated `rt-nodejs-agent` apps include `agentRuntimeOptions`.
 - Add tests for event wiring from declared output pins.
 - Add tests for probe auto-registration failure behavior.
 - Keep `runtime/doc/agent-user-guide.md` current as the feature evolves.

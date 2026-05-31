@@ -189,7 +189,7 @@ Minimal header shape:
 
 ```json
 {
-  "runtime": "@vizualmodel/vmblu-runtime/rt-agent",
+  "runtime": "@vizualmodel/vmblu-runtime/rt-nodejs-agent",
   "agent": {
     "enabled": true,
     "id": "mainAssistant",
