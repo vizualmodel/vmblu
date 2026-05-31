@@ -23,7 +23,9 @@ let selectedId = ''
 let error = ''
 
 const providerOptions = ['openai']
+const typeOptions = ['overlay', 'http', 'mcp', 'openai', 'claude', 'langchain']
 const overlayOptions = ['overlay', 'none']
+const transportModeOptions = ['stdio', 'http']
 
 onMount(() => {
     tx.send('modal div', box.div)
@@ -86,10 +88,13 @@ function makeAgent(id, caps) {
     return normalizeAgent({
         id,
         title: titleFromId(id),
+        type: 'overlay',
         enabled: true,
         instructions: 'Operate the application through published tools.',
         llm: {provider: 'openai', model: 'gpt-4.1-mini', endpoint: 'http://127.0.0.1:8080/v1'},
         ui: {mode: 'overlay'},
+        server: {host: '127.0.0.1', port: 8787, basePath: '/agent'},
+        transport: {mode: 'stdio'},
         permissions: {
             tools: {allow: caps.tools.map(item => item.id), deny: []},
             probes: {allow: caps.probes.map(item => item.id), deny: []},
@@ -102,6 +107,7 @@ function normalizeAgent(agent, caps) {
     const id = String(agent?.id || 'agent').trim() || 'agent'
     return {
         id,
+        type: agent?.type ?? inferAgentType(agent),
         title: agent?.title ?? titleFromId(id),
         enabled: agent?.enabled !== false,
         instructions: agent?.instructions ?? '',
@@ -113,12 +119,26 @@ function normalizeAgent(agent, caps) {
         ui: {
             mode: agent?.ui?.mode ?? 'overlay',
         },
+        server: {
+            host: agent?.server?.host ?? '127.0.0.1',
+            port: agent?.server?.port ?? 8787,
+            basePath: agent?.server?.basePath ?? '/agent',
+        },
+        transport: {
+            mode: agent?.transport?.mode ?? 'stdio',
+        },
         permissions: {
             tools: normalizePermission(agent?.permissions?.tools, caps.tools),
             probes: normalizePermission(agent?.permissions?.probes, caps.probes),
             events: normalizePermission(agent?.permissions?.events, caps.events),
         },
     }
+}
+
+function inferAgentType(agent) {
+    if (agent?.transport?.mode) return 'mcp'
+    if (agent?.server) return 'http'
+    return 'overlay'
 }
 
 function normalizePermission(permission, items) {
@@ -364,18 +384,33 @@ function titleFromId(id) {
                     <LabelSelect label="default agent" bind:value={config.defaultAgent} options={config.agents.map(agent => agent.id)} />
                 </div>
 
+                <LabelSelect label="type" bind:value={selectedAgent.type} options={typeOptions} />
                 <LabelTextInput label="title" bind:text={selectedAgent.title} />
                 <LabelTextarea label="instructions" bind:text={selectedAgent.instructions} />
 
-                <div class="row">
-                    <LabelSelect label="provider" bind:value={selectedAgent.llm.provider} options={providerOptions} />
-                    <LabelSelect label="overlay" bind:value={selectedAgent.ui.mode} options={overlayOptions} />
-                </div>
+                {#if selectedAgent.type === 'overlay' || selectedAgent.type === 'openai'}
+                    <div class="row">
+                        <LabelSelect label="provider" bind:value={selectedAgent.llm.provider} options={providerOptions} />
+                        <LabelSelect label="overlay" bind:value={selectedAgent.ui.mode} options={overlayOptions} />
+                    </div>
 
-                <div class="row">
-                    <LabelTextInput label="model" bind:text={selectedAgent.llm.model} />
-                    <LabelTextInput label="endpoint" bind:text={selectedAgent.llm.endpoint} />
-                </div>
+                    <div class="row">
+                        <LabelTextInput label="model" bind:text={selectedAgent.llm.model} />
+                        <LabelTextInput label="endpoint" bind:text={selectedAgent.llm.endpoint} />
+                    </div>
+                {/if}
+
+                {#if selectedAgent.type === 'http'}
+                    <div class="row">
+                        <LabelTextInput label="server host" bind:text={selectedAgent.server.host} />
+                        <LabelTextInput label="server port" bind:text={selectedAgent.server.port} />
+                    </div>
+                    <LabelTextInput label="base path" bind:text={selectedAgent.server.basePath} />
+                {/if}
+
+                {#if selectedAgent.type === 'mcp'}
+                    <LabelSelect label="transport" bind:value={selectedAgent.transport.mode} options={transportModeOptions} />
+                {/if}
 
                 <div class="hint">
                     Effective view: {allowedCounts.tools} tools, {allowedCounts.probes} probes, {allowedCounts.events} events.

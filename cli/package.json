@@ -17,6 +17,7 @@
     "commands/agent",
     "commands/init",
     "commands/llm-bridge",
+    "commands/make-agent-adapter",
     "commands/make-capabilities",
     "commands/make-app",
     "commands/make-test",
@@ -44,6 +45,7 @@
     "tsup": "^8.5.0"
   },
   "dependencies": {
+    "@vizualmodel/vmblu-runtime": "^0.4.0",
     "ts-morph": "^26.0.0",
     "typescript": "^5.8.3"
   },

@@ -8081,7 +8081,7 @@ var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1
 var root_4$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Default Permissions</h4> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Allow Lists</h4> <!> <!></div>`, 1);
 var root_2$8 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!> <!>`, 1);
 var root_5$3 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
-var root_6$2 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
+var root_6$1 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
 var root_1$b = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
 
 function Model_runtime_settings($$anchor, $$props) {
@@ -8431,7 +8431,7 @@ function Model_runtime_settings($$anchor, $$props) {
 			var node_14 = sibling(node_2, 2);
 
 			if_block(node_14, () => get(settingsError), ($$anchor) => {
-				var div_6 = root_6$2();
+				var div_6 = root_6$1();
 				var text_1 = child(div_6);
 				template_effect(() => set_text(text_1, get(settingsError)));
 				append($$anchor, div_6);
@@ -17343,9 +17343,9 @@ function Markdown_input($$anchor, $$props) {
 var root_5$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw"> </span><span class="punct svelte-m7l4mw">:</span></p>`);
 var root_8$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
 var root_7$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="field svelte-m7l4mw"> </span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!>`, 1);
-var root_10 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">kind</span><span class="punct svelte-m7l4mw">:</span><span class="kind svelte-m7l4mw"> </span></p>`);
-var root_11$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
-var root_9$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">type</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <!>`, 1);
+var root_10$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">kind</span><span class="punct svelte-m7l4mw">:</span><span class="kind svelte-m7l4mw"> </span></p>`);
+var root_11$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
+var root_9$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">type</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <!>`, 1);
 var root_3$1 = template(`<p class="line brace svelte-m7l4mw"></p> <p class="line contract-line svelte-m7l4mw" style="--indent:1"><span class="contract-key svelte-m7l4mw">role</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <p class="line brace svelte-m7l4mw"></p>`, 1);
 var root_13 = template(`<pre class="line svelte-m7l4mw"> </pre>`);
 var root_2$6 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Contract</p> <div class="box contract svelte-m7l4mw"><!></div></div>`);
@@ -17534,7 +17534,7 @@ function Pin_profile($$anchor, $$props) {
 											append($$anchor, fragment_4);
 										},
 										($$anchor) => {
-											var fragment_5 = root_9$1();
+											var fragment_5 = root_9$2();
 											var p_5 = first_child(fragment_5);
 											var span_5 = sibling(child(p_5), 2);
 											var text_6 = child(span_5);
@@ -17542,7 +17542,7 @@ function Pin_profile($$anchor, $$props) {
 											var node_6 = sibling(p_5, 2);
 
 											if_block(node_6, () => get(row).typeKind, ($$anchor) => {
-												var p_6 = root_10();
+												var p_6 = root_10$1();
 												var span_6 = sibling(child(p_6), 2);
 												var text_7 = child(span_6);
 
@@ -17557,7 +17557,7 @@ function Pin_profile($$anchor, $$props) {
 											var node_7 = sibling(node_6, 2);
 
 											if_block(node_7, () => get(row).summary, ($$anchor) => {
-												var p_7 = root_11$1();
+												var p_7 = root_11$2();
 												var span_7 = sibling(child(p_7), 2);
 												var text_8 = child(span_7);
 
@@ -19394,12 +19394,14 @@ function Label_text_input($$anchor, $$props) {
 }
 
 var root_2$1 = template(`<button type="button" class="agent-row svelte-1qan2ee"><div class="agent-title svelte-1qan2ee"> </div> <div> </div> <div class="agent-counts svelte-1qan2ee"> </div></button>`);
-var root_5$1 = template(`<span class="approval svelte-1qan2ee">requires approval</span>`);
-var root_4$1 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <!> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_6$1 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_7 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_8 = template(`<div class="error svelte-1qan2ee"> </div>`);
-var root_3 = template(`<div class="agent-form svelte-1qan2ee"><!> <div class="row svelte-1qan2ee"><!> <!></div> <!> <!> <div class="row svelte-1qan2ee"><!> <!></div> <div class="row svelte-1qan2ee"><!> <!></div> <div class="hint svelte-1qan2ee"> </div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Tools</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Probes</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Events</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <!></div>`);
+var root_4$1 = template(`<div class="row svelte-1qan2ee"><!> <!></div> <div class="row svelte-1qan2ee"><!> <!></div>`, 1);
+var root_5$1 = template(`<div class="row svelte-1qan2ee"><!> <!></div> <!>`, 1);
+var root_8 = template(`<span class="approval svelte-1qan2ee">requires approval</span>`);
+var root_7 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <!> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
+var root_9$1 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
+var root_10 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
+var root_11$1 = template(`<div class="error svelte-1qan2ee"> </div>`);
+var root_3 = template(`<div class="agent-form svelte-1qan2ee"><!> <div class="row svelte-1qan2ee"><!> <!></div> <!> <!> <!> <!> <!> <!> <div class="hint svelte-1qan2ee"> </div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Tools</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Probes</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Events</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <!></div>`);
 var root_1$1 = template(`<div class="agent-settings svelte-1qan2ee"><div class="agents-list svelte-1qan2ee"><!> <div class="agent-actions svelte-1qan2ee"><!> <!> <!></div></div> <!></div>`);
 
 function Agent_settings($$anchor, $$props) {
@@ -19422,7 +19424,18 @@ function Agent_settings($$anchor, $$props) {
 	let selectedId = mutable_state('');
 	let error = mutable_state('');
 	const providerOptions = ['openai'];
+
+	const typeOptions = [
+		'overlay',
+		'http',
+		'mcp',
+		'openai',
+		'claude',
+		'langchain'
+	];
+
 	const overlayOptions = ['overlay', 'none'];
+	const transportModeOptions = ['stdio', 'http'];
 
 	onMount(() => {
 		tx().send('modal div', get(box).div);
@@ -19498,6 +19511,7 @@ function Agent_settings($$anchor, $$props) {
 			{
 				id,
 				title: titleFromId(id),
+				type: 'overlay',
 				enabled: true,
 				instructions: 'Operate the application through published tools.',
 				llm: {
@@ -19506,6 +19520,12 @@ function Agent_settings($$anchor, $$props) {
 					endpoint: 'http://127.0.0.1:8080/v1'
 				},
 				ui: { mode: 'overlay' },
+				server: {
+					host: '127.0.0.1',
+					port: 8787,
+					basePath: '/agent'
+				},
+				transport: { mode: 'stdio' },
 				permissions: {
 					tools: {
 						allow: caps.tools.map((item) => item.id),
@@ -19530,6 +19550,7 @@ function Agent_settings($$anchor, $$props) {
 
 		return {
 			id,
+			type: agent?.type ?? inferAgentType(agent),
 			title: agent?.title ?? titleFromId(id),
 			enabled: agent?.enabled !== false,
 			instructions: agent?.instructions ?? '',
@@ -19539,12 +19560,24 @@ function Agent_settings($$anchor, $$props) {
 				endpoint: agent?.llm?.endpoint ?? 'http://127.0.0.1:8080/v1'
 			},
 			ui: { mode: agent?.ui?.mode ?? 'overlay' },
+			server: {
+				host: agent?.server?.host ?? '127.0.0.1',
+				port: agent?.server?.port ?? 8787,
+				basePath: agent?.server?.basePath ?? '/agent'
+			},
+			transport: { mode: agent?.transport?.mode ?? 'stdio' },
 			permissions: {
 				tools: normalizePermission(agent?.permissions?.tools, caps.tools),
 				probes: normalizePermission(agent?.permissions?.probes, caps.probes),
 				events: normalizePermission(agent?.permissions?.events, caps.events)
 			}
 		};
+	}
+
+	function inferAgentType(agent) {
+		if (agent?.transport?.mode) return 'mcp';
+		if (agent?.server) return 'http';
+		return 'overlay';
 	}
 
 	function normalizePermission(permission, items) {
@@ -19779,7 +19812,21 @@ function Agent_settings($$anchor, $$props) {
 
 				var node_8 = sibling(div_7, 2);
 
-				Label_text_input(node_8, {
+				Label_select(node_8, {
+					label: "type",
+					get value() {
+						return get(selectedAgent).type;
+					},
+					set value($$value) {
+						mutate(selectedAgent, get(selectedAgent).type = $$value);
+					},
+					options: typeOptions,
+					$$legacy: true
+				});
+
+				var node_9 = sibling(node_8, 2);
+
+				Label_text_input(node_9, {
 					label: "title",
 					get text() {
 						return get(selectedAgent).title;
@@ -19790,9 +19837,9 @@ function Agent_settings($$anchor, $$props) {
 					$$legacy: true
 				});
 
-				var node_9 = sibling(node_8, 2);
+				var node_10 = sibling(node_9, 2);
 
-				Label_textarea(node_9, {
+				Label_textarea(node_10, {
 					label: "instructions",
 					get text() {
 						return get(selectedAgent).instructions;
@@ -19803,74 +19850,143 @@ function Agent_settings($$anchor, $$props) {
 					$$legacy: true
 				});
 
-				var div_8 = sibling(node_9, 2);
-				var node_10 = child(div_8);
-
-				Label_select(node_10, {
-					label: "provider",
-					get value() {
-						return get(selectedAgent).llm.provider;
-					},
-					set value($$value) {
-						mutate(selectedAgent, get(selectedAgent).llm.provider = $$value);
-					},
-					options: providerOptions,
-					$$legacy: true
-				});
-
 				var node_11 = sibling(node_10, 2);
 
-				Label_select(node_11, {
-					label: "overlay",
-					get value() {
-						return get(selectedAgent).ui.mode;
-					},
-					set value($$value) {
-						mutate(selectedAgent, get(selectedAgent).ui.mode = $$value);
-					},
-					options: overlayOptions,
-					$$legacy: true
+				if_block(node_11, () => get(selectedAgent).type === 'overlay' || get(selectedAgent).type === 'openai', ($$anchor) => {
+					var fragment_1 = root_4$1();
+					var div_8 = first_child(fragment_1);
+					var node_12 = child(div_8);
+
+					Label_select(node_12, {
+						label: "provider",
+						get value() {
+							return get(selectedAgent).llm.provider;
+						},
+						set value($$value) {
+							mutate(selectedAgent, get(selectedAgent).llm.provider = $$value);
+						},
+						options: providerOptions,
+						$$legacy: true
+					});
+
+					var node_13 = sibling(node_12, 2);
+
+					Label_select(node_13, {
+						label: "overlay",
+						get value() {
+							return get(selectedAgent).ui.mode;
+						},
+						set value($$value) {
+							mutate(selectedAgent, get(selectedAgent).ui.mode = $$value);
+						},
+						options: overlayOptions,
+						$$legacy: true
+					});
+
+					var div_9 = sibling(div_8, 2);
+					var node_14 = child(div_9);
+
+					Label_text_input(node_14, {
+						label: "model",
+						get text() {
+							return get(selectedAgent).llm.model;
+						},
+						set text($$value) {
+							mutate(selectedAgent, get(selectedAgent).llm.model = $$value);
+						},
+						$$legacy: true
+					});
+
+					var node_15 = sibling(node_14, 2);
+
+					Label_text_input(node_15, {
+						label: "endpoint",
+						get text() {
+							return get(selectedAgent).llm.endpoint;
+						},
+						set text($$value) {
+							mutate(selectedAgent, get(selectedAgent).llm.endpoint = $$value);
+						},
+						$$legacy: true
+					});
+					append($$anchor, fragment_1);
 				});
 
-				var div_9 = sibling(div_8, 2);
-				var node_12 = child(div_9);
+				var node_16 = sibling(node_11, 2);
 
-				Label_text_input(node_12, {
-					label: "model",
-					get text() {
-						return get(selectedAgent).llm.model;
-					},
-					set text($$value) {
-						mutate(selectedAgent, get(selectedAgent).llm.model = $$value);
-					},
-					$$legacy: true
+				if_block(node_16, () => get(selectedAgent).type === 'http', ($$anchor) => {
+					var fragment_2 = root_5$1();
+					var div_10 = first_child(fragment_2);
+					var node_17 = child(div_10);
+
+					Label_text_input(node_17, {
+						label: "server host",
+						get text() {
+							return get(selectedAgent).server.host;
+						},
+						set text($$value) {
+							mutate(selectedAgent, get(selectedAgent).server.host = $$value);
+						},
+						$$legacy: true
+					});
+
+					var node_18 = sibling(node_17, 2);
+
+					Label_text_input(node_18, {
+						label: "server port",
+						get text() {
+							return get(selectedAgent).server.port;
+						},
+						set text($$value) {
+							mutate(selectedAgent, get(selectedAgent).server.port = $$value);
+						},
+						$$legacy: true
+					});
+
+					var node_19 = sibling(div_10, 2);
+
+					Label_text_input(node_19, {
+						label: "base path",
+						get text() {
+							return get(selectedAgent).server.basePath;
+						},
+						set text($$value) {
+							mutate(selectedAgent, get(selectedAgent).server.basePath = $$value);
+						},
+						$$legacy: true
+					});
+
+					append($$anchor, fragment_2);
 				});
 
-				var node_13 = sibling(node_12, 2);
+				var node_20 = sibling(node_16, 2);
 
-				Label_text_input(node_13, {
-					label: "endpoint",
-					get text() {
-						return get(selectedAgent).llm.endpoint;
-					},
-					set text($$value) {
-						mutate(selectedAgent, get(selectedAgent).llm.endpoint = $$value);
-					},
-					$$legacy: true
+				if_block(node_20, () => get(selectedAgent).type === 'mcp', ($$anchor) => {
+					Label_select($$anchor, {
+						label: "transport",
+						get value() {
+							return get(selectedAgent).transport.mode;
+						},
+						set value($$value) {
+							mutate(selectedAgent, get(selectedAgent).transport.mode = $$value);
+						},
+						options: transportModeOptions,
+						$$legacy: true
+					});
 				});
 
-				var div_10 = sibling(div_9, 2);
-				var text_3 = child(div_10);
+				var div_11 = sibling(node_20, 2);
+				var text_3 = child(div_11);
 
-				var div_11 = sibling(div_10, 2);
-				var div_12 = child(div_11);
-				var span = sibling(child(div_12), 2);
+				var div_12 = sibling(div_11, 2);
+				var div_13 = child(div_12);
+				var span = sibling(child(div_13), 2);
 				var text_4 = child(span);
 
-				var node_14 = sibling(div_12, 2);
+				var node_21 = sibling(div_13, 2);
 
-				each(node_14, 1, () => get(capabilities).tools, index, ($$anchor, item) => {
-					var label = root_4$1();
+				each(node_21, 1, () => get(capabilities).tools, index, ($$anchor, item) => {
+					var label = root_7();
 					var input = child(label);
 					template_effect(() => set_checked(input, isAllowed('tools', get(item).id)));
 
@@ -19878,15 +19994,15 @@ function Agent_settings($$anchor, $$props) {
 					var span_2 = child(span_1);
 					var text_5 = child(span_2);
 
-					var node_15 = sibling(span_2, 2);
+					var node_22 = sibling(span_2, 2);
 
-					if_block(node_15, () => get(item).approval === 'always', ($$anchor) => {
-						var span_3 = root_5$1();
+					if_block(node_22, () => get(item).approval === 'always', ($$anchor) => {
+						var span_3 = root_8();
 
 						append($$anchor, span_3);
 					});
 
-					var span_4 = sibling(node_15, 2);
+					var span_4 = sibling(node_22, 2);
 					var text_6 = child(span_4);
 
 					template_effect(() => {
@@ -19898,15 +20014,15 @@ function Agent_settings($$anchor, $$props) {
 					append($$anchor, label);
 				});
 
-				var div_13 = sibling(div_11, 2);
-				var div_14 = child(div_13);
-				var span_5 = sibling(child(div_14), 2);
+				var div_14 = sibling(div_12, 2);
+				var div_15 = child(div_14);
+				var span_5 = sibling(child(div_15), 2);
 				var text_7 = child(span_5);
 
-				var node_16 = sibling(div_14, 2);
+				var node_23 = sibling(div_15, 2);
 
-				each(node_16, 1, () => get(capabilities).probes, index, ($$anchor, item) => {
-					var label_1 = root_6$1();
+				each(node_23, 1, () => get(capabilities).probes, index, ($$anchor, item) => {
+					var label_1 = root_9$1();
 					var input_1 = child(label_1);
 					template_effect(() => set_checked(input_1, isAllowed('probes', get(item).id)));
 
@@ -19926,15 +20042,15 @@ function Agent_settings($$anchor, $$props) {
 					append($$anchor, label_1);
 				});
 
-				var div_15 = sibling(div_13, 2);
-				var div_16 = child(div_15);
-				var span_9 = sibling(child(div_16), 2);
+				var div_16 = sibling(div_14, 2);
+				var div_17 = child(div_16);
+				var span_9 = sibling(child(div_17), 2);
 				var text_10 = child(span_9);
 
-				var node_17 = sibling(div_16, 2);
+				var node_24 = sibling(div_17, 2);
 
-				each(node_17, 1, () => get(capabilities).events, index, ($$anchor, item) => {
-					var label_2 = root_7();
+				each(node_24, 1, () => get(capabilities).events, index, ($$anchor, item) => {
+					var label_2 = root_10();
 					var input_2 = child(label_2);
 					template_effect(() => set_checked(input_2, isAllowed('events', get(item).id)));
 
@@ -19954,13 +20070,13 @@ function Agent_settings($$anchor, $$props) {
 					append($$anchor, label_2);
 				});
 
-				var node_18 = sibling(div_15, 2);
+				var node_25 = sibling(div_16, 2);
 
-				if_block(node_18, () => get(error), ($$anchor) => {
-					var div_17 = root_8();
-					var text_13 = child(div_17);
+				if_block(node_25, () => get(error), ($$anchor) => {
+					var div_18 = root_11$1();
+					var text_13 = child(div_18);
 					template_effect(() => set_text(text_13, get(error)));
-					append($$anchor, div_17);
+					append($$anchor, div_18);
 				});
 
 				template_effect(() => {
