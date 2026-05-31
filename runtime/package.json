@@ -31,6 +31,21 @@
       "import": "./dist/agent-adapters/index.js",
       "require": "./dist/agent-adapters/index.cjs",
       "default": "./dist/agent-adapters/index.js"
+    },
+    "./agent-base": {
+      "import": "./dist/agent-base/index.js",
+      "require": "./dist/agent-base/index.cjs",
+      "default": "./dist/agent-base/index.js"
+    },
+    "./llm-overlay": {
+      "import": "./dist/llm-overlay/index.js",
+      "require": "./dist/llm-overlay/index.cjs",
+      "default": "./dist/llm-overlay/index.js"
+    },
+    "./security": {
+      "import": "./dist/security/index.js",
+      "require": "./dist/security/index.cjs",
+      "default": "./dist/security/index.js"
     }
   },
   "main": "./dist/rt-base/index.cjs",
@@ -49,7 +64,10 @@
     "build:browser-agent": "tsup rt-browser-agent/index.js --format esm,cjs --out-dir dist/rt-browser-agent --sourcemap --splitting false --keep-names",
     "build:agent": "tsup rt-agent/index.js --format esm,cjs --out-dir dist/rt-agent --sourcemap --splitting false --keep-names",
     "build:agent-adapters": "tsup agent-adapters/index.js --format esm,cjs --out-dir dist/agent-adapters --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:agent && npm run build:agent-adapters",
+    "build:agent-base": "tsup agent-base/index.js --format esm,cjs --out-dir dist/agent-base --sourcemap --splitting false --keep-names",
+    "build:llm-overlay": "tsup llm-overlay/index.js --format esm,cjs --out-dir dist/llm-overlay --sourcemap --splitting false --keep-names",
+    "build:security": "tsup security/index.js --format esm,cjs --out-dir dist/security --sourcemap --splitting false --keep-names",
+    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:agent && npm run build:agent-adapters && npm run build:agent-base && npm run build:llm-overlay && npm run build:security",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },

@@ -563,7 +563,7 @@ var _Runtime = class _Runtime {
 __name(_Runtime, "Runtime");
 var Runtime = _Runtime;
 
-// rt-als/node-context.js
+// security/node-context.js
 import { AsyncLocalStorage } from "async_hooks";
 var nodeStorage = new AsyncLocalStorage();
 function cloneStore() {
@@ -828,7 +828,7 @@ var runtimeSettings = {
   effectivePolicy
 };
 
-// rt-als/safety.js
+// security/safety.js
 import childProcess from "child_process";
 import fs from "fs";
 import http from "http";
@@ -1123,7 +1123,7 @@ __name(_Runtime2, "Runtime");
 var Runtime2 = _Runtime2;
 Runtime2.prototype.settings = runtimeSettings;
 
-// rt-als/security-reporter.js
+// security/security-reporter.js
 function SecurityReporterFactory(tx, sx = null) {
   const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
   let currentTx = tx;

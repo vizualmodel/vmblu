@@ -616,7 +616,7 @@ var _Runtime = class _Runtime {
 __name(_Runtime, "Runtime");
 var Runtime = _Runtime;
 
-// rt-als/node-context.js
+// security/node-context.js
 var import_node_async_hooks = require("async_hooks");
 var nodeStorage = new import_node_async_hooks.AsyncLocalStorage();
 function cloneStore() {
@@ -881,7 +881,7 @@ var runtimeSettings = {
   effectivePolicy
 };
 
-// rt-als/safety.js
+// security/safety.js
 var import_node_child_process = __toESM(require("child_process"), 1);
 var import_node_fs = __toESM(require("fs"), 1);
 var import_node_http = __toESM(require("http"), 1);
@@ -1176,7 +1176,7 @@ __name(_Runtime2, "Runtime");
 var Runtime2 = _Runtime2;
 Runtime2.prototype.settings = runtimeSettings;
 
-// rt-agent/broker-protocol.js
+// agent-base/broker-protocol.js
 var BrokerRequestTypes = Object.freeze({
   CAPABILITIES_LIST: "capabilities.list",
   TOOL_CALL: "tool.call",
@@ -1216,7 +1216,7 @@ function brokerError(request, code, message, details = void 0) {
 }
 __name(brokerError, "brokerError");
 
-// rt-agent/agent-overlay.js
+// llm-overlay/agent-overlay.js
 var STORAGE_PREFIX = "vmblu.rt-agent.overlay.";
 var _AgentOverlay = class _AgentOverlay {
   constructor({ agent, broker = null, traceRecorder = null, config = {} } = {}) {
@@ -1672,7 +1672,7 @@ var _AgentOverlay = class _AgentOverlay {
 __name(_AgentOverlay, "AgentOverlay");
 var AgentOverlay = _AgentOverlay;
 
-// rt-agent/openai-chat-provider.js
+// agent-adapters/openai-chat-provider.js
 var _OpenAIChatProvider = class _OpenAIChatProvider {
   constructor({ llm = {}, fetchImpl = null } = {}) {
     this.llm = llm;
@@ -1717,7 +1717,7 @@ async function safeReadText(response) {
 }
 __name(safeReadText, "safeReadText");
 
-// rt-agent/agent-policy.js
+// agent-base/agent-policy.js
 var _AgentPolicy = class _AgentPolicy {
   static fromAgent(agent = {}) {
     return new _AgentPolicy((agent == null ? void 0 : agent.config) ?? agent);
@@ -1891,7 +1891,7 @@ function normalizeOpenAIJsonSchema(schema) {
 }
 __name(normalizeOpenAIJsonSchema, "normalizeOpenAIJsonSchema");
 
-// rt-agent/agent-runtime.js
+// agent-base/agent-runtime.js
 var DEFAULT_MAX_TOOL_ROUNDS = 4;
 var _AgentRuntime = class _AgentRuntime {
   constructor({ id, broker = null, provider = null, config = {} } = {}) {
@@ -2242,7 +2242,7 @@ function compactJson(value, limit = 700) {
 }
 __name(compactJson, "compactJson");
 
-// rt-agent/capability-registry.js
+// agent-base/capability-registry.js
 var _CapabilityRegistry = class _CapabilityRegistry {
   constructor(capabilities = null) {
     this.capabilities = this.normalizeCapabilities(capabilities);
@@ -2295,7 +2295,7 @@ var _CapabilityRegistry = class _CapabilityRegistry {
 __name(_CapabilityRegistry, "CapabilityRegistry");
 var CapabilityRegistry = _CapabilityRegistry;
 
-// rt-agent/json-schema.js
+// agent-base/json-schema.js
 function validateJsonSchema(schema, value, { path = "$" } = {}) {
   const errors = [];
   validate(schema, value, path, errors);
@@ -2421,7 +2421,7 @@ function error(path, keyword, message) {
 }
 __name(error, "error");
 
-// rt-agent/trace-recorder.js
+// agent-base/trace-recorder.js
 var _TraceRecorder = class _TraceRecorder {
   constructor({ clock = /* @__PURE__ */ __name(() => /* @__PURE__ */ new Date(), "clock") } = {}) {
     this.clock = clock;
@@ -2458,7 +2458,7 @@ var _TraceRecorder = class _TraceRecorder {
 __name(_TraceRecorder, "TraceRecorder");
 var TraceRecorder = _TraceRecorder;
 
-// rt-agent/tool-broker.js
+// agent-base/tool-broker.js
 var _ToolBroker = class _ToolBroker {
   constructor({ runtime, capabilities, registry, traceRecorder } = {}) {
     this.runtime = null;
@@ -3192,7 +3192,7 @@ function normalizeVerifyWith(tool = {}) {
 }
 __name(normalizeVerifyWith, "normalizeVerifyWith");
 
-// rt-agent/agent-runtime-support.js
+// agent-base/agent-runtime-support.js
 var _AgentRuntimeSupport = class _AgentRuntimeSupport {
   constructor(runtime) {
     this.runtime = runtime;
@@ -3319,7 +3319,7 @@ var _Runtime3 = class _Runtime3 extends Runtime2 {
 __name(_Runtime3, "Runtime");
 var Runtime3 = _Runtime3;
 
-// rt-agent/security-reporter.js
+// security/security-reporter.js
 function SecurityReporterFactory(tx, sx = null) {
   const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
   let currentTx = tx;

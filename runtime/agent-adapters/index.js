@@ -2,4 +2,5 @@ export {AgentAdapterRegistry, agentAdapterRegistry, normalizeTarget} from './ada
 export {AgentCapabilityFilter, normalizeCapabilities} from './capability-filter.js'
 export {HttpAgentAdapter} from './http-adapter.js'
 export {OpenAIAgentAdapter, normalizeOpenAIJsonSchema} from './openai-adapter.js'
+export {OpenAIChatProvider} from './openai-chat-provider.js'
 export {VmbluAgentAdapter} from './vmblu-adapter.js'
