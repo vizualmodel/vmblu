@@ -24,6 +24,7 @@ __export(index_exports, {
   AgentCapabilityFilter: () => AgentCapabilityFilter,
   HttpAgentAdapter: () => HttpAgentAdapter,
   OpenAIAgentAdapter: () => OpenAIAgentAdapter,
+  OpenAIChatProvider: () => OpenAIChatProvider,
   VmbluAgentAdapter: () => VmbluAgentAdapter,
   agentAdapterRegistry: () => agentAdapterRegistry,
   normalizeCapabilities: () => normalizeCapabilities,
@@ -32,7 +33,7 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
-// rt-agent/agent-policy.js
+// agent-base/agent-policy.js
 var _AgentPolicy = class _AgentPolicy {
   static fromAgent(agent = {}) {
     return new _AgentPolicy((agent == null ? void 0 : agent.config) ?? agent);
@@ -294,12 +295,58 @@ function normalizeTarget(target) {
 }
 __name(normalizeTarget, "normalizeTarget");
 var agentAdapterRegistry = new AgentAdapterRegistry();
+
+// agent-adapters/openai-chat-provider.js
+var _OpenAIChatProvider = class _OpenAIChatProvider {
+  constructor({ llm = {}, fetchImpl = null } = {}) {
+    this.llm = llm;
+    this.fetchImpl = fetchImpl;
+  }
+  isConfigured() {
+    var _a, _b;
+    return Boolean(((_a = this.llm) == null ? void 0 : _a.endpoint) && ((_b = this.llm) == null ? void 0 : _b.model));
+  }
+  async complete({ messages, tools = [] } = {}) {
+    if (!this.isConfigured()) throw new Error("OpenAI chat provider requires llm.endpoint and llm.model");
+    const fetchFn = this.fetchImpl ?? globalThis.fetch;
+    if (typeof fetchFn !== "function") throw new Error("fetch is not available in this runtime");
+    const response = await fetchFn(`${normalizeEndpoint(this.llm.endpoint)}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: this.llm.model,
+        messages,
+        ...tools.length ? { tools, tool_choice: "auto" } : {}
+      })
+    });
+    if (!response.ok) {
+      const text = await safeReadText(response);
+      throw new Error(`LLM bridge error: ${response.status} ${text || response.statusText}`);
+    }
+    return response.json();
+  }
+};
+__name(_OpenAIChatProvider, "OpenAIChatProvider");
+var OpenAIChatProvider = _OpenAIChatProvider;
+function normalizeEndpoint(endpoint) {
+  return String(endpoint || "").replace(/\/+$/, "");
+}
+__name(normalizeEndpoint, "normalizeEndpoint");
+async function safeReadText(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+__name(safeReadText, "safeReadText");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgentAdapterRegistry,
   AgentCapabilityFilter,
   HttpAgentAdapter,
   OpenAIAgentAdapter,
+  OpenAIChatProvider,
   VmbluAgentAdapter,
   agentAdapterRegistry,
   normalizeCapabilities,

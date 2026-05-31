@@ -2,9 +2,9 @@ export {Runtime}
 
 import {Runtime as SharedRuntime} from '../shared/runtime.js'
 import {HIX_HANDLER, HIX_REPLY, HIX_TYPE_MASK} from '../shared/target.js'
-import {runAsNode} from './node-context.js'
+import {runAsNode} from '../security/node-context.js'
 import {runtimeSettings} from './runtime-settings.js'
-import {safety} from './safety.js'
+import {safety} from '../security/safety.js'
 
 class Runtime extends SharedRuntime {
     configure(options = {}) {

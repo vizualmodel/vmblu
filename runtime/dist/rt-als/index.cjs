@@ -599,7 +599,7 @@ var _Runtime = class _Runtime {
 __name(_Runtime, "Runtime");
 var Runtime = _Runtime;
 
-// rt-als/node-context.js
+// security/node-context.js
 var import_node_async_hooks = require("async_hooks");
 var nodeStorage = new import_node_async_hooks.AsyncLocalStorage();
 function cloneStore() {
@@ -864,7 +864,7 @@ var runtimeSettings = {
   effectivePolicy
 };
 
-// rt-als/safety.js
+// security/safety.js
 var import_node_child_process = __toESM(require("child_process"), 1);
 var import_node_fs = __toESM(require("fs"), 1);
 var import_node_http = __toESM(require("http"), 1);
@@ -1159,7 +1159,7 @@ __name(_Runtime2, "Runtime");
 var Runtime2 = _Runtime2;
 Runtime2.prototype.settings = runtimeSettings;
 
-// rt-als/security-reporter.js
+// security/security-reporter.js
 function SecurityReporterFactory(tx, sx = null) {
   const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
   let currentTx = tx;

@@ -1,1 +1,1 @@
-export {safety} from '../rt-als/safety.js'
+export {safety} from '../security/safety.js'

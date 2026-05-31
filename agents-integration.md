@@ -571,9 +571,11 @@ Acceptance:
 
 1. The CLI command should be named `make-agent-adapter`.
 2. Agent-facing adapter and gateway code should live under
-   `runtime/agent-adapters`. Over time, shared source that currently lives under
-   `runtime/rt-agent` can move there when it is not specific to the `rt-agent`
-   runtime variant.
+   `runtime/agent-adapters`. Common broker/runtime agent code lives under
+   `runtime/agent-base`, the optional browser chat UI lives under
+   `runtime/llm-overlay`, and shared ALS/security support lives under
+   `runtime/security`. The `rt-*` folders should act as runtime composition
+   points over these reusable libraries.
 3. Gateway configuration should start per agent interface, because it gives the
    most flexibility. Common gateway defaults can be factored into an app-level
    block later if repeated configuration becomes painful.
