@@ -1,4 +1,4 @@
-import {AgentPolicy} from '../agent-base/agent-policy.js'
+import {AgentPolicy} from '../agent-base/index.js'
 
 export class AgentCapabilityFilter {
     constructor({agent = null} = {}) {
