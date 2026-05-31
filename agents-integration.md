@@ -569,14 +569,19 @@ Acceptance:
 
 ## Open Decisions
 
-1. Should the command be named `make-agent-interface`,
-   `make-agent-adapter`, or `make-agent-projection`?
-2. Should projections live under `core/agent` or `runtime/rt-agent`?
-3. Should Node.js gateway configuration live under each agent interface or under
-   a separate app-level `agentGateway` block?
-4. Which external example should come first: HTTP gateway or MCP gateway?
-5. Should browser apps ever expose external agent gateway support, or should
-   they always require a backend-owned runtime for external agents?
+1. The CLI command should be named `make-agent-adapter`.
+2. Agent-facing adapter and gateway code should live under
+   `runtime/agent-adapters`. Over time, shared source that currently lives under
+   `runtime/rt-agent` can move there when it is not specific to the `rt-agent`
+   runtime variant.
+3. Gateway configuration should start per agent interface, because it gives the
+   most flexibility. Common gateway defaults can be factored into an app-level
+   block later if repeated configuration becomes painful.
+4. The first external example should be HTTP. MCP is also needed, but HTTP is
+   the smallest gateway that proves the architecture.
+5. Browser external-agent gateway support should remain possible, but it is not
+   a priority. Near-term browser work should stay focused on the overlay and
+   LLM bridge.
 
 ## Near-Term Recommendation
 
@@ -586,7 +591,7 @@ Start with the smallest coherent implementation:
    `type: "overlay"`.
 2. Extract OpenAI tool projection from `AgentRuntime` into a shared projection
    module.
-3. Add `vmblu make-agent-interface --target openai`.
+3. Add `vmblu make-agent-adapter --target openai`.
 4. Add a minimal Node.js HTTP gateway target.
 5. Build `examples/agent-http-gateway`.
 6. Update the user guide with the practical setup path.

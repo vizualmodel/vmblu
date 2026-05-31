@@ -26,6 +26,11 @@
       "import": "./dist/rt-agent/index.js",
       "require": "./dist/rt-agent/index.cjs",
       "default": "./dist/rt-agent/index.js"
+    },
+    "./agent-adapters": {
+      "import": "./dist/agent-adapters/index.js",
+      "require": "./dist/agent-adapters/index.cjs",
+      "default": "./dist/agent-adapters/index.js"
     }
   },
   "main": "./dist/rt-base/index.cjs",
@@ -43,7 +48,8 @@
     "build:als": "tsup rt-als/index.js --format esm,cjs --out-dir dist/rt-als --sourcemap --splitting false --keep-names",
     "build:browser-agent": "tsup rt-browser-agent/index.js --format esm,cjs --out-dir dist/rt-browser-agent --sourcemap --splitting false --keep-names",
     "build:agent": "tsup rt-agent/index.js --format esm,cjs --out-dir dist/rt-agent --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:agent",
+    "build:agent-adapters": "tsup agent-adapters/index.js --format esm,cjs --out-dir dist/agent-adapters --sourcemap --splitting false --keep-names",
+    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:agent && npm run build:agent-adapters",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },

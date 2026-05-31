@@ -1,6 +1,7 @@
 import {BrokerRequestTypes} from './broker-protocol.js'
 import {AgentOverlay} from './agent-overlay.js'
 import {OpenAIChatProvider} from './openai-chat-provider.js'
+import {OpenAIAgentAdapter} from '../agent-adapters/openai-adapter.js'
 
 const DEFAULT_MAX_TOOL_ROUNDS = 4
 
@@ -308,45 +309,9 @@ export class AgentRuntime {
 
     buildOpenAICapabilityTools() {
         const capabilities = this.broker?.capabilityView?.(this.id) ?? this.broker?.registry?.list?.() ?? {}
-        const appTools = capabilities.tools ?? []
-        const probes = capabilities.probes ?? []
-        this.openAICapabilityMap = new Map()
-
-        const toolSpecs = appTools.map((tool, index) => {
-            const name = this.openAICapabilityName('tool', tool.id, index)
-            this.openAICapabilityMap.set(name, {kind: 'tool', capability: tool})
-            return {
-                type: 'function',
-                function: {
-                    name,
-                    description: tool.description || tool.title || tool.id,
-                    parameters: normalizeOpenAIJsonSchema(tool.input?.schema ?? {type: 'object', additionalProperties: true}),
-                },
-            }
-        })
-
-        const probeSpecs = probes.map((probe, index) => {
-            const name = this.openAICapabilityName('probe', probe.id, index)
-            this.openAICapabilityMap.set(name, {kind: 'probe', capability: probe})
-            return {
-                type: 'function',
-                function: {
-                    name,
-                    description: `Read-only probe: ${probe.description || probe.title || probe.id}`,
-                    parameters: normalizeOpenAIJsonSchema(probe.schema ?? {type: 'object', additionalProperties: true}),
-                },
-            }
-        })
-
-        return [...toolSpecs, ...probeSpecs]
-    }
-
-    openAICapabilityName(prefix, id, index) {
-        const base = String(id || `${prefix}_${index + 1}`)
-            .replace(/[^a-zA-Z0-9_-]+/g, '_')
-            .replace(/^_+|_+$/g, '')
-            .slice(0, 48)
-        return `${prefix}_${base || 'capability'}_${index + 1}`
+        const projection = new OpenAIAgentAdapter({capabilities, agent: this.config}).project()
+        this.openAICapabilityMap = projection.map
+        return projection.tools
     }
 
     async executeOpenAIToolCall(toolCall) {
@@ -405,30 +370,6 @@ function parseToolArguments(value) {
     catch {
         return {}
     }
-}
-
-function normalizeOpenAIJsonSchema(schema) {
-    if (!schema || typeof schema !== 'object') return {type: 'object', additionalProperties: true}
-    if (Array.isArray(schema)) return schema.map(item => normalizeOpenAIJsonSchema(item))
-
-    const normalized = {...schema}
-    const types = Array.isArray(normalized.type) ? normalized.type : [normalized.type]
-
-    if (types.includes('array') && !normalized.items) {
-        normalized.items = {}
-    }
-
-    if (normalized.properties && typeof normalized.properties === 'object') {
-        normalized.properties = Object.fromEntries(
-            Object.entries(normalized.properties).map(([key, value]) => [key, normalizeOpenAIJsonSchema(value)])
-        )
-    }
-
-    if (normalized.items && typeof normalized.items === 'object') {
-        normalized.items = normalizeOpenAIJsonSchema(normalized.items)
-    }
-
-    return normalized
 }
 
 function makeJsonSafe(value) {
