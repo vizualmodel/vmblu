@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {Runtime} from '../rt-agent/runtime.js'
+import {Runtime} from '../rt-nodejs-agent/runtime.js'
 import {Runtime as BrowserAgentRuntime} from '../rt-browser-agent/runtime.js'
 
 function waitFor(predicate, timeoutMs = 1000) {
@@ -18,7 +18,7 @@ function waitFor(predicate, timeoutMs = 1000) {
     })
 }
 
-test('rt-agent wires broker, agent shell, tool dispatch, and event capture', async () => {
+test('rt-nodejs-agent wires broker, agent shell, tool dispatch, and event capture', async () => {
     let received = null
 
     function SourceFactory(tx) {
@@ -331,7 +331,7 @@ test('broker wraps calls for ToolInvocation target pins', async () => {
     }
 })
 
-test('rt-agent auto-registers published node probes', async () => {
+test('rt-nodejs-agent auto-registers published node probes', async () => {
     function StateFactory() {
         return {
             probe(name, args) {
@@ -542,7 +542,7 @@ test('rt-browser-agent wires broker and dispatches tools without ALS runtime', a
     }
 })
 
-test('rt-agent selects default agent from multi-agent config', async () => {
+test('rt-nodejs-agent selects default agent from multi-agent config', async () => {
     const runtime = new Runtime([], {
         capabilities: {
             tools: [

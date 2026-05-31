@@ -326,7 +326,7 @@ Add a shared projection module used by both CLI and runtime gateway.
 Likely package location:
 
 ```text
-runtime/rt-agent/projections/
+runtime/agent-adapters/
 ```
 
 or, if the projections should not depend on runtime code:
@@ -425,10 +425,10 @@ request path as the overlay.
 Likely files:
 
 ```text
-runtime/rt-agent/agent-gateway.js
-runtime/rt-agent/agent-gateway-http.js
-runtime/rt-agent/agent-gateway-mcp.js
-runtime/rt-agent/projections/*
+runtime/agent-adapters/agent-gateway.js
+runtime/agent-adapters/agent-gateway-http.js
+runtime/agent-adapters/agent-gateway-mcp.js
+runtime/agent-adapters/*
 ```
 
 ## Documentation Work

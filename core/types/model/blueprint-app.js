@@ -185,7 +185,9 @@ runtime.start()
     },
 
     isAgentRuntime(runtime) {
-        return runtime === '@vizualmodel/vmblu-runtime/rt-agent'
+        return runtime === '@vizualmodel/vmblu-runtime/rt-nodejs-agent'
+            || runtime.endsWith('/rt-nodejs-agent')
+            || runtime === '@vizualmodel/vmblu-runtime/rt-agent'
             || runtime.endsWith('/rt-agent')
             || runtime === '@vizualmodel/vmblu-runtime/rt-browser-agent'
             || runtime.endsWith('/rt-browser-agent')

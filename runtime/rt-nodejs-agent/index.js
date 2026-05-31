@@ -5,4 +5,4 @@ export {BrokerRequestTypes, BrokerResultTypes, ToolResultStatus, brokerError, Ca
 export {AgentOverlay} from '../llm-overlay/agent-overlay.js'
 export {OpenAIChatProvider} from '../agent-adapters/openai-chat-provider.js'
 export {AgentAdapterRegistry, agentAdapterRegistry, HttpAgentAdapter, OpenAIAgentAdapter, VmbluAgentAdapter} from '../agent-adapters/index.js'
-export const VERSION = '0.1.1-agent'
+export const VERSION = '0.1.1-nodejs-agent'

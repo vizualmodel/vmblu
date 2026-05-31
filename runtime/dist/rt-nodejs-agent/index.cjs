@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// rt-agent/index.js
+// rt-nodejs-agent/index.js
 var index_exports = {};
 __export(index_exports, {
   AgentAdapterRegistry: () => AgentAdapterRegistry,
@@ -3287,7 +3287,7 @@ function selectAgentConfig(agent) {
 }
 __name(selectAgentConfig, "selectAgentConfig");
 
-// rt-agent/runtime.js
+// rt-nodejs-agent/runtime.js
 var _Runtime3 = class _Runtime3 extends Runtime2 {
   get settings() {
     return runtimeSettings;
@@ -3436,8 +3436,8 @@ function normalizeTarget(target) {
 __name(normalizeTarget, "normalizeTarget");
 var agentAdapterRegistry = new AgentAdapterRegistry();
 
-// rt-agent/index.js
-var VERSION = "0.1.1-agent";
+// rt-nodejs-agent/index.js
+var VERSION = "0.1.1-nodejs-agent";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgentAdapterRegistry,

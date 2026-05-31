@@ -7785,6 +7785,7 @@ const runtimeSettings = {
 const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base';
 const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als';
 const RT_BROWSER_AGENT = '@vizualmodel/vmblu-runtime/rt-browser-agent';
+const RT_NODEJS_AGENT = '@vizualmodel/vmblu-runtime/rt-nodejs-agent';
 const RT_AGENT = '@vizualmodel/vmblu-runtime/rt-agent';
 
 const RUNTIME_DESCRIPTORS = [
@@ -7807,15 +7808,20 @@ const RUNTIME_DESCRIPTORS = [
         supportsAgents: true,
     },
     {
-        id: RT_AGENT,
-        name: 'rt-agent',
+        id: RT_NODEJS_AGENT,
+        name: 'rt-nodejs-agent',
         settings: runtimeSettings,
         supportsAgents: true,
+        aliases: [RT_AGENT, 'rt-agent'],
     },
 ];
 
 function getRuntimeDescriptor(runtime) {
-    return RUNTIME_DESCRIPTORS.find(candidate => candidate.id === runtime || candidate.name === runtime) ?? RUNTIME_DESCRIPTORS[0]
+    return RUNTIME_DESCRIPTORS.find(candidate => {
+        return candidate.id === runtime
+            || candidate.name === runtime
+            || candidate.aliases?.includes(runtime)
+    }) ?? RUNTIME_DESCRIPTORS[0]
 }
 
 function getRuntimeSettings(runtime) {

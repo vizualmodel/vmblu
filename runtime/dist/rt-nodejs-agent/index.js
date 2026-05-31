@@ -3234,7 +3234,7 @@ function selectAgentConfig(agent) {
 }
 __name(selectAgentConfig, "selectAgentConfig");
 
-// rt-agent/runtime.js
+// rt-nodejs-agent/runtime.js
 var _Runtime3 = class _Runtime3 extends Runtime2 {
   get settings() {
     return runtimeSettings;
@@ -3383,8 +3383,8 @@ function normalizeTarget(target) {
 __name(normalizeTarget, "normalizeTarget");
 var agentAdapterRegistry = new AgentAdapterRegistry();
 
-// rt-agent/index.js
-var VERSION = "0.1.1-agent";
+// rt-nodejs-agent/index.js
+var VERSION = "0.1.1-nodejs-agent";
 export {
   AgentAdapterRegistry,
   AgentOverlay,

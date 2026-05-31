@@ -43,10 +43,10 @@ Agent support is available in two runtime variants:
 | `@vizualmodel/vmblu-runtime/rt-base` | yes | yes | no | no |
 | `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
 | `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
-| `@vizualmodel/vmblu-runtime/rt-agent` | no | yes | yes | yes |
+| `@vizualmodel/vmblu-runtime/rt-nodejs-agent` | no | yes | yes | yes |
 
 Use `rt-browser-agent` for browser applications that need agent tools, probes,
-events and the overlay UI. Use `rt-agent` for Node.js applications that need the
+events and the overlay UI. Use `rt-nodejs-agent` for Node.js applications that need the
 same agent layer plus ALS-based safety attribution and Node API instrumentation.
 
 ## Configure An Agent
