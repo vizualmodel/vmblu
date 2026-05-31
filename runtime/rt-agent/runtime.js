@@ -1,7 +1,7 @@
 export {Runtime}
 
 import {Runtime as AlsRuntime} from '../rt-als/runtime.js'
-import {AgentRuntimeSupport} from '../agent-base/agent-runtime-support.js'
+import {AgentRuntimeSupport} from '../agent-base/index.js'
 import {runtimeSettings} from './runtime-settings.js'
 
 class Runtime extends AlsRuntime {

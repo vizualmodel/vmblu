@@ -33,6 +33,130 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
+// agent-adapters/openai-chat-provider.js
+var _OpenAIChatProvider = class _OpenAIChatProvider {
+  constructor({ llm = {}, fetchImpl = null } = {}) {
+    this.llm = llm;
+    this.fetchImpl = fetchImpl;
+  }
+  isConfigured() {
+    var _a, _b;
+    return Boolean(((_a = this.llm) == null ? void 0 : _a.endpoint) && ((_b = this.llm) == null ? void 0 : _b.model));
+  }
+  async complete({ messages, tools = [] } = {}) {
+    if (!this.isConfigured()) throw new Error("OpenAI chat provider requires llm.endpoint and llm.model");
+    const fetchFn = this.fetchImpl ?? globalThis.fetch;
+    if (typeof fetchFn !== "function") throw new Error("fetch is not available in this runtime");
+    const response = await fetchFn(`${normalizeEndpoint(this.llm.endpoint)}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: this.llm.model,
+        messages,
+        ...tools.length ? { tools, tool_choice: "auto" } : {}
+      })
+    });
+    if (!response.ok) {
+      const text = await safeReadText(response);
+      throw new Error(`LLM bridge error: ${response.status} ${text || response.statusText}`);
+    }
+    return response.json();
+  }
+};
+__name(_OpenAIChatProvider, "OpenAIChatProvider");
+var OpenAIChatProvider = _OpenAIChatProvider;
+function normalizeEndpoint(endpoint) {
+  return String(endpoint || "").replace(/\/+$/, "");
+}
+__name(normalizeEndpoint, "normalizeEndpoint");
+async function safeReadText(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+__name(safeReadText, "safeReadText");
+
+// agent-adapters/openai-adapter.js
+var _OpenAIAgentAdapter = class _OpenAIAgentAdapter {
+  constructor({ capabilities = {}, agent = null } = {}) {
+    this.capabilities = capabilities;
+    this.agent = agent;
+    this.filter = new AgentCapabilityFilter({ agent });
+  }
+  project() {
+    var _a;
+    const view = this.filter.filter(this.capabilities);
+    const map = /* @__PURE__ */ new Map();
+    const tools = [
+      ...this.projectTools(view.tools, map),
+      ...this.projectProbes(view.probes, map)
+    ];
+    return {
+      target: "openai",
+      agentId: ((_a = this.agent) == null ? void 0 : _a.id) ?? null,
+      application: view.application,
+      tools,
+      map
+    };
+  }
+  projectTools(tools = [], map) {
+    return tools.map((tool, index) => {
+      var _a;
+      const name = this.capabilityName("tool", tool.id, index);
+      map == null ? void 0 : map.set(name, { kind: "tool", capability: tool });
+      return {
+        type: "function",
+        function: {
+          name,
+          description: tool.description || tool.title || tool.id,
+          parameters: normalizeOpenAIJsonSchema(((_a = tool.input) == null ? void 0 : _a.schema) ?? { type: "object", additionalProperties: true })
+        }
+      };
+    });
+  }
+  projectProbes(probes = [], map) {
+    return probes.map((probe, index) => {
+      const name = this.capabilityName("probe", probe.id, index);
+      map == null ? void 0 : map.set(name, { kind: "probe", capability: probe });
+      return {
+        type: "function",
+        function: {
+          name,
+          description: `Read-only probe: ${probe.description || probe.title || probe.id}`,
+          parameters: normalizeOpenAIJsonSchema(probe.schema ?? { type: "object", additionalProperties: true })
+        }
+      };
+    });
+  }
+  capabilityName(prefix, id, index) {
+    const base = String(id || `${prefix}_${index + 1}`).replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 48);
+    return `${prefix}_${base || "capability"}_${index + 1}`;
+  }
+};
+__name(_OpenAIAgentAdapter, "OpenAIAgentAdapter");
+var OpenAIAgentAdapter = _OpenAIAgentAdapter;
+function normalizeOpenAIJsonSchema(schema) {
+  if (!schema || typeof schema !== "object") return { type: "object", additionalProperties: true };
+  if (Array.isArray(schema)) return schema.map((item) => normalizeOpenAIJsonSchema(item));
+  const normalized = { ...schema };
+  const types = Array.isArray(normalized.type) ? normalized.type : [normalized.type];
+  if (types.includes("array") && !normalized.items) {
+    normalized.items = {};
+  }
+  if (normalized.properties && typeof normalized.properties === "object") {
+    normalized.properties = Object.fromEntries(
+      Object.entries(normalized.properties).map(([key, value]) => [key, normalizeOpenAIJsonSchema(value)])
+    );
+  }
+  if (normalized.items && typeof normalized.items === "object") {
+    normalized.items = normalizeOpenAIJsonSchema(normalized.items);
+  }
+  return normalized;
+}
+__name(normalizeOpenAIJsonSchema, "normalizeOpenAIJsonSchema");
+
 // agent-base/agent-policy.js
 var _AgentPolicy = class _AgentPolicy {
   static fromAgent(agent = {}) {
@@ -163,85 +287,6 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
 __name(_HttpAgentAdapter, "HttpAgentAdapter");
 var HttpAgentAdapter = _HttpAgentAdapter;
 
-// agent-adapters/openai-adapter.js
-var _OpenAIAgentAdapter = class _OpenAIAgentAdapter {
-  constructor({ capabilities = {}, agent = null } = {}) {
-    this.capabilities = capabilities;
-    this.agent = agent;
-    this.filter = new AgentCapabilityFilter({ agent });
-  }
-  project() {
-    var _a;
-    const view = this.filter.filter(this.capabilities);
-    const map = /* @__PURE__ */ new Map();
-    const tools = [
-      ...this.projectTools(view.tools, map),
-      ...this.projectProbes(view.probes, map)
-    ];
-    return {
-      target: "openai",
-      agentId: ((_a = this.agent) == null ? void 0 : _a.id) ?? null,
-      application: view.application,
-      tools,
-      map
-    };
-  }
-  projectTools(tools = [], map) {
-    return tools.map((tool, index) => {
-      var _a;
-      const name = this.capabilityName("tool", tool.id, index);
-      map == null ? void 0 : map.set(name, { kind: "tool", capability: tool });
-      return {
-        type: "function",
-        function: {
-          name,
-          description: tool.description || tool.title || tool.id,
-          parameters: normalizeOpenAIJsonSchema(((_a = tool.input) == null ? void 0 : _a.schema) ?? { type: "object", additionalProperties: true })
-        }
-      };
-    });
-  }
-  projectProbes(probes = [], map) {
-    return probes.map((probe, index) => {
-      const name = this.capabilityName("probe", probe.id, index);
-      map == null ? void 0 : map.set(name, { kind: "probe", capability: probe });
-      return {
-        type: "function",
-        function: {
-          name,
-          description: `Read-only probe: ${probe.description || probe.title || probe.id}`,
-          parameters: normalizeOpenAIJsonSchema(probe.schema ?? { type: "object", additionalProperties: true })
-        }
-      };
-    });
-  }
-  capabilityName(prefix, id, index) {
-    const base = String(id || `${prefix}_${index + 1}`).replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 48);
-    return `${prefix}_${base || "capability"}_${index + 1}`;
-  }
-};
-__name(_OpenAIAgentAdapter, "OpenAIAgentAdapter");
-var OpenAIAgentAdapter = _OpenAIAgentAdapter;
-function normalizeOpenAIJsonSchema(schema) {
-  if (!schema || typeof schema !== "object") return { type: "object", additionalProperties: true };
-  if (Array.isArray(schema)) return schema.map((item) => normalizeOpenAIJsonSchema(item));
-  const normalized = { ...schema };
-  const types = Array.isArray(normalized.type) ? normalized.type : [normalized.type];
-  if (types.includes("array") && !normalized.items) {
-    normalized.items = {};
-  }
-  if (normalized.properties && typeof normalized.properties === "object") {
-    normalized.properties = Object.fromEntries(
-      Object.entries(normalized.properties).map(([key, value]) => [key, normalizeOpenAIJsonSchema(value)])
-    );
-  }
-  if (normalized.items && typeof normalized.items === "object") {
-    normalized.items = normalizeOpenAIJsonSchema(normalized.items);
-  }
-  return normalized;
-}
-__name(normalizeOpenAIJsonSchema, "normalizeOpenAIJsonSchema");
-
 // agent-adapters/vmblu-adapter.js
 var _VmbluAgentAdapter = class _VmbluAgentAdapter {
   constructor({ capabilities = {}, agent = null } = {}) {
@@ -295,51 +340,6 @@ function normalizeTarget(target) {
 }
 __name(normalizeTarget, "normalizeTarget");
 var agentAdapterRegistry = new AgentAdapterRegistry();
-
-// agent-adapters/openai-chat-provider.js
-var _OpenAIChatProvider = class _OpenAIChatProvider {
-  constructor({ llm = {}, fetchImpl = null } = {}) {
-    this.llm = llm;
-    this.fetchImpl = fetchImpl;
-  }
-  isConfigured() {
-    var _a, _b;
-    return Boolean(((_a = this.llm) == null ? void 0 : _a.endpoint) && ((_b = this.llm) == null ? void 0 : _b.model));
-  }
-  async complete({ messages, tools = [] } = {}) {
-    if (!this.isConfigured()) throw new Error("OpenAI chat provider requires llm.endpoint and llm.model");
-    const fetchFn = this.fetchImpl ?? globalThis.fetch;
-    if (typeof fetchFn !== "function") throw new Error("fetch is not available in this runtime");
-    const response = await fetchFn(`${normalizeEndpoint(this.llm.endpoint)}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: this.llm.model,
-        messages,
-        ...tools.length ? { tools, tool_choice: "auto" } : {}
-      })
-    });
-    if (!response.ok) {
-      const text = await safeReadText(response);
-      throw new Error(`LLM bridge error: ${response.status} ${text || response.statusText}`);
-    }
-    return response.json();
-  }
-};
-__name(_OpenAIChatProvider, "OpenAIChatProvider");
-var OpenAIChatProvider = _OpenAIChatProvider;
-function normalizeEndpoint(endpoint) {
-  return String(endpoint || "").replace(/\/+$/, "");
-}
-__name(normalizeEndpoint, "normalizeEndpoint");
-async function safeReadText(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-__name(safeReadText, "safeReadText");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgentAdapterRegistry,

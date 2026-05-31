@@ -575,75 +575,6 @@ async function safeReadText(response) {
 }
 __name(safeReadText, "safeReadText");
 
-// agent-base/agent-policy.js
-var _AgentPolicy = class _AgentPolicy {
-  static fromAgent(agent = {}) {
-    return new _AgentPolicy((agent == null ? void 0 : agent.config) ?? agent);
-  }
-  constructor(agent = {}) {
-    const permissions = (agent == null ? void 0 : agent.permissions) ?? {};
-    this.agentId = (agent == null ? void 0 : agent.id) ?? null;
-    this.enabled = (agent == null ? void 0 : agent.enabled) !== false;
-    this.permissions = {
-      tools: normalizePermissionSet(permissions.tools),
-      probes: normalizePermissionSet(permissions.probes),
-      events: normalizePermissionSet(permissions.events)
-    };
-  }
-  canUse(kind, id) {
-    var _a;
-    const set = (_a = this.permissions) == null ? void 0 : _a[kind];
-    if (!set || !id) return { allowed: true, reason: "no_policy" };
-    if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
-    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
-    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
-  }
-  approvalDecision(tool = {}) {
-    if ((tool == null ? void 0 : tool.approval) === "always") {
-      return { required: true, reason: "approval_required", rule: "tool.approval" };
-    }
-    return { required: false, reason: "approval_not_required", rule: "tool.approval" };
-  }
-  filterCapabilities(capabilities = {}) {
-    return {
-      ...capabilities,
-      tools: ((capabilities == null ? void 0 : capabilities.tools) ?? []).filter((tool) => this.canUse("tools", tool == null ? void 0 : tool.id).allowed),
-      probes: ((capabilities == null ? void 0 : capabilities.probes) ?? []).filter((probe) => this.canUse("probes", probe == null ? void 0 : probe.id).allowed),
-      events: ((capabilities == null ? void 0 : capabilities.events) ?? []).filter((event) => this.canUse("events", event == null ? void 0 : event.id).allowed)
-    };
-  }
-  traceDetails() {
-    return {
-      agentId: this.agentId,
-      enabled: this.enabled,
-      permissions: this.permissions
-    };
-  }
-  toJSON() {
-    return this.traceDetails();
-  }
-};
-__name(_AgentPolicy, "AgentPolicy");
-var AgentPolicy = _AgentPolicy;
-function normalizePermissionSet(value = {}) {
-  const hasAllowList = Array.isArray(value == null ? void 0 : value.allow);
-  return {
-    allow: normalizeStringList(value == null ? void 0 : value.allow),
-    deny: normalizeStringList(value == null ? void 0 : value.deny),
-    hasAllowList
-  };
-}
-__name(normalizePermissionSet, "normalizePermissionSet");
-function normalizeStringList(value) {
-  if (!Array.isArray(value)) return [];
-  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
-}
-__name(normalizeStringList, "normalizeStringList");
-function matches(patterns, id) {
-  return patterns.includes("*") || patterns.includes(id);
-}
-__name(matches, "matches");
-
 // agent-adapters/capability-filter.js
 var _AgentCapabilityFilter = class _AgentCapabilityFilter {
   constructor({ agent = null } = {}) {
@@ -1155,6 +1086,75 @@ var _CapabilityRegistry = class _CapabilityRegistry {
 };
 __name(_CapabilityRegistry, "CapabilityRegistry");
 var CapabilityRegistry = _CapabilityRegistry;
+
+// agent-base/agent-policy.js
+var _AgentPolicy = class _AgentPolicy {
+  static fromAgent(agent = {}) {
+    return new _AgentPolicy((agent == null ? void 0 : agent.config) ?? agent);
+  }
+  constructor(agent = {}) {
+    const permissions = (agent == null ? void 0 : agent.permissions) ?? {};
+    this.agentId = (agent == null ? void 0 : agent.id) ?? null;
+    this.enabled = (agent == null ? void 0 : agent.enabled) !== false;
+    this.permissions = {
+      tools: normalizePermissionSet(permissions.tools),
+      probes: normalizePermissionSet(permissions.probes),
+      events: normalizePermissionSet(permissions.events)
+    };
+  }
+  canUse(kind, id) {
+    var _a;
+    const set = (_a = this.permissions) == null ? void 0 : _a[kind];
+    if (!set || !id) return { allowed: true, reason: "no_policy" };
+    if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
+    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
+    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
+  }
+  approvalDecision(tool = {}) {
+    if ((tool == null ? void 0 : tool.approval) === "always") {
+      return { required: true, reason: "approval_required", rule: "tool.approval" };
+    }
+    return { required: false, reason: "approval_not_required", rule: "tool.approval" };
+  }
+  filterCapabilities(capabilities = {}) {
+    return {
+      ...capabilities,
+      tools: ((capabilities == null ? void 0 : capabilities.tools) ?? []).filter((tool) => this.canUse("tools", tool == null ? void 0 : tool.id).allowed),
+      probes: ((capabilities == null ? void 0 : capabilities.probes) ?? []).filter((probe) => this.canUse("probes", probe == null ? void 0 : probe.id).allowed),
+      events: ((capabilities == null ? void 0 : capabilities.events) ?? []).filter((event) => this.canUse("events", event == null ? void 0 : event.id).allowed)
+    };
+  }
+  traceDetails() {
+    return {
+      agentId: this.agentId,
+      enabled: this.enabled,
+      permissions: this.permissions
+    };
+  }
+  toJSON() {
+    return this.traceDetails();
+  }
+};
+__name(_AgentPolicy, "AgentPolicy");
+var AgentPolicy = _AgentPolicy;
+function normalizePermissionSet(value = {}) {
+  const hasAllowList = Array.isArray(value == null ? void 0 : value.allow);
+  return {
+    allow: normalizeStringList(value == null ? void 0 : value.allow),
+    deny: normalizeStringList(value == null ? void 0 : value.deny),
+    hasAllowList
+  };
+}
+__name(normalizePermissionSet, "normalizePermissionSet");
+function normalizeStringList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+}
+__name(normalizeStringList, "normalizeStringList");
+function matches(patterns, id) {
+  return patterns.includes("*") || patterns.includes(id);
+}
+__name(matches, "matches");
 
 // agent-base/json-schema.js
 function validateJsonSchema(schema, value, { path = "$" } = {}) {
