@@ -755,12 +755,12 @@
       {
         "from": "(pin 9) size change @ column-main layout",
         "to": "(pin 7) size change @ editor page",
-        "wire": "x 27.4 y 0.0 x 148.8"
+        "wire": "x 27.4 y 0.0 x 148.6"
       },
       {
         "from": "(pin 3) dom.workspace div @ workspace",
         "to": "(pin 3) left column @ column-main layout",
-        "wire": "x 24.8 y -256.0 x -66.0"
+        "wire": "x 24.8 y -256.0 x -65.8"
       },
       {
         "from": "(pin 5) file.selected @ workspace",
@@ -805,7 +805,7 @@
       {
         "from": "(pin 8) div @ editor page",
         "to": "(pin 4) main area @ column-main layout",
-        "wire": "x -45.0 y 0.0 x -131.2"
+        "wire": "x -45.0 y 0.0 x -131.0"
       },
       {
         "from": "(pin 4) div @ tab ribbon",
