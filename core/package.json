@@ -1,13 +1,29 @@
 {
-  "name": "kernel",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@vizualmodel/vmblu-core",
+  "version": "0.5.5",
   "type": "module",
-  "dependencies": {
-    "@vizualmodel/vmblu-runtime": "file:../runtime"
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "types"
+  ],
+  "exports": {
+    ".": "./types/model/index.js",
+    "./types/model": "./types/model/index.js",
+    "./types/model/schema-version": "./types/model/schema-version.js",
+    "./types/arl": "./types/arl/index.js",
+    "./types/arl/arl-node": "./types/arl/arl-node.js",
+    "./types/arl/path": "./types/arl/path.js",
+    "./types/node": "./types/node/index.js",
+    "./types/util": "./types/util/index.js",
+    "./types/view": "./types/view/index.js",
+    "./types/widget": "./types/widget/index.js",
+    "./types/*": "./types/*"
   },
   "devDependencies": {
-    "@vizualmodel/vmblu-cli": "^0.5.3",
+    "@vizualmodel/vmblu-cli": "^0.5.5",
+    "@vizualmodel/vmblu-runtime": "file:../runtime",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
   },

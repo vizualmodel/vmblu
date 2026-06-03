@@ -12,15 +12,10 @@ const defaultMonitor = () => ({
     logTimings: false,
 })
 
-const defaultSecurity = () => ({
-    enabled: false,
-})
-
 function make() {
     return {
         run: defaultRun(),
         monitor: defaultMonitor(),
-        security: defaultSecurity(),
     }
 }
 
@@ -44,17 +39,12 @@ function normalize(dx = null) {
             ...(dx.monitor ?? {}),
             logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
         },
-        security: {
-            ...defaults.security,
-            ...(dx.security ?? {}),
-        },
     }
 
     normalized.run.worker.on = !!normalized.run.worker.on
     normalized.run.worker.path = normalized.run.worker.path ?? ''
     normalized.monitor.logMessages = !!normalized.monitor.logMessages
     normalized.monitor.logTimings = !!normalized.monitor.logTimings
-    normalized.security.enabled = !!normalized.security.enabled
 
     return normalized
 }
@@ -78,10 +68,10 @@ function assign(target, dx = null) {
 
     target.run = structuredClone(normalized.run)
     target.monitor = structuredClone(normalized.monitor)
-    target.security = structuredClone(normalized.security)
 
     delete target.logMessages
     delete target.worker
+    delete target.security
 
     return target
 }
@@ -97,12 +87,6 @@ function makeModel() {
     return {
         run: {},
         monitor: {},
-        security: {
-            mode: 'warn',
-            forwardEvents: true,
-            defaults: {},
-            allow: {},
-        },
     }
 }
 
@@ -118,18 +102,6 @@ function normalizeModel(settings = null) {
         monitor: {
             ...defaults.monitor,
             ...(settings.monitor ?? {}),
-        },
-        security: {
-            ...defaults.security,
-            ...(settings.security ?? {}),
-            defaults: {
-                ...defaults.security.defaults,
-                ...(settings.security?.defaults ?? {}),
-            },
-            allow: {
-                ...defaults.security.allow,
-                ...(settings.security?.allow ?? {}),
-            },
         },
     }
 }

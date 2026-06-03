@@ -8,8 +8,8 @@ import path from 'node:path'
 import {exec as execCallback} from 'node:child_process'
 import {promisify} from 'node:util'
 import {Runtime} from '../rt-als/runtime.js'
-import {runAsNode} from '../rt-als/node-context.js'
-import {safety} from '../rt-als/safety.js'
+import {runAsNode} from '../security/node-context.js'
+import {safety} from '../security/safety.js'
 
 const exec = promisify(execCallback)
 const uninstallers = []
@@ -242,11 +242,15 @@ test('classifies safety events against model runtime security settings', async (
     ], {
         runtimeSettings: {
             security: {
-                defaults: {
-                    fs: 'deny',
-                    net: 'warn',
-                    process: 'deny',
-                }
+                fs: {
+                    write: {mode: 'deny'},
+                },
+                net: {
+                    egress: {mode: 'warn'},
+                },
+                process: {
+                    exec: {mode: 'deny'},
+                },
             }
         }
     })
@@ -254,16 +258,18 @@ test('classifies safety events against model runtime security settings', async (
     runtime.start()
 
     try {
-        await runAsNode('Sink', async () => {
+        assert.throws(() => runAsNode('Sink', () => {
             fs.writeFileSync(targetFile, 'classified')
-        })
+        }), /security policy denied fs\.write/)
 
         const event = events.find((item) => item.cap === 'fs:write')
         assert.ok(event)
         assert.equal(event.node, 'Sink')
+        assert.equal(event.operation, 'fs.write')
         assert.equal(event.policy.decision, 'denied')
-        assert.equal(event.policy.domain, 'fs')
-        assert.equal(event.policy.permission, 'deny')
+        assert.equal(event.policy.area, 'fs')
+        assert.equal(event.policy.action, 'write')
+        assert.equal(event.policy.mode, 'deny')
     } finally {
         runtime.stop()
     }
@@ -291,8 +297,10 @@ test('does not let node security settings broaden the model security envelope', 
             dx: {
                 security: {
                     enabled: true,
-                    request: {
-                        fs: 'allow',
+                    fs: {
+                        write: {
+                            mode: 'allow',
+                        },
                     }
                 }
             }
@@ -300,11 +308,15 @@ test('does not let node security settings broaden the model security envelope', 
     ], {
         runtimeSettings: {
             security: {
-                defaults: {
-                    fs: 'warn',
-                    net: 'warn',
-                    process: 'deny',
-                }
+                fs: {
+                    write: {mode: 'warn'},
+                },
+                net: {
+                    egress: {mode: 'warn'},
+                },
+                process: {
+                    exec: {mode: 'deny'},
+                },
             }
         }
     })
@@ -320,8 +332,9 @@ test('does not let node security settings broaden the model security envelope', 
         assert.ok(event)
         assert.equal(event.node, 'Sink')
         assert.equal(event.policy.decision, 'warning')
-        assert.equal(event.policy.domain, 'fs')
-        assert.equal(event.policy.permission, 'warn')
+        assert.equal(event.policy.area, 'fs')
+        assert.equal(event.policy.action, 'write')
+        assert.equal(event.policy.mode, 'warn')
     } finally {
         runtime.stop()
     }
@@ -340,17 +353,35 @@ test('classifies safety events outside fs allow-list as denied', async () => {
             factory: class SinkFactory {},
             inputs: [],
             outputs: [],
+            dx: {
+                security: {
+                    enabled: true,
+                    fs: {
+                        write: {
+                            mode: 'allow',
+                        },
+                    },
+                },
+            },
         }
     ], {
         runtimeSettings: {
             security: {
-                defaults: {
-                    fs: 'allow',
-                    net: 'warn',
-                    process: 'deny',
+                fs: {
+                    write: {
+                        mode: 'allow',
+                        roots: ['./approved'],
+                    },
                 },
-                allow: {
-                    fsRoots: ['./approved'],
+                net: {
+                    egress: {
+                        mode: 'warn',
+                    },
+                },
+                process: {
+                    exec: {
+                        mode: 'deny',
+                    },
                 },
             },
         },
@@ -359,9 +390,9 @@ test('classifies safety events outside fs allow-list as denied', async () => {
     runtime.start()
 
     try {
-        await runAsNode('Sink', async () => {
+        assert.throws(() => runAsNode('Sink', () => {
             fs.writeFileSync(targetFile, 'outside')
-        })
+        }), /security policy denied fs\.write/)
 
         const event = events.find((item) => item.cap === 'fs:write')
         assert.ok(event)

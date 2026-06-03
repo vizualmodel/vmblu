@@ -1,7 +1,5 @@
 import {runtimeSettings as baseRuntimeSettings} from './rt-base/runtime-settings.js'
 import {runtimeSettings as alsRuntimeSettings} from './rt-als/runtime-settings.js'
-import {runtimeSettings as browserAgentRuntimeSettings} from './rt-browser-agent/runtime-settings.js'
-import {runtimeSettings as nodejsAgentRuntimeSettings} from './rt-nodejs-agent/runtime-settings.js'
 
 export const RT_BASE = '@vizualmodel/vmblu-runtime/rt-base'
 export const RT_ALS = '@vizualmodel/vmblu-runtime/rt-als'
@@ -25,13 +23,13 @@ export const RUNTIME_DESCRIPTORS = [
     {
         id: RT_BROWSER_AGENT,
         name: 'rt-browser-agent',
-        settings: browserAgentRuntimeSettings,
+        settings: baseRuntimeSettings,
         supportsAgents: true,
     },
     {
         id: RT_NODEJS_AGENT,
         name: 'rt-nodejs-agent',
-        settings: nodejsAgentRuntimeSettings,
+        settings: alsRuntimeSettings,
         supportsAgents: true,
         aliases: [RT_AGENT, 'rt-agent'],
     },

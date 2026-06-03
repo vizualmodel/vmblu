@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "schemaVersion": "0.9.7",
   "type": "module",
   "bin": {
@@ -45,7 +45,8 @@
     "tsup": "^8.5.0"
   },
   "dependencies": {
-    "@vizualmodel/vmblu-runtime": "^0.4.0",
+    "@vizualmodel/vmblu-core": "^0.5.5",
+    "@vizualmodel/vmblu-runtime": "^0.5.5",
     "ts-morph": "^26.0.0",
     "typescript": "^5.8.3"
   },

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "ui-svelte.js",
-  "type" : "module",
+  "type": "module",
   "dependencies": {
     "@vizualmodel/vmblu-runtime": "file:../runtime",
     "markdown-it": "^14.1.1"

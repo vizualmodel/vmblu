@@ -22,10 +22,8 @@ let settingsError = ''
 let currentSettings = null
 let currentRuntime = null
 let view = 'form'
-let netHostsText = ''
-let fsRootsText = ''
+let scopeText = makeScopeText()
 
-const securityModeOptions = ['off', 'warn', 'enforce']
 const permissionOptions = ['allow', 'warn', 'deny']
 
 onMount(() => {
@@ -79,7 +77,7 @@ function normalizeModelSettings(runtime, settings = null) {
 }
 
 function collectFormSettings() {
-    syncAllowListsFromText()
+    syncScopeListsFromText()
     settingsError = ''
     return normalizeModelSettings(currentRuntime, currentSettings)
 }
@@ -99,7 +97,7 @@ function syncSettingsFromText() {
 function setView(nextView) {
     if (nextView === view) return
     if (nextView === 'json') {
-        syncAllowListsFromText()
+        syncScopeListsFromText()
         syncTextFromSettings()
         settingsError = ''
     }
@@ -110,14 +108,33 @@ function setView(nextView) {
 }
 
 function syncAllowTextFromSettings() {
-    netHostsText = listToText(currentSettings?.security?.allow?.netHosts)
-    fsRootsText = listToText(currentSettings?.security?.allow?.fsRoots)
+    scopeText = {
+        fsReadRoots: listToText(currentSettings?.security?.fs?.read?.roots),
+        fsWriteRoots: listToText(currentSettings?.security?.fs?.write?.roots),
+        fsDeleteRoots: listToText(currentSettings?.security?.fs?.delete?.roots),
+        netEgressHosts: listToText(currentSettings?.security?.net?.egress?.hosts),
+        processExecCommands: listToText(currentSettings?.security?.process?.exec?.commands),
+    }
 }
 
-function syncAllowListsFromText() {
-    if (!currentSettings?.security?.allow) return
-    currentSettings.security.allow.netHosts = textToList(netHostsText)
-    currentSettings.security.allow.fsRoots = textToList(fsRootsText)
+function syncScopeListsFromText() {
+    const security = currentSettings?.security
+    if (!security) return
+    security.fs.read.roots = textToList(scopeText.fsReadRoots)
+    security.fs.write.roots = textToList(scopeText.fsWriteRoots)
+    security.fs.delete.roots = textToList(scopeText.fsDeleteRoots)
+    security.net.egress.hosts = textToList(scopeText.netEgressHosts)
+    security.process.exec.commands = textToList(scopeText.processExecCommands)
+}
+
+function makeScopeText() {
+    return {
+        fsReadRoots: '',
+        fsWriteRoots: '',
+        fsDeleteRoots: '',
+        netEgressHosts: '',
+        processExecCommands: '',
+    }
 }
 
 function listToText(values) {
@@ -153,8 +170,7 @@ function runtimeName(runtime) {
 }
 
 function hasPolicySettings(settings) {
-    const defaults = settings?.security?.defaults
-    return !!defaults && ['fs', 'net', 'process'].some(key => key in defaults)
+    return !!(settings?.security?.fs && settings?.security?.net && settings?.security?.process)
 }
 </script>
 
@@ -232,26 +248,27 @@ function hasPolicySettings(settings) {
                 <LabelCheckbox label="log timings" bind:on={currentSettings.monitor.logTimings} />
             </div>
 
-            {#if currentSettings.security}
-                <div class="section">
-                    <h4>Security</h4>
-                    <LabelSelect label="mode" bind:value={currentSettings.security.mode} options={securityModeOptions} />
-                    <LabelCheckbox label="forward events" bind:on={currentSettings.security.forwardEvents} />
-                </div>
-            {/if}
-
             {#if hasPolicySettings(currentSettings)}
                 <div class="section">
-                    <h4>Default Permissions</h4>
-                    <LabelSelect label="file system" bind:value={currentSettings.security.defaults.fs} options={permissionOptions} />
-                    <LabelSelect label="network" bind:value={currentSettings.security.defaults.net} options={permissionOptions} />
-                    <LabelSelect label="process" bind:value={currentSettings.security.defaults.process} options={permissionOptions} />
+                    <h4>File System</h4>
+                    <LabelSelect label="read" bind:value={currentSettings.security.fs.read.mode} options={permissionOptions} />
+                    <LabelTextarea label="read roots" bind:text={scopeText.fsReadRoots} />
+                    <LabelSelect label="write" bind:value={currentSettings.security.fs.write.mode} options={permissionOptions} />
+                    <LabelTextarea label="write roots" bind:text={scopeText.fsWriteRoots} />
+                    <LabelSelect label="delete" bind:value={currentSettings.security.fs.delete.mode} options={permissionOptions} />
+                    <LabelTextarea label="delete roots" bind:text={scopeText.fsDeleteRoots} />
                 </div>
 
                 <div class="section">
-                    <h4>Allow Lists</h4>
-                    <LabelTextarea label="network hosts" bind:text={netHostsText} />
-                    <LabelTextarea label="file roots" bind:text={fsRootsText} />
+                    <h4>Network</h4>
+                    <LabelSelect label="egress" bind:value={currentSettings.security.net.egress.mode} options={permissionOptions} />
+                    <LabelTextarea label="hosts" bind:text={scopeText.netEgressHosts} />
+                </div>
+
+                <div class="section">
+                    <h4>Process</h4>
+                    <LabelSelect label="exec" bind:value={currentSettings.security.process.exec.mode} options={permissionOptions} />
+                    <LabelTextarea label="commands" bind:text={scopeText.processExecCommands} />
                 </div>
             {/if}
         {:else}
