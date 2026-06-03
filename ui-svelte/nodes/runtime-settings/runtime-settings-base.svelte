@@ -15,5 +15,3 @@ export let dx
 <h4>Monitor</h4>
 <LabelCheckbox label="log messages" bind:on={dx.monitor.logMessages} />
 <LabelCheckbox label="log timings" bind:on={dx.monitor.logTimings} />
-<h4>Security</h4>
-<LabelCheckbox label="custom security settings" bind:on={dx.security.enabled} />

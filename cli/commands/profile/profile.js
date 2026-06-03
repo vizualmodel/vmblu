@@ -10,9 +10,9 @@ import ts from 'typescript';
 import { Project } from 'ts-morph';
 
 // vmblu
-import { ModelBlueprint, ModelCompiler } from '../../../core/types/model/index.js';
-import { ARL } from '../../../core/types/arl/arl-node.js'
-import { normalizeSeparators } from '../../../core/types/arl/path.js';
+import { ModelBlueprint, ModelCompiler } from '@vizualmodel/vmblu-core/types/model';
+import { ARL } from '@vizualmodel/vmblu-core/types/arl/arl-node'
+import { normalizeSeparators } from '@vizualmodel/vmblu-core/types/arl/path';
 import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
 
 // profile tool

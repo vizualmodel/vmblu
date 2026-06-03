@@ -595,6 +595,8 @@ function isCapabilitySuppressed(cap) {
 __name(isCapabilitySuppressed, "isCapabilitySuppressed");
 
 // rt-als/runtime-settings.js
+var PERMISSIONS = ["allow", "warn", "deny"];
+var PERMISSION_ORDER = { deny: 0, warn: 1, allow: 2 };
 var defaultWorker = /* @__PURE__ */ __name(() => ({
   on: false,
   path: ""
@@ -606,20 +608,34 @@ var defaultMonitor = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultSecurityRequest = /* @__PURE__ */ __name(() => ({
-  fs: "inherit",
-  net: "inherit",
-  process: "inherit",
-  allow: {
-    netHosts: [],
-    fsRoots: []
+var defaultFsOperation = /* @__PURE__ */ __name((mode = "deny") => ({
+  mode,
+  roots: []
+}), "defaultFsOperation");
+var defaultNetOperation = /* @__PURE__ */ __name((mode = "deny") => ({
+  mode,
+  hosts: []
+}), "defaultNetOperation");
+var defaultProcessOperation = /* @__PURE__ */ __name((mode = "deny") => ({
+  mode,
+  commands: []
+}), "defaultProcessOperation");
+var defaultSecurityPolicy = /* @__PURE__ */ __name(() => ({
+  fs: {
+    read: defaultFsOperation(),
+    write: defaultFsOperation(),
+    delete: defaultFsOperation()
+  },
+  net: {
+    egress: defaultNetOperation()
+  },
+  process: {
+    exec: defaultProcessOperation()
   }
-}), "defaultSecurityRequest");
+}), "defaultSecurityPolicy");
 var defaultSecurity = /* @__PURE__ */ __name(() => ({
   enabled: false,
-  mode: "warn",
-  forward: true,
-  request: defaultSecurityRequest()
+  ...defaultSecurityPolicy()
 }), "defaultSecurity");
 function make() {
   return {
@@ -634,6 +650,7 @@ function normalize(dx = null) {
   const defaults = make();
   if (!dx || typeof dx !== "object") return defaults;
   const legacySafety = dx.safety ?? {};
+  const security = normalizeNodeSecurity(dx.security, legacySafety);
   const normalized = {
     run: {
       ...defaults.run,
@@ -648,7 +665,7 @@ function normalize(dx = null) {
       ...dx.monitor ?? {},
       logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
     },
-    security: normalizeSecuritySettings(dx.security, legacySafety, defaults.security)
+    security
   };
   normalized.run.worker.on = !!normalized.run.worker.on;
   normalized.run.worker.path = normalized.run.worker.path ?? "";
@@ -680,35 +697,25 @@ function assign(target, dx = null) {
 __name(assign, "assign");
 function isDefault(dx = null) {
   const normalized = normalize(dx);
-  return JSON.stringify(normalized) === JSON.stringify(make());
+  const defaults = make();
+  if (!normalized.security.enabled || isDefaultSecurityPolicy(normalized.security)) {
+    normalized.security = structuredClone(defaults.security);
+  }
+  return JSON.stringify(normalized) === JSON.stringify(defaults);
 }
 __name(isDefault, "isDefault");
-var defaultModelSecurity = /* @__PURE__ */ __name(() => ({
-  mode: "warn",
-  forwardEvents: true,
-  defaults: {
-    fs: "warn",
-    net: "warn",
-    process: "deny"
-  },
-  allow: {
-    netHosts: [],
-    fsRoots: []
-  }
-}), "defaultModelSecurity");
 function makeModel() {
   return {
     run: {},
     monitor: {},
-    security: defaultModelSecurity()
+    security: defaultSecurityPolicy()
   };
 }
 __name(makeModel, "makeModel");
 function normalizeModel(settings = null) {
   const defaults = makeModel();
   if (!settings || typeof settings !== "object") return defaults;
-  const security = settings.security ?? {};
-  const normalized = {
+  return {
     run: {
       ...defaults.run,
       ...settings.run ?? {}
@@ -717,105 +724,187 @@ function normalizeModel(settings = null) {
       ...defaults.monitor,
       ...settings.monitor ?? {}
     },
-    security: {
-      ...defaults.security,
-      ...security,
-      defaults: {
-        ...defaults.security.defaults,
-        ...security.defaults ?? {}
-      },
-      allow: {
-        ...defaults.security.allow,
-        ...security.allow ?? {}
-      }
-    }
+    security: normalizeModelSecurity(settings.security)
   };
-  normalized.security.mode = ["off", "warn", "enforce"].includes(normalized.security.mode) ? normalized.security.mode : defaults.security.mode;
-  normalized.security.forwardEvents = normalized.security.forwardEvents !== false;
-  normalized.security.defaults.fs = normalizePermission(normalized.security.defaults.fs);
-  normalized.security.defaults.net = normalizePermission(normalized.security.defaults.net);
-  normalized.security.defaults.process = normalizePermission(normalized.security.defaults.process);
-  normalized.security.allow.netHosts = Array.isArray(normalized.security.allow.netHosts) ? normalized.security.allow.netHosts : [];
-  normalized.security.allow.fsRoots = Array.isArray(normalized.security.allow.fsRoots) ? normalized.security.allow.fsRoots : [];
-  return normalized;
 }
 __name(normalizeModel, "normalizeModel");
 function effectivePolicy(modelSettings = null, nodeDx = null) {
-  var _a, _b, _c;
+  var _a;
+  const hasModelSecurity = !!(modelSettings && typeof modelSettings === "object" && modelSettings.security);
   const model = normalizeModel(modelSettings);
   const node = normalize(nodeDx);
-  const request = ((_a = node.security) == null ? void 0 : _a.enabled) ? node.security.request : defaultSecurityRequest();
+  const nodeSecurity = ((_a = node.security) == null ? void 0 : _a.enabled) ? node.security : defaultSecurity();
   return {
-    mode: ((_b = node.security) == null ? void 0 : _b.enabled) ? node.security.mode : model.security.mode,
-    forward: ((_c = node.security) == null ? void 0 : _c.enabled) ? node.security.forward : model.security.forwardEvents,
-    security: {
-      fs: clipPermission(resolvePermission(request.fs, model.security.defaults.fs), model.security.defaults.fs),
-      net: clipPermission(resolvePermission(request.net, model.security.defaults.net), model.security.defaults.net),
-      process: clipPermission(resolvePermission(request.process, model.security.defaults.process), model.security.defaults.process),
-      allow: intersectAllowLists(model.security.allow, request.allow)
-    },
+    active: hasModelSecurity,
+    security: intersectSecurity(model.security, nodeSecurity),
     model,
     node
   };
 }
 __name(effectivePolicy, "effectivePolicy");
-function normalizeSecuritySettings(security = null, legacySafety = {}, defaults = defaultSecurity()) {
+function normalizeNodeSecurity(security = null, legacySafety = {}) {
   const source = security ?? {};
-  const request = source.request ?? {};
-  const allow = request.allow ?? {};
-  const normalized = {
-    ...defaults,
-    ...source,
-    enabled: source.enabled ?? legacySafety.on ?? defaults.enabled,
-    mode: source.mode ?? legacySafety.mode ?? defaults.mode,
-    forward: source.forward ?? legacySafety.forward ?? defaults.forward,
-    request: {
-      ...defaults.request,
-      ...request,
-      allow: {
-        ...defaults.request.allow,
-        ...allow
-      }
+  const legacy = legacyNodeSecurity(source);
+  const enabled = source.enabled ?? legacySafety.on ?? false;
+  return {
+    enabled: !!enabled,
+    ...normalizeSecurityPolicy(source, legacy)
+  };
+}
+__name(normalizeNodeSecurity, "normalizeNodeSecurity");
+function normalizeModelSecurity(security = null) {
+  return normalizeSecurityPolicy(security, legacyModelSecurity(security));
+}
+__name(normalizeModelSecurity, "normalizeModelSecurity");
+function normalizeSecurityPolicy(source = null, legacy = {}) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+  const defaults = defaultSecurityPolicy();
+  const value = source ?? {};
+  return {
+    fs: {
+      read: normalizeFsOperation(((_a = value.fs) == null ? void 0 : _a.read) ?? ((_b = legacy.fs) == null ? void 0 : _b.read) ?? defaults.fs.read),
+      write: normalizeFsOperation(((_c = value.fs) == null ? void 0 : _c.write) ?? ((_d = legacy.fs) == null ? void 0 : _d.write) ?? defaults.fs.write),
+      delete: normalizeFsOperation(((_e = value.fs) == null ? void 0 : _e.delete) ?? ((_f = legacy.fs) == null ? void 0 : _f.delete) ?? defaults.fs.delete)
+    },
+    net: {
+      egress: normalizeNetOperation(((_g = value.net) == null ? void 0 : _g.egress) ?? ((_h = legacy.net) == null ? void 0 : _h.egress) ?? defaults.net.egress)
+    },
+    process: {
+      exec: normalizeProcessOperation(((_i = value.process) == null ? void 0 : _i.exec) ?? ((_j = legacy.process) == null ? void 0 : _j.exec) ?? defaults.process.exec)
     }
   };
-  normalized.enabled = !!normalized.enabled;
-  normalized.forward = normalized.forward !== false;
-  normalized.mode = ["off", "warn", "enforce"].includes(normalized.mode) ? normalized.mode : defaults.mode;
-  normalized.request.fs = normalizePermission(normalized.request.fs);
-  normalized.request.net = normalizePermission(normalized.request.net);
-  normalized.request.process = normalizePermission(normalized.request.process);
-  normalized.request.allow.netHosts = Array.isArray(normalized.request.allow.netHosts) ? normalized.request.allow.netHosts : [];
-  normalized.request.allow.fsRoots = Array.isArray(normalized.request.allow.fsRoots) ? normalized.request.allow.fsRoots : [];
-  return normalized;
 }
-__name(normalizeSecuritySettings, "normalizeSecuritySettings");
-function normalizePermission(value) {
-  return ["inherit", "allow", "warn", "deny"].includes(value) ? value : "inherit";
-}
-__name(normalizePermission, "normalizePermission");
-function resolvePermission(requested, fallback) {
-  return requested === "inherit" ? fallback : requested;
-}
-__name(resolvePermission, "resolvePermission");
-function clipPermission(requested, envelope) {
-  const order = { deny: 0, warn: 1, allow: 2, inherit: 1 };
-  return order[requested] <= order[envelope] ? requested : envelope;
-}
-__name(clipPermission, "clipPermission");
-function intersectAllowLists(modelAllow = {}, nodeAllow = {}) {
+__name(normalizeSecurityPolicy, "normalizeSecurityPolicy");
+function normalizeFsOperation(value = null) {
+  const mode = normalizeMode(value == null ? void 0 : value.mode);
   return {
-    netHosts: intersect(modelAllow.netHosts, nodeAllow.netHosts),
-    fsRoots: intersect(modelAllow.fsRoots, nodeAllow.fsRoots)
+    mode,
+    roots: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.roots)
   };
 }
-__name(intersectAllowLists, "intersectAllowLists");
-function intersect(modelValues = [], nodeValues = []) {
-  if (!Array.isArray(modelValues) || !modelValues.length) return [];
+__name(normalizeFsOperation, "normalizeFsOperation");
+function normalizeNetOperation(value = null) {
+  const mode = normalizeMode(value == null ? void 0 : value.mode);
+  return {
+    mode,
+    hosts: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.hosts)
+  };
+}
+__name(normalizeNetOperation, "normalizeNetOperation");
+function normalizeProcessOperation(value = null) {
+  const mode = normalizeMode(value == null ? void 0 : value.mode);
+  return {
+    mode,
+    commands: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.commands)
+  };
+}
+__name(normalizeProcessOperation, "normalizeProcessOperation");
+function normalizeMode(value) {
+  return PERMISSIONS.includes(value) ? value : "deny";
+}
+__name(normalizeMode, "normalizeMode");
+function normalizeList(value) {
+  return Array.isArray(value) ? value.filter(Boolean).map((item) => String(item)) : [];
+}
+__name(normalizeList, "normalizeList");
+function legacyModelSecurity(security = null) {
+  if (!(security == null ? void 0 : security.defaults) && !(security == null ? void 0 : security.allow)) return {};
+  const defaults = security.defaults ?? {};
+  const allow = security.allow ?? {};
+  return {
+    fs: {
+      read: defaultFsOperation("deny"),
+      write: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) },
+      delete: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) }
+    },
+    net: {
+      egress: { mode: normalizeLegacyMode(defaults.net), hosts: normalizeList(allow.netHosts) }
+    },
+    process: {
+      exec: { mode: normalizeLegacyMode(defaults.process), commands: [] }
+    }
+  };
+}
+__name(legacyModelSecurity, "legacyModelSecurity");
+function legacyNodeSecurity(security = null) {
+  if (!(security == null ? void 0 : security.request)) return {};
+  const request = security.request ?? {};
+  const allow = request.allow ?? {};
+  return {
+    fs: {
+      read: defaultFsOperation("deny"),
+      write: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) },
+      delete: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) }
+    },
+    net: {
+      egress: { mode: normalizeLegacyMode(request.net), hosts: normalizeList(allow.netHosts) }
+    },
+    process: {
+      exec: { mode: normalizeLegacyMode(request.process), commands: [] }
+    }
+  };
+}
+__name(legacyNodeSecurity, "legacyNodeSecurity");
+function normalizeLegacyMode(value) {
+  return value === "inherit" ? "deny" : normalizeMode(value);
+}
+__name(normalizeLegacyMode, "normalizeLegacyMode");
+function intersectSecurity(model, node) {
+  return {
+    fs: {
+      read: intersectFsOperation(model.fs.read, node.fs.read),
+      write: intersectFsOperation(model.fs.write, node.fs.write),
+      delete: intersectFsOperation(model.fs.delete, node.fs.delete)
+    },
+    net: {
+      egress: intersectNetOperation(model.net.egress, node.net.egress)
+    },
+    process: {
+      exec: intersectProcessOperation(model.process.exec, node.process.exec)
+    }
+  };
+}
+__name(intersectSecurity, "intersectSecurity");
+function intersectFsOperation(model, node) {
+  const mode = stricterMode(model.mode, node.mode);
+  return {
+    mode,
+    roots: mode === "deny" ? [] : intersectScope(model.roots, node.roots)
+  };
+}
+__name(intersectFsOperation, "intersectFsOperation");
+function intersectNetOperation(model, node) {
+  const mode = stricterMode(model.mode, node.mode);
+  return {
+    mode,
+    hosts: mode === "deny" ? [] : intersectScope(model.hosts, node.hosts)
+  };
+}
+__name(intersectNetOperation, "intersectNetOperation");
+function intersectProcessOperation(model, node) {
+  const mode = stricterMode(model.mode, node.mode);
+  return {
+    mode,
+    commands: mode === "deny" ? [] : intersectScope(model.commands, node.commands)
+  };
+}
+__name(intersectProcessOperation, "intersectProcessOperation");
+function stricterMode(modelMode, nodeMode) {
+  return PERMISSION_ORDER[nodeMode] <= PERMISSION_ORDER[modelMode] ? nodeMode : modelMode;
+}
+__name(stricterMode, "stricterMode");
+function intersectScope(modelValues = [], nodeValues = []) {
+  if (!Array.isArray(modelValues) || !modelValues.length) return Array.isArray(nodeValues) ? nodeValues.slice() : [];
   if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice();
   const allowed = new Set(modelValues);
   return nodeValues.filter((value) => allowed.has(value));
 }
-__name(intersect, "intersect");
+__name(intersectScope, "intersectScope");
+function isDefaultSecurityPolicy(security = {}) {
+  const { enabled, ...policy } = security;
+  return JSON.stringify(policy) === JSON.stringify(defaultSecurityPolicy());
+}
+__name(isDefaultSecurityPolicy, "isDefaultSecurityPolicy");
 var runtimeSettings = {
   make,
   normalize,
@@ -833,8 +922,9 @@ import childProcess from "child_process";
 import fs from "fs";
 import http from "http";
 import https from "https";
-var STATE_KEY = Symbol.for("vmblu.rt-als.safetyHooks");
-var WRAPPED = Symbol.for("vmblu.rt-als.wrapped");
+import path from "path";
+var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.rt-als.safetyHooks");
+var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.rt-als.wrapped");
 var _Safety = class _Safety {
   constructor() {
     this.emitter = null;
@@ -859,31 +949,33 @@ var _Safety = class _Safety {
       var _a, _b, _c, _d;
       const actor = (_b = (_a = runtime == null ? void 0 : runtime.actors) == null ? void 0 : _a.find) == null ? void 0 : _b.call(_a, (candidate) => candidate.name === (event == null ? void 0 : event.node));
       const effectivePolicy2 = (_d = (_c = runtime == null ? void 0 : runtime.settings) == null ? void 0 : _c.effectivePolicy) == null ? void 0 : _d.call(_c, modelRuntimeSettings, actor == null ? void 0 : actor.dx);
-      if (!(effectivePolicy2 == null ? void 0 : effectivePolicy2.security)) return null;
-      const domain = capabilityDomain(event.cap ?? event.capability);
-      const permission = effectivePolicy2.security[domain];
-      const allowListDecision = classifyAllowList(domain, event.detail, effectivePolicy2.security.allow);
-      const decision = (allowListDecision == null ? void 0 : allowListDecision.decision) ?? (permission === "deny" ? "denied" : permission === "warn" ? "warning" : "allowed");
+      if (!(effectivePolicy2 == null ? void 0 : effectivePolicy2.active) || !(effectivePolicy2 == null ? void 0 : effectivePolicy2.security)) return null;
+      const operation = parseOperation(event.operation ?? event.cap ?? event.capability);
+      const policy = operationPolicy(effectivePolicy2.security, operation);
+      if (!policy) return null;
+      const scopeDecision = classifyScope(operation, event.detail, policy);
+      const decision = (scopeDecision == null ? void 0 : scopeDecision.decision) ?? (policy.mode === "deny" ? "denied" : policy.mode === "warn" ? "warning" : "allowed");
       return {
         decision,
-        domain,
-        permission,
-        mode: effectivePolicy2.mode,
-        forward: effectivePolicy2.forward,
-        ...(allowListDecision == null ? void 0 : allowListDecision.reason) ? { reason: allowListDecision.reason } : {}
+        area: operation.area,
+        action: operation.action,
+        mode: (scopeDecision == null ? void 0 : scopeDecision.mode) ?? policy.mode,
+        ...(scopeDecision == null ? void 0 : scopeDecision.reason) ? { reason: scopeDecision.reason } : {}
       };
     };
   }
-  report(cap, detail = {}) {
+  report(operation, detail = {}) {
     const event = {
       ts: Date.now(),
       node: getCurrentNode(),
-      cap,
+      operation: normalizeOperationName(operation),
+      cap: legacyCapabilityName(operation),
       detail
     };
     const policy = this.classify(event);
     if (policy) event.policy = policy;
     this.emit(event);
+    return event;
   }
   classify(event) {
     if (!this.policyClassifier) return null;
@@ -897,9 +989,14 @@ var _Safety = class _Safety {
       };
     }
   }
-  emitCapability(cap, detail) {
-    if (isCapabilitySuppressed(cap)) return;
-    this.report(cap, detail);
+  emitCapability(operation, detail) {
+    var _a;
+    if (isCapabilitySuppressed(operation)) return null;
+    const event = this.report(operation, detail);
+    if (((_a = event == null ? void 0 : event.policy) == null ? void 0 : _a.decision) === "denied") {
+      throw new SecurityPolicyError(event);
+    }
+    return event;
   }
   installHooks({ mode = "off" } = {}) {
     if (mode === "off") return () => {
@@ -922,35 +1019,41 @@ var _Safety = class _Safety {
   installProcessHooks(restores) {
     const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(childProcess, "exec", (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
-      report("proc:exec", { command: safeString(command) });
+      report("process.exec", { command: safeString(command) });
       return original.call(this, command, ...args);
     }, "wrappedExec"), restores);
     wrapMethod(childProcess, "execFile", (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, args, options, callback) {
       const argv = Array.isArray(args) ? args : [];
-      report("proc:exec", { command: safeString(file), args: argv.slice() });
+      report("process.exec", { command: safeString(file), args: argv.slice() });
       return original.call(this, file, args, options, callback);
     }, "wrappedExecFile"), restores);
     wrapMethod(childProcess, "spawn", (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, args, options) {
-      report("proc:exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
+      report("process.exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
       return original.call(this, command, args, options);
     }, "wrappedSpawn"), restores);
     wrapMethod(childProcess, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, args, options) {
-      report("proc:exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
+      report("process.exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
       return original.call(this, modulePath, args, options);
     }, "wrappedFork"), restores);
   }
   installFsHooks(restores) {
     const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
+    for (const key of ["readFile", "readFileSync"]) {
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(path2, ...args) {
+        report("fs.read", { path: safeString(path2) });
+        return original.call(this, path2, ...args);
+      }, "wrappedFsRead"), restores);
+    }
     for (const key of ["writeFile", "writeFileSync", "appendFile", "appendFileSync"]) {
-      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path, ...args) {
-        report("fs:write", { path: safeString(path) });
-        return original.call(this, path, ...args);
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path2, ...args) {
+        report("fs.write", { path: safeString(path2) });
+        return original.call(this, path2, ...args);
       }, "wrappedFs"), restores);
     }
     for (const key of ["rm", "rmSync", "unlink", "unlinkSync"]) {
-      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path, ...args) {
-        report("fs:delete", { path: safeString(path) });
-        return original.call(this, path, ...args);
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path2, ...args) {
+        report("fs.delete", { path: safeString(path2) });
+        return original.call(this, path2, ...args);
       }, "wrappedDelete"), restores);
     }
   }
@@ -962,21 +1065,21 @@ var _Safety = class _Safety {
         url: describeRequestUrl(input),
         method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       };
-      report("net:egress", detail);
-      return suppressCapability("net:egress", () => original.call(this, input, init));
+      report("net.egress", detail);
+      return suppressCapability("net.egress", () => original.call(this, input, init));
     }, "wrappedFetch"), restores);
   }
   installHttpHooks(restores) {
     const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(http, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpRequest(input, options, callback) {
-      report("net:egress", {
+      report("net.egress", {
         url: describeRequestUrl(input, options, "http:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpRequest"), restores);
     wrapMethod(https, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpsRequest(input, options, callback) {
-      report("net:egress", {
+      report("net.egress", {
         url: describeRequestUrl(input, options, "https:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
@@ -1004,6 +1107,15 @@ var _Safety = class _Safety {
 };
 __name(_Safety, "Safety");
 var Safety = _Safety;
+var _SecurityPolicyError = class _SecurityPolicyError extends Error {
+  constructor(event) {
+    super(`vmblu security policy denied ${(event == null ? void 0 : event.operation) ?? "operation"}`);
+    this.name = "SecurityPolicyError";
+    this.event = event;
+  }
+};
+__name(_SecurityPolicyError, "SecurityPolicyError");
+var SecurityPolicyError = _SecurityPolicyError;
 function getState() {
   if (!globalThis[STATE_KEY]) {
     globalThis[STATE_KEY] = {
@@ -1040,32 +1152,49 @@ function describeRequestUrl(input, options = null, protocol = "") {
     const actualProtocol = input.protocol ?? (options == null ? void 0 : options.protocol) ?? protocol;
     const host = input.hostname ?? input.host ?? (options == null ? void 0 : options.hostname) ?? (options == null ? void 0 : options.host) ?? "";
     const port = input.port ?? (options == null ? void 0 : options.port);
-    const path = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
+    const path2 = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
     const authority = port ? `${host}:${port}` : host;
-    return authority ? `${actualProtocol}//${authority}${path}` : path;
+    return authority ? `${actualProtocol}//${authority}${path2}` : path2;
   }
   return safeString(input);
 }
 __name(describeRequestUrl, "describeRequestUrl");
-function capabilityDomain(cap) {
-  var _a, _b, _c;
-  if ((_a = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _a.call(cap, "fs:")) return "fs";
-  if ((_b = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _b.call(cap, "net:")) return "net";
-  if ((_c = cap == null ? void 0 : cap.startsWith) == null ? void 0 : _c.call(cap, "proc:")) return "process";
-  return "unknown";
+function normalizeOperationName(value) {
+  return parseOperation(value).name;
 }
-__name(capabilityDomain, "capabilityDomain");
-function classifyAllowList(domain, detail = {}, allow = {}) {
-  var _a, _b;
-  if (domain === "fs" && ((_a = allow.fsRoots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
-    return isPathAllowed(detail.path, allow.fsRoots) ? null : { decision: "denied", reason: "fs_root_not_allowed" };
+__name(normalizeOperationName, "normalizeOperationName");
+function legacyCapabilityName(value) {
+  const operation = parseOperation(value);
+  if (operation.name === "process.exec") return "proc:exec";
+  return operation.name.replace(".", ":");
+}
+__name(legacyCapabilityName, "legacyCapabilityName");
+function parseOperation(value) {
+  const normalized = String(value ?? "").replace(":", ".");
+  if (normalized === "proc.exec") return { name: "process.exec", area: "process", action: "exec" };
+  const [area = "unknown", action = "unknown"] = normalized.split(".");
+  return { name: `${area}.${action}`, area, action };
+}
+__name(parseOperation, "parseOperation");
+function operationPolicy(security = {}, operation) {
+  var _a;
+  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+}
+__name(operationPolicy, "operationPolicy");
+function classifyScope(operation, detail = {}, policy = {}) {
+  var _a, _b, _c;
+  if (operation.area === "fs" && ((_a = policy.roots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
+    return isPathAllowed(detail.path, policy.roots) ? null : { decision: "denied", mode: "deny", reason: "fs_root_not_allowed" };
   }
-  if (domain === "net" && ((_b = allow.netHosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
-    return isHostAllowed(detail.url, allow.netHosts) ? null : { decision: "denied", reason: "net_host_not_allowed" };
+  if (operation.area === "net" && ((_b = policy.hosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
+    return isHostAllowed(detail.url, policy.hosts) ? null : { decision: "denied", mode: "deny", reason: "net_host_not_allowed" };
+  }
+  if (operation.area === "process" && ((_c = policy.commands) == null ? void 0 : _c.length) && (detail == null ? void 0 : detail.command)) {
+    return isCommandAllowed(detail.command, policy.commands) ? null : { decision: "denied", mode: "deny", reason: "process_command_not_allowed" };
   }
   return null;
 }
-__name(classifyAllowList, "classifyAllowList");
+__name(classifyScope, "classifyScope");
 function isPathAllowed(value, roots = []) {
   const target = normalizePath(value);
   return roots.some((root) => {
@@ -1075,7 +1204,7 @@ function isPathAllowed(value, roots = []) {
 }
 __name(isPathAllowed, "isPathAllowed");
 function normalizePath(value) {
-  return String(value ?? "").replaceAll("\\", "/").replace(/\/+$/, "");
+  return path.resolve(String(value ?? "")).replaceAll("\\", "/").replace(/\/+$/, "");
 }
 __name(normalizePath, "normalizePath");
 function isHostAllowed(value, hosts = []) {
@@ -1087,6 +1216,10 @@ function isHostAllowed(value, hosts = []) {
   }
 }
 __name(isHostAllowed, "isHostAllowed");
+function isCommandAllowed(value, commands = []) {
+  return commands.includes(String(value ?? ""));
+}
+__name(isCommandAllowed, "isCommandAllowed");
 var safety = new Safety();
 
 // rt-als/runtime.js
@@ -2243,106 +2376,106 @@ function matches(patterns, id) {
 __name(matches, "matches");
 
 // agent-base/json-schema.js
-function validateJsonSchema(schema, value, { path = "$" } = {}) {
+function validateJsonSchema(schema, value, { path: path2 = "$" } = {}) {
   const errors = [];
-  validate(schema, value, path, errors);
+  validate(schema, value, path2, errors);
   return {
     valid: errors.length === 0,
     errors
   };
 }
 __name(validateJsonSchema, "validateJsonSchema");
-function validate(schema, value, path, errors) {
+function validate(schema, value, path2, errors) {
   if (!schema || typeof schema !== "object" || Array.isArray(schema)) return;
   if (schema.oneOf) {
     const matches2 = schema.oneOf.filter((candidate) => {
       const candidateErrors = [];
-      validate(candidate, value, path, candidateErrors);
+      validate(candidate, value, path2, candidateErrors);
       return candidateErrors.length === 0;
     });
-    if (matches2.length !== 1) errors.push(error(path, "oneOf", `Expected exactly one matching schema, found ${matches2.length}`));
+    if (matches2.length !== 1) errors.push(error(path2, "oneOf", `Expected exactly one matching schema, found ${matches2.length}`));
     return;
   }
   if (schema.anyOf) {
     const matches2 = schema.anyOf.some((candidate) => {
       const candidateErrors = [];
-      validate(candidate, value, path, candidateErrors);
+      validate(candidate, value, path2, candidateErrors);
       return candidateErrors.length === 0;
     });
-    if (!matches2) errors.push(error(path, "anyOf", "Expected at least one matching schema"));
+    if (!matches2) errors.push(error(path2, "anyOf", "Expected at least one matching schema"));
     return;
   }
   if (schema.allOf) {
-    for (const candidate of schema.allOf) validate(candidate, value, path, errors);
+    for (const candidate of schema.allOf) validate(candidate, value, path2, errors);
   }
   if (schema.const !== void 0 && value !== schema.const) {
-    errors.push(error(path, "const", `Expected ${JSON.stringify(schema.const)}`));
+    errors.push(error(path2, "const", `Expected ${JSON.stringify(schema.const)}`));
   }
   if (Array.isArray(schema.enum) && !schema.enum.some((item) => item === value)) {
-    errors.push(error(path, "enum", `Expected one of: ${schema.enum.map((item) => JSON.stringify(item)).join(", ")}`));
+    errors.push(error(path2, "enum", `Expected one of: ${schema.enum.map((item) => JSON.stringify(item)).join(", ")}`));
   }
   if (schema.type && !matchesType(schema.type, value)) {
-    errors.push(error(path, "type", `Expected ${Array.isArray(schema.type) ? schema.type.join(" or ") : schema.type}`));
+    errors.push(error(path2, "type", `Expected ${Array.isArray(schema.type) ? schema.type.join(" or ") : schema.type}`));
     return;
   }
-  if (isObject(value)) validateObject(schema, value, path, errors);
-  if (Array.isArray(value)) validateArray(schema, value, path, errors);
-  if (typeof value === "number") validateNumber(schema, value, path, errors);
-  if (typeof value === "string") validateString(schema, value, path, errors);
+  if (isObject(value)) validateObject(schema, value, path2, errors);
+  if (Array.isArray(value)) validateArray(schema, value, path2, errors);
+  if (typeof value === "number") validateNumber(schema, value, path2, errors);
+  if (typeof value === "string") validateString(schema, value, path2, errors);
 }
 __name(validate, "validate");
-function validateObject(schema, value, path, errors) {
+function validateObject(schema, value, path2, errors) {
   const properties = isObject(schema.properties) ? schema.properties : {};
   const required = Array.isArray(schema.required) ? schema.required : [];
   for (const key of required) {
-    if (!Object.hasOwn(value, key)) errors.push(error(`${path}.${key}`, "required", "Missing required property"));
+    if (!Object.hasOwn(value, key)) errors.push(error(`${path2}.${key}`, "required", "Missing required property"));
   }
   for (const [key, item] of Object.entries(value)) {
     if (properties[key]) {
-      validate(properties[key], item, `${path}.${key}`, errors);
+      validate(properties[key], item, `${path2}.${key}`, errors);
       continue;
     }
     if (schema.additionalProperties === false) {
-      errors.push(error(`${path}.${key}`, "additionalProperties", "Unexpected property"));
+      errors.push(error(`${path2}.${key}`, "additionalProperties", "Unexpected property"));
     } else if (isObject(schema.additionalProperties)) {
-      validate(schema.additionalProperties, item, `${path}.${key}`, errors);
+      validate(schema.additionalProperties, item, `${path2}.${key}`, errors);
     }
   }
 }
 __name(validateObject, "validateObject");
-function validateArray(schema, value, path, errors) {
+function validateArray(schema, value, path2, errors) {
   if (Number.isInteger(schema.minItems) && value.length < schema.minItems) {
-    errors.push(error(path, "minItems", `Expected at least ${schema.minItems} items`));
+    errors.push(error(path2, "minItems", `Expected at least ${schema.minItems} items`));
   }
   if (Number.isInteger(schema.maxItems) && value.length > schema.maxItems) {
-    errors.push(error(path, "maxItems", `Expected at most ${schema.maxItems} items`));
+    errors.push(error(path2, "maxItems", `Expected at most ${schema.maxItems} items`));
   }
   if (schema.items) {
-    value.forEach((item, index) => validate(schema.items, item, `${path}[${index}]`, errors));
+    value.forEach((item, index) => validate(schema.items, item, `${path2}[${index}]`, errors));
   }
 }
 __name(validateArray, "validateArray");
-function validateNumber(schema, value, path, errors) {
+function validateNumber(schema, value, path2, errors) {
   if (typeof schema.minimum === "number" && value < schema.minimum) {
-    errors.push(error(path, "minimum", `Expected >= ${schema.minimum}`));
+    errors.push(error(path2, "minimum", `Expected >= ${schema.minimum}`));
   }
   if (typeof schema.maximum === "number" && value > schema.maximum) {
-    errors.push(error(path, "maximum", `Expected <= ${schema.maximum}`));
+    errors.push(error(path2, "maximum", `Expected <= ${schema.maximum}`));
   }
 }
 __name(validateNumber, "validateNumber");
-function validateString(schema, value, path, errors) {
+function validateString(schema, value, path2, errors) {
   if (Number.isInteger(schema.minLength) && value.length < schema.minLength) {
-    errors.push(error(path, "minLength", `Expected length >= ${schema.minLength}`));
+    errors.push(error(path2, "minLength", `Expected length >= ${schema.minLength}`));
   }
   if (Number.isInteger(schema.maxLength) && value.length > schema.maxLength) {
-    errors.push(error(path, "maxLength", `Expected length <= ${schema.maxLength}`));
+    errors.push(error(path2, "maxLength", `Expected length <= ${schema.maxLength}`));
   }
   if (schema.pattern) {
     try {
-      if (!new RegExp(schema.pattern).test(value)) errors.push(error(path, "pattern", `Expected to match ${schema.pattern}`));
+      if (!new RegExp(schema.pattern).test(value)) errors.push(error(path2, "pattern", `Expected to match ${schema.pattern}`));
     } catch {
-      errors.push(error(path, "pattern", `Invalid schema pattern ${schema.pattern}`));
+      errors.push(error(path2, "pattern", `Invalid schema pattern ${schema.pattern}`));
     }
   }
 }
@@ -2363,8 +2496,8 @@ function isObject(value) {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
 __name(isObject, "isObject");
-function error(path, keyword, message) {
-  return { path, keyword, message };
+function error(path2, keyword, message) {
+  return { path: path2, keyword, message };
 }
 __name(error, "error");
 

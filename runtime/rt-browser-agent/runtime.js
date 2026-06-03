@@ -2,7 +2,7 @@ export {Runtime}
 
 import {Runtime as BaseRuntime} from '../rt-base/runtime.js'
 import {AgentRuntimeSupport} from '../agent-base/index.js'
-import {runtimeSettings} from './runtime-settings.js'
+import {runtimeSettings} from '../rt-base/runtime-settings.js'
 
 class Runtime extends BaseRuntime {
     get settings() {

@@ -575,14 +575,14 @@ var defaultMonitor$2 = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultSecurity$2 = /* @__PURE__ */ __name(() => ({
+var defaultSecurity$1 = /* @__PURE__ */ __name(() => ({
   enabled: false
 }), "defaultSecurity");
 function make$2() {
   return {
     run: defaultRun$2(),
     monitor: defaultMonitor$2(),
-    security: defaultSecurity$2()
+    security: defaultSecurity$1()
   };
 }
 __name(make$2, "make");
@@ -647,18 +647,26 @@ function makeModel$2() {
     run: {},
     monitor: {},
     security: {
-      mode: "warn",
-      forwardEvents: true,
-      defaults: {},
-      allow: {}
+      fs: {
+        read: { mode: "deny", roots: [] },
+        write: { mode: "deny", roots: [] },
+        delete: { mode: "deny", roots: [] }
+      },
+      net: {
+        egress: { mode: "deny", hosts: [] }
+      },
+      process: {
+        exec: { mode: "deny", commands: [] }
+      }
     }
   };
 }
 __name(makeModel$2, "makeModel");
 function normalizeModel$2(settings = null) {
-  var _a, _b;
+  var _a, _b, _c, _d, _e;
   const defaults = makeModel$2();
   if (!settings || typeof settings !== "object") return defaults;
+  const security = settings.security ?? {};
   return {
     run: {
       ...defaults.run,
@@ -670,14 +678,16 @@ function normalizeModel$2(settings = null) {
     },
     security: {
       ...defaults.security,
-      ...settings.security ?? {},
-      defaults: {
-        ...defaults.security.defaults,
-        ...((_a = settings.security) == null ? void 0 : _a.defaults) ?? {}
+      fs: {
+        read: { ...defaults.security.fs.read, ...((_a = security.fs) == null ? void 0 : _a.read) ?? {} },
+        write: { ...defaults.security.fs.write, ...((_b = security.fs) == null ? void 0 : _b.write) ?? {} },
+        delete: { ...defaults.security.fs.delete, ...((_c = security.fs) == null ? void 0 : _c.delete) ?? {} }
       },
-      allow: {
-        ...defaults.security.allow,
-        ...((_b = settings.security) == null ? void 0 : _b.allow) ?? {}
+      net: {
+        egress: { ...defaults.security.net.egress, ...((_d = security.net) == null ? void 0 : _d.egress) ?? {} }
+      },
+      process: {
+        exec: { ...defaults.security.process.exec, ...((_e = security.process) == null ? void 0 : _e.exec) ?? {} }
       }
     }
   };
@@ -735,6 +745,21 @@ function run_all(arr) {
 	for (var i = 0; i < arr.length; i++) {
 		arr[i]();
 	}
+}
+
+/**
+ * @template V
+ * @param {V} value
+ * @param {V | (() => V)} fallback
+ * @param {boolean} [lazy]
+ * @returns {V}
+ */
+function fallback(value, fallback, lazy = false) {
+	return value === undefined
+		? lazy
+			? /** @type {() => V} */ (fallback)()
+			: /** @type {V} */ (fallback)
+		: value;
 }
 
 const DERIVED = 1 << 1;
@@ -5616,7 +5641,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$t = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$r = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -5658,7 +5683,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$t();
+	var div_1 = root$r();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5678,7 +5703,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$s = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
+var root$q = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
 
 function Vertical_menu_tabs_content($$anchor, $$props) {
 	push($$props, false);
@@ -5727,7 +5752,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$s();
+	var div_1 = root$q();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5743,7 +5768,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$r = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$p = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5804,7 +5829,7 @@ function Canvas_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$r();
+	var div_1 = root$p();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -5812,7 +5837,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$q = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$o = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -6064,7 +6089,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$q();
+	var div_1 = root$o();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -6101,7 +6126,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$p = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$n = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -6271,7 +6296,7 @@ function Column_main($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$p();
+	var div_1 = root$n();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -6293,8 +6318,8 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$h = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$o = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$i = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$m = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6327,12 +6352,12 @@ function Top_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$o();
+	var div = root$m();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$h();
+		var div_1 = root_1$i();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6357,8 +6382,8 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$g = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$n = template(`<div class="menu svelte-1st5yi2"></div>`);
+var root_1$h = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$l = template(`<div class="menu svelte-1st5yi2"></div>`);
 
 function Side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6391,12 +6416,12 @@ function Side_menu($$anchor, $$props) {
 	function keydown() {}
 	init();
 
-	var div = root$n();
+	var div = root$l();
 
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$g();
+		var div_1 = root_1$h();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6421,9 +6446,9 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$d = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$b = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root_3$4 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$m = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root$k = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -6499,7 +6524,7 @@ function Tab_ribbon($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$m();
+	var div = root$k();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -6511,7 +6536,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$d();
+				var div_1 = root_2$b();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -6563,8 +6588,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$f = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
-var root$l = template(`<div class="menu svelte-oi2iq"></div>`);
+var root_1$g = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
+var root$j = template(`<div class="menu svelte-oi2iq"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6596,12 +6621,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$l();
+	var div = root$j();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$f();
+		var div_1 = root_1$g();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6721,10 +6746,10 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$e = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$c = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_1$f = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$a = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
 var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
-var root$k = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
+var root$i = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
 	push($$props, false);
@@ -6831,7 +6856,7 @@ function Popup_box($$anchor, $$props) {
 
 	init();
 
-	var div = root$k();
+	var div = root$i();
 
 	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
 
@@ -6842,7 +6867,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$e();
+		var i_2 = root_1$f();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -6852,7 +6877,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$c();
+		var i_3 = root_2$a();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6891,7 +6916,7 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root$j = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
+var root$h = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
 
 function Text_field($$anchor, $$props) {
 	push($$props, false);
@@ -6925,7 +6950,7 @@ function Text_field($$anchor, $$props) {
 
 	init();
 
-	var input_1 = root$j();
+	var input_1 = root$h();
 
 	bind_this(input_1, ($$value) => set(input, $$value), () => get(input));
 	template_effect(() => set_attribute(input_1, "style", style() ? style() : ''));
@@ -6935,7 +6960,7 @@ function Text_field($$anchor, $$props) {
 	pop();
 }
 
-var root$i = template(`<input type="checkbox" class="svelte-kvi95y">`);
+var root$g = template(`<input type="checkbox" class="svelte-kvi95y">`);
 
 function Checkbox($$anchor, $$props) {
 	push($$props, false);
@@ -6951,7 +6976,7 @@ function Checkbox($$anchor, $$props) {
 
 	init();
 
-	var input = root$i();
+	var input = root$g();
 	template_effect(() => set_attribute(input, "style", style() ? style() : ''));
 	bind_checked(input, on);
 	event("change", input, onInput);
@@ -6959,14 +6984,14 @@ function Checkbox($$anchor, $$props) {
 	pop();
 }
 
-var root$h = template(`<div class="label-checkbox svelte-2li08e"><label class="svelte-2li08e"> </label> <div class="checkbox-field svelte-2li08e"><!> <!></div></div>`);
+var root$f = template(`<div class="label-checkbox svelte-2li08e"><label class="svelte-2li08e"> </label> <div class="checkbox-field svelte-2li08e"><!> <!></div></div>`);
 
 function Label_checkbox($$anchor, $$props) {
 	let label = prop($$props, "label", 8);
 	let on = prop($$props, "on", 12);
 	let style = prop($$props, "style", 8, 'width: 9rem;');
 	let onToggle = prop($$props, "onToggle", 8);
-	var div = root$h();
+	var div = root$f();
 	var label_1 = child(div);
 	var text = child(label_1);
 
@@ -6998,7 +7023,7 @@ function Label_checkbox($$anchor, $$props) {
 	append($$anchor, div);
 }
 
-var root$g = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!>`, 1);
+var root$e = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!>`, 1);
 
 function Runtime_settings_base($$anchor, $$props) {
 	push($$props, false);
@@ -7007,7 +7032,7 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	init();
 
-	var fragment = root$g();
+	var fragment = root$e();
 	var node = sibling(first_child(fragment), 2);
 
 	Label_checkbox(node, {
@@ -7059,313 +7084,137 @@ function Runtime_settings_base($$anchor, $$props) {
 		$$legacy: true
 	});
 
-	var node_3 = sibling(node_2, 4);
-
-	Label_checkbox(node_3, {
-		label: "custom security settings",
-		get on() {
-			return dx().security.enabled;
-		},
-		set on($$value) {
-			dx(dx().security.enabled = $$value, true);
-		},
-		$$legacy: true
-	});
-
 	append($$anchor, fragment);
 	pop();
 }
 
-var root$f = template(`<div class="same-line svelte-nv80og"><!></div>`);
+var root$d = template(`<button type="button" class="svelte-2d29qn"> </button>`);
 
-function Same_line($$anchor, $$props) {
-	var div = root$f();
-	var node = child(div);
+function Button($$anchor, $$props) {
+	push($$props, false);
 
-	slot(node, $$props, "default", {});
-	append($$anchor, div);
-}
+	let label = prop($$props, "label", 8);
+	let click = prop($$props, "click", 8);
+	let active = prop($$props, "active", 8, false);
+	let disabled = prop($$props, "disabled", 8, false);
 
-var root$e = template(`<label class="label svelte-1w9b525"> </label>`);
+	init();
 
-function Label($$anchor, $$props) {
-	let text = prop($$props, "text", 8);
-	let style = prop($$props, "style", 8);
-	var label = root$e();
-	var text_1 = child(label);
+	var button = root$d();
+	var text = child(button);
 
 	template_effect(() => {
-		set_attribute(label, "style", style() ? style() : '');
-		set_text(text_1, text());
+		button.disabled = disabled();
+		toggle_class(button, "active", active());
+		set_text(text, label());
 	});
 
-	append($$anchor, label);
-}
-
-var root_2$b = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
-var root$d = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!> <!> <!>`, 1);
-
-function Runtime_settings_als($$anchor, $$props) {
-	push($$props, false);
-
-	let dx = prop($$props, "dx", 12);
-
-	init();
-
-	var fragment = root$d();
-	var node = sibling(first_child(fragment), 2);
-
-	Label_checkbox(node, {
-		label: "use worker script:",
-		get on() {
-			return dx().run.worker.on;
-		},
-		set on($$value) {
-			dx(dx().run.worker.on = $$value, true);
-		},
-		children: ($$anchor, $$slotProps) => {
-			Text_field($$anchor, {
-				get text() {
-					return dx().run.worker.path;
-				},
-				set text($$value) {
-					dx(dx().run.worker.path = $$value, true);
-				},
-				$$legacy: true
-			});
-		},
-		$$slots: { default: true },
-		$$legacy: true
-	});
-
-	var node_1 = sibling(node, 4);
-
-	Label_checkbox(node_1, {
-		label: "log messages",
-		get on() {
-			return dx().monitor.logMessages;
-		},
-		set on($$value) {
-			dx(dx().monitor.logMessages = $$value, true);
-		},
-		$$legacy: true
-	});
-
-	var node_2 = sibling(node_1, 2);
-
-	Label_checkbox(node_2, {
-		label: "log timings",
-		get on() {
-			return dx().monitor.logTimings;
-		},
-		set on($$value) {
-			dx(dx().monitor.logTimings = $$value, true);
-		},
-		$$legacy: true
-	});
-
-	var node_3 = sibling(node_2, 4);
-
-	Label_checkbox(node_3, {
-		label: "custom security settings",
-		get on() {
-			return dx().security.enabled;
-		},
-		set on($$value) {
-			dx(dx().security.enabled = $$value, true);
-		},
-		$$legacy: true
-	});
-
-	var node_4 = sibling(node_3, 2);
-
-	Label_checkbox(node_4, {
-		label: "forward `security.event`",
-		get on() {
-			return dx().security.forward;
-		},
-		set on($$value) {
-			dx(dx().security.forward = $$value, true);
-		},
-		$$legacy: true
-	});
-
-	var node_5 = sibling(node_4, 2);
-
-	Same_line(node_5, {
-		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$b();
-			var node_6 = first_child(fragment_2);
-
-			Label(node_6, {
-				text: "security mode:",
-				style: "margin-right: 0.5rem;"
-			});
-
-			var select = sibling(node_6, 2);
-
-			template_effect(() => {
-				dx().security.mode;
-				invalidate_inner_signals(() => {});
-			});
-
-			var option = child(select);
-
-			option.value = null == (option.__value = "off") ? "" : "off";
-
-			var option_1 = sibling(option);
-
-			option_1.value = null == (option_1.__value = "warn") ? "" : "warn";
-
-			var option_2 = sibling(option_1);
-
-			option_2.value = null == (option_2.__value = "enforce") ? "" : "enforce";
-			bind_select_value(select, () => dx().security.mode, ($$value) => dx(dx().security.mode = $$value, true));
-			append($$anchor, fragment_2);
-		},
-		$$slots: { default: true }
-	});
-
-	append($$anchor, fragment);
+	event("click", button, () => click()?.());
+	append($$anchor, button);
 	pop();
 }
 
-var root_2$a = template(`<!> <select><option>off</option><option>warn</option><option>enforce</option></select>`, 1);
-var root$c = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!> <!> <!> <h4>Agent broker</h4> <!>`, 1);
+var root_1$e = template(`<option> </option>`);
+var root$c = template(`<div class="select-field svelte-16klf86"><label class="svelte-16klf86"> </label> <select class="svelte-16klf86"></select></div>`);
 
-function Runtime_settings_agent($$anchor, $$props) {
+function Label_select($$anchor, $$props) {
 	push($$props, false);
 
-	let dx = prop($$props, "dx", 12);
+	let label = prop($$props, "label", 8);
+	let value = prop($$props, "value", 12);
+	let options = prop($$props, "options", 24, () => []);
+	let style = prop($$props, "style", 8, 'width: 9rem;');
+	let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+
+	function optionValue(option) {
+		return typeof option === 'object' ? option.value : option;
+	}
+
+	function optionLabel(option) {
+		return typeof option === 'object' ? option.label : option;
+	}
 
 	init();
 
-	var fragment = root$c();
-	var node = sibling(first_child(fragment), 2);
+	var div = root$c();
+	var label_1 = child(div);
 
-	Label_checkbox(node, {
-		label: "use worker script:",
-		get on() {
-			return dx().run.worker.on;
-		},
-		set on($$value) {
-			dx(dx().run.worker.on = $$value, true);
-		},
-		children: ($$anchor, $$slotProps) => {
-			Text_field($$anchor, {
-				get text() {
-					return dx().run.worker.path;
-				},
-				set text($$value) {
-					dx(dx().run.worker.path = $$value, true);
-				},
-				$$legacy: true
-			});
-		},
-		$$slots: { default: true },
-		$$legacy: true
+	set_attribute(label_1, "for", fid);
+
+	var text = child(label_1);
+
+	var select = sibling(label_1, 2);
+
+	template_effect(() => {
+		value();
+
+		invalidate_inner_signals(() => {
+			options();
+		});
 	});
 
-	var node_1 = sibling(node, 4);
+	set_attribute(select, "id", fid);
 
-	Label_checkbox(node_1, {
-		label: "log messages",
-		get on() {
-			return dx().monitor.logMessages;
-		},
-		set on($$value) {
-			dx(dx().monitor.logMessages = $$value, true);
-		},
-		$$legacy: true
+	each(select, 5, options, index, ($$anchor, option) => {
+		var option_1 = root_1$e();
+		var option_1_value = {};
+		var text_1 = child(option_1);
+
+		template_effect(() => set_text(text_1, optionLabel(get(option))));
+
+		template_effect(() => {
+			if (option_1_value !== (option_1_value = optionValue(get(option)))) {
+				option_1.value = null == (option_1.__value = optionValue(get(option))) ? "" : optionValue(get(option));
+			}
+		});
+
+		append($$anchor, option_1);
 	});
 
-	var node_2 = sibling(node_1, 2);
-
-	Label_checkbox(node_2, {
-		label: "log timings",
-		get on() {
-			return dx().monitor.logTimings;
-		},
-		set on($$value) {
-			dx(dx().monitor.logTimings = $$value, true);
-		},
-		$$legacy: true
+	template_effect(() => {
+		set_attribute(label_1, "style", style());
+		set_text(text, label());
 	});
 
-	var node_3 = sibling(node_2, 4);
+	bind_select_value(select, value);
+	append($$anchor, div);
+	pop();
+}
 
-	Label_checkbox(node_3, {
-		label: "custom security settings",
-		get on() {
-			return dx().security.enabled;
-		},
-		set on($$value) {
-			dx(dx().security.enabled = $$value, true);
-		},
-		$$legacy: true
+var root$b = template(`<div class="textarea-field svelte-har9rk"><label class="svelte-har9rk"> </label> <textarea spellcheck="false" class="svelte-har9rk"></textarea></div>`);
+
+function Label_textarea($$anchor, $$props) {
+	push($$props, false);
+
+	let label = prop($$props, "label", 8);
+	let text = prop($$props, "text", 12);
+	let style = prop($$props, "style", 8, 'width: 9rem;');
+	let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+
+	init();
+
+	var div = root$b();
+	var label_1 = child(div);
+
+	set_attribute(label_1, "for", fid);
+
+	var text_1 = child(label_1);
+
+	var textarea = sibling(label_1, 2);
+	set_attribute(textarea, "id", fid);
+
+	template_effect(() => {
+		set_attribute(label_1, "style", style());
+		set_text(text_1, label());
 	});
 
-	var node_4 = sibling(node_3, 2);
+	bind_value(textarea, text);
 
-	Label_checkbox(node_4, {
-		label: "forward `security.event`",
-		get on() {
-			return dx().security.forward;
-		},
-		set on($$value) {
-			dx(dx().security.forward = $$value, true);
-		},
-		$$legacy: true
-	});
+	event("keydown", textarea, stopPropagation(function ($$arg) {
+		bubble_event.call(this, $$props, $$arg);
+	}));
 
-	var node_5 = sibling(node_4, 2);
-
-	Same_line(node_5, {
-		children: ($$anchor, $$slotProps) => {
-			var fragment_2 = root_2$a();
-			var node_6 = first_child(fragment_2);
-
-			Label(node_6, {
-				text: "security mode:",
-				style: "margin-right: 0.5rem;"
-			});
-
-			var select = sibling(node_6, 2);
-
-			template_effect(() => {
-				dx().security.mode;
-				invalidate_inner_signals(() => {});
-			});
-
-			var option = child(select);
-
-			option.value = null == (option.__value = "off") ? "" : "off";
-
-			var option_1 = sibling(option);
-
-			option_1.value = null == (option_1.__value = "warn") ? "" : "warn";
-
-			var option_2 = sibling(option_1);
-
-			option_2.value = null == (option_2.__value = "enforce") ? "" : "enforce";
-			bind_select_value(select, () => dx().security.mode, ($$value) => dx(dx().security.mode = $$value, true));
-			append($$anchor, fragment_2);
-		},
-		$$slots: { default: true }
-	});
-
-	var node_7 = sibling(node_5, 4);
-
-	Same_line(node_7, {
-		children: ($$anchor, $$slotProps) => {
-			Label($$anchor, {
-				text: "agent-specific node runtime settings will be added here"
-			});
-		},
-		$$slots: { default: true }
-	});
-
-	append($$anchor, fragment);
+	append($$anchor, div);
 	pop();
 }
 
@@ -7383,15 +7232,10 @@ const defaultMonitor$1 = () => ({
     logTimings: false,
 });
 
-const defaultSecurity$1 = () => ({
-    enabled: false,
-});
-
 function make$1() {
     return {
         run: defaultRun$1(),
         monitor: defaultMonitor$1(),
-        security: defaultSecurity$1(),
     }
 }
 
@@ -7415,17 +7259,12 @@ function normalize$2(dx = null) {
             ...(dx.monitor ?? {}),
             logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
         },
-        security: {
-            ...defaults.security,
-            ...(dx.security ?? {}),
-        },
     };
 
     normalized.run.worker.on = !!normalized.run.worker.on;
     normalized.run.worker.path = normalized.run.worker.path ?? '';
     normalized.monitor.logMessages = !!normalized.monitor.logMessages;
     normalized.monitor.logTimings = !!normalized.monitor.logTimings;
-    normalized.security.enabled = !!normalized.security.enabled;
 
     return normalized
 }
@@ -7449,10 +7288,10 @@ function assign$3(target, dx = null) {
 
     target.run = structuredClone(normalized.run);
     target.monitor = structuredClone(normalized.monitor);
-    target.security = structuredClone(normalized.security);
 
     delete target.logMessages;
     delete target.worker;
+    delete target.security;
 
     return target
 }
@@ -7468,12 +7307,6 @@ function makeModel$1() {
     return {
         run: {},
         monitor: {},
-        security: {
-            mode: 'warn',
-            forwardEvents: true,
-            defaults: {},
-            allow: {},
-        },
     }
 }
 
@@ -7489,18 +7322,6 @@ function normalizeModel$1(settings = null) {
         monitor: {
             ...defaults.monitor,
             ...(settings.monitor ?? {}),
-        },
-        security: {
-            ...defaults.security,
-            ...(settings.security ?? {}),
-            defaults: {
-                ...defaults.security.defaults,
-                ...(settings.security?.defaults ?? {}),
-            },
-            allow: {
-                ...defaults.security.allow,
-                ...(settings.security?.allow ?? {}),
-            },
         },
     }
 }
@@ -7524,6 +7345,9 @@ const runtimeSettings$1 = {
     effectivePolicy: effectivePolicy$1,
 };
 
+const PERMISSIONS = ['allow', 'warn', 'deny'];
+const PERMISSION_ORDER = {deny: 0, warn: 1, allow: 2};
+
 const defaultWorker = () => ({
     on: false,
     path: '',
@@ -7538,21 +7362,38 @@ const defaultMonitor = () => ({
     logTimings: false,
 });
 
-const defaultSecurityRequest = () => ({
-    fs: 'inherit',
-    net: 'inherit',
-    process: 'inherit',
-    allow: {
-        netHosts: [],
-        fsRoots: [],
+const defaultFsOperation = (mode = 'deny') => ({
+    mode,
+    roots: [],
+});
+
+const defaultNetOperation = (mode = 'deny') => ({
+    mode,
+    hosts: [],
+});
+
+const defaultProcessOperation = (mode = 'deny') => ({
+    mode,
+    commands: [],
+});
+
+const defaultSecurityPolicy = () => ({
+    fs: {
+        read: defaultFsOperation(),
+        write: defaultFsOperation(),
+        delete: defaultFsOperation(),
+    },
+    net: {
+        egress: defaultNetOperation(),
+    },
+    process: {
+        exec: defaultProcessOperation(),
     },
 });
 
 const defaultSecurity = () => ({
     enabled: false,
-    mode: 'warn',
-    forward: true,
-    request: defaultSecurityRequest(),
+    ...defaultSecurityPolicy(),
 });
 
 function make() {
@@ -7570,6 +7411,7 @@ function normalize$1(dx = null) {
     if (!dx || typeof dx !== 'object') return defaults
 
     const legacySafety = dx.safety ?? {};
+    const security = normalizeNodeSecurity(dx.security, legacySafety);
 
     const normalized = {
         run: {
@@ -7585,7 +7427,7 @@ function normalize$1(dx = null) {
             ...(dx.monitor ?? {}),
             logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
         },
-        security: normalizeSecuritySettings(dx.security, legacySafety, defaults.security),
+        security,
     };
 
     normalized.run.worker.on = !!normalized.run.worker.on;
@@ -7627,29 +7469,20 @@ function assign$2(target, dx = null) {
 function isDefault(dx = null) {
 
     const normalized = normalize$1(dx);
+    const defaults = make();
 
-    return JSON.stringify(normalized) === JSON.stringify(make())
+    if (!normalized.security.enabled || isDefaultSecurityPolicy(normalized.security)) {
+        normalized.security = structuredClone(defaults.security);
+    }
+
+    return JSON.stringify(normalized) === JSON.stringify(defaults)
 }
-
-const defaultModelSecurity = () => ({
-    mode: 'warn',
-    forwardEvents: true,
-    defaults: {
-        fs: 'warn',
-        net: 'warn',
-        process: 'deny',
-    },
-    allow: {
-        netHosts: [],
-        fsRoots: [],
-    },
-});
 
 function makeModel() {
     return {
         run: {},
         monitor: {},
-        security: defaultModelSecurity(),
+        security: defaultSecurityPolicy(),
     }
 }
 
@@ -7657,8 +7490,7 @@ function normalizeModel(settings = null) {
     const defaults = makeModel();
     if (!settings || typeof settings !== 'object') return defaults
 
-    const security = settings.security ?? {};
-    const normalized = {
+    return {
         run: {
             ...defaults.run,
             ...(settings.run ?? {}),
@@ -7667,107 +7499,190 @@ function normalizeModel(settings = null) {
             ...defaults.monitor,
             ...(settings.monitor ?? {}),
         },
-        security: {
-            ...defaults.security,
-            ...security,
-            defaults: {
-                ...defaults.security.defaults,
-                ...(security.defaults ?? {}),
-            },
-            allow: {
-                ...defaults.security.allow,
-                ...(security.allow ?? {}),
-            },
-        },
-    };
-
-    normalized.security.mode = ['off', 'warn', 'enforce'].includes(normalized.security.mode) ? normalized.security.mode : defaults.security.mode;
-    normalized.security.forwardEvents = normalized.security.forwardEvents !== false;
-    normalized.security.defaults.fs = normalizePermission(normalized.security.defaults.fs);
-    normalized.security.defaults.net = normalizePermission(normalized.security.defaults.net);
-    normalized.security.defaults.process = normalizePermission(normalized.security.defaults.process);
-    normalized.security.allow.netHosts = Array.isArray(normalized.security.allow.netHosts) ? normalized.security.allow.netHosts : [];
-    normalized.security.allow.fsRoots = Array.isArray(normalized.security.allow.fsRoots) ? normalized.security.allow.fsRoots : [];
-
-    return normalized
+        security: normalizeModelSecurity(settings.security),
+    }
 }
 
 function effectivePolicy(modelSettings = null, nodeDx = null) {
+    const hasModelSecurity = !!(modelSettings && typeof modelSettings === 'object' && modelSettings.security);
     const model = normalizeModel(modelSettings);
     const node = normalize$1(nodeDx);
-    const request = node.security?.enabled ? node.security.request : defaultSecurityRequest();
+    const nodeSecurity = node.security?.enabled ? node.security : defaultSecurity();
 
     return {
-        mode: node.security?.enabled ? node.security.mode : model.security.mode,
-        forward: node.security?.enabled ? node.security.forward : model.security.forwardEvents,
-        security: {
-            fs: clipPermission(resolvePermission(request.fs, model.security.defaults.fs), model.security.defaults.fs),
-            net: clipPermission(resolvePermission(request.net, model.security.defaults.net), model.security.defaults.net),
-            process: clipPermission(resolvePermission(request.process, model.security.defaults.process), model.security.defaults.process),
-            allow: intersectAllowLists(model.security.allow, request.allow),
-        },
+        active: hasModelSecurity,
+        security: intersectSecurity(model.security, nodeSecurity),
         model,
         node,
     }
 }
 
-function normalizeSecuritySettings(security = null, legacySafety = {}, defaults = defaultSecurity()) {
+function normalizeNodeSecurity(security = null, legacySafety = {}) {
     const source = security ?? {};
-    const request = source.request ?? {};
-    const allow = request.allow ?? {};
-    const normalized = {
-        ...defaults,
-        ...source,
-        enabled: source.enabled ?? legacySafety.on ?? defaults.enabled,
-        mode: source.mode ?? legacySafety.mode ?? defaults.mode,
-        forward: source.forward ?? legacySafety.forward ?? defaults.forward,
-        request: {
-            ...defaults.request,
-            ...request,
-            allow: {
-                ...defaults.request.allow,
-                ...allow,
-            },
-        },
-    };
+    const legacy = legacyNodeSecurity(source);
+    const enabled = source.enabled ?? legacySafety.on ?? false;
 
-    normalized.enabled = !!normalized.enabled;
-    normalized.forward = normalized.forward !== false;
-    normalized.mode = ['off', 'warn', 'enforce'].includes(normalized.mode) ? normalized.mode : defaults.mode;
-    normalized.request.fs = normalizePermission(normalized.request.fs);
-    normalized.request.net = normalizePermission(normalized.request.net);
-    normalized.request.process = normalizePermission(normalized.request.process);
-    normalized.request.allow.netHosts = Array.isArray(normalized.request.allow.netHosts) ? normalized.request.allow.netHosts : [];
-    normalized.request.allow.fsRoots = Array.isArray(normalized.request.allow.fsRoots) ? normalized.request.allow.fsRoots : [];
-
-    return normalized
-}
-
-function normalizePermission(value) {
-    return ['inherit', 'allow', 'warn', 'deny'].includes(value) ? value : 'inherit'
-}
-
-function resolvePermission(requested, fallback) {
-    return requested === 'inherit' ? fallback : requested
-}
-
-function clipPermission(requested, envelope) {
-    const order = {deny: 0, warn: 1, allow: 2, inherit: 1};
-    return order[requested] <= order[envelope] ? requested : envelope
-}
-
-function intersectAllowLists(modelAllow = {}, nodeAllow = {}) {
     return {
-        netHosts: intersect(modelAllow.netHosts, nodeAllow.netHosts),
-        fsRoots: intersect(modelAllow.fsRoots, nodeAllow.fsRoots),
+        enabled: !!enabled,
+        ...normalizeSecurityPolicy(source, legacy),
     }
 }
 
-function intersect(modelValues = [], nodeValues = []) {
-    if (!Array.isArray(modelValues) || !modelValues.length) return []
+function normalizeModelSecurity(security = null) {
+    return normalizeSecurityPolicy(security, legacyModelSecurity(security))
+}
+
+function normalizeSecurityPolicy(source = null, legacy = {}) {
+    const defaults = defaultSecurityPolicy();
+    const value = source ?? {};
+
+    return {
+        fs: {
+            read: normalizeFsOperation(value.fs?.read ?? legacy.fs?.read ?? defaults.fs.read),
+            write: normalizeFsOperation(value.fs?.write ?? legacy.fs?.write ?? defaults.fs.write),
+            delete: normalizeFsOperation(value.fs?.delete ?? legacy.fs?.delete ?? defaults.fs.delete),
+        },
+        net: {
+            egress: normalizeNetOperation(value.net?.egress ?? legacy.net?.egress ?? defaults.net.egress),
+        },
+        process: {
+            exec: normalizeProcessOperation(value.process?.exec ?? legacy.process?.exec ?? defaults.process.exec),
+        },
+    }
+}
+
+function normalizeFsOperation(value = null) {
+    const mode = normalizeMode(value?.mode);
+    return {
+        mode,
+        roots: mode === 'deny' ? [] : normalizeList(value?.roots),
+    }
+}
+
+function normalizeNetOperation(value = null) {
+    const mode = normalizeMode(value?.mode);
+    return {
+        mode,
+        hosts: mode === 'deny' ? [] : normalizeList(value?.hosts),
+    }
+}
+
+function normalizeProcessOperation(value = null) {
+    const mode = normalizeMode(value?.mode);
+    return {
+        mode,
+        commands: mode === 'deny' ? [] : normalizeList(value?.commands),
+    }
+}
+
+function normalizeMode(value) {
+    return PERMISSIONS.includes(value) ? value : 'deny'
+}
+
+function normalizeList(value) {
+    return Array.isArray(value) ? value.filter(Boolean).map(item => String(item)) : []
+}
+
+function legacyModelSecurity(security = null) {
+    if (!security?.defaults && !security?.allow) return {}
+
+    const defaults = security.defaults ?? {};
+    const allow = security.allow ?? {};
+
+    return {
+        fs: {
+            read: defaultFsOperation('deny'),
+            write: {mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots)},
+            delete: {mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots)},
+        },
+        net: {
+            egress: {mode: normalizeLegacyMode(defaults.net), hosts: normalizeList(allow.netHosts)},
+        },
+        process: {
+            exec: {mode: normalizeLegacyMode(defaults.process), commands: []},
+        },
+    }
+}
+
+function legacyNodeSecurity(security = null) {
+    if (!security?.request) return {}
+
+    const request = security.request ?? {};
+    const allow = request.allow ?? {};
+
+    return {
+        fs: {
+            read: defaultFsOperation('deny'),
+            write: {mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots)},
+            delete: {mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots)},
+        },
+        net: {
+            egress: {mode: normalizeLegacyMode(request.net), hosts: normalizeList(allow.netHosts)},
+        },
+        process: {
+            exec: {mode: normalizeLegacyMode(request.process), commands: []},
+        },
+    }
+}
+
+function normalizeLegacyMode(value) {
+    return value === 'inherit' ? 'deny' : normalizeMode(value)
+}
+
+function intersectSecurity(model, node) {
+    return {
+        fs: {
+            read: intersectFsOperation(model.fs.read, node.fs.read),
+            write: intersectFsOperation(model.fs.write, node.fs.write),
+            delete: intersectFsOperation(model.fs.delete, node.fs.delete),
+        },
+        net: {
+            egress: intersectNetOperation(model.net.egress, node.net.egress),
+        },
+        process: {
+            exec: intersectProcessOperation(model.process.exec, node.process.exec),
+        },
+    }
+}
+
+function intersectFsOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode);
+    return {
+        mode,
+        roots: mode === 'deny' ? [] : intersectScope(model.roots, node.roots),
+    }
+}
+
+function intersectNetOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode);
+    return {
+        mode,
+        hosts: mode === 'deny' ? [] : intersectScope(model.hosts, node.hosts),
+    }
+}
+
+function intersectProcessOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode);
+    return {
+        mode,
+        commands: mode === 'deny' ? [] : intersectScope(model.commands, node.commands),
+    }
+}
+
+function stricterMode(modelMode, nodeMode) {
+    return PERMISSION_ORDER[nodeMode] <= PERMISSION_ORDER[modelMode] ? nodeMode : modelMode
+}
+
+function intersectScope(modelValues = [], nodeValues = []) {
+    if (!Array.isArray(modelValues) || !modelValues.length) return Array.isArray(nodeValues) ? nodeValues.slice() : []
     if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice()
     const allowed = new Set(modelValues);
     return nodeValues.filter(value => allowed.has(value))
+}
+
+function isDefaultSecurityPolicy(security = {}) {
+    const {enabled, ...policy} = security;
+    return JSON.stringify(policy) === JSON.stringify(defaultSecurityPolicy())
 }
 
 const runtimeSettings = {
@@ -7828,13 +7743,508 @@ function getRuntimeSettings(runtime) {
     return getRuntimeDescriptor(runtime).settings
 }
 
-var root_2$9 = template(`<p class="runtime-warning svelte-f3trbc"> </p>`);
-var root_1$d = template(`<!> <!>`, 1);
+var root_2$9 = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
+var root_1$d = template(`<div class="node-security-settings svelte-jkuczt"><div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Network</h4> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Process</h4> <!> <!></div> <!></div>`);
+
+function Node_security_settings($$anchor, $$props) {
+	push($$props, false);
+
+	const envelopeWarning = mutable_state();
+	let tx = prop($$props, "tx", 8);
+	const permissionOptions = ['allow', 'warn', 'deny'];
+
+	const box = mutable_state({
+		div: null,
+		pos: null,
+		title: 'Node Security Settings',
+		ok: null,
+		cancel: null
+	});
+
+	let runtime = mutable_state(null);
+	let modelRuntimeSettings = mutable_state(null);
+	let security = mutable_state(makeDefaultSecurity());
+	let scopeText = mutable_state(makeScopeText());
+	let projectedSecurity = mutable_state(makeDefaultSecurity());
+
+	onMount(() => {
+		tx()?.send('modal div', get(box).div);
+	});
+
+	function show(
+		{
+			runtime: runtimeName,
+			security: nodeSecurity,
+			modelRuntimeSettings: settings,
+			pos,
+			ok,
+			cancel
+		}
+	) {
+		set(runtime, runtimeName);
+		set(modelRuntimeSettings, settings ?? null);
+		set(security, normalizeSecurity(get(runtime), nodeSecurity));
+		syncTextFromSecurity();
+		mutate(box, get(box).pos = { ...pos });
+
+		mutate(box, get(box).ok = () => {
+			ok?.(clone(get(projectedSecurity)));
+		});
+
+		mutate(box, get(box).cancel = () => cancel?.());
+		get(box).show(get(box).pos);
+	}
+
+	function normalizeSecurity(runtimeName, nodeSecurity) {
+		const dx = getRuntimeSettings(runtimeName).normalize({ security: nodeSecurity });
+
+		return { ...clone(dx.security), enabled: true };
+	}
+
+	function makeDefaultSecurity() {
+		return {
+			enabled: true,
+			fs: {
+				read: { mode: 'deny', roots: [] },
+				write: { mode: 'deny', roots: [] },
+				delete: { mode: 'deny', roots: [] }
+			},
+			net: { egress: { mode: 'deny', hosts: [] } },
+			process: { exec: { mode: 'deny', commands: [] } }
+		};
+	}
+
+	function makeScopeText() {
+		return {
+			fsReadRoots: '',
+			fsWriteRoots: '',
+			fsDeleteRoots: '',
+			netEgressHosts: '',
+			processExecCommands: ''
+		};
+	}
+
+	function syncTextFromSecurity() {
+		set(scopeText, {
+			fsReadRoots: listToText(get(security)?.fs?.read?.roots),
+			fsWriteRoots: listToText(get(security)?.fs?.write?.roots),
+			fsDeleteRoots: listToText(get(security)?.fs?.delete?.roots),
+			netEgressHosts: listToText(get(security)?.net?.egress?.hosts),
+			processExecCommands: listToText(get(security)?.process?.exec?.commands)
+		});
+	}
+
+	function securityFromText(source, text) {
+		const next = clone(source);
+
+		next.fs.read.roots = textToList(text.fsReadRoots);
+		next.fs.write.roots = textToList(text.fsWriteRoots);
+		next.fs.delete.roots = textToList(text.fsDeleteRoots);
+		next.net.egress.hosts = textToList(text.netEgressHosts);
+		next.process.exec.commands = textToList(text.processExecCommands);
+		return next;
+	}
+
+	function listToText(values) {
+		return Array.isArray(values) ? values.join('\n') : '';
+	}
+
+	function textToList(text) {
+		return (text ?? '').split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+	}
+
+	function clone(value) {
+		return JSON.parse(JSON.stringify(value));
+	}
+
+	function runtimeEnvelopeWarning(runtimeName, settings, nodeSecurity) {
+		if (!settings || typeof settings !== 'object') return '';
+
+		const dx = getRuntimeSettings(runtimeName).normalize({ security: nodeSecurity });
+		const policy = getRuntimeSettings(runtimeName).effectivePolicy(settings, dx);
+		const clipped = [];
+
+		collectClippedOperation(clipped, 'fs.read', policy.node?.security?.fs?.read, policy.security?.fs?.read, 'roots');
+		collectClippedOperation(clipped, 'fs.write', policy.node?.security?.fs?.write, policy.security?.fs?.write, 'roots');
+		collectClippedOperation(clipped, 'fs.delete', policy.node?.security?.fs?.delete, policy.security?.fs?.delete, 'roots');
+		collectClippedOperation(clipped, 'net.egress', policy.node?.security?.net?.egress, policy.security?.net?.egress, 'hosts');
+		collectClippedOperation(clipped, 'process.exec', policy.node?.security?.process?.exec, policy.security?.process?.exec, 'commands');
+		return clipped.length ? `Outside model envelope: ${clipped.join(', ')}` : '';
+	}
+
+	function collectClippedOperation(
+		clipped,
+		label,
+		requested,
+		effective,
+		scopeKey
+	) {
+		if (!requested || !effective) return;
+
+		if (requested.mode !== effective.mode) {
+			clipped.push(`${label}: ${requested.mode} -> ${effective.mode}`);
+			return;
+		}
+
+		const requestedScope = requested[scopeKey] ?? [];
+		const effectiveScope = effective[scopeKey] ?? [];
+
+		if (requestedScope.length && JSON.stringify(requestedScope) !== JSON.stringify(effectiveScope)) {
+			clipped.push(`${label} scope clipped`);
+		}
+	}
+
+	legacy_pre_effect(() => (get(security), get(scopeText)), () => {
+		set(projectedSecurity, securityFromText(get(security), get(scopeText)));
+	});
+
+	legacy_pre_effect(
+		() => (
+			get(runtime),
+			get(modelRuntimeSettings),
+			get(projectedSecurity)
+		),
+		() => {
+			set(envelopeWarning, runtimeEnvelopeWarning(get(runtime), get(modelRuntimeSettings), get(projectedSecurity)));
+		}
+	);
+
+	legacy_pre_effect_reset();
+	init();
+
+	Popup_box($$anchor, {
+		get box() {
+			return get(box);
+		},
+		children: ($$anchor, $$slotProps) => {
+			var div = root_1$d();
+			var div_1 = child(div);
+			var node = sibling(child(div_1), 2);
+
+			Label_select(node, {
+				label: "read",
+				get value() {
+					return get(security).fs.read.mode;
+				},
+				set value($$value) {
+					mutate(security, get(security).fs.read.mode = $$value);
+				},
+				options: permissionOptions,
+				$$legacy: true
+			});
+
+			var node_1 = sibling(node, 2);
+
+			Label_textarea(node_1, {
+				label: "read roots",
+				get text() {
+					return get(scopeText).fsReadRoots;
+				},
+				set text($$value) {
+					mutate(scopeText, get(scopeText).fsReadRoots = $$value);
+				},
+				$$legacy: true
+			});
+
+			var node_2 = sibling(node_1, 2);
+
+			Label_select(node_2, {
+				label: "write",
+				get value() {
+					return get(security).fs.write.mode;
+				},
+				set value($$value) {
+					mutate(security, get(security).fs.write.mode = $$value);
+				},
+				options: permissionOptions,
+				$$legacy: true
+			});
+
+			var node_3 = sibling(node_2, 2);
+
+			Label_textarea(node_3, {
+				label: "write roots",
+				get text() {
+					return get(scopeText).fsWriteRoots;
+				},
+				set text($$value) {
+					mutate(scopeText, get(scopeText).fsWriteRoots = $$value);
+				},
+				$$legacy: true
+			});
+
+			var node_4 = sibling(node_3, 2);
+
+			Label_select(node_4, {
+				label: "delete",
+				get value() {
+					return get(security).fs.delete.mode;
+				},
+				set value($$value) {
+					mutate(security, get(security).fs.delete.mode = $$value);
+				},
+				options: permissionOptions,
+				$$legacy: true
+			});
+
+			var node_5 = sibling(node_4, 2);
+
+			Label_textarea(node_5, {
+				label: "delete roots",
+				get text() {
+					return get(scopeText).fsDeleteRoots;
+				},
+				set text($$value) {
+					mutate(scopeText, get(scopeText).fsDeleteRoots = $$value);
+				},
+				$$legacy: true
+			});
+
+			var div_2 = sibling(div_1, 2);
+			var node_6 = sibling(child(div_2), 2);
+
+			Label_select(node_6, {
+				label: "egress",
+				get value() {
+					return get(security).net.egress.mode;
+				},
+				set value($$value) {
+					mutate(security, get(security).net.egress.mode = $$value);
+				},
+				options: permissionOptions,
+				$$legacy: true
+			});
+
+			var node_7 = sibling(node_6, 2);
+
+			Label_textarea(node_7, {
+				label: "hosts",
+				get text() {
+					return get(scopeText).netEgressHosts;
+				},
+				set text($$value) {
+					mutate(scopeText, get(scopeText).netEgressHosts = $$value);
+				},
+				$$legacy: true
+			});
+
+			var div_3 = sibling(div_2, 2);
+			var node_8 = sibling(child(div_3), 2);
+
+			Label_select(node_8, {
+				label: "exec",
+				get value() {
+					return get(security).process.exec.mode;
+				},
+				set value($$value) {
+					mutate(security, get(security).process.exec.mode = $$value);
+				},
+				options: permissionOptions,
+				$$legacy: true
+			});
+
+			var node_9 = sibling(node_8, 2);
+
+			Label_textarea(node_9, {
+				label: "commands",
+				get text() {
+					return get(scopeText).processExecCommands;
+				},
+				set text($$value) {
+					mutate(scopeText, get(scopeText).processExecCommands = $$value);
+				},
+				$$legacy: true
+			});
+
+			var node_10 = sibling(div_3, 2);
+
+			if_block(node_10, () => get(envelopeWarning), ($$anchor) => {
+				var p = root_2$9();
+				var text_1 = child(p);
+				template_effect(() => set_text(text_1, get(envelopeWarning)));
+				append($$anchor, p);
+			});
+			append($$anchor, div);
+		},
+		$$slots: { default: true }
+	});
+
+	bind_prop($$props, "show", show);
+	return pop({ show });
+}
+
+var root$a = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!> <!>`, 1);
+
+function Runtime_settings_als($$anchor, $$props) {
+	push($$props, false);
+
+	let dx = prop($$props, "dx", 12);
+	let tx = prop($$props, "tx", 8);
+	let runtime = prop($$props, "runtime", 8);
+	let modelRuntimeSettings = prop($$props, "modelRuntimeSettings", 8);
+	let popupPos = prop($$props, "popupPos", 8);
+	let securitySettingsPopup = mutable_state();
+
+	function showSecuritySettings() {
+		dx(dx().security.enabled = true, true);
+		dx({ ...dx() });
+
+		get(securitySettingsPopup).show({
+			runtime: runtime(),
+			security: dx().security,
+			modelRuntimeSettings: modelRuntimeSettings(),
+			pos: securityPopupPosition(),
+			ok: (security) => {
+				dx({ ...dx(), security });
+			}
+		});
+	}
+
+	function securityPopupPosition() {
+		const pos = popupPos() ?? { x: 40, y: 40 };
+
+		return { x: (pos.x ?? 40) + 24, y: (pos.y ?? 40) + 24 };
+	}
+
+	init();
+
+	var fragment = root$a();
+	var node = sibling(first_child(fragment), 2);
+
+	Label_checkbox(node, {
+		label: "use worker script:",
+		get on() {
+			return dx().run.worker.on;
+		},
+		set on($$value) {
+			dx(dx().run.worker.on = $$value, true);
+		},
+		children: ($$anchor, $$slotProps) => {
+			Text_field($$anchor, {
+				get text() {
+					return dx().run.worker.path;
+				},
+				set text($$value) {
+					dx(dx().run.worker.path = $$value, true);
+				},
+				$$legacy: true
+			});
+		},
+		$$slots: { default: true },
+		$$legacy: true
+	});
+
+	var node_1 = sibling(node, 4);
+
+	Label_checkbox(node_1, {
+		label: "log messages",
+		get on() {
+			return dx().monitor.logMessages;
+		},
+		set on($$value) {
+			dx(dx().monitor.logMessages = $$value, true);
+		},
+		$$legacy: true
+	});
+
+	var node_2 = sibling(node_1, 2);
+
+	Label_checkbox(node_2, {
+		label: "log timings",
+		get on() {
+			return dx().monitor.logTimings;
+		},
+		set on($$value) {
+			dx(dx().monitor.logTimings = $$value, true);
+		},
+		$$legacy: true
+	});
+
+	var node_3 = sibling(node_2, 4);
+
+	Label_checkbox(node_3, {
+		label: "custom security settings",
+		get on() {
+			return dx().security.enabled;
+		},
+		set on($$value) {
+			dx(dx().security.enabled = $$value, true);
+		},
+		children: ($$anchor, $$slotProps) => {
+			var disabled = derived_safe_equal(() => !dx().security.enabled);
+
+			Button($$anchor, {
+				label: "settings",
+				click: showSecuritySettings,
+				get disabled() {
+					return get(disabled);
+				}
+			});
+		},
+		$$slots: { default: true },
+		$$legacy: true
+	});
+
+	var node_4 = sibling(node_3, 2);
+
+	bind_this(
+		Node_security_settings(node_4, {
+			get tx() {
+				return tx();
+			},
+			$$legacy: true
+		}),
+		($$value) => set(securitySettingsPopup, $$value),
+		() => get(securitySettingsPopup)
+	);
+
+	append($$anchor, fragment);
+	pop();
+}
+
+var root$9 = template(`<!> <h4>Agent broker</h4> <p>Agent-specific node runtime settings will be added here.</p>`, 1);
+
+function Runtime_settings_agent($$anchor, $$props) {
+	let dx = prop($$props, "dx", 12);
+	let tx = prop($$props, "tx", 8);
+	let runtime = prop($$props, "runtime", 8);
+	let modelRuntimeSettings = prop($$props, "modelRuntimeSettings", 8);
+	let popupPos = prop($$props, "popupPos", 8);
+	var fragment = root$9();
+	var node = first_child(fragment);
+
+	Runtime_settings_als(node, {
+		get dx() {
+			return dx();
+		},
+		set dx($$value) {
+			dx($$value);
+		},
+		get tx() {
+			return tx();
+		},
+		get runtime() {
+			return runtime();
+		},
+		get modelRuntimeSettings() {
+			return modelRuntimeSettings();
+		},
+		get popupPos() {
+			return popupPos();
+		},
+		$$legacy: true
+	});
+	append($$anchor, fragment);
+}
+
+var root_4$2 = template(`<p class="runtime-warning svelte-f3trbc"> </p>`);
+var root_1$c = template(`<!> <!>`, 1);
 
 function Runtime_settings($$anchor, $$props) {
 	push($$props, false);
 
 	const envelopeWarning = mutable_state();
+	const runtimeComponent = mutable_state();
 	let tx = prop($$props, "tx", 8);
 
 	onMount(() => {
@@ -7854,7 +8264,7 @@ function Runtime_settings($$anchor, $$props) {
 	let modelRuntimeSettings = mutable_state(null);
 
 	function runtimeSettingsComponent(runtime) {
-		if (runtime === RT_AGENT) return Runtime_settings_agent;
+		if (runtime === RT_AGENT || runtime === RT_NODEJS_AGENT) return Runtime_settings_agent;
 		if (runtime === RT_ALS) return Runtime_settings_als;
 		return Runtime_settings_base;
 	}
@@ -7889,16 +8299,36 @@ function Runtime_settings($$anchor, $$props) {
 		if (!dx?.security?.enabled || !modelSettings || typeof modelSettings !== 'object') return '';
 
 		const policy = getRuntimeSettings(runtime).effectivePolicy(modelSettings, dx);
-		const request = policy.node?.security?.request ?? {};
 		const clipped = [];
 
-		for (const domain of ['fs', 'net', 'process']) {
-			if (request[domain] !== 'inherit' && request[domain] !== policy.security?.[domain]) {
-				clipped.push(`${domain}: ${request[domain]} -> ${policy.security?.[domain]}`);
-			}
+		collectClippedOperation(clipped, 'fs.read', policy.node?.security?.fs?.read, policy.security?.fs?.read, 'roots');
+		collectClippedOperation(clipped, 'fs.write', policy.node?.security?.fs?.write, policy.security?.fs?.write, 'roots');
+		collectClippedOperation(clipped, 'fs.delete', policy.node?.security?.fs?.delete, policy.security?.fs?.delete, 'roots');
+		collectClippedOperation(clipped, 'net.egress', policy.node?.security?.net?.egress, policy.security?.net?.egress, 'hosts');
+		collectClippedOperation(clipped, 'process.exec', policy.node?.security?.process?.exec, policy.security?.process?.exec, 'commands');
+		return clipped.length ? `Outside model envelope: ${clipped.join(', ')}` : '';
+	}
+
+	function collectClippedOperation(
+		clipped,
+		label,
+		requested,
+		effective,
+		scopeKey
+	) {
+		if (!requested || !effective) return;
+
+		if (requested.mode !== effective.mode) {
+			clipped.push(`${label}: ${requested.mode} -> ${effective.mode}`);
+			return;
 		}
 
-		return clipped.length ? `Outside model envelope: ${clipped.join(', ')}` : '';
+		const requestedScope = requested[scopeKey] ?? [];
+		const effectiveScope = effective[scopeKey] ?? [];
+
+		if (requestedScope.length && JSON.stringify(requestedScope) !== JSON.stringify(effectiveScope)) {
+			clipped.push(`${label} scope clipped`);
+		}
 	}
 
 	legacy_pre_effect(
@@ -7912,6 +8342,10 @@ function Runtime_settings($$anchor, $$props) {
 		}
 	);
 
+	legacy_pre_effect(() => (get(runtimeName)), () => {
+		set(runtimeComponent, runtimeSettingsComponent(get(runtimeName)));
+	});
+
 	legacy_pre_effect_reset();
 	init();
 
@@ -7920,25 +8354,59 @@ function Runtime_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$d();
+			var fragment_1 = root_1$c();
 			var node = first_child(fragment_1);
 
-			component(node, () => runtimeSettingsComponent(get(runtimeName)), ($$anchor, $$component) => {
-				$$component($$anchor, {
-					get dx() {
-						return get(localDx);
-					},
-					set dx($$value) {
-						set(localDx, $$value);
-					},
-					$$legacy: true
-				});
-			});
+			if_block(
+				node,
+				() => get(runtimeComponent) === Runtime_settings_base,
+				($$anchor) => {
+					Runtime_settings_base($$anchor, {
+						get dx() {
+							return get(localDx);
+						},
+						set dx($$value) {
+							set(localDx, $$value);
+						},
+						$$legacy: true
+					});
+				},
+				($$anchor) => {
+					var fragment_3 = comment$1();
+					var node_1 = first_child(fragment_3);
 
-			var node_1 = sibling(node, 2);
+					component(node_1, () => get(runtimeComponent), ($$anchor, $$component) => {
+						$$component($$anchor, {
+							get dx() {
+								return get(localDx);
+							},
+							set dx($$value) {
+								set(localDx, $$value);
+							},
+							get tx() {
+								return tx();
+							},
+							get runtime() {
+								return get(runtimeName);
+							},
+							get modelRuntimeSettings() {
+								return get(modelRuntimeSettings);
+							},
+							get popupPos() {
+								return get(box).pos;
+							},
+							$$legacy: true
+						});
+					});
 
-			if_block(node_1, () => get(envelopeWarning), ($$anchor) => {
-				var p = root_2$9();
+					append($$anchor, fragment_3);
+				}
+			);
+
+			var node_2 = sibling(node, 2);
+
+			if_block(node_2, () => get(envelopeWarning), ($$anchor) => {
+				var p = root_4$2();
 				var text = child(p);
 				template_effect(() => set_text(text, get(envelopeWarning)));
 				append($$anchor, p);
@@ -7953,141 +8421,10 @@ function Runtime_settings($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$b = template(`<button type="button" class="svelte-2d29qn"> </button>`);
-
-function Button($$anchor, $$props) {
-	push($$props, false);
-
-	let label = prop($$props, "label", 8);
-	let click = prop($$props, "click", 8);
-	let active = prop($$props, "active", 8, false);
-	let disabled = prop($$props, "disabled", 8, false);
-
-	init();
-
-	var button = root$b();
-	var text = child(button);
-
-	template_effect(() => {
-		button.disabled = disabled();
-		toggle_class(button, "active", active());
-		set_text(text, label());
-	});
-
-	event("click", button, () => click()?.());
-	append($$anchor, button);
-	pop();
-}
-
-var root_1$c = template(`<option> </option>`);
-var root$a = template(`<div class="select-field svelte-16klf86"><label class="svelte-16klf86"> </label> <select class="svelte-16klf86"></select></div>`);
-
-function Label_select($$anchor, $$props) {
-	push($$props, false);
-
-	let label = prop($$props, "label", 8);
-	let value = prop($$props, "value", 12);
-	let options = prop($$props, "options", 24, () => []);
-	let style = prop($$props, "style", 8, 'width: 9rem;');
-	let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-
-	function optionValue(option) {
-		return typeof option === 'object' ? option.value : option;
-	}
-
-	function optionLabel(option) {
-		return typeof option === 'object' ? option.label : option;
-	}
-
-	init();
-
-	var div = root$a();
-	var label_1 = child(div);
-
-	set_attribute(label_1, "for", fid);
-
-	var text = child(label_1);
-
-	var select = sibling(label_1, 2);
-
-	template_effect(() => {
-		value();
-
-		invalidate_inner_signals(() => {
-			options();
-		});
-	});
-
-	set_attribute(select, "id", fid);
-
-	each(select, 5, options, index, ($$anchor, option) => {
-		var option_1 = root_1$c();
-		var option_1_value = {};
-		var text_1 = child(option_1);
-
-		template_effect(() => set_text(text_1, optionLabel(get(option))));
-
-		template_effect(() => {
-			if (option_1_value !== (option_1_value = optionValue(get(option)))) {
-				option_1.value = null == (option_1.__value = optionValue(get(option))) ? "" : optionValue(get(option));
-			}
-		});
-
-		append($$anchor, option_1);
-	});
-
-	template_effect(() => {
-		set_attribute(label_1, "style", style());
-		set_text(text, label());
-	});
-
-	bind_select_value(select, value);
-	append($$anchor, div);
-	pop();
-}
-
-var root$9 = template(`<div class="textarea-field svelte-har9rk"><label class="svelte-har9rk"> </label> <textarea spellcheck="false" class="svelte-har9rk"></textarea></div>`);
-
-function Label_textarea($$anchor, $$props) {
-	push($$props, false);
-
-	let label = prop($$props, "label", 8);
-	let text = prop($$props, "text", 12);
-	let style = prop($$props, "style", 8, 'width: 9rem;');
-	let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-
-	init();
-
-	var div = root$9();
-	var label_1 = child(div);
-
-	set_attribute(label_1, "for", fid);
-
-	var text_1 = child(label_1);
-
-	var textarea = sibling(label_1, 2);
-	set_attribute(textarea, "id", fid);
-
-	template_effect(() => {
-		set_attribute(label_1, "style", style());
-		set_text(text_1, label());
-	});
-
-	bind_value(textarea, text);
-
-	event("keydown", textarea, stopPropagation(function ($$arg) {
-		bubble_event.call(this, $$props, $$arg);
-	}));
-
-	append($$anchor, div);
-	pop();
-}
-
-var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Security</h4> <!> <!></div>`);
-var root_4$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Default Permissions</h4> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Allow Lists</h4> <!> <!></div>`, 1);
-var root_2$8 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!> <!>`, 1);
-var root_5$3 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
-var root_6$1 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
+var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
+var root_2$8 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
+var root_4$1 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
+var root_5$3 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
 var root_1$b = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
 
 function Model_runtime_settings($$anchor, $$props) {
@@ -8108,9 +8445,7 @@ function Model_runtime_settings($$anchor, $$props) {
 	let currentSettings = mutable_state(null);
 	let currentRuntime = null;
 	let view = mutable_state('form');
-	let netHostsText = mutable_state('');
-	let fsRootsText = mutable_state('');
-	const securityModeOptions = ['off', 'warn', 'enforce'];
+	let scopeText = mutable_state(makeScopeText());
 	const permissionOptions = ['allow', 'warn', 'deny'];
 
 	onMount(() => {
@@ -8168,7 +8503,7 @@ function Model_runtime_settings($$anchor, $$props) {
 	}
 
 	function collectFormSettings() {
-		syncAllowListsFromText();
+		syncScopeListsFromText();
 		set(settingsError, '');
 		return normalizeModelSettings(currentRuntime, get(currentSettings));
 	}
@@ -8190,7 +8525,7 @@ function Model_runtime_settings($$anchor, $$props) {
 		if (nextView === get(view)) return;
 
 		if (nextView === 'json') {
-			syncAllowListsFromText();
+			syncScopeListsFromText();
 			syncTextFromSettings();
 			set(settingsError, '');
 		} else if (!syncSettingsFromText()) {
@@ -8201,14 +8536,34 @@ function Model_runtime_settings($$anchor, $$props) {
 	}
 
 	function syncAllowTextFromSettings() {
-		set(netHostsText, listToText(get(currentSettings)?.security?.allow?.netHosts));
-		set(fsRootsText, listToText(get(currentSettings)?.security?.allow?.fsRoots));
+		set(scopeText, {
+			fsReadRoots: listToText(get(currentSettings)?.security?.fs?.read?.roots),
+			fsWriteRoots: listToText(get(currentSettings)?.security?.fs?.write?.roots),
+			fsDeleteRoots: listToText(get(currentSettings)?.security?.fs?.delete?.roots),
+			netEgressHosts: listToText(get(currentSettings)?.security?.net?.egress?.hosts),
+			processExecCommands: listToText(get(currentSettings)?.security?.process?.exec?.commands)
+		});
 	}
 
-	function syncAllowListsFromText() {
-		if (!get(currentSettings)?.security?.allow) return;
-		mutate(currentSettings, get(currentSettings).security.allow.netHosts = textToList(get(netHostsText)));
-		mutate(currentSettings, get(currentSettings).security.allow.fsRoots = textToList(get(fsRootsText)));
+	function syncScopeListsFromText() {
+		const security = get(currentSettings)?.security;
+
+		if (!security) return;
+		security.fs.read.roots = textToList(get(scopeText).fsReadRoots);
+		security.fs.write.roots = textToList(get(scopeText).fsWriteRoots);
+		security.fs.delete.roots = textToList(get(scopeText).fsDeleteRoots);
+		security.net.egress.hosts = textToList(get(scopeText).netEgressHosts);
+		security.process.exec.commands = textToList(get(scopeText).processExecCommands);
+	}
+
+	function makeScopeText() {
+		return {
+			fsReadRoots: '',
+			fsWriteRoots: '',
+			fsDeleteRoots: '',
+			netEgressHosts: '',
+			processExecCommands: ''
+		};
 	}
 
 	function listToText(values) {
@@ -8241,9 +8596,7 @@ function Model_runtime_settings($$anchor, $$props) {
 	}
 
 	function hasPolicySettings(settings) {
-		const defaults = settings?.security?.defaults;
-
-		return !!defaults && ['fs', 'net', 'process'].some((key) => key in defaults);
+		return !!(settings?.security?.fs && settings?.security?.net && settings?.security?.process);
 	}
 
 	init();
@@ -8313,65 +8666,72 @@ function Model_runtime_settings($$anchor, $$props) {
 
 					var node_5 = sibling(div_2, 2);
 
-					if_block(node_5, () => get(currentSettings).security, ($$anchor) => {
-						var div_3 = root_3$2();
+					if_block(node_5, () => hasPolicySettings(get(currentSettings)), ($$anchor) => {
+						var fragment_2 = root_3$2();
+						var div_3 = first_child(fragment_2);
 						var node_6 = sibling(child(div_3), 2);
 
 						Label_select(node_6, {
-							label: "mode",
+							label: "read",
 							get value() {
-								return get(currentSettings).security.mode;
+								return get(currentSettings).security.fs.read.mode;
 							},
 							set value($$value) {
-								mutate(currentSettings, get(currentSettings).security.mode = $$value);
+								mutate(currentSettings, get(currentSettings).security.fs.read.mode = $$value);
 							},
-							options: securityModeOptions,
+							options: permissionOptions,
 							$$legacy: true
 						});
 
 						var node_7 = sibling(node_6, 2);
 
-						Label_checkbox(node_7, {
-							label: "forward events",
-							get on() {
-								return get(currentSettings).security.forwardEvents;
+						Label_textarea(node_7, {
+							label: "read roots",
+							get text() {
+								return get(scopeText).fsReadRoots;
 							},
-							set on($$value) {
-								mutate(currentSettings, get(currentSettings).security.forwardEvents = $$value);
+							set text($$value) {
+								mutate(scopeText, get(scopeText).fsReadRoots = $$value);
 							},
 							$$legacy: true
 						});
-						append($$anchor, div_3);
-					});
 
-					var node_8 = sibling(node_5, 2);
+						var node_8 = sibling(node_7, 2);
 
-					if_block(node_8, () => hasPolicySettings(get(currentSettings)), ($$anchor) => {
-						var fragment_2 = root_4$2();
-						var div_4 = first_child(fragment_2);
-						var node_9 = sibling(child(div_4), 2);
-
-						Label_select(node_9, {
-							label: "file system",
+						Label_select(node_8, {
+							label: "write",
 							get value() {
-								return get(currentSettings).security.defaults.fs;
+								return get(currentSettings).security.fs.write.mode;
 							},
 							set value($$value) {
-								mutate(currentSettings, get(currentSettings).security.defaults.fs = $$value);
+								mutate(currentSettings, get(currentSettings).security.fs.write.mode = $$value);
 							},
 							options: permissionOptions,
+							$$legacy: true
+						});
+
+						var node_9 = sibling(node_8, 2);
+
+						Label_textarea(node_9, {
+							label: "write roots",
+							get text() {
+								return get(scopeText).fsWriteRoots;
+							},
+							set text($$value) {
+								mutate(scopeText, get(scopeText).fsWriteRoots = $$value);
+							},
 							$$legacy: true
 						});
 
 						var node_10 = sibling(node_9, 2);
 
 						Label_select(node_10, {
-							label: "network",
+							label: "delete",
 							get value() {
-								return get(currentSettings).security.defaults.net;
+								return get(currentSettings).security.fs.delete.mode;
 							},
 							set value($$value) {
-								mutate(currentSettings, get(currentSettings).security.defaults.net = $$value);
+								mutate(currentSettings, get(currentSettings).security.fs.delete.mode = $$value);
 							},
 							options: permissionOptions,
 							$$legacy: true
@@ -8379,41 +8739,69 @@ function Model_runtime_settings($$anchor, $$props) {
 
 						var node_11 = sibling(node_10, 2);
 
-						Label_select(node_11, {
-							label: "process",
-							get value() {
-								return get(currentSettings).security.defaults.process;
+						Label_textarea(node_11, {
+							label: "delete roots",
+							get text() {
+								return get(scopeText).fsDeleteRoots;
 							},
-							set value($$value) {
-								mutate(currentSettings, get(currentSettings).security.defaults.process = $$value);
+							set text($$value) {
+								mutate(scopeText, get(scopeText).fsDeleteRoots = $$value);
 							},
-							options: permissionOptions,
 							$$legacy: true
 						});
 
-						var div_5 = sibling(div_4, 2);
-						var node_12 = sibling(child(div_5), 2);
+						var div_4 = sibling(div_3, 2);
+						var node_12 = sibling(child(div_4), 2);
 
-						Label_textarea(node_12, {
-							label: "network hosts",
-							get text() {
-								return get(netHostsText);
+						Label_select(node_12, {
+							label: "egress",
+							get value() {
+								return get(currentSettings).security.net.egress.mode;
 							},
-							set text($$value) {
-								set(netHostsText, $$value);
+							set value($$value) {
+								mutate(currentSettings, get(currentSettings).security.net.egress.mode = $$value);
 							},
+							options: permissionOptions,
 							$$legacy: true
 						});
 
 						var node_13 = sibling(node_12, 2);
 
 						Label_textarea(node_13, {
-							label: "file roots",
+							label: "hosts",
 							get text() {
-								return get(fsRootsText);
+								return get(scopeText).netEgressHosts;
 							},
 							set text($$value) {
-								set(fsRootsText, $$value);
+								mutate(scopeText, get(scopeText).netEgressHosts = $$value);
+							},
+							$$legacy: true
+						});
+
+						var div_5 = sibling(div_4, 2);
+						var node_14 = sibling(child(div_5), 2);
+
+						Label_select(node_14, {
+							label: "exec",
+							get value() {
+								return get(currentSettings).security.process.exec.mode;
+							},
+							set value($$value) {
+								mutate(currentSettings, get(currentSettings).security.process.exec.mode = $$value);
+							},
+							options: permissionOptions,
+							$$legacy: true
+						});
+
+						var node_15 = sibling(node_14, 2);
+
+						Label_textarea(node_15, {
+							label: "commands",
+							get text() {
+								return get(scopeText).processExecCommands;
+							},
+							set text($$value) {
+								mutate(scopeText, get(scopeText).processExecCommands = $$value);
 							},
 							$$legacy: true
 						});
@@ -8423,7 +8811,7 @@ function Model_runtime_settings($$anchor, $$props) {
 					append($$anchor, fragment_1);
 				},
 				($$anchor) => {
-					var textarea = root_5$3();
+					var textarea = root_4$1();
 					bind_value(textarea, () => get(settingsText), ($$value) => set(settingsText, $$value));
 
 					event("keydown", textarea, stopPropagation(function ($$arg) {
@@ -8434,10 +8822,10 @@ function Model_runtime_settings($$anchor, $$props) {
 				}
 			);
 
-			var node_14 = sibling(node_2, 2);
+			var node_16 = sibling(node_2, 2);
 
-			if_block(node_14, () => get(settingsError), ($$anchor) => {
-				var div_6 = root_6$1();
+			if_block(node_16, () => get(settingsError), ($$anchor) => {
+				var div_6 = root_5$3();
 				var text_1 = child(div_6);
 				template_effect(() => set_text(text_1, get(settingsError)));
 				append($$anchor, div_6);
@@ -17350,10 +17738,10 @@ var root_5$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class
 var root_8$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
 var root_7$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="field svelte-m7l4mw"> </span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!>`, 1);
 var root_10$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">kind</span><span class="punct svelte-m7l4mw">:</span><span class="kind svelte-m7l4mw"> </span></p>`);
-var root_11$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
+var root_11$1 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">summary</span><span class="punct svelte-m7l4mw">:</span><span class="summary svelte-m7l4mw"> </span></p>`);
 var root_9$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">type</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <!>`, 1);
 var root_3$1 = template(`<p class="line brace svelte-m7l4mw"></p> <p class="line contract-line svelte-m7l4mw" style="--indent:1"><span class="contract-key svelte-m7l4mw">role</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <p class="line brace svelte-m7l4mw"></p>`, 1);
-var root_13 = template(`<pre class="line svelte-m7l4mw"> </pre>`);
+var root_13$1 = template(`<pre class="line svelte-m7l4mw"> </pre>`);
 var root_2$6 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Contract</p> <div class="box contract svelte-m7l4mw"><!></div></div>`);
 var root_19 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
 var root_21$1 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
@@ -17563,7 +17951,7 @@ function Pin_profile($$anchor, $$props) {
 											var node_7 = sibling(node_6, 2);
 
 											if_block(node_7, () => get(row).summary, ($$anchor) => {
-												var p_7 = root_11$2();
+												var p_7 = root_11$1();
 												var span_7 = sibling(child(p_7), 2);
 												var text_8 = child(span_7);
 
@@ -17606,7 +17994,7 @@ function Pin_profile($$anchor, $$props) {
 							node_8,
 							() => get(_contract).text,
 							($$anchor) => {
-								var pre = root_13();
+								var pre = root_13$1();
 								var text_9 = child(pre);
 								template_effect(() => set_text(text_9, get(_contract).text));
 								append($$anchor, pre);
@@ -19399,22 +19787,89 @@ function Label_text_input($$anchor, $$props) {
 	pop();
 }
 
-var root_2$1 = template(`<button type="button" class="agent-row svelte-1qan2ee"><div class="agent-title svelte-1qan2ee"> </div> <div> </div> <div class="agent-counts svelte-1qan2ee"> </div></button>`);
-var root_4$1 = template(`<div class="row svelte-1qan2ee"><!> <!></div> <div class="row svelte-1qan2ee"><!> <!></div>`, 1);
-var root_5$1 = template(`<div class="row svelte-1qan2ee"><!> <!></div> <!>`, 1);
-var root_8 = template(`<span class="approval svelte-1qan2ee">requires approval</span>`);
-var root_7 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <!> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_9$1 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_10 = template(`<label class="capability-item svelte-1qan2ee"><input type="checkbox" class="svelte-1qan2ee"> <span><span class="capability-title svelte-1qan2ee"> </span> <span class="capability-id svelte-1qan2ee"> </span></span></label>`);
-var root_11$1 = template(`<div class="error svelte-1qan2ee"> </div>`);
-var root_3 = template(`<div class="agent-form svelte-1qan2ee"><!> <div class="row svelte-1qan2ee"><!> <!></div> <!> <!> <!> <!> <!> <!> <div class="hint svelte-1qan2ee"> </div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Tools</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Probes</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <div class="capability-section svelte-1qan2ee"><div class="capability-header svelte-1qan2ee"><span>Events</span> <span class="hint svelte-1qan2ee"> </span></div> <!></div> <!></div>`);
-var root_1$1 = template(`<div class="agent-settings svelte-1qan2ee"><div class="agents-list svelte-1qan2ee"><!> <div class="agent-actions svelte-1qan2ee"><!> <!> <!></div></div> <!></div>`);
+var root_2$1 = template(`<span class="approval svelte-1thwlxz">requires approval</span>`);
+var root_1$1 = template(`<label class="capability-item svelte-1thwlxz"><input type="checkbox" class="svelte-1thwlxz"> <span><span class="capability-title svelte-1thwlxz"> </span> <!> <span class="capability-id svelte-1thwlxz"> </span></span></label>`);
+var root_3 = template(`<div class="capability-section svelte-1thwlxz"><div class="capability-header svelte-1thwlxz"><span> </span> <span class="hint svelte-1thwlxz"> </span></div> <!></div>`);
+var root_6$1 = template(`<button type="button" class="agent-row svelte-1thwlxz"><div class="agent-title svelte-1thwlxz"> </div> <div> </div> <div class="agent-counts svelte-1thwlxz"> </div></button>`);
+var root_9$1 = template(`<div class="row svelte-1thwlxz"><!> <!></div> <div class="row svelte-1thwlxz"><!> <!></div>`, 1);
+var root_10 = template(`<div class="row svelte-1thwlxz"><!> <!></div> <!>`, 1);
+var root_8 = template(`<!> <div class="row svelte-1thwlxz"><!> <!></div> <!> <!> <!> <!> <!> <!> <div class="hint svelte-1thwlxz"> </div> <!> <!> <!>`, 1);
+var root_12 = template(`<textarea class="json-editor svelte-1thwlxz" spellcheck="false"></textarea>`);
+var root_13 = template(`<div class="error svelte-1thwlxz"> </div>`);
+var root_7 = template(`<div class="agent-form svelte-1thwlxz"><div class="tabs svelte-1thwlxz"><!> <!></div> <!> <!></div>`);
+var root_5$1 = template(`<div class="agent-settings svelte-1thwlxz"><div class="agents-list svelte-1thwlxz"><!> <div class="agent-actions svelte-1thwlxz"><!> <!> <!></div></div> <!></div>`);
 
 function Agent_settings($$anchor, $$props) {
 	push($$props, false);
 
 	const selectedAgent = mutable_state();
 	const allowedCounts = mutable_state();
+
+	const capabilityItem = (
+		$$anchor,
+		kind = noop,
+		item = noop,
+		$$arg2
+	) => {
+		let showApproval = derived_safe_equal(() => fallback($$arg2?.(), false));
+		var label = root_1$1();
+		var input = child(label);
+		template_effect(() => set_checked(input, isAllowed(kind(), item().id)));
+
+		var span = sibling(input, 2);
+		var span_1 = child(span);
+		var text_1 = child(span_1);
+
+		var node = sibling(span_1, 2);
+
+		if_block(node, () => get(showApproval) && item().approval === 'always', ($$anchor) => {
+			var span_2 = root_2$1();
+
+			append($$anchor, span_2);
+		});
+
+		var span_3 = sibling(node, 2);
+		var text_2 = child(span_3);
+
+		template_effect(() => {
+			set_text(text_1, item().title || item().id);
+			set_text(text_2, item().id);
+		});
+
+		event("change", input, (event) => setAllowed(kind(), item().id, event.currentTarget.checked));
+		append($$anchor, label);
+	};
+
+	const capabilitySection = (
+		$$anchor,
+		kind = noop,
+		title = noop,
+		items = noop,
+		$$arg3
+	) => {
+		let showApproval = derived_safe_equal(() => fallback($$arg3?.(), false));
+		var div = root_3();
+		var div_1 = child(div);
+		var span_4 = child(div_1);
+		var text_3 = child(span_4);
+
+		var span_5 = sibling(span_4, 2);
+		var text_4 = child(span_5);
+
+		var node_1 = sibling(div_1, 2);
+
+		each(node_1, 1, items, index, ($$anchor, item) => {
+			capabilityItem($$anchor, kind, () => get(item), () => get(showApproval));
+		});
+
+		template_effect(() => {
+			set_text(text_3, title());
+			set_text(text_4, `${get(selectedAgent).permissions[kind()].allow.length ?? ""} selected`);
+		});
+
+		append($$anchor, div);
+	};
+
 	let tx = prop($$props, "tx", 8);
 
 	const box = mutable_state({
@@ -19426,9 +19881,11 @@ function Agent_settings($$anchor, $$props) {
 	});
 
 	let config = mutable_state(makeAgentConfig(null));
+	let configText = mutable_state('');
 	let capabilities = mutable_state({ tools: [], probes: [], events: [] });
 	let selectedId = mutable_state('');
 	let error = mutable_state('');
+	let view = mutable_state('form');
 	const providerOptions = ['openai'];
 
 	const typeOptions = [
@@ -19459,12 +19916,14 @@ function Agent_settings($$anchor, $$props) {
 		set(capabilities, normalizeCapabilities(nextCapabilities));
 		set(config, makeAgentConfig(settings, get(capabilities)));
 		set(selectedId, get(config).defaultAgent || get(config).agents[0]?.id || '');
+		syncTextFromConfig();
 		set(error, '');
+		set(view, 'form');
 		mutate(box, get(box).title = 'Agent Settings');
 		mutate(box, get(box).pos = { ...pos });
 
 		mutate(box, get(box).ok = () => {
-			const next = collectConfig();
+			const next = get(view) === 'json' ? parseConfigText() : collectConfig();
 
 			if (!next) {
 				get(box).show(get(box).pos);
@@ -19628,6 +20087,55 @@ function Agent_settings($$anchor, $$props) {
 		return JSON.parse(JSON.stringify(get(config)));
 	}
 
+	function configToText(value) {
+		return JSON.stringify(value ?? makeAgentConfig(null, get(capabilities)), null, 2);
+	}
+
+	function syncTextFromConfig() {
+		const collected = collectConfig();
+
+		set(configText, configToText(collected ?? get(config)));
+		set(error, '');
+	}
+
+	function syncConfigFromText() {
+		const parsed = parseConfigText();
+
+		if (!parsed) return false;
+		set(config, makeAgentConfig(parsed, get(capabilities)));
+		set(selectedId, get(config).defaultAgent || get(config).agents[0]?.id || '');
+		return true;
+	}
+
+	function setView(nextView) {
+		if (nextView === get(view)) return;
+
+		if (nextView === 'json') {
+			syncTextFromConfig();
+		} else if (!syncConfigFromText()) {
+			return;
+		}
+
+		set(view, nextView);
+	}
+
+	function parseConfigText() {
+		const text = get(configText)?.trim() ?? '';
+
+		if (!text) {
+			set(error, 'agent settings JSON is required');
+			return null;
+		}
+
+		try {
+			set(error, '');
+			return makeAgentConfig(JSON.parse(text), get(capabilities));
+		} catch(parseError) {
+			set(error, parseError?.message ?? String(parseError));
+			return null;
+		}
+	}
+
 	function addAgent() {
 		let index = get(config).agents.length + 1;
 		let id = `agent${index}`;
@@ -19718,27 +20226,27 @@ function Agent_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$1();
-			var div_1 = child(div);
-			var node = child(div_1);
+			var div_2 = root_5$1();
+			var div_3 = child(div_2);
+			var node_2 = child(div_3);
 
-			each(node, 1, () => get(config).agents, index, ($$anchor, agent) => {
-				var button = root_2$1();
-				var div_2 = child(button);
-				var text = child(div_2);
+			each(node_2, 1, () => get(config).agents, index, ($$anchor, agent) => {
+				var button = root_6$1();
+				var div_4 = child(button);
+				var text_5 = child(div_4);
 
-				var div_3 = sibling(div_2, 2);
-				var text_1 = child(div_3);
+				var div_5 = sibling(div_4, 2);
+				var text_6 = child(div_5);
 
-				var div_4 = sibling(div_3, 2);
-				var text_2 = child(div_4);
+				var div_6 = sibling(div_5, 2);
+				var text_7 = child(div_6);
 
 				template_effect(() => {
 					toggle_class(button, "selected", get(agent).id === get(selectedId));
-					set_text(text, get(agent).title || get(agent).id);
-					set_text(text_1, get(agent).id);
+					set_text(text_5, get(agent).title || get(agent).id);
+					set_text(text_6, get(agent).id);
 
-					set_text(text_2, `${get(agent).permissions.tools.allow.length ?? ""} tools,
+					set_text(text_7, `${get(agent).permissions.tools.allow.length ?? ""} tools,
                         ${get(agent).permissions.probes.allow.length ?? ""} probes,
                         ${get(agent).permissions.events.allow.length ?? ""} events`);
 				});
@@ -19747,19 +20255,19 @@ function Agent_settings($$anchor, $$props) {
 				append($$anchor, button);
 			});
 
-			var div_5 = sibling(node, 2);
-			var node_1 = child(div_5);
+			var div_7 = sibling(node_2, 2);
+			var node_3 = child(div_7);
 
-			Button(node_1, { label: "add agent", click: addAgent });
+			Button(node_3, { label: "add agent", click: addAgent });
 
-			var node_2 = sibling(node_1, 2);
+			var node_4 = sibling(node_3, 2);
 
-			Button(node_2, { label: "duplicate", click: duplicateAgent });
+			Button(node_4, { label: "duplicate", click: duplicateAgent });
 
-			var node_3 = sibling(node_2, 2);
+			var node_5 = sibling(node_4, 2);
 			var disabled = derived_safe_equal(() => get(config).agents.length <= 1);
 
-			Button(node_3, {
+			Button(node_5, {
 				label: "delete",
 				click: removeAgent,
 				get disabled() {
@@ -19767,334 +20275,290 @@ function Agent_settings($$anchor, $$props) {
 				}
 			});
 
-			var node_4 = sibling(div_1, 2);
+			var node_6 = sibling(div_3, 2);
 
-			if_block(node_4, () => get(selectedAgent), ($$anchor) => {
-				var div_6 = root_3();
-				var node_5 = child(div_6);
+			if_block(node_6, () => get(selectedAgent), ($$anchor) => {
+				var div_8 = root_7();
+				var div_9 = child(div_8);
+				var node_7 = child(div_9);
+				var active = derived_safe_equal(() => get(view) === 'form');
 
-				Label_checkbox(node_5, {
-					label: "enabled",
-					get on() {
-						return get(selectedAgent).enabled;
+				Button(node_7, {
+					label: "Form",
+					click: () => setView('form'),
+					get active() {
+						return get(active);
+					}
+				});
+
+				var node_8 = sibling(node_7, 2);
+				var active_1 = derived_safe_equal(() => get(view) === 'json');
+
+				Button(node_8, {
+					label: "JSON",
+					click: () => setView('json'),
+					get active() {
+						return get(active_1);
+					}
+				});
+
+				var node_9 = sibling(div_9, 2);
+
+				if_block(
+					node_9,
+					() => get(view) === 'form',
+					($$anchor) => {
+						var fragment_2 = root_8();
+						var node_10 = first_child(fragment_2);
+
+						Label_checkbox(node_10, {
+							label: "enabled",
+							get on() {
+								return get(selectedAgent).enabled;
+							},
+							set on($$value) {
+								mutate(selectedAgent, get(selectedAgent).enabled = $$value);
+							},
+							$$legacy: true
+						});
+
+						var div_10 = sibling(node_10, 2);
+						var node_11 = child(div_10);
+
+						Label_text_input(node_11, {
+							label: "id",
+							get text() {
+								return get(selectedAgent).id;
+							},
+							set text($$value) {
+								mutate(selectedAgent, get(selectedAgent).id = $$value);
+							},
+							onInput: () => set(selectedId, get(selectedAgent).id),
+							$$legacy: true
+						});
+
+						var node_12 = sibling(node_11, 2);
+						var options = derived_safe_equal(() => get(config).agents.map((agent) => agent.id));
+
+						Label_select(node_12, {
+							label: "default agent",
+							get value() {
+								return get(config).defaultAgent;
+							},
+							set value($$value) {
+								mutate(config, get(config).defaultAgent = $$value);
+							},
+							get options() {
+								return get(options);
+							},
+							$$legacy: true
+						});
+
+						var node_13 = sibling(div_10, 2);
+
+						Label_select(node_13, {
+							label: "type",
+							get value() {
+								return get(selectedAgent).type;
+							},
+							set value($$value) {
+								mutate(selectedAgent, get(selectedAgent).type = $$value);
+							},
+							options: typeOptions,
+							$$legacy: true
+						});
+
+						var node_14 = sibling(node_13, 2);
+
+						Label_text_input(node_14, {
+							label: "title",
+							get text() {
+								return get(selectedAgent).title;
+							},
+							set text($$value) {
+								mutate(selectedAgent, get(selectedAgent).title = $$value);
+							},
+							$$legacy: true
+						});
+
+						var node_15 = sibling(node_14, 2);
+
+						Label_textarea(node_15, {
+							label: "instructions",
+							get text() {
+								return get(selectedAgent).instructions;
+							},
+							set text($$value) {
+								mutate(selectedAgent, get(selectedAgent).instructions = $$value);
+							},
+							$$legacy: true
+						});
+
+						var node_16 = sibling(node_15, 2);
+
+						if_block(node_16, () => get(selectedAgent).type === 'overlay' || get(selectedAgent).type === 'openai', ($$anchor) => {
+							var fragment_3 = root_9$1();
+							var div_11 = first_child(fragment_3);
+							var node_17 = child(div_11);
+
+							Label_select(node_17, {
+								label: "provider",
+								get value() {
+									return get(selectedAgent).llm.provider;
+								},
+								set value($$value) {
+									mutate(selectedAgent, get(selectedAgent).llm.provider = $$value);
+								},
+								options: providerOptions,
+								$$legacy: true
+							});
+
+							var node_18 = sibling(node_17, 2);
+
+							Label_select(node_18, {
+								label: "overlay",
+								get value() {
+									return get(selectedAgent).ui.mode;
+								},
+								set value($$value) {
+									mutate(selectedAgent, get(selectedAgent).ui.mode = $$value);
+								},
+								options: overlayOptions,
+								$$legacy: true
+							});
+
+							var div_12 = sibling(div_11, 2);
+							var node_19 = child(div_12);
+
+							Label_text_input(node_19, {
+								label: "model",
+								get text() {
+									return get(selectedAgent).llm.model;
+								},
+								set text($$value) {
+									mutate(selectedAgent, get(selectedAgent).llm.model = $$value);
+								},
+								$$legacy: true
+							});
+
+							var node_20 = sibling(node_19, 2);
+
+							Label_text_input(node_20, {
+								label: "endpoint",
+								get text() {
+									return get(selectedAgent).llm.endpoint;
+								},
+								set text($$value) {
+									mutate(selectedAgent, get(selectedAgent).llm.endpoint = $$value);
+								},
+								$$legacy: true
+							});
+							append($$anchor, fragment_3);
+						});
+
+						var node_21 = sibling(node_16, 2);
+
+						if_block(node_21, () => get(selectedAgent).type === 'http', ($$anchor) => {
+							var fragment_4 = root_10();
+							var div_13 = first_child(fragment_4);
+							var node_22 = child(div_13);
+
+							Label_text_input(node_22, {
+								label: "server host",
+								get text() {
+									return get(selectedAgent).server.host;
+								},
+								set text($$value) {
+									mutate(selectedAgent, get(selectedAgent).server.host = $$value);
+								},
+								$$legacy: true
+							});
+
+							var node_23 = sibling(node_22, 2);
+
+							Label_text_input(node_23, {
+								label: "server port",
+								get text() {
+									return get(selectedAgent).server.port;
+								},
+								set text($$value) {
+									mutate(selectedAgent, get(selectedAgent).server.port = $$value);
+								},
+								$$legacy: true
+							});
+
+							var node_24 = sibling(div_13, 2);
+
+							Label_text_input(node_24, {
+								label: "base path",
+								get text() {
+									return get(selectedAgent).server.basePath;
+								},
+								set text($$value) {
+									mutate(selectedAgent, get(selectedAgent).server.basePath = $$value);
+								},
+								$$legacy: true
+							});
+
+							append($$anchor, fragment_4);
+						});
+
+						var node_25 = sibling(node_21, 2);
+
+						if_block(node_25, () => get(selectedAgent).type === 'mcp', ($$anchor) => {
+							Label_select($$anchor, {
+								label: "transport",
+								get value() {
+									return get(selectedAgent).transport.mode;
+								},
+								set value($$value) {
+									mutate(selectedAgent, get(selectedAgent).transport.mode = $$value);
+								},
+								options: transportModeOptions,
+								$$legacy: true
+							});
+						});
+
+						var div_14 = sibling(node_25, 2);
+						var text_8 = child(div_14);
+
+						var node_26 = sibling(div_14, 2);
+
+						capabilitySection(node_26, () => 'tools', () => 'Tools', () => get(capabilities).tools, () => true);
+
+						var node_27 = sibling(node_26, 2);
+
+						capabilitySection(node_27, () => 'probes', () => 'Probes', () => get(capabilities).probes);
+
+						var node_28 = sibling(node_27, 2);
+
+						capabilitySection(node_28, () => 'events', () => 'Events', () => get(capabilities).events);
+						template_effect(() => set_text(text_8, `Effective view: ${get(allowedCounts).tools ?? ""} tools, ${get(allowedCounts).probes ?? ""} probes, ${get(allowedCounts).events ?? ""} events.`));
+						append($$anchor, fragment_2);
 					},
-					set on($$value) {
-						mutate(selectedAgent, get(selectedAgent).enabled = $$value);
-					},
-					$$legacy: true
+					($$anchor) => {
+						var textarea = root_12();
+						bind_value(textarea, () => get(configText), ($$value) => set(configText, $$value));
+
+						event("keydown", textarea, stopPropagation(function ($$arg) {
+							bubble_event.call(this, $$props, $$arg);
+						}));
+
+						append($$anchor, textarea);
+					}
+				);
+
+				var node_29 = sibling(node_9, 2);
+
+				if_block(node_29, () => get(error), ($$anchor) => {
+					var div_15 = root_13();
+					var text_9 = child(div_15);
+					template_effect(() => set_text(text_9, get(error)));
+					append($$anchor, div_15);
 				});
-
-				var div_7 = sibling(node_5, 2);
-				var node_6 = child(div_7);
-
-				Label_text_input(node_6, {
-					label: "id",
-					get text() {
-						return get(selectedAgent).id;
-					},
-					set text($$value) {
-						mutate(selectedAgent, get(selectedAgent).id = $$value);
-					},
-					onInput: () => set(selectedId, get(selectedAgent).id),
-					$$legacy: true
-				});
-
-				var node_7 = sibling(node_6, 2);
-				var options = derived_safe_equal(() => get(config).agents.map((agent) => agent.id));
-
-				Label_select(node_7, {
-					label: "default agent",
-					get value() {
-						return get(config).defaultAgent;
-					},
-					set value($$value) {
-						mutate(config, get(config).defaultAgent = $$value);
-					},
-					get options() {
-						return get(options);
-					},
-					$$legacy: true
-				});
-
-				var node_8 = sibling(div_7, 2);
-
-				Label_select(node_8, {
-					label: "type",
-					get value() {
-						return get(selectedAgent).type;
-					},
-					set value($$value) {
-						mutate(selectedAgent, get(selectedAgent).type = $$value);
-					},
-					options: typeOptions,
-					$$legacy: true
-				});
-
-				var node_9 = sibling(node_8, 2);
-
-				Label_text_input(node_9, {
-					label: "title",
-					get text() {
-						return get(selectedAgent).title;
-					},
-					set text($$value) {
-						mutate(selectedAgent, get(selectedAgent).title = $$value);
-					},
-					$$legacy: true
-				});
-
-				var node_10 = sibling(node_9, 2);
-
-				Label_textarea(node_10, {
-					label: "instructions",
-					get text() {
-						return get(selectedAgent).instructions;
-					},
-					set text($$value) {
-						mutate(selectedAgent, get(selectedAgent).instructions = $$value);
-					},
-					$$legacy: true
-				});
-
-				var node_11 = sibling(node_10, 2);
-
-				if_block(node_11, () => get(selectedAgent).type === 'overlay' || get(selectedAgent).type === 'openai', ($$anchor) => {
-					var fragment_1 = root_4$1();
-					var div_8 = first_child(fragment_1);
-					var node_12 = child(div_8);
-
-					Label_select(node_12, {
-						label: "provider",
-						get value() {
-							return get(selectedAgent).llm.provider;
-						},
-						set value($$value) {
-							mutate(selectedAgent, get(selectedAgent).llm.provider = $$value);
-						},
-						options: providerOptions,
-						$$legacy: true
-					});
-
-					var node_13 = sibling(node_12, 2);
-
-					Label_select(node_13, {
-						label: "overlay",
-						get value() {
-							return get(selectedAgent).ui.mode;
-						},
-						set value($$value) {
-							mutate(selectedAgent, get(selectedAgent).ui.mode = $$value);
-						},
-						options: overlayOptions,
-						$$legacy: true
-					});
-
-					var div_9 = sibling(div_8, 2);
-					var node_14 = child(div_9);
-
-					Label_text_input(node_14, {
-						label: "model",
-						get text() {
-							return get(selectedAgent).llm.model;
-						},
-						set text($$value) {
-							mutate(selectedAgent, get(selectedAgent).llm.model = $$value);
-						},
-						$$legacy: true
-					});
-
-					var node_15 = sibling(node_14, 2);
-
-					Label_text_input(node_15, {
-						label: "endpoint",
-						get text() {
-							return get(selectedAgent).llm.endpoint;
-						},
-						set text($$value) {
-							mutate(selectedAgent, get(selectedAgent).llm.endpoint = $$value);
-						},
-						$$legacy: true
-					});
-					append($$anchor, fragment_1);
-				});
-
-				var node_16 = sibling(node_11, 2);
-
-				if_block(node_16, () => get(selectedAgent).type === 'http', ($$anchor) => {
-					var fragment_2 = root_5$1();
-					var div_10 = first_child(fragment_2);
-					var node_17 = child(div_10);
-
-					Label_text_input(node_17, {
-						label: "server host",
-						get text() {
-							return get(selectedAgent).server.host;
-						},
-						set text($$value) {
-							mutate(selectedAgent, get(selectedAgent).server.host = $$value);
-						},
-						$$legacy: true
-					});
-
-					var node_18 = sibling(node_17, 2);
-
-					Label_text_input(node_18, {
-						label: "server port",
-						get text() {
-							return get(selectedAgent).server.port;
-						},
-						set text($$value) {
-							mutate(selectedAgent, get(selectedAgent).server.port = $$value);
-						},
-						$$legacy: true
-					});
-
-					var node_19 = sibling(div_10, 2);
-
-					Label_text_input(node_19, {
-						label: "base path",
-						get text() {
-							return get(selectedAgent).server.basePath;
-						},
-						set text($$value) {
-							mutate(selectedAgent, get(selectedAgent).server.basePath = $$value);
-						},
-						$$legacy: true
-					});
-
-					append($$anchor, fragment_2);
-				});
-
-				var node_20 = sibling(node_16, 2);
-
-				if_block(node_20, () => get(selectedAgent).type === 'mcp', ($$anchor) => {
-					Label_select($$anchor, {
-						label: "transport",
-						get value() {
-							return get(selectedAgent).transport.mode;
-						},
-						set value($$value) {
-							mutate(selectedAgent, get(selectedAgent).transport.mode = $$value);
-						},
-						options: transportModeOptions,
-						$$legacy: true
-					});
-				});
-
-				var div_11 = sibling(node_20, 2);
-				var text_3 = child(div_11);
-
-				var div_12 = sibling(div_11, 2);
-				var div_13 = child(div_12);
-				var span = sibling(child(div_13), 2);
-				var text_4 = child(span);
-
-				var node_21 = sibling(div_13, 2);
-
-				each(node_21, 1, () => get(capabilities).tools, index, ($$anchor, item) => {
-					var label = root_7();
-					var input = child(label);
-					template_effect(() => set_checked(input, isAllowed('tools', get(item).id)));
-
-					var span_1 = sibling(input, 2);
-					var span_2 = child(span_1);
-					var text_5 = child(span_2);
-
-					var node_22 = sibling(span_2, 2);
-
-					if_block(node_22, () => get(item).approval === 'always', ($$anchor) => {
-						var span_3 = root_8();
-
-						append($$anchor, span_3);
-					});
-
-					var span_4 = sibling(node_22, 2);
-					var text_6 = child(span_4);
-
-					template_effect(() => {
-						set_text(text_5, get(item).title || get(item).id);
-						set_text(text_6, get(item).id);
-					});
-
-					event("change", input, (event) => setAllowed('tools', get(item).id, event.currentTarget.checked));
-					append($$anchor, label);
-				});
-
-				var div_14 = sibling(div_12, 2);
-				var div_15 = child(div_14);
-				var span_5 = sibling(child(div_15), 2);
-				var text_7 = child(span_5);
-
-				var node_23 = sibling(div_15, 2);
-
-				each(node_23, 1, () => get(capabilities).probes, index, ($$anchor, item) => {
-					var label_1 = root_9$1();
-					var input_1 = child(label_1);
-					template_effect(() => set_checked(input_1, isAllowed('probes', get(item).id)));
-
-					var span_6 = sibling(input_1, 2);
-					var span_7 = child(span_6);
-					var text_8 = child(span_7);
-
-					var span_8 = sibling(span_7, 2);
-					var text_9 = child(span_8);
-
-					template_effect(() => {
-						set_text(text_8, get(item).title || get(item).id);
-						set_text(text_9, get(item).id);
-					});
-
-					event("change", input_1, (event) => setAllowed('probes', get(item).id, event.currentTarget.checked));
-					append($$anchor, label_1);
-				});
-
-				var div_16 = sibling(div_14, 2);
-				var div_17 = child(div_16);
-				var span_9 = sibling(child(div_17), 2);
-				var text_10 = child(span_9);
-
-				var node_24 = sibling(div_17, 2);
-
-				each(node_24, 1, () => get(capabilities).events, index, ($$anchor, item) => {
-					var label_2 = root_10();
-					var input_2 = child(label_2);
-					template_effect(() => set_checked(input_2, isAllowed('events', get(item).id)));
-
-					var span_10 = sibling(input_2, 2);
-					var span_11 = child(span_10);
-					var text_11 = child(span_11);
-
-					var span_12 = sibling(span_11, 2);
-					var text_12 = child(span_12);
-
-					template_effect(() => {
-						set_text(text_11, get(item).title || get(item).id);
-						set_text(text_12, get(item).id);
-					});
-
-					event("change", input_2, (event) => setAllowed('events', get(item).id, event.currentTarget.checked));
-					append($$anchor, label_2);
-				});
-
-				var node_25 = sibling(div_16, 2);
-
-				if_block(node_25, () => get(error), ($$anchor) => {
-					var div_18 = root_11$1();
-					var text_13 = child(div_18);
-					template_effect(() => set_text(text_13, get(error)));
-					append($$anchor, div_18);
-				});
-
-				template_effect(() => {
-					set_text(text_3, `Effective view: ${get(allowedCounts).tools ?? ""} tools, ${get(allowedCounts).probes ?? ""} probes, ${get(allowedCounts).events ?? ""} events.`);
-					set_text(text_4, `${get(selectedAgent).permissions.tools.allow.length ?? ""} selected`);
-					set_text(text_7, `${get(selectedAgent).permissions.probes.allow.length ?? ""} selected`);
-					set_text(text_10, `${get(selectedAgent).permissions.events.allow.length ?? ""} selected`);
-				});
-
-				append($$anchor, div_6);
+				append($$anchor, div_8);
 			});
-			append($$anchor, div);
+			append($$anchor, div_2);
 		},
 		$$slots: { default: true }
 	});

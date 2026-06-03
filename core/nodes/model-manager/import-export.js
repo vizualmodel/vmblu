@@ -42,6 +42,8 @@ async importFromModel(node, lName, userPath = null) {
         node.linkIsBad()
         return
     }
+
+    stripImportedSecurity(newNode)
     
     // explicitely reset the link as good
     node.linkIsGood()
@@ -129,6 +131,8 @@ async nodeFromLibrary(libModel, lName) {
     // check
     if (!newNode) return null
 
+    stripImportedSecurity(newNode)
+
     // good or bad - set the changed name/path
     newNode.setLink(model, lName, Path.Kind.Relative)
 
@@ -137,4 +141,27 @@ async nodeFromLibrary(libModel, lName) {
 },
 
 
+}
+
+function stripImportedSecurity(node) {
+    if (!node) return
+
+    if (node.dx?.security) {
+        const nextDx = structuredClone(node.dx)
+        delete nextDx.security
+        node.dx = hasMeaningfulDx(nextDx) ? nextDx : null
+    }
+
+    if (node.is?.group) {
+        for (const child of node.nodes ?? []) stripImportedSecurity(child)
+    }
+}
+
+function hasMeaningfulDx(dx) {
+    if (!dx || typeof dx !== 'object') return false
+    if (dx.run?.worker?.on) return true
+    if (dx.run?.worker?.path) return true
+    if (dx.monitor?.logMessages) return true
+    if (dx.monitor?.logTimings) return true
+    return Object.keys(dx).some(key => !['run', 'monitor'].includes(key))
 }

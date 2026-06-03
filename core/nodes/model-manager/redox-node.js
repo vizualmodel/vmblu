@@ -1,4 +1,4 @@
-import {getRuntimeSettings} from '../../../runtime/runtime-settings-registry.js'
+import {getRuntimeSettings} from '@vizualmodel/vmblu-runtime/runtime-settings'
 
 export const redoxNode = {
 

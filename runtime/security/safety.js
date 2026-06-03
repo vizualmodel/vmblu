@@ -3,6 +3,7 @@ import childProcess from 'node:child_process'
 import fs from 'node:fs'
 import http from 'node:http'
 import https from 'node:https'
+import path from 'node:path'
 
 const STATE_KEY = Symbol.for('vmblu.rt-als.safetyHooks')
 const WRAPPED = Symbol.for('vmblu.rt-als.wrapped')
@@ -35,30 +36,32 @@ class Safety {
         return (event) => {
             const actor = runtime?.actors?.find?.(candidate => candidate.name === event?.node)
             const effectivePolicy = runtime?.settings?.effectivePolicy?.(modelRuntimeSettings, actor?.dx)
-            if (!effectivePolicy?.security) return null
+            if (!effectivePolicy?.active || !effectivePolicy?.security) return null
 
-            const domain = capabilityDomain(event.cap ?? event.capability)
-            const permission = effectivePolicy.security[domain]
-            const allowListDecision = classifyAllowList(domain, event.detail, effectivePolicy.security.allow)
-            const decision = allowListDecision?.decision
-                ?? (permission === 'deny' ? 'denied' : permission === 'warn' ? 'warning' : 'allowed')
+            const operation = parseOperation(event.operation ?? event.cap ?? event.capability)
+            const policy = operationPolicy(effectivePolicy.security, operation)
+            if (!policy) return null
+
+            const scopeDecision = classifyScope(operation, event.detail, policy)
+            const decision = scopeDecision?.decision
+                ?? (policy.mode === 'deny' ? 'denied' : policy.mode === 'warn' ? 'warning' : 'allowed')
 
             return {
                 decision,
-                domain,
-                permission,
-                mode: effectivePolicy.mode,
-                forward: effectivePolicy.forward,
-                ...(allowListDecision?.reason ? {reason: allowListDecision.reason} : {}),
+                area: operation.area,
+                action: operation.action,
+                mode: scopeDecision?.mode ?? policy.mode,
+                ...(scopeDecision?.reason ? {reason: scopeDecision.reason} : {}),
             }
         }
     }
 
-    report(cap, detail = {}) {
+    report(operation, detail = {}) {
         const event = {
             ts: Date.now(),
             node: getCurrentNode(),
-            cap,
+            operation: normalizeOperationName(operation),
+            cap: legacyCapabilityName(operation),
             detail,
         }
 
@@ -66,6 +69,7 @@ class Safety {
         if (policy) event.policy = policy
 
         this.emit(event)
+        return event
     }
 
     classify(event) {
@@ -83,9 +87,13 @@ class Safety {
         }
     }
 
-    emitCapability(cap, detail) {
-        if (isCapabilitySuppressed(cap)) return
-        this.report(cap, detail)
+    emitCapability(operation, detail) {
+        if (isCapabilitySuppressed(operation)) return null
+        const event = this.report(operation, detail)
+        if (event?.policy?.decision === 'denied') {
+            throw new SecurityPolicyError(event)
+        }
+        return event
     }
 
     installHooks({mode = 'off'} = {}) {
@@ -115,23 +123,23 @@ class Safety {
         const report = (cap, detail) => this.emitCapability(cap, detail)
 
         wrapMethod(childProcess, 'exec', (original) => function wrappedExec(command, ...args) {
-            report('proc:exec', {command: safeString(command)})
+            report('process.exec', {command: safeString(command)})
             return original.call(this, command, ...args)
         }, restores)
 
         wrapMethod(childProcess, 'execFile', (original) => function wrappedExecFile(file, args, options, callback) {
             const argv = Array.isArray(args) ? args : []
-            report('proc:exec', {command: safeString(file), args: argv.slice()})
+            report('process.exec', {command: safeString(file), args: argv.slice()})
             return original.call(this, file, args, options, callback)
         }, restores)
 
         wrapMethod(childProcess, 'spawn', (original) => function wrappedSpawn(command, args, options) {
-            report('proc:exec', {command: safeString(command), args: Array.isArray(args) ? args.slice() : []})
+            report('process.exec', {command: safeString(command), args: Array.isArray(args) ? args.slice() : []})
             return original.call(this, command, args, options)
         }, restores)
 
         wrapMethod(childProcess, 'fork', (original) => function wrappedFork(modulePath, args, options) {
-            report('proc:exec', {command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : []})
+            report('process.exec', {command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : []})
             return original.call(this, modulePath, args, options)
         }, restores)
     }
@@ -139,16 +147,23 @@ class Safety {
     installFsHooks(restores) {
         const report = (cap, detail) => this.emitCapability(cap, detail)
 
+        for (const key of ['readFile', 'readFileSync']) {
+            wrapMethod(fs, key, (original) => function wrappedFsRead(path, ...args) {
+                report('fs.read', {path: safeString(path)})
+                return original.call(this, path, ...args)
+            }, restores)
+        }
+
         for (const key of ['writeFile', 'writeFileSync', 'appendFile', 'appendFileSync']) {
             wrapMethod(fs, key, (original) => function wrappedFs(path, ...args) {
-                report('fs:write', {path: safeString(path)})
+                report('fs.write', {path: safeString(path)})
                 return original.call(this, path, ...args)
             }, restores)
         }
 
         for (const key of ['rm', 'rmSync', 'unlink', 'unlinkSync']) {
             wrapMethod(fs, key, (original) => function wrappedDelete(path, ...args) {
-                report('fs:delete', {path: safeString(path)})
+                report('fs.delete', {path: safeString(path)})
                 return original.call(this, path, ...args)
             }, restores)
         }
@@ -165,8 +180,8 @@ class Safety {
                 method: init?.method ?? input?.method ?? 'GET',
             }
 
-            report('net:egress', detail)
-            return suppressCapability('net:egress', () => original.call(this, input, init))
+            report('net.egress', detail)
+            return suppressCapability('net.egress', () => original.call(this, input, init))
         }, restores)
     }
 
@@ -174,7 +189,7 @@ class Safety {
         const report = (cap, detail) => this.emitCapability(cap, detail)
 
         wrapMethod(http, 'request', (original) => function wrappedHttpRequest(input, options, callback) {
-            report('net:egress', {
+            report('net.egress', {
                 url: describeRequestUrl(input, options, 'http:'),
                 method: options?.method ?? input?.method ?? 'GET',
             })
@@ -182,7 +197,7 @@ class Safety {
         }, restores)
 
         wrapMethod(https, 'request', (original) => function wrappedHttpsRequest(input, options, callback) {
-            report('net:egress', {
+            report('net.egress', {
                 url: describeRequestUrl(input, options, 'https:'),
                 method: options?.method ?? input?.method ?? 'GET',
             })
@@ -208,6 +223,14 @@ class Safety {
                 this.setEmitter(null)
             }
         }
+    }
+}
+
+class SecurityPolicyError extends Error {
+    constructor(event) {
+        super(`vmblu security policy denied ${event?.operation ?? 'operation'}`)
+        this.name = 'SecurityPolicyError'
+        this.event = event
     }
 }
 
@@ -257,24 +280,44 @@ function describeRequestUrl(input, options = null, protocol = '') {
     return safeString(input)
 }
 
-function capabilityDomain(cap) {
-    if (cap?.startsWith?.('fs:')) return 'fs'
-    if (cap?.startsWith?.('net:')) return 'net'
-    if (cap?.startsWith?.('proc:')) return 'process'
-    return 'unknown'
+function normalizeOperationName(value) {
+    return parseOperation(value).name
 }
 
-function classifyAllowList(domain, detail = {}, allow = {}) {
-    if (domain === 'fs' && allow.fsRoots?.length && detail?.path) {
-        return isPathAllowed(detail.path, allow.fsRoots)
+function legacyCapabilityName(value) {
+    const operation = parseOperation(value)
+    if (operation.name === 'process.exec') return 'proc:exec'
+    return operation.name.replace('.', ':')
+}
+
+function parseOperation(value) {
+    const normalized = String(value ?? '').replace(':', '.')
+    if (normalized === 'proc.exec') return {name: 'process.exec', area: 'process', action: 'exec'}
+    const [area = 'unknown', action = 'unknown'] = normalized.split('.')
+    return {name: `${area}.${action}`, area, action}
+}
+
+function operationPolicy(security = {}, operation) {
+    return security?.[operation.area]?.[operation.action] ?? null
+}
+
+function classifyScope(operation, detail = {}, policy = {}) {
+    if (operation.area === 'fs' && policy.roots?.length && detail?.path) {
+        return isPathAllowed(detail.path, policy.roots)
             ? null
-            : {decision: 'denied', reason: 'fs_root_not_allowed'}
+            : {decision: 'denied', mode: 'deny', reason: 'fs_root_not_allowed'}
     }
 
-    if (domain === 'net' && allow.netHosts?.length && detail?.url) {
-        return isHostAllowed(detail.url, allow.netHosts)
+    if (operation.area === 'net' && policy.hosts?.length && detail?.url) {
+        return isHostAllowed(detail.url, policy.hosts)
             ? null
-            : {decision: 'denied', reason: 'net_host_not_allowed'}
+            : {decision: 'denied', mode: 'deny', reason: 'net_host_not_allowed'}
+    }
+
+    if (operation.area === 'process' && policy.commands?.length && detail?.command) {
+        return isCommandAllowed(detail.command, policy.commands)
+            ? null
+            : {decision: 'denied', mode: 'deny', reason: 'process_command_not_allowed'}
     }
 
     return null
@@ -289,7 +332,7 @@ function isPathAllowed(value, roots = []) {
 }
 
 function normalizePath(value) {
-    return String(value ?? '').replaceAll('\\', '/').replace(/\/+$/, '')
+    return path.resolve(String(value ?? '')).replaceAll('\\', '/').replace(/\/+$/, '')
 }
 
 function isHostAllowed(value, hosts = []) {
@@ -300,6 +343,10 @@ function isHostAllowed(value, hosts = []) {
     catch {
         return false
     }
+}
+
+function isCommandAllowed(value, commands = []) {
+    return commands.includes(String(value ?? ''))
 }
 
 export const safety = new Safety()

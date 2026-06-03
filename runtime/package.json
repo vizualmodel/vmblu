@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-runtime",
-  "version": "0.4.0",
+  "version": "0.5.5",
   "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
@@ -51,6 +51,11 @@
       "import": "./dist/security/index.js",
       "require": "./dist/security/index.cjs",
       "default": "./dist/security/index.js"
+    },
+    "./runtime-settings": {
+      "import": "./dist/runtime-settings/runtime-settings-registry.js",
+      "require": "./dist/runtime-settings/runtime-settings-registry.cjs",
+      "default": "./dist/runtime-settings/runtime-settings-registry.js"
     }
   },
   "main": "./dist/rt-base/index.cjs",
@@ -72,7 +77,8 @@
     "build:agent-base": "tsup agent-base/index.js --format esm,cjs --out-dir dist/agent-base --sourcemap --splitting false --keep-names",
     "build:llm-overlay": "tsup llm-overlay/index.js --format esm,cjs --out-dir dist/llm-overlay --sourcemap --splitting false --keep-names",
     "build:security": "tsup security/index.js --format esm,cjs --out-dir dist/security --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:nodejs-agent && npm run build:agent-adapters && npm run build:agent-base && npm run build:llm-overlay && npm run build:security",
+    "build:runtime-settings": "tsup runtime-settings-registry.js --format esm,cjs --out-dir dist/runtime-settings --sourcemap --splitting false --keep-names",
+    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:nodejs-agent && npm run build:agent-adapters && npm run build:agent-base && npm run build:llm-overlay && npm run build:security && npm run build:runtime-settings",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },

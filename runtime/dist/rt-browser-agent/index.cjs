@@ -616,14 +616,10 @@ var defaultMonitor = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultSecurity = /* @__PURE__ */ __name(() => ({
-  enabled: false
-}), "defaultSecurity");
 function make() {
   return {
     run: defaultRun(),
-    monitor: defaultMonitor(),
-    security: defaultSecurity()
+    monitor: defaultMonitor()
   };
 }
 __name(make, "make");
@@ -644,17 +640,12 @@ function normalize(dx = null) {
       ...defaults.monitor,
       ...dx.monitor ?? {},
       logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
-    },
-    security: {
-      ...defaults.security,
-      ...dx.security ?? {}
     }
   };
   normalized.run.worker.on = !!normalized.run.worker.on;
   normalized.run.worker.path = normalized.run.worker.path ?? "";
   normalized.monitor.logMessages = !!normalized.monitor.logMessages;
   normalized.monitor.logTimings = !!normalized.monitor.logTimings;
-  normalized.security.enabled = !!normalized.security.enabled;
   return normalized;
 }
 __name(normalize, "normalize");
@@ -672,9 +663,9 @@ function assign(target, dx = null) {
   const normalized = normalize(dx);
   target.run = structuredClone(normalized.run);
   target.monitor = structuredClone(normalized.monitor);
-  target.security = structuredClone(normalized.security);
   delete target.logMessages;
   delete target.worker;
+  delete target.security;
   return target;
 }
 __name(assign, "assign");
@@ -686,18 +677,11 @@ __name(isDefault, "isDefault");
 function makeModel() {
   return {
     run: {},
-    monitor: {},
-    security: {
-      mode: "warn",
-      forwardEvents: true,
-      defaults: {},
-      allow: {}
-    }
+    monitor: {}
   };
 }
 __name(makeModel, "makeModel");
 function normalizeModel(settings = null) {
-  var _a, _b;
   const defaults = makeModel();
   if (!settings || typeof settings !== "object") return defaults;
   return {
@@ -708,18 +692,6 @@ function normalizeModel(settings = null) {
     monitor: {
       ...defaults.monitor,
       ...settings.monitor ?? {}
-    },
-    security: {
-      ...defaults.security,
-      ...settings.security ?? {},
-      defaults: {
-        ...defaults.security.defaults,
-        ...((_a = settings.security) == null ? void 0 : _a.defaults) ?? {}
-      },
-      allow: {
-        ...defaults.security.allow,
-        ...((_b = settings.security) == null ? void 0 : _b.allow) ?? {}
-      }
     }
   };
 }

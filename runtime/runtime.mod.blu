@@ -8,7 +8,7 @@
   },
   "factories": [
     {
-      "path": "./rt-als/security-reporter.js",
+      "path": "./security/security-reporter.js",
       "function": "SecurityReporterFactory"
     }
   ],
@@ -42,7 +42,7 @@
     "kind": "source",
     "name": "security reporter",
     "factory": {
-      "path": "./rt-als/security-reporter.js",
+      "path": "./security/security-reporter.js",
       "function": "SecurityReporterFactory"
     },
     "interfaces": [

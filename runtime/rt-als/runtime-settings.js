@@ -1,3 +1,6 @@
+const PERMISSIONS = ['allow', 'warn', 'deny']
+const PERMISSION_ORDER = {deny: 0, warn: 1, allow: 2}
+
 const defaultWorker = () => ({
     on: false,
     path: '',
@@ -12,21 +15,38 @@ const defaultMonitor = () => ({
     logTimings: false,
 })
 
-const defaultSecurityRequest = () => ({
-    fs: 'inherit',
-    net: 'inherit',
-    process: 'inherit',
-    allow: {
-        netHosts: [],
-        fsRoots: [],
+const defaultFsOperation = (mode = 'deny') => ({
+    mode,
+    roots: [],
+})
+
+const defaultNetOperation = (mode = 'deny') => ({
+    mode,
+    hosts: [],
+})
+
+const defaultProcessOperation = (mode = 'deny') => ({
+    mode,
+    commands: [],
+})
+
+const defaultSecurityPolicy = () => ({
+    fs: {
+        read: defaultFsOperation(),
+        write: defaultFsOperation(),
+        delete: defaultFsOperation(),
+    },
+    net: {
+        egress: defaultNetOperation(),
+    },
+    process: {
+        exec: defaultProcessOperation(),
     },
 })
 
 const defaultSecurity = () => ({
     enabled: false,
-    mode: 'warn',
-    forward: true,
-    request: defaultSecurityRequest(),
+    ...defaultSecurityPolicy(),
 })
 
 function make() {
@@ -44,6 +64,7 @@ function normalize(dx = null) {
     if (!dx || typeof dx !== 'object') return defaults
 
     const legacySafety = dx.safety ?? {}
+    const security = normalizeNodeSecurity(dx.security, legacySafety)
 
     const normalized = {
         run: {
@@ -59,7 +80,7 @@ function normalize(dx = null) {
             ...(dx.monitor ?? {}),
             logMessages: dx.monitor?.logMessages ?? dx.logMessages ?? defaults.monitor.logMessages,
         },
-        security: normalizeSecuritySettings(dx.security, legacySafety, defaults.security),
+        security,
     }
 
     normalized.run.worker.on = !!normalized.run.worker.on
@@ -101,29 +122,20 @@ function assign(target, dx = null) {
 function isDefault(dx = null) {
 
     const normalized = normalize(dx)
+    const defaults = make()
 
-    return JSON.stringify(normalized) === JSON.stringify(make())
+    if (!normalized.security.enabled || isDefaultSecurityPolicy(normalized.security)) {
+        normalized.security = structuredClone(defaults.security)
+    }
+
+    return JSON.stringify(normalized) === JSON.stringify(defaults)
 }
-
-const defaultModelSecurity = () => ({
-    mode: 'warn',
-    forwardEvents: true,
-    defaults: {
-        fs: 'warn',
-        net: 'warn',
-        process: 'deny',
-    },
-    allow: {
-        netHosts: [],
-        fsRoots: [],
-    },
-})
 
 function makeModel() {
     return {
         run: {},
         monitor: {},
-        security: defaultModelSecurity(),
+        security: defaultSecurityPolicy(),
     }
 }
 
@@ -131,8 +143,7 @@ function normalizeModel(settings = null) {
     const defaults = makeModel()
     if (!settings || typeof settings !== 'object') return defaults
 
-    const security = settings.security ?? {}
-    const normalized = {
+    return {
         run: {
             ...defaults.run,
             ...(settings.run ?? {}),
@@ -141,107 +152,190 @@ function normalizeModel(settings = null) {
             ...defaults.monitor,
             ...(settings.monitor ?? {}),
         },
-        security: {
-            ...defaults.security,
-            ...security,
-            defaults: {
-                ...defaults.security.defaults,
-                ...(security.defaults ?? {}),
-            },
-            allow: {
-                ...defaults.security.allow,
-                ...(security.allow ?? {}),
-            },
-        },
+        security: normalizeModelSecurity(settings.security),
     }
-
-    normalized.security.mode = ['off', 'warn', 'enforce'].includes(normalized.security.mode) ? normalized.security.mode : defaults.security.mode
-    normalized.security.forwardEvents = normalized.security.forwardEvents !== false
-    normalized.security.defaults.fs = normalizePermission(normalized.security.defaults.fs)
-    normalized.security.defaults.net = normalizePermission(normalized.security.defaults.net)
-    normalized.security.defaults.process = normalizePermission(normalized.security.defaults.process)
-    normalized.security.allow.netHosts = Array.isArray(normalized.security.allow.netHosts) ? normalized.security.allow.netHosts : []
-    normalized.security.allow.fsRoots = Array.isArray(normalized.security.allow.fsRoots) ? normalized.security.allow.fsRoots : []
-
-    return normalized
 }
 
 function effectivePolicy(modelSettings = null, nodeDx = null) {
+    const hasModelSecurity = !!(modelSettings && typeof modelSettings === 'object' && modelSettings.security)
     const model = normalizeModel(modelSettings)
     const node = normalize(nodeDx)
-    const request = node.security?.enabled ? node.security.request : defaultSecurityRequest()
+    const nodeSecurity = node.security?.enabled ? node.security : defaultSecurity()
 
     return {
-        mode: node.security?.enabled ? node.security.mode : model.security.mode,
-        forward: node.security?.enabled ? node.security.forward : model.security.forwardEvents,
-        security: {
-            fs: clipPermission(resolvePermission(request.fs, model.security.defaults.fs), model.security.defaults.fs),
-            net: clipPermission(resolvePermission(request.net, model.security.defaults.net), model.security.defaults.net),
-            process: clipPermission(resolvePermission(request.process, model.security.defaults.process), model.security.defaults.process),
-            allow: intersectAllowLists(model.security.allow, request.allow),
-        },
+        active: hasModelSecurity,
+        security: intersectSecurity(model.security, nodeSecurity),
         model,
         node,
     }
 }
 
-function normalizeSecuritySettings(security = null, legacySafety = {}, defaults = defaultSecurity()) {
+function normalizeNodeSecurity(security = null, legacySafety = {}) {
     const source = security ?? {}
-    const request = source.request ?? {}
-    const allow = request.allow ?? {}
-    const normalized = {
-        ...defaults,
-        ...source,
-        enabled: source.enabled ?? legacySafety.on ?? defaults.enabled,
-        mode: source.mode ?? legacySafety.mode ?? defaults.mode,
-        forward: source.forward ?? legacySafety.forward ?? defaults.forward,
-        request: {
-            ...defaults.request,
-            ...request,
-            allow: {
-                ...defaults.request.allow,
-                ...allow,
-            },
+    const legacy = legacyNodeSecurity(source)
+    const enabled = source.enabled ?? legacySafety.on ?? false
+
+    return {
+        enabled: !!enabled,
+        ...normalizeSecurityPolicy(source, legacy),
+    }
+}
+
+function normalizeModelSecurity(security = null) {
+    return normalizeSecurityPolicy(security, legacyModelSecurity(security))
+}
+
+function normalizeSecurityPolicy(source = null, legacy = {}) {
+    const defaults = defaultSecurityPolicy()
+    const value = source ?? {}
+
+    return {
+        fs: {
+            read: normalizeFsOperation(value.fs?.read ?? legacy.fs?.read ?? defaults.fs.read),
+            write: normalizeFsOperation(value.fs?.write ?? legacy.fs?.write ?? defaults.fs.write),
+            delete: normalizeFsOperation(value.fs?.delete ?? legacy.fs?.delete ?? defaults.fs.delete),
+        },
+        net: {
+            egress: normalizeNetOperation(value.net?.egress ?? legacy.net?.egress ?? defaults.net.egress),
+        },
+        process: {
+            exec: normalizeProcessOperation(value.process?.exec ?? legacy.process?.exec ?? defaults.process.exec),
         },
     }
-
-    normalized.enabled = !!normalized.enabled
-    normalized.forward = normalized.forward !== false
-    normalized.mode = ['off', 'warn', 'enforce'].includes(normalized.mode) ? normalized.mode : defaults.mode
-    normalized.request.fs = normalizePermission(normalized.request.fs)
-    normalized.request.net = normalizePermission(normalized.request.net)
-    normalized.request.process = normalizePermission(normalized.request.process)
-    normalized.request.allow.netHosts = Array.isArray(normalized.request.allow.netHosts) ? normalized.request.allow.netHosts : []
-    normalized.request.allow.fsRoots = Array.isArray(normalized.request.allow.fsRoots) ? normalized.request.allow.fsRoots : []
-
-    return normalized
 }
 
-function normalizePermission(value) {
-    return ['inherit', 'allow', 'warn', 'deny'].includes(value) ? value : 'inherit'
-}
-
-function resolvePermission(requested, fallback) {
-    return requested === 'inherit' ? fallback : requested
-}
-
-function clipPermission(requested, envelope) {
-    const order = {deny: 0, warn: 1, allow: 2, inherit: 1}
-    return order[requested] <= order[envelope] ? requested : envelope
-}
-
-function intersectAllowLists(modelAllow = {}, nodeAllow = {}) {
+function normalizeFsOperation(value = null) {
+    const mode = normalizeMode(value?.mode)
     return {
-        netHosts: intersect(modelAllow.netHosts, nodeAllow.netHosts),
-        fsRoots: intersect(modelAllow.fsRoots, nodeAllow.fsRoots),
+        mode,
+        roots: mode === 'deny' ? [] : normalizeList(value?.roots),
     }
 }
 
-function intersect(modelValues = [], nodeValues = []) {
-    if (!Array.isArray(modelValues) || !modelValues.length) return []
+function normalizeNetOperation(value = null) {
+    const mode = normalizeMode(value?.mode)
+    return {
+        mode,
+        hosts: mode === 'deny' ? [] : normalizeList(value?.hosts),
+    }
+}
+
+function normalizeProcessOperation(value = null) {
+    const mode = normalizeMode(value?.mode)
+    return {
+        mode,
+        commands: mode === 'deny' ? [] : normalizeList(value?.commands),
+    }
+}
+
+function normalizeMode(value) {
+    return PERMISSIONS.includes(value) ? value : 'deny'
+}
+
+function normalizeList(value) {
+    return Array.isArray(value) ? value.filter(Boolean).map(item => String(item)) : []
+}
+
+function legacyModelSecurity(security = null) {
+    if (!security?.defaults && !security?.allow) return {}
+
+    const defaults = security.defaults ?? {}
+    const allow = security.allow ?? {}
+
+    return {
+        fs: {
+            read: defaultFsOperation('deny'),
+            write: {mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots)},
+            delete: {mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots)},
+        },
+        net: {
+            egress: {mode: normalizeLegacyMode(defaults.net), hosts: normalizeList(allow.netHosts)},
+        },
+        process: {
+            exec: {mode: normalizeLegacyMode(defaults.process), commands: []},
+        },
+    }
+}
+
+function legacyNodeSecurity(security = null) {
+    if (!security?.request) return {}
+
+    const request = security.request ?? {}
+    const allow = request.allow ?? {}
+
+    return {
+        fs: {
+            read: defaultFsOperation('deny'),
+            write: {mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots)},
+            delete: {mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots)},
+        },
+        net: {
+            egress: {mode: normalizeLegacyMode(request.net), hosts: normalizeList(allow.netHosts)},
+        },
+        process: {
+            exec: {mode: normalizeLegacyMode(request.process), commands: []},
+        },
+    }
+}
+
+function normalizeLegacyMode(value) {
+    return value === 'inherit' ? 'deny' : normalizeMode(value)
+}
+
+function intersectSecurity(model, node) {
+    return {
+        fs: {
+            read: intersectFsOperation(model.fs.read, node.fs.read),
+            write: intersectFsOperation(model.fs.write, node.fs.write),
+            delete: intersectFsOperation(model.fs.delete, node.fs.delete),
+        },
+        net: {
+            egress: intersectNetOperation(model.net.egress, node.net.egress),
+        },
+        process: {
+            exec: intersectProcessOperation(model.process.exec, node.process.exec),
+        },
+    }
+}
+
+function intersectFsOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode)
+    return {
+        mode,
+        roots: mode === 'deny' ? [] : intersectScope(model.roots, node.roots),
+    }
+}
+
+function intersectNetOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode)
+    return {
+        mode,
+        hosts: mode === 'deny' ? [] : intersectScope(model.hosts, node.hosts),
+    }
+}
+
+function intersectProcessOperation(model, node) {
+    const mode = stricterMode(model.mode, node.mode)
+    return {
+        mode,
+        commands: mode === 'deny' ? [] : intersectScope(model.commands, node.commands),
+    }
+}
+
+function stricterMode(modelMode, nodeMode) {
+    return PERMISSION_ORDER[nodeMode] <= PERMISSION_ORDER[modelMode] ? nodeMode : modelMode
+}
+
+function intersectScope(modelValues = [], nodeValues = []) {
+    if (!Array.isArray(modelValues) || !modelValues.length) return Array.isArray(nodeValues) ? nodeValues.slice() : []
     if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice()
     const allowed = new Set(modelValues)
     return nodeValues.filter(value => allowed.has(value))
+}
+
+function isDefaultSecurityPolicy(security = {}) {
+    const {enabled, ...policy} = security
+    return JSON.stringify(policy) === JSON.stringify(defaultSecurityPolicy())
 }
 
 export const runtimeSettings = {

@@ -18,9 +18,11 @@ const box = {
 }
 
 let config = makeAgentConfig(null)
+let configText = ''
 let capabilities = {tools: [], probes: [], events: []}
 let selectedId = ''
 let error = ''
+let view = 'form'
 
 const providerOptions = ['openai']
 const typeOptions = ['overlay', 'http', 'mcp', 'openai', 'claude', 'langchain']
@@ -35,11 +37,13 @@ export function show({settings, capabilities: nextCapabilities, pos, ok, cancel}
     capabilities = normalizeCapabilities(nextCapabilities)
     config = makeAgentConfig(settings, capabilities)
     selectedId = config.defaultAgent || config.agents[0]?.id || ''
+    syncTextFromConfig()
     error = ''
+    view = 'form'
     box.title = 'Agent Settings'
     box.pos = {...pos}
     box.ok = () => {
-        const next = collectConfig()
+        const next = view === 'json' ? parseConfigText() : collectConfig()
         if (!next) {
             box.show(box.pos)
             return
@@ -177,6 +181,52 @@ function collectConfig() {
     return JSON.parse(JSON.stringify(config))
 }
 
+function configToText(value) {
+    return JSON.stringify(value ?? makeAgentConfig(null, capabilities), null, 2)
+}
+
+function syncTextFromConfig() {
+    const collected = collectConfig()
+    configText = configToText(collected ?? config)
+    error = ''
+}
+
+function syncConfigFromText() {
+    const parsed = parseConfigText()
+    if (!parsed) return false
+    config = makeAgentConfig(parsed, capabilities)
+    selectedId = config.defaultAgent || config.agents[0]?.id || ''
+    return true
+}
+
+function setView(nextView) {
+    if (nextView === view) return
+    if (nextView === 'json') {
+        syncTextFromConfig()
+    }
+    else if (!syncConfigFromText()) {
+        return
+    }
+    view = nextView
+}
+
+function parseConfigText() {
+    const text = configText?.trim() ?? ''
+    if (!text) {
+        error = 'agent settings JSON is required'
+        return null
+    }
+
+    try {
+        error = ''
+        return makeAgentConfig(JSON.parse(text), capabilities)
+    }
+    catch (parseError) {
+        error = parseError?.message ?? String(parseError)
+        return null
+    }
+}
+
 function addAgent() {
     let index = config.agents.length + 1
     let id = `agent${index}`
@@ -240,6 +290,35 @@ function titleFromId(id) {
 }
 </script>
 
+{#snippet capabilityItem(kind, item, showApproval = false)}
+    <label class="capability-item">
+        <input
+            type="checkbox"
+            checked={isAllowed(kind, item.id)}
+            on:change={(event) => setAllowed(kind, item.id, event.currentTarget.checked)}
+        />
+        <span>
+            <span class="capability-title">{item.title || item.id}</span>
+            {#if showApproval && item.approval === 'always'}
+                <span class="approval"> requires approval</span>
+            {/if}
+            <span class="capability-id">{item.id}</span>
+        </span>
+    </label>
+{/snippet}
+
+{#snippet capabilitySection(kind, title, items, showApproval = false)}
+    <div class="capability-section">
+        <div class="capability-header">
+            <span>{title}</span>
+            <span class="hint">{selectedAgent.permissions[kind].allow.length} selected</span>
+        </div>
+        {#each items as item}
+            {@render capabilityItem(kind, item, showApproval)}
+        {/each}
+    </div>
+{/snippet}
+
 <style>
 .agent-settings {
     display: grid;
@@ -297,10 +376,16 @@ function titleFromId(id) {
 }
 
 .agent-actions,
+.tabs,
 .row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.45rem;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 0.2rem;
 }
 
 .agent-actions {
@@ -311,6 +396,22 @@ function titleFromId(id) {
 .agent-form {
     display: grid;
     gap: 0.55rem;
+}
+
+.json-editor {
+    width: 100%;
+    min-height: 28rem;
+    background: #111;
+    color: #ccc;
+    border: 1px solid #555;
+    font-family: var(--fFixed);
+    font-size: var(--fSmall);
+    outline: none;
+    resize: vertical;
+}
+
+.json-editor:focus {
+    border-color: #888;
 }
 
 .capability-section {
@@ -377,107 +478,57 @@ function titleFromId(id) {
 
         {#if selectedAgent}
             <div class="agent-form">
-                <LabelCheckbox label="enabled" bind:on={selectedAgent.enabled} />
-
-                <div class="row">
-                    <LabelTextInput label="id" bind:text={selectedAgent.id} onInput={() => selectedId = selectedAgent.id} />
-                    <LabelSelect label="default agent" bind:value={config.defaultAgent} options={config.agents.map(agent => agent.id)} />
+                <div class="tabs">
+                    <Button label="Form" click={() => setView('form')} active={view === 'form'} />
+                    <Button label="JSON" click={() => setView('json')} active={view === 'json'} />
                 </div>
 
-                <LabelSelect label="type" bind:value={selectedAgent.type} options={typeOptions} />
-                <LabelTextInput label="title" bind:text={selectedAgent.title} />
-                <LabelTextarea label="instructions" bind:text={selectedAgent.instructions} />
-
-                {#if selectedAgent.type === 'overlay' || selectedAgent.type === 'openai'}
-                    <div class="row">
-                        <LabelSelect label="provider" bind:value={selectedAgent.llm.provider} options={providerOptions} />
-                        <LabelSelect label="overlay" bind:value={selectedAgent.ui.mode} options={overlayOptions} />
-                    </div>
+                {#if view === 'form'}
+                    <LabelCheckbox label="enabled" bind:on={selectedAgent.enabled} />
 
                     <div class="row">
-                        <LabelTextInput label="model" bind:text={selectedAgent.llm.model} />
-                        <LabelTextInput label="endpoint" bind:text={selectedAgent.llm.endpoint} />
+                        <LabelTextInput label="id" bind:text={selectedAgent.id} onInput={() => selectedId = selectedAgent.id} />
+                        <LabelSelect label="default agent" bind:value={config.defaultAgent} options={config.agents.map(agent => agent.id)} />
                     </div>
+
+                    <LabelSelect label="type" bind:value={selectedAgent.type} options={typeOptions} />
+                    <LabelTextInput label="title" bind:text={selectedAgent.title} />
+                    <LabelTextarea label="instructions" bind:text={selectedAgent.instructions} />
+
+                    {#if selectedAgent.type === 'overlay' || selectedAgent.type === 'openai'}
+                        <div class="row">
+                            <LabelSelect label="provider" bind:value={selectedAgent.llm.provider} options={providerOptions} />
+                            <LabelSelect label="overlay" bind:value={selectedAgent.ui.mode} options={overlayOptions} />
+                        </div>
+
+                        <div class="row">
+                            <LabelTextInput label="model" bind:text={selectedAgent.llm.model} />
+                            <LabelTextInput label="endpoint" bind:text={selectedAgent.llm.endpoint} />
+                        </div>
+                    {/if}
+
+                    {#if selectedAgent.type === 'http'}
+                        <div class="row">
+                            <LabelTextInput label="server host" bind:text={selectedAgent.server.host} />
+                            <LabelTextInput label="server port" bind:text={selectedAgent.server.port} />
+                        </div>
+                        <LabelTextInput label="base path" bind:text={selectedAgent.server.basePath} />
+                    {/if}
+
+                    {#if selectedAgent.type === 'mcp'}
+                        <LabelSelect label="transport" bind:value={selectedAgent.transport.mode} options={transportModeOptions} />
+                    {/if}
+
+                    <div class="hint">
+                        Effective view: {allowedCounts.tools} tools, {allowedCounts.probes} probes, {allowedCounts.events} events.
+                    </div>
+
+                    {@render capabilitySection('tools', 'Tools', capabilities.tools, true)}
+                    {@render capabilitySection('probes', 'Probes', capabilities.probes)}
+                    {@render capabilitySection('events', 'Events', capabilities.events)}
+                {:else}
+                    <textarea class="json-editor" spellcheck="false" bind:value={configText} on:keydown|stopPropagation></textarea>
                 {/if}
-
-                {#if selectedAgent.type === 'http'}
-                    <div class="row">
-                        <LabelTextInput label="server host" bind:text={selectedAgent.server.host} />
-                        <LabelTextInput label="server port" bind:text={selectedAgent.server.port} />
-                    </div>
-                    <LabelTextInput label="base path" bind:text={selectedAgent.server.basePath} />
-                {/if}
-
-                {#if selectedAgent.type === 'mcp'}
-                    <LabelSelect label="transport" bind:value={selectedAgent.transport.mode} options={transportModeOptions} />
-                {/if}
-
-                <div class="hint">
-                    Effective view: {allowedCounts.tools} tools, {allowedCounts.probes} probes, {allowedCounts.events} events.
-                </div>
-
-                <div class="capability-section">
-                    <div class="capability-header">
-                        <span>Tools</span>
-                        <span class="hint">{selectedAgent.permissions.tools.allow.length} selected</span>
-                    </div>
-                    {#each capabilities.tools as item}
-                        <label class="capability-item">
-                            <input
-                                type="checkbox"
-                                checked={isAllowed('tools', item.id)}
-                                on:change={(event) => setAllowed('tools', item.id, event.currentTarget.checked)}
-                            />
-                            <span>
-                                <span class="capability-title">{item.title || item.id}</span>
-                                {#if item.approval === 'always'}
-                                    <span class="approval"> requires approval</span>
-                                {/if}
-                                <span class="capability-id">{item.id}</span>
-                            </span>
-                        </label>
-                    {/each}
-                </div>
-
-                <div class="capability-section">
-                    <div class="capability-header">
-                        <span>Probes</span>
-                        <span class="hint">{selectedAgent.permissions.probes.allow.length} selected</span>
-                    </div>
-                    {#each capabilities.probes as item}
-                        <label class="capability-item">
-                            <input
-                                type="checkbox"
-                                checked={isAllowed('probes', item.id)}
-                                on:change={(event) => setAllowed('probes', item.id, event.currentTarget.checked)}
-                            />
-                            <span>
-                                <span class="capability-title">{item.title || item.id}</span>
-                                <span class="capability-id">{item.id}</span>
-                            </span>
-                        </label>
-                    {/each}
-                </div>
-
-                <div class="capability-section">
-                    <div class="capability-header">
-                        <span>Events</span>
-                        <span class="hint">{selectedAgent.permissions.events.allow.length} selected</span>
-                    </div>
-                    {#each capabilities.events as item}
-                        <label class="capability-item">
-                            <input
-                                type="checkbox"
-                                checked={isAllowed('events', item.id)}
-                                on:change={(event) => setAllowed('events', item.id, event.currentTarget.checked)}
-                            />
-                            <span>
-                                <span class="capability-title">{item.title || item.id}</span>
-                                <span class="capability-id">{item.id}</span>
-                            </span>
-                        </label>
-                    {/each}
-                </div>
 
                 {#if error}
                     <div class="error">{error}</div>
