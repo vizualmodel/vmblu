@@ -1,3 +1,5 @@
+import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
+
 export const redoxWidget = {
     newPin: {
         doit({ view, node, pos, is }) {
@@ -59,16 +61,20 @@ export const redoxWidget = {
             const savedRoutes = pin.routes.slice();
 
             // disconnect
-            pin.disconnect();
+            const affectedCables = pin.disconnect();
+
+            const collapses = collapseEndpointOnlyCables(affectedCables);
 
             // store and report the new edit
-            this.saveEdit('disconnectPin', { pin, routes: savedRoutes });
+            this.saveEdit('disconnectPin', { pin, routes: savedRoutes, collapses });
         },
-        undo({ pin, routes }) {
+        undo({ pin, routes, collapses }) {
+            undoCableCollapses(collapses);
             pin.reconnect(routes);
         },
-        redo({ pin, routes }) {
+        redo({ pin, routes, collapses }) {
             pin.disconnect();
+            redoCableCollapses(collapses);
         },
     },
 
@@ -80,33 +86,41 @@ export const redoxWidget = {
             // also for the pad if applicable
             const padRoutes = pin.is.proxy ? pin.pad.routes.slice() : null;
 
-            // save the edit *before* the delete !
-            this.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes });
-
             // adjust selection before deleting the pin
             view.selection.adjustForRemovedWidget(pin);
 
             // disconnect
-            pin.disconnect();
+            const affectedCables = pin.disconnect();
+
+            if (pin.is.proxy) {
+                affectedCables.push(...pin.pad.disconnect());
+            }
+
+            const collapses = collapseEndpointOnlyCables(affectedCables, pin.node);
+
+            // save the edit after disconnect/collapse state is known, before the pin is removed.
+            this.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes, collapses });
 
             // delete the pin in the node
             pin.node.look.removePin(pin);
 
             // if proxy remove pad
             if (pin.is.proxy) {
-                pin.pad.disconnect();
-
                 pin.node.removePad(pin.pad);
             }
             // if not remove from rx table
             else pin.node.rxtxRemovePin(pin);
         },
-        undo({ view, pin, pinRoutes, padRoutes }) {
+        undo({ view, pin, pinRoutes, padRoutes, collapses }) {
+            undoCableCollapses(collapses);
+
             // copy the routes (redo destroys the array - we want to keep it on the undo stack !)
             const copyRoutes = pinRoutes.slice();
 
             // put the pin back
             pin.node.look.restorePin(pin);
+
+            if (pin.is.proxy) pin.node.restorePad(pin.pad);
 
             // if there is a selection maybe it has to be adjusted
             view.selection.adjustForNewWidget(pin);
@@ -123,15 +137,22 @@ export const redoxWidget = {
             }
         },
 
-        redo({ view, pin, pinRoutes, padRoutes }) {
+        redo({ view, pin, pinRoutes, padRoutes, collapses }) {
             // first disconnect
             pin.disconnect();
+
+            if (pin.is.proxy) pin.pad.disconnect();
+
+            redoCableCollapses(collapses);
 
             // adjust selection before deleting the pin
             view.selection.adjustForRemovedWidget(pin);
 
             // remove the pin
             pin.node.look.removePin(pin);
+
+            if (pin.is.proxy) pin.node.removePad(pin.pad);
+            else pin.node.rxtxRemovePin(pin);
         },
     },
 

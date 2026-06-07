@@ -249,7 +249,7 @@ export const mouseMoveHandling = {
     drawRoute(route, xyLocal) {
 
         // check if we have hit something with our route ...
-        this.mouseHit(xyLocal)
+        this.mouseHit(xyLocal, route)
 
         // the following objects have a hover-state
         const hit = this.hit

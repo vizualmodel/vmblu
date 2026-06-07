@@ -18,6 +18,20 @@ export const routeMoving = {
         const wire = cable?.wire
         if (!wire || wire.length < 2) return false
 
+        if (cable.bendEndpoint(tack, otherCenter)) {
+            const tackPoint = tack.center()
+            this.wire.length = 0
+            if (this.from === tack) {
+                this.wire.push({...tackPoint}, {...otherCenter})
+            }
+            else {
+                this.wire.push({...otherCenter}, {...tackPoint})
+            }
+
+            tack.refreshPlacement?.()
+            return true
+        }
+
         const moveTacksOnSegment = (segment, delta, axis) => {
             for (const otherTack of cable.tacks) {
                 if (otherTack.is.endpoint || otherTack.segment != segment) continue
@@ -65,7 +79,14 @@ export const routeMoving = {
             this.wire.push({...otherCenter}, {...tackPoint})
         }
 
+        tack.refreshPlacement?.()
+
         return true
+    },
+
+    refreshTackPlacements() {
+        if (this.from?.is?.tack) this.from.refreshPlacement?.()
+        if (this.to?.is?.tack) this.to.refreshPlacement?.()
     },
 
     // moves a segment horizontally or vertically
@@ -240,64 +261,68 @@ export const routeMoving = {
 
     // The endpoint(s) of the route have changed - make a better route
     adjust() {
+        try {
+            // in autoroute situations the wire can be missing
+            if (!this.wire.length) return
 
-        // in autoroute situations the wire can be missing
-        if (!this.wire.length) return
+            // notation
+            const from = this.from
+            const to = this.to
 
-        // notation
-        const from = this.from
-        const to = this.to
+            // check that there are two valid endpoints
+            if ( ! to?.center || !from?.center) return
 
-        // check that there are two valid endpoints
-        if ( ! to?.center || !from?.center) return
+            // from new - to new
+            const fn = from.center()
+            const tn = to.center()
 
-        // from new - to new
-        const fn = from.center()
-        const tn = to.center()
+            // from previous - to previous
+            const fp = this.wire[0]
+            const tp = this.wire.at(-1)
 
-        // from previous - to previous
-        const fp = this.wire[0]
-        const tp = this.wire.at(-1)
+            // the deltas
+            const df = {x: fn.x - fp.x, y: fn.y - fp.y}
+            const dt = {x: tn.x - tp.x, y: tn.y - tp.y}
 
-        // the deltas
-        const df = {x: fn.x - fp.x, y: fn.y - fp.y}
-        const dt = {x: tn.x - tp.x, y: tn.y - tp.y}
+            if (from.is.tack && this.adjustCableEndpoint(from, tn)) return
+            if (to.is.tack && this.adjustCableEndpoint(to, fn)) return
 
-        if (from.is.tack && this.adjustCableEndpoint(from, tn)) return
-        if (to.is.tack && this.adjustCableEndpoint(to, fn)) return
+            // check if both endpoints moved over the same distance - just move the route
+            if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
 
-        // check if both endpoints moved over the same distance - just move the route
-        if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
-
-        // adjust the routes - there are 3 topologies
-        if (from.is.tack && to.is.tack) {
-            if (this.tackOnHorizontalTrunk(from)) {
-                this.adjustTH(fn, tn)
-                return
+            // adjust the routes - there are 3 topologies
+            if (from.is.tack && to.is.tack) {
+                if (this.tackOnHorizontalTrunk(from)) {
+                    this.adjustTH(fn, tn)
+                    return
+                }
+                if (this.tackOnHorizontalTrunk(to)) {
+                    this.adjustHT(fn, tn)
+                    return
+                }
+                this.adjustHH(fn, tn)
             }
-            if (this.tackOnHorizontalTrunk(to)) {
-                this.adjustHT(fn, tn)
-                return
+            else if (to.is.tack) {
+                if (this.tackOnHorizontalTrunk(to)) {
+                    this.adjustHT(fn, tn)
+                    return
+                }
+                (to.cable?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
             }
-            this.adjustHH(fn, tn)
+            else if (from.is.tack) {
+                if (this.tackOnHorizontalTrunk(from)) {
+                    this.adjustTH(fn, tn)
+                    return
+                }
+                (from.cable?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
+            }
+            else {
+                this.adjustHH(fn,tn)      
+            }
         }
-        else if (to.is.tack) {
-            if (this.tackOnHorizontalTrunk(to)) {
-                this.adjustHT(fn, tn)
-                return
-            }
-            (to.cable?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
+        finally {
+            this.refreshTackPlacements()
         }
-        else if (from.is.tack) {
-            if (this.tackOnHorizontalTrunk(from)) {
-                this.adjustTH(fn, tn)
-                return
-            }
-            (from.cable?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
-        }
-        else {
-            this.adjustHH(fn,tn)      
-        }  
     },
 
     // Starts and ends horizontally

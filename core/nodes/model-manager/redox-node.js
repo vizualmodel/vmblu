@@ -1,5 +1,7 @@
 import {getRuntimeSettings} from '@vizualmodel/vmblu-runtime/runtime-settings'
 
+import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
+
 export const redoxNode = {
 
 newGroupNode: {
@@ -191,20 +193,26 @@ disconnectNode: {
         const allRoutes = node.getRoutes()
 
         // disconnect the node
-        node.disconnect()
+        const affectedCables = node.disconnect()
+
+        const collapses = collapseEndpointOnlyCables(affectedCables)
 
         // save the edit
-        this.saveEdit('disconnectNode',{node, allRoutes})
+        this.saveEdit('disconnectNode',{node, allRoutes, collapses})
     },
-    undo({node, allRoutes}) {
+    undo({node, allRoutes, collapses}) {
+
+        undoCableCollapses(collapses)
 
         // reconnect the routes to the pins - make a copy of the routes array, redo empties the array again !
         for (const route of allRoutes) route.reconnect()
     },
-    redo({node, allRoutes}) {
+    redo({node, allRoutes, collapses}) {
 
         // redo the disconnect
         node.disconnect()
+
+        redoCableCollapses(collapses)
     }
 },
 
@@ -214,7 +222,9 @@ deleteNode: {
         const allRoutes = node.getRoutes()
 
         // disconnect
-        node.disconnect()
+        const affectedCables = node.disconnect()
+
+        const collapses = collapseEndpointOnlyCables(affectedCables)
 
         // remove the node
         if (!view) return
@@ -224,19 +234,23 @@ deleteNode: {
         if (node.saveView) node.savedView.closeView()
 
         // save the edit
-        this.saveEdit('deleteNode',{view, node, allRoutes})
+        this.saveEdit('deleteNode',{view, node, allRoutes, collapses})
     },
-    undo({view, node, allRoutes}) {
+    undo({view, node, allRoutes, collapses}) {
 
         // add the node to the view again
         view.root.addNode(node)
 
+        undoCableCollapses(collapses)
+
         // reconnect the routes to the pins - make a copy of the routes array
         for (const route of allRoutes) route.reconnect()
     },
-    redo({view, node, allRoutes}) {
+    redo({view, node, allRoutes, collapses}) {
 
         node.disconnect()
+
+        redoCableCollapses(collapses)
 
         view.root.removeNode(node)
     }

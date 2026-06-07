@@ -107,6 +107,9 @@ export const PinEventFactory = getFactory(PinEventSvelte)
 import MessageBoxSvelte from './nodes/message-box/message-box.svelte'
 export const MessageBoxFactory = getFactory(MessageBoxSvelte)
 
+import ToastBoxSvelte from './nodes/toast-box/toast-box.svelte'
+export const ToastBoxFactory = getFactory(ToastBoxSvelte)
+
 import NameAndPathSvelte from './nodes/name-path/name-path.svelte'
 export const NameAndPathFactory = getFactory(NameAndPathSvelte)
 

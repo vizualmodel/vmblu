@@ -243,6 +243,37 @@
           },
           {
             "kind": "source",
+            "name": "toast box",
+            "factory": {
+              "path": "../index.js",
+              "function": "ToastBoxFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
             "name": "json input",
             "factory": {
               "path": "../index.js",

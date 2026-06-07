@@ -416,10 +416,20 @@
           "params": []
         },
         {
+          "pin": "wire.check",
+          "handler": "onWireCheck",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 132,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
           "pin": "show.settings",
           "handler": "onShowSettings",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 132,
+          "line": 146,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -549,6 +559,11 @@
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
           "line": 128
+        },
+        {
+          "pin": "info popup",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 142
         },
         {
           "pin": "model.header",

@@ -46,7 +46,7 @@ export class SourceDocWatcher {
     this.modelUri = vscode.Uri.parse(modelArl.url);
     //cout(`[SourceDocWatcher] Model set to ${this.modelUri.toString()}`);
     // Kick a run when the model changes/loads
-    this.requestScan('model-set');
+    void this.resolveProfileOutputFromModel().finally(() => this.requestScan('model-set'));
   }
 
   start() {
@@ -146,6 +146,34 @@ export class SourceDocWatcher {
   }
 
   // --- Running vmblu profile + posting results ------------------------------
+
+  private async resolveProfileOutputFromModel() {
+    if (!this.modelUri) return;
+
+    const actualModelPath = await this.resolveActualModelPath(this.modelUri.fsPath);
+    const parsed = path.parse(actualModelPath);
+    const baseName = parsed.ext === '.blu' && parsed.name.endsWith('.mod')
+      ? parsed.name.slice(0, -'.mod'.length)
+      : parsed.name;
+
+    this.outUri = vscode.Uri.file(path.join(parsed.dir, `${baseName}.src.prf`));
+  }
+
+  private async resolveActualModelPath(modelPath: string): Promise<string> {
+    if (!modelPath.endsWith('.blu')) return modelPath;
+
+    try {
+      const text = await fs.readFile(modelPath, 'utf8');
+      const entrypoint = JSON.parse(text);
+      if (entrypoint?.kind !== 'vmblu.entrypoint') return modelPath;
+      if (entrypoint.version !== 1 || typeof entrypoint.model !== 'string') return modelPath;
+      if (path.isAbsolute(entrypoint.model) || entrypoint.model.includes('..')) return modelPath;
+
+      return path.resolve(path.dirname(modelPath), entrypoint.model);
+    } catch {
+      return modelPath;
+    }
+  }
 
   private async runProfile(delta?: { changed: string[]; deleted: string[]; reason?: string }) {
     // Build the base CLI invocation; we'll reuse arguments for retries/fallbacks.

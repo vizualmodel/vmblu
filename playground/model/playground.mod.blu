@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "0.9.4",
+    "version": "0.9.7",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "12/16/2025, 10:49:03 AM",
     "utc": "2025-12-16T09:49:03.571Z",
@@ -472,38 +472,6 @@
       },
       {
         "kind": "dock",
-        "name": "message box",
-        "label": "uses callbacks",
-        "link": {
-          "path": "../../ui-svelte/model/ui-svelte.mod.blu",
-          "node": "message box"
-        },
-        "interfaces": [
-          {
-            "interface": "",
-            "pins": [
-              {
-                "name": "modal div",
-                "kind": "output",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "show",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "kind": "dock",
         "name": "editor page",
         "label": "The main editor window",
         "link": {
@@ -697,6 +665,14 @@
                 }
               },
               {
+                "name": "wire check",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
@@ -820,6 +796,12 @@
             "color": "#0fb2e4",
             "message": "back to save point",
             "help": "back to save point"
+          },
+          {
+            "icon": "cable",
+            "color": "#0fb2e4",
+            "message": "wire check",
+            "help": "Wire check"
           },
           {
             "icon": "build",
@@ -1237,6 +1219,14 @@
                 }
               },
               {
+                "name": "wire check",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "show settings",
                 "kind": "input",
                 "contract": {
@@ -1409,6 +1399,14 @@
                 }
               },
               {
+                "name": "info popup",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "get path",
                 "kind": "output",
                 "contract": {
@@ -1545,6 +1543,14 @@
               },
               {
                 "name": "pin profile",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "temp message",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -2059,6 +2065,37 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "dock",
+            "name": "toast box",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "toast box"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ],
         "connections": [
@@ -2219,6 +2256,15 @@
           },
           {
             "src": {
+              "pin": "modal div",
+              "node": "toast box"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
               "pin": "confirm"
             },
             "dst": {
@@ -2260,6 +2306,15 @@
             "dst": {
               "pin": "show",
               "node": "pin profile"
+            }
+          },
+          {
+            "src": {
+              "pin": "temp message"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "toast box"
             }
           },
           {
@@ -2402,16 +2457,6 @@
       },
       {
         "src": {
-          "pin": "modal div",
-          "node": "message box"
-        },
-        "dst": {
-          "pin": "dom.add modal div",
-          "node": "workspace"
-        }
-      },
-      {
-        "src": {
           "pin": "content size change",
           "node": "editor page"
         },
@@ -2477,6 +2522,16 @@
         },
         "dst": {
           "pin": "accept changes",
+          "node": "model manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "wire check",
+          "node": "side menu"
+        },
+        "dst": {
+          "pin": "wire check",
           "node": "model manager"
         }
       },
@@ -2833,6 +2888,16 @@
         },
         "dst": {
           "pin": "pin profile",
+          "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "info popup",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "temp message",
           "node": "popups"
         }
       },

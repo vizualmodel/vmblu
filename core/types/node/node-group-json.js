@@ -103,6 +103,7 @@ export const jsonHandling = {
         if (raw.buses) for(const rawBus of raw.buses) {
 
             const bus = new Cable({x:0, y:0}, null, true)
+            bus.node = this
             bus._rawIndex = legacyBuses.length
             bus._rawName = rawBus.name
 
@@ -119,6 +120,7 @@ export const jsonHandling = {
         if (raw.cables) for(const rawCable of raw.cables) {
 
             const cable = new Cable({x:0, y:0})
+            cable.node = this
 
             cable.cook(rawCable, modcom)
 

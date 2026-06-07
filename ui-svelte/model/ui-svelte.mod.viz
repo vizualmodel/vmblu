@@ -83,6 +83,20 @@
           },
           {
             "kind": "source",
+            "name": "toast box",
+            "rect": "x 575 y 586 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 R)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
             "name": "json input",
             "rect": "x 355 y 172 w 150 h 56",
             "interfaces": [

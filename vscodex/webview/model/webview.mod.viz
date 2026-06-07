@@ -126,6 +126,7 @@
             "pins": [
               "(96 L)sync model",
               "(73 L)accept changes",
+              "(101 L)wire check",
               "(76 L)show settings",
               "(53 L)make app",
               "(54 L)make lib",
@@ -172,7 +173,8 @@
               "(84 R)pin profile",
               "(59 R)get path",
               "(93 R)tool settings",
-              "(94 R)event settings"
+              "(94 R)event settings",
+              "(106 R)info popup"
             ]
           }
         ]
@@ -214,6 +216,7 @@
               "(3 L)path only",
               "(14 L)tool settings",
               "(15 L)event settings",
+              "(16 L)temp message",
               "(7 L)node settings (sx)",
               "(10 L)runtime settings (dx)",
               "(5 L)node prompt",
@@ -231,6 +234,7 @@
           "(3 L)x -76 y 149 w 79 h 15|path only",
           "(14 L)x -106 y 1274 w 83 h 15|tool settings",
           "(15 L)x -115 y 1148 w 92 h 15|event settings",
+          "(16 L)x -147 y 1710 w 107 h 15|temp message",
           "(7 L)x -82 y 641 w 125 h 15|node settings (sx)",
           "(10 L)x -82 y 882 w 141 h 15|runtime settings (dx)",
           "(5 L)x -89 y 388 w 98 h 15|node prompt",
@@ -425,6 +429,34 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "dock",
+            "name": "message box",
+            "rect": "x 194 y 1690 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "toast box",
+            "rect": "x 194 y 1775 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
+                ]
+              }
+            ]
           }
         ],
         "cables": [
@@ -521,6 +553,16 @@
             "wire": "x 202.7"
           },
           {
+            "from": "(pin 2) modal div @ message box",
+            "to": "(cable 0 nonselective)",
+            "wire": "x 202.7"
+          },
+          {
+            "from": "(pin 2) modal div @ toast box",
+            "to": "(cable 0 nonselective)",
+            "wire": "x 202.7"
+          },
+          {
             "from": "(pad 11) confirm",
             "to": "(pin 1) show @ confirm box",
             "wire": "x 107.5 y 0.0 x 107.5"
@@ -549,6 +591,11 @@
             "from": "(pad 15) event settings",
             "to": "(pin 3) show @ event settings",
             "wire": "x 112.0 y 0.0 x 112.0"
+          },
+          {
+            "from": "(pad 16) temp message",
+            "to": "(pin 1) show @ toast box",
+            "wire": "x 240.0"
           },
           {
             "from": "(pad 7) node settings (sx)",
@@ -598,6 +645,7 @@
             "pins": [
               "(5 R)sync model",
               "(3 R)accept changes",
+              "(12 R)wire check",
               "(7 R)show settings",
               "(11 R)make app",
               "(10 R)make lib",
@@ -780,6 +828,11 @@
         "wire": "x 44.7 y -105.0 x 115.3"
       },
       {
+        "from": "(pin 106) info popup @ model manager",
+        "to": "(pin 16) temp message @ popups",
+        "wire": "x 44.7 y -105.0 x 115.3"
+      },
+      {
         "from": "(pin 15) remote @ clipboard",
         "to": "(pin 32) clipboard.remote @ message broker",
         "wire": "x -100.6 y 0.0 x -104.4"
@@ -812,6 +865,11 @@
       {
         "from": "(pin 3) accept changes @ vscode side menu",
         "to": "(pin 73) accept changes @ model manager",
+        "wire": "x 396.5 y 0.0 x 103.5"
+      },
+      {
+        "from": "(pin 12) wire check @ vscode side menu",
+        "to": "(pin 101) wire check @ model manager",
         "wire": "x 396.5 y 0.0 x 103.5"
       },
       {

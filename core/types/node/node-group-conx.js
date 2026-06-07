@@ -117,6 +117,69 @@ export const conxHandling = {
         return [routes, conx]
     },
 
+    getConnectionRoutes() {
+
+        const routes = []
+        const seen = new Set()
+        const addRoute = (route) => {
+
+            if (!route?.from || !route?.to) return
+            if (seen.has(route)) return
+
+            seen.add(route)
+            routes.push(route)
+        }
+
+        // output pins define logical node-to-node connections
+        for(const node of this.nodes) {
+            for(const pin of node.look.widgets) {
+                if (!pin.is.pin || pin.is.input) continue
+                for(const route of pin.routes) addRoute(route)
+            }
+        }
+
+        // incoming pads define logical pad-to-node or pad-to-bus connections
+        for(const pad of this.pads) {
+            if (!pad.proxy.is.input) continue
+            for(const route of pad.routes) addRoute(route)
+        }
+
+        // cable tail routes represent the downstream logical cable connections
+        for(const cable of this.cables) {
+            for(const tack of cable.tacks) {
+                const other = tack.getOther()
+                if (other?.is?.pin && other.is.input) addRoute(tack.route)
+                if (other?.is?.pad && !other.proxy.is.input) addRoute(tack.route)
+            }
+        }
+
+        return routes
+    },
+
+    clearConnectionCheck() {
+
+        for(const route of this.getConnectionRoutes()) {
+            if (route.is.newConx) route.disconnect()
+            else route.is.noConx = false
+        }
+    },
+
+    checkConnectionsAgainst(rawConnections) {
+
+        this.clearConnectionCheck()
+
+        const conx = this.cookConx(rawConnections ?? [])
+
+        for(const route of this.getConnectionRoutes()) {
+            this.findRouteInConx(route, conx)
+        }
+
+        const extra = this.getConnectionRoutes().filter(route => route.is.noConx).length
+        const missing = this.createNewRoutes(conx)
+
+        return {missing, extra}
+    },
+
     // when we are getting the connections the pins and the pads have been added to the group node, but not the buses and the routes
     cookConx(rawConx) {
 
@@ -282,7 +345,9 @@ export const conxHandling = {
     createNewRoutes(conx) {
 
         // check
-        if (! conx?.length) return
+        if (! conx?.length) return 0
+
+        let count = 0
 
         // add a routes for each new connection
         for(const cx of conx) {
@@ -290,7 +355,10 @@ export const conxHandling = {
             if (!cx.is.new) continue
 
             this.createNewRoute(cx)
+            count++
         }
+
+        return count
     },
 
     createNewRoute(cx) {

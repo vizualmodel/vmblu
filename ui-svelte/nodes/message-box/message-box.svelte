@@ -22,13 +22,12 @@ onMount(async () => {
 
 export const handlers = {
 
-    "-> show"({title, message, pos,ok, cancel}) {
-
-        // notation
-        const box = this.popup.box
+    "-> show"({title, message, pos, ok, cancel} = {}) {
 
         // set the box parameters
         box.title = title
+        box.ok = ok
+        box.cancel = cancel
 
         // The message to show
         text = message

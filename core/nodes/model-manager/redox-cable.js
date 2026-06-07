@@ -1,37 +1,3 @@
-function disconnectCableTacks(cable) {
-    for (const tack of cable.tacks.slice()) tack.route.disconnect()
-    cable.tacks.length = 0
-}
-
-function restoreCableTackWires(cable, tackWires = []) {
-    if (!tackWires?.length) return
-    cable.restoreTackWires(tackWires)
-    for (const tack of cable.tacks) tack.setRoute(tack.route)
-}
-
-function restoreCableWireState(cable, wire, tackWires) {
-    cable.restoreWire(wire)
-    if (tackWires) restoreCableTackWires(cable, tackWires)
-}
-
-function restoreCableDrawState(cable, wire, tacks, tackWires) {
-    
-    disconnectCableTacks(cable)
-    cable.tacks.length = 0
-    cable.restoreWire(wire)
-
-    tacks ??= []
-    tackWires ??= []
-    for (let i = 0; i < tacks.length; i++) {
-        if (tackWires[i]) {
-            tacks[i].segment = tackWires[i].segment
-            tacks[i].route.restoreWire(tackWires[i].track)
-        }
-    }
-
-    cable.reconnect(tacks.slice())
-}
-
 export const redoxCable = {
 
 cableHighlight: {
@@ -144,7 +110,7 @@ cableDraw: {
             newTackWires = cable.copyTackWires()
         }
         else {
-            disconnectCableTacks(cable)
+            cable.disconnectTacks()
             node.removeCable(cable)
             deleted = true
             newTacks = []
@@ -156,28 +122,28 @@ cableDraw: {
 
     undo({node, cable, oldWire, oldTacks, oldTackWires, floating}) {
         if (floating) {
-            restoreCableWireState(cable, oldWire, oldTackWires)
+            cable.restoreWireState(oldWire, oldTackWires)
             return
         }
 
         node.restoreCable(cable)
-        restoreCableDrawState(cable, oldWire, oldTacks, oldTackWires)
+        cable.restoreDrawState(oldWire, oldTacks, oldTackWires)
     },
 
     redo({node, cable, newWire, newTacks, newTackWires, deleted, floating}) {
         if (floating) {
-            restoreCableWireState(cable, newWire, newTackWires)
+            cable.restoreWireState(newWire, newTackWires)
             return
         }
 
         if (deleted) {
-            disconnectCableTacks(cable)
+            cable.disconnectTacks()
             node.removeCable(cable)
             return
         }
 
         node.restoreCable(cable)
-        restoreCableDrawState(cable, newWire, newTacks, newTackWires)
+        cable.restoreDrawState(newWire, newTacks, newTackWires)
     }
 },
 
@@ -188,10 +154,10 @@ cableSegmentDrag: {
     },
 
     undo({cable, oldWire, oldTackWires }) {
-        restoreCableWireState(cable, oldWire, oldTackWires)
+        cable.restoreWireState(oldWire, oldTackWires)
     },
     redo({cable, newWire, newTackWires }) {
-        restoreCableWireState(cable, newWire, newTackWires)
+        cable.restoreWireState(newWire, newTackWires)
     }
 },
 
@@ -201,10 +167,10 @@ cableDrag: {
         this.saveEdit('cableDrag',{cable, oldWire, newWire, oldTackWires, newTackWires})
     },
     undo({cable, oldWire, oldTackWires }) {
-        restoreCableWireState(cable, oldWire, oldTackWires)
+        cable.restoreWireState(oldWire, oldTackWires)
     },
     redo({cable, newWire, newTackWires }) {
-        restoreCableWireState(cable, newWire, newTackWires)
+        cable.restoreWireState(newWire, newTackWires)
     }
 },
 

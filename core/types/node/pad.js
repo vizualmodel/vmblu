@@ -323,7 +323,7 @@ Pad.prototype = {
         }
     },
 
-    hitRoute(pos) {
+    hitRoute(pos, ignoredRoute = null) {
 
         let segment = 0
 
@@ -331,6 +331,7 @@ Pad.prototype = {
         for (const route of this.routes) {
 
             // only routes from this pad
+            if (route === ignoredRoute) continue
             if ((route.from == this)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
         }
         // nothing

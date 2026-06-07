@@ -12,9 +12,9 @@ PROJECTS=(
   "core"
   "playground"
   "ui-svelte"
-  "examples/chat-application/chat-client"
-  "examples/chat-application/chat-server"
-  "examples/solar-system"
+  "../vmblu-examples/chat-application/chat-client"
+  "../vmblu-examples/chat-application/chat-server"
+  "../vmblu-examples/solar-system"
 )
 
 for project in "${PROJECTS[@]}"; do
@@ -25,8 +25,7 @@ for project in "${PROJECTS[@]}"; do
     echo "Skipping $project: package.json not found" >&2
     continue
   fi
-
-  if ! grep -q '@vizualmodel/vmblu-\(cli\|runtime\)' "$package_json"; then
+  if ! grep -Eq '@vizualmodel/vmblu-(cli|runtime)' "$package_json"; then
     echo "Skipping $project: no @vizualmodel vmblu dependency"
     continue
   fi

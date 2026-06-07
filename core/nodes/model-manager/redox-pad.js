@@ -1,4 +1,4 @@
-import {Pad} from '../../types/node/index.js'
+import {Pad, collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
 import {style} from '../../types/util/index.js'
 
 export const redoxPad = {
@@ -118,17 +118,23 @@ changeNamePad: {
 disconnectPad: {
 
     doit({pad}) {
-        // save the edit *before* disconnecting
-        this.saveEdit('disconnectPad',{pad, routes: pad.routes.slice()})
+        const routes = pad.routes.slice()
 
         // disconnect all the routes to the pad
-        pad.disconnect()
+        const affectedCables = pad.disconnect()
+
+        const collapses = collapseEndpointOnlyCables(affectedCables, pad.proxy?.node)
+
+        // save the edit
+        this.saveEdit('disconnectPad',{pad, routes, collapses})
     },
-    undo({pad, routes}) {
+    undo({pad, routes, collapses}) {
+        undoCableCollapses(collapses)
         pad.reconnect(routes.slice())
     },
-    redo({pad, routes}) {
+    redo({pad, routes, collapses}) {
         pad.disconnect()
+        redoCableCollapses(collapses)
     }
 },
 
@@ -136,13 +142,17 @@ deletePad: {
 
     doit({view, pad}) {
         if (!view?.root) return
-        // save the edit *before* disconnecting
-        this.saveEdit('deletePad',{pad, routes: pad.routes.slice()})
+        const routes = pad.routes.slice()
 
         // notation
         const node = view.root
 
-        pad.disconnect()
+        const affectedCables = pad.disconnect()
+
+        const collapses = collapseEndpointOnlyCables(affectedCables, node)
+
+        // save the edit
+        this.saveEdit('deletePad',{pad, routes, collapses})
 
         node.removePad(pad)
 
@@ -150,16 +160,18 @@ deletePad: {
 
         node.look.removePin(pad.proxy)
     },
-    undo({pad, routes}) {
+    undo({pad, routes, collapses}) {
+        undoCableCollapses(collapses)
 
         const node = pad.proxy.node
         node.restorePad(pad)
         node.look.restorePin(pad.proxy)
         pad.reconnect(routes.slice())
     },
-    redo({pad, routes}) {
+    redo({pad, routes, collapses}) {
 
         pad.disconnect()
+        redoCableCollapses(collapses)
         pad.proxy.node.removePad(pad)
         pad.proxy.disconnect()
         pad.proxy.node.look.removePin(pad.proxy)
