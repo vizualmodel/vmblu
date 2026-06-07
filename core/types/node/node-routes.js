@@ -42,11 +42,31 @@ getAllRoutes(widgets) {
 connect() {},
 
 disconnect() {
-    for (const widget of this.look.widgets) if (widget.is.pin) widget.disconnect()
+    const affectedCables = []
+
+    for (const widget of this.look.widgets) {
+        if (!widget.is.pin) continue
+
+        for (const cable of widget.disconnect() ?? []) {
+            if (!affectedCables.includes(cable)) affectedCables.push(cable)
+        }
+    }
+
+    return affectedCables
 },
 
 disconnectPinArea(widgets) {
-    for (const widget of widgets) if (widget.is.pin) widget.disconnect()
+    const affectedCables = []
+
+    for (const widget of widgets) {
+        if (!widget.is.pin) continue
+
+        for (const cable of widget.disconnect() ?? []) {
+            if (!affectedCables.includes(cable)) affectedCables.push(cable)
+        }
+    }
+
+    return affectedCables
 },
 
 isConnected() {

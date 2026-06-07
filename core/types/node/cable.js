@@ -152,9 +152,10 @@ Cable.prototype = {
         return (this.wire.length === 2)
     },
 
-    hitRoute(pos) {
+    hitRoute(pos, ignoredRoute = null) {
         let segment = 0
         for (const tack of this.tacks) {
+            if (tack.route === ignoredRoute) continue
             if ((tack.route.from == tack)&&(segment = tack.route.hitSegment(pos)))  return [zap.route, tack.route, segment]
         }
         return [zap.nothing, null, 0]
@@ -300,6 +301,39 @@ Cable.prototype = {
             tacks[i].segment = copy[i].segment
             tacks[i].route.restoreWire(copy[i].track)
         }
+    },
+
+    disconnectTacks() {
+        for (const tack of this.tacks.slice()) tack.route.disconnect()
+        this.tacks.length = 0
+    },
+
+    restoreTackWireState(tackWires = []) {
+        if (!tackWires?.length) return
+
+        this.restoreTackWires(tackWires)
+        for (const tack of this.tacks) tack.setRoute(tack.route)
+    },
+
+    restoreWireState(wire, tackWires) {
+        this.restoreWire(wire)
+        if (tackWires) this.restoreTackWireState(tackWires)
+    },
+
+    restoreDrawState(wire, tacks, tackWires) {
+        this.disconnectTacks()
+        this.restoreWire(wire)
+
+        tacks ??= []
+        tackWires ??= []
+        for (let i = 0; i < tacks.length; i++) {
+            if (tackWires[i]) {
+                tacks[i].segment = tackWires[i].segment
+                tacks[i].route.restoreWire(tackWires[i].track)
+            }
+        }
+
+        this.reconnect(tacks.slice())
     },
 
     disconnect() {
@@ -490,6 +524,59 @@ Cable.prototype = {
         this.tacks.forEach(tack => { 
             if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y)
         })
+    },
+
+    bendEndpoint(tack, point) {
+        if (!tack?.is?.endpoint || !this.singleSegment()) return false
+
+        const oldStart = {...this.wire[0]}
+        const oldEnd = {...this.wire[1]}
+        const horizontal = oldStart.y === oldEnd.y
+        const vertical = oldStart.x === oldEnd.x
+        if (!horizontal && !vertical) return false
+
+        if (horizontal && point.y === oldStart.y) return false
+        if (vertical && point.x === oldStart.x) return false
+
+        const tackPoint = tack.center()
+        const startDistance = Math.hypot(tackPoint.x - oldStart.x, tackPoint.y - oldStart.y)
+        const endDistance = Math.hypot(tackPoint.x - oldEnd.x, tackPoint.y - oldEnd.y)
+        const moveStart = startDistance <= endDistance
+
+        const elbow = horizontal
+            ? (moveStart ? {x: oldStart.x, y: point.y} : {x: oldEnd.x, y: point.y})
+            : (moveStart ? {x: point.x, y: oldStart.y} : {x: point.x, y: oldEnd.y})
+
+        const addPoint = (wire, next) => {
+            const previous = wire.at(-1)
+            if (previous && previous.x === next.x && previous.y === next.y) return
+            wire.push({...next})
+        }
+
+        const nextWire = []
+        const rawWire = moveStart
+            ? [{...point}, elbow, oldStart, oldEnd]
+            : [oldStart, oldEnd, elbow, {...point}]
+        for (const next of rawWire) addPoint(nextWire, next)
+        if (nextWire.length < 2) return false
+
+        this.wire = nextWire
+        const movedSegment = moveStart ? 1 : this.wire.length - 1
+        const trunkSegment = moveStart ? this.wire.length - 1 : 1
+
+        for (const otherTack of this.tacks) {
+            if (otherTack === tack) {
+                otherTack.placeOnSegment(point, movedSegment)
+                continue
+            }
+            else if (moveStart && otherTack.segment === 1) {
+                otherTack.segment = trunkSegment
+            }
+
+            otherTack.refreshPlacement?.()
+        }
+
+        return true
     },
 
     getCombinedLimit(s1,s2) {
@@ -686,9 +773,14 @@ Cable.prototype = {
         return 'incomplete'
     },
 
+    canCollapseToRoute() {
+        return !this.is.floating
+            && this.tacks.length === 2
+            && this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)
+    },
+
     collapseIfOnlyEndpointTacks(node) {
-        if (this.tacks.length !== 2) return null
-        if (!this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)) return null
+        if (!this.canCollapseToRoute()) return null
         if (!node) return null
 
         const wire = this.copyWire()
@@ -722,4 +814,64 @@ Cable.prototype = {
         const route = connectDirect(startWidget, endWidget, wire) ?? connectDirect(endWidget, startWidget, wire.slice().reverse())
         return route ? {route} : null
     },
+
+    collapseToRoute(node) {
+        if (!this.canCollapseToRoute()) return null
+
+        const collapse = {
+            node: this.node ?? node,
+            cable: this,
+            tacks: this.tacks.slice(),
+            route: null,
+        }
+
+        if (!collapse.node) return null
+
+        const collapsed = this.collapseIfOnlyEndpointTacks(collapse.node)
+        if (!collapsed) return null
+
+        collapse.route = collapsed.route
+        return collapse
+    },
+
+    undoCollapse(collapse) {
+        if (!collapse?.route) return
+
+        collapse.route.disconnect()
+        collapse.node.restoreCable(this)
+        this.reconnect(collapse.tacks.slice())
+    },
+
+    redoCollapse(collapse) {
+        if (!collapse) return
+
+        collapse.route = this.collapseIfOnlyEndpointTacks(collapse.node)?.route
+    },
+}
+
+export function collapseEndpointOnlyCables(cables = [], fallbackNode = null) {
+    const collapses = []
+    const checked = []
+
+    for (const cable of cables) {
+        if (!cable || checked.includes(cable)) continue
+        checked.push(cable)
+
+        const collapse = cable.collapseToRoute(fallbackNode)
+        if (collapse) collapses.push(collapse)
+    }
+
+    return collapses
+}
+
+export function undoCableCollapses(collapses = []) {
+    for (const collapse of collapses.slice().reverse()) {
+        collapse?.cable?.undoCollapse(collapse)
+    }
+}
+
+export function redoCableCollapses(collapses = []) {
+    for (const collapse of collapses) {
+        collapse?.cable?.redoCollapse(collapse)
+    }
 }

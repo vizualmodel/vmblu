@@ -158,6 +158,7 @@ const nodeList = [
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",
+		"-> wire check",
 		"-> sync model",
 		"-> sync links",
 		"-> show settings",
@@ -180,6 +181,7 @@ const nodeList = [
 		"tool settings -> ()",
 		"event settings -> ()",
 		"get path -> ()",
+		"info popup -> ()",
 		"redox.done -> ()",
 		"open source file -> ()",
 		"open model -> ()"

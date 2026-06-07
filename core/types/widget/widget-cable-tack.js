@@ -164,6 +164,13 @@ CableTack.prototype = {
         }
     },
 
+    refreshPlacement() {
+        if (!this.route?.from || !this.route?.to) return
+
+        this.rcAlias = null
+        this.is.bridge ? this.bridgeRect() : this.tackRect()
+    },
+
     horizontal() {
         const s = this.segment
         const w = this.cable.wire

@@ -13,6 +13,7 @@ import { ContextMenuFactory,
 		 PathRequestFactory,
 		 SingleTextFieldFactory,
 		 MessageBoxFactory,
+		 ToastBoxFactory,
 		 JsonInputFactory,
 		 TextBlockFactory,
 		 NodeSelectorFactory,
@@ -82,6 +83,18 @@ const nodeList = [
 	name: "message box", 
 	uid: "bCec", 
 	factory: MessageBoxFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//___________________________________________________TOAST BOX
+	{
+	name: "toast box", 
+	uid: "LRpK", 
+	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],

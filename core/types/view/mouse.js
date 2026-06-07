@@ -50,7 +50,7 @@ export const mouseHandling = {
     },
 
     // checks what we have hit inside a client area of a view
-    mouseHit(xyLocal) {
+    mouseHit(xyLocal, ignoredRoute = null) {
         // notation
         const hit = this.hit;
 
@@ -83,28 +83,28 @@ export const mouseHandling = {
         }
 
         // check if we have hit a route
-        this.mouseHitRoutes(xyLocal)
+        this.mouseHitRoutes(xyLocal, ignoredRoute)
     },
 
-    mouseHitRoutes(xyLocal) {
+    mouseHitRoutes(xyLocal, ignoredRoute = null) {
 
         const hit = this.hit
 
         // search the routes of the nodes 
         for (const node of this.root.nodes) {
-            [hit.what, hit.route, hit.routeSegment] = node.hitRoute(xyLocal)
+            [hit.what, hit.route, hit.routeSegment] = node.hitRoute(xyLocal, ignoredRoute)
             if (hit.what != zap.nothing) return
         }
  
         // search the pads
         for (const pad of this.root.pads) {
-            [hit.what, hit.route, hit.routeSegment] = pad.hitRoute(xyLocal)
+            [hit.what, hit.route, hit.routeSegment] = pad.hitRoute(xyLocal, ignoredRoute)
             if (hit.what != zap.nothing) return
         }
         
         // search the cables
         for(const cable of this.root.cables) {
-            [hit.what, hit.route, hit.routeSegment] = cable.hitRoute(xyLocal)
+            [hit.what, hit.route, hit.routeSegment] = cable.hitRoute(xyLocal, ignoredRoute)
             if (hit.what != zap.nothing) return
         }
     },

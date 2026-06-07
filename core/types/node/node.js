@@ -159,7 +159,7 @@ Node.prototype = {
         return [zap.node,this, null]
     },
 
-    hitRoute(pos) {
+    hitRoute(pos, ignoredRoute = null) {
 
         // check if we have hit a route
         let segment = 0
@@ -172,6 +172,7 @@ Node.prototype = {
                 for (const route of widget.routes) {
 
                     // only routes starting from the widget 
+                    if (route === ignoredRoute) continue
                     if ((route.from == widget)&&(segment = route.hitSegment(pos))) return [zap.route, route, segment]
                 }
             }

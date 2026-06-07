@@ -1357,6 +1357,35 @@ p.svelte-nkfvqo {
 } 
 
 
+.toast.svelte-184ewf7 {
+    position: fixed;
+    left: 50%;
+    top: 1.5rem;
+    transform: translateX(-50%);
+    z-index: 10000;
+    min-width: 12rem;
+    max-width: 24rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid #666;
+    border-radius: 2px;
+    background: #000000cc;
+    color: #d0d0d0;
+    font-family: var(--fFixed);
+    font-size: var(--fSmall);
+    pointer-events: none;
+}
+
+.title.svelte-184ewf7 {
+    margin-bottom: 0.25rem;
+    color: #f0f0f0;
+    font-weight: bold;
+}
+
+.message.svelte-184ewf7 {
+    color: grey;
+}
+
+
 /* @import '../color-scheme.css'; */
 
 .input-field.svelte-dgsivs {

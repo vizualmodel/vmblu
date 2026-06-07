@@ -9,7 +9,7 @@ addHeader() {
     const iconSpace = 2*(2*style.icon.xPadding + 2*style.icon.wIcon + style.icon.xSpacing)
 
     // the required width for the look..
-    const W = this.getTextWidth(this.node.name) + iconSpace;
+    const W = this.getTextWidth(this.node.name, style.header.font) + iconSpace;
 
     // notation
     const rc = this.rect 

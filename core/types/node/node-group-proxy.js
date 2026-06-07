@@ -200,6 +200,7 @@ export const proxyHandling = {
 
         // A bus is now a floating cable.
         const bus = new Cable(pos, uid, true)
+        bus.node = this
 
         // save it
         this.cables.push(bus)
@@ -211,6 +212,7 @@ export const proxyHandling = {
     addCable(pos, uid=null) {
 
         const cable = new Cable(pos, uid)
+        cable.node = this
 
         this.cables.push(cable)
 
@@ -258,6 +260,7 @@ export const proxyHandling = {
 
         if (this.cables.find(cp => cp.uid == cable.uid)) return
 
+        cable.node = this
         this.cables.push(cable)
     }
 }

@@ -26,6 +26,8 @@ import { PathRequestFactory,
 		 DocumentSettingsFactory,
 		 ModelRuntimeSettingsFactory,
 		 AgentSettingsFactory,
+		 MessageBoxFactory,
+		 ToastBoxFactory,
 		 VscodeSideMenuFactory } from '../../../ui-svelte/index.js'
 
 
@@ -100,6 +102,7 @@ const nodeList = [
 	inputs: [
 		"-> sync model",
 		"-> accept changes",
+		"-> wire check",
 		"-> show settings",
 		"-> make app",
 		"-> make lib",
@@ -125,7 +128,8 @@ const nodeList = [
 		"pin profile -> show @ pin profile (kZqQ)",
 		"get path -> path @ path request (cbcn)",
 		"tool settings -> show @ tool settings (oPup)",
-		"event settings -> show @ event settings (Qslw)"
+		"event settings -> show @ event settings (Qslw)",
+		"info popup -> show @ toast box (LrNb)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
@@ -304,6 +308,30 @@ const nodeList = [
 		"modal div -> modal div @ message broker (Ksns)"
 		]
 	},
+	//_________________________________________________MESSAGE BOX
+	{
+	name: "message box", 
+	uid: "oIvV", 
+	factory: MessageBoxFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (Ksns)"
+		]
+	},
+	//___________________________________________________TOAST BOX
+	{
+	name: "toast box", 
+	uid: "LrNb", 
+	factory: ToastBoxFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> modal div @ message broker (Ksns)"
+		]
+	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu", 
@@ -314,6 +342,7 @@ const nodeList = [
 		"div -> floating menu @ message broker (Ksns)",
 		"sync model -> sync model @ model manager (WNAt)",
 		"accept changes -> accept changes @ model manager (WNAt)",
+		"wire check -> wire check @ model manager (WNAt)",
 		"show settings -> show settings @ model manager (WNAt)",
 		"make app -> make app @ model manager (WNAt)",
 		"make lib -> make lib @ model manager (WNAt)",
@@ -340,6 +369,12 @@ const nodeList = [
 		        "color": "#0fb2e4",
 		        "message": "accept changes",
 		        "help": "Accept changes"
+		    },
+		    {
+		        "icon": "cable",
+		        "color": "#0fb2e4",
+		        "message": "wire check",
+		        "help": "Wire check"
 		    },
 		    {
 		        "icon": "bolt",

@@ -129,6 +129,27 @@ ModelManager.prototype = {
         this.tx.send('redox.done', {verb: 'accept changes'})
     },
 
+    onWireCheck() {
+
+        // check
+        if (!this.model?.root) return
+
+        const rawConnections = this.model.savePoint?.root?.connections ?? []
+
+        const result = this.model.root.checkConnectionsAgainst(rawConnections)
+
+        if (!result.missing && !result.extra) {
+            this.tx.send('info popup', {
+                title: 'Wire check',
+                message: 'wire check ok',
+                duration: 2000
+            })
+        }
+
+        // redraw
+        this.tx.send('redox.done', {verb: 'wire check'})
+    },
+
    
    onShowSettings() {
 
@@ -201,7 +222,7 @@ ModelManager.prototype = {
         if (forceReloadMain) model.is.main = true
 
         // check if anything has changed
-        if (!this.modcom.hasFresh()) return
+        const hasFresh = this.modcom.hasFresh()
 
         // update the nodes that need to be updated
         if (!model.root || model.blu.is.fresh || model.viz.is.fresh) {
@@ -209,6 +230,9 @@ ModelManager.prototype = {
         }
         else if (this.modcom.updateLinkedNode(model.root, model.root)) {
             this.tx.send('redox.done', {verb})
+        }
+        else if (!hasFresh) {
+            return
         }
 
         // rest the fresh flags

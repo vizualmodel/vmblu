@@ -963,6 +963,14 @@
                 }
               },
               {
+                "name": "wire check",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
                 "name": "sync model",
                 "kind": "input",
                 "contract": {
@@ -1107,6 +1115,14 @@
               },
               {
                 "name": "get path",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "info popup",
                 "kind": "output",
                 "contract": {
                   "role": "follower",

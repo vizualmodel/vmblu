@@ -61,12 +61,14 @@ export const padRouteFunctions = {
 
         // make a copy of the routes - the pad.routes array will be modified during this proc
         const routes = this.routes.slice()    
+        const affectedCables = []
 
         // go through all the routes
         for (const route of routes) {
 
             // get the other widget
             const other = route.from == this ? route.to : route.from
+            if (other.is.tack && !affectedCables.includes(other.cable)) affectedCables.push(other.cable)
 
             // a pad can be connected to a pin or bus
             other.is.pin ? route.rxtxPinPadDisconnect() : route.rxtxPadBusDisconnect()
@@ -74,6 +76,8 @@ export const padRouteFunctions = {
             // remove the route at both ends
             route.remove()
         }
+
+        return affectedCables
     },
 
     reconnect(routes) {
@@ -87,7 +91,10 @@ export const padRouteFunctions = {
 
             // a pad can be attached to a pin or a bus
             if (other.is.pin) other.routes.push(route)
-            else other.cable.push(other)
+            else if (other.is.tack) {
+                other.cable.tacks.push(other)
+                route.rxtxPadBus()
+            }
         }
     },
 

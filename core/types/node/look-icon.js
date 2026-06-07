@@ -16,7 +16,7 @@ export const iconHandling = {
         const iconSpace = 2*(style.icon.xPadding + 2*(style.icon.wIcon + style.icon.xSpacing))
 
         // calculate the new width for the header
-        let newWidth = this.getTextWidth(header.title) + iconSpace
+        let newWidth = this.getTextWidth(header.title, style.header.font) + iconSpace
 
         // check width of the look and adapt the width of the look if neecssary
         if (newWidth > this.rect.w) this.wider(newWidth - this.rect.w)

@@ -273,11 +273,13 @@ Pin.prototype = {
     disconnect() {
         // make a copy of the routes - the pin.routes array will be modified during this proc
         const routes = this.routes.slice();
+        const affectedCables = [];
 
         // for all widgets that have routes..
         for (const route of routes) {
             // get the other widget
             const other = route.from == this ? route.to : route.from;
+            if (other.is.tack && !affectedCables.includes(other.cable)) affectedCables.push(other.cable);
 
             // disconnect
             other.is.pin
@@ -291,6 +293,8 @@ Pin.prototype = {
             // remove the route at both ends
             route.remove();
         }
+
+        return affectedCables;
     },
 
     // this function is used in the undo action (see redox)

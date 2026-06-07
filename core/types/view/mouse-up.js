@@ -7,7 +7,7 @@ export const mouseUpHandling = {
     onMouseUp(xyLocal,e, tx) {
 
         // see what we have hit...
-        this.mouseHit(xyLocal)
+        this.mouseHit(xyLocal, this.state.action === doing.routeDraw ? this.state.route : null)
 
         // if we need to adjust the undo parameters...
         const state = this.state

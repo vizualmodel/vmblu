@@ -90,7 +90,7 @@ function StyleFactory() {
         wCursor: 2, hCursor: 15, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
     } 
     this.look = {
-        wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:300, dxCopy: 20, dyCopy:20,  smallMove: 5, 
+        wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:600, dxCopy: 20, dyCopy:20,  smallMove: 5, 
     } 
     this.box = {
         rCorner:7.5,  wLine:2, cLine: color.shade1, cBackground:color.shade2, 

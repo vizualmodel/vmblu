@@ -273,6 +273,7 @@
             "interface": "(99) actions",
             "pins": [
               "(73 R)accept changes",
+              "(101 R)wire check",
               "(96 R)sync model",
               "(76 R)show settings",
               "(53 R)make app",
@@ -303,7 +304,8 @@
               "(84 R)pin profile",
               "(93 R)tool settings",
               "(94 R)event settings",
-              "(59 R)get path"
+              "(59 R)get path",
+              "(106 R)info popup"
             ]
           },
           {

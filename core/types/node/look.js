@@ -109,9 +109,13 @@ Look.prototype = {
         if (widget.rect.w > this.rect.w) this.wider(widget.rect.w - this.rect.w)
     },
 
-    getTextWidth(str) {
+    getTextWidth(str, font = style.std.font) {
 
-        return ctxOffscreen.measureText(str).width
+        const saveFont = ctxOffscreen.font
+        ctxOffscreen.font = font
+        const width = ctxOffscreen.measureText(str).width
+        ctxOffscreen.font = saveFont
+        return width
     },
 
     wider(delta=0) {

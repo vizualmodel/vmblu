@@ -1,5 +1,6 @@
 import {doing} from '../../types/view/view-base.js'
 import {selex} from '../../types/view/selection.js'
+import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
 
 export const redoxSelect = {
 
@@ -183,6 +184,7 @@ disconnectSelection: {
     doit({selection}) {
         // an array of arrays to save the routes of each node
         const allRoutes = []
+        const affectedCables = []
         
         // disconnect all nodes in the selection
         for (const node of selection.nodes) {
@@ -191,14 +193,20 @@ disconnectSelection: {
             allRoutes.push(node.getRoutes())
 
             // disconnect
-            node.disconnect()
+            for (const cable of node.disconnect()) {
+                if (!affectedCables.includes(cable)) affectedCables.push(cable)
+            }
         }
 
+        const collapses = collapseEndpointOnlyCables(affectedCables)
+
         // save the edit
-        this.saveEdit('disconnectSelection', {selection: selection.shallowCopy(), allRoutes })
+        this.saveEdit('disconnectSelection', {selection: selection.shallowCopy(), allRoutes, collapses })
     },
     // nota that allRoutes is an array of arrays - one for each node !
-    undo({selection, allRoutes}) {
+    undo({selection, allRoutes, collapses}) {
+
+        undoCableCollapses(collapses)
 
         for (const routes of allRoutes) {
             for (const route of routes) {
@@ -206,8 +214,9 @@ disconnectSelection: {
             }
         }
     },
-    redo({selection, allRoutes}) {
+    redo({selection, allRoutes, collapses}) {
         for (const node of selection.nodes) node.disconnect()
+        redoCableCollapses(collapses)
     }
 },
 
@@ -217,6 +226,7 @@ deleteSelection: {
 
         // an array of arrays to save the routes of each node
         const allRoutes = []
+        const affectedCables = []
 
         // notation
         const selection = view.selection
@@ -228,7 +238,9 @@ deleteSelection: {
             allRoutes.push(node.getRoutes())
 
             // disconnect
-            node.disconnect()
+            for (const cable of node.disconnect()) {
+                if (!affectedCables.includes(cable)) affectedCables.push(cable)
+            }
 
             // disconnect and remove
             view.root.removeNode(node)
@@ -238,17 +250,23 @@ deleteSelection: {
         for (const pad of selection.pads) {
 
             // disconnect pad
-            pad.disconnect()
+            for (const cable of pad.disconnect()) {
+                if (!affectedCables.includes(cable)) affectedCables.push(cable)
+            }
 
             // remove pad
             view.root.removePad(pad)
 
             // disconnect pin
-            pad.proxy.disconnect()
+            for (const cable of pad.proxy.disconnect()) {
+                if (!affectedCables.includes(cable)) affectedCables.push(cable)
+            }
 
             // remove pin
             view.root.look.removePin(pad.proxy)
         }
+
+        const collapses = collapseEndpointOnlyCables(affectedCables)
 
         // remove the cables in the selection, but only the ones that have no connections anymore
         for (const bus of selection.cables) {
@@ -261,7 +279,7 @@ deleteSelection: {
         }
 
         // save the edit
-        this.saveEdit('deleteSelection', {view, selection: selection.shallowCopy(),allRoutes })
+        this.saveEdit('deleteSelection', {view, selection: selection.shallowCopy(), allRoutes, collapses })
 
         // clean up the selection
         selection.reset()
@@ -271,7 +289,7 @@ deleteSelection: {
     },
 
     // nota that allRoutes is an array of arrays - one for each node !
-    undo({view, selection, allRoutes}) {
+    undo({view, selection, allRoutes, collapses}) {
 
         // add all the nodes again
         for (const node of selection.nodes) view.root.addNode(node)
@@ -294,6 +312,8 @@ deleteSelection: {
             view.root.restoreCable(bus)
         }
 
+        undoCableCollapses(collapses)
+
         // add all the routes again
         for (const routes of allRoutes) {
             for (const route of routes) {
@@ -302,7 +322,7 @@ deleteSelection: {
         }
     },
 
-    redo({view, selection, allRoutes}) {
+    redo({view, selection, allRoutes, collapses}) {
         
         // disconnect all nodes in the selection
         for (const node of selection.nodes) {
@@ -329,6 +349,8 @@ deleteSelection: {
             // remove pin
             view.root.look.removePin(pad.proxy)
         }
+
+        redoCableCollapses(collapses)
 
         // remove the cables in the selection, but only the ones that have no connections anymore
         for (const bus of selection.cables) {

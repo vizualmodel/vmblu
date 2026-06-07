@@ -5641,7 +5641,7 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$r = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+var root$s = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -5683,7 +5683,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$r();
+	var div_1 = root$s();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5703,7 +5703,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$q = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
+var root$r = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
 
 function Vertical_menu_tabs_content($$anchor, $$props) {
 	push($$props, false);
@@ -5752,7 +5752,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$q();
+	var div_1 = root$r();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5768,7 +5768,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$p = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$q = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5829,7 +5829,7 @@ function Canvas_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$p();
+	var div_1 = root$q();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -5837,7 +5837,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$o = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$p = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -6089,7 +6089,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$o();
+	var div_1 = root$p();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -6126,7 +6126,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$n = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$o = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -6296,7 +6296,7 @@ function Column_main($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$n();
+	var div_1 = root$o();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -6318,10 +6318,74 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$i = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$m = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$j = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$n = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8),
+		sx = prop($$props, "sx", 8);
+
+	onMount(() => {
+		// send the div
+		tx().send("div", get(menuDiv));
+	});
+
+	let menuDiv = mutable_state(null);
+	let symbols = mutable_state(sx() ?? []);
+
+	const handlers = {
+		"-> set menu"(newSymbols) {
+			set(symbols, newSymbols);
+		}
+	};
+
+	function menuClick(e) {
+		// get the clicked symbol
+		const index = e.target.getAttribute("data-index");
+
+		// send the corresponding message
+		tx().send(get(symbols)[index].message, e);
+	}
+
+	function keydown() {}
+	init();
+
+	var div = root$n();
+
+	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
+
+	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
+		var div_1 = root_1$j();
+		var i = child(div_1);
+
+		set_attribute(i, "data-index", index);
+
+		var text = child(i);
+
+		var div_2 = sibling(i, 2);
+		var text_1 = child(div_2);
+
+		template_effect(() => {
+			set_text(text, get(symbol).name);
+			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
+			set_text(text_1, get(symbol).help);
+		});
+
+		event("click", i, menuClick);
+		event("keydown", i, keydown);
+		append($$anchor, div_1);
+	});
+	append($$anchor, div);
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_1$i = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$m = template(`<div class="menu svelte-1st5yi2"></div>`);
+
+function Side_menu($$anchor, $$props) {
 	push($$props, false);
 
 	let tx = prop($$props, "tx", 8),
@@ -6382,73 +6446,9 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$h = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$l = template(`<div class="menu svelte-1st5yi2"></div>`);
-
-function Side_menu($$anchor, $$props) {
-	push($$props, false);
-
-	let tx = prop($$props, "tx", 8),
-		sx = prop($$props, "sx", 8);
-
-	onMount(() => {
-		// send the div
-		tx().send("div", get(menuDiv));
-	});
-
-	let menuDiv = mutable_state(null);
-	let symbols = mutable_state(sx() ?? []);
-
-	const handlers = {
-		"-> set menu"(newSymbols) {
-			set(symbols, newSymbols);
-		}
-	};
-
-	function menuClick(e) {
-		// get the clicked symbol
-		const index = e.target.getAttribute("data-index");
-
-		// send the corresponding message
-		tx().send(get(symbols)[index].message, e);
-	}
-
-	function keydown() {}
-	init();
-
-	var div = root$l();
-
-	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
-
-	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$h();
-		var i = child(div_1);
-
-		set_attribute(i, "data-index", index);
-
-		var text = child(i);
-
-		var div_2 = sibling(i, 2);
-		var text_1 = child(div_2);
-
-		template_effect(() => {
-			set_text(text, get(symbol).name);
-			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
-			set_text(text_1, get(symbol).help);
-		});
-
-		event("click", i, menuClick);
-		event("keydown", i, keydown);
-		append($$anchor, div_1);
-	});
-	append($$anchor, div);
-	bind_prop($$props, "handlers", handlers);
-	return pop({ handlers });
-}
-
-var root_2$b = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$c = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root_3$4 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$k = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root$l = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -6524,7 +6524,7 @@ function Tab_ribbon($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$k();
+	var div = root$l();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -6536,7 +6536,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$b();
+				var div_1 = root_2$c();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -6588,8 +6588,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$g = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
-var root$j = template(`<div class="menu svelte-oi2iq"></div>`);
+var root_1$h = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
+var root$k = template(`<div class="menu svelte-oi2iq"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6621,12 +6621,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$j();
+	var div = root$k();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$g();
+		var div_1 = root_1$h();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6746,10 +6746,10 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$f = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$a = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_1$g = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
+var root_2$b = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
 var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
-var root$i = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
+var root$j = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
 	push($$props, false);
@@ -6856,7 +6856,7 @@ function Popup_box($$anchor, $$props) {
 
 	init();
 
-	var div = root$i();
+	var div = root$j();
 
 	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
 
@@ -6867,7 +6867,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$f();
+		var i_2 = root_1$g();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -6877,7 +6877,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$a();
+		var i_3 = root_2$b();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6916,7 +6916,7 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root$h = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
+var root$i = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
 
 function Text_field($$anchor, $$props) {
 	push($$props, false);
@@ -6950,7 +6950,7 @@ function Text_field($$anchor, $$props) {
 
 	init();
 
-	var input_1 = root$h();
+	var input_1 = root$i();
 
 	bind_this(input_1, ($$value) => set(input, $$value), () => get(input));
 	template_effect(() => set_attribute(input_1, "style", style() ? style() : ''));
@@ -6960,7 +6960,7 @@ function Text_field($$anchor, $$props) {
 	pop();
 }
 
-var root$g = template(`<input type="checkbox" class="svelte-kvi95y">`);
+var root$h = template(`<input type="checkbox" class="svelte-kvi95y">`);
 
 function Checkbox($$anchor, $$props) {
 	push($$props, false);
@@ -6976,7 +6976,7 @@ function Checkbox($$anchor, $$props) {
 
 	init();
 
-	var input = root$g();
+	var input = root$h();
 	template_effect(() => set_attribute(input, "style", style() ? style() : ''));
 	bind_checked(input, on);
 	event("change", input, onInput);
@@ -6984,14 +6984,14 @@ function Checkbox($$anchor, $$props) {
 	pop();
 }
 
-var root$f = template(`<div class="label-checkbox svelte-2li08e"><label class="svelte-2li08e"> </label> <div class="checkbox-field svelte-2li08e"><!> <!></div></div>`);
+var root$g = template(`<div class="label-checkbox svelte-2li08e"><label class="svelte-2li08e"> </label> <div class="checkbox-field svelte-2li08e"><!> <!></div></div>`);
 
 function Label_checkbox($$anchor, $$props) {
 	let label = prop($$props, "label", 8);
 	let on = prop($$props, "on", 12);
 	let style = prop($$props, "style", 8, 'width: 9rem;');
 	let onToggle = prop($$props, "onToggle", 8);
-	var div = root$f();
+	var div = root$g();
 	var label_1 = child(div);
 	var text = child(label_1);
 
@@ -7023,7 +7023,7 @@ function Label_checkbox($$anchor, $$props) {
 	append($$anchor, div);
 }
 
-var root$e = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!>`, 1);
+var root$f = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!>`, 1);
 
 function Runtime_settings_base($$anchor, $$props) {
 	push($$props, false);
@@ -7032,7 +7032,7 @@ function Runtime_settings_base($$anchor, $$props) {
 
 	init();
 
-	var fragment = root$e();
+	var fragment = root$f();
 	var node = sibling(first_child(fragment), 2);
 
 	Label_checkbox(node, {
@@ -7088,7 +7088,7 @@ function Runtime_settings_base($$anchor, $$props) {
 	pop();
 }
 
-var root$d = template(`<button type="button" class="svelte-2d29qn"> </button>`);
+var root$e = template(`<button type="button" class="svelte-2d29qn"> </button>`);
 
 function Button($$anchor, $$props) {
 	push($$props, false);
@@ -7100,7 +7100,7 @@ function Button($$anchor, $$props) {
 
 	init();
 
-	var button = root$d();
+	var button = root$e();
 	var text = child(button);
 
 	template_effect(() => {
@@ -7114,8 +7114,8 @@ function Button($$anchor, $$props) {
 	pop();
 }
 
-var root_1$e = template(`<option> </option>`);
-var root$c = template(`<div class="select-field svelte-16klf86"><label class="svelte-16klf86"> </label> <select class="svelte-16klf86"></select></div>`);
+var root_1$f = template(`<option> </option>`);
+var root$d = template(`<div class="select-field svelte-16klf86"><label class="svelte-16klf86"> </label> <select class="svelte-16klf86"></select></div>`);
 
 function Label_select($$anchor, $$props) {
 	push($$props, false);
@@ -7136,7 +7136,7 @@ function Label_select($$anchor, $$props) {
 
 	init();
 
-	var div = root$c();
+	var div = root$d();
 	var label_1 = child(div);
 
 	set_attribute(label_1, "for", fid);
@@ -7156,7 +7156,7 @@ function Label_select($$anchor, $$props) {
 	set_attribute(select, "id", fid);
 
 	each(select, 5, options, index, ($$anchor, option) => {
-		var option_1 = root_1$e();
+		var option_1 = root_1$f();
 		var option_1_value = {};
 		var text_1 = child(option_1);
 
@@ -7181,7 +7181,7 @@ function Label_select($$anchor, $$props) {
 	pop();
 }
 
-var root$b = template(`<div class="textarea-field svelte-har9rk"><label class="svelte-har9rk"> </label> <textarea spellcheck="false" class="svelte-har9rk"></textarea></div>`);
+var root$c = template(`<div class="textarea-field svelte-har9rk"><label class="svelte-har9rk"> </label> <textarea spellcheck="false" class="svelte-har9rk"></textarea></div>`);
 
 function Label_textarea($$anchor, $$props) {
 	push($$props, false);
@@ -7193,7 +7193,7 @@ function Label_textarea($$anchor, $$props) {
 
 	init();
 
-	var div = root$b();
+	var div = root$c();
 	var label_1 = child(div);
 
 	set_attribute(label_1, "for", fid);
@@ -7743,8 +7743,8 @@ function getRuntimeSettings(runtime) {
     return getRuntimeDescriptor(runtime).settings
 }
 
-var root_2$9 = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
-var root_1$d = template(`<div class="node-security-settings svelte-jkuczt"><div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Network</h4> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Process</h4> <!> <!></div> <!></div>`);
+var root_2$a = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
+var root_1$e = template(`<div class="node-security-settings svelte-jkuczt"><div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Network</h4> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Process</h4> <!> <!></div> <!></div>`);
 
 function Node_security_settings($$anchor, $$props) {
 	push($$props, false);
@@ -7917,7 +7917,7 @@ function Node_security_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$d();
+			var div = root_1$e();
 			var div_1 = child(div);
 			var node = sibling(child(div_1), 2);
 
@@ -8059,7 +8059,7 @@ function Node_security_settings($$anchor, $$props) {
 			var node_10 = sibling(div_3, 2);
 
 			if_block(node_10, () => get(envelopeWarning), ($$anchor) => {
-				var p = root_2$9();
+				var p = root_2$a();
 				var text_1 = child(p);
 				template_effect(() => set_text(text_1, get(envelopeWarning)));
 				append($$anchor, p);
@@ -8073,7 +8073,7 @@ function Node_security_settings($$anchor, $$props) {
 	return pop({ show });
 }
 
-var root$a = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!> <!>`, 1);
+var root$b = template(`<h4>Run</h4> <!> <h4>Monitor</h4> <!> <!> <h4>Security</h4> <!> <!>`, 1);
 
 function Runtime_settings_als($$anchor, $$props) {
 	push($$props, false);
@@ -8108,7 +8108,7 @@ function Runtime_settings_als($$anchor, $$props) {
 
 	init();
 
-	var fragment = root$a();
+	var fragment = root$b();
 	var node = sibling(first_child(fragment), 2);
 
 	Label_checkbox(node, {
@@ -8202,7 +8202,7 @@ function Runtime_settings_als($$anchor, $$props) {
 	pop();
 }
 
-var root$9 = template(`<!> <h4>Agent broker</h4> <p>Agent-specific node runtime settings will be added here.</p>`, 1);
+var root$a = template(`<!> <h4>Agent broker</h4> <p>Agent-specific node runtime settings will be added here.</p>`, 1);
 
 function Runtime_settings_agent($$anchor, $$props) {
 	let dx = prop($$props, "dx", 12);
@@ -8210,7 +8210,7 @@ function Runtime_settings_agent($$anchor, $$props) {
 	let runtime = prop($$props, "runtime", 8);
 	let modelRuntimeSettings = prop($$props, "modelRuntimeSettings", 8);
 	let popupPos = prop($$props, "popupPos", 8);
-	var fragment = root$9();
+	var fragment = root$a();
 	var node = first_child(fragment);
 
 	Runtime_settings_als(node, {
@@ -8238,7 +8238,7 @@ function Runtime_settings_agent($$anchor, $$props) {
 }
 
 var root_4$2 = template(`<p class="runtime-warning svelte-f3trbc"> </p>`);
-var root_1$c = template(`<!> <!>`, 1);
+var root_1$d = template(`<!> <!>`, 1);
 
 function Runtime_settings($$anchor, $$props) {
 	push($$props, false);
@@ -8354,7 +8354,7 @@ function Runtime_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$c();
+			var fragment_1 = root_1$d();
 			var node = first_child(fragment_1);
 
 			if_block(
@@ -8422,10 +8422,10 @@ function Runtime_settings($$anchor, $$props) {
 }
 
 var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
-var root_2$8 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
+var root_2$9 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
 var root_4$1 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
 var root_5$3 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
-var root_1$b = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
+var root_1$c = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
 
 function Model_runtime_settings($$anchor, $$props) {
 	push($$props, false);
@@ -8606,7 +8606,7 @@ function Model_runtime_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$b();
+			var div = root_1$c();
 			var div_1 = child(div);
 			var node = child(div_1);
 			var active = derived_safe_equal(() => get(view) === 'form');
@@ -8636,7 +8636,7 @@ function Model_runtime_settings($$anchor, $$props) {
 				node_2,
 				() => get(view) === 'form' && get(currentSettings),
 				($$anchor) => {
-					var fragment_1 = root_2$8();
+					var fragment_1 = root_2$9();
 					var div_2 = first_child(fragment_1);
 					var node_3 = sibling(child(div_2), 2);
 
@@ -8882,8 +8882,8 @@ function Confirm_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$a = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
-var root$8 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
+var root_1$b = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
+var root$9 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
 	push($$props, false);
@@ -8963,14 +8963,14 @@ function Context_menu($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$8();
+	var div = root$9();
 
 	bind_this(div, ($$value) => mutate(context, get(context).div = $$value), () => get(context)?.div);
 
 	var ul = child(div);
 
 	each(ul, 5, () => get(context).menu, index, ($$anchor, choice, index) => {
-		var li = root_1$a();
+		var li = root_1$b();
 
 		set_attribute(li, "data-index", index);
 
@@ -9004,7 +9004,7 @@ function Context_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$7 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
+var root$8 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1xkqtu5"></textarea>`);
 
 function Text_area_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -9022,7 +9022,7 @@ function Text_area_input$1($$anchor, $$props) {
 
 	init();
 
-	var textarea = root$7();
+	var textarea = root$8();
 
 	template_effect(() => {
 		set_attribute(textarea, "rows", rows());
@@ -17560,9 +17560,9 @@ MarkdownIt.prototype.renderInline = function (src, env) {
   return this.renderer.render(this.parseInline(src, env), this.options, env)
 };
 
-var root_1$9 = template(`<div class="preview svelte-1uavf00" aria-label="Markdown preview" tabindex="0"><!></div>`);
-var root_2$7 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1uavf00"></textarea>`);
-var root$6 = template(`<div class="wrapper svelte-1uavf00"><!></div>`);
+var root_1$a = template(`<div class="preview svelte-1uavf00" aria-label="Markdown preview" tabindex="0"><!></div>`);
+var root_2$8 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1uavf00"></textarea>`);
+var root$7 = template(`<div class="wrapper svelte-1uavf00"><!></div>`);
 
 function Markdown_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -17616,14 +17616,14 @@ function Markdown_input$1($$anchor, $$props) {
 
 	legacy_pre_effect_reset();
 
-	var div = root$6();
+	var div = root$7();
 	var node = child(div);
 
 	if_block(
 		node,
 		showPreview,
 		($$anchor) => {
-			var div_1 = root_1$9();
+			var div_1 = root_1$a();
 			var node_1 = child(div_1);
 
 			html(node_1, () => get(previewHtml));
@@ -17631,7 +17631,7 @@ function Markdown_input$1($$anchor, $$props) {
 			append($$anchor, div_1);
 		},
 		($$anchor) => {
-			var textarea = root_2$7();
+			var textarea = root_2$8();
 
 			template_effect(() => {
 				set_attribute(textarea, "style", get(fieldStyle));
@@ -17742,7 +17742,7 @@ var root_11$1 = template(`<p class="line contract-line svelte-m7l4mw"><span clas
 var root_9$2 = template(`<p class="line contract-line svelte-m7l4mw"><span class="contract-key svelte-m7l4mw">type</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <!>`, 1);
 var root_3$1 = template(`<p class="line brace svelte-m7l4mw"></p> <p class="line contract-line svelte-m7l4mw" style="--indent:1"><span class="contract-key svelte-m7l4mw">role</span><span class="punct svelte-m7l4mw">:</span><span class="type svelte-m7l4mw"> </span></p> <!> <p class="line brace svelte-m7l4mw"></p>`, 1);
 var root_13$1 = template(`<pre class="line svelte-m7l4mw"> </pre>`);
-var root_2$6 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Contract</p> <div class="box contract svelte-m7l4mw"><!></div></div>`);
+var root_2$7 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Contract</p> <div class="box contract svelte-m7l4mw"><!></div></div>`);
 var root_19 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
 var root_21$1 = template(`<p class="line meta svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p>`);
 var root_22 = template(`<p class="line empty svelte-m7l4mw">No source profile entry for this internal pin.</p>`);
@@ -17758,7 +17758,7 @@ var root_34 = template(`<p class="line svelte-m7l4mw"><span class="clickable sve
 var root_32 = template(`<div class="box svelte-m7l4mw"><div class="lines svelte-m7l4mw"></div></div>`);
 var root_36 = template(`<div class="box svelte-m7l4mw"><div class="lines svelte-m7l4mw"><p class="line svelte-m7l4mw"><span class="clickable svelte-m7l4mw"> </span></p></div></div>`);
 var root_31 = template(`<div class="section svelte-m7l4mw"><p class="section-title svelte-m7l4mw">Sent at</p></div> <!>`, 1);
-var root_1$8 = template(`<div class="profile svelte-m7l4mw"><!> <!></div>`);
+var root_1$9 = template(`<div class="profile svelte-m7l4mw"><!> <!></div>`);
 
 function Pin_profile($$anchor, $$props) {
 	push($$props, false);
@@ -17845,11 +17845,11 @@ function Pin_profile($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$8();
+			var div = root_1$9();
 			var node = child(div);
 
 			if_block(node, () => get(_contract), ($$anchor) => {
-				var div_1 = root_2$6();
+				var div_1 = root_2$7();
 				var div_2 = sibling(child(div_1), 2);
 				var node_1 = child(div_2);
 
@@ -18268,8 +18268,8 @@ function Pin_profile($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$5 = template(`<div class="error svelte-1wofc62"> </div>`);
-var root_1$7 = template(`<div class="form svelte-1wofc62"><label class="inline svelte-1wofc62"><input type="checkbox" class="svelte-1wofc62"> expose input pin as agent tool</label> <label class="svelte-1wofc62">id <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">title <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">description <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <div class="row svelte-1wofc62"><label class="svelte-1wofc62">risk <select class="svelte-1wofc62"><option>low</option><option>medium</option><option>high</option></select></label> <label class="svelte-1wofc62">approval <select class="svelte-1wofc62"><option>never</option><option>on-request</option><option>always</option></select></label></div> <label class="svelte-1wofc62">timeoutMs <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">schema JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">effects JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">examples JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">usageGuidance JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <!></div>`);
+var root_2$6 = template(`<div class="error svelte-1wofc62"> </div>`);
+var root_1$8 = template(`<div class="form svelte-1wofc62"><label class="inline svelte-1wofc62"><input type="checkbox" class="svelte-1wofc62"> expose input pin as agent tool</label> <label class="svelte-1wofc62">id <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">title <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">description <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <div class="row svelte-1wofc62"><label class="svelte-1wofc62">risk <select class="svelte-1wofc62"><option>low</option><option>medium</option><option>high</option></select></label> <label class="svelte-1wofc62">approval <select class="svelte-1wofc62"><option>never</option><option>on-request</option><option>always</option></select></label></div> <label class="svelte-1wofc62">timeoutMs <input spellcheck="false" class="svelte-1wofc62"></label> <label class="svelte-1wofc62">schema JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">effects JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">examples JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <label class="svelte-1wofc62">usageGuidance JSON <textarea spellcheck="false" class="svelte-1wofc62"></textarea></label> <!></div>`);
 
 function Pin_tool($$anchor, $$props) {
 	push($$props, false);
@@ -18438,7 +18438,7 @@ function Pin_tool($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$7();
+			var div = root_1$8();
 			var label_1 = child(div);
 			var input = child(label_1);
 
@@ -18510,7 +18510,7 @@ function Pin_tool($$anchor, $$props) {
 			var node = sibling(label_11, 2);
 
 			if_block(node, () => get(error), ($$anchor) => {
-				var div_2 = root_2$5();
+				var div_2 = root_2$6();
 				var text_1 = child(div_2);
 				template_effect(() => set_text(text_1, get(error)));
 				append($$anchor, div_2);
@@ -18535,8 +18535,8 @@ function Pin_tool($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$4 = template(`<div class="error svelte-1jevcjj"> </div>`);
-var root_1$6 = template(`<div class="form svelte-1jevcjj"><label class="inline svelte-1jevcjj"><input type="checkbox" class="svelte-1jevcjj"> expose output pin as agent event</label> <label class="svelte-1jevcjj">id <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">title <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">description <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <label class="svelte-1jevcjj">schema JSON <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <!></div>`);
+var root_2$5 = template(`<div class="error svelte-1jevcjj"> </div>`);
+var root_1$7 = template(`<div class="form svelte-1jevcjj"><label class="inline svelte-1jevcjj"><input type="checkbox" class="svelte-1jevcjj"> expose output pin as agent event</label> <label class="svelte-1jevcjj">id <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">title <input spellcheck="false" class="svelte-1jevcjj"></label> <label class="svelte-1jevcjj">description <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <label class="svelte-1jevcjj">schema JSON <textarea spellcheck="false" class="svelte-1jevcjj"></textarea></label> <!></div>`);
 
 function Pin_event($$anchor, $$props) {
 	push($$props, false);
@@ -18665,7 +18665,7 @@ function Pin_event($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$6();
+			var div = root_1$7();
 			var label_1 = child(div);
 			var input = child(label_1);
 
@@ -18684,7 +18684,7 @@ function Pin_event($$anchor, $$props) {
 			var node = sibling(label_5, 2);
 
 			if_block(node, () => get(error), ($$anchor) => {
-				var div_1 = root_2$4();
+				var div_1 = root_2$5();
 				var text_1 = child(div_1);
 				template_effect(() => set_text(text_1, get(error)));
 				append($$anchor, div_1);
@@ -18703,7 +18703,7 @@ function Pin_event($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$5 = template(`<p class="svelte-nkfvqo"> </p>`);
+var root_1$6 = template(`<p class="svelte-nkfvqo"> </p>`);
 
 function Message_box($$anchor, $$props) {
 	push($$props, false);
@@ -18711,40 +18711,41 @@ function Message_box($$anchor, $$props) {
 	let tx = prop($$props, "tx", 8);
 
 	// the popup box data
-	let box = {
+	let box = mutable_state({
 		div: null,
 		pos: null,
 		title: '',
 		ok: null,
 		cancel: null
-	};
+	});
 
 	let text = mutable_state('');
 
 	onMount(async () => {
-		tx().send("modal div", box.div);
+		tx().send("modal div", get(box).div);
 	});
 
 	const handlers = {
-		"-> show"({ title, message, pos, ok, cancel }) {
-			// notation
-			const box = this.popup.box;
-
+		"-> show"({ title, message, pos, ok, cancel } = {}) {
 			// set the box parameters
-			box.title = title;
+			mutate(box, get(box).title = title);
+			mutate(box, get(box).ok = ok);
+			mutate(box, get(box).cancel = cancel);
 			// The message to show
 			set(text, message);
 			// show
-			box.show(pos);
+			get(box).show(pos);
 		}
 	};
 
 	init();
 
 	Popup_box($$anchor, {
-		box,
+		get box() {
+			return get(box);
+		},
 		children: ($$anchor, $$slotProps) => {
-			var p = root_1$5();
+			var p = root_1$6();
 			var text_1 = child(p);
 			template_effect(() => set_text(text_1, get(text)));
 			append($$anchor, p);
@@ -18752,6 +18753,76 @@ function Message_box($$anchor, $$props) {
 		$$slots: { default: true }
 	});
 
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_2$4 = template(`<div class="title svelte-184ewf7"> </div>`);
+var root_1$5 = template(`<div class="toast svelte-184ewf7"><!> <div class="message svelte-184ewf7"> </div></div>`);
+var root$6 = template(`<div><!></div>`);
+
+function Toast_box($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8);
+	let div = mutable_state(null);
+	let title = mutable_state('');
+	let message = mutable_state('');
+	let visible = mutable_state(false);
+	let hideTimer = null;
+
+	onMount(() => {
+		tx().send('modal div', get(div));
+	});
+
+	const handlers = {
+		'-> show'(
+			{
+				title: nextTitle = '',
+				message: nextMessage = '',
+				duration = 2000
+			} = {}
+		) {
+			if (hideTimer) clearTimeout(hideTimer);
+			set(title, nextTitle);
+			set(message, nextMessage);
+			set(visible, true);
+
+			hideTimer = setTimeout(
+				() => {
+					set(visible, false);
+					hideTimer = null;
+				},
+				duration
+			);
+		}
+	};
+
+	init();
+
+	var div_1 = root$6();
+
+	bind_this(div_1, ($$value) => set(div, $$value), () => get(div));
+
+	var node = child(div_1);
+
+	if_block(node, () => get(visible), ($$anchor) => {
+		var div_2 = root_1$5();
+		var node_1 = child(div_2);
+
+		if_block(node_1, () => get(title), ($$anchor) => {
+			var div_3 = root_2$4();
+			var text = child(div_3);
+			template_effect(() => set_text(text, get(title)));
+			append($$anchor, div_3);
+		});
+
+		var div_4 = sibling(node_1, 2);
+		var text_1 = child(div_4);
+		template_effect(() => set_text(text_1, get(message)));
+		append($$anchor, div_2);
+	});
+	append($$anchor, div_1);
 	bind_prop($$props, "handlers", handlers);
 	return pop({ handlers });
 }
@@ -21157,6 +21228,7 @@ const PinProfileFactory = getFactory(Pin_profile);
 const PinToolFactory = getFactory(Pin_tool);
 const PinEventFactory = getFactory(Pin_event);
 const MessageBoxFactory = getFactory(Message_box);
+const ToastBoxFactory = getFactory(Toast_box);
 const NameAndPathFactory = getFactory(Name_path);
 const PathRequestFactory = getFactory(Path);
 const SingleTextFieldFactory = getFactory(Single_text_field);
@@ -21217,6 +21289,18 @@ const nodeList = [
 	name: "message box", 
 	uid: "bCec", 
 	factory: MessageBoxFactory,
+	inputs: [
+		"-> show"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
+	//___________________________________________________TOAST BOX
+	{
+	name: "toast box", 
+	uid: "LRpK", 
+	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
