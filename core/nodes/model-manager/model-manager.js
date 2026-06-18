@@ -64,6 +64,9 @@ ModelManager.prototype = {
         // rest the main flag
         this.setMainFlag(model)
 
+        // We also want the prompts here
+        model.is.withPrompts = true
+
         await this.modcom.refreshRaw(model)
         this.tx.send('model.resolved', model.getArl())
 
@@ -211,6 +214,9 @@ ModelManager.prototype = {
 
         // reset the main flag on all cached models
         this.setMainFlag(model)
+
+        // We want the prompts as well
+        model.is.withPrompts = true
 
         // reset the main flag to force reading the main model
         if (forceReloadMain) model.is.main = false

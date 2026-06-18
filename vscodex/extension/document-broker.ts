@@ -208,6 +208,39 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			return;
 		}
 
+		case 'HTTP-STAT': {
+
+			// make a URI from the arl
+			const uri = this.makeUri(message.arl);
+
+			// check
+			if (!uri) {
+				console.error('INVALID ARL', message.arl);
+				broker.postMessage({verb:'404',rqKey:message.rqKey, arl:message.arl});
+				return;
+			}
+
+			try {
+				const stat = await vscode.workspace.fs.stat(uri);
+				broker.postMessage({
+					verb:'200',
+					rqKey:message.rqKey,
+					content: {
+						mtime: stat.mtime,
+						ctime: stat.ctime,
+						size: stat.size,
+						type: stat.type,
+					}
+				});
+			}
+			catch {
+				broker.postMessage({verb:'404',rqKey:message.rqKey, arl:message.arl});
+			}
+
+			// done
+			return;
+		}
+
 		// request from the webview (arl) to save data to a file
 		case 'HTTP-POST': {
 

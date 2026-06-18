@@ -313,11 +313,23 @@
         },
 
         "prompt": { "type": "string" },
+        "promptRepo": { "$ref": "#/$defs/PromptRepo" },
 
         "sx": { "$ref": "#/$defs/NodeInitialization" },
         "rx": { "$ref": "#/$defs/RuntimeDirectives" }
       },
       "required": ["kind", "name"]
+    },
+
+    "PromptRepo": {
+      "description": "External model-owned prompt repository for a node and its pins.",
+      "type": "object",
+      "properties": {
+        "arl": { "type": "string", "minLength": 1 },
+        "pathKind": { "type": "integer" }
+      },
+      "required": ["arl", "pathKind"],
+      "additionalProperties": false
     },
 
     "SourceNodeSpec": {

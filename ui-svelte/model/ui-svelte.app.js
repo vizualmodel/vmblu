@@ -227,7 +227,8 @@ const nodeList = [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> ()"
+		"modal div -> ()",
+		"pin prompt -> ()"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS

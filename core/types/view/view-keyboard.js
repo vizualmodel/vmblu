@@ -38,7 +38,14 @@ export const keyboardHandling = {
             const done = ( e.key.length > 1 || e.ctrlKey) ? this.textField.handleSpecialKey?.(e) : this.textField.handleKey?.(e)
     
             // continue editing ?
-            if (done) this.stateSwitch(doing.nothing)
+            if (done) {
+
+                // do a state switch
+                this.stateSwitch(doing.nothing)
+
+                // signal the end of the edit
+                tx.send('redox.doit',{verb: 'endOfTextFieldEdit'})
+            }
 
             return true
         }

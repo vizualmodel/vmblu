@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // Model: 
 // Path: /c:/dev/vmblu/vscodex/webview/model/webview.app.js
-// Creation date 5/29/2026, 10:31:32 AM
+// Creation date 6/17/2026, 12:09:50 PM
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -37,7 +37,7 @@ const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker", 
-	uid: "Ksns", 
+	uid: "BKEI", 
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
@@ -54,21 +54,21 @@ const nodeList = [
 		],
 	outputs: [
 		`set document -> [ 
-			"model.set @ model manager (WNAt)",
-			"top level view @ view manager (ecaZ)" ]`,
+			"model.set @ model manager (GSYC)",
+			"top level view @ view manager (gPzt)" ]`,
 		"get document -> ()",
-		"reload model -> sync model @ model manager (WNAt)",
-		"model.save -> model.save @ model manager (WNAt)",
-		"sync links -> sync links @ model manager (WNAt)",
-		"canvas resize -> size change @ view manager (ecaZ)",
-		"clipboard.local => local @ clipboard (tjra)",
-		"clipboard.switched -> switched @ clipboard (tjra)"
+		"reload model -> sync model @ model manager (GSYC)",
+		"model.save -> model.save @ model manager (GSYC)",
+		"sync links -> sync links @ model manager (GSYC)",
+		"canvas resize -> size change @ view manager (gPzt)",
+		"clipboard.local => local @ clipboard (tuYb)",
+		"clipboard.switched -> switched @ clipboard (tuYb)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager", 
-	uid: "ecaZ", 
+	uid: "gPzt", 
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -79,25 +79,25 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (WNAt)",
-		"redox.undo -> redox.undo @ model manager (WNAt)",
-		"redox.redo -> redox.redo @ model manager (WNAt)",
-		"canvas -> canvas @ message broker (Ksns)",
-		"node settings (sx) -> json @ node settings (dEDy)",
-		"runtime settings (dx) -> show @ runtime settings (Izcj)",
-		"node prompt -> markdown @ markdown prompt (HGXo)",
-		"context menu -> context menu @ context menu (tBSh)",
-		"name and path -> name and path @ name and path (PCre)",
-		"open model -> open document @ message broker (Ksns)",
-		"open source file -> open js file @ message broker (Ksns)",
-		"clipboard.get => get @ clipboard (tjra)",
-		"clipboard.set -> set @ clipboard (tjra)"
+		"redox.doit -> redox.doit @ model manager (GSYC)",
+		"redox.undo -> redox.undo @ model manager (GSYC)",
+		"redox.redo -> redox.redo @ model manager (GSYC)",
+		"canvas -> canvas @ message broker (BKEI)",
+		"node settings (sx) -> json @ node settings (FQMs)",
+		"runtime settings (dx) -> show @ runtime settings (Rsqj)",
+		"node prompt -> markdown @ markdown prompt (Iamb)",
+		"context menu -> context menu @ context menu (Akzp)",
+		"name and path -> name and path @ name and path (Vkzd)",
+		"open model -> open document @ message broker (BKEI)",
+		"open source file -> open js file @ message broker (BKEI)",
+		"clipboard.get => get @ clipboard (tuYb)",
+		"clipboard.set -> set @ clipboard (tuYb)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager", 
-	uid: "WNAt", 
+	uid: "GSYC", 
 	factory: ModelManager,
 	inputs: [
 		"-> sync model",
@@ -116,26 +116,26 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (gJzZ)",
-		"open source file -> open js file @ message broker (Ksns)",
+		"save point.confirm -> show @ confirm box (ZkcH)",
+		"open source file -> open js file @ message broker (BKEI)",
 		"open model -> ()",
-		"model.root -> root @ view manager (ecaZ)",
-		"model.header -> show @ doc settings(0) (jVZV)",
-		"model.resolved -> model.resolved @ message broker (Ksns)",
+		"model.root -> root @ view manager (gPzt)",
+		"model.header -> show @ doc settings(0) (WVrO)",
+		"model.resolved -> model.resolved @ message broker (BKEI)",
 		`redox.done -> [ 
-			"redox.done @ view manager (ecaZ)",
-			"new edit @ message broker (Ksns)" ]`,
-		"pin profile -> show @ pin profile (kZqQ)",
-		"get path -> path @ path request (cbcn)",
-		"tool settings -> show @ tool settings (oPup)",
-		"event settings -> show @ event settings (Qslw)",
-		"info popup -> show @ toast box (LrNb)"
+			"redox.done @ view manager (gPzt)",
+			"new edit @ message broker (BKEI)" ]`,
+		"pin profile -> show @ pin profile (Mtkb)",
+		"get path -> path @ path request (PNCi)",
+		"tool settings -> show @ tool settings (OvKh)",
+		"event settings -> show @ event settings (nCkc)",
+		"info popup -> show @ toast box (qzTo)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "tjra", 
+	uid: "tuYb", 
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -144,212 +144,213 @@ const nodeList = [
 		"-> switched"
 		],
 	outputs: [
-		"remote => clipboard.remote @ message broker (Ksns)",
-		"switch -> clipboard.switch @ message broker (Ksns)"
+		"remote => clipboard.remote @ message broker (BKEI)",
+		"switch -> clipboard.switch @ message broker (BKEI)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "cbcn", 
+	uid: "PNCi", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"folder.get => folder.get @ message broker (Ksns)",
-		"modal div -> modal div @ message broker (Ksns)"
+		"folder.get => folder.get @ message broker (BKEI)",
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings", 
-	uid: "dEDy", 
+	uid: "FQMs", 
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path", 
-	uid: "PCre", 
+	uid: "Vkzd", 
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)",
-		"folder.get => folder.get @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)",
+		"folder.get => folder.get @ message broker (BKEI)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile", 
-	uid: "kZqQ", 
+	uid: "Mtkb", 
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)",
+		"pin prompt -> markdown @ markdown prompt (Iamb)"
 		]
 	},
 	//_____________________________________________MARKDOWN PROMPT
 	{
 	name: "markdown prompt", 
-	uid: "HGXo", 
+	uid: "Iamb", 
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu", 
-	uid: "tBSh", 
+	uid: "Akzp", 
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings", 
-	uid: "Izcj", 
+	uid: "Rsqj", 
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings", 
-	uid: "oPup", 
+	uid: "OvKh", 
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings", 
-	uid: "Qslw", 
+	uid: "nCkc", 
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box", 
-	uid: "gJzZ", 
+	uid: "ZkcH", 
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_____________________________________________DOC SETTINGS(0)
 	{
 	name: "doc settings(0)", 
-	uid: "jVZV", 
+	uid: "WVrO", 
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)",
-		"agent settings -> show @ agent settings (UipE)",
-		"model runtime settings -> show @ model runtime settings (UoEH)"
+		"modal div -> modal div @ message broker (BKEI)",
+		"agent settings -> show @ agent settings (HNIi)",
+		"model runtime settings -> show @ model runtime settings (ZchE)"
 		]
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings", 
-	uid: "UoEH", 
+	uid: "ZchE", 
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings", 
-	uid: "UipE", 
+	uid: "HNIi", 
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box", 
-	uid: "oIvV", 
+	uid: "Nege", 
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box", 
-	uid: "LrNb", 
+	uid: "qzTo", 
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Ksns)"
+		"modal div -> modal div @ message broker (BKEI)"
 		]
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu", 
-	uid: "HyVX", 
+	uid: "hTVZ", 
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (Ksns)",
-		"sync model -> sync model @ model manager (WNAt)",
-		"accept changes -> accept changes @ model manager (WNAt)",
-		"wire check -> wire check @ model manager (WNAt)",
-		"show settings -> show settings @ model manager (WNAt)",
-		"make app -> make app @ model manager (WNAt)",
-		"make lib -> make lib @ model manager (WNAt)",
-		"set save point -> save point.set @ model manager (WNAt)",
-		"back to save point -> save point.back @ model manager (WNAt)",
-		"recalibrate -> recalibrate @ view manager (ecaZ)",
-		"grid on-off -> grid on-off @ view manager (ecaZ)"
+		"div -> floating menu @ message broker (BKEI)",
+		"sync model -> sync model @ model manager (GSYC)",
+		"accept changes -> accept changes @ model manager (GSYC)",
+		"wire check -> wire check @ model manager (GSYC)",
+		"show settings -> show settings @ model manager (GSYC)",
+		"make app -> make app @ model manager (GSYC)",
+		"make lib -> make lib @ model manager (GSYC)",
+		"set save point -> save point.set @ model manager (GSYC)",
+		"back to save point -> save point.back @ model manager (GSYC)",
+		"recalibrate -> recalibrate @ view manager (gPzt)",
+		"grid on-off -> grid on-off @ view manager (gPzt)"
 		],
 	sx:	[
 		    {

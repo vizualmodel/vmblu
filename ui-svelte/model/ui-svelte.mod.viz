@@ -232,13 +232,14 @@
           {
             "kind": "source",
             "name": "pin profile",
-            "rect": "x 568 y 172 w 150 h 56",
+            "rect": "x 568 y 172 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 R)show",
-                  "(2 L)modal div"
+                  "(2 L)modal div",
+                  "(3 L)pin prompt"
                 ]
               }
             ]
@@ -504,16 +505,16 @@
           {
             "kind": "source",
             "name": "vscode side menu",
-            "rect": "x 317 y 369 w 200 h 206",
+            "rect": "x 317 y 369 w 200 h 221",
             "interfaces": [
               {
-                "interface": "(13) dom",
+                "interface": "(16) dom",
                 "pins": [
                   "(2 L)div"
                 ]
               },
               {
-                "interface": "(14) menu items",
+                "interface": "(17) menu items",
                 "pins": [
                   "(3 L)accept changes",
                   "(4 L)recalibrate",
@@ -523,7 +524,8 @@
                   "(8 L)set save point",
                   "(9 L)back to save point",
                   "(10 L)make lib",
-                  "(11 L)make app"
+                  "(11 L)make app",
+                  "(15 L)wire check"
                 ]
               }
             ]

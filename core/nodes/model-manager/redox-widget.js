@@ -55,6 +55,13 @@ export const redoxWidget = {
         },
     },
 
+    // End of text field edit is here to force a save when a field has been edited.
+    endOfTextFieldEdit: {
+        doit() {},
+        undo() {},
+        redo() {}
+    },
+
     disconnectPin: {
         doit({ pin }) {
             // save the routes before disconnecting ...
@@ -203,6 +210,26 @@ export const redoxWidget = {
         },
     },
 
+    changePinPrompt: {
+        doit({ pin, prompt }) {
+            if (!pin) return;
+
+            const oldPrompt = pin.prompt ?? '';
+            const newPrompt = prompt?.length ? prompt : '';
+
+            if (newPrompt === oldPrompt) return;
+
+            pin.prompt = newPrompt;
+            this.saveEdit('changePinPrompt', {pin, oldPrompt, newPrompt});
+        },
+        undo({ pin, oldPrompt }) {
+            pin.prompt = oldPrompt;
+        },
+        redo({ pin, newPrompt }) {
+            pin.prompt = newPrompt;
+        },
+    },
+
     pinDrag: {
         doit({ pin, oldY, oldLeft}) {
             // just save the current position
@@ -234,6 +261,12 @@ export const redoxWidget = {
                 ? manager.model.getInputPinProfile(pin)
                 : manager.model.getOutputPinProfile(pin);
 
+            const legacySummary = sourceSummary(profile);
+            if (!pin.prompt && legacySummary) {
+                this.changePinPrompt.doit.call(this, {pin, prompt: legacySummary});
+                manager.tx.send('redox.done', {verb: 'changePinPrompt'});
+            }
+
             // show the profile
             manager.tx.send('pin profile', {
                 
@@ -249,6 +282,12 @@ export const redoxWidget = {
 
                     // request to open the source file
                     manager.tx.send('open source file', { arl, line: loc.line });
+                },
+
+                editPrompt: ({pin, prompt, done}) => {
+                    this.changePinPrompt.doit.call(this, {pin, prompt});
+                    manager.tx.send('redox.done', {verb: 'changePinPrompt'});
+                    done?.();
                 },
             });
         },
@@ -419,4 +458,11 @@ function normalizeSettings(settings) {
 
 function isEnabledCapability(pin) {
     return pin?.tool?.enabled === true || pin?.event?.enabled === true;
+}
+
+function sourceSummary(profile) {
+    if (Array.isArray(profile)) {
+        return profile.find(item => item?.summary)?.summary ?? '';
+    }
+    return profile?.summary ?? '';
 }

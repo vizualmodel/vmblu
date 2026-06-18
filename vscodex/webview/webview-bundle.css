@@ -1165,6 +1165,28 @@ textarea.svelte-1dybe9r {
     margin: 0;
 }
 
+.section-header.svelte-1oswn12 {
+    align-items: center;
+    display: flex;
+    gap: 0.35rem;
+}
+
+.section-edit.svelte-1oswn12 {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #c0c022;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.section-edit.svelte-1oswn12:hover {
+    color: #ffff00;
+}
+
 .lines.svelte-1oswn12 {
     display: grid;
     gap: 0.25rem;
@@ -1192,11 +1214,34 @@ textarea.svelte-1dybe9r {
     gap: 0.16rem;
 }
 
+.contract-toggle.svelte-1oswn12 {
+    align-items: center;
+    background: #272727;
+    border: 1px solid #555;
+    border-radius: 0.15rem;
+    color: #44a3fc;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: var(--fFixed);
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+}
+
+.contract-toggle.svelte-1oswn12:hover {
+    border-color: #888;
+}
+
+.contract-toggle-icon.svelte-1oswn12 {
+    font-size: 0.85rem;
+    line-height: 1;
+    margin-right: 0.12rem;
+}
+
 .contract-line.svelte-1oswn12 {
     padding-left: calc(var(--indent, 0) * 1rem);
 }
 
-.brace.svelte-1oswn12,
 .field.svelte-1oswn12,
 .endpoint.svelte-1oswn12,
 .summary.svelte-1oswn12, 

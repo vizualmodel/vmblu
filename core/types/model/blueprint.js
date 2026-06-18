@@ -8,6 +8,7 @@ import {CapabilityHandling} from './blueprint-cap.js'
 import {AppHandling} from './blueprint-app.js'
 import {TestHandling} from './blueprint-tst.js'
 import {LibHandling} from './blueprint-lib.js'
+import {PromptHandling} from './blueprint-prompt.js'
 
 
 export function ModelBlueprint(arl) {
@@ -16,6 +17,7 @@ export function ModelBlueprint(arl) {
     this.is = {
         selectable: false,  // will be set if this model is visible in the select node popup
         main: false,        // set to true for the main model
+        withPrompts: false  // set true if the prompt files need to be read
     }
 
     this.blu = {
@@ -280,4 +282,4 @@ ModelBlueprint.prototype = {
 
 }
 
-Object.assign(ModelBlueprint.prototype, RawHandling, ProfileHandling, CapabilityHandling, AppHandling, TestHandling, LibHandling)
+Object.assign(ModelBlueprint.prototype, RawHandling, PromptHandling, ProfileHandling, CapabilityHandling, AppHandling, TestHandling, LibHandling)

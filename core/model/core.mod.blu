@@ -749,7 +749,7 @@
       {
         "kind": "source",
         "name": "view manager",
-        "label": "Manages the views and the ui",
+        "label": "Manages the views and the uio",
         "factory": {
           "path": "../nodes/view-manager/view-manager.js",
           "function": "ViewManager"
