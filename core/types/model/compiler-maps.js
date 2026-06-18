@@ -8,6 +8,7 @@ async ensureModelCurrent(model) {
     if (!model) return false
 
     if (model.is.main && model.raw) {
+        if (model.is.withPrompts) await model.hydratePromptRepos?.(model.raw)
         model.preCook()
         if (model.sourceProfileOrigin !== 'host') {
             await model.handleSourceProfile().catch(() => {})
@@ -20,6 +21,7 @@ async ensureModelCurrent(model) {
     const needsReload = !model.raw || !stamp || !model.stamp || (stamp !== model.stamp)
 
     if (!needsReload) {
+        if (model.is.withPrompts) await model.hydratePromptRepos?.(model.raw)
         model.blu.is.fresh = false
         model.viz.is.fresh = false
         return true
@@ -48,6 +50,7 @@ async refreshRaw(model) {
 
     // take the model found or the model that is new
     const activeModel = knownModel ?? model
+    if (model.is.withPrompts) activeModel.is.withPrompts = true
 
     // load or reload
     if (!await this.ensureModelCurrent(activeModel)) return
@@ -72,6 +75,7 @@ async addImports(model, imports) {
         const linkedArl = model.blu.arl.resolve(rawModel)
         if (!linkedArl) continue
         const linkedModel = this.models.findArl(linkedArl) ?? new ModelBlueprint(linkedArl)
+        if (model.is.withPrompts) linkedModel.is.withPrompts = true
         pList.push(this.refreshRaw(linkedModel))
     }
 

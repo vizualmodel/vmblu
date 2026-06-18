@@ -104,11 +104,16 @@ async getRaw() {
     // set raw in the model
     this.raw = bRaw
 
+    // get the prompts for the nodes and pins
+    if (this.is.withPrompts) await this.hydratePromptRepos?.(bRaw)
+
     // We also return the result
     return bRaw
 },
 
 saveRaw() {
+
+    const promptFiles = this.preparePromptReposForSave?.(this.raw) ?? []
 
     // now split the result in two parts
     const split = this.splitRaw(this.raw)
@@ -118,8 +123,11 @@ saveRaw() {
     const viz = JSON.stringify(split.viz,null,2)
 
     // save both parts of the model
-    if (blu) this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error))
-    if (viz) this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error))
+    const saves = []
+    if (blu) saves.push(this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error)))
+    if (viz) saves.push(this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error)))
+
+    Promise.allSettled(saves).then(() => this.savePromptRepos?.(promptFiles))
 },
 
 // Splits raw into a part for the blu file and the viz file
@@ -201,6 +209,9 @@ splitNode(rNode) {
     }
     if (rNode.label) blu.label = rNode.label
     if (rNode.prompt) blu.prompt = rNode.prompt;
+    if (rNode.promptRepo && rNode.kind !== 'dock') {
+        blu.promptRepo = rNode.promptRepo.makeRaw ? rNode.promptRepo.makeRaw(this.blu.arl) : rNode.promptRepo;
+    }
     if (rNode.probes) blu.probes = rNode.probes;
 
     const viz = {

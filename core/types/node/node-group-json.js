@@ -16,7 +16,8 @@ export const jsonHandling = {
         const raw = { kind: "group", name: this.name, rect} 
 
         if (label) raw.label = label
-        if (this.prompt) raw.prompt = this.prompt
+        if (this.promptRepo) raw.promptRepo = this.promptRepo.makeRaw(refArl)
+        else if (this.prompt) raw.prompt = this.prompt
         if (this.savedView) raw.view = this.savedView.raw ? this.savedView : this.savedView.makeRaw();
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx    
@@ -59,7 +60,6 @@ export const jsonHandling = {
 
         // add if present
         if (label) raw.label = label
-        if (this.prompt) raw.prompt = this.prompt
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx    
         if (this.dx) raw.dx = this.dx

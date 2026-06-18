@@ -7,6 +7,7 @@ import {routeHandling} from './node-routes.js'
 import {compareHandling} from './node-compare.js'
 import {Look} from './look.js'
 import {zap} from '../view/index.js'
+import {resolvePromptRepo} from './prompt-repo.js'
 
 // The node in a nodegraph
 export function Node (look=null, name=null, uid=null) {
@@ -40,6 +41,9 @@ export function Node (look=null, name=null, uid=null) {
 
     // comment is an optional text field for the node
     this.prompt = null
+
+    // Optional model-owned external prompt repository for this node.
+    this.promptRepo = null
 
     // Agent probe metadata authored on source nodes.
     this.probes = null
@@ -227,6 +231,11 @@ Node.prototype = {
     
         // check if the node has a comment
         if (raw.prompt) this.prompt = raw.prompt
+
+        // check if the node has an external prompt repo
+        if (raw.promptRepo && raw.kind !== 'dock') {
+            this.promptRepo = resolvePromptRepo(raw.promptRepo, modcom.getCurrentModel()?.getArl?.())
+        }
 
         // check if the node has agent probe metadata
         if (raw.probes) this.probes = raw.probes

@@ -48,6 +48,7 @@ const sourceFunctions = {
 
         // copy the comment
         newNode.prompt = this.prompt ? this.prompt.slice() : null
+        newNode.promptRepo = this.promptRepo?.clone?.() ?? null
 
         // copy agent probe metadata
         newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null

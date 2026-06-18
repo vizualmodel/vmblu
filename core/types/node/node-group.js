@@ -168,6 +168,7 @@ const groupFunctions = {
 
         // copy the comment
         newNode.prompt = this.prompt ? this.prompt.slice() : null;
+        newNode.promptRepo = this.promptRepo?.clone?.() ?? null
 
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;

@@ -5,7 +5,7 @@ Modern LLMs make it easy to “vibe code”. But as your app grows, features bre
 
 **vmblu** fixes that by making your architecture *structured, visual, and AI-native*. With vmblu, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
-## `▞   What is vmblu?`
+## `What is vmblu?`
 
 **vmblu** is a format spec and tool set, for building trusted, maintainable software with AI. **vmblu** makes the architecture of your software explicit and easier to navigate and understand — by humans and LLMs. With **vmblu** architecture comes first.
 
@@ -17,7 +17,7 @@ Modern LLMs make it easy to “vibe code”. But as your app grows, features bre
 
 The **vmblu model** is not documentation, it is the actual system. The graphical **vmblu** model lets you understand and reason about the architecture. The **vmblu** runtime keeps the application safe.
 
-## `▞   vmblu is for developers`
+## `vmblu is for developers`
 
 - **vmblu** is a tool targeted at developers whose role is changing with the arrival of powerful AI.
 - **vmblu** is for building real, complex systems. It is an excellent foundation to build agentic systems. 
@@ -25,7 +25,7 @@ The **vmblu model** is not documentation, it is the actual system. The graphical
 
 **vmblu** is currently at version 0.x.y, with version 1.0.0 planned in the second quarter of the year (2026). It is in good shape, but expect updates.
 
-## `▞   Quick start`
+## `Quick start`
 
 - Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=vizualmodel.vmblu)
 - Add the runtime with: `npm install @vizualmodel/vmblu-runtime`  
@@ -33,11 +33,11 @@ The **vmblu model** is not documentation, it is the actual system. The graphical
 - Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
 - Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
 
-## `▞   Open source`
+## `Open source`
 
 **vmblu** is licensed under the [Apache License 2.0](./LICENSE.txt).
 
-## `▞   Screenshot`
+## `Screenshot`
 
 ![vmblu screenshot](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-screenshot.png)
 

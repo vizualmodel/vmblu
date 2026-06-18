@@ -172,7 +172,82 @@ Think: *intent note*, not documentation.
 * request: *“Requests the active camera data.”*
 * reply: *“Returns the spec of the active camera to the requestor.”*
 
-## A.7 Request / Reply Semantics
+## A.7 Prompt repositories
+
+Node and pin prompts are part of the model, but they do not have to be stored inline in the `.mod.blu` file. A node may use `promptRepo` to point to a model-owned markdown file that contains the prompt for the node and the prompts for its pins.
+
+Use external prompt files as the normal form for non-trivial models. This keeps the structural model - nodes, interfaces, pins, contracts and connections - readable for humans and coding agents while still keeping design prompts under model ownership.
+
+### PromptRepo object
+
+`promptRepo` belongs on a non-dock node. Dock nodes do not have their own prompts; they get their meaning from the linked node.
+
+The `promptRepo` object contains:
+
+```json
+{
+  "arl": "./prompts/NodeName.md",
+  "pathKind": 2
+}
+```
+
+- `arl` is resolved relative to the current model file.
+- `pathKind` uses the same values as vmblu `Path.Kind`.
+
+
+### File layout
+
+Use one markdown prompt file per non-dock node. The conventional folder is `prompts/` next to the model file:
+
+```text
+model/
+  server.mod.blu
+  prompts/
+    Transport.md
+    Authentication.md
+    DataCenter.md
+```
+
+For nodes inside a group node, place child prompt files in a folder named after the group node:
+
+```text
+model/
+  prompts/
+    GroupNode.md
+    GroupNode/
+      ChildNode.md
+      OtherChildNode.md
+```
+
+A group node may therefore have both its own prompt file and a folder for its child nodes.
+
+### Markdown format
+
+Prompt files use this simple markdown structure:
+
+```md
+# NodeName
+
+## Node
+
+Node-level prompt text.
+
+## Pins
+
+### interface.pin-name
+
+Pin-level prompt text.
+```
+
+The `## Node` section contains the node prompt. The `## Pins` section contains one `###` subsection per pin, using the exact pin name from the model. If a file cannot be read or parsed, tools may fail silently and leave existing prompts unchanged.
+
+### Guidance for coding agents
+
+When implementing a node, inspect the structural model first: node kind, factory, interfaces, pins, contracts, connections, types, runtime settings and capabilities. Then read the node's `promptRepo` file, if present, for design intent.
+
+Prompts are design-time guidance. They help an agent understand intent, but contracts, types, capabilities, runtime settings and source code remain the authoritative sources for executable behavior. When code has been implemented and later diverges from an old prompt, prefer the current model and source code over stale prompt text unless the user explicitly asks to update the prompt.
+
+## A.8 Request / Reply Semantics
 
 A Request/Reply connection allows to group a message and the response to that message in one exchange. 
 Because the Request/Reply connection consists of two data exchanges, the request and the reply, the contract for the pin in the owner-role contains two vmbluTypes: one for the request and one for the reply.
@@ -215,7 +290,7 @@ Because the Request/Reply connection consists of two data exchanges, the request
     }
     ```
 
-## A.8 Factory Function Signature
+## A.9 Factory Function Signature
 
 A source node references its implementation via a **factory** object (`path` + `function`).  
 The factory function is called by the runtime to create the node instance.
@@ -238,13 +313,13 @@ The tage remains valid until the end of the file or until a new node tag is defi
 - sx: arbitrary initialization data supplied by the model. sx can be null.
 - rx: not passed to the node. Runtime-only directives; used by the runtime to decide how/where to host the node (e.g. worker thread, debug flags).
 
-## A.9 Dock Nodes and Drift
+## A.10 Dock Nodes and Drift
 
 - A dock node references another node defined in a different file via a link.
 - Pins and connections of the dock node are kept in the importing file.
 - If the external node definition changes, the editor highlights differences (“drift”) between the dock node and its linked definition.
 
-## A.10 Agent Capabilities
+## A.11 Agent Capabilities
 
 Vmblu exposes application behaviour to coding agents and LLM clients through model-defined capabilities. Capabilities are declared in the blueprint and generated into a capability manifest with `vmblu make-capabilities <entrypoint>.blu`.
 
@@ -303,7 +378,7 @@ agent or provider adapter
 
 MCP remains useful as an adapter format, but the blueprint capability metadata is the authoritative model. Do not mark handlers with source-level tags to expose them as agent tools; define tools, probes and events in the model.
 
-## A.11 Architecture-First Model Design
+## A.12 Architecture-First Model Design
 
 Vmblu models can be used before implementation details are known. During early design, it is valid and often useful to model a system as a small number of coarse responsibility nodes with provisional pins and broad payload types. This gives humans and agents a concrete graph to discuss without forcing premature implementation decisions.
 
@@ -321,7 +396,7 @@ Do not treat an early model as incomplete merely because it lacks final source n
 
 When moving from architecture to implementation, make the refinement explicit. Replace broad payload types with structured types, promote group nodes to source nodes only when an implementation unit is ready, and add pin prompts or capability metadata only when they clarify actual behavior.
 
-## A.12 AI Generation Guidelines
+## A.13 AI Generation Guidelines
 
 For LLMs working with vmblu files:
 

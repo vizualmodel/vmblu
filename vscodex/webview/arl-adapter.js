@@ -120,6 +120,19 @@ const vscodeARLmethods = {
 		return 'file://' + encodeURI(prefixed);
 	},
 
+	async getMeta() {
+		return requestVsCode('HTTP-STAT', {arl:this});
+	},
+
+	async getStamp() {
+		const meta = await this.getMeta().catch(() => null);
+		if (!meta) return null;
+
+		const modified = meta.mtime ?? meta.modified ?? '';
+		const size = meta.size ?? '';
+		return (modified || size !== '') ? `modified:${modified}|size:${size}` : null;
+	},
+
 	// for get we use the access to the filesystem that we have at the vscode-side - therefore we send a message
 	async get( as = 'text') {
 		return requestVsCode('HTTP-GET', {arl:this, format: as});

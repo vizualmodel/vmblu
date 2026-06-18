@@ -954,6 +954,14 @@
                 "interface": "",
                 "pins": [
                   {
+                    "name": "pin prompt",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
                     "name": "show",
                     "kind": "input",
                     "contract": {
@@ -1377,6 +1385,16 @@
             },
             "dst": {
               "pin": "folder.get"
+            }
+          },
+          {
+            "src": {
+              "pin": "pin prompt",
+              "node": "pin profile"
+            },
+            "dst": {
+              "pin": "markdown",
+              "node": "markdown prompt"
             }
           },
           {

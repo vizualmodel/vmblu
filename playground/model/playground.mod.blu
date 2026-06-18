@@ -473,7 +473,7 @@
       {
         "kind": "dock",
         "name": "editor page",
-        "label": "The main editor window",
+        "label": "The main editor window layout",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vertical menu tabs content"
@@ -1750,6 +1750,14 @@
                 "interface": "",
                 "pins": [
                   {
+                    "name": "pin prompt",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
                     "name": "show",
                     "kind": "input",
                     "contract": {
@@ -2142,6 +2150,16 @@
             },
             "dst": {
               "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "pin prompt",
+              "node": "pin profile"
+            },
+            "dst": {
+              "pin": "markdown",
+              "node": "markdown input"
             }
           },
           {

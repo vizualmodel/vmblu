@@ -647,6 +647,14 @@
                       "role": "follower",
                       "payload": "DomElement"
                     }
+                  },
+                  {
+                    "name": "pin prompt",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
                   }
                 ]
               }
@@ -1588,6 +1596,14 @@
                     "contract": {
                       "role": "follower",
                       "payload": "UiEvent"
+                    }
+                  },
+                  {
+                    "name": "wire check",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
                     }
                   }
                 ]

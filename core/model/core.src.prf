@@ -1,6 +1,6 @@
 {
-  "version": "0.5.3",
-  "generatedAt": "2026-05-26T10:51:59.471Z",
+  "version": "0.5.5",
+  "generatedAt": "2026-06-17T09:58:42.355Z",
   "entries": [
     {
       "node": "document manager",
@@ -364,7 +364,7 @@
           "pin": "redox.doit",
           "handler": "onRedoxDoit",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 86,
+          "line": 87,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -389,7 +389,7 @@
           "pin": "redox.undo",
           "handler": "onRedoxUndo",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 96,
+          "line": 97,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -399,7 +399,7 @@
           "pin": "redox.redo",
           "handler": "onRedoxRedo",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 107,
+          "line": 108,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -409,7 +409,7 @@
           "pin": "accept.changes",
           "handler": "onAcceptChanges",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 119,
+          "line": 120,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -429,27 +429,7 @@
           "pin": "show.settings",
           "handler": "onShowSettings",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 146,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": []
-        },
-        {
-          "pin": "sync.links",
-          "handler": "onSyncLinks",
-          "file": "../nodes/model-manager/model-manager.js",
-          "line": 165,
-          "summary": "",
-          "returns": "",
-          "examples": [],
-          "params": []
-        },
-        {
-          "pin": "reload.model",
-          "handler": "onReloadModel",
-          "file": "../nodes/model-manager/model-manager.js",
-          "line": 169,
+          "line": 154,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -459,7 +439,17 @@
           "pin": "sync.model",
           "handler": "onSyncModel",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 210,
+          "line": 197,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sync.links",
+          "handler": "onSyncLinks",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 201,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -469,7 +459,7 @@
           "pin": "make.lib",
           "handler": "onMakeLib",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 213,
+          "line": 245,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -485,7 +475,7 @@
           "pin": "make.app",
           "handler": "onMakeApp",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 238,
+          "line": 270,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -501,7 +491,7 @@
           "pin": "model.save",
           "handler": "onModelSave",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 359,
+          "line": 391,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -517,7 +507,7 @@
           "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 388,
+          "line": 420,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -527,7 +517,7 @@
           "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 415,
+          "line": 447,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -536,29 +526,34 @@
       ],
       "transmits": [
         {
+          "pin": "model.resolved",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 68
+        },
+        {
           "pin": "model.root",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 78
+          "line": 79
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 93
+          "line": 94
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 104
+          "line": 105
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 116
+          "line": 117
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 128
+          "line": 129
         },
         {
           "pin": "info popup",
@@ -566,54 +561,59 @@
           "line": 142
         },
         {
+          "pin": "redox.done",
+          "file": "../nodes/model-manager/model-manager.js",
+          "line": 150
+        },
+        {
           "pin": "model.header",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 145
+          "line": 167
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 153
+          "line": 176
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 160
+          "line": 192
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 200
+          "line": 232
         },
         {
           "pin": "get path",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 252
+          "line": 284
         },
         {
           "pin": "model.root",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 348
+          "line": 380
         },
         {
           "pin": "model.root",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 353
+          "line": 385
         },
         {
           "pin": "save point.confirm",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 393
+          "line": 425
         },
         {
           "pin": "save point.confirm",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 421
+          "line": 453
         },
         {
           "pin": "redox.done",
           "file": "../nodes/model-manager/model-manager.js",
-          "line": 433
+          "line": 465
         }
       ]
     },
@@ -659,22 +659,22 @@
         {
           "pin": "runtime settings (dx)",
           "file": "../types/node/node-icon-click.js",
-          "line": 159
+          "line": 160
         },
         {
           "pin": "node prompt",
           "file": "../types/node/node-icon-click.js",
-          "line": 171
+          "line": 173
         },
         {
           "pin": "open model",
           "file": "../types/node/node-icon-click.js",
-          "line": 193
+          "line": 195
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 206
+          "line": 208
         }
       ]
     }

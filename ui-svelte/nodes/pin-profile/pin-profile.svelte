@@ -21,15 +21,17 @@
     let _pin = null
     let _open = null
     let _contract = null
+    let _expandedContract = {}
 
     // small helper
     const closeBox = () => {
         _pin = null
+        _editPrompt = null
         box.hide()        
     }
 
     export const handlers = {
-        onShow({ pos, pin, contract, profile, open = null }) {
+        onShow({ pos, pin, contract, profile, open = null, editPrompt = null }) {
 
             // check and just hide if repeat
             if (_pin && pin === _pin) return closeBox();
@@ -39,9 +41,13 @@
             _contract = contract;
             _profile = profile;
             _open = open
+            _editPrompt = editPrompt
+            _expandedContract = {}
             box.show(pos);
         }
     };
+
+    let _editPrompt = null;
 
     function onProfileKeydown(e) {
         if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
@@ -64,6 +70,36 @@
         return String(text ?? '').replace(/^\s*-\s*/, '').trim();
     }
 
+    function sourceSummary(profile) {
+        if (Array.isArray(profile)) {
+            return profile.find(item => item?.summary)?.summary ?? '';
+        }
+        return profile?.summary ?? '';
+    }
+
+    function editPrompt() {
+        if (!_pin) return;
+        tx.send('pin prompt', {
+            header: 'Prompt for ' + _pin.name + ' @ ' + _pin.node.name,
+            pos: box.div
+                ? { x: box.div.offsetLeft + 24, y: box.div.offsetTop + 24 }
+                : box.pos,
+            text: _pin.prompt ?? '',
+            ok: (prompt) => {
+                _editPrompt?.({
+                    pin: _pin,
+                    prompt,
+                    done: () => {
+                        _pin = _pin;
+                    },
+                });
+            },
+        });
+    }
+
+    $: _modelPrompt = _pin?.prompt ?? '';
+    $: _sourceSummary = sourceSummary(_profile);
+
     function contractRow(line) {
         const parts = line.parts ?? [];
         const header = partText(parts, 'header');
@@ -75,6 +111,63 @@
         if (header) return { kind: 'header', key: header };
         if (field) return { kind: 'field', key: field, type, summary };
         return { kind: 'type', type, typeKind: kind, summary };
+    }
+
+    function contractOverview(contract) {
+        if (!contract) return [];
+
+        if (contract.request || contract.reply) {
+            return [
+                {
+                    key: 'request',
+                    label: 'request',
+                    type: contract.request?.type ?? contract.payload?.request ?? 'any',
+                    typeKind: contract.request?.kind ?? '',
+                    summary: contract.request?.summary ?? '',
+                },
+                {
+                    key: 'reply',
+                    label: 'reply',
+                    type: contract.reply?.type ?? contract.payload?.reply ?? 'any',
+                    typeKind: contract.reply?.kind ?? '',
+                    summary: contract.reply?.summary ?? '',
+                },
+            ];
+        }
+
+        return [{
+            key: 'payload',
+            label: 'payload',
+            type: contract.type ?? contract.payload ?? 'any',
+            typeKind: contract.kind ?? '',
+            summary: contract.summary ?? '',
+        }];
+    }
+
+    function contractDetailTokens(contract, key) {
+        const tokens = contract?.tokens ?? [];
+        if (key === 'payload') return tokens;
+
+        const details = [];
+        let inSection = false;
+        for (const line of tokens) {
+            const row = contractRow(line);
+            if (row.kind === 'header') {
+                inSection = row.key === key;
+                continue;
+            }
+            if (inSection) details.push({ ...line, indent: Math.max(0, line.indent - 1) });
+        }
+        return details;
+    }
+
+    function toggleContract(e, key) {
+        e?.preventDefault();
+        e?.stopPropagation();
+        _expandedContract = {
+            ..._expandedContract,
+            [key]: !_expandedContract[key],
+        };
     }
 </script>
 
@@ -96,6 +189,28 @@
     font-family: var(--fBase);
     font-size: 0.78rem;
     margin: 0;
+}
+
+.section-header {
+    align-items: center;
+    display: flex;
+    gap: 0.35rem;
+}
+
+.section-edit {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #c0c022;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.section-edit:hover {
+    color: #ffff00;
 }
 
 .lines {
@@ -125,11 +240,34 @@
     gap: 0.16rem;
 }
 
+.contract-toggle {
+    align-items: center;
+    background: #272727;
+    border: 1px solid #555;
+    border-radius: 0.15rem;
+    color: #44a3fc;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: var(--fFixed);
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+}
+
+.contract-toggle:hover {
+    border-color: #888;
+}
+
+.contract-toggle-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+    margin-right: 0.12rem;
+}
+
 .contract-line {
     padding-left: calc(var(--indent, 0) * 1rem);
 }
 
-.brace,
 .field,
 .endpoint,
 .summary, 
@@ -181,42 +319,69 @@
         <p class="section-title">Contract</p>
         <div class="box contract">
             {#if _contract.tokens}
-                <p class="line brace">{'{'}</p>
                 <p class="line contract-line" style="--indent:1">
-                    <span class="contract-key">role</span><span class="punct">: </span><span class="type">{_contract.role ?? 'follower'}</span>
+                    <!-- <span class="contract-key">role</span><span class="punct">: </span> -->
+                    <span class="type">{_contract.role ?? 'follower'}</span>
                 </p>
-                {#each _contract.tokens as line}
-                    {@const row = contractRow(line)}
-                    {#if row.kind === 'header'}
-                        <p class="line contract-line" style={`--indent:${line.indent + 1}`}>
-                            <span class="contract-key">{row.key}</span><span class="punct">:</span>
+                {#each contractOverview(_contract) as item}
+                    <p class="line contract-line" style="--indent:1">
+                        <!-- <span class="contract-key">{item.label}</span><span class="punct">: </span> -->
+                        <button class="contract-toggle" type="button" on:mousedown={(e) => toggleContract(e, item.key)} on:click|preventDefault|stopPropagation on:keydown={onProfileKeydown} title="Toggle contract details">
+                            <span class="material-icons-outlined contract-toggle-icon">{_expandedContract[item.key] ? 'expand_more' : 'chevron_right'}</span>
+                            <span>{item.type}</span>
+                        </button>
+                    </p>
+                    <!-- {#if item.typeKind}
+                        <p class="line contract-line" style="--indent:2">
+                            <span class="contract-key">kind</span><span class="punct">: </span><span class="kind">{item.typeKind}</span>
                         </p>
-                    {:else if row.kind === 'field'}
-                        <p class="line contract-line" style={`--indent:${line.indent + 1}`}>
-                            <span class="field">{row.key}</span><span class="punct">: </span><span class="type">{row.type}</span>
+                    {/if} -->
+                    <!-- {#if item.summary}
+                        <p class="line contract-line" style="--indent:2">
+                            <span class="contract-key">summary</span><span class="punct">: </span>
+                            <span class="summary">{item.summary}</span>
                         </p>
-                        {#if row.summary}
-                            <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
-                                <span class="contract-key">summary</span><span class="punct">: </span><span class="summary">{row.summary}</span>
-                            </p>
-                        {/if}
-                    {:else}
-                        <p class="line contract-line" style={`--indent:${line.indent + 1}`}>
-                            <span class="contract-key">type</span><span class="punct">: </span><span class="type">{row.type}</span>
+                    {/if} -->
+                    {#if _expandedContract[item.key]}
+                        {#each contractDetailTokens(_contract, item.key) as line}
+                            {@const row = contractRow(line)}
+                            {#if row.kind === 'header'}
+                                <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
+                                    <span class="contract-key">{row.key}</span><span class="punct">:</span>
+                                </p>
+                            {:else if row.kind === 'field'}
+                                <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
+                                    <span class="field">{row.key}</span><span class="punct">: </span><span class="type">{row.type}</span>
+                                </p>
+                                {#if row.summary}
+                                    <p class="line contract-line" style={`--indent:${line.indent + 3}`}>
+                                        <span class="contract-key">summary</span><span class="punct">: </span><span class="summary">{row.summary}</span>
+                                    </p>
+                                {/if}
+                            {:else}
+                                <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
+                                    <span class="contract-key">type</span><span class="punct">: </span><span class="type">{row.type}</span>
+                                </p>
+                                {#if row.typeKind}
+                                    <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
+                                        <span class="contract-key">kind</span><span class="punct">: </span><span class="kind">{row.typeKind}</span>
+                                    </p>
+                                {/if}
+                                {#if row.summary}
+                                    <p class="line contract-line" style={`--indent:${line.indent + 2}`}>
+                                        <span class="contract-key">summary</span><span class="punct">: </span><span class="summary">{row.summary}</span>
+                                    </p>
+                                {/if}
+                            {/if}
+                        {/each}
+                    <!-- {/if} -->
+                    {:else if item.summary}
+                        <p class="line contract-line" style="--indent:2">
+                            <!-- <span class="contract-key">summary</span><span class="punct">: </span> -->
+                            <span class="summary">{item.summary}</span>
                         </p>
-                        {#if row.typeKind}
-                            <p class="line contract-line" style={`--indent:${line.indent + 1}`}>
-                                <span class="contract-key">kind</span><span class="punct">: </span><span class="kind">{row.typeKind}</span>
-                            </p>
-                        {/if}
-                        {#if row.summary}
-                            <p class="line contract-line" style={`--indent:${line.indent + 1}`}>
-                                <span class="contract-key">summary</span><span class="punct">: </span><span class="summary">{row.summary}</span>
-                            </p>
-                        {/if}
                     {/if}
                 {/each}
-                <p class="line brace">{'}'}</p>
             {:else if _contract.text}
                 <pre class="line">{_contract.text}</pre>
             {/if}
@@ -279,14 +444,10 @@
                 {/if}
             </div>
         </div>
-        {#if _profile.summary}
-            <div class="section">
-                <p class="section-title">Description</p>
-                <div class="box">
-                    <pre class="line summary">{_profile.summary}</pre>
-                </div>
-            </div>
-        {/if}
+    {:else}
+        <div class="box">
+            <p class="line">No handler found.</p>
+        </div>
     {/if}
 {:else}
     <div class="section">
@@ -317,8 +478,35 @@
                     </p>
                 </div>
             </div>
+            {:else}
+            <div class="box">
+                <p class="line">No tx locations.</p>
+            </div>
         {/if}
     {/if}
+{/if}
+{#if _pin}
+    <div class="section">
+        <div class="section-header">
+            <p class="section-title">Pin Prompt</p>
+            <button class="material-icons-outlined section-edit" title="Edit pin prompt" on:click={editPrompt} on:keydown={onProfileKeydown}>edit</button>
+        </div>
+        <div class="box">
+            {#if _modelPrompt}
+                <pre class="line summary">{_modelPrompt}</pre>
+            {:else}
+                <p class="line empty">No prompt.</p>
+            {/if}
+        </div>
+    </div>
+{/if}
+{#if !_modelPrompt && _sourceSummary}
+    <div class="section">
+        <p class="section-title">Source summary</p>
+        <div class="box">
+            <pre class="line summary">{_sourceSummary}</pre>
+        </div>
+    </div>
 {/if}
 </div>
 </PopupBox>
