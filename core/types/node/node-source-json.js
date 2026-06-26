@@ -13,6 +13,7 @@ export const jsonHandling = {
 
         // add if present
         if (label) raw.label = label
+        if (this.team) raw.team = this.team
         if (this.promptRepo) raw.promptRepo = this.promptRepo.makeRaw(refArl)
         else if (this.prompt) raw.prompt = this.prompt
         if (interfaces.length) raw.interfaces = interfaces

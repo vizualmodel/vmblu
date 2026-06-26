@@ -111,6 +111,20 @@
           },
           {
             "kind": "source",
+            "name": "node settings",
+            "rect": "x 535 y 172 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 L)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
             "name": "text block",
             "rect": "x 74 y 265 w 150 h 56",
             "interfaces": [
@@ -328,6 +342,7 @@
                   "(2 R)tabs div",
                   "(3 R)content div",
                   "(4 R)content size change",
+                  "(9 R)legend div",
                   "(5 R)modal div",
                   "(6 R)show",
                   "(7 R)size change",
@@ -387,6 +402,7 @@
                   "(2 R)tabs div",
                   "(3 R)content div",
                   "(4 R)content size change",
+                  "(9 R)legend div",
                   "(5 R)modal div",
                   "(6 R)show",
                   "(7 R)size change",

@@ -11,7 +11,7 @@ button {
     color: #ccc;
     border: 1px solid #555;
     border-radius: 0.2rem;
-    padding: 0.25rem 0.45rem;
+    padding: 0.2rem 0.2rem;
     font-family: var(--fBase);
     font-size: var(--fSmall);
     cursor: pointer;

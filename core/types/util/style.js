@@ -62,11 +62,11 @@ const color = {
         const sat = hsl.substring(comma1+1, comma2)
 
         // change the shades
-        this.shade1 = convert.hslToHex(`hsl(${hue},${sat},40%,1)`)          // box, seperator line, pin unconnected, title background
-        this.shade2 = convert.hslToHex(`hsl(${hue},${sat},30%,0.50)`)       // box bg, pad bg - 0.5 transparency
-        this.shade3 = convert.hslToHex(`hsl(${hue}, 100%, 90%, 1)`)         // title
-        this.shade4 = convert.hslToHex(`hsl(${hue},${sat},60%,1)`)          // pin connected
-        this.shade5 = convert.hslToHex(`hsl(${hue}, 50%, 75%, 1)`)          // ifPins
+        this.shade1 = convert.hslToHex(`hsl(${hue},${sat}, 40%, 1)`)        // box, seperator line, pin unconnected, title background
+        this.shade2 = convert.hslToHex(`hsl(${hue},${sat}, 30%, 0.5)`)      // box bg, pad bg - 0.5 transparency
+        this.shade3 = convert.hslToHex(`hsl(${hue},${sat}, 90%, 1)`)        // title
+        this.shade4 = convert.hslToHex(`hsl(${hue},${sat}, 60%, 1)`)        // pin connected
+        this.shade5 = convert.hslToHex(`hsl(${hue},${sat}, 75%, 1)`)        // ifPins
 
 
         // change the shades - dark theme...

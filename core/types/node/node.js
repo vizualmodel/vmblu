@@ -47,21 +47,39 @@ export function Node (look=null, name=null, uid=null) {
 
     // Agent probe metadata authored on source nodes.
     this.probes = null
+
+    // Optional semantic color team. Missing means default at render time.
+    this.team = null
+
+    // The model that owns this node instance.
+    this.model = null
 }
 // common functions
 Node.prototype = {
 
     // render the look of the node
     render(ctx){
-        
-        // switch to the link style - will return the current style
-        const savedStyle = this.link?.model ? style.switch(this.link.model.header.style) : null
+
+        const teamStyle = this.resolveTeamStyle()
+        const savedStyle = teamStyle ? style.switch(teamStyle) : null
 
         // render the node
         this.look?.render(ctx)
 
         // reset the style
         if (savedStyle) style.switch(savedStyle)
+    },
+
+    resolveTeamStyle() {
+
+        if (this.team) return this.model?.header?.teamStyle?.(this.team) ?? style
+        return this.model?.header?.teamStyle?.('default') ?? style
+    },
+
+    setModelRecursive(model) {
+
+        this.model = model
+        if (this.nodes) for (const node of this.nodes) node.setModelRecursive(model)
     },
 
     // recursively find a node with a given uid
@@ -239,6 +257,12 @@ Node.prototype = {
 
         // check if the node has agent probe metadata
         if (raw.probes) this.probes = raw.probes
+
+        // check if the node has a semantic team
+        if (raw.team) this.team = raw.team
+
+        // keep the model that owns this node instance
+        this.model = modcom.getCurrentModel()
 
         // check if the node has settings
         if (raw.sx) this.sx = raw.sx

@@ -8,6 +8,7 @@ let tabsDiv
 
 // menuDiv is initialised with a message
 let menuDiv = null;
+let legendDiv = null;
 
 onMount(async () => {
 })
@@ -21,6 +22,9 @@ export const handlers = {
         // append the menu again
         if (menuDiv) contentDiv.append(menuDiv)
 
+        // append the team legend again
+        if (legendDiv) contentDiv.append(legendDiv)
+
         // send out the div
         tx.send('div', mainDiv)
     },
@@ -33,6 +37,13 @@ export const handlers = {
 
         // append
         contentDiv.append(menuDiv)
+    },
+
+    // The legend div is an overlay at the top of the content
+    onLegendDiv(div) {
+
+        legendDiv = div
+        contentDiv.append(legendDiv)
     },
 
     onTabsDiv(div) {

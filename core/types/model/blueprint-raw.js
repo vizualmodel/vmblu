@@ -156,11 +156,12 @@ splitRaw(raw) {
 
 splitHeader(rHeader) {
 
-    const {version, created, saved, utc, runtime, runtimeSettings, agent, style} = {...rHeader}
+    const {version, created, saved, utc, runtime, runtimeSettings, agent, style, teams} = {...rHeader}
     const headerVersion = version ?? 'no version'
     const styleRgb = (typeof style === 'string') ? style : style?.rgb ?? style?.color ?? null
 
     const blu = {version: headerVersion, created, saved, utc, runtime}
+    if (teams) blu.teams = JSON.parse(JSON.stringify(teams))
     if (runtimeSettings) blu.runtimeSettings = runtimeSettings
     if (agent) blu.agent = agent
 
@@ -208,6 +209,7 @@ splitNode(rNode) {
         name: rNode.name,
     }
     if (rNode.label) blu.label = rNode.label
+    if (rNode.team) blu.team = rNode.team
     if (rNode.prompt) blu.prompt = rNode.prompt;
     if (rNode.promptRepo && rNode.kind !== 'dock') {
         blu.promptRepo = rNode.promptRepo.makeRaw ? rNode.promptRepo.makeRaw(this.blu.arl) : rNode.promptRepo;
@@ -263,6 +265,13 @@ splitNode(rNode) {
 joinHeader(bRaw, vRaw) {
     const vStyle = vRaw?.header?.style
     bRaw.header.style = (typeof vStyle === 'string') ? vStyle : style.rgb;
+    if (!bRaw.header.teams) {
+        bRaw.header.teams = {
+            default: {
+                color: validTeamColor(bRaw.header.style) ? bRaw.header.style : style.rgb
+            }
+        }
+    }
     // this.header.cook(arl, bRaw.header)
 },
 
@@ -466,4 +475,8 @@ function isEntrypointRaw(raw) {
 function defaultVizPath(modelArl) {
     const split = Path.split(modelArl.getPath())
     return split.name + (split.kind ?? '') + '.viz'
+}
+
+function validTeamColor(color) {
+    return typeof color === 'string' && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(color)
 }

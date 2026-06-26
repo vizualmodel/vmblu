@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // Model: node-editor
 // Path: C:/dev/vmblu/core/model/core.app.js
-// Creation date 5/29/2026, 10:10:52 AM
+// Creation date 6/19/2026, 9:45:03 AM
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -24,7 +24,7 @@ const nodeList = [
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager", 
-	uid: "cBsd", 
+	uid: "rCaA", 
 	factory: LibraryManager,
 	inputs: [
 		"-> add file",
@@ -38,7 +38,7 @@ const nodeList = [
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager", 
-	uid: "huEe", 
+	uid: "sQaL", 
 	factory: DocumentManager,
 	inputs: [
 		"-> doc.selected",
@@ -65,7 +65,7 @@ const nodeList = [
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard", 
-	uid: "TnBO", 
+	uid: "qHzJ", 
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -81,7 +81,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector", 
-	uid: "HLsU", 
+	uid: "ugxM", 
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
@@ -89,16 +89,16 @@ const nodeList = [
 		],
 	outputs: [
 		"selected node -> ()",
-		"remove file -> remove file @ library manager (KZQK)",
-		"add file -> add file @ library manager (KZQK)",
-		"get path -> path @ path request (FaFb)",
+		"remove file -> remove file @ library manager (YGzC)",
+		"add file -> add file @ library manager (YGzC)",
+		"get path -> path @ path request (vbZx)",
 		"modal div -> ()"
 		]
 	},
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager", 
-	uid: "KZQK", 
+	uid: "YGzC", 
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -106,13 +106,13 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (HLsU)"
+		"build table -> build table @ node selector (ugxM)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request", 
-	uid: "FaFb", 
+	uid: "vbZx", 
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -125,7 +125,7 @@ const nodeList = [
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager", 
-	uid: "gqDg", 
+	uid: "fHar", 
 	factory: ViewManager,
 	inputs: [
 		"-> size change",
@@ -137,6 +137,7 @@ const nodeList = [
 		],
 	outputs: [
 		"canvas -> ()",
+		"team legend -> ()",
 		"clipboard.get => ()",
 		"clipboard.set -> ()",
 		"name and path -> ()",
@@ -154,7 +155,7 @@ const nodeList = [
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager", 
-	uid: "UdeM", 
+	uid: "rtVY", 
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",

@@ -10,6 +10,10 @@
     {
       "path": "../index.js",
       "function": "ContextMenuFactory"
+    },
+    {
+      "path": "../index.js",
+      "function": "TeamLegendFactory"
     }
   ],
   "types": {
@@ -285,6 +289,37 @@
                 "pins": [
                   {
                     "name": "json",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "node settings",
+            "factory": {
+              "path": "../index.js",
+              "function": "NodeSettingsFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
                     "kind": "input",
                     "contract": {
                       "role": "follower",
@@ -866,6 +901,14 @@
                     }
                   },
                   {
+                    "name": "legend div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  },
+                  {
                     "name": "modal div",
                     "kind": "input",
                     "contract": {
@@ -1057,6 +1100,14 @@
                     "contract": {
                       "role": "follower",
                       "payload": "ViewSizeChange"
+                    }
+                  },
+                  {
+                    "name": "legend div",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
                     }
                   },
                   {
@@ -1607,6 +1658,37 @@
                     }
                   }
                 ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "team legend",
+        "factory": {
+          "path": "../index.js",
+          "function": "TeamLegendFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "teams",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
               }
             ]
           }

@@ -284,8 +284,8 @@ View.prototype = {
     // render the view    
     render(ctx) {
 
-        // switch to the style of the file where the node comes from
-        const savedStyle = style.switch(this.root?.link?.model?.header?.style)
+        // switch to the team style of the root context
+        const savedStyle = style.switch(this.root?.resolveTeamStyle?.())
 
         // save the current context settings
         ctx.save()
@@ -377,9 +377,13 @@ View.prototype = {
             }
         }
 
-        // now render the cables, nodes, pads 
+        // now render the cables
         for(const cable of root.cables) cable.render(ctx)
+
+        // ...nodes
         for(const node of root.nodes) node.render(ctx)
+
+        // ...pads
         for(const pad of root.pads) pad.render(ctx)
     },
 
