@@ -1,0 +1,23 @@
+{
+  "name": "linear",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@vizualmodel/vmblu-runtime": "^0.4.0"
+  },
+  "devDependencies": {
+    "@vizualmodel/vmblu-cli": "^0.5.5",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  },
+  "scripts": {
+    "vm:init": "vmblu init .",
+    "vm:profile": "vmblu profile linear.blu",
+    "vm:app": "vmblu make-app linear.blu",
+    "vm:capabilities": "vmblu make-capabilities linear.blu",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
