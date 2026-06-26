@@ -84,6 +84,18 @@ ViewManager.prototype = {
         return this.model
     },
 
+    sendTeamLegend() {
+
+        const teams = this.model?.header?.teams
+        const legend = teams
+            ? Object.entries(teams)
+                .filter(([name, team]) => name?.length && name !== 'default' && team?.color)
+                .map(([name, team]) => ({name, color: team.color}))
+            : []
+
+        this.tx.send("team legend", legend)
+    },
+
     addEventHandlers() {
 
         // add the keyboard handlers to the document
@@ -197,5 +209,3 @@ ViewManager.prototype = {
     },
 }
 Object.assign(ViewManager.prototype, mouseHandling, keyboardHandling, messageHandling)
-
-

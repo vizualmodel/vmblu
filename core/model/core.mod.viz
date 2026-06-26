@@ -217,6 +217,7 @@
             "interface": "(78) setup",
             "pins": [
               "(37 R)canvas",
+              "(46 R)team legend",
               "(38 R)size change",
               "(39 R)top level view",
               "(22 R)root"

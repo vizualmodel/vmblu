@@ -159,6 +159,8 @@ const groupFunctions = {
 
         // if the node has a link copy that too
         newNode.link = this.link ? this.link.copy() : null
+        newNode.team = this.team
+        newNode.model = this.model
 
         // now create an empty look
         newNode.look = new Look(this.look.rect)
@@ -237,6 +239,8 @@ const groupFunctions = {
 
         // create the source - without the look
         let source = new SourceNode(null,newName ?? this.name,this.uid)
+        source.team = this.team
+        source.model = this.model
 
         source.look = new Look(this.look.rect)
 

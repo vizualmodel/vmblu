@@ -173,7 +173,7 @@ ModelManager.prototype = {
             path: this.model.getArl()?.getFullPath() ?? '- unspecified -',
             settings: header,
             capabilities: this.model.makeCapabilityObject?.(this.model.root) ?? null,
-            pos: { x: 25, y: 25 },
+            pos: { x: 75, y: 25 },
             onColor(rgb) {
                 header.style.adapt(rgb);
                 tx.send('redox.done', {verb: 'accept changes'})
@@ -185,10 +185,12 @@ ModelManager.prototype = {
                 }
 
                 header.runtime = settings.runtime;
+                if (settings.teams) header.setTeams(settings.teams);
                 if (settings.runtimeSettings) header.runtimeSettings = settings.runtimeSettings;
                 else delete header.runtimeSettings;
                 if (settings.agent) header.agent = settings.agent;
                 else delete header.agent;
+                tx.send('redox.done', {verb: 'accept changes'})
             },
             cancel() {
                 header.style.adapt(oldRgb);

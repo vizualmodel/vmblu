@@ -148,7 +148,9 @@ export const nodeClickHandling = {
                 tx.send("node settings (sx)",{    title:'Settings for ' + node.name, 
                                         pos: newPos,
                                         json: node.sx,
-                                        ok: (sx) => doEdit(tx,"changeNodeSettings",{node, sx})
+                                        team: node.team,
+                                        teams: view?.getManager?.()?.getModel?.()?.header?.teams,
+                                        ok: ({sx, team}) => doEdit(tx,"changeNodeSettings",{node, sx, team})
                                     })                  
                 break     
 

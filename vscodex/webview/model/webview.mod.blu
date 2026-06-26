@@ -4,7 +4,12 @@
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
-    "runtime": "../../../runtime/rt-base/runtime.js"
+    "runtime": "../../../runtime/rt-base/runtime.js",
+    "teams": {
+      "default": {
+        "color": "#00aaff"
+      }
+    }
   },
   "imports": [
     "../../../core/model/core.mod.blu",
@@ -873,17 +878,16 @@
           {
             "kind": "dock",
             "name": "node settings",
-            "label": "node settings in json format",
             "link": {
               "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
-              "node": "json input"
+              "node": "node settings"
             },
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
-                    "name": "json",
+                    "name": "show",
                     "kind": "input",
                     "contract": {
                       "role": "follower",
@@ -1593,7 +1597,7 @@
               "pin": "node settings (sx)"
             },
             "dst": {
-              "pin": "json",
+              "pin": "show",
               "node": "node settings"
             }
           },

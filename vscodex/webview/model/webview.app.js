@@ -14,7 +14,7 @@ import { ViewManager } from '../../../core/nodes/view-manager/view-manager.js'
 import { ModelManager } from '../../../core/nodes/model-manager/model-manager.js'
 import { Clipboard } from '../../../core/nodes/clipboard/clipboard.js'
 import { PathRequestFactory,
-		 JsonInputFactory,
+		 NodeSettingsFactory,
 		 NameAndPathFactory,
 		 PinProfileFactory,
 		 MarkdownInputFactory,
@@ -83,7 +83,7 @@ const nodeList = [
 		"redox.undo -> redox.undo @ model manager (GSYC)",
 		"redox.redo -> redox.redo @ model manager (GSYC)",
 		"canvas -> canvas @ message broker (BKEI)",
-		"node settings (sx) -> json @ node settings (FQMs)",
+		"node settings (sx) -> show @ node settings (FQMs)",
 		"runtime settings (dx) -> show @ runtime settings (Rsqj)",
 		"node prompt -> markdown @ markdown prompt (Iamb)",
 		"context menu -> context menu @ context menu (Akzp)",
@@ -165,9 +165,9 @@ const nodeList = [
 	{
 	name: "node settings", 
 	uid: "FQMs", 
-	factory: JsonInputFactory,
+	factory: NodeSettingsFactory,
 	inputs: [
-		"-> json"
+		"-> show"
 		],
 	outputs: [
 		"modal div -> modal div @ message broker (BKEI)"

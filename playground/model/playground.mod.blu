@@ -5,6 +5,20 @@
     "saved": "12/16/2025, 10:49:03 AM",
     "utc": "2025-12-16T09:49:03.571Z",
     "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
+    "teams": {
+      "default": {
+        "color": "#a1a1a1"
+      },
+      "ui": {
+        "color": "#c0d13d"
+      },
+      "workspace": {
+        "color": "#794d89"
+      },
+      "core": {
+        "color": "#b27134"
+      }
+    },
     "agent": {
       "schema": "https://vmblu.dev/schemas/agents.v1.json",
       "version": 1,
@@ -195,6 +209,7 @@
         "kind": "dock",
         "name": "column-main layout",
         "label": "main page layout",
+        "team": "ui",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "column-main layout"
@@ -235,6 +250,7 @@
         "kind": "source",
         "name": "workspace",
         "label": "list of folders and files at the left",
+        "team": "workspace",
         "factory": {
           "path": "../nodes/workspace/factory.js",
           "function": "Workspace"
@@ -442,6 +458,7 @@
       {
         "kind": "dock",
         "name": "single text field",
+        "team": "workspace",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "single text field"
@@ -474,6 +491,7 @@
         "kind": "dock",
         "name": "editor page",
         "label": "The main editor window layout",
+        "team": "ui",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vertical menu tabs content"
@@ -482,6 +500,14 @@
           {
             "interface": "",
             "pins": [
+              {
+                "name": "legend div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
               {
                 "name": "menu div",
                 "kind": "input",
@@ -554,6 +580,7 @@
         "kind": "dock",
         "name": "tab ribbon",
         "label": "selects between open documents",
+        "team": "ui",
         "link": {
           "path": "../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "tab ribbon"
@@ -640,6 +667,7 @@
         "kind": "source",
         "name": "side menu",
         "label": "icon menu top left of the window",
+        "team": "ui",
         "factory": {
           "path": "../../ui-svelte/index.js",
           "function": "VscodeSideMenuFactory"
@@ -839,6 +867,7 @@
         "kind": "dock",
         "name": "document manager",
         "label": "doc = view + model",
+        "team": "core",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "document manager"
@@ -1001,6 +1030,7 @@
         "kind": "dock",
         "name": "view manager",
         "label": "windows + ui",
+        "team": "core",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "view manager"
@@ -1075,6 +1105,14 @@
           {
             "interface": "visuals",
             "pins": [
+              {
+                "name": "team legend",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
               {
                 "name": "grid on-off",
                 "kind": "input",
@@ -1194,6 +1232,7 @@
         "kind": "dock",
         "name": "model manager",
         "label": "changes to the model",
+        "team": "core",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "model manager"
@@ -1442,6 +1481,7 @@
       {
         "kind": "dock",
         "name": "clipboard",
+        "team": "core",
         "link": {
           "path": "../../core/model/core.mod.blu",
           "node": "clipboard"
@@ -1505,6 +1545,7 @@
       {
         "kind": "group",
         "name": "popups",
+        "team": "ui",
         "interfaces": [
           {
             "interface": "",
@@ -1629,6 +1670,7 @@
             "kind": "dock",
             "name": "path request",
             "label": "ask for filename to save",
+            "team": "ui",
             "prompt": "We use the callback parameter for this node, so we can disregard the path return message.",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
@@ -1669,17 +1711,17 @@
           {
             "kind": "dock",
             "name": "node settings",
-            "label": "node settings in json format",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
-              "node": "json input"
+              "node": "node settings"
             },
             "interfaces": [
               {
                 "interface": "",
                 "pins": [
                   {
-                    "name": "json",
+                    "name": "show",
                     "kind": "input",
                     "contract": {
                       "role": "follower",
@@ -1701,6 +1743,7 @@
           {
             "kind": "dock",
             "name": "name and path",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "name and path"
@@ -1741,6 +1784,7 @@
             "kind": "dock",
             "name": "pin profile",
             "label": " the message parameters and prompt",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "pin profile"
@@ -1781,6 +1825,7 @@
             "kind": "dock",
             "name": "markdown input",
             "label": "comment  about the node",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "markdown input"
@@ -1812,6 +1857,7 @@
           {
             "kind": "dock",
             "name": "doc settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "document settings"
@@ -1859,6 +1905,7 @@
           {
             "kind": "dock",
             "name": "model runtime settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "model runtime settings"
@@ -1890,6 +1937,7 @@
           {
             "kind": "dock",
             "name": "agent settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "agent settings"
@@ -1922,6 +1970,7 @@
             "kind": "dock",
             "name": "context menu",
             "label": "uses callbacks",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "context menu"
@@ -1953,6 +2002,7 @@
           {
             "kind": "dock",
             "name": "runtime settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "runtime settings"
@@ -1984,6 +2034,7 @@
           {
             "kind": "dock",
             "name": "confirm box",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "confirm box"
@@ -2015,6 +2066,7 @@
           {
             "kind": "dock",
             "name": "tool settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "tool settings"
@@ -2046,6 +2098,7 @@
           {
             "kind": "dock",
             "name": "event settings",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "event settings"
@@ -2077,6 +2130,7 @@
           {
             "kind": "dock",
             "name": "toast box",
+            "team": "ui",
             "link": {
               "path": "../../ui-svelte/model/ui-svelte.mod.blu",
               "node": "toast box"
@@ -2349,7 +2403,7 @@
               "pin": "node settings (sx)"
             },
             "dst": {
-              "pin": "json",
+              "pin": "show",
               "node": "node settings"
             }
           },
@@ -2388,6 +2442,38 @@
               "pin": "name and path",
               "node": "name and path"
             }
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "team legend",
+        "team": "ui",
+        "factory": {
+          "path": "../../ui-svelte/index.js",
+          "function": "TeamLegendFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "teams",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              }
+            ]
           }
         ]
       }
@@ -2761,6 +2847,16 @@
       },
       {
         "src": {
+          "pin": "team legend",
+          "node": "view manager"
+        },
+        "dst": {
+          "pin": "teams",
+          "node": "team legend"
+        }
+      },
+      {
+        "src": {
           "pin": "canvas",
           "node": "view manager"
         },
@@ -2946,6 +3042,16 @@
         },
         "dst": {
           "pin": "modal div",
+          "node": "editor page"
+        }
+      },
+      {
+        "src": {
+          "pin": "div",
+          "node": "team legend"
+        },
+        "dst": {
+          "pin": "legend div",
           "node": "editor page"
         }
       }

@@ -767,6 +767,14 @@
                 }
               },
               {
+                "name": "team legend",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
                 "name": "size change",
                 "kind": "input",
                 "contract": {

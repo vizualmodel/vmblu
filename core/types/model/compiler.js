@@ -191,6 +191,7 @@ goodLink(raw, lName, model, linkedNode, pathKind) {
 
     // and now fuse the two nodes to highlight the differences 
     dock.fuse(linkedNode)
+    dock.setModelRecursive(this.getCurrentModel())
 
     // done
     return dock
@@ -262,7 +263,9 @@ updateLinkedNode(root, node) {
         }
         
         // and fuse with the new node
+        const ownerModel = node.model
         node.fuse(newNode)
+        node.setModelRecursive(ownerModel)
 
         // build the the rx/tx tables for the imported nodes.
         node.rxtxBuildTxTable()

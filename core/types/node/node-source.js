@@ -53,6 +53,10 @@ const sourceFunctions = {
         // copy agent probe metadata
         newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null
 
+        // copy team/model metadata
+        newNode.team = this.team
+        newNode.model = this.model
+
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;
 
@@ -90,6 +94,8 @@ const sourceFunctions = {
 
         // create a new group node
         const newNode = new GroupNode(null, newName ?? this.name, this.uid)
+        newNode.team = this.team
+        newNode.model = this.model
 
         // create the new look
         newNode.look = new Look(this.look.rect)

@@ -13,6 +13,7 @@ export const messageHandling = {
             this.top = null;
             this.focus = null;
             this.model = null;
+            this.sendTeamLegend();
             this.redraw();
             return;
         }
@@ -29,16 +30,22 @@ export const messageHandling = {
         this.top = view;
         this.focus = view;
         this.model = doc.model;
+        this.sendTeamLegend();
         this.redraw();
     },
 
     onRoot(root) {
-        if (!this.top || !root) return;
+        if (!this.top || !root) {
+            this.sendTeamLegend();
+            return;
+        }
         this.top.syncRoot(root);
+        this.sendTeamLegend();
         this.redraw();
     },
 
     onRedoxDone() {
+        this.sendTeamLegend()
         this.redraw()
     },
 

@@ -69,6 +69,9 @@ export const TabRibbonFactory = getFactory(TabRibbonSvelte)
 import VscodeSideMenuSvelte from './nodes/vscode-side-menu/vscode-side-menu.svelte'
 export  const VscodeSideMenuFactory = getFactory(VscodeSideMenuSvelte)
 
+import TeamLegendSvelte from './nodes/team-legend/team-legend.svelte'
+export const TeamLegendFactory = getFactory(TeamLegendSvelte)
+
 /* 
  * POPUPS
 */
@@ -88,6 +91,9 @@ export const ContextMenuFactory = getFactory(ContextMenu)
 
 import JsonAreaInputSvelte from './nodes/json-area-input/json-area-input.svelte'
 export const JsonInputFactory = getFactory(JsonAreaInputSvelte)
+
+import NodeSettingsSvelte from './nodes/node-settings/node-settings.svelte'
+export const NodeSettingsFactory = getFactory(NodeSettingsSvelte)
 
 import TextAreaInputSvelte from './nodes/text-area-input/text-area-input.svelte'
 export const TextBlockFactory = getFactory(TextAreaInputSvelte)

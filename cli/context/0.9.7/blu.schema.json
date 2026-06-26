@@ -50,12 +50,31 @@
         "saved": { "type": "string", "format": "date-time" },
         "utc": { "type": "string", "format": "date-time" },
         "style": { "type": "string" },
+        "teams": {
+          "description": "Semantic visual teams used to color nodes by architectural role. The default team is required when teams are declared.",
+          "type": "object",
+          "properties": {
+            "default": { "$ref": "#/$defs/Team" }
+          },
+          "additionalProperties": { "$ref": "#/$defs/Team" },
+          "required": ["default"]
+        },
         "runtime": { "type": "string" },
         "runtimeSettings": { "$ref": "#/$defs/RuntimeSettingsConfig" },
         "agent": { "$ref": "#/$defs/AgentConfig" }
       },
       "additionalProperties": false,
       "required": ["version", "created", "saved", "utc"]
+    },
+
+    "Team": {
+      "description": "A semantic node team. Additional properties are reserved for future team metadata.",
+      "type": "object",
+      "properties": {
+        "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$" }
+      },
+      "required": ["color"],
+      "additionalProperties": true
     },
 
     "RuntimeSettingsConfig": {
@@ -306,6 +325,7 @@
         "kind": { "enum": ["source", "group", "dock"] },
         "name": { "type": "string", "minLength": 1, "pattern": "^[^@]+$" },
         "label": { "type": "string" },
+        "team": { "type": "string", "minLength": 1 },
 
         "interfaces": {
           "type": "array",

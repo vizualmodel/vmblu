@@ -9,6 +9,16 @@ A source node can represent a UI element, the access to a database, a login proc
 The name of a node should be meaningful and unique inside a group node.
 The prompt for a node should be a clear, concise and up-to-date description of its function.
 
+## A.1.1 Node teams
+
+Nodes may declare a `team` string to make the architecture visually readable. A team identifies a semantic role such as `ui`, `domain`, `data` or `integration`; it should not be named after a color.
+
+Team definitions live in `header.teams`. The `default` team is always present. Each team has a `color` property; team objects may gain additional properties in future schema versions.
+
+If a node has no explicit `team`, it inherits the render-time team context from its containing group node. If there is no containing team context, it uses `default`.
+
+For dock nodes, the linked node is rendered in the team context of the dock node. This is a visual rule and should not mutate the linked source model.
+
 ## A.2 Interface names and Pin names
 
 - **Interfaces** are a group of pins that belong together. The purpose of interfaces is to make the design and functionality of a node easier to understand.
@@ -193,7 +203,9 @@ The `promptRepo` object contains:
 
 - `arl` is resolved relative to the current model file.
 - `pathKind` uses the same values as vmblu `Path.Kind`.
+- Do not store runtime state such as `is.hydrated` in the model. Hydration status is runtime-only.
 
+During initial model creation, agents may write `prompt` fields inline on nodes and pins as an authoring convenience. Tools may read these inline prompts, but when saving prompts they should prefer `promptRepo` files so inline prompts disappear over time.
 
 ### File layout
 

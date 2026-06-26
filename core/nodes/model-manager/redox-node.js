@@ -301,8 +301,10 @@ nodeDrag: {
 },
 
 changeNodeSettings: {
-    doit({node, sx}) {
+    doit({node, sx, team}) {
+
         if (JSON.stringify(sx) !== JSON.stringify(node.sx)) node.sx = sx
+        node.team = team?.length ? team : null
     },
     undo({}) {
     },
