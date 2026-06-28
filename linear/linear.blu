@@ -1,5 +1,0 @@
-{
-  "kind": "vmblu.entrypoint",
-  "version": 1,
-  "model": "model/linear.mod.blu"
-}
