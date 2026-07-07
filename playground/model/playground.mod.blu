@@ -701,6 +701,14 @@
                 }
               },
               {
+                "name": "auto layout",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
@@ -830,6 +838,12 @@
             "color": "#0fb2e4",
             "message": "wire check",
             "help": "Wire check"
+          },
+          {
+            "icon": "account_tree",
+            "color": "#0fb2e4",
+            "message": "auto layout",
+            "help": "Auto layout"
           },
           {
             "icon": "build",
@@ -1259,6 +1273,14 @@
               },
               {
                 "name": "wire check",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "auto layout",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -2636,6 +2658,16 @@
         },
         "dst": {
           "pin": "wire check",
+          "node": "model manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "auto layout",
+          "node": "side menu"
+        },
+        "dst": {
+          "pin": "auto layout",
           "node": "model manager"
         }
       },

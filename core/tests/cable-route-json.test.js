@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {convert} from '../types/util/convert.js'
 import {Bus} from '../types/node/bus.js'
+import {Cable} from '../types/node/cable.js'
 
 test('unnamed cable route endpoint keeps cable property, index and flags after raw parsing', () => {
     const source = convert.rawToEndPoint('(cable 2 endpoint bridge)')
@@ -28,4 +29,19 @@ test('bus raw no longer writes name and legacy route names still parse', () => {
         convert.rawToEndPoint('(cable 2 nonselective) clock'),
         {cable: true, index: 2, endpoint: false, bridge: false, alias: 'clock', selective: false}
     )
+})
+
+test('cable cook keeps a segment when saved wire is empty', () => {
+    const cable = new Cable()
+
+    cable.cook({
+        start: 'x 2180 y 284.5',
+        wire: ''
+    })
+
+    assert.deepEqual(cable.wire, [
+        {x: 2180, y: 284.5},
+        {x: 2180, y: 284.5}
+    ])
+    assert.notEqual(cable.wire[0], cable.wire[1])
 })

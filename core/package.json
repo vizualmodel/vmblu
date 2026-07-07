@@ -16,6 +16,7 @@
     "./types/arl/arl-node": "./types/arl/arl-node.js",
     "./types/arl/path": "./types/arl/path.js",
     "./types/node": "./types/node/index.js",
+    "./types/elk": "./types/elk/index.js",
     "./types/util": "./types/util/index.js",
     "./types/view": "./types/view/index.js",
     "./types/widget": "./types/widget/index.js",
@@ -36,5 +37,8 @@
     "build": "npm run test",
     "test": "node --test tests/*.test.js",
     "preview": "vite preview"
+  },
+  "dependencies": {
+    "elkjs": "^0.11.1"
   }
 }

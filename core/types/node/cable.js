@@ -94,7 +94,9 @@ Cable.prototype = {
     cook(raw) {
         this.is.floating = raw.floating === undefined ? this.is.floating : !!raw.floating
         this.wire = convert.stringToWire(convert.stringToPoint(raw.start), null, raw.wire)
-        if (this.wire.length == 1) this.wire.push(this.wire[0])
+        const start = convert.stringToPoint(raw.start) ?? {x: 0, y: 0}
+        if (this.wire.length == 0) this.wire = [{...start}, {...start}]
+        else if (this.wire.length == 1) this.wire.push({...this.wire[0]})
     },
 
     highLight() {

@@ -103,6 +103,7 @@ const nodeList = [
 		"-> sync model",
 		"-> accept changes",
 		"-> wire check",
+		"-> auto layout",
 		"-> show settings",
 		"-> make app",
 		"-> make lib",
@@ -344,6 +345,7 @@ const nodeList = [
 		"sync model -> sync model @ model manager (GSYC)",
 		"accept changes -> accept changes @ model manager (GSYC)",
 		"wire check -> wire check @ model manager (GSYC)",
+		"auto layout -> auto layout @ model manager (GSYC)",
 		"show settings -> show settings @ model manager (GSYC)",
 		"make app -> make app @ model manager (GSYC)",
 		"make lib -> make lib @ model manager (GSYC)",
@@ -376,6 +378,12 @@ const nodeList = [
 		        "color": "#0fb2e4",
 		        "message": "wire check",
 		        "help": "Wire check"
+		    },
+		    {
+		        "icon": "account_tree",
+		        "color": "#0fb2e4",
+		        "message": "auto layout",
+		        "help": "Auto layout"
 		    },
 		    {
 		        "icon": "bolt",

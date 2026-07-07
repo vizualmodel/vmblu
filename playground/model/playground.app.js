@@ -166,6 +166,7 @@ const nodeList = [
 		"sync model -> sync model @ model manager (EulS)",
 		"accept changes -> accept changes @ model manager (EulS)",
 		"wire check -> wire check @ model manager (EulS)",
+		"auto layout -> auto layout @ model manager (EulS)",
 		"show settings -> show settings @ model manager (EulS)",
 		"make app -> make app @ model manager (EulS)",
 		"make lib -> make lib @ model manager (EulS)",
@@ -219,6 +220,12 @@ const nodeList = [
 		        "color": "#0fb2e4",
 		        "message": "wire check",
 		        "help": "Wire check"
+		    },
+		    {
+		        "icon": "account_tree",
+		        "color": "#0fb2e4",
+		        "message": "auto layout",
+		        "help": "Auto layout"
 		    },
 		    {
 		        "icon": "build",
@@ -320,6 +327,7 @@ const nodeList = [
 		"-> sync model",
 		"-> accept changes",
 		"-> wire check",
+		"-> auto layout",
 		"-> show settings",
 		"-> make app",
 		"-> make lib",

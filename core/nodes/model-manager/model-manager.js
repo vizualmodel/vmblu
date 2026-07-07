@@ -109,11 +109,11 @@ ModelManager.prototype = {
     },
 
     onRedoxRedo() {
-        const next = this.redox.getUndo()
+        const next = this.redox.getRedo()
 
         if (!next) return
 
-        const action = this.redox[next.verb]?.undo
+        const action = this.redox[next.verb]?.redo
         if (!action) return
 
         action.call(this.redox, next.param)
@@ -151,6 +151,20 @@ ModelManager.prototype = {
 
         // redraw
         this.tx.send('redox.done', {verb: 'wire check'})
+    },
+
+    async onAutoLayout() {
+        if (!this.model?.root) return
+
+        this.tx.send('save point.confirm', {
+            title: 'Confirm auto layout',
+            message: 'Auto layout will reposition nodes, rebuild routes, and remove cables. You can undo the result.',
+            pos: { x: 500, y: 100 },
+            ok: async () => {
+                await this.onRedoxDoit({verb: 'autoLayout'})
+            },
+            cancel: () => {},
+        })
     },
 
    
