@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-runtime",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
@@ -86,12 +86,12 @@
     "access": "public"
   },
   "devDependencies": {
-      "eslint": "^9.36.0",
-      "@eslint/js": "^9.36.0",
-      "eslint-config-prettier": "^10.1.8",
-      "globals": "^16.4.0",
-      "prettier": "^3.6.2",
-      "typescript":"^5.x",
-      "tsup": "^8.5.0"
+    "@eslint/js": "^9.36.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.x"
   }
 }
