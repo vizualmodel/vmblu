@@ -979,6 +979,14 @@
                 }
               },
               {
+                "name": "auto layout",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
                 "name": "sync model",
                 "kind": "input",
                 "contract": {

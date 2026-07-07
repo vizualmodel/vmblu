@@ -436,6 +436,14 @@
                 }
               },
               {
+                "name": "auto layout",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "show settings",
                 "kind": "input",
                 "contract": {
@@ -1688,6 +1696,14 @@
                 }
               },
               {
+                "name": "auto layout",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
@@ -1770,6 +1786,12 @@
             "color": "#0fb2e4",
             "message": "wire check",
             "help": "Wire check"
+          },
+          {
+            "icon": "account_tree",
+            "color": "#0fb2e4",
+            "message": "auto layout",
+            "help": "Auto layout"
           },
           {
             "icon": "bolt",
@@ -2210,6 +2232,16 @@
         },
         "dst": {
           "pin": "wire check",
+          "node": "model manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "auto layout",
+          "node": "vscode side menu"
+        },
+        "dst": {
+          "pin": "auto layout",
           "node": "model manager"
         }
       },

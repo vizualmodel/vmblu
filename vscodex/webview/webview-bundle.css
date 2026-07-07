@@ -588,6 +588,47 @@ i.icon.svelte-1gqilec:active {
 }
 
 
+.team-legend.svelte-1dvh83i {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0);
+    color: #ccc;
+    font-family: Tahoma, Arial, sans-serif;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.team.svelte-1dvh83i {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.bullet.svelte-1dvh83i {
+    width: 0.6rem;
+    height: 0.6rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+}
+
+.name.svelte-1dvh83i {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
 .main.svelte-16f3fxd {
     /* settings */
     --fontBase: arial, helvetica, sans-serif;
@@ -813,7 +854,7 @@ button.svelte-1g88gnz:disabled {
 .select-field.svelte-1vrac7q {
     display: flex;
     align-items: center;
-    margin: 0rem 0rem 0.3rem 0rem;
+    /* margin: 0rem 0rem 0.3rem 0rem; */
     background: transparent;
 }
 
@@ -825,20 +866,69 @@ label.svelte-1vrac7q {
     user-select: none;
 }
 
-select.svelte-1vrac7q {
-    height: 1.4rem;
+.select-box.svelte-1vrac7q {
+    position: relative;
     margin-left: 1rem;
+}
+
+button.svelte-1vrac7q {
+    height: 1.35rem;
+    padding: 0 0.35rem;
     background: #111;
     color: #ccc;
     border: 1px solid #555;
+    border-radius: 0.35rem;
     font-family: var(--fBase);
     font-size: var(--fSmall);
+    line-height: 1.1;
     outline: none;
+    cursor: pointer;
+    min-width: 5rem;
+    text-align: left;
 }
 
-select.svelte-1vrac7q:focus {
+button.svelte-1vrac7q:focus {
     border-color: #888;
 }
+
+.arrow.svelte-1vrac7q {
+    float: right;
+    margin-left: 0.5rem;
+    color: #999;
+}
+
+ul.svelte-1vrac7q {
+    position: absolute;
+    top: calc(100% + 0.15rem);
+    left: 0;
+    min-width: 100%;
+    margin: 0;
+    padding: 0.15rem;
+    background: #111;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 0.35rem;
+    list-style: none;
+    font-family: var(--fBase);
+    font-size: var(--fSmall);
+    line-height: 1.1;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+li.svelte-1vrac7q {
+    padding: 0.12rem 0.3rem;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+li.svelte-1vrac7q:hover,
+li.selected.svelte-1vrac7q {
+    background: #333;
+    color: #eee;
+}
+
 
 
 .textarea-field.svelte-1uuyv1k {

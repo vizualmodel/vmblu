@@ -9,6 +9,7 @@ import {redoxPad} from './redox-pad.js'
 import {redoxSelect} from './redox-select.js'
 import {redoxPinArea} from './redox-pin-area.js'
 import {redoxView} from './redox-view.js'
+import {redoxLayout} from './redox-layout.js'
 
 // we call this redox - oxydation / reduction 
 export function Redox(myManager)  {
@@ -33,4 +34,4 @@ Redox.prototype = {
         this.undoStack.push({verb, param})
     },
 }
-Object.assign(Redox.prototype, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxCable, redoxPad, redoxSelect, redoxPinArea, redoxView)
+Object.assign(Redox.prototype, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxCable, redoxPad, redoxSelect, redoxPinArea, redoxView, redoxLayout)

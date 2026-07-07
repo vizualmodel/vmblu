@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 const publicModules = [
     '../types/arl/index.js',
     '../types/model/index.js',
+    '../types/elk/index.js',
     '../types/node/index.js',
     '../types/util/index.js',
     '../types/view/index.js',
