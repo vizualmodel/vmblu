@@ -4,16 +4,17 @@
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "12/16/2025, 1:00:06 PM",
     "utc": "2025-12-16T12:00:06.433Z",
-    "runtime": "@vizualmodel/vmblu-runtime/rt-base"
+    "runtime": "@vizualmodel/vmblu-runtime/rt-base",
+    "teams": {
+      "default": {
+        "color": "#00aaff"
+      }
+    }
   },
   "factories": [
     {
       "path": "../index.js",
       "function": "ContextMenuFactory"
-    },
-    {
-      "path": "../index.js",
-      "function": "TeamLegendFactory"
     }
   ],
   "types": {
@@ -1562,7 +1563,7 @@
             },
             "interfaces": [
               {
-                "interface": "dom",
+                "interface": "",
                 "pins": [
                   {
                     "name": "div",
@@ -1571,12 +1572,15 @@
                       "role": "follower",
                       "payload": "DomElement"
                     }
-                  }
-                ]
-              },
-              {
-                "interface": "menu items",
-                "pins": [
+                  },
+                  {
+                    "name": "auto layout",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
                   {
                     "name": "accept changes",
                     "kind": "output",

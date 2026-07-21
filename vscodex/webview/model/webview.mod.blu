@@ -19,6 +19,10 @@
     {
       "path": "../message-broker.js",
       "function": "MessageBroker"
+    },
+    {
+      "path": "../../../ui-svelte/index.js",
+      "function": "TeamLegendFactory"
     }
   ],
   "root": {
@@ -166,6 +170,14 @@
                   "role": "follower",
                   "payload": "any"
                 }
+              },
+              {
+                "name": "legend div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
               }
             ]
           },
@@ -285,6 +297,14 @@
           {
             "interface": "visuals",
             "pins": [
+              {
+                "name": "team legend",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
               {
                 "name": "grid on-off",
                 "kind": "input",
@@ -1656,7 +1676,7 @@
         },
         "interfaces": [
           {
-            "interface": "dom",
+            "interface": "",
             "pins": [
               {
                 "name": "div",
@@ -1665,12 +1685,7 @@
                   "role": "follower",
                   "payload": "DomElement"
                 }
-              }
-            ]
-          },
-          {
-            "interface": "menu items",
-            "pins": [
+              },
               {
                 "name": "sync model",
                 "kind": "output",
@@ -1700,7 +1715,7 @@
                 "kind": "output",
                 "contract": {
                   "role": "follower",
-                  "payload": "UiEvent"
+                  "payload": "any"
                 }
               },
               {
@@ -1830,6 +1845,38 @@
             "help": "Settings"
           }
         ]
+      },
+      {
+        "kind": "source",
+        "name": "team legend",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "TeamLegendFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "teams",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              }
+            ]
+          }
+        ]
       }
     ],
     "connections": [
@@ -1937,6 +1984,16 @@
         "dst": {
           "pin": "redox.redo",
           "node": "model manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "team legend",
+          "node": "view manager"
+        },
+        "dst": {
+          "pin": "teams",
+          "node": "team legend"
         }
       },
       {
@@ -2313,6 +2370,16 @@
         "dst": {
           "pin": "grid on-off",
           "node": "view manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "div",
+          "node": "team legend"
+        },
+        "dst": {
+          "pin": "legend div",
+          "node": "message broker"
         }
       }
     ]

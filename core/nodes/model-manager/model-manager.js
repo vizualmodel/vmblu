@@ -410,12 +410,18 @@ ModelManager.prototype = {
     },
 
     // Th path parameter is optional
-    onModelSave({path=null}) {
+    onModelSave({path=null, preserveTarget=false}) {
 
         // check
         if (! this.model) return null
 
-        if (path && !this.model.changeArl(path)) return;
+        const originalBluArl = this.model.blu.arl
+        const originalVizArl = this.model.viz.arl
+
+        // A real Save As changes the model target before encoding. A VS Code
+        // hot-exit backup is encoded for the canonical location and only uses
+        // its temporary target while the files are written.
+        if (path && !preserveTarget && !this.model.changeArl(path)) return;
 
         // reset the save compiler
         this.modcom.reset()
@@ -435,8 +441,18 @@ ModelManager.prototype = {
         // set raw in the model again
         this.model.setRaw(raw)
 
+        if (path && preserveTarget && !this.model.changeArl(path)) return;
+
         // and save
-        this.model.saveRaw()
+        try {
+            this.model.saveRaw()
+        }
+        finally {
+            if (path && preserveTarget) {
+                this.model.blu.arl = originalBluArl
+                this.model.viz.arl = originalVizArl
+            }
+        }
     },
 
     onSavePointSet({}) {
