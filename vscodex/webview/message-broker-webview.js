@@ -70,6 +70,12 @@ export const messageBrokerWebview = {
 		document.body.append(menuDiv)
 	},
 
+	onLegendDiv(legendDiv) {
+
+		// add the team legend to the document body
+		document.body.append(legendDiv)
+	},
+
 	// the editor signals that it is now the owner of the active clipboard
 	onClipboardSwitch() {
 	

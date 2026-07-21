@@ -1,6 +1,6 @@
 {
-  "version": "0.5.5",
-  "generatedAt": "2026-06-19T09:53:49.015Z",
+  "version": "0.5.6",
+  "generatedAt": "2026-07-21T14:58:24.067Z",
   "entries": [
     {
       "node": "message broker",
@@ -128,10 +128,26 @@
           ]
         },
         {
+          "pin": "legend.div",
+          "handler": "onLegendDiv",
+          "file": "../message-broker-webview.js",
+          "line": 73,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "legendDiv",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
           "pin": "clipboard.switch",
           "handler": "onClipboardSwitch",
           "file": "../message-broker-webview.js",
-          "line": 74,
+          "line": 80,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -141,7 +157,7 @@
           "pin": "clipboard.local",
           "handler": "onClipboardLocal",
           "file": "../message-broker-webview.js",
-          "line": 81,
+          "line": 87,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -157,7 +173,7 @@
           "pin": "clipboard.remote",
           "handler": "onClipboardRemote",
           "file": "../message-broker-webview.js",
-          "line": 87,
+          "line": 93,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -167,7 +183,7 @@
           "pin": "new.edit",
           "handler": "onNewEdit",
           "file": "../message-broker-webview.js",
-          "line": 93,
+          "line": 99,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -183,7 +199,7 @@
           "pin": "model.resolved",
           "handler": "onModelResolved",
           "file": "../message-broker-webview.js",
-          "line": 99,
+          "line": 105,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -199,7 +215,7 @@
           "pin": "open.js-file",
           "handler": "onOpenJsFile",
           "file": "../message-broker-webview.js",
-          "line": 105,
+          "line": 111,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -220,7 +236,7 @@
           "pin": "folder.get",
           "handler": "onFolderGet",
           "file": "../message-broker-webview.js",
-          "line": 112,
+          "line": 118,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -662,10 +678,20 @@
           "params": []
         },
         {
+          "pin": "auto.layout",
+          "handler": "onAutoLayout",
+          "file": "../../../core/nodes/model-manager/model-manager.js",
+          "line": 156,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
           "pin": "show.settings",
           "handler": "onShowSettings",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 157,
+          "line": 171,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -675,7 +701,7 @@
           "pin": "sync.model",
           "handler": "onSyncModel",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 202,
+          "line": 216,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -685,7 +711,7 @@
           "pin": "sync.links",
           "handler": "onSyncLinks",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 206,
+          "line": 220,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -695,7 +721,7 @@
           "pin": "make.lib",
           "handler": "onMakeLib",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 253,
+          "line": 267,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -711,7 +737,7 @@
           "pin": "make.app",
           "handler": "onMakeApp",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 278,
+          "line": 292,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -727,7 +753,7 @@
           "pin": "model.save",
           "handler": "onModelSave",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 399,
+          "line": 413,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -736,6 +762,11 @@
               "name": "path",
               "type": "any",
               "description": ""
+            },
+            {
+              "name": "preserveTarget",
+              "type": "boolean",
+              "description": ""
             }
           ]
         },
@@ -743,7 +774,7 @@
           "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 428,
+          "line": 458,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -753,7 +784,7 @@
           "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 455,
+          "line": 485,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -802,14 +833,14 @@
           "line": 153
         },
         {
-          "pin": "model.header",
+          "pin": "save point.confirm",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 170
+          "line": 159
         },
         {
-          "pin": "redox.done",
+          "pin": "model.header",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 179
+          "line": 184
         },
         {
           "pin": "redox.done",
@@ -819,42 +850,47 @@
         {
           "pin": "redox.done",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 197
+          "line": 207
         },
         {
           "pin": "redox.done",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 240
+          "line": 211
+        },
+        {
+          "pin": "redox.done",
+          "file": "../../../core/nodes/model-manager/model-manager.js",
+          "line": 254
         },
         {
           "pin": "get path",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 292
+          "line": 306
         },
         {
           "pin": "model.root",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 388
+          "line": 402
         },
         {
           "pin": "model.root",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 393
+          "line": 407
         },
         {
           "pin": "save point.confirm",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 433
+          "line": 463
         },
         {
           "pin": "save point.confirm",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 461
+          "line": 491
         },
         {
           "pin": "redox.done",
           "file": "../../../core/nodes/model-manager/model-manager.js",
-          "line": 473
+          "line": 503
         }
       ]
     },
