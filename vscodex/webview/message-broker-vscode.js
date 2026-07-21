@@ -74,7 +74,7 @@ export const messageBrokerVscode = {
 				const path = message.uri ? this.makeArl(message.uri).getPath() : null
 
 				// delegate saving to the kernel model manager
-				this.tx.send('model.save', {path})
+				this.tx.send('model.save', {path, preserveTarget: message.preserveTarget === true})
 
 				// vscode could be waiting for the save !
 				vscode.postMessage({verb:'file saved'})
