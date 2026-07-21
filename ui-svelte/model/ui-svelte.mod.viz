@@ -333,7 +333,7 @@
           {
             "kind": "source",
             "name": "menu tabs window",
-            "rect": "x 24 y 193 w 200 h 146",
+            "rect": "x 24 y 193 w 200 h 161",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -393,7 +393,7 @@
           {
             "kind": "source",
             "name": "vertical menu tabs content",
-            "rect": "x 339 y 197 w 250 h 146",
+            "rect": "x 339 y 197 w 250 h 161",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -521,17 +521,13 @@
           {
             "kind": "source",
             "name": "vscode side menu",
-            "rect": "x 317 y 369 w 200 h 221",
+            "rect": "x 317 y 369 w 200 h 206",
             "interfaces": [
               {
-                "interface": "(16) dom",
+                "interface": "(0)",
                 "pins": [
-                  "(2 L)div"
-                ]
-              },
-              {
-                "interface": "(17) menu items",
-                "pins": [
+                  "(2 L)div",
+                  "(18 L)auto layout",
                   "(3 L)accept changes",
                   "(4 L)recalibrate",
                   "(5 L)sync model",
@@ -544,6 +540,20 @@
                   "(15 L)wire check"
                 ]
               }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "team legend",
+        "rect": "x 90 y 166 w 150 h 56",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 R)teams",
+              "(4 R)div"
             ]
           }
         ]

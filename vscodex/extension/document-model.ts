@@ -16,8 +16,6 @@ export const documentFlags = {
 // Define the vmblu document model
 export class VmbluDocument implements vscode.CustomDocument {
 
-	private static readonly AUTOSAVE_DELAY_MS = 1000;
-
 	public readonly uri: vscode.Uri;
 	readonly backupId: string | undefined;
 
@@ -47,9 +45,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	// The disposable (event listeners) for this document
 	public disposables: vscode.Disposable[] = [];
-	private autosaveTimer: NodeJS.Timeout | null = null;
 	private saveInFlight: Promise<void> | null = null;
-	private autosavePending = false;
 
 	// The constructor for our document
 	constructor(uri: vscode.Uri,backupId: string | undefined) {
@@ -141,11 +137,6 @@ export class VmbluDocument implements vscode.CustomDocument {
 		// check
 		if ( ! this.disposables) return;
 
-		if (this.autosaveTimer) {
-			clearTimeout(this.autosaveTimer);
-			this.autosaveTimer = null;
-		}
-
 		// clear all the disposables
 		for( const item of this.disposables) item.dispose?.();
 		this.disposables.length = 0;
@@ -176,8 +167,6 @@ export class VmbluDocument implements vscode.CustomDocument {
 								undo: ()=>{},
 								redo: ()=>{} });
 
-		// persist edits through vmblu using a short debounce window
-		this.scheduleAutoSave();
 	}
 
 	// Method to call when handling the clipboard
@@ -200,33 +189,12 @@ export class VmbluDocument implements vscode.CustomDocument {
 		await this.runSave(targetResource, cancellation);
 	}
 
-	private scheduleAutoSave() {
-		if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
-		this.autosaveTimer = setTimeout(() => {
-			this.autosaveTimer = null;
-			void this.autoSave();
-		}, VmbluDocument.AUTOSAVE_DELAY_MS);
-	}
-
-	private async autoSave(): Promise<void> {
-		try {
-			await this.runSave(null, undefined, true);
-		}
-		catch (error) {
-			cout(`Autosave failed for "${this.uri.path}": ${error}`);
-		}
-	}
-
-	private async runSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken, isAutoSave = false): Promise<void> {
+	private async runSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken, preserveTarget = false): Promise<void> {
 		if (this.saveInFlight) {
-			if (isAutoSave) {
-				this.autosavePending = true;
-				return;
-			}
 			await this.saveInFlight;
 		}
 
-		const savePromise = this.performSave(targetResource, cancellation);
+		const savePromise = this.performSave(targetResource, cancellation, preserveTarget);
 		this.saveInFlight = savePromise;
 
 		try {
@@ -234,14 +202,10 @@ export class VmbluDocument implements vscode.CustomDocument {
 		}
 		finally {
 			this.saveInFlight = null;
-			if (this.autosavePending) {
-				this.autosavePending = false;
-				this.scheduleAutoSave();
-			}
 		}
 	}
 
-	private async performSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken): Promise<void> {
+	private async performSave(targetResource: vscode.Uri | null, cancellation?: vscode.CancellationToken, preserveTarget = false): Promise<void> {
 		if (cancellation?.isCancellationRequested) return;
 
 		// The webview where we will ask for the file data
@@ -257,7 +221,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 		});
 
 		// request the current document
-		broker.postMessage({verb:'save request', uri: targetResource ? targetResource.toString() : null});
+		broker.postMessage({verb:'save request', uri: targetResource ? targetResource.toString() : null, preserveTarget});
 
 		// wait for the result (see the message handler onMessage)
 		await this.wait.promise;
@@ -278,18 +242,28 @@ export class VmbluDocument implements vscode.CustomDocument {
 	// Called by VS Code to backup the edited document.
 	// These backups are used to implement hot exit.
 	async backup(destination: vscode.Uri, cancellation: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-		
-		// save the document to the destination
-		await this.saveAs(destination, cancellation);
+		// Keep both halves of the backup beside the canonical model so relative
+		// model paths remain valid. The model manager restores its original target
+		// immediately after writing this temporary pair.
+		const modelUri = this.resolvedModelArl?.url ? vscode.Uri.parse(this.resolvedModelArl.url) : this.uri;
+		const modelDir = vscode.Uri.joinPath(modelUri, '..');
+		const opaqueName = destination.path.slice(destination.path.lastIndexOf('/') + 1);
+		const backupBase = `.vmblu-backup-${opaqueName}`;
+		const backupBlu = vscode.Uri.joinPath(modelDir, `${backupBase}.mod.blu`);
+		const backupViz = vscode.Uri.joinPath(modelDir, `${backupBase}.mod.viz`);
+
+		await this.runSave(backupBlu, cancellation, true);
 
 		// return an id and a delete function ...
 		return {
-			id: destination.toString(),
+			id: backupBlu.toString(),
 			delete: async () => {
-				try {
-					await vscode.workspace.fs.delete(destination);
-				} catch {
-					// noop
+				for (const backupUri of [backupBlu, backupViz]) {
+					try {
+						await vscode.workspace.fs.delete(backupUri);
+					} catch {
+						// noop
+					}
 				}
 			}
 		};

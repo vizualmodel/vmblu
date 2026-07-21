@@ -95,7 +95,7 @@
         "publish:patch": "npm run webview && vsce publish patch",
         "webview": "cd ./webview && rollup -c",
         "ext": "tsc -p tsconfig.json",
-        "bundle": "cd ./out/extension && rollup -c",
+        "bundle": "rollup -c ./extension/rollup.config.mjs",
         "lint": "eslint \"extension/**/*.ts\"",
         "watch": "tsc -w -p ./",
         "help": "tsc -h",
