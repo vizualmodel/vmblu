@@ -172,11 +172,17 @@ export const nodeClickHandling = {
             case 'comment':
 
                 // save the node hit
-                tx.send("node prompt", {   header: 'Prompt for ' + node.name, 
+                tx.send("node prompt", {   header: 'Node information for ' + node.name,
                                             pos: newPos, 
-                                            uid: node.uid, 
-                                            text: node.prompt ?? '', 
-                                            ok: (prompt)=> doEdit(tx,"changeNodePrompt",{node, prompt})
+                                            uid: node.uid,
+                                            mode: 'node-sections',
+                                            sections: {
+                                                prompt: node.prompt ?? '',
+                                                status: node.promptStatus ?? '',
+                                                decisions: node.promptDecisions ?? '',
+                                                open: node.promptOpen ?? '',
+                                            },
+                                            ok: (sections)=> doEdit(tx,"changeNodePrompt",{node, sections})
                                         })
                 break        
         }

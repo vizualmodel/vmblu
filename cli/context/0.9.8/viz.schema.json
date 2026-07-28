@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vmblu.dev/context/0.9.6/viz.schema.json",
-  "title": "vmblu Visual Model (v0.9.6)",
+  "$id": "https://vmblu.dev/context/0.9.8/viz.schema.json",
+  "title": "vmblu Visual Model (v0.9.8)",
   "type": "object",
   "additionalProperties": false,
   "properties": {

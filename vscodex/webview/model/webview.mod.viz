@@ -20,7 +20,7 @@
         "rect": "x 246 y 746 w 200 h 386",
         "interfaces": [
           {
-            "interface": "(51) document",
+            "interface": "(55) document",
             "pins": [
               "(21 R)set document",
               "(20 R)open document",
@@ -29,7 +29,7 @@
             ]
           },
           {
-            "interface": "(52) edit",
+            "interface": "(56) edit",
             "pins": [
               "(37 R)reload model",
               "(47 R)model.save",
@@ -41,17 +41,17 @@
             ]
           },
           {
-            "interface": "(53) divs",
+            "interface": "(57) divs",
             "pins": [
               "(29 L)canvas resize",
               "(28 L)canvas",
+              "(54 L)legend div",
               "(27 L)floating menu",
-              "(30 L)modal div",
-              "(54 L)legend div"
+              "(30 L)modal div"
             ]
           },
           {
-            "interface": "(55) clipboard",
+            "interface": "(58) clipboard",
             "pins": [
               "(31 R)clipboard.local",
               "(32 R)clipboard.remote",
@@ -409,7 +409,7 @@
           {
             "kind": "dock",
             "name": "model runtime settings",
-            "rect": "x 158 y 1515 w 180 h 56",
+            "rect": "x 158 y 1515 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -549,12 +549,12 @@
           {
             "from": "(pin 3) model runtime settings @ doc settings(0)",
             "to": "(pin 1) show @ model runtime settings",
-            "wire": "x 39.1 y 89.0 x -53.1"
+            "wire": "x 39.1 y 89.0 x -83.1"
           },
           {
             "from": "(pin 2) modal div @ model runtime settings",
             "to": "(cable 0 nonselective)",
-            "wire": "x 75.0 y 0.0 x 133.7"
+            "wire": "x 75.0 y 0.0 x 163.7"
           },
           {
             "from": "(pin 2) modal div @ agent settings",
@@ -665,13 +665,13 @@
       {
         "kind": "source",
         "name": "team legend",
-        "rect": "x 248 y 590 w 150 h 56",
+        "rect": "x 250 y 596 w 150 h 56",
         "interfaces": [
           {
             "interface": "(0)",
             "pins": [
-              "(3 R)teams",
-              "(4 L)div"
+              "(4 L)div",
+              "(3 R)teams"
             ]
           }
         ]
@@ -683,16 +683,16 @@
         "wire": "x 95.0 y -360.0 x 398.0"
       },
       {
-        "start": "x 814 y 548.5",
-        "wire": "x 125.0 x -125.1"
+        "start": "x 939 y 548.5",
+        "wire": "y 0.0 x -125.0"
       },
       {
         "start": "x 939 y 368.5",
         "wire": "x -423.3 y 570.0 x -69.7"
       },
       {
-        "start": "x 939 y 173.5",
-        "wire": "x -488.4 x 488.4"
+        "start": "x 451 y 173.5",
+        "wire": "x -0.4 x 488.4"
       }
     ],
     "routes": [
@@ -749,7 +749,7 @@
       {
         "from": "(pin 46) team legend @ view manager",
         "to": "(pin 3) teams @ team legend",
-        "wire": "x -207.0 y -21.0 x -29.0"
+        "wire": "x -207.0 y 0.0 x -27.0"
       },
       {
         "from": "(pin 37) canvas @ view manager",
@@ -869,7 +869,7 @@
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 30) modal div @ message broker",
-        "wire": "x 126.0 y 530.5 x -1378.0 y -155.5 x 45.0"
+        "wire": "x 126.0 y 530.5 x -1378.0 y -140.5 x 45.0"
       },
       {
         "from": "(pin 12) folder.get @ popups",
@@ -879,7 +879,7 @@
       {
         "from": "(pin 2) div @ vscode side menu",
         "to": "(pin 27) floating menu @ message broker",
-        "wire": "x -77.6 y 855.0 x 72.6"
+        "wire": "x -87.6 y 870.0 x 82.6"
       },
       {
         "from": "(pin 5) sync model @ vscode side menu",
@@ -939,7 +939,7 @@
       {
         "from": "(pin 4) div @ team legend",
         "to": "(pin 54) legend div @ message broker",
-        "wire": "x -93.0 y 411.0 x 91.0"
+        "wire": "x -76.0 y 390.0 x 72.0"
       },
       {
         "from": "(cable 0 endpoint nonselective)",

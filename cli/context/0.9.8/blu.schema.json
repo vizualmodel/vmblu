@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vmblu.dev/context/0.9.7/blu.schema.json",
-  "title": "vmblu Blueprint Model (v0.9.7)",
+  "$id": "https://vmblu.dev/context/0.9.8/blu.schema.json",
+  "title": "vmblu Blueprint Model (v0.9.8)",
   "type": "object",
   "additionalProperties": false,
   "required": ["header", "root"],
@@ -342,7 +342,7 @@
     },
 
     "PromptRepo": {
-      "description": "External model-owned prompt repository for a node and its pins.",
+      "description": "External model-owned repository for node prompt, status, decisions, open work and pin prompts.",
       "type": "object",
       "properties": {
         "arl": { "type": "string", "minLength": 1 },

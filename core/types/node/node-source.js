@@ -48,6 +48,9 @@ const sourceFunctions = {
 
         // copy the comment
         newNode.prompt = this.prompt ? this.prompt.slice() : null
+        newNode.promptStatus = this.promptStatus ? this.promptStatus.slice() : null
+        newNode.promptDecisions = this.promptDecisions ? this.promptDecisions.slice() : null
+        newNode.promptOpen = this.promptOpen ? this.promptOpen.slice() : null
         newNode.promptRepo = this.promptRepo?.clone?.() ?? null
 
         // copy agent probe metadata

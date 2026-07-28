@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // Model: hv-layout
-// Path: /c:/dev/vmblu/playground/model/playground.app.js
-// Creation date 6/19/2026, 9:54:56 AM
+// Path: C:/dev/vmblu/playground/model/playground.app.js
+// Creation date 28/7/2026, 09:52:11
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -43,21 +43,21 @@ import agent from './playground.agent.json' with { type: 'json' }
 const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
-	name: "column-main layout", 
-	uid: "YZYW", 
+	name: "column-main layout",
+	uid: "atMF",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> main area",
 		"-> left column"
 		],
 	outputs: [
-		"size change -> size change @ editor page (AfgR)"
+		"size change -> size change @ editor page (tWeo)"
 		]
 	},
 	//___________________________________________________WORKSPACE
 	{
-	name: "workspace", 
-	uid: "UJJH", 
+	name: "workspace",
+	uid: "yowV",
 	factory: Workspace,
 	inputs: [
 		"-> dom.add modal div",
@@ -67,12 +67,12 @@ const nodeList = [
 		"=> folder.get"
 		],
 	outputs: [
-		"dom.workspace div -> left column @ column-main layout (YZYW)",
-		"file.selected -> doc.selected @ document manager (xhlM)",
-		"file.new -> doc.new @ document manager (xhlM)",
-		"file.renamed -> doc.renamed @ document manager (xhlM)",
-		"file.deleted -> doc.deleted @ document manager (xhlM)",
-		"file.get name -> doc.get @ document manager (xhlM)",
+		"dom.workspace div -> left column @ column-main layout (atMF)",
+		"file.selected -> doc.selected @ document manager (LEhy)",
+		"file.new -> doc.new @ document manager (LEhy)",
+		"file.renamed -> doc.renamed @ document manager (LEhy)",
+		"file.deleted -> doc.deleted @ document manager (LEhy)",
+		"file.get name -> doc.get @ document manager (LEhy)",
 		"file.context menu -> ()",
 		"files.get list => ()",
 		"files.selected -> ()",
@@ -101,39 +101,39 @@ const nodeList = [
 	},
 	//___________________________________________SINGLE TEXT FIELD
 	{
-	name: "single text field", 
-	uid: "mzbA", 
+	name: "single text field",
+	uid: "fCZM",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> dom.add modal div @ workspace (UJJH)"
+		"modal div -> dom.add modal div @ workspace (yowV)"
 		]
 	},
 	//_________________________________________________EDITOR PAGE
 	{
-	name: "editor page", 
-	uid: "AfgR", 
+	name: "editor page",
+	uid: "tWeo",
 	factory: VerticalMenuTabsContent,
 	inputs: [
+		"-> legend div",
 		"-> menu div",
 		"-> tabs div",
 		"-> content div",
 		"-> modal div",
 		"-> show",
-		"-> size change",
-		"-> legend div"
+		"-> size change"
 		],
 	outputs: [
-		"content size change -> size change @ view manager (dhZj)",
-		"div -> main area @ column-main layout (YZYW)"
+		"content size change -> size change @ view manager (tSqb)",
+		"div -> main area @ column-main layout (atMF)"
 		]
 	},
 	//__________________________________________________TAB RIBBON
 	{
-	name: "tab ribbon", 
-	uid: "DPWq", 
+	name: "tab ribbon",
+	uid: "Fazl",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -142,9 +142,9 @@ const nodeList = [
 		"-> tab.remove"
 		],
 	outputs: [
-		"div -> tabs div @ editor page (AfgR)",
-		"tab.request to close -> tab.request to close @ document manager (xhlM)",
-		"tab.request to select -> tab.request to select @ document manager (xhlM)"
+		"div -> tabs div @ editor page (tWeo)",
+		"tab.request to close -> tab.request to close @ document manager (LEhy)",
+		"tab.request to select -> tab.request to select @ document manager (LEhy)"
 		],
 	sx:	{
 		    "a": 7,
@@ -158,25 +158,25 @@ const nodeList = [
 	},
 	//___________________________________________________SIDE MENU
 	{
-	name: "side menu", 
-	uid: "SRlS", 
+	name: "side menu",
+	uid: "biBu",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"sync model -> sync model @ model manager (EulS)",
-		"accept changes -> accept changes @ model manager (EulS)",
-		"wire check -> wire check @ model manager (EulS)",
-		"auto layout -> auto layout @ model manager (EulS)",
-		"show settings -> show settings @ model manager (EulS)",
-		"make app -> make app @ model manager (EulS)",
-		"make lib -> make lib @ model manager (EulS)",
-		"set save point -> save point.set @ model manager (EulS)",
-		"back to save point -> save point.back @ model manager (EulS)",
-		"recalibrate -> recalibrate @ view manager (dhZj)",
-		"grid on-off -> grid on-off @ view manager (dhZj)",
-		"save -> model.save @ model manager (EulS)",
-		"save as -> file.save as @ document manager (xhlM)",
-		"div -> menu div @ editor page (AfgR)"
+		"sync model -> sync model @ model manager (fmKf)",
+		"accept changes -> accept changes @ model manager (fmKf)",
+		"wire check -> wire check @ model manager (fmKf)",
+		"auto layout -> auto layout @ model manager (fmKf)",
+		"show settings -> show settings @ model manager (fmKf)",
+		"make app -> make app @ model manager (fmKf)",
+		"make lib -> make lib @ model manager (fmKf)",
+		"set save point -> save point.set @ model manager (fmKf)",
+		"back to save point -> save point.back @ model manager (fmKf)",
+		"recalibrate -> recalibrate @ view manager (tSqb)",
+		"grid on-off -> grid on-off @ view manager (tSqb)",
+		"save -> model.save @ model manager (fmKf)",
+		"save as -> file.save as @ document manager (LEhy)",
+		"div -> menu div @ editor page (tWeo)"
 		],
 	sx:	[
 		    {
@@ -261,8 +261,8 @@ const nodeList = [
 	},
 	//____________________________________________DOCUMENT MANAGER
 	{
-	name: "document manager", 
-	uid: "xhlM", 
+	name: "document manager",
+	uid: "LEhy",
 	factory: DocumentManager,
 	inputs: [
 		"-> tab.request to close",
@@ -276,22 +276,22 @@ const nodeList = [
 		"-> file.save as"
 		],
 	outputs: [
-		"tab.new -> tab.new @ tab ribbon (DPWq)",
-		"tab.rename -> tab.rename @ tab ribbon (DPWq)",
-		"tab.select -> tab.select @ tab ribbon (DPWq)",
-		"tab.remove -> tab.remove @ tab ribbon (DPWq)",
+		"tab.new -> tab.new @ tab ribbon (Fazl)",
+		"tab.rename -> tab.rename @ tab ribbon (Fazl)",
+		"tab.select -> tab.select @ tab ribbon (Fazl)",
+		"tab.remove -> tab.remove @ tab ribbon (Fazl)",
 		`doc.set active -> [ 
-			"model.set @ model manager (EulS)",
-			"top level view @ view manager (dhZj)" ]`,
-		"file.save -> model.save @ model manager (EulS)",
-		"file.save as filename -> path @ path request (ADgH)",
+			"model.set @ model manager (fmKf)",
+			"top level view @ view manager (tSqb)" ]`,
+		"file.save -> model.save @ model manager (fmKf)",
+		"file.save as filename -> path @ path request (uOnq)",
 		"file.save all -> ()"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
-	name: "view manager", 
-	uid: "dhZj", 
+	name: "view manager",
+	uid: "tSqb",
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -302,26 +302,26 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (EulS)",
-		"redox.undo -> redox.undo @ model manager (EulS)",
-		"redox.redo -> redox.redo @ model manager (EulS)",
-		"canvas -> content div @ editor page (AfgR)",
-		"node settings (sx) -> show @ node settings (JTZx)",
-		"runtime settings (dx) -> show @ runtime settings (xoHz)",
-		"node prompt -> markdown @ markdown input (bJbN)",
-		"context menu -> context menu @ context menu (TeMy)",
-		"name and path -> name and path @ name and path (eLAa)",
+		"redox.doit -> redox.doit @ model manager (fmKf)",
+		"redox.undo -> redox.undo @ model manager (fmKf)",
+		"redox.redo -> redox.redo @ model manager (fmKf)",
+		"team legend -> teams @ team legend (Mvbc)",
+		"canvas -> content div @ editor page (tWeo)",
+		"node settings (sx) -> show @ node settings (JqzX)",
+		"runtime settings (dx) -> show @ runtime settings (ktxp)",
+		"node prompt -> markdown @ markdown input (nrBF)",
+		"context menu -> context menu @ context menu (bVIl)",
+		"name and path -> name and path @ name and path (yMnR)",
 		"open source file -> ()",
 		"open model -> ()",
-		"clipboard.get => get @ clipboard (wioZ)",
-		"clipboard.set -> set @ clipboard (wioZ)",
-		"team legend -> teams @ team legend (vcix)"
+		"clipboard.get => get @ clipboard (aCeI)",
+		"clipboard.set -> set @ clipboard (aCeI)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
-	name: "model manager", 
-	uid: "EulS", 
+	name: "model manager",
+	uid: "fmKf",
 	factory: ModelManager,
 	inputs: [
 		"-> sync model",
@@ -341,24 +341,24 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (DRTj)",
-		"model.root -> root @ view manager (dhZj)",
-		"model.header -> show @ doc settings (ApWA)",
+		"save point.confirm -> show @ confirm box (phBB)",
+		"model.root -> root @ view manager (tSqb)",
+		"model.header -> show @ doc settings (JfFD)",
 		"model.resolved -> ()",
-		"redox.done -> redox.done @ view manager (dhZj)",
-		"event settings -> show @ event settings (uxCv)",
-		"tool settings -> show @ tool settings (tsYr)",
-		"pin profile -> show @ pin profile (sDKx)",
-		"info popup -> show @ toast box (TSRa)",
-		"get path -> path @ path request (ADgH)",
+		"redox.done -> redox.done @ view manager (tSqb)",
+		"event settings -> show @ event settings (ibzb)",
+		"tool settings -> show @ tool settings (oevX)",
+		"pin profile -> show @ pin profile (Yxwa)",
+		"info popup -> show @ toast box (LZEu)",
+		"get path -> path @ path request (uOnq)",
 		"open source file -> ()",
 		"open model -> ()"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
-	name: "clipboard", 
-	uid: "wioZ", 
+	name: "clipboard",
+	uid: "aCeI",
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -373,187 +373,187 @@ const nodeList = [
 	},
 	//________________________________________________PATH REQUEST
 	{
-	name: "path request", 
-	uid: "ADgH", 
+	name: "path request",
+	uid: "uOnq",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)",
-		"folder.get => folder.get @ workspace (UJJH)"
+		"modal div -> modal div @ editor page (tWeo)",
+		"folder.get => folder.get @ workspace (yowV)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
-	name: "node settings", 
-	uid: "JTZx", 
+	name: "node settings",
+	uid: "JqzX",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
-	name: "name and path", 
-	uid: "eLAa", 
+	name: "name and path",
+	uid: "yMnR",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"folder.get => folder.get @ workspace (UJJH)",
-		"modal div -> modal div @ editor page (AfgR)"
+		"folder.get => folder.get @ workspace (yowV)",
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
-	name: "pin profile", 
-	uid: "sDKx", 
+	name: "pin profile",
+	uid: "Yxwa",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"pin prompt -> markdown @ markdown input (bJbN)",
-		"modal div -> modal div @ editor page (AfgR)"
+		"pin prompt -> markdown @ markdown input (nrBF)",
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//______________________________________________MARKDOWN INPUT
 	{
-	name: "markdown input", 
-	uid: "bJbN", 
+	name: "markdown input",
+	uid: "nrBF",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//________________________________________________DOC SETTINGS
 	{
-	name: "doc settings", 
-	uid: "ApWA", 
+	name: "doc settings",
+	uid: "JfFD",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)",
-		"agent settings -> show @ agent settings (cyRk)",
-		"model runtime settings -> show @ model runtime settings (sKQd)"
+		"modal div -> modal div @ editor page (tWeo)",
+		"agent settings -> show @ agent settings (PYnL)",
+		"model runtime settings -> show @ model runtime settings (cprb)"
 		]
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
-	name: "model runtime settings", 
-	uid: "sKQd", 
+	name: "model runtime settings",
+	uid: "cprb",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//______________________________________________AGENT SETTINGS
 	{
-	name: "agent settings", 
-	uid: "cyRk", 
+	name: "agent settings",
+	uid: "PYnL",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
-	name: "context menu", 
-	uid: "TeMy", 
+	name: "context menu",
+	uid: "bVIl",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
-	name: "runtime settings", 
-	uid: "xoHz", 
+	name: "runtime settings",
+	uid: "ktxp",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
-	name: "confirm box", 
-	uid: "DRTj", 
+	name: "confirm box",
+	uid: "phBB",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
-	name: "tool settings", 
-	uid: "tsYr", 
+	name: "tool settings",
+	uid: "oevX",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
-	name: "event settings", 
-	uid: "uxCv", 
+	name: "event settings",
+	uid: "ibzb",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//___________________________________________________TOAST BOX
 	{
-	name: "toast box", 
-	uid: "TSRa", 
+	name: "toast box",
+	uid: "LZEu",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (AfgR)"
+		"modal div -> modal div @ editor page (tWeo)"
 		]
 	},
 	//_________________________________________________TEAM LEGEND
 	{
-	name: "team legend", 
-	uid: "vcix", 
+	name: "team legend",
+	uid: "Mvbc",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
 		],
 	outputs: [
-		"div -> legend div @ editor page (AfgR)"
+		"div -> legend div @ editor page (tWeo)"
 		]
 	},
 ]

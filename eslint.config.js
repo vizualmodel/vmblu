@@ -5,8 +5,9 @@ import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
   {
-    // The `ignores` property is for file exclusion
-    ignores: ["**/*-bundle.js", "docs/"],
+    ignores: ["**/*-bundle.js", "**/out/**", "docs/"],
+  },
+  {
     //files: ["**/*.{js,mjs,cjs}"],
     files: ["**/*.{js}"],
     plugins: { js },

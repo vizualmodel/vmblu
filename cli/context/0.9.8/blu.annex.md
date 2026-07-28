@@ -184,7 +184,7 @@ Think: *intent note*, not documentation.
 
 ## A.7 Prompt repositories
 
-Node and pin prompts are part of the model, but they do not have to be stored inline in the `.mod.blu` file. A node may use `promptRepo` to point to a model-owned markdown file that contains the prompt for the node and the prompts for its pins.
+Node prompts, design status, decisions, open work and pin prompts are part of the model, but they do not have to be stored inline in the `.mod.blu` file. A node may use `promptRepo` to point to a model-owned markdown file that contains this information.
 
 Use external prompt files as the normal form for non-trivial models. This keeps the structural model - nodes, interfaces, pins, contracts and connections - readable for humans and coding agents while still keeping design prompts under model ownership.
 
@@ -242,7 +242,22 @@ Prompt files use this simple markdown structure:
 
 ## Node
 
-Node-level prompt text.
+### Prompt
+
+Stable node responsibility and behavioral guidance.
+
+### Status
+
+Concise current stage and readiness.
+
+### Decisions
+
+Accepted node-level decisions that are not already expressed structurally.
+
+### Open
+
+Unresolved work and choices that prevent the node from reaching its next
+readiness level.
 
 ## Pins
 
@@ -251,13 +266,29 @@ Node-level prompt text.
 Pin-level prompt text.
 ```
 
-The `## Node` section contains the node prompt. The `## Pins` section contains one `###` subsection per pin, using the exact pin name from the model. If a file cannot be read or parsed, tools may fail silently and leave existing prompts unchanged.
+The `## Node` section scopes four node-level subsections:
+
+- `### Prompt` contains stable responsibility and behavioral guidance.
+- `### Status` summarizes the node's current design, implementation or
+  verification stage and its readiness for the next stage.
+- `### Decisions` records accepted node-level decisions and rationale that are
+  not already authoritative in structural model fields.
+- `### Open` records unresolved work and choices. Phrase work as actions and
+  choices as decisions so one list can represent both without ambiguity.
+
+Do not duplicate node kind, interfaces, pins, contracts, connections, types,
+factories, runtime settings or capabilities in these sections. Those
+structural model fields remain authoritative.
+
+The `## Pins` section contains one `###` subsection per pin, using the exact pin name from the model. Pin subsections remain concise behavioral prompts as described in A.6.
+
+Readers must continue to accept the legacy format in which text appears directly under `## Node`; that text is the node prompt. Writers save the structured format with `Prompt`, `Status`, `Decisions` and `Open` subsections, including empty subsections, so every editable node-level text has a stable title. If a file cannot be read or parsed, tools may fail silently and leave existing prompts unchanged.
 
 ### Guidance for coding agents
 
-When implementing a node, inspect the structural model first: node kind, factory, interfaces, pins, contracts, connections, types, runtime settings and capabilities. Then read the node's `promptRepo` file, if present, for design intent.
+When refining or implementing a node, inspect the structural model first: node kind, factory, interfaces, pins, contracts, connections, types, runtime settings and capabilities. Then read the node's `promptRepo` file, if present. Use `Status` and `Open` to determine whether the node is ready for the requested phase instead of assuming that a complete-looking responsibility prompt means the design is implementation-ready.
 
-Prompts are design-time guidance. They help an agent understand intent, but contracts, types, capabilities, runtime settings and source code remain the authoritative sources for executable behavior. When code has been implemented and later diverges from an old prompt, prefer the current model and source code over stale prompt text unless the user explicitly asks to update the prompt.
+Prompts are guidance. Status, decisions and open items make the current refinement state explicit, but contracts, types, capabilities, runtime settings and source code remain the authoritative sources for executable behavior. Keep status and open items current as work progresses. When code has been implemented and later diverges from an old prompt, prefer the current model and source code over stale prompt text unless the user explicitly asks to update the prompt.
 
 ## A.8 Request / Reply Semantics
 

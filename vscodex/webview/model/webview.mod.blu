@@ -156,6 +156,14 @@
                 }
               },
               {
+                "name": "legend div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
                 "name": "floating menu",
                 "kind": "input",
                 "contract": {
@@ -165,14 +173,6 @@
               },
               {
                 "name": "modal div",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "legend div",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -1859,16 +1859,16 @@
             "interface": "",
             "pins": [
               {
-                "name": "teams",
-                "kind": "input",
+                "name": "div",
+                "kind": "output",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
                 }
               },
               {
-                "name": "div",
-                "kind": "output",
+                "name": "teams",
+                "kind": "input",
                 "contract": {
                   "role": "follower",
                   "payload": "any"

@@ -333,13 +333,19 @@ changeNodeDynamics: {
 },
 
 changeNodePrompt: {
-    doit({node,prompt}) {
+    doit({node, prompt, sections=null}) {
 
-        if ( !prompt || prompt.length == 0) {
-            node.prompt = null
+        const next = sections ?? {prompt}
+        const fields = {
+            prompt: 'prompt',
+            status: 'promptStatus',
+            decisions: 'promptDecisions',
+            open: 'promptOpen',
         }
-        else if (prompt !== node.prompt) {
-            node.prompt = prompt
+
+        for (const [section, field] of Object.entries(fields)) {
+            const value = next?.[section]?.length ? next[section] : null
+            if (value !== node[field]) node[field] = value
         }
     },
     undo({}) {

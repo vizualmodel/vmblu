@@ -5,7 +5,13 @@ import {tmpdir} from 'node:os'
 import path from 'node:path'
 
 import {ARL} from '../types/arl/arl-node.js'
-import {ModelBlueprint, ModelCompiler, UIDGenerator} from '../types/model/index.js'
+import {ModelBlueprint, ModelCompiler, ModelHeader, UIDGenerator} from '../types/model/index.js'
+
+test('new model headers use the current schema version', () => {
+    const header = new ModelHeader()
+
+    assert.equal(header.version, '0.9.8')
+})
 
 test('model blueprint loads blu/viz and can be split and loaded again', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'vmblu-core-model-'))
@@ -72,6 +78,8 @@ test('model blueprint loads blu/viz and can be split and loaded again', async ()
         })
         assert.deepEqual(split.blu.root.nodes ?? [], [])
         assert.deepEqual(split.viz.root.nodes ?? [], [])
+        assert.equal(split.viz.header.created, bluRaw.header.created)
+        assert.equal(split.viz.header.saved, bluRaw.header.saved)
 
         const nextBluArl = new ARL(path.join(dir, 'roundtrip.mod.blu'))
         const nextVizArl = nextBluArl.resolve('./roundtrip.mod.viz')

@@ -289,7 +289,7 @@ runtime.start()
         const separator = underscores.slice(0, -node.name.length) + node.name.toUpperCase()
 
         // every node has name, uid and code - use the alias if present
-        let sSource = `${separator}\n\t{\n\tname: "${node.name}", \n\tuid: "${node.uid}", \n\tfactory: ${node.factory.alias ?? node.factory.fName},`
+        let sSource = `${separator}\n\t{\n\tname: "${node.name}",\n\tuid: "${node.uid}",\n\tfactory: ${node.factory.alias ?? node.factory.fName},`
 
         // Add the list of input pins
         sSource += '\n\tinputs: ['
@@ -427,7 +427,7 @@ runtime.start()
     <meta name='viewport' content='width=device-width'>
     <title>${node.name}</title>
     <link rel='icon' type='image/png' href='/page/shared/favicon.ico'>
-    <link rel='stylesheet' href='${cssPath}'> 
+    <link rel='stylesheet' href='${cssPath}'>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script type='module' src='${appPath}'></script>
 </head>

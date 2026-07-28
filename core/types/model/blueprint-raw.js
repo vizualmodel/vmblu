@@ -167,7 +167,7 @@ splitHeader(rHeader) {
 
     return { 
             blu,
-            viz : {version: headerVersion, utc, style: styleRgb}
+            viz : {version: headerVersion, created, saved, utc, style: styleRgb}
     }
 },
 

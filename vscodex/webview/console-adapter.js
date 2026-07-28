@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+
 import {vscode} from './arl-adapter.js';
 
 // This function catches the console.log output in the webview part

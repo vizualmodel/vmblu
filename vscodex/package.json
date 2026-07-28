@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "0.1.42",
+    "version": "0.1.44",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -89,10 +89,12 @@
         "assets/vmblu-screenshot.png"
     ],
     "scripts": {
-        "vscode:prepublish": "npm run ext && npm run bundle",
+        "vscode:prepublish": "npm run webview && npm run ext && npm run bundle",
         "vx": "npm run webview && npm run ext &&  npm run bundle && npm run vsix",
         "vsix": "vsce package --no-rewrite-relative-links",
         "publish:patch": "npm run webview && vsce publish patch",
+        "sync:schema": "node ../cli/scripts/generate-schema-version.js",
+        "prewebview": "npm run sync:schema",
         "webview": "cd ./webview && rollup -c",
         "ext": "tsc -p tsconfig.json",
         "bundle": "rollup -c ./extension/rollup.config.mjs",
