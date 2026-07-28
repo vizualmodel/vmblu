@@ -39,8 +39,12 @@ export function Node (look=null, name=null, uid=null) {
     // a node can have dynamics - dynamics are passed to the runtime - (to be changed to some fixed format probably)
     this.dx = null
 
-    // comment is an optional text field for the node
+    // Model-owned node prompt content. The additional sections live in the
+    // prompt repository and remain out of the semantic blueprint JSON.
     this.prompt = null
+    this.promptStatus = null
+    this.promptDecisions = null
+    this.promptOpen = null
 
     // Optional model-owned external prompt repository for this node.
     this.promptRepo = null
@@ -249,6 +253,9 @@ Node.prototype = {
     
         // check if the node has a comment
         if (raw.prompt) this.prompt = raw.prompt
+        if (raw.promptStatus) this.promptStatus = raw.promptStatus
+        if (raw.promptDecisions) this.promptDecisions = raw.promptDecisions
+        if (raw.promptOpen) this.promptOpen = raw.promptOpen
 
         // check if the node has an external prompt repo
         if (raw.promptRepo && raw.kind !== 'dock') {

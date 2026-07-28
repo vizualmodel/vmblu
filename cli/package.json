@@ -1,7 +1,7 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "0.5.6",
-  "schemaVersion": "0.9.7",
+  "version": "0.5.7",
+  "schemaVersion": "0.9.8",
   "type": "module",
   "bin": {
     "vmblu": "bin/vmblu.js"
@@ -45,7 +45,7 @@
     "tsup": "^8.5.0"
   },
   "dependencies": {
-    "@vizualmodel/vmblu-core": "0.5.6",
+    "@vizualmodel/vmblu-core": "0.5.7",
     "@vizualmodel/vmblu-runtime": "0.5.6",
     "ts-morph": "^26.0.0",
     "typescript": "^5.8.3"
@@ -55,6 +55,8 @@
     "local-profile": "node ./bin/vmblu.js profile",
     "local-init": "node ./bin/vmblu.js init",
     "prebuild": "node ./scripts/generate-schema-version.js",
-    "build": "rollup -c ./commands/profile/rollup.config.js"
+    "build": "rollup -c ./commands/profile/rollup.config.js",
+    "test": "node --test tests/*.test.js",
+    "prepack": "npm run build"
   }
 }

@@ -575,14 +575,10 @@ var defaultMonitor$2 = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultSecurity$1 = /* @__PURE__ */ __name(() => ({
-  enabled: false
-}), "defaultSecurity");
 function make$2() {
   return {
     run: defaultRun$2(),
-    monitor: defaultMonitor$2(),
-    security: defaultSecurity$1()
+    monitor: defaultMonitor$2()
   };
 }
 __name(make$2, "make");
@@ -603,17 +599,12 @@ function normalize$3(dx = null) {
       ...defaults.monitor,
       ...dx.monitor ?? {},
       logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
-    },
-    security: {
-      ...defaults.security,
-      ...dx.security ?? {}
     }
   };
   normalized.run.worker.on = !!normalized.run.worker.on;
   normalized.run.worker.path = normalized.run.worker.path ?? "";
   normalized.monitor.logMessages = !!normalized.monitor.logMessages;
   normalized.monitor.logTimings = !!normalized.monitor.logTimings;
-  normalized.security.enabled = !!normalized.security.enabled;
   return normalized;
 }
 __name(normalize$3, "normalize");
@@ -631,9 +622,9 @@ function assign$4(target, dx = null) {
   const normalized = normalize$3(dx);
   target.run = structuredClone(normalized.run);
   target.monitor = structuredClone(normalized.monitor);
-  target.security = structuredClone(normalized.security);
   delete target.logMessages;
   delete target.worker;
+  delete target.security;
   return target;
 }
 __name(assign$4, "assign");
@@ -645,28 +636,13 @@ __name(isDefault$2, "isDefault");
 function makeModel$2() {
   return {
     run: {},
-    monitor: {},
-    security: {
-      fs: {
-        read: { mode: "deny", roots: [] },
-        write: { mode: "deny", roots: [] },
-        delete: { mode: "deny", roots: [] }
-      },
-      net: {
-        egress: { mode: "deny", hosts: [] }
-      },
-      process: {
-        exec: { mode: "deny", commands: [] }
-      }
-    }
+    monitor: {}
   };
 }
 __name(makeModel$2, "makeModel");
 function normalizeModel$2(settings = null) {
-  var _a, _b, _c, _d, _e;
   const defaults = makeModel$2();
   if (!settings || typeof settings !== "object") return defaults;
-  const security = settings.security ?? {};
   return {
     run: {
       ...defaults.run,
@@ -675,20 +651,6 @@ function normalizeModel$2(settings = null) {
     monitor: {
       ...defaults.monitor,
       ...settings.monitor ?? {}
-    },
-    security: {
-      ...defaults.security,
-      fs: {
-        read: { ...defaults.security.fs.read, ...((_a = security.fs) == null ? void 0 : _a.read) ?? {} },
-        write: { ...defaults.security.fs.write, ...((_b = security.fs) == null ? void 0 : _b.write) ?? {} },
-        delete: { ...defaults.security.fs.delete, ...((_c = security.fs) == null ? void 0 : _c.delete) ?? {} }
-      },
-      net: {
-        egress: { ...defaults.security.net.egress, ...((_d = security.net) == null ? void 0 : _d.egress) ?? {} }
-      },
-      process: {
-        exec: { ...defaults.security.process.exec, ...((_e = security.process) == null ? void 0 : _e.exec) ?? {} }
-      }
     }
   };
 }
@@ -6466,8 +6428,8 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$d = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root_3$4 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_2$e = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
+var root_3$5 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
 var root$m = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
@@ -6556,7 +6518,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$d();
+				var div_1 = root_2$e();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -6578,7 +6540,7 @@ function Tab_ribbon($$anchor, $$props) {
 				append($$anchor, div_1);
 			},
 			($$anchor) => {
-				var div_3 = root_3$4();
+				var div_3 = root_3$5();
 
 				set_attribute(div_3, "data-index", index);
 
@@ -6812,8 +6774,8 @@ theme.subscribe(value => {
 });
 
 var root_1$i = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$c = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
-var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
+var root_2$d = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_3$4 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
 var root$j = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
@@ -6942,7 +6904,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$c();
+		var i_3 = root_2$d();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6955,7 +6917,7 @@ function Popup_box($$anchor, $$props) {
 	var node_2 = sibling(h1, 2);
 
 	if_block(node_2, () => box().trash, ($$anchor) => {
-		var div_3 = root_3$3();
+		var div_3 = root_3$4();
 		var i_4 = child(div_3);
 		event("click", i_4, onTrash);
 		event("keydown", i_4, onKeydown);
@@ -7179,7 +7141,7 @@ function Button($$anchor, $$props) {
 	pop();
 }
 
-var root_2$b = template(`<li role="option" class="svelte-1pc2gyz"> </li>`);
+var root_2$c = template(`<li role="option" class="svelte-1pc2gyz"> </li>`);
 var root_1$h = template(`<ul role="listbox" class="svelte-1pc2gyz"></ul>`);
 var root$d = template(`<div class="select-field svelte-1pc2gyz"><label class="svelte-1pc2gyz"> </label> <div class="select-box svelte-1pc2gyz"><button type="button" aria-haspopup="listbox" class="svelte-1pc2gyz"> <span class="arrow svelte-1pc2gyz">▾</span></button> <!></div></div>`);
 
@@ -7276,7 +7238,7 @@ function Label_select($$anchor, $$props) {
 		set_attribute(ul, "aria-labelledby", labelId);
 
 		each(ul, 5, options, index, ($$anchor, option) => {
-			var li = root_2$b();
+			var li = root_2$c();
 
 			template_effect(() => set_attribute(li, "aria-selected", optionValue(get(option)) === value()));
 
@@ -7872,7 +7834,7 @@ function getRuntimeSettings(runtime) {
     return getRuntimeDescriptor(runtime).settings
 }
 
-var root_2$a = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
+var root_2$b = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
 var root_1$g = template(`<div class="node-security-settings svelte-jkuczt"><div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Network</h4> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Process</h4> <!> <!></div> <!></div>`);
 
 function Node_security_settings($$anchor, $$props) {
@@ -8188,7 +8150,7 @@ function Node_security_settings($$anchor, $$props) {
 			var node_10 = sibling(div_3, 2);
 
 			if_block(node_10, () => get(envelopeWarning), ($$anchor) => {
-				var p = root_2$a();
+				var p = root_2$b();
 				var text_1 = child(p);
 				template_effect(() => set_text(text_1, get(envelopeWarning)));
 				append($$anchor, p);
@@ -8550,8 +8512,8 @@ function Runtime_settings($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
-var root_2$9 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
+var root_3$3 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
+var root_2$a = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
 var root_4$2 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
 var root_5$2 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
 var root_1$e = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
@@ -8765,7 +8727,7 @@ function Model_runtime_settings($$anchor, $$props) {
 				node_2,
 				() => get(view) === 'form' && get(currentSettings),
 				($$anchor) => {
-					var fragment_1 = root_2$9();
+					var fragment_1 = root_2$a();
 					var div_2 = first_child(fragment_1);
 					var node_3 = sibling(child(div_2), 2);
 
@@ -8796,7 +8758,7 @@ function Model_runtime_settings($$anchor, $$props) {
 					var node_5 = sibling(div_2, 2);
 
 					if_block(node_5, () => hasPolicySettings(get(currentSettings)), ($$anchor) => {
-						var fragment_2 = root_3$2();
+						var fragment_2 = root_3$3();
 						var div_3 = first_child(fragment_2);
 						var node_6 = sibling(child(div_3), 2);
 
@@ -17832,7 +17794,7 @@ MarkdownIt.prototype.renderInline = function (src, env) {
 };
 
 var root_1$b = template(`<div class="preview svelte-1uavf00" aria-label="Markdown preview" tabindex="0"><!></div>`);
-var root_2$8 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1uavf00"></textarea>`);
+var root_2$9 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1uavf00"></textarea>`);
 var root$7 = template(`<div class="wrapper svelte-1uavf00"><!></div>`);
 
 function Markdown_input$1($$anchor, $$props) {
@@ -17902,7 +17864,7 @@ function Markdown_input$1($$anchor, $$props) {
 			append($$anchor, div_1);
 		},
 		($$anchor) => {
-			var textarea = root_2$8();
+			var textarea = root_2$9();
 
 			template_effect(() => {
 				set_attribute(textarea, "style", get(fieldStyle));
@@ -17918,6 +17880,9 @@ function Markdown_input$1($$anchor, $$props) {
 	append($$anchor, div);
 	pop();
 }
+
+var root_3$2 = template(`<button type="button" class="tab svelte-1h4g5a9" role="tab"> </button>`);
+var root_2$8 = template(`<div class="tabs svelte-1h4g5a9" role="tablist" aria-label="Node prompt sections"></div> <!>`, 1);
 
 function Markdown_input($$anchor, $$props) {
 	push($$props, false);
@@ -17940,14 +17905,23 @@ function Markdown_input($$anchor, $$props) {
 
 	// the text
 	let newText = mutable_state('');
+	let sectionTabs = mutable_state([]);
+	let activeSection = mutable_state(null);
 	let showPreview = mutable_state(false);
+
+	// only the escape key can go to the box
+	function onKeydown(e) {
+		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
+	}
 
 	const handlers = {
 		onMarkdown(
 			{
 				header,
 				pos,
-				text,
+				text = '',
+				mode = null,
+				sections = null,
 				ok = null,
 				cancel = null
 			}
@@ -17955,9 +17929,42 @@ function Markdown_input($$anchor, $$props) {
 			// set the box parameters
 			mutate(box, get(box).title = header);
 
+			const sectioned = mode === 'node-sections' || sections !== null;
+			const nodeSections = sections ?? { prompt: text };
+
+			set(sectionTabs, sectioned
+				? [
+					{
+						key: 'prompt',
+						label: 'Prompt',
+						text: nodeSections.prompt ?? ''
+					},
+					{
+						key: 'status',
+						label: 'Status',
+						text: nodeSections.status ?? ''
+					},
+					{
+						key: 'decisions',
+						label: 'Decisions',
+						text: nodeSections.decisions ?? ''
+					},
+					{
+						key: 'open',
+						label: 'Open',
+						text: nodeSections.open ?? ''
+					}
+				]
+				: []);
+			set(activeSection, get(sectionTabs)[0]?.key ?? null);
+
 			// set the ok function
 			mutate(box, get(box).ok = () => {
-				ok?.(get(newText));
+				if (get(sectionTabs).length) {
+					ok?.(Object.fromEntries(get(sectionTabs).map((tab) => [tab.key, tab.text])));
+				} else {
+					ok?.(get(newText));
+				}
 			});
 
 			// set the add function: when the add icon is pressed, the markdown is previewed
@@ -17980,23 +17987,87 @@ function Markdown_input($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			Markdown_input$1($$anchor, {
-				get text() {
-					return get(newText);
+			var fragment_1 = comment$1();
+			var node = first_child(fragment_1);
+
+			if_block(
+				node,
+				() => get(sectionTabs).length,
+				($$anchor) => {
+					var fragment_2 = root_2$8();
+					var div = first_child(fragment_2);
+
+					each(div, 5, () => get(sectionTabs), index, ($$anchor, tab) => {
+						var button = root_3$2();
+						var text_1 = child(button);
+
+						template_effect(() => {
+							set_attribute(button, "aria-selected", get(activeSection) === get(tab).key);
+							toggle_class(button, "active", get(activeSection) === get(tab).key);
+							set_text(text_1, get(tab).label);
+						});
+
+						event("click", button, () => set(activeSection, get(tab).key));
+						event("keydown", button, onKeydown);
+						append($$anchor, button);
+					});
+
+					var node_1 = sibling(div, 2);
+
+					each(node_1, 1, () => get(sectionTabs), index, ($$anchor, tab) => {
+						var fragment_3 = comment$1();
+						var node_2 = first_child(fragment_3);
+
+						if_block(node_2, () => get(activeSection) === get(tab).key, ($$anchor) => {
+							Markdown_input$1($$anchor, {
+								get text() {
+									return get(tab).text;
+								},
+								set text($$value) {
+									(
+										get(tab).text = $$value,
+										invalidate_inner_signals(() => (get(sectionTabs)))
+									);
+								},
+								get showPreview() {
+									return get(showPreview);
+								},
+								set showPreview($$value) {
+									set(showPreview, $$value);
+								},
+								cols: "50",
+								rows: "25",
+								$$legacy: true
+							});
+						});
+
+						append($$anchor, fragment_3);
+					});
+
+					append($$anchor, fragment_2);
 				},
-				set text($$value) {
-					set(newText, $$value);
-				},
-				get showPreview() {
-					return get(showPreview);
-				},
-				set showPreview($$value) {
-					set(showPreview, $$value);
-				},
-				cols: "50",
-				rows: "25",
-				$$legacy: true
-			});
+				($$anchor) => {
+					Markdown_input$1($$anchor, {
+						get text() {
+							return get(newText);
+						},
+						set text($$value) {
+							set(newText, $$value);
+						},
+						get showPreview() {
+							return get(showPreview);
+						},
+						set showPreview($$value) {
+							set(showPreview, $$value);
+						},
+						cols: "50",
+						rows: "25",
+						$$legacy: true
+					});
+				}
+			);
+
+			append($$anchor, fragment_1);
 		},
 		$$slots: { default: true }
 	});

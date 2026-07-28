@@ -1242,6 +1242,33 @@ textarea.svelte-1uavf00 {
 }
 
 
+.tabs.svelte-1h4g5a9 {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid #333;
+}
+
+.tab.svelte-1h4g5a9 {
+    padding: 0.4rem 0.7rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--md-fg, #fff);
+    cursor: pointer;
+}
+
+.tab.svelte-1h4g5a9:hover,
+.tab.svelte-1h4g5a9:focus-visible {
+    background: rgba(127, 199, 255, 0.08);
+    outline: 1px solid #7fc7ff;
+    outline-offset: -1px;
+}
+
+.tab.active.svelte-1h4g5a9 {
+    border-bottom-color: #7fc7ff;
+    color: #7fc7ff;
+}
 
 
 .profile.svelte-5263ly {

@@ -1,5 +1,5 @@
-/* eslint-disable no-undef */
-/* eslint-disable semi */
+
+
 
 // Message handlers for messages coming from the other nodes...
 import {requestVsCode, vscode} from './arl-adapter.js'
@@ -56,6 +56,9 @@ export const messageBrokerWebview = {
 
 		// add the resize event listener
 		window.addEventListener("resize", onResize, { passive: true });
+
+		// apply the DPR-aware canvas sizing on the initial render as well
+		onResize();
     },
 
 	onModalDiv(modalDiv) {

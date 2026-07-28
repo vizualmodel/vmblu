@@ -43,8 +43,7 @@ function defaultModel(projectName, schemaVersion = SCHEMA_VERSION) {
       saved: now,
       utc: now,
       style: "#2c7be5",
-      runtime: "@vizualmodel/vmblu-runtime/rt-base",
-      description: `${projectName} - vmblu model (scaffolded)`
+      runtime: "@vizualmodel/vmblu-runtime/rt-base"
     },
     imports: [],
     factories: [],
@@ -65,6 +64,8 @@ function defaultVizual(schemaVersion = SCHEMA_VERSION) {
   return JSON.stringify({
     header: {
       version: schemaVersion,
+      created: now,
+      saved: now,
       utc: now,
       style: "#2c7be5"
     },
@@ -77,8 +78,7 @@ function defaultVizual(schemaVersion = SCHEMA_VERSION) {
         rect: "x 0 y 0 w 1200 h 800",
         transform: "sx 1.000 sy 1.000 dx 0.000 dy 0.000"
       },
-      nodes: [],
-      connections: []
+      nodes: []
     }
   }, null, 2);
 }

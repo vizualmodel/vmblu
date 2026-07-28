@@ -351,9 +351,9 @@
         "name": "popups",
         "rect": "x 2180 y 167 w 150 h 236",
         "view": {
-          "state": "open",
-          "rect": "x 862 y -267 w 1488 h 1514",
-          "transform": "sx 0.882 sy 0.882 dx 1368.716 dy -281.100"
+          "state": "closed",
+          "rect": "x 1030 y -235 w 1488 h 1514",
+          "transform": "sx 0.882 sy 0.882 dx 1536.716 dy -249.100"
         },
         "interfaces": [
           {
@@ -656,12 +656,12 @@
           {
             "from": "(pin 3) model runtime settings @ doc settings",
             "to": "(pin 1) show @ model runtime settings",
-            "wire": "x 32.3 y 72.0 x -51.2"
+            "wire": "x 32.3 y 72.0 x -51.3"
           },
           {
             "from": "(pin 2) modal div @ model runtime settings",
             "to": "(cable 0 nonselective)",
-            "wire": "x 69.0 y 0.0 x 215.6"
+            "wire": "x 69.0 y 0.0 x 215.7"
           },
           {
             "from": "(pin 2) modal div @ agent settings",

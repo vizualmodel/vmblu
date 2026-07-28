@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+
 // import arl to change some of the functions
 import {ARL, Path} from '../../core/types/arl/index.js';
 

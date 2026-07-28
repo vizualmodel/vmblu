@@ -1,6 +1,6 @@
 {
-  "version": "0.5.3",
-  "generatedAt": "2026-06-30T11:03:47.118Z",
+  "version": "0.5.6",
+  "generatedAt": "2026-07-26T19:43:33.914Z",
   "entries": [
     {
       "node": "document manager",
@@ -508,14 +508,22 @@
               "name": "path",
               "type": "any",
               "description": ""
+            },
+            {
+              "name": "preserveTarget",
+              "type": "boolean",
+              "description": ""
             }
+          ],
+          "typeErrors": [
+            "typeWarning: expected any but handler uses destructured params"
           ]
         },
         {
           "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 442,
+          "line": 458,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -525,7 +533,7 @@
           "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 469,
+          "line": 485,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -621,17 +629,17 @@
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 447
+          "line": 463
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 475
+          "line": 491
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 487
+          "line": 503
         }
       ]
     },
@@ -687,12 +695,12 @@
         {
           "pin": "open model",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 197
+          "line": 202
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 210
+          "line": 215
         }
       ]
     }

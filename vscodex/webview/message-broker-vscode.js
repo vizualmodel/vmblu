@@ -1,5 +1,5 @@
-/* eslint-disable no-undef */
-/* eslint-disable semi */
+
+
 
 // the event handler for messages coming from vs code
 import {Document} from '../../core/nodes/document-manager/document.js';
