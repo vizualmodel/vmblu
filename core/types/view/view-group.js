@@ -36,7 +36,7 @@ selectionToGroup(UID) {
         //..and remove it from the root in this view
         this.root.removeNode(node)
     }
-    // now we add the cables and keep track of the floating cables that were transferred
+    // now we add the cables and keep track of the trunks that were transferred
     const transfers = this.busTransfer(newGroup)
 
     // create the proxies for this group type and make the interconnections inside + outside of the group
@@ -102,7 +102,7 @@ busTransfer(newGroup) {
     return transfers
 },
 
-// The new bus inside the new group has to be connected to the bus outside
+// The new cable inside the group has to be connected to the cable outside
 // we filter the connections to avoid duplicates
 busInterconnect(outside, newGroup, inside) {
 

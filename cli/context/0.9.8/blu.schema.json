@@ -342,7 +342,7 @@
     },
 
     "PromptRepo": {
-      "description": "External model-owned repository for node prompt, status, decisions, open work and pin prompts.",
+      "description": "External model-owned repository for node prompt, status, decisions, open work, references and pin prompts.",
       "type": "object",
       "properties": {
         "arl": { "type": "string", "minLength": 1 },

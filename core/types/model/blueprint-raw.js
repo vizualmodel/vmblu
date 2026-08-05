@@ -111,7 +111,7 @@ async getRaw() {
     return bRaw
 },
 
-saveRaw() {
+async saveRaw() {
 
     const promptFiles = this.preparePromptReposForSave?.(this.raw) ?? []
 
@@ -124,10 +124,11 @@ saveRaw() {
 
     // save both parts of the model
     const saves = []
-    if (blu) saves.push(this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error)))
-    if (viz) saves.push(this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error)))
+    if (blu) saves.push(saveFile(this.blu.arl, blu))
+    if (viz) saves.push(saveFile(this.viz.arl, viz))
 
-    Promise.allSettled(saves).then(() => this.savePromptRepos?.(promptFiles))
+    await Promise.all(saves)
+    await this.savePromptRepos?.(promptFiles)
 },
 
 // Splits raw into a part for the blu file and the viz file
@@ -311,7 +312,8 @@ joinInterfaces(bNode, vNode) {
 
     // first convert strings
     vNode.interfaces = vNode.interfaces.map( iface => {
-        const vif = {...convert.stringToInterface(iface.interface)}
+        const serializedInterface = iface.interface ?? iface.name
+        const vif = {...convert.stringToInterface(serializedInterface)}
         vif.pins = iface.pins.map( pin => convert.stringToPin(pin))
         return vif
     })
@@ -479,4 +481,16 @@ function defaultVizPath(modelArl) {
 
 function validTeamColor(color) {
     return typeof color === 'string' && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(color)
+}
+
+async function saveFile(arl, body) {
+    try {
+        const result = await arl.save(body)
+        if (result === null || result === false) throw new Error('File write returned failure')
+        return result
+    }
+    catch (error) {
+        console.error(`Failed to save ${arl.getPath()}:`, error)
+        throw error
+    }
 }

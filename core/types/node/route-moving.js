@@ -15,6 +15,7 @@ export const routeMoving = {
         if (!tack?.cable?.is?.cable || !tack.is.endpoint) return false
 
         const cable = tack.cable
+        cable.canonicalizeOrthogonalWire?.('endpoint adjustment')
         const wire = cable?.wire
         if (!wire || wire.length < 2) return false
 
@@ -80,6 +81,7 @@ export const routeMoving = {
         }
 
         tack.refreshPlacement?.()
+        cable.validateOrthogonalWire?.('endpoint adjustment')
 
         return true
     },
@@ -92,36 +94,42 @@ export const routeMoving = {
     // moves a segment horizontally or vertically
     moveSegment(s,delta) {
 
-        const from = this.from
-        const to = this.to
+        try {
 
-        let p1 = this.wire[s-1]
-        let p2 = this.wire[s]
+            const from = this.from
+            const to = this.to
 
-        // if there is only one segment and one of the endpoints is a bus, add two segments
-        if (this.wire.length == 2) {
-            if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2)
+            let p1 = this.wire[s-1]
+            let p2 = this.wire[s]
+
+            // if there is only one segment and one of the endpoints is a bus, add two segments
+            if (this.wire.length == 2) {
+                if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2)
+            }
+
+            // first segment...
+            if (s == 1) {
+                // if one of the end points is a tack or pad - it can slide
+                return (from.is.tack || from.is.pad) ? from.slide(delta) : null
+            }
+
+            // last segment...
+            if (s == this.wire.length-1) {
+                return (to.is.tack || to.is.pad) ? to.slide(delta) : null
+            }
+
+            // otherwise just move the segment
+            if (p1.x == p2.x) {
+                p1.x += delta.x
+                p2.x += delta.x
+            }
+            else {
+                p1.y += delta.y
+                p2.y += delta.y
+            }
         }
-
-        // first segment...
-        if (s == 1) {
-            // if one of the end points is a tack or pad - it can slide
-            return (from.is.tack || from.is.pad) ? from.slide(delta) : null
-        }
-
-        // last segment...
-        if (s == this.wire.length-1) {
-            return (to.is.tack || to.is.pad) ? to.slide(delta) : null
-        }
-
-        // otherwise just move the segment
-        if (p1.x == p2.x) {
-            p1.x += delta.x
-            p2.x += delta.x
-        }
-        else {
-            p1.y += delta.y
-            p2.y += delta.y
+        finally {
+            this.refreshTackPlacements()
         }
     },
 

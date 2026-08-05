@@ -94,7 +94,7 @@ async exportToModel(node, lName, model) {
 
     // add the libraries if any
     if (models.size() > 0) target.imports = models.all(linkedModel => Path.relative(linkedModel.blu.arl.getFullPath(), model.getArl().getFullPath()))
-    if (factories.size() > 0) target.factories = factories.all(factory => factory.makeRaw(model.getArl()))
+    if (factories.size() > 0) target.factories = factories.makeRaw(model.getArl())
 
     // add the root
     target.root = newNode.makeRaw(model.getArl())

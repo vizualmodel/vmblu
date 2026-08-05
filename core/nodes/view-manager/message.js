@@ -69,6 +69,16 @@ export const messageHandling = {
         this.redraw();
     },
 
+    onApplicationPrompt(event) {
+        const root = this.top?.root
+        if (!root) return
+
+        root.showPrompt(this.tx, {
+            x: (event?.clientX ?? 0) - 15,
+            y: (event?.clientY ?? 0) + 10,
+        }, `Application prompt for ${root.name}`)
+    },
+
  
     onSizeChange(rect) {
         // check if the size is given

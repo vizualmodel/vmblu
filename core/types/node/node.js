@@ -7,7 +7,7 @@ import {routeHandling} from './node-routes.js'
 import {compareHandling} from './node-compare.js'
 import {Look} from './look.js'
 import {zap} from '../view/index.js'
-import {resolvePromptRepo} from './prompt-repo.js'
+import {NodePrompts} from './node-prompts.js'
 
 // The node in a nodegraph
 export function Node (look=null, name=null, uid=null) {
@@ -39,15 +39,8 @@ export function Node (look=null, name=null, uid=null) {
     // a node can have dynamics - dynamics are passed to the runtime - (to be changed to some fixed format probably)
     this.dx = null
 
-    // Model-owned node prompt content. The additional sections live in the
-    // prompt repository and remain out of the semantic blueprint JSON.
-    this.prompt = null
-    this.promptStatus = null
-    this.promptDecisions = null
-    this.promptOpen = null
-
-    // Optional model-owned external prompt repository for this node.
-    this.promptRepo = null
+    // Model-owned prompt content, repository identity, and runtime save state.
+    this.prompts = new NodePrompts()
 
     // Agent probe metadata authored on source nodes.
     this.probes = null
@@ -251,16 +244,8 @@ Node.prototype = {
         // check the width again - reset the width if it was not zero to start with..
         if (rc.w > 0 && this.look.rect.w > rc.w) this.look.smaller(this.look.rect.w - rc.w)
     
-        // check if the node has a comment
-        if (raw.prompt) this.prompt = raw.prompt
-        if (raw.promptStatus) this.promptStatus = raw.promptStatus
-        if (raw.promptDecisions) this.promptDecisions = raw.promptDecisions
-        if (raw.promptOpen) this.promptOpen = raw.promptOpen
-
-        // check if the node has an external prompt repo
-        if (raw.promptRepo && raw.kind !== 'dock') {
-            this.promptRepo = resolvePromptRepo(raw.promptRepo, modcom.getCurrentModel()?.getArl?.())
-        }
+        // Cook the flat persisted prompt fields into the live prompt structure.
+        this.prompts.cook(raw, modcom.getCurrentModel()?.getArl?.())
 
         // check if the node has agent probe metadata
         if (raw.probes) this.probes = raw.probes

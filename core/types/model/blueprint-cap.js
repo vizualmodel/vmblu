@@ -1,4 +1,5 @@
 import {Path} from '../arl/index.js'
+import {makeArtifactProvenance} from './artifact-provenance.js'
 
 const PRIMITIVE_SCHEMA_TYPES = new Set(['string', 'number', 'boolean', 'integer', 'object', 'array', 'null'])
 const ANY_SCHEMA = {type: 'object'}
@@ -11,6 +12,12 @@ makeCapabilityObject(root = null) {
     const capability = {
         schema: 'https://vmblu.dev/schemas/capabilities.v1.json',
         version: 1,
+        provenance: makeArtifactProvenance({
+            artifact: 'capabilities',
+            model: this.getArl().getName(),
+            source: this.raw,
+            schemaVersion: this.raw?.header?.version,
+        }),
         application: {
             id: appName || 'application',
             title: appName || 'Application',

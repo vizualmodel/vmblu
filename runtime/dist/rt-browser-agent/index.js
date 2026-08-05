@@ -297,7 +297,7 @@ function createTx(runtime, source) {
     send(pin, param) {
       if (pin) {
         const tx = source.findTx(pin);
-        if (tx) return runtime.sendTo(tx, source, param);
+        if (tx) return runtime.sendTo(source, tx.pin, tx.targets, param);
       }
       console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
       return 0;
@@ -305,7 +305,7 @@ function createTx(runtime, source) {
     request(pin, param, timeout = 0) {
       if (pin) {
         const tx = source.findTx(pin);
-        if (tx) return runtime.requestFrom(tx, source, param, timeout);
+        if (tx) return runtime.requestFrom(source, tx.pin, tx.targets, param, timeout);
       }
       console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
       return runtime.reject("No such output pin");
@@ -319,7 +319,7 @@ function createTx(runtime, source) {
     reschedule() {
       if (source.msg) runtime.reschedule(source.msg);
     },
-    select(nodeName) {
+    to(nodeName) {
       const _nodeName = nodeName;
       return {
         send(pin, param) {
@@ -328,9 +328,7 @@ function createTx(runtime, source) {
             if (tx) {
               const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
               if (actualTarget) {
-                const txCopy = new TX(tx.pin, tx.channel);
-                txCopy.targets = [actualTarget];
-                return runtime.sendTo(txCopy, source, param);
+                return runtime.sendTo(source, tx.pin, [actualTarget], param);
               }
               console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
               return 0;
@@ -345,9 +343,7 @@ function createTx(runtime, source) {
             if (tx) {
               const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
               if (actualTarget) {
-                const txCopy = new TX(tx.pin, tx.channel);
-                txCopy.targets = [actualTarget];
-                return runtime.requestFrom(txCopy, source, param, timeout);
+                return runtime.requestFrom(source, tx.pin, [actualTarget], param, timeout);
               }
               console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
               return runtime.reject("selected node not connected");
@@ -357,14 +353,37 @@ function createTx(runtime, source) {
           return runtime.reject("No such output pin");
         }
       };
+    },
+    select(nodeName) {
+      return this.to(nodeName);
     }
   };
 }
 __name(createTx, "createTx");
 
+// shared/release-version.js
+var RUNTIME_VERSION = "0.10.0";
+function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+  const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
+  return `${match[1]}.${match[2]}`;
+}
+__name(runtimeCompatibilityFamily, "runtimeCompatibilityFamily");
+function assertRuntimeCompatibility(expectedFamily) {
+  if (!expectedFamily) return runtimeCompatibilityFamily();
+  const actualFamily = runtimeCompatibilityFamily();
+  if (expectedFamily !== actualFamily) {
+    throw new Error(`Incompatible vmblu runtime ${RUNTIME_VERSION}; generated application requires compatibility family ${expectedFamily}`);
+  }
+  return actualFamily;
+}
+__name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
+
 // shared/runtime.js
 var _Runtime = class _Runtime {
   constructor(nodeList = [], options = {}) {
+    var _a;
+    assertRuntimeCompatibility((_a = options == null ? void 0 : options.vmblu) == null ? void 0 : _a.compatibilityFamily);
     this.actors = [];
     this.receiveTimer = 0;
     this.idleTimer = 0;
@@ -472,33 +491,33 @@ var _Runtime = class _Runtime {
   logNotConnected(nodeName, pinName) {
     console.log(`${nodeName}[${pinName}] : not connected.`);
   }
-  sendTo(tx, source, param) {
+  sendTo(source, pin, targets, param) {
     var _a, _b;
-    if (tx.targets.length < 1) {
-      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+    if (targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, pin);
       return 0;
     }
     ++this.msgCount;
     const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
-    for (const target of tx.targets) {
-      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+    for (const target of targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: pin, rxRef: 0, rxPin: target.pin });
       if (log) this.logMessage(this.qOut.at(-1));
     }
     this.idleCount = 0;
     if (!this.receiveTimer) this.scheduleReceive();
-    return tx.targets.length;
+    return targets.length;
   }
-  requestFrom(tx, source, param, timeout) {
+  requestFrom(source, pin, targets, param, timeout) {
     var _a, _b;
-    if (tx.targets.length < 1) {
-      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+    if (targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, pin);
       return this.reject("Not connected");
     }
     const txRef = ++this.msgCount;
     let channelCount = 0;
     const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
-    for (const target of tx.targets) {
-      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+    for (const target of targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: pin, rxRef: 0, rxPin: target.pin });
       if (log) this.logReqReply(this.qOut.at(-1), "request");
       if (target.channel) channelCount++;
     }
@@ -2218,7 +2237,6 @@ var _ToolBroker = class _ToolBroker {
     try {
       const wait = request.wait ?? "accepted";
       const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0;
-      const tx = this.makeRuntimeTx(tool.input.pin, target);
       const payload = this.makeRuntimePayload(tool, request, callId);
       this.trace.record({
         type: "message.dispatch",
@@ -2230,15 +2248,15 @@ var _ToolBroker = class _ToolBroker {
         details: { target: tool.input }
       });
       if (wait === "none" || wait === "accepted" || wait !== "verified" && !target.channel) {
-        this.runtime.sendTo(tx, this.source, payload);
+        this.runtime.sendTo(this.source, tool.input.pin, [target], payload);
         return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED);
       }
       if (wait === "verified") {
-        if (target.channel) await this.runtime.requestFrom(tx, this.source, payload, timeout);
-        else this.runtime.sendTo(tx, this.source, payload);
+        if (target.channel) await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
+        else this.runtime.sendTo(this.source, tool.input.pin, [target], payload);
         return this.verifyToolResult(request, tool, callId, timeout);
       }
-      const reply = await this.runtime.requestFrom(tx, this.source, payload, timeout);
+      const reply = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
       return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, { result: reply });
     } catch (error2) {
       return this.toolError(request, callId, "dispatch_failed", (error2 == null ? void 0 : error2.message) || String(error2), tool.id);
@@ -2606,13 +2624,6 @@ var _ToolBroker = class _ToolBroker {
       hix: HIX_HANDLER | hix,
       pin: rx.pin,
       channel: rx.channel
-    };
-  }
-  makeRuntimeTx(pin, target) {
-    return {
-      pin,
-      channel: target.channel,
-      targets: [target]
     };
   }
   makeRuntimePayload(tool, request, callId) {

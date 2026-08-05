@@ -336,21 +336,15 @@ changeNodePrompt: {
     doit({node, prompt, sections=null}) {
 
         const next = sections ?? {prompt}
-        const fields = {
-            prompt: 'prompt',
-            status: 'promptStatus',
-            decisions: 'promptDecisions',
-            open: 'promptOpen',
-        }
-
-        for (const [section, field] of Object.entries(fields)) {
-            const value = next?.[section]?.length ? next[section] : null
-            if (value !== node[field]) node[field] = value
-        }
+        const edit = node.prompts.apply(next)
+        if (!edit.changed) return
+        this.saveEdit('changeNodePrompt', {node, oldSections: edit.before, newSections: edit.after})
     },
-    undo({}) {
+    undo({node, oldSections}) {
+        node.prompts.restore(oldSections)
     },
-    redo({}){
+    redo({node, newSections}){
+        node.prompts.restore(newSections)
     }
 }
 

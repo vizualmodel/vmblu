@@ -1,4 +1,4 @@
-import {applyLayoutPatch, captureAutoLayoutState, layoutElk, normalizeLayoutRoutes, restoreAutoLayoutState} from '../../types/elk/index.js'
+import {applyLayoutPatch, captureAutoLayoutState, layoutElk, normalizeLayoutRoutes, rerouteLayoutBoundaryRoutes, restoreAutoLayoutState} from '../../types/elk/index.js'
 
 export const redoxLayout = {
 
@@ -9,7 +9,7 @@ autoLayout: {
         if (!root) return
 
         const before = captureAutoLayoutState(root)
-        normalizeLayoutRoutes(root)
+        const routes = normalizeLayoutRoutes(root)
 
         const result = await layoutElk(root)
 
@@ -25,17 +25,19 @@ autoLayout: {
         }
 
         applyLayoutPatch(result.patch)
+        rerouteLayoutBoundaryRoutes(root, routes, result.patch)
+        root.rxtxBuildTxTable?.()
         const after = captureAutoLayoutState(root)
 
-        this.saveEdit('autoLayout', {before, after, diagnostics: result.diagnostics})
+        this.saveEdit('autoLayout', {root, before, after, diagnostics: result.diagnostics})
     },
 
-    undo({before}) {
-        restoreAutoLayoutState(this.manager?.model?.root, before)
+    undo({root, before}) {
+        restoreAutoLayoutState(root ?? this.manager?.model?.root, before)
     },
 
-    redo({after}) {
-        restoreAutoLayoutState(this.manager?.model?.root, after)
+    redo({root, after}) {
+        restoreAutoLayoutState(root ?? this.manager?.model?.root, after)
     }
 }
 

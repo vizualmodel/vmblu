@@ -5,6 +5,7 @@ import { ModelBlueprint, ModelCompiler, UIDGenerator } from '@vizualmodel/vmblu-
 import { ARL } from '@vizualmodel/vmblu-core/types/arl/arl-node';
 import { normalizeSeparators } from '@vizualmodel/vmblu-core/types/arl/path';
 import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
+import { assertCompatibleVersion } from '../../lib/version-policy.js';
 
 export const command = 'make-capabilities <model-file>';
 export const describe = 'Generate an agent capability manifest from a model';
@@ -42,6 +43,7 @@ export const handler = async (argv) => {
   const model = new ModelBlueprint(arl);
   const compiler = new ModelCompiler(new UIDGenerator());
   await compiler.refreshRaw(model);
+  assertCompatibleVersion(model.raw?.header?.version, 'model schema');
 
   if (!model.raw?.root) {
     console.error('Failed to load model root.');

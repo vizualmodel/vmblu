@@ -7,10 +7,10 @@ const cm = {
 	choices:[
 		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
 		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
-		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
-		{text:'new cable',		icon:'cable',  		char:'ctrl shift k',	state:"enabled",	action:newCable},
+		{text:'new cable',		icon:'cable',  		char:'ctrl b',	state:"enabled",	action:newCable},
 		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
 		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
+		{text:'auto layout',	icon:'account_tree',					state:"enabled",	action:autoLayout},
 		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
 		{text:"paste as link",	icon:"link",		char:'ctrl l',	state:"enabled", 	action:linkFromClipboard},
 		{text:"paste",			icon:"content_copy",char:'ctrl v',	state:"enabled", 	action:pasteFromClipboard},
@@ -46,10 +46,6 @@ function newSourceNode() {
 	cm.doEdit('newSourceNode',{view: cm.view,pos: cm.xyLocal})
 }
 
-function newBus() {
-	cm.doEdit('cableCreate',{view: cm.view, pos: cm.xyLocal, floating: true})
-}
-
 function newCable() {
 	cm.doEdit('cableCreate',{view: cm.view, pos: cm.xyLocal})
 }
@@ -60,6 +56,19 @@ function newInputPad() {
 
 function newOutputPad() {
 	cm.doEdit('padCreate', {view: cm.view,pos: cm.xyLocal, input: false})
+}
+
+function autoLayout(e, contextMenuTx) {
+	const editTx = cm.tx
+	const root = cm.view.root
+
+	contextMenuTx.send('confirm', {
+		title: 'Confirm auto layout',
+		message: 'Auto layout this group? Its nodes and pads will be repositioned.',
+		pos: {x: e.clientX, y: e.clientY},
+		ok: () => editTx.send('redox.doit', {verb: 'autoLayout', param: {root}}),
+		cancel: () => {}
+	})
 }
 
 function selectNode() {

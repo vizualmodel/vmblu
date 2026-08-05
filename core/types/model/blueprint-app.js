@@ -1,4 +1,5 @@
 import {Path} from '../arl/index.js'
+import {makeArtifactProvenance} from './artifact-provenance.js'
 
 function ActualSource(name, pin) {
     this.variant = name,
@@ -83,11 +84,15 @@ export const AppHandling = {
         node.collectImports(imports)
 
         // The header
-        const today = new Date()
+        const provenance = makeArtifactProvenance({
+            artifact: 'application',
+            model: this.getArl().getName(),
+            source: this.raw,
+            schemaVersion: this.raw?.header?.version,
+        })
         let sHeader =      '// ------------------------------------------------------------------'
                         +`\n// Model: ${node.name}`
-                        +`\n// Path: ${srcArl.getPath()}`
-                        +`\n// Creation date ${today.toLocaleString()}`
+                        +`\n// @vmblu-generated ${JSON.stringify(provenance)}`
                         +'\n// ------------------------------------------------------------------\n'
 
         // set the imported source/libs
@@ -106,7 +111,7 @@ export const AppHandling = {
         // close the nodeList
         sNodeList += '\n]'
 
-        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl)
+        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl, provenance)
 
         // combine all..
         const jsSource = 
@@ -147,10 +152,16 @@ runtime.start()
         return capArl
     },
 
-    JSRuntimeOptions(runtime, node, srcArl) {
+    JSRuntimeOptions(runtime, node, srcArl, provenance) {
 
         const imports = []
-        const optionLines = []
+        const optionLines = [
+            `    vmblu: ${JSON.stringify({
+                compatibilityFamily: provenance.compatibilityFamily,
+                generatorVersion: provenance.generator.version,
+                schemaVersion: provenance.schemaVersion,
+            })}`
+        ]
 
         const runtimeSettings = this.header.runtimeSettings
         const runtimeSettingsPath = this.runtimeSettingsImportPath(srcArl)

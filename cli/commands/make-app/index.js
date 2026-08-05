@@ -5,6 +5,7 @@ import { ModelBlueprint, ModelCompiler, UIDGenerator } from '@vizualmodel/vmblu-
 import { ARL } from '@vizualmodel/vmblu-core/types/arl/arl-node';
 import { normalizeSeparators } from '@vizualmodel/vmblu-core/types/arl/path';
 import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
+import { assertCompatibleVersion } from '../../lib/version-policy.js';
 
 export const command = 'make-app <model-file>';
 export const describe = 'Generate an application JS file from a model';
@@ -56,6 +57,7 @@ export const handler = async (argv) => {
   const model = new ModelBlueprint(arl);
   const compiler = new ModelCompiler(new UIDGenerator());
   await compiler.refreshRaw(model);
+  assertCompatibleVersion(model.raw?.header?.version, 'model schema');
 
   // Compile the model into a root node using the current compiler API.
   const root = model.raw?.root ? compiler.compileRawNode(model, model.raw.root) : null;

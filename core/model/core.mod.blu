@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "no version",
+    "version": "0.10.0",
     "created": "4/2/2024, 1:26:41 PM",
     "saved": "3/9/2026, 6:56:39 PM",
     "utc": "2026-03-09T17:56:39.260Z",
@@ -10,26 +10,11 @@
     "../../ui-svelte/model/ui-svelte.mod.blu"
   ],
   "factories": [
-    {
-      "path": "../nodes/library-manager/library-manager.js",
-      "function": "LibraryManager"
-    },
-    {
-      "path": "../nodes/document-manager/document-manager.js",
-      "function": "DocumentManager"
-    },
-    {
-      "path": "../nodes/clipboard/clipboard.js",
-      "function": "Clipboard"
-    },
-    {
-      "path": "../nodes/view-manager/view-manager.js",
-      "function": "ViewManager"
-    },
-    {
-      "path": "../nodes/model-manager/model-manager.js",
-      "function": "ModelManager"
-    }
+    "../nodes/library-manager/library-manager.js",
+    "../nodes/document-manager/document-manager.js",
+    "../nodes/clipboard/clipboard.js",
+    "../nodes/view-manager/view-manager.js",
+    "../nodes/model-manager/model-manager.js"
   ],
   "types": {
     "AnyPayload": {
@@ -870,6 +855,14 @@
                 "contract": {
                   "role": "follower",
                   "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
                 }
               },
               {

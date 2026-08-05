@@ -10,10 +10,11 @@ import ts from 'typescript';
 import { Project } from 'ts-morph';
 
 // vmblu
-import { ModelBlueprint, ModelCompiler } from '@vizualmodel/vmblu-core/types/model';
+import { ModelBlueprint, ModelCompiler, makeArtifactProvenance } from '@vizualmodel/vmblu-core/types/model';
 import { ARL } from '@vizualmodel/vmblu-core/types/arl/arl-node'
 import { normalizeSeparators } from '@vizualmodel/vmblu-core/types/arl/path';
 import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
+import { assertCompatibleVersion } from '../../lib/version-policy.js';
 
 // profile tool
 import {findHandlers} from './find-handlers.js'
@@ -74,6 +75,7 @@ export async function profile(argv = process.argv.slice(2)) {
     if (!raw) {
         throw new Error(`Could not load model raw data from ${modelPath}`);
     }
+    assertCompatibleVersion(raw.header?.version, 'model schema');
     model.preCook();
 
     // create a model compile object - we do not need a uid generator
@@ -90,7 +92,6 @@ export async function profile(argv = process.argv.slice(2)) {
 
     // get all the handlers and transmissions of all the source files into the rxtx array
     const rxtx = []
-    const generatedAt = new Date().toISOString()
     for (const sourceFile of sourceFiles) {
 
         // display file scanned..
@@ -126,7 +127,14 @@ export async function profile(argv = process.argv.slice(2)) {
     // and write the output to that file
     const output = {
         version: PROFILE_VERSION,
-        generatedAt,
+        provenance: makeArtifactProvenance({
+            artifact: 'source-profile',
+            model: path.basename(modelPath),
+            source: model.raw,
+            generatorName: '@vizualmodel/vmblu-cli',
+            generatorVersion: PROFILE_VERSION,
+            schemaVersion: model.raw.header?.version,
+        }),
         entries: rxtx
     };
 

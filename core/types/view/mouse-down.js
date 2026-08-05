@@ -557,6 +557,7 @@ export const mouseDownHandling = {
 
                         // save the current wire
                         state.modo.wire = hit.cable.copyWire()
+                        state.modo.tacks = hit.cable.tacks.slice()
                         state.modo.wires = hit.cable.copyTackWires()
 
                         // Orient the cable so redraw always extends from the last point.
@@ -615,18 +616,16 @@ export const mouseDownHandling = {
                     break
 
                     case SHIFT:{
-                        if (!hit.cable.is.floating) {
-                            state.cable = hit.cable
-                            state.busSegment = hit.busSegment
-                            state.cable.is.selected = true
-                            state.modo.wire = hit.cable.copyWire()
-                            state.modo.tacks = hit.cable.tacks.slice()
-                            state.modo.tackWires = hit.cable.copyTackWires()
+                        state.cable = hit.cable
+                        state.busSegment = hit.busSegment
+                        state.cable.is.selected = true
+                        state.modo.wire = hit.cable.copyWire()
+                        state.modo.tacks = hit.cable.tacks.slice()
+                        state.modo.tackWires = hit.cable.copyTackWires()
 
-                            hit.cable.resumeDrawing(hit.busSegment, xyLocal)
+                        hit.cable.resumeDrawing(hit.busSegment, xyLocal)
 
-                            this.stateSwitch(doing.busDraw)
-                        }
+                        this.stateSwitch(doing.busDraw)
                     }
                     break
 
@@ -744,8 +743,8 @@ export const mouseDownHandling = {
 
                     case CTRL|SHIFT:{
 
-                        // create a new floating cable
-                        this.doEdit(tx,'cableCreate',{view: this, pos: xyLocal, floating: true})
+                        // create a new cable
+                        this.doEdit(tx,'cableCreate',{view: this, pos: xyLocal})
                     }
                     break
                 }

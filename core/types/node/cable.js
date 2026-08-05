@@ -1,6 +1,6 @@
 import {Route} from './route.js'
 import {Widget} from '../widget/index.js'
-import {convert, closestPointOnCurve, interpolateSegment, style, shape, inside, segmentsInside, eject} from '../util/index.js'
+import {canonicalOrthogonalWire, convert, closestPointOnCurve, diagonalWireSegments, interpolateSegment, style, shape, inside, segmentsInside, eject} from '../util/index.js'
 import {zap} from '../view/index.js'
 
 export function Cable(from = {x:0, y:0}, uid = null, floating = false) {
@@ -47,18 +47,20 @@ Cable.prototype = {
                         : this.is.highLighted ? st.cHighLighted
                         : st.cNormal
 
-        shape.drawWire(ctx,cLine, this.is.floating ? st.wBus : st.wCable, this.wire)
+        shape.drawWire(ctx,cLine, st.wCable, this.wire)
 
-        if (this.is.floating) {
-            this.renderEndpoint(ctx, this.wire[0], cLine)
-            this.renderEndpoint(ctx, this.wire.at(-1), cLine)
-        }
+        if (this.shouldRenderEndpoint(this.wire[0])) this.renderEndpoint(ctx, this.wire[0], cLine)
+        if (this.shouldRenderEndpoint(this.wire.at(-1))) this.renderEndpoint(ctx, this.wire.at(-1), cLine)
 
         // also render the tacks
         this.tacks.forEach( tack => tack.render(ctx) )
     },
 
-    defaultTackSelectivity(widget) {
+    defaultTackSelectivity() {
+        return false
+    },
+
+    legacyTackSelectivity(widget) {
         const input = widget?.is?.pin ? widget.is.input
                     : widget?.is?.pad ? !widget.proxy.is.input
                     : false
@@ -67,6 +69,10 @@ Cable.prototype = {
 
     renderEndpoint(ctx, point, color) {
         shape.emptyLabel(ctx, point.x, point.y, style.cable.radius, color)
+    },
+
+    shouldRenderEndpoint() {
+        return true
     },
 
     endpointRect(point) {
@@ -83,6 +89,8 @@ Cable.prototype = {
     },
 
     makeRaw() {
+        this.canonicalizeOrthogonalWire('save')
+        this.validateOrthogonalWire('save')
         const raw = {
             start: convert.pointToString(this.wire[0]),
             wire: convert.wireToString(this.wire)
@@ -97,6 +105,45 @@ Cable.prototype = {
         const start = convert.stringToPoint(raw.start) ?? {x: 0, y: 0}
         if (this.wire.length == 0) this.wire = [{...start}, {...start}]
         else if (this.wire.length == 1) this.wire.push({...this.wire[0]})
+        this.canonicalizeOrthogonalWire('load')
+        this.validateOrthogonalWire('load')
+    },
+
+    canonicalizeOrthogonalWire(operation = 'unknown') {
+        if (diagonalWireSegments(this.wire).length) return false
+
+        const canonical = canonicalOrthogonalWire(this.wire)
+        if (canonical.length === 1) canonical.push({...canonical[0]})
+        if (canonical.length < 2) return false
+
+        const changed = canonical.length !== this.wire.length ||
+            canonical.some((point, index) =>
+                point.x !== this.wire[index]?.x || point.y !== this.wire[index]?.y
+            )
+        if (!changed) return true
+
+        this.wire = canonical
+        for (const tack of this.tacks) tack.refreshPlacement?.()
+        this.validateOrthogonalWire(operation)
+        return true
+    },
+
+    validateOrthogonalWire(operation = 'unknown') {
+        const diagonals = diagonalWireSegments(this.wire)
+        if (!diagonals.length) {
+            this._diagonalWarning = null
+            return true
+        }
+
+        const signature = JSON.stringify(diagonals)
+        if (this._diagonalWarning !== signature) {
+            this._diagonalWarning = signature
+            console.warn(`Cable wire became non-orthogonal during ${operation}.`, {
+                cable: this,
+                diagonals
+            })
+        }
+        return false
     },
 
     highLight() {
@@ -109,13 +156,17 @@ Cable.prototype = {
         for (const tack of this.tacks) tack.route.unHighLight()
     },
 
-    hitTest(pos) {
-        if (this.is.floating) {
-            const endpoint =   inside(pos, this.endpointRect(this.wire[0])) ? 'start'
-                             : inside(pos, this.endpointRect(this.wire.at(-1))) ? 'end'
-                             : null
-            if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
+    setSelectivityForAll(on) {
+        for (const tack of this.tacks) {
+            if (tack.canBeSelective()) tack.is.selective = on
         }
+    },
+
+    hitTest(pos) {
+        const endpoint =   this.shouldRenderEndpoint(this.wire[0]) && inside(pos, this.endpointRect(this.wire[0])) ? 'start'
+                         : this.shouldRenderEndpoint(this.wire.at(-1)) && inside(pos, this.endpointRect(this.wire.at(-1))) ? 'end'
+                         : null
+        if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
 
         for (const tack of this.tacks) {
             if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
@@ -235,6 +286,7 @@ Cable.prototype = {
         tack.restore(route)
 
         widget.is.pin ? route.rxtxPinBus() : route.rxtxPadBus()
+        this.validateOrthogonalWire('endpoint connection')
         return tack
     },
 
@@ -578,6 +630,7 @@ Cable.prototype = {
             otherTack.refreshPlacement?.()
         }
 
+        this.validateOrthogonalWire('endpoint bend')
         return true
     },
 
@@ -595,8 +648,6 @@ Cable.prototype = {
     },
 
     moveSegment(segment, delta) {
-        if (!this.is.floating && this.tacks.some(tack => tack.is.endpoint && tack.segment == segment)) return
-
         let p = this.wire
         const dx = delta.x
         const dy = delta.y
@@ -668,6 +719,8 @@ Cable.prototype = {
                 for (const tack of this.tacks) if (tack.segment == segment) tack.moveX(dx)
             }
         }
+
+        this.validateOrthogonalWire('segment move')
     },
 
     removeTwoPoints(segment) {
@@ -776,8 +829,7 @@ Cable.prototype = {
     },
 
     canCollapseToRoute() {
-        return !this.is.floating
-            && this.tacks.length === 2
+        return this.tacks.length === 2
             && this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)
     },
 

@@ -291,13 +291,12 @@ export const ctrlKeyTable = {
         view.doEdit(tx,'newGroupNode', { view, pos: view.hit.xyLocal });
     },
 
-    // a new bus
+    // a new cable
     b: (view,tx) => {
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
-        // create a new floating cable
-        view.doEdit(tx,'cableCreate', {view, pos: view.hit.xyLocal, floating: true});
+        view.doEdit(tx,'cableCreate', {view, pos: view.hit.xyLocal});
     },
 
     // copy

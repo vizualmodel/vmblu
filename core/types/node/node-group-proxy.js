@@ -198,7 +198,7 @@ export const proxyHandling = {
             pos = arguments[1]
         }
 
-        // A bus is now a floating cable.
+        // Compatibility API: create a cable carrying the old format marker.
         const bus = new Cable(pos, uid, true)
         bus.node = this
 

@@ -11,6 +11,7 @@
     "scripts": {
         "lint": "eslint .",
         "format": "prettier --check .",
+        "release:check": "npm run build --workspace=@vizualmodel/vmblu-cli && npm run build --workspace=@vizualmodel/vmblu-runtime && npm test --workspace=@vizualmodel/vmblu-core && npm test --workspace=@vizualmodel/vmblu-cli && npm test --workspace=@vizualmodel/vmblu-runtime && node ./cli/scripts/check-release.js",
         "br": "cd ./browser && npm run dev",
         "pg": "cd ./playground && npm run dev",
         "vx": "cd ./vscodex && npm run vx",
@@ -40,7 +41,7 @@
         "vite-plugin-string": "^1.2.3"
     },
     "dependencies": {
-        "@vizualmodel/vmblu-cli": "^0.5.7",
+        "@vizualmodel/vmblu-cli": ">=0.10.0 <0.11.0",
         "@vizualmodel/vmblu-runtime": "file:runtime",
         "markdown-it": "^14.1.1",
         "ts-morph": "^26.0.0",

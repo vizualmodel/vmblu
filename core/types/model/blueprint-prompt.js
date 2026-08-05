@@ -1,4 +1,5 @@
 import {Path} from '../arl/index.js'
+import {carryPromptRepoRuntimeState, getPromptRepoRuntimeState} from '../node/prompt-repo.js'
 
 export const PromptHandling = {
 
@@ -20,7 +21,11 @@ export const PromptHandling = {
                 if (parsed) {
                     applyNodePrompts(node, parsed.node)
                     applyPinPrompts(node, parsed.pins)
-                    node.promptRepo.is = {...node.promptRepo.is, hydrated: true}
+                    const state = getPromptRepoRuntimeState(node.promptRepo)
+                    state.hydrated = true
+                    state.dirty = false
+                    state.pendingText = null
+                    state.hydratedText = text
                 }
             }
 
@@ -48,11 +53,15 @@ export const PromptHandling = {
             }
 
             if (node.promptRepo?.arl) {
+                const state = getPromptRepoRuntimeState(node.promptRepo)
                 const repoArl = resolvePromptRepoArl(node.promptRepo, refArl)
-                if (repoArl) {
+                if (repoArl && state.dirty) {
+                    const text = state.pendingText ?? serializePromptMarkdown(node)
+                    state.pendingText = text
                     promptFiles.push({
                         arl: repoArl,
-                        text: serializePromptMarkdown(node),
+                        text,
+                        state,
                     })
                 }
                 deleteInlinePrompts(node)
@@ -68,11 +77,42 @@ export const PromptHandling = {
         return promptFiles
     },
 
-    savePromptRepos(promptFiles = this.preparePromptReposForSave()) {
-        for (const file of promptFiles) {
-            file.arl?.save(file.text)?.catch?.(() => {})
+    async savePromptRepos(promptFiles = this.preparePromptReposForSave()) {
+        const saves = promptFiles.map(async file => {
+            try {
+                if (file.state.hydrated) {
+                    const currentText = await file.arl.get('text').catch(() => null)
+                    if (currentText !== file.state.hydratedText) {
+                        throw new PromptRepositoryConflictError(file.arl?.getPath?.() ?? '<unknown>')
+                    }
+                }
+                const result = await file.arl.save(file.text)
+                if (result === null || result === false) throw new Error('Prompt repository write returned failure')
+                file.state.dirty = false
+                file.state.pendingText = null
+                file.state.hydrated = true
+                file.state.hydratedText = file.text
+            }
+            catch (error) {
+                console.error(`Failed to save prompt repository ${file.arl?.getPath?.() ?? '<unknown>'}:`, error)
+                throw error
+            }
+        })
+        const results = await Promise.allSettled(saves)
+        const failures = results.filter(result => result.status === 'rejected').map(result => result.reason)
+        if (failures.length) {
+            const details = failures.map(error => error?.message ?? String(error)).join('; ')
+            throw new AggregateError(failures, `One or more prompt repositories failed to save: ${details}`)
         }
     },
+}
+
+export class PromptRepositoryConflictError extends Error {
+    constructor(path) {
+        super(`Prompt repository changed outside vmblu: ${path}`)
+        this.name = 'PromptRepositoryConflictError'
+        this.path = path
+    }
 }
 
 function resolvePromptRepoArl(promptRepo, refArl) {
@@ -86,10 +126,13 @@ function resolvePromptRepoArl(promptRepo, refArl) {
 
 function makeDefaultPromptRepo(node, path) {
     const parts = [...path, node.name].filter(Boolean).map(safeName)
-    return {
+    const promptRepo = {
         arl: `./prompts/${parts.join('/')}.md`,
         pathKind: Path.Kind.Relative,
     }
+    carryPromptRepoRuntimeState(promptRepo, promptRepo)
+    getPromptRepoRuntimeState(promptRepo).dirty = true
+    return promptRepo
 }
 
 function safeName(name) {
@@ -104,6 +147,7 @@ function hasPrompts(node) {
     if (node.promptStatus?.length) return true
     if (node.promptDecisions?.length) return true
     if (node.promptOpen?.length) return true
+    if (node.promptReferences?.length) return true
     for (const iface of node.interfaces ?? []) {
         for (const pin of iface.pins ?? []) {
             if (pin.prompt?.length) return true
@@ -117,6 +161,7 @@ function deleteInlinePrompts(node) {
     delete node.promptStatus
     delete node.promptDecisions
     delete node.promptOpen
+    delete node.promptReferences
     for (const iface of node.interfaces ?? []) {
         for (const pin of iface.pins ?? []) {
             delete pin.prompt
@@ -140,6 +185,7 @@ function applyNodePrompts(node, sections) {
     node.promptStatus = sections.status || null
     node.promptDecisions = sections.decisions || null
     node.promptOpen = sections.open || null
+    node.promptReferences = sections.references || null
 }
 
 const nodeSectionNames = new Map([
@@ -147,6 +193,7 @@ const nodeSectionNames = new Map([
     ['status', 'status'],
     ['decisions', 'decisions'],
     ['open', 'open'],
+    ['references', 'references'],
 ])
 
 export function parsePromptMarkdown(text) {
@@ -164,6 +211,7 @@ export function parsePromptMarkdown(text) {
             status: [],
             decisions: [],
             open: [],
+            references: [],
         }
         const pinMap = new Map()
         let buffer = []
@@ -221,6 +269,7 @@ export function parsePromptMarkdown(text) {
                 status: nodeSections.status.join('\n').trim(),
                 decisions: nodeSections.decisions.join('\n').trim(),
                 open: nodeSections.open.join('\n').trim(),
+                references: nodeSections.references.join('\n').trim(),
             },
             pins: pinMap,
         }
@@ -251,6 +300,10 @@ export function serializePromptMarkdown(node) {
         '### Open',
         '',
         node.promptOpen ?? '',
+        '',
+        '### References',
+        '',
+        node.promptReferences ?? '',
         '',
         '## Pins',
     ]

@@ -10,6 +10,22 @@ const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param})
 
 export const nodeClickHandling = {
 
+    showPrompt(tx, pos, header=`Node information for ${this.name}`) {
+
+        const node = this
+        const promptArl = node.prompts.repository?.arl
+
+        tx.send("node prompt", {
+            header,
+            pos,
+            uid: node.uid,
+            mode: 'node-sections',
+            sections: node.prompts.snapshot(''),
+            open: promptArl ? () => tx.send('open source file', {arl: promptArl}) : null,
+            ok: (sections) => doEdit(tx,"changeNodePrompt",{node, sections})
+        })
+    },
+
     showExportForm(pos,tx) {
 
         const node = this
@@ -170,20 +186,7 @@ export const nodeClickHandling = {
             }
 
             case 'comment':
-
-                // save the node hit
-                tx.send("node prompt", {   header: 'Node information for ' + node.name,
-                                            pos: newPos, 
-                                            uid: node.uid,
-                                            mode: 'node-sections',
-                                            sections: {
-                                                prompt: node.prompt ?? '',
-                                                status: node.promptStatus ?? '',
-                                                decisions: node.promptDecisions ?? '',
-                                                open: node.promptOpen ?? '',
-                                            },
-                                            ok: (sections)=> doEdit(tx,"changeNodePrompt",{node, sections})
-                                        })
+                node.showPrompt(tx, newPos)
                 break        
         }
     

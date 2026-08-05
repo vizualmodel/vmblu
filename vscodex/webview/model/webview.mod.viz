@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "no version",
+    "version": "0.10.0",
     "utc": "2025-12-16T12:00:24.931Z",
     "style": "#00aaff"
   },
@@ -323,12 +323,13 @@
           {
             "kind": "dock",
             "name": "context menu",
-            "rect": "x 199 y 748 w 150 h 56",
+            "rect": "x 199 y 748 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 L)context menu",
+                  "(3 L)confirm",
                   "(2 R)modal div"
                 ]
               }
@@ -517,6 +518,11 @@
             "wire": "x 197.7"
           },
           {
+            "from": "(pin 3) confirm @ context menu",
+            "to": "(pin 1) show @ confirm box",
+            "wire": "x -69.8 y 208.1 x 66.5"
+          },
+          {
             "from": "(pin 1) modal div @ runtime settings",
             "to": "(cable 0 nonselective)",
             "wire": "x 96.4 y 0.0 x 99.3"
@@ -650,7 +656,6 @@
               "(5 R)sync model",
               "(3 R)accept changes",
               "(15 R)wire check",
-              "(18 R)auto layout",
               "(7 R)show settings",
               "(11 R)make app",
               "(10 R)make lib",
@@ -895,11 +900,6 @@
         "from": "(pin 15) wire check @ vscode side menu",
         "to": "(pin 101) wire check @ model manager",
         "wire": "x 385.9 y 0.0 x 102.1"
-      },
-      {
-        "from": "(pin 18) auto layout @ vscode side menu",
-        "to": "(pin 110) auto layout @ model manager",
-        "wire": "x 238.9 y 0.0 x 249.1"
       },
       {
         "from": "(pin 7) show settings @ vscode side menu",

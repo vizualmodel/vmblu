@@ -46,12 +46,8 @@ const sourceFunctions = {
         // copy the look of this node to the new node
         this.look.copy(newNode)
 
-        // copy the comment
-        newNode.prompt = this.prompt ? this.prompt.slice() : null
-        newNode.promptStatus = this.promptStatus ? this.promptStatus.slice() : null
-        newNode.promptDecisions = this.promptDecisions ? this.promptDecisions.slice() : null
-        newNode.promptOpen = this.promptOpen ? this.promptOpen.slice() : null
-        newNode.promptRepo = this.promptRepo?.clone?.() ?? null
+        // copy the prompt content and repository runtime state
+        newNode.prompts = this.prompts.clone()
 
         // copy agent probe metadata
         newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null
@@ -141,7 +137,7 @@ const sourceFunctions = {
                         +'\n// ------------------------------------------------------------------'
 
         // The prompt for the node
-        let sPrompt = this.prompt?.length > 0 ? '\n\n/*\n' + this.prompt + "\n*/": ""
+        let sPrompt = this.prompts.prompt?.length > 0 ? '\n\n/*\n' + this.prompts.prompt + "\n*/": ""
 
         // The constructor
         let sConstructor =    `\n\n//Constructor for ${this.name}`

@@ -40,11 +40,25 @@ function routeWire(edgeRecord, wire) {
 export function fromElkResult(result, context) {
     const diagnostics = []
     const nodes = []
+    const pads = []
     const pins = []
     const routes = []
 
     for (const child of result?.children ?? []) {
         const node = context.nodeById.get(child.id)
+        const pad = context.padById?.get(child.id)
+
+        if (pad) {
+            pads.push({
+                pad,
+                id: child.id,
+                x: Math.round(Number(child.x) || 0),
+                y: Math.round(Number(child.y) || 0),
+                leftText: !!pad.proxy?.is?.input
+            })
+            continue
+        }
+
         if (!node) {
             diagnostics.push(makeDiagnostic('unknown-node', `ELK returned an unknown node '${child.id}'.`))
             continue
@@ -95,6 +109,7 @@ export function fromElkResult(result, context) {
 
     return {
         nodes,
+        pads,
         pins,
         routes,
         meta: {

@@ -21,7 +21,7 @@ export function GroupNode (look=null, name=defaultGroupNodeName, uid=null) {
     // the nodes that are part of this group
     this.nodes = []
 
-    // legacy compatibility; bus topology is now stored as floating cables
+    // legacy compatibility for code that still inspects a buses collection
     this.buses = []
 
     // the cables that are part of this group
@@ -168,12 +168,8 @@ const groupFunctions = {
         // copy the look from this node to the newNode
         this.look.copy(newNode)
 
-        // copy the comment
-        newNode.prompt = this.prompt ? this.prompt.slice() : null;
-        newNode.promptStatus = this.promptStatus ? this.promptStatus.slice() : null
-        newNode.promptDecisions = this.promptDecisions ? this.promptDecisions.slice() : null
-        newNode.promptOpen = this.promptOpen ? this.promptOpen.slice() : null
-        newNode.promptRepo = this.promptRepo?.clone?.() ?? null
+        // copy the prompt content and repository runtime state
+        newNode.prompts = this.prompts.clone()
 
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;

@@ -129,9 +129,9 @@
     "Interface": {
       "description": "Visual metadata for an interface of a node. Structure mirrors the blueprint interface, but only contains editor-related data.",
       "type": "object",
-      "required": ["name"],
+      "required": ["interface"],
       "properties": {
-        "name": { "type": "string", "pattern": "^[^@]+$" },
+        "interface": { "type": "string", "pattern": "^[^@]+$" },
         "pins": {
           "description": "Visual metadata for pins belonging to this interface.",
           "type": "array",
