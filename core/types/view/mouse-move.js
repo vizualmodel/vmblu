@@ -59,11 +59,9 @@ export const mouseMoveHandling = {
 
             case doing.busDraw:
                 state.cable.drawXY(xyLocal)
-                if (!state.cable.is.floating) {
-                    this.mouseHit(xyLocal)
-                    const conx = this.hit.lookWidget ?? this.hit.pad ?? null
-                    this.hover(conx, conx ? !state.cable.findTack(conx) : false)
-                }
+                this.mouseHit(xyLocal)
+                const conx = this.hit.lookWidget ?? this.hit.pad ?? null
+                this.hover(conx, conx ? !state.cable.findTack(conx) : false)
                 return true
 
             case doing.busRedraw:

@@ -1,6 +1,8 @@
 {
   "header": {
-    "version": "0.9.6",
+    "version": "0.10.0",
+    "created": "4/2/2024, 12:51:45 PM",
+    "saved": "12/16/2025, 1:00:06 PM",
     "utc": "2025-12-16T12:00:06.433Z",
     "style": "#00aaff"
   },
@@ -27,12 +29,13 @@
           {
             "kind": "source",
             "name": "context menu",
-            "rect": "x 68 y 74 w 150 h 56",
+            "rect": "x 68 y 74 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
                 "pins": [
                   "(1 R)context menu",
+                  "(3 R)confirm",
                   "(2 L)modal div"
                 ]
               }
@@ -112,7 +115,7 @@
           {
             "kind": "source",
             "name": "node settings",
-            "rect": "x 535 y 172 w 150 h 56",
+            "rect": "x 566 y 177 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -246,7 +249,7 @@
           {
             "kind": "source",
             "name": "pin profile",
-            "rect": "x 568 y 172 w 150 h 71",
+            "rect": "x 583 y 474 w 150 h 71",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -527,11 +530,11 @@
                 "interface": "(0)",
                 "pins": [
                   "(2 L)div",
-                  "(18 L)auto layout",
                   "(3 L)accept changes",
                   "(4 L)recalibrate",
                   "(5 L)sync model",
                   "(6 L)grid on-off",
+                  "(16 R)application prompt",
                   "(7 L)show settings",
                   "(8 L)set save point",
                   "(9 L)back to save point",

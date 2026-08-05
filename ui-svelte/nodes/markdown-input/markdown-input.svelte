@@ -3,7 +3,8 @@ import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
 import MarkdownInput from '../../fragments/markdown-input.svelte'
 
-export let tx // sx
+export let tx
+export let sx = {}
 
 // the popup box data
 let box = {
@@ -32,7 +33,7 @@ function onKeydown(e) {
 
 export const handlers = {
 
-    onMarkdown({header, pos, text='', mode=null, sections=null, ok=null, cancel=null}) {
+    onMarkdown({header, pos, text='', mode=null, sections=null, open=null, ok=null, cancel=null}) {
 
         // set the box parameters
         box.title = header
@@ -44,6 +45,7 @@ export const handlers = {
             {key: 'status', label: 'Status', text: nodeSections.status ?? ''},
             {key: 'decisions', label: 'Decisions', text: nodeSections.decisions ?? ''},
             {key: 'open', label: 'Open', text: nodeSections.open ?? ''},
+            {key: 'references', label: 'References', text: nodeSections.references ?? ''},
         ] : []
         activeSection = sectionTabs[0]?.key ?? null
 
@@ -61,6 +63,7 @@ export const handlers = {
         box.add = () => {
             showPreview = !showPreview
         }
+        box.open = sx?.openPromptFile ? open : null
 
         // set the text field
         newText = text

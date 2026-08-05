@@ -17,7 +17,10 @@ cableHighlight: {
 cableCreate: {
 
     doit({view, pos, floating = false}) {
-        view.state.cable = floating ? view.root.addBus(pos) : view.root.addCable(pos)
+        view.state.cable = view.root.addCable(pos)
+        // Compatibility for callers that still create a "bus". The marker is
+        // retained in saved data but no longer changes cable behavior.
+        view.state.cable.is.floating = !!floating
         this.saveEdit('cableCreate',{view, cable: view.state.cable})
     },
     undo({view, cable}) {
@@ -92,16 +95,46 @@ cableDisconnect: {
     }    
 },
 
+cableSelective: {
+
+    doit({cable}) {
+        this.saveEdit('cableSelective', {cable, tacks: cable.tacks.slice()})
+        cable.setSelectivityForAll(true)
+    },
+    undo({cable, tacks}) {
+        if (cable.tacks.length != tacks.length) return
+
+        for(let i=0; i<tacks.length; i++) {
+            cable.tacks[i].selective = tacks[i].selective
+        }
+    },
+    redo({cable}) {
+        cable.setSelectivityForAll(true)
+    }    
+},
+
+cableUnselective: {
+
+    doit({cable}) {
+        this.saveEdit('cableUnselective', {cable, tacks: cable.tacks.slice()})
+        cable.setSelectivityForAll(false)
+    },
+    undo({cable, tacks}) {
+        if (cable.tacks.length != tacks.length) return
+
+        for(let i=0; i<tacks.length; i++) {
+            cable.tacks[i].selective = tacks[i].selective
+        }
+    },
+    redo({cable}) {
+        cable.setSelectivityForAll(false)
+    }    
+},
+
 cableDraw: {
 
     doit({view, cable, conx, oldWire, newWire, oldTacks, oldTackWires, newTacks, newTackWires}) {
         const node = view.root
-        let deleted = false
-
-        if (cable.is.floating) {
-            this.saveEdit('cableDraw',{node, cable, oldWire, newWire, oldTackWires, newTackWires, floating: true})
-            return
-        }
 
         const connected = (conx?.is?.pin || conx?.is?.pad) ? cable.connectEndpoint(conx) : null
 
@@ -109,39 +142,16 @@ cableDraw: {
             newTacks = cable.tacks.slice()
             newTackWires = cable.copyTackWires()
         }
-        else {
-            cable.disconnectTacks()
-            node.removeCable(cable)
-            deleted = true
-            newTacks = []
-            newTackWires = []
-        }
 
-        this.saveEdit('cableDraw',{node, cable, oldWire, newWire, oldTacks, oldTackWires, newTacks, newTackWires, deleted})
+        this.saveEdit('cableDraw',{node, cable, oldWire, newWire, oldTacks, oldTackWires, newTacks, newTackWires})
     },
 
-    undo({node, cable, oldWire, oldTacks, oldTackWires, floating}) {
-        if (floating) {
-            cable.restoreWireState(oldWire, oldTackWires)
-            return
-        }
-
+    undo({node, cable, oldWire, oldTacks, oldTackWires}) {
         node.restoreCable(cable)
         cable.restoreDrawState(oldWire, oldTacks, oldTackWires)
     },
 
-    redo({node, cable, newWire, newTacks, newTackWires, deleted, floating}) {
-        if (floating) {
-            cable.restoreWireState(newWire, newTackWires)
-            return
-        }
-
-        if (deleted) {
-            cable.disconnectTacks()
-            node.removeCable(cable)
-            return
-        }
-
+    redo({node, cable, newWire, newTacks, newTackWires}) {
         node.restoreCable(cable)
         cable.restoreDrawState(newWire, newTacks, newTackWires)
     }

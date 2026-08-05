@@ -26,11 +26,13 @@ FactoryMap.prototype = {
 
         for (const rawFactory of model.raw.factories) {
 
-            //const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path
-            if (!rawFactory.path) continue
+            // Top-level factories are a file index. Accept the legacy object
+            // form while models transition to canonical string entries.
+            const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path
+            if (typeof rawPath !== 'string' || !rawPath.trim()) continue
 
             // the factories have to be resolved wrt the file that contains them
-            const normalized = normalizeFactoryPath(rawFactory.path)
+            const normalized = normalizeFactoryPath(rawPath)
             const arl = modelArl.resolve(normalized.path)
 
             // get the full path of the factory
@@ -73,6 +75,11 @@ FactoryMap.prototype = {
         const val = Array.from(this.map.values())
         if (!val?.length) return []
         return val.map( e => f(e))
+    },
+
+    // serialize the top-level factory file index (not node factory bindings)
+    makeRaw(refArl) {
+        return this.all(factory => factory.getPath(refArl))
     },
 
 }

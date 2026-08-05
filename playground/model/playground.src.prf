@@ -1,6 +1,19 @@
 {
-  "version": "0.5.6",
-  "generatedAt": "2026-07-26T19:43:33.914Z",
+  "version": "0.10.0",
+  "provenance": {
+    "generated": true,
+    "artifact": "source-profile",
+    "compatibilityFamily": "0.10",
+    "schemaVersion": "0.10.0",
+    "generator": {
+      "name": "@vizualmodel/vmblu-cli",
+      "version": "0.10.0"
+    },
+    "source": {
+      "model": "playground.mod.blu",
+      "hash": "fnv1a64:a5c80a601964a089"
+    }
+  },
   "entries": [
     {
       "node": "document manager",
@@ -301,10 +314,26 @@
           "params": []
         },
         {
+          "pin": "application.prompt",
+          "handler": "onApplicationPrompt",
+          "file": "../../core/nodes/view-manager/message.js",
+          "line": 72,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "event",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
           "pin": "size.change",
           "handler": "onSizeChange",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 73,
+          "line": 83,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -653,54 +682,59 @@
           "line": 5
         },
         {
-          "pin": "name and path",
+          "pin": "node prompt",
           "file": "../../core/types/node/node-icon-click.js",
           "line": 18
         },
         {
+          "pin": "open source file",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 24
+        },
+        {
           "pin": "name and path",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 41
+          "line": 34
+        },
+        {
+          "pin": "name and path",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 57
         },
         {
           "pin": "open model",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 60
+          "line": 76
         },
         {
           "pin": "name and path",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 91
+          "line": 107
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 111
+          "line": 127
         },
         {
           "pin": "node settings (sx)",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 148
+          "line": 164
         },
         {
           "pin": "runtime settings (dx)",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 162
-        },
-        {
-          "pin": "node prompt",
-          "file": "../../core/types/node/node-icon-click.js",
-          "line": 175
+          "line": 178
         },
         {
           "pin": "open model",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 202
+          "line": 206
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 215
+          "line": 219
         }
       ]
     }

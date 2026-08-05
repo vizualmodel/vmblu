@@ -97,7 +97,22 @@ entrypoint:
 vmblu make-app model/my-app.mod.blu
 vmblu make-app my-app.blu
 vmblu make-capabilities my-app.blu
+vmblu verify my-app.blu
 ```
+
+`vmblu verify` checks the model and visualization compatibility family,
+canonical factory indexes, and the provenance/source hashes of generated
+profiles, applications and capability manifests. Missing generated artifacts
+are reported as skipped by default; use `--require-generated` to require all
+three standard outputs.
+
+## Compatibility versions
+
+CLI, core, runtime and schema versions use `xx.yy.zz`. The `xx.yy` pair is the
+compatibility family and `zz` is an independent patch level. Components in the
+same family are compatible; crossing a family boundary requires migration.
+Package dependency ranges must therefore remain inside one family, for example
+`>=0.10.0 <0.11.0`.
 
 General schemas and docs are resolved from the installed CLI package. The
 canonical agent-readable files live under `cli/context/<schema-version>/`.

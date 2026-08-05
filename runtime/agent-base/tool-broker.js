@@ -279,7 +279,6 @@ export class ToolBroker {
         try {
             const wait = request.wait ?? 'accepted'
             const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0
-            const tx = this.makeRuntimeTx(tool.input.pin, target)
             const payload = this.makeRuntimePayload(tool, request, callId)
 
             this.trace.record({
@@ -293,17 +292,17 @@ export class ToolBroker {
             })
 
             if (wait === 'none' || wait === 'accepted' || (wait !== 'verified' && !target.channel)) {
-                this.runtime.sendTo(tx, this.source, payload)
+                this.runtime.sendTo(this.source, tool.input.pin, [target], payload)
                 return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED)
             }
 
             if (wait === 'verified') {
-                if (target.channel) await this.runtime.requestFrom(tx, this.source, payload, timeout)
-                else this.runtime.sendTo(tx, this.source, payload)
+                if (target.channel) await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout)
+                else this.runtime.sendTo(this.source, tool.input.pin, [target], payload)
                 return this.verifyToolResult(request, tool, callId, timeout)
             }
 
-            const reply = await this.runtime.requestFrom(tx, this.source, payload, timeout)
+            const reply = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout)
             return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, {result: reply})
         }
         catch (error) {
@@ -708,14 +707,6 @@ export class ToolBroker {
             hix: HIX_HANDLER | hix,
             pin: rx.pin,
             channel: rx.channel,
-        }
-    }
-
-    makeRuntimeTx(pin, target) {
-        return {
-            pin,
-            channel: target.channel,
-            targets: [target],
         }
     }
 

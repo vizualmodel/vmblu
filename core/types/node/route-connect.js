@@ -8,10 +8,8 @@ trunkOfTack(tack) {
 bridgeParts(from, to) {
     if (!from?.is?.tack || !to?.is?.cable) return null
     if (!from.cable?.is?.cable) return null
-    if (from.cable.is.floating === to.is.floating) return null
-    return from.cable.is.floating
-        ? {cable: to, bus: from.cable}
-        : {cable: from.cable, bus: to}
+    if (from.cable === to) return null
+    return {cable: from.cable, bus: to}
 },
 
 bridgeNeighbors(trunk) {
@@ -60,7 +58,7 @@ canConnectPromotedRoute(from, route) {
     if (from.is.pin || from.is.pad) return true
     if (!from.is.tack) return false
 
-    return !!from.cable?.is?.floating
+    return !!from.cable?.is?.cable
 },
 
 conxString(from, to) {

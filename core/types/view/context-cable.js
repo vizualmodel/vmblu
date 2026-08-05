@@ -3,6 +3,8 @@ const cm = {
 	choices: [
 		{icon:"highlight",text:"",state:"enabled", action:cableHighLight},
 		{icon:"timeline",text:"straight connections",state:"enabled", action:straightConnections},
+		{icon:"vpn_key",text:"all selective",state:"enabled", action:selectiveConnections},
+		{icon:"vpn_key_off",text:"all unselective",state:"enabled", action:unselectiveConnections},
 		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect},
 		{icon:"delete",text:"delete",state:"enabled", action:deleteCable}
 	],
@@ -45,4 +47,12 @@ function disconnect() {
 
 function deleteCable() {
 	cm.doEdit('cableDelete',{view: cm.view, cable: cm.cable})
+}
+
+function selectiveConnections() {
+	cm.doEdit('cableSelective',{cable: cm.cable})
+}
+
+function unselectiveConnections() {
+	cm.doEdit('cableUnselective',{cable: cm.cable})
 }

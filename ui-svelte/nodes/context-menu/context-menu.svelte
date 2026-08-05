@@ -21,7 +21,7 @@ export const handlers = {
 
 
 	// pos = x,y = e.clientX e.clientY
-	"-> context menu"({menu, event}) {
+	onContextMenu({menu, event}) {
 
 		// set the menu
 		context.menu = menu
@@ -87,7 +87,8 @@ function onClickLI(e) {
 
 	// check if enabled
 	if (context.menu[index]) {
-		if (context.menu[index].state == "enabled") context.menu[index].action(e) 
+		const choice = context.menu[index]
+		if (choice.state == "enabled") choice.action(e, tx)
 	}
 }
 

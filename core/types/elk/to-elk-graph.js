@@ -11,6 +11,12 @@ function routeEdgeId(index) {
     return `route.${index}`
 }
 
+function padNodeId(root, pad, index) {
+    const rootId = root?.uid ?? root?.name ?? 'root'
+    const padId = pad?.uid ?? pad?.proxy?.wid ?? index
+    return `${rootId}.pad.${padId}`
+}
+
 function visiblePins(node) {
     return (node?.look?.widgets ?? [])
         .filter(widget => widget?.is?.pin && !widget.is.zombie)
@@ -45,8 +51,14 @@ function fixedPortGeometry(pin, fixedPorts) {
 
 function routeEndpoints(route) {
     const [src, dst] = route.messageFlow()
-    if (!src?.is?.pin || !dst?.is?.pin) return null
+    if (!(src?.is?.pin || src?.is?.pad) || !(dst?.is?.pin || dst?.is?.pad)) return null
     return {src, dst}
+}
+
+function padLayoutOptions(pad) {
+    return {
+        'org.eclipse.elk.layered.layering.layerConstraint': pad?.proxy?.is?.input ? 'FIRST_SEPARATE' : 'LAST_SEPARATE'
+    }
 }
 
 export function toElkGraph(root, options = {}, constraints = {}) {
@@ -54,11 +66,13 @@ export function toElkGraph(root, options = {}, constraints = {}) {
     const nodes = (root?.nodes ?? []).filter(node => node?.look?.rect && node?.uid)
     const nodeSet = new Set(nodes)
     const pinToPortId = new Map()
+    const padToNodeId = new Map()
     const portToPin = new Map()
     const nodeById = new Map()
+    const padById = new Map()
     const nodeGeometryById = new Map()
 
-    const children = nodes.map(node => {
+    const nodeChildren = nodes.map(node => {
         const geometry = nodeLayoutGeometry(node)
         const rect = geometry.rect
         const nodeLayoutOptions = constraints.fixedPorts ? {'org.eclipse.elk.portConstraints': 'FIXED_POS'} : undefined
@@ -86,26 +100,44 @@ export function toElkGraph(root, options = {}, constraints = {}) {
         }
     })
 
+    const pads = (root?.pads ?? []).filter(pad => pad?.rect && pad?.proxy)
+    const padSet = new Set(pads)
+    const padChildren = pads.map((pad, index) => {
+        const id = padNodeId(root, pad, index)
+        padToNodeId.set(pad, id)
+        padById.set(id, pad)
+
+        return {
+            id,
+            width: Math.max(1, Number(pad.rect.w) || 0),
+            height: Math.max(1, Number(pad.rect.h) || 0),
+            layoutOptions: padLayoutOptions(pad)
+        }
+    })
+
+    const children = [...nodeChildren, ...padChildren]
+
     const routeByEdgeId = new Map()
     const edges = []
-    const routes = root?.getInternalRoutes?.(nodes) ?? []
+    const routes = root?.getConnectionRoutes?.() ?? root?.getInternalRoutes?.(nodes) ?? []
 
     routes.forEach((route, index) => {
         const endpoints = routeEndpoints(route)
         if (!endpoints) {
-            diagnostics.push(makeDiagnostic('route-skipped', 'Only pin-to-pin routes are supported in ELK auto-layout.'))
+            diagnostics.push(makeDiagnostic('route-skipped', 'Only node-pin and group-pad routes are supported in ELK auto-layout.'))
             return
         }
 
-        if (!nodeSet.has(endpoints.src.node) || !nodeSet.has(endpoints.dst.node)) {
+        const endpointIsInRoot = endpoint => endpoint.is.pin ? nodeSet.has(endpoint.node) : padSet.has(endpoint)
+        if (!endpointIsInRoot(endpoints.src) || !endpointIsInRoot(endpoints.dst)) {
             diagnostics.push(makeDiagnostic('route-skipped', 'Route endpoint node is outside the layout root.'))
             return
         }
 
-        const source = pinToPortId.get(endpoints.src)
-        const target = pinToPortId.get(endpoints.dst)
+        const source = endpoints.src.is.pin ? pinToPortId.get(endpoints.src) : padToNodeId.get(endpoints.src)
+        const target = endpoints.dst.is.pin ? pinToPortId.get(endpoints.dst) : padToNodeId.get(endpoints.dst)
         if (!source || !target) {
-            diagnostics.push(makeDiagnostic('route-skipped', 'Route endpoint pin could not be mapped to an ELK port.'))
+            diagnostics.push(makeDiagnostic('route-skipped', 'Route endpoint could not be mapped into the ELK graph.'))
             return
         }
 
@@ -121,7 +153,7 @@ export function toElkGraph(root, options = {}, constraints = {}) {
             children,
             edges
         },
-        context: {nodeById, nodeGeometryById, portToPin, routeByEdgeId},
+        context: {nodeById, padById, nodeGeometryById, portToPin, routeByEdgeId},
         diagnostics
     }
 }

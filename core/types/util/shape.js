@@ -456,6 +456,86 @@ triangle(ctx, x,y,w,h,type,cFill) {
     ctx.fill()
 },
 
+tack(ctx, x,y,w,h,zone,inflow,selective,cFill) {
+
+    // inflow changes the direction of the arrow
+    if (inflow) zone = zone == 'E' ? 'W' : zone == 'W' ? 'E' : zone == 'N' ? 'S' : 'N';
+
+    const color = selective ? "#000000" : cFill
+
+    ctx.beginPath()
+    ctx.fillStyle = color
+
+    switch (zone) {
+
+    case "N":
+        ctx.moveTo(x, y+h)
+        ctx.lineTo(x+w,y+h)
+        ctx.lineTo(x+w/2,y)
+        ctx.lineTo(x,y+h)
+        break
+
+    case "S" :
+        ctx.moveTo(x,y)
+        ctx.lineTo(x+w/2,y+h)
+        ctx.lineTo(x+w,y)
+        ctx.lineTo(x,y)
+        break
+
+    case "W" :
+        ctx.moveTo(x,y+h/2)
+        ctx.lineTo(x+w,y+h)
+        ctx.lineTo(x+w,y)
+        ctx.lineTo(x,y+h/2)
+        break
+
+    case "E" :
+        ctx.moveTo(x,y)
+        ctx.lineTo(x,y+h)
+        ctx.lineTo(x+w,y+h/2)
+        ctx.lineTo(x,y)
+        break
+    }
+    ctx.fill()
+
+    if (! selective) return
+
+    ctx.strokeStyle = cFill
+    ctx.lineWidth = 1
+
+    switch (zone) {
+
+    case "N":
+        ctx.moveTo(x, y+h)
+        ctx.lineTo(x+w,y+h)
+        ctx.lineTo(x+w/2,y)
+        ctx.lineTo(x,y+h)
+        break
+
+    case "S" :
+        ctx.moveTo(x,y)
+        ctx.lineTo(x+w/2,y+h)
+        ctx.lineTo(x+w,y)
+        ctx.lineTo(x,y)
+        break
+
+    case "W" :
+        ctx.moveTo(x,y+h/2)
+        ctx.lineTo(x+w,y+h)
+        ctx.lineTo(x+w,y)
+        ctx.lineTo(x,y+h/2)
+        break
+
+    case "E" :
+        ctx.moveTo(x,y)
+        ctx.lineTo(x,y+h)
+        ctx.lineTo(x+w,y+h/2)
+        ctx.lineTo(x,y)
+        break
+    }
+    ctx.stroke()
+},
+
 bridge(ctx, x, y, r, color) {            
 
     ctx.beginPath()
@@ -465,27 +545,6 @@ bridge(ctx, x, y, r, color) {
     ctx.lineWidth = 2
     ctx.rect(x - r, y - r, 2 * r, 2 * r)
     ctx.stroke()
-    ctx.fill()
-},
-
-selectiveTack(ctx, x, y, r, color) {
-
-    ctx.beginPath()
-    ctx.strokeStyle = color
-    ctx.lineWidth = 1
-    ctx.arc(x,y,r,0,2*Math.PI)
-    ctx.stroke()
-
-    ctx.beginPath()
-    ctx.fillStyle = '#000000'
-    ctx.arc(x,y,Math.max(1, r-1),0,2*Math.PI)
-    ctx.fill()
-},
-
-tack(ctx, x, y, r, color) {
-    ctx.beginPath()
-    ctx.fillStyle = color
-    ctx.arc(x,y,r,0,2*Math.PI)
     ctx.fill()
 },
 

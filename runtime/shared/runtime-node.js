@@ -181,7 +181,7 @@ function createTx(runtime, source) {
 
                 const tx = source.findTx(pin)
 
-                if (tx) return runtime.sendTo(tx, source, param)
+                if (tx) return runtime.sendTo(source, tx.pin, tx.targets, param)
             }
 
             console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? 'missing !!'}"`, source.txMap)
@@ -194,7 +194,7 @@ function createTx(runtime, source) {
 
                 const tx = source.findTx(pin)
 
-                if (tx) return runtime.requestFrom(tx, source, param, timeout)
+                if (tx) return runtime.requestFrom(source, tx.pin, tx.targets, param, timeout)
             }
 
             console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap)
@@ -213,7 +213,7 @@ function createTx(runtime, source) {
             if (source.msg) runtime.reschedule(source.msg)
         },
 
-        select(nodeName) {
+        to(nodeName) {
 
             const _nodeName = nodeName
 
@@ -231,9 +231,7 @@ function createTx(runtime, source) {
 
                             if (actualTarget) {
 
-                                const txCopy = new TX(tx.pin, tx.channel)
-                                txCopy.targets = [actualTarget]
-                                return runtime.sendTo(txCopy, source, param)
+                                return runtime.sendTo(source, tx.pin, [actualTarget], param)
                             }
 
                             console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
@@ -257,9 +255,7 @@ function createTx(runtime, source) {
 
                             if (actualTarget) {
 
-                                const txCopy = new TX(tx.pin, tx.channel)
-                                txCopy.targets = [actualTarget]
-                                return runtime.requestFrom(txCopy, source, param, timeout)
+                                return runtime.requestFrom(source, tx.pin, [actualTarget], param, timeout)
                             }
 
                             console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`)
@@ -271,6 +267,10 @@ function createTx(runtime, source) {
                     return runtime.reject('No such output pin')
                 },
             }
+        },
+
+        select(nodeName) {
+            return this.to(nodeName)
         }
     }
 }

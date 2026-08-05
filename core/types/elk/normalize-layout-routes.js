@@ -45,20 +45,31 @@ function removeAllCables(root) {
 function logicalConnections(root) {
     const [, rawConnections] = root.getRoutesAndConnections()
     return root.cookConx(rawConnections)
-        .filter(cx => cx?.src?.is?.pin && cx?.dst?.is?.pin)
 }
 
 function createDirectRoute(root, src, dst) {
-    const route = new Route(src, null)
+    const route = new Route(src, dst)
     src.routes.push(route)
+    dst.routes.push(route)
 
-    if (!route.connect(dst)) {
-        src.routes.pop()
-        return null
-    }
+    const pin = src.is.pin ? src : dst.is.pin ? dst : null
+    const pad = src.is.pad ? src : dst.is.pad ? dst : null
+    if (pin?.is?.channel && pad) pad.proxy.is.channel = true
 
     route.autoRoute(root.nodes)
     return route
+}
+
+function attachRoute(route, endpoint) {
+    if (endpoint?.is?.pin || endpoint?.is?.pad) {
+        if (!endpoint.routes.includes(route)) endpoint.routes.push(route)
+        return
+    }
+
+    if (endpoint?.is?.tack) {
+        endpoint.route = route
+        if (!endpoint.cable.tacks.includes(endpoint)) endpoint.cable.tacks.push(endpoint)
+    }
 }
 
 export function captureAutoLayoutState(root) {
@@ -67,6 +78,13 @@ export function captureAutoLayoutState(root) {
             node,
             x: node.look.rect.x,
             y: node.look.rect.y
+        })),
+        pads: (root?.pads ?? []).map(pad => ({
+            pad,
+            x: pad.rect.x,
+            y: pad.rect.y,
+            leftText: pad.is.leftText,
+            channel: pad.proxy.is.channel
         })),
         pins: (root?.nodes ?? []).flatMap(node =>
             visiblePins(node).map(pin => ({
@@ -98,6 +116,12 @@ export function restoreAutoLayoutState(root, state) {
     removeAllCables(root)
 
     for (const item of state.nodes ?? []) item.node.look.moveTo(item.x, item.y)
+    for (const item of state.pads ?? []) {
+        item.pad.rect.x = item.x
+        item.pad.rect.y = item.y
+        item.pad.is.leftText = item.leftText
+        item.pad.proxy.is.channel = item.channel
+    }
     for (const item of state.pins ?? []) {
         item.pin.is.left = item.left
         item.pin.rect.x = item.x
@@ -115,8 +139,12 @@ export function restoreAutoLayoutState(root, state) {
         item.route.from = item.from
         item.route.to = item.to
         item.route.restoreWire(item.wire)
-        item.route.reconnect()
+        attachRoute(item.route, item.from)
+        attachRoute(item.route, item.to)
     }
+
+
+    root.rxtxBuildTxTable?.()
 }
 
 export function normalizeLayoutRoutes(root) {
@@ -132,4 +160,15 @@ export function normalizeLayoutRoutes(root) {
     }
 
     return routes
+}
+
+// ELK only lays out routes between child nodes. Connections to group pads
+// still need to follow the child nodes after their positions have changed.
+export function rerouteLayoutBoundaryRoutes(root, routes, patch) {
+    const elkRoutes = new Set((patch?.routes ?? []).map(item => item.route))
+
+    for (const route of routes ?? []) {
+        if (elkRoutes.has(route)) continue
+        route.autoRoute(root?.nodes ?? [])
+    }
 }

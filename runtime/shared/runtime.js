@@ -1,9 +1,11 @@
 import {ResolveQueue} from './resolve-queue.js'
 import {HIX_HANDLER, HIX_REPLY, HIX_TYPE_MASK} from './target.js'
 import {RuntimeNode} from './runtime-node.js'
+import {assertRuntimeCompatibility} from './release-version.js'
 
 export class Runtime {
     constructor(nodeList = [], options = {}) {
+        assertRuntimeCompatibility(options?.vmblu?.compatibilityFamily)
         this.actors = []
         this.receiveTimer = 0
         this.idleTimer = 0
@@ -150,31 +152,31 @@ export class Runtime {
         console.log(`${nodeName}[${pinName}] : not connected.`)
     }
 
-    sendTo(tx, source, param) {
+    sendTo(source, pin, targets, param) {
 
-        if (tx.targets.length < 1) {
-            if (source.logsMessages?.()) this.logNotConnected(source.name, tx.pin)
+        if (targets.length < 1) {
+            if (source.logsMessages?.()) this.logNotConnected(source.name, pin)
             return 0
         }
 
         ++this.msgCount
 
         const log = source.logsMessages?.()
-        for (const target of tx.targets) {
-            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
+        for (const target of targets) {
+            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: pin, rxRef: 0, rxPin: target.pin})
             if (log) this.logMessage(this.qOut.at(-1))
         }
 
         this.idleCount = 0
         if (!this.receiveTimer) this.scheduleReceive()
 
-        return tx.targets.length
+        return targets.length
     }
 
-    requestFrom(tx, source, param, timeout) {
+    requestFrom(source, pin, targets, param, timeout) {
 
-        if (tx.targets.length < 1) {
-            if (source.logsMessages?.()) this.logNotConnected(source.name, tx.pin)
+        if (targets.length < 1) {
+            if (source.logsMessages?.()) this.logNotConnected(source.name, pin)
             return this.reject('Not connected')
         }
 
@@ -182,9 +184,9 @@ export class Runtime {
         let channelCount = 0
 
         const log = source.logsMessages?.()
-        for (const target of tx.targets) {
+        for (const target of targets) {
 
-            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin})
+            this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: pin, rxRef: 0, rxPin: target.pin})
 
             if (log) this.logReqReply(this.qOut.at(-1), 'request')
 

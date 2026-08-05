@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "0.9.7",
+    "version": "0.10.0",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "12/16/2025, 10:49:03 AM",
     "utc": "2025-12-16T09:49:03.571Z",
@@ -60,14 +60,8 @@
     "../../core/model/core.mod.blu"
   ],
   "factories": [
-    {
-      "path": "../nodes/workspace/factory.js",
-      "function": "Workspace"
-    },
-    {
-      "path": "../../ui-svelte/index.js",
-      "function": "VscodeSideMenuFactory"
-    }
+    "../nodes/workspace/factory.js",
+    "../../ui-svelte/index.js"
   ],
   "types": {
     "AnyPayload": {
@@ -363,11 +357,8 @@
                 "contract": {
                   "role": "follower",
                   "payload": {
-                    "request": {
-                      "request": "AnyPayload",
-                      "reply": "FileList"
-                    },
-                    "reply": "AnyPayload"
+                    "request": "AnyPayload",
+                    "reply": "FileList"
                   }
                 }
               },
@@ -398,10 +389,7 @@
                 "contract": {
                   "role": "follower",
                   "payload": {
-                    "request": {
-                      "request": "AnyPayload",
-                      "reply": "AnyPayload"
-                    },
+                    "request": "AnyPayload",
                     "reply": "AnyPayload"
                   }
                 }
@@ -701,14 +689,6 @@
                 }
               },
               {
-                "name": "auto layout",
-                "kind": "output",
-                "contract": {
-                  "role": "follower",
-                  "payload": "UiEvent"
-                }
-              },
-              {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
@@ -765,6 +745,14 @@
                 }
               },
               {
+                "name": "application prompt",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
                 "name": "save",
                 "kind": "output",
                 "contract": {
@@ -810,6 +798,12 @@
             "help": "Grid on/off"
           },
           {
+            "icon": "comment",
+            "color": "#0fb2e4",
+            "message": "application prompt",
+            "help": "Application prompt"
+          },
+          {
             "icon": "check_box",
             "color": "#0fb2e4",
             "message": "accept changes",
@@ -838,12 +832,6 @@
             "color": "#0fb2e4",
             "message": "wire check",
             "help": "Wire check"
-          },
-          {
-            "icon": "account_tree",
-            "color": "#0fb2e4",
-            "message": "auto layout",
-            "help": "Auto layout"
           },
           {
             "icon": "build",
@@ -1149,6 +1137,14 @@
                 "contract": {
                   "role": "follower",
                   "payload": "any"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
                 }
               }
             ]
@@ -2010,6 +2006,14 @@
                     }
                   },
                   {
+                    "name": "confirm",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
                     "name": "modal div",
                     "kind": "output",
                     "contract": {
@@ -2301,6 +2305,16 @@
             },
             "dst": {
               "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "confirm",
+              "node": "context menu"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "confirm box"
             }
           },
           {
@@ -2663,16 +2677,6 @@
       },
       {
         "src": {
-          "pin": "auto layout",
-          "node": "side menu"
-        },
-        "dst": {
-          "pin": "auto layout",
-          "node": "model manager"
-        }
-      },
-      {
-        "src": {
           "pin": "show settings",
           "node": "side menu"
         },
@@ -2738,6 +2742,16 @@
         },
         "dst": {
           "pin": "grid on-off",
+          "node": "view manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "application prompt",
+          "node": "side menu"
+        },
+        "dst": {
+          "pin": "application prompt",
           "node": "view manager"
         }
       },

@@ -90,7 +90,7 @@ export const mouseUpHandling = {
                 cable.unHighLight()
                 this.stopHover()
                 const cableConx = this.hit.lookWidget ?? this.hit.pad ?? null
-                this.doEdit(tx,'cableDraw',{view: this, cable, conx: cableConx, oldWire: state.modo.wire, newWire: cable.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires ?? state.modo.wires, newTacks: cable.tacks.slice(), newTackWires: cable.copyTackWires()})
+                this.doEdit(tx,'cableDraw',{view: this, cable, conx: cableConx, redraw: state.action === doing.busRedraw, oldWire: state.modo.wire, newWire: cable.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires ?? state.modo.wires, newTacks: cable.tacks.slice(), newTackWires: cable.copyTackWires()})
                 break
 
             case doing.busSegmentDrag:

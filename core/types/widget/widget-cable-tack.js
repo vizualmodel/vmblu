@@ -11,6 +11,7 @@ export function CableTack(cable, wid = null) {
         bridge: false,
         endpoint: false,
         selective: false,
+        inflow: false           // true if to the cable
     }
 
     // Owner trunk.
@@ -22,6 +23,7 @@ export function CableTack(cable, wid = null) {
 
     this.wid = wid ?? cable.generateWid?.() ?? null
     this.segment = 0
+    this.zone = 'E'
     this.alias = null
     this.rcAlias = null
     this.route = null
@@ -37,18 +39,16 @@ CableTack.prototype = {
                      : this.is.highLighted ? style.cable.cHighLighted
                      : style.cable.cNormal
 
-        const center = this.visualCenter()
-        if (!center) return;
+        const rc = this.rect
 
-        this.is.bridge 
-            ? shape.bridge(ctx, center.x, center.y, style.cable.rTack, color)
-            : this.isSelective()
-                ? shape.selectiveTack(ctx, center.x, center.y, style.cable.rTack, color)
-                : shape.tack(ctx, center.x, center.y, style.cable.rTack, color);
+        const center = {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
+
+        this.is.bridge  ? shape.bridge(ctx, center.x, center.y, style.cable.rTack, color)
+                        : shape.tack(ctx, rc.x,rc.y,rc.w,rc.h,this.zone,this.is.inflow,this.is.selective,color)
 
         if (this.alias && this.route) {
             if (!this.rcAlias) {
-                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.cable.fAlias)
+                this.rcAlias = shape.rcAlias(ctx, this.alias, this.zone, this.rect.x, this.rect.y, style.cable.fAlias)
             }
 
             shape.drawAlias(ctx, this.alias, this.rcAlias, color, style.cable.fAlias)
@@ -125,8 +125,14 @@ CableTack.prototype = {
 
     zoneDelta() {
         const r = style.cable.rTack
-        const zone = this.aliasZone()
-        return zone == 'N' ? {x: r, y: 2*r} : zone == 'S' ? {x: r, y: 0}: zone == 'E' ? {x: 0, y: r}: {x: 2*r, y: r}
+
+        switch(this.zone) {
+            case 'N': return {x: r, y: 2*r};
+            case 'S': return {x: r, y: 0};
+            case 'E': return {x: 0, y: r};
+            case 'W': return {x: 2*r, y: r};
+            default: return {x: 0, y: r};
+        }
     },
 
     tackRect() {
@@ -134,9 +140,11 @@ CableTack.prototype = {
         const inter = this.intersection()
 
         this.segment = inter.segment
+        this.is.inflow = !this.endpointIsInput()
 
         const r = style.cable.rTack
         const rc = this.rect
+        this.zone = this.aliasZone()
         const delta =  this.zoneDelta()
 
         rc.w = 2 * r
@@ -148,6 +156,7 @@ CableTack.prototype = {
     placeOnSegment(point, segment) {
 
         this.segment = segment
+        this.rcAlias = null
         this.rect.w = 2 * style.cable.rTack
         this.rect.h = 2 * style.cable.rTack
 
@@ -158,6 +167,7 @@ CableTack.prototype = {
         }
         // place the tack in the right zone
         else {
+            this.zone = this.aliasZone()
             const delta =  this.zoneDelta()
             this.rect.x = point.x - delta.x
             this.rect.y = point.y - delta.y
@@ -165,6 +175,7 @@ CableTack.prototype = {
     },
 
     refreshPlacement() {
+
         if (!this.route?.from || !this.route?.to) return
 
         this.rcAlias = null
@@ -184,11 +195,6 @@ CableTack.prototype = {
 
         const delta =  this.zoneDelta()
         return   {x: rc.x + delta.x, y: rc.y + delta.y}
-    },
-
-    visualCenter() {
-        const rc = this.rect
-        return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
     },
 
     toJSON() {
@@ -292,7 +298,7 @@ CableTack.prototype = {
 
         const [a,b] = [this.cable.wire[this.segment -1], this.cable.wire[this.segment]]
         const rc = this.rect
-        const wTrunk = this.cable.is.floating ? style.cable.wBus : style.cable.wCable
+        const wTrunk = style.cable.wCable
 
         if (a.y == b.y) {
             let xMax = Math.max(a.x, b.x) - rc.w - wTrunk/2
@@ -341,6 +347,8 @@ CableTack.prototype = {
 
             horizontal ? p[last - 1].x = center.x : p[last - 1].y = center.y
         }
+
+        this.refreshPlacement()
     },
 
     fuseEndSegment() {
@@ -410,7 +418,7 @@ CableTack.prototype = {
     endpointIsInput(widget = this.getOther()) {
         if (widget?.is?.pin) return widget.is.input
         if (widget?.is?.pad) return !widget.proxy.is.input
-        return null
+        return false
     },
 
     setSelective(selective) {
@@ -422,7 +430,7 @@ CableTack.prototype = {
         return input === null ? false : !input
     },
 
-    key() {
+    actualName() {
         const actual = this.actualEndpoint()
         return this.alias ?? actual?.name ?? null
     },
@@ -431,13 +439,9 @@ CableTack.prototype = {
         return this.endpointIsInput() === true
     },
 
-    isSelective() {
-        return !!this.is.selective
-    },
-
     acceptsFrom(tack) {
-        if (!this.isSelective()) return true
-        return this.key() === tack.key()
+        if (!this.is.selective) return true
+        return this.actualName() === tack.actualName()
     },
 
     areConnected(tack) {

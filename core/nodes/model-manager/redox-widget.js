@@ -220,13 +220,16 @@ export const redoxWidget = {
             if (newPrompt === oldPrompt) return;
 
             pin.prompt = newPrompt;
+            pin.node?.prompts.markDirty();
             this.saveEdit('changePinPrompt', {pin, oldPrompt, newPrompt});
         },
         undo({ pin, oldPrompt }) {
             pin.prompt = oldPrompt;
+            pin.node?.prompts.markDirty();
         },
         redo({ pin, newPrompt }) {
             pin.prompt = newPrompt;
+            pin.node?.prompts.markDirty();
         },
     },
 

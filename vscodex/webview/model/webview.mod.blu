@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "no version",
+    "version": "0.10.0",
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
     "utc": "2025-12-16T12:00:24.931Z",
@@ -16,14 +16,8 @@
     "../../../ui-svelte/model/ui-svelte.mod.blu"
   ],
   "factories": [
-    {
-      "path": "../message-broker.js",
-      "function": "MessageBroker"
-    },
-    {
-      "path": "../../../ui-svelte/index.js",
-      "function": "TeamLegendFactory"
-    }
+    "../message-broker.js",
+    "../../../ui-svelte/index.js"
   ],
   "root": {
     "kind": "group",
@@ -356,6 +350,14 @@
                 "contract": {
                   "role": "follower",
                   "payload": "any"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
                 }
               },
               {
@@ -1043,7 +1045,10 @@
                   }
                 ]
               }
-            ]
+            ],
+            "sx": {
+              "openPromptFile": true
+            }
           },
           {
             "kind": "dock",
@@ -1060,6 +1065,14 @@
                   {
                     "name": "context menu",
                     "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "confirm",
+                    "kind": "output",
                     "contract": {
                       "role": "follower",
                       "payload": "any"
@@ -1458,6 +1471,16 @@
           },
           {
             "src": {
+              "pin": "confirm",
+              "node": "context menu"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "confirm box"
+            }
+          },
+          {
+            "src": {
               "pin": "modal div",
               "node": "runtime settings"
             },
@@ -1711,14 +1734,6 @@
                 }
               },
               {
-                "name": "auto layout",
-                "kind": "output",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
                 "name": "show settings",
                 "kind": "output",
                 "contract": {
@@ -1773,6 +1788,14 @@
                   "role": "follower",
                   "payload": "UiEvent"
                 }
+              },
+              {
+                "name": "application prompt",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
               }
             ]
           }
@@ -1791,6 +1814,12 @@
             "help": "Grid on/off"
           },
           {
+            "icon": "comment",
+            "color": "#0fb2e4",
+            "message": "application prompt",
+            "help": "Application prompt"
+          },
+          {
             "icon": "check_box",
             "color": "#0fb2e4",
             "message": "accept changes",
@@ -1801,12 +1830,6 @@
             "color": "#0fb2e4",
             "message": "wire check",
             "help": "Wire check"
-          },
-          {
-            "icon": "account_tree",
-            "color": "#0fb2e4",
-            "message": "auto layout",
-            "help": "Auto layout"
           },
           {
             "icon": "bolt",
@@ -2294,16 +2317,6 @@
       },
       {
         "src": {
-          "pin": "auto layout",
-          "node": "vscode side menu"
-        },
-        "dst": {
-          "pin": "auto layout",
-          "node": "model manager"
-        }
-      },
-      {
-        "src": {
           "pin": "show settings",
           "node": "vscode side menu"
         },
@@ -2369,6 +2382,16 @@
         },
         "dst": {
           "pin": "grid on-off",
+          "node": "view manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "application prompt",
+          "node": "vscode side menu"
+        },
+        "dst": {
+          "pin": "application prompt",
           "node": "view manager"
         }
       },

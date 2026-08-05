@@ -294,7 +294,7 @@ encode(node, model) {
 
     // add the models, factories and libraries
     if (models.size() > 0) raw.imports = models.all( linkedModel => Path.relative(linkedModel.blu.arl.getFullPath(), model.getArl().getFullPath()))
-    if (factories.size() > 0) raw.factories = factories.all( factory => factory.makeRaw(model.getArl()))
+    if (factories.size() > 0) raw.factories = factories.makeRaw(model.getArl())
     if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => Path.relative(lib.blu.arl.getFullPath(), model.getArl().getFullPath()))
 
     // add the types

@@ -410,7 +410,7 @@ ModelManager.prototype = {
     },
 
     // Th path parameter is optional
-    onModelSave({path=null, preserveTarget=false}) {
+    async onModelSave({path=null, preserveTarget=false}) {
 
         // check
         if (! this.model) return null
@@ -445,7 +445,7 @@ ModelManager.prototype = {
 
         // and save
         try {
-            this.model.saveRaw()
+            await this.model.saveRaw()
         }
         finally {
             if (path && preserveTarget) {

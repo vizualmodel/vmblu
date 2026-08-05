@@ -68,8 +68,8 @@ export const TestHandling = {
 
     connectViaBus(root, sequencer, mirrorList) {
 
-        // add a bus
-        const bus = root.addBus('sequencer.cable', {x:X.cable, y:Y.headroom})
+        // add a shared cable trunk
+        const bus = root.addCable({x:X.cable, y:Y.headroom})
 
         // make it as long as the mirror list
         const rc = mirrorList.at(-1).look.rect 

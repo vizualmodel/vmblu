@@ -20,6 +20,12 @@ export function captureLayoutState(patch) {
             x: item.node.look.rect.x,
             y: item.node.look.rect.y
         })),
+        pads: (patch.pads ?? []).map(item => ({
+            pad: item.pad,
+            x: item.pad.rect.x,
+            y: item.pad.rect.y,
+            leftText: item.pad.is.leftText
+        })),
         pins: patch.pins.map(item => ({
             pin: item.pin,
             left: item.pin.is.left,
@@ -34,6 +40,11 @@ export function captureLayoutState(patch) {
 
 export function applyLayoutPatch(patch) {
     for (const item of patch.nodes) item.node.look.moveTo(item.x, item.y)
+    for (const item of patch.pads ?? []) {
+        item.pad.rect.x = item.x
+        item.pad.rect.y = item.y
+        item.pad.is.leftText = item.leftText
+    }
     for (const item of patch.pins) setPinGeometry(item.pin, item.left, item.y)
     for (const item of patch.routes) {
         const wire = copyWire(item.wire)
@@ -47,6 +58,11 @@ export function applyLayoutPatch(patch) {
 
 export function restoreLayoutState(state) {
     for (const item of state.nodes) item.node.look.moveTo(item.x, item.y)
+    for (const item of state.pads ?? []) {
+        item.pad.rect.x = item.x
+        item.pad.rect.y = item.y
+        item.pad.is.leftText = item.leftText
+    }
     for (const item of state.pins) setPinGeometry(item.pin, item.left, item.y)
     for (const item of state.routes) item.route.restoreWire(copyWire(item.wire))
 }

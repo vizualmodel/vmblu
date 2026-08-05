@@ -1,5 +1,66 @@
 import {Route} from './index.js'
-import {convert} from '../util/index.js'
+import {canonicalOrthogonalWire, closestPointOnCurve, convert, diagonalWireSegments, style} from '../util/index.js'
+
+function midpoint(a, b) {
+    return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
+}
+
+function extendWireEnds(wire, extraLength) {
+    const extended = wire.map(point => ({...point}))
+    if (extended.length < 2 || extraLength <= 0) return extended
+
+    const start = extended[0]
+    const afterStart = extended[1]
+    const end = extended.at(-1)
+    const beforeEnd = extended.at(-2)
+
+    if (start.x === afterStart.x) start.y += start.y < afterStart.y ? -extraLength : extraLength
+    else start.x += start.x < afterStart.x ? -extraLength : extraLength
+
+    if (end.x === beforeEnd.x) end.y += end.y < beforeEnd.y ? -extraLength : extraLength
+    else end.x += end.x < beforeEnd.x ? -extraLength : extraLength
+
+    return extended
+}
+
+export function splitRouteWireForCable(routeWire) {
+    const wire = canonicalOrthogonalWire(routeWire)
+    if (wire.length < 2 || diagonalWireSegments(wire).length) return null
+
+    if (wire.length >= 4) {
+        return {
+            cableWire: wire.slice(1, -1),
+            fromWire: wire.slice(0, 2),
+            toWire: wire.slice(-2).reverse()
+        }
+    }
+
+    if (wire.length === 3) {
+        const fromTack = midpoint(wire[0], wire[1])
+        const toTack = midpoint(wire[1], wire[2])
+
+        return {
+            cableWire: [fromTack, {...wire[1]}, toTack],
+            fromWire: [{...wire[0]}, {...fromTack}],
+            toWire: [{...wire[2]}, {...toTack}]
+        }
+    }
+
+    const fromTack = {
+        x: wire[0].x + (wire[1].x - wire[0].x) / 3,
+        y: wire[0].y + (wire[1].y - wire[0].y) / 3
+    }
+    const toTack = {
+        x: wire[0].x + 2 * (wire[1].x - wire[0].x) / 3,
+        y: wire[0].y + 2 * (wire[1].y - wire[0].y) / 3
+    }
+
+    return {
+        cableWire: [fromTack, toTack],
+        fromWire: [{...wire[0]}, {...fromTack}],
+        toWire: [{...wire[1]}, {...toTack}]
+    }
+}
 
 export const conxHandling = {
 
@@ -417,21 +478,29 @@ export const conxHandling = {
         if (route.wire.length < 2) return null
 
         const oldRoute = route.clone()
-        const wire = route.copyWire()
-        const clickSegment = Math.min(Math.max(segment, 1), wire.length - 1)
+        const split = splitRouteWireForCable(route.copyWire())
+        if (!split) {
+            console.warn('Cannot convert a non-orthogonal or empty route to a cable.', {
+                wire: route.copyWire(),
+                diagonals: diagonalWireSegments(route.wire)
+            })
+            return null
+        }
 
-        const cable = this.addCable(wire[0])
-        cable.wire = wire.map(point => ({...point}))
+        const firstTackPoint = split.cableWire[0]
+        const lastTackPoint = split.cableWire.at(-1)
+        const cableWire = extendWireEnds(split.cableWire, style.cable.extraLength)
+        const cable = this.addCable(cableWire[0])
+        cable.wire = cableWire
 
         route.disconnect()
 
-        const attach = (widget, point, tackSegment, endpoint = false) => {
+        const attach = (widget, wire, point, tackSegment) => {
             const tack = cable.newTack()
-            tack.is.endpoint = endpoint
             tack.placeOnSegment(point, tackSegment)
 
             const leg = new Route(widget, tack)
-            leg.wire = [widget.center(), {...point}]
+            leg.wire = wire.map(next => ({...next}))
             widget.routes.push(leg)
             tack.restore(leg)
 
@@ -440,20 +509,15 @@ export const conxHandling = {
             return leg
         }
 
-        const pointOnSegment = (wire, segment, point) => {
-            const a = wire[segment - 1]
-            const b = wire[segment]
-
-            if (!point) return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
-            if (a.x === b.x) return {x: a.x, y: Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))}
-            if (a.y === b.y) return {x: Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x)), y: a.y}
-            return {x: point.x, y: point.y}
-        }
-
         const makePendingBranch = () => {
-            const point = pointOnSegment(cable.wire, clickSegment, xyLocal)
+            const closest = closestPointOnCurve(
+                cable.wire,
+                xyLocal ?? midpoint(cable.wire[0], cable.wire.at(-1))
+            )
+            const pendingSegment = closest?.segment ?? 1
+            const point = closest?.point ?? midpoint(cable.wire[0], cable.wire[1])
             const tack = cable.newTack()
-            tack.placeOnSegment(point, clickSegment)
+            tack.placeOnSegment(point, pendingSegment)
 
             const pendingRoute = new Route(tack, null)
             pendingRoute.wire = [{...point}, {...point}]
@@ -462,14 +526,13 @@ export const conxHandling = {
             return {route: pendingRoute, tack}
         }
 
-        const first = cable.wire[0]
-        const last = cable.wire.at(-1)
         const routes = [
-            attach(oldRoute.from, first, 1, true),
-            attach(oldRoute.to, last, cable.wire.length - 1, true)
+            attach(oldRoute.from, split.fromWire, firstTackPoint, 1),
+            attach(oldRoute.to, split.toWire, lastTackPoint, cable.wire.length - 1)
         ]
 
         const pending = createPending ? makePendingBranch() : null
+        cable.validateOrthogonalWire('route conversion')
         return {node: this, route, oldRoute, cable, routes, tacks: routes.map(leg => leg.from.is.tack ? leg.from : leg.to), pending}
     },
 

@@ -22,7 +22,8 @@ function makeManager() {
         setRaw(raw) {
             observations.raw = raw
         },
-        saveRaw() {
+        async saveRaw() {
+            await Promise.resolve()
             observations.savedBlu = this.blu.arl
             observations.savedViz = this.viz.arl
         },
@@ -43,10 +44,10 @@ function makeManager() {
     return {manager, model, observations, canonicalBlu, canonicalViz, backupBlu, backupViz}
 }
 
-test('temporary model save restores the canonical target', () => {
+test('temporary model save restores the canonical target', async () => {
     const fixture = makeManager()
 
-    fixture.manager.onModelSave({path: '.vmblu-backup-1.mod.blu', preserveTarget: true})
+    await fixture.manager.onModelSave({path: '.vmblu-backup-1.mod.blu', preserveTarget: true})
 
     assert.equal(fixture.observations.encodedBlu, fixture.canonicalBlu)
     assert.equal(fixture.observations.encodedViz, fixture.canonicalViz)
@@ -56,10 +57,10 @@ test('temporary model save restores the canonical target', () => {
     assert.equal(fixture.model.viz.arl, fixture.canonicalViz)
 })
 
-test('regular Save As keeps the new model target', () => {
+test('regular Save As keeps the new model target', async () => {
     const fixture = makeManager()
 
-    fixture.manager.onModelSave({path: 'renamed.mod.blu'})
+    await fixture.manager.onModelSave({path: 'renamed.mod.blu'})
 
     assert.equal(fixture.observations.encodedBlu, fixture.backupBlu)
     assert.equal(fixture.observations.encodedViz, fixture.backupViz)

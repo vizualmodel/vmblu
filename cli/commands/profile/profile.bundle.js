@@ -464,6 +464,86 @@ triangle(ctx, x,y,w,h,type,cFill) {
     ctx.fill();
 },
 
+tack(ctx, x,y,w,h,zone,inflow,selective,cFill) {
+
+    // inflow changes the direction of the arrow
+    if (inflow) zone = zone == 'E' ? 'W' : zone == 'W' ? 'E' : zone == 'N' ? 'S' : 'N';
+
+    const color = selective ? "#000000" : cFill;
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+
+    switch (zone) {
+
+    case "N":
+        ctx.moveTo(x, y+h);
+        ctx.lineTo(x+w,y+h);
+        ctx.lineTo(x+w/2,y);
+        ctx.lineTo(x,y+h);
+        break
+
+    case "S" :
+        ctx.moveTo(x,y);
+        ctx.lineTo(x+w/2,y+h);
+        ctx.lineTo(x+w,y);
+        ctx.lineTo(x,y);
+        break
+
+    case "W" :
+        ctx.moveTo(x,y+h/2);
+        ctx.lineTo(x+w,y+h);
+        ctx.lineTo(x+w,y);
+        ctx.lineTo(x,y+h/2);
+        break
+
+    case "E" :
+        ctx.moveTo(x,y);
+        ctx.lineTo(x,y+h);
+        ctx.lineTo(x+w,y+h/2);
+        ctx.lineTo(x,y);
+        break
+    }
+    ctx.fill();
+
+    if (! selective) return
+
+    ctx.strokeStyle = cFill;
+    ctx.lineWidth = 1;
+
+    switch (zone) {
+
+    case "N":
+        ctx.moveTo(x, y+h);
+        ctx.lineTo(x+w,y+h);
+        ctx.lineTo(x+w/2,y);
+        ctx.lineTo(x,y+h);
+        break
+
+    case "S" :
+        ctx.moveTo(x,y);
+        ctx.lineTo(x+w/2,y+h);
+        ctx.lineTo(x+w,y);
+        ctx.lineTo(x,y);
+        break
+
+    case "W" :
+        ctx.moveTo(x,y+h/2);
+        ctx.lineTo(x+w,y+h);
+        ctx.lineTo(x+w,y);
+        ctx.lineTo(x,y+h/2);
+        break
+
+    case "E" :
+        ctx.moveTo(x,y);
+        ctx.lineTo(x,y+h);
+        ctx.lineTo(x+w,y+h/2);
+        ctx.lineTo(x,y);
+        break
+    }
+    ctx.stroke();
+},
+
 bridge(ctx, x, y, r, color) {            
 
     ctx.beginPath();
@@ -473,27 +553,6 @@ bridge(ctx, x, y, r, color) {
     ctx.lineWidth = 2;
     ctx.rect(x - r, y - r, 2 * r, 2 * r);
     ctx.stroke();
-    ctx.fill();
-},
-
-selectiveTack(ctx, x, y, r, color) {
-
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.arc(x,y,r,0,2*Math.PI);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.fillStyle = '#000000';
-    ctx.arc(x,y,Math.max(1, r-1),0,2*Math.PI);
-    ctx.fill();
-},
-
-tack(ctx, x, y, r, color) {
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.arc(x,y,r,0,2*Math.PI);
     ctx.fill();
 },
 
@@ -1723,11 +1782,9 @@ function StyleFactory() {
         cAdded: color.add, cDeleted: color.red
     }; 
     this.cable = {
-        wNormal: 6, wBus: 4, split: 50, tooClose: 25, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 7.5,
+        wNormal: 6, wBus: 4, split: 50, tooClose: 25, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 6.5,
         cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
-
-        wCable: 4, rTack: 4,
-
+        wCable: 4, rTack: 5, extraLength: 15,
         wBridge: 6, hBridge: 6
     }; 
     this.selection = {
@@ -1946,6 +2003,66 @@ TextEdit.prototype = {
         }
     },
 };
+
+const DEFAULT_EPSILON = 1e-9;
+
+function sameCoordinate(a, b, epsilon) {
+    return Math.abs(a - b) <= epsilon
+}
+
+function samePoint(a, b, epsilon) {
+    return sameCoordinate(a.x, b.x, epsilon) && sameCoordinate(a.y, b.y, epsilon)
+}
+
+function diagonalWireSegments(wire = [], epsilon = DEFAULT_EPSILON) {
+    const diagonals = [];
+
+    for (let index = 1; index < wire.length; index++) {
+        const from = wire[index - 1];
+        const to = wire[index];
+        if (!from || !to) continue
+
+        if (!sameCoordinate(from.x, to.x, epsilon) && !sameCoordinate(from.y, to.y, epsilon)) {
+            diagonals.push({segment: index, from: {...from}, to: {...to}});
+        }
+    }
+
+    return diagonals
+}
+
+function canonicalOrthogonalWire(wire = [], epsilon = DEFAULT_EPSILON) {
+    const canonical = [];
+
+    for (const point of wire) {
+        if (!Number.isFinite(point?.x) || !Number.isFinite(point?.y)) continue
+        if (!canonical.length || !samePoint(canonical.at(-1), point, epsilon)) {
+            canonical.push({x: point.x, y: point.y});
+        }
+    }
+
+    let changed = true;
+    while (changed && canonical.length > 2) {
+        changed = false;
+
+        for (let index = 1; index < canonical.length - 1; index++) {
+            const previous = canonical[index - 1];
+            const point = canonical[index];
+            const next = canonical[index + 1];
+            const sameX = sameCoordinate(previous.x, point.x, epsilon) &&
+                          sameCoordinate(point.x, next.x, epsilon);
+            const sameY = sameCoordinate(previous.y, point.y, epsilon) &&
+                          sameCoordinate(point.y, next.y, epsilon);
+
+            if (sameX || sameY) {
+                canonical.splice(index, 1);
+                changed = true;
+                break
+            }
+        }
+    }
+
+    return canonical
+}
 
 // a function to check if a point is inside or outside a rectangle
 const inside =  (p,R) => ((p.x >= R.x) && (p.x <= R.x + R.w) && (p.y >= R.y) && (p.y <= R.y + R.h)); 
@@ -2196,7 +2313,7 @@ function updateDerivedSettings(original, derived) {
 }
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const SCHEMA_VERSION = "0.9.8";
+const SCHEMA_VERSION$1 = "0.10.0";
 
 const DEFAULT_TEAM = 'default';
 const DEFAULT_TEAM_COLOR = '#0066ff';
@@ -2206,7 +2323,7 @@ function ModelHeader() {
     const today = new Date();
 
     // Set the schema version in the header
-    this.version = SCHEMA_VERSION;
+    this.version = SCHEMA_VERSION$1;
     this.created = today.toLocaleString();
     this.saved = today.toLocaleString();
     this.utc = today.toJSON();
@@ -2250,7 +2367,7 @@ ModelHeader.prototype = {
 
         const raw = {
             // Set the schema version in the header
-            version: this.version = SCHEMA_VERSION,
+            version: this.version = SCHEMA_VERSION$1,
             created: this.created,
             saved: this.saved,
             utc: this.utc,
@@ -3134,7 +3251,7 @@ async getRaw() {
     return bRaw
 },
 
-saveRaw() {
+async saveRaw() {
 
     const promptFiles = this.preparePromptReposForSave?.(this.raw) ?? [];
 
@@ -3147,10 +3264,11 @@ saveRaw() {
 
     // save both parts of the model
     const saves = [];
-    if (blu) saves.push(this.blu.arl.save(blu).catch(error => console.error(`Failed to save ${this.blu.arl.getPath()}:`, error)));
-    if (viz) saves.push(this.viz.arl.save(viz).catch(error => console.error(`Failed to save ${this.viz.arl.getPath()}:`, error)));
+    if (blu) saves.push(saveFile(this.blu.arl, blu));
+    if (viz) saves.push(saveFile(this.viz.arl, viz));
 
-    Promise.allSettled(saves).then(() => this.savePromptRepos?.(promptFiles));
+    await Promise.all(saves);
+    await this.savePromptRepos?.(promptFiles);
 },
 
 // Splits raw into a part for the blu file and the viz file
@@ -3334,7 +3452,8 @@ joinInterfaces(bNode, vNode) {
 
     // first convert strings
     vNode.interfaces = vNode.interfaces.map( iface => {
-        const vif = {...convert.stringToInterface(iface.interface)};
+        const serializedInterface = iface.interface ?? iface.name;
+        const vif = {...convert.stringToInterface(serializedInterface)};
         vif.pins = iface.pins.map( pin => convert.stringToPin(pin));
         return vif
     });
@@ -3502,6 +3621,18 @@ function defaultVizPath(modelArl) {
 
 function validTeamColor(color) {
     return typeof color === 'string' && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(color)
+}
+
+async function saveFile(arl, body) {
+    try {
+        const result = await arl.save(body);
+        if (result === null || result === false) throw new Error('File write returned failure')
+        return result
+    }
+    catch (error) {
+        console.error(`Failed to save ${arl.getPath()}:`, error);
+        throw error
+    }
 }
 
 const ProfileHandling = {
@@ -3840,6 +3971,69 @@ getContract(pin) {
 
 };
 
+// Auto-generated by cli/scripts/generate-schema-version.js
+const CORE_VERSION = "0.10.0";
+const SCHEMA_VERSION = "0.10.0";
+
+function compatibilityFamily$1(version) {
+    const match = String(version ?? '').match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+    if (!match) throw new Error(`Invalid vmblu version: ${version}`)
+    return `${match[1]}.${match[2]}`
+}
+
+function canonicalJson(value) {
+    return JSON.stringify(normalize(value))
+}
+
+function sourceHash(value) {
+    const text = typeof value === 'string' ? value : canonicalJson(value);
+    let hash = 0xcbf29ce484222325n;
+    for (let i = 0; i < text.length; i++) {
+        hash ^= BigInt(text.charCodeAt(i));
+        hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+    }
+    return `fnv1a64:${hash.toString(16).padStart(16, '0')}`
+}
+
+function makeArtifactProvenance({
+    artifact,
+    model,
+    source,
+    generatorName = '@vizualmodel/vmblu-core',
+    generatorVersion = CORE_VERSION,
+    schemaVersion = SCHEMA_VERSION,
+} = {}) {
+    if (!artifact) throw new Error('Artifact provenance requires an artifact kind')
+    if (!model) throw new Error('Artifact provenance requires a model identity')
+
+    return {
+        generated: true,
+        artifact,
+        compatibilityFamily: compatibilityFamily$1(generatorVersion),
+        schemaVersion,
+        generator: {
+            name: generatorName,
+            version: generatorVersion,
+        },
+        source: {
+            model,
+            hash: sourceHash(source),
+        },
+    }
+}
+
+function normalize(value) {
+    if (value === null || typeof value !== 'object') return value
+    if (Array.isArray(value)) return value.map(item => item === undefined ? null : normalize(item))
+    if (typeof value.toJSON === 'function') return normalize(value.toJSON())
+
+    const normalized = {};
+    for (const key of Object.keys(value).sort()) {
+        if (value[key] !== undefined) normalized[key] = normalize(value[key]);
+    }
+    return normalized
+}
+
 const PRIMITIVE_SCHEMA_TYPES = new Set(['string', 'number', 'boolean', 'integer', 'object', 'array', 'null']);
 const ANY_SCHEMA = {type: 'object'};
 
@@ -3851,6 +4045,12 @@ makeCapabilityObject(root = null) {
     const capability = {
         schema: 'https://vmblu.dev/schemas/capabilities.v1.json',
         version: 1,
+        provenance: makeArtifactProvenance({
+            artifact: 'capabilities',
+            model: this.getArl().getName(),
+            source: this.raw,
+            schemaVersion: this.raw?.header?.version,
+        }),
         application: {
             id: appName || 'application',
             title: appName || 'Application',
@@ -4163,11 +4363,15 @@ const AppHandling = {
         node.collectImports(imports);
 
         // The header
-        const today = new Date();
+        const provenance = makeArtifactProvenance({
+            artifact: 'application',
+            model: this.getArl().getName(),
+            source: this.raw,
+            schemaVersion: this.raw?.header?.version,
+        });
         let sHeader =      '// ------------------------------------------------------------------'
                         +`\n// Model: ${node.name}`
-                        +`\n// Path: ${srcArl.getPath()}`
-                        +`\n// Creation date ${today.toLocaleString()}`
+                        +`\n// @vmblu-generated ${JSON.stringify(provenance)}`
                         +'\n// ------------------------------------------------------------------\n';
 
         // set the imported source/libs
@@ -4186,7 +4390,7 @@ const AppHandling = {
         // close the nodeList
         sNodeList += '\n]';
 
-        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl);
+        const runtimeOptions = this.JSRuntimeOptions(runtime, node, srcArl, provenance);
 
         // combine all..
         const jsSource = 
@@ -4227,10 +4431,16 @@ runtime.start()
         return capArl
     },
 
-    JSRuntimeOptions(runtime, node, srcArl) {
+    JSRuntimeOptions(runtime, node, srcArl, provenance) {
 
         const imports = [];
-        const optionLines = [];
+        const optionLines = [
+            `    vmblu: ${JSON.stringify({
+                compatibilityFamily: provenance.compatibilityFamily,
+                generatorVersion: provenance.generator.version,
+                schemaVersion: provenance.schemaVersion,
+            })}`
+        ];
 
         const runtimeSettings = this.header.runtimeSettings;
         const runtimeSettingsPath = this.runtimeSettingsImportPath(srcArl);
@@ -4739,6 +4949,22 @@ const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param});
 
 const nodeClickHandling = {
 
+    showPrompt(tx, pos, header=`Node information for ${this.name}`) {
+
+        const node = this;
+        const promptArl = node.prompts.repository?.arl;
+
+        tx.send("node prompt", {
+            header,
+            pos,
+            uid: node.uid,
+            mode: 'node-sections',
+            sections: node.prompts.snapshot(''),
+            open: promptArl ? () => tx.send('open source file', {arl: promptArl}) : null,
+            ok: (sections) => doEdit(tx,"changeNodePrompt",{node, sections})
+        });
+    },
+
     showExportForm(pos,tx) {
 
         const node = this;
@@ -4899,20 +5125,7 @@ const nodeClickHandling = {
             }
 
             case 'comment':
-
-                // save the node hit
-                tx.send("node prompt", {   header: 'Node information for ' + node.name,
-                                            pos: newPos, 
-                                            uid: node.uid,
-                                            mode: 'node-sections',
-                                            sections: {
-                                                prompt: node.prompt ?? '',
-                                                status: node.promptStatus ?? '',
-                                                decisions: node.promptDecisions ?? '',
-                                                open: node.promptOpen ?? '',
-                                            },
-                                            ok: (sections)=> doEdit(tx,"changeNodePrompt",{node, sections})
-                                        });
+                node.showPrompt(tx, newPos);
                 break        
         }
     
@@ -6634,6 +6847,7 @@ function CableTack(cable, wid = null) {
         bridge: false,
         endpoint: false,
         selective: false,
+        inflow: false           // true if to the cable
     };
 
     // Owner trunk.
@@ -6645,6 +6859,7 @@ function CableTack(cable, wid = null) {
 
     this.wid = wid ?? cable.generateWid?.() ?? null;
     this.segment = 0;
+    this.zone = 'E';
     this.alias = null;
     this.rcAlias = null;
     this.route = null;
@@ -6660,18 +6875,16 @@ CableTack.prototype = {
                      : this.is.highLighted ? style.cable.cHighLighted
                      : style.cable.cNormal;
 
-        const center = this.visualCenter();
-        if (!center) return;
+        const rc = this.rect;
 
-        this.is.bridge 
-            ? shape.bridge(ctx, center.x, center.y, style.cable.rTack, color)
-            : this.isSelective()
-                ? shape.selectiveTack(ctx, center.x, center.y, style.cable.rTack, color)
-                : shape.tack(ctx, center.x, center.y, style.cable.rTack, color);
+        const center = {x: rc.x + rc.w/2, y: rc.y + rc.h/2};
+
+        this.is.bridge  ? shape.bridge(ctx, center.x, center.y, style.cable.rTack, color)
+                        : shape.tack(ctx, rc.x,rc.y,rc.w,rc.h,this.zone,this.is.inflow,this.is.selective,color);
 
         if (this.alias && this.route) {
             if (!this.rcAlias) {
-                this.rcAlias = shape.rcAlias(ctx, this.alias, this.aliasZone(), this.rect.x, this.rect.y, style.cable.fAlias);
+                this.rcAlias = shape.rcAlias(ctx, this.alias, this.zone, this.rect.x, this.rect.y, style.cable.fAlias);
             }
 
             shape.drawAlias(ctx, this.alias, this.rcAlias, color, style.cable.fAlias);
@@ -6748,8 +6961,14 @@ CableTack.prototype = {
 
     zoneDelta() {
         const r = style.cable.rTack;
-        const zone = this.aliasZone();
-        return zone == 'N' ? {x: r, y: 2*r} : zone == 'S' ? {x: r, y: 0}: zone == 'E' ? {x: 0, y: r}: {x: 2*r, y: r}
+
+        switch(this.zone) {
+            case 'N': return {x: r, y: 2*r};
+            case 'S': return {x: r, y: 0};
+            case 'E': return {x: 0, y: r};
+            case 'W': return {x: 2*r, y: r};
+            default: return {x: 0, y: r};
+        }
     },
 
     tackRect() {
@@ -6757,9 +6976,11 @@ CableTack.prototype = {
         const inter = this.intersection();
 
         this.segment = inter.segment;
+        this.is.inflow = !this.endpointIsInput();
 
         const r = style.cable.rTack;
         const rc = this.rect;
+        this.zone = this.aliasZone();
         const delta =  this.zoneDelta();
 
         rc.w = 2 * r;
@@ -6771,6 +6992,7 @@ CableTack.prototype = {
     placeOnSegment(point, segment) {
 
         this.segment = segment;
+        this.rcAlias = null;
         this.rect.w = 2 * style.cable.rTack;
         this.rect.h = 2 * style.cable.rTack;
 
@@ -6781,6 +7003,7 @@ CableTack.prototype = {
         }
         // place the tack in the right zone
         else {
+            this.zone = this.aliasZone();
             const delta =  this.zoneDelta();
             this.rect.x = point.x - delta.x;
             this.rect.y = point.y - delta.y;
@@ -6788,6 +7011,7 @@ CableTack.prototype = {
     },
 
     refreshPlacement() {
+
         if (!this.route?.from || !this.route?.to) return
 
         this.rcAlias = null;
@@ -6807,11 +7031,6 @@ CableTack.prototype = {
 
         const delta =  this.zoneDelta();
         return   {x: rc.x + delta.x, y: rc.y + delta.y}
-    },
-
-    visualCenter() {
-        const rc = this.rect;
-        return {x: rc.x + rc.w/2, y: rc.y + rc.h/2}
     },
 
     toJSON() {
@@ -6915,7 +7134,7 @@ CableTack.prototype = {
 
         const [a,b] = [this.cable.wire[this.segment -1], this.cable.wire[this.segment]];
         const rc = this.rect;
-        const wTrunk = this.cable.is.floating ? style.cable.wBus : style.cable.wCable;
+        const wTrunk = style.cable.wCable;
 
         if (a.y == b.y) {
             let xMax = Math.max(a.x, b.x) - rc.w - wTrunk/2;
@@ -6964,6 +7183,8 @@ CableTack.prototype = {
 
             horizontal ? p[last - 1].x = center.x : p[last - 1].y = center.y;
         }
+
+        this.refreshPlacement();
     },
 
     fuseEndSegment() {
@@ -7033,7 +7254,7 @@ CableTack.prototype = {
     endpointIsInput(widget = this.getOther()) {
         if (widget?.is?.pin) return widget.is.input
         if (widget?.is?.pad) return !widget.proxy.is.input
-        return null
+        return false
     },
 
     setSelective(selective) {
@@ -7045,7 +7266,7 @@ CableTack.prototype = {
         return input === null ? false : !input
     },
 
-    key() {
+    actualName() {
         const actual = this.actualEndpoint();
         return this.alias ?? actual?.name ?? null
     },
@@ -7054,13 +7275,9 @@ CableTack.prototype = {
         return this.endpointIsInput() === true
     },
 
-    isSelective() {
-        return !!this.is.selective
-    },
-
     acceptsFrom(tack) {
-        if (!this.isSelective()) return true
-        return this.key() === tack.key()
+        if (!this.is.selective) return true
+        return this.actualName() === tack.actualName()
     },
 
     areConnected(tack) {
@@ -10218,11 +10435,9 @@ const mouseMoveHandling = {
 
             case doing.busDraw:
                 state.cable.drawXY(xyLocal);
-                if (!state.cable.is.floating) {
-                    this.mouseHit(xyLocal);
-                    const conx = this.hit.lookWidget ?? this.hit.pad ?? null;
-                    this.hover(conx, conx ? !state.cable.findTack(conx) : false);
-                }
+                this.mouseHit(xyLocal);
+                const conx = this.hit.lookWidget ?? this.hit.pad ?? null;
+                this.hover(conx, conx ? !state.cable.findTack(conx) : false);
                 return true
 
             case doing.busRedraw:
@@ -10982,6 +11197,7 @@ const mouseDownHandling = {
 
                         // save the current wire
                         state.modo.wire = hit.cable.copyWire();
+                        state.modo.tacks = hit.cable.tacks.slice();
                         state.modo.wires = hit.cable.copyTackWires();
 
                         // Orient the cable so redraw always extends from the last point.
@@ -11028,18 +11244,16 @@ const mouseDownHandling = {
                     break
 
                     case SHIFT:{
-                        if (!hit.cable.is.floating) {
-                            state.cable = hit.cable;
-                            state.busSegment = hit.busSegment;
-                            state.cable.is.selected = true;
-                            state.modo.wire = hit.cable.copyWire();
-                            state.modo.tacks = hit.cable.tacks.slice();
-                            state.modo.tackWires = hit.cable.copyTackWires();
+                        state.cable = hit.cable;
+                        state.busSegment = hit.busSegment;
+                        state.cable.is.selected = true;
+                        state.modo.wire = hit.cable.copyWire();
+                        state.modo.tacks = hit.cable.tacks.slice();
+                        state.modo.tackWires = hit.cable.copyTackWires();
 
-                            hit.cable.resumeDrawing(hit.busSegment, xyLocal);
+                        hit.cable.resumeDrawing(hit.busSegment, xyLocal);
 
-                            this.stateSwitch(doing.busDraw);
-                        }
+                        this.stateSwitch(doing.busDraw);
                     }
                     break
 
@@ -11143,8 +11357,8 @@ const mouseDownHandling = {
 
                     case CTRL|SHIFT:{
 
-                        // create a new floating cable
-                        this.doEdit(tx,'cableCreate',{view: this, pos: xyLocal, floating: true});
+                        // create a new cable
+                        this.doEdit(tx,'cableCreate',{view: this, pos: xyLocal});
                     }
                     break
                 }
@@ -11243,7 +11457,7 @@ const mouseUpHandling = {
                 cable.unHighLight();
                 this.stopHover();
                 const cableConx = this.hit.lookWidget ?? this.hit.pad ?? null;
-                this.doEdit(tx,'cableDraw',{view: this, cable, conx: cableConx, oldWire: state.modo.wire, newWire: cable.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires ?? state.modo.wires, newTacks: cable.tacks.slice(), newTackWires: cable.copyTackWires()});
+                this.doEdit(tx,'cableDraw',{view: this, cable, conx: cableConx, redraw: state.action === doing.busRedraw, oldWire: state.modo.wire, newWire: cable.copyWire(), oldTacks: state.modo.tacks, oldTackWires: state.modo.tackWires ?? state.modo.wires, newTacks: cable.tacks.slice(), newTackWires: cable.copyTackWires()});
                 break
 
             case doing.busSegmentDrag:
@@ -11358,10 +11572,10 @@ const cm$8 = {
 	choices:[
 		{text:'new group node',	icon:'account_tree',char:'ctrl g',	state:"enabled",	action:newGroupNode},
 		{text:'new source node',icon:'factory',		char:'ctrl s', 	state:"enabled",	action:newSourceNode},
-		{text:'new bus',		icon:'cable',  		char:'ctrl k',	state:"enabled",	action:newBus},
-		{text:'new cable',		icon:'cable',  		char:'ctrl shift k',	state:"enabled",	action:newCable},
+		{text:'new cable',		icon:'cable',  		char:'ctrl b',	state:"enabled",	action:newCable},
 		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
 		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
+		{text:'auto layout',	icon:'account_tree',					state:"enabled",	action:autoLayout},
 		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
 		{text:"paste as link",	icon:"link",		char:'ctrl l',	state:"enabled", 	action:linkFromClipboard},
 		{text:"paste",			icon:"content_copy",char:'ctrl v',	state:"enabled", 	action:pasteFromClipboard},
@@ -11397,10 +11611,6 @@ function newSourceNode() {
 	cm$8.doEdit('newSourceNode',{view: cm$8.view,pos: cm$8.xyLocal});
 }
 
-function newBus() {
-	cm$8.doEdit('cableCreate',{view: cm$8.view, pos: cm$8.xyLocal, floating: true});
-}
-
 function newCable() {
 	cm$8.doEdit('cableCreate',{view: cm$8.view, pos: cm$8.xyLocal});
 }
@@ -11411,6 +11621,19 @@ function newInputPad() {
 
 function newOutputPad() {
 	cm$8.doEdit('padCreate', {view: cm$8.view,pos: cm$8.xyLocal, input: false});
+}
+
+function autoLayout(e, contextMenuTx) {
+	const editTx = cm$8.tx;
+	const root = cm$8.view.root;
+
+	contextMenuTx.send('confirm', {
+		title: 'Confirm auto layout',
+		message: 'Auto layout this group? Its nodes and pads will be repositioned.',
+		pos: {x: e.clientX, y: e.clientY},
+		ok: () => editTx.send('redox.doit', {verb: 'autoLayout', param: {root}}),
+		cancel: () => {}
+	});
 }
 
 function selectNode() {
@@ -12072,6 +12295,8 @@ const cm$2 = {
 	choices: [
 		{icon:"highlight",text:"",state:"enabled", action:cableHighLight},
 		{icon:"timeline",text:"straight connections",state:"enabled", action:straightConnections},
+		{icon:"vpn_key",text:"all selective",state:"enabled", action:selectiveConnections},
+		{icon:"vpn_key_off",text:"all unselective",state:"enabled", action:unselectiveConnections},
 		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect$1},
 		{icon:"delete",text:"delete",state:"enabled", action:deleteCable}
 	],
@@ -12114,6 +12339,14 @@ function disconnect$1() {
 
 function deleteCable() {
 	cm$2.doEdit('cableDelete',{view: cm$2.view, cable: cm$2.cable});
+}
+
+function selectiveConnections() {
+	cm$2.doEdit('cableSelective',{cable: cm$2.cable});
+}
+
+function unselectiveConnections() {
+	cm$2.doEdit('cableUnselective',{cable: cm$2.cable});
 }
 
 const cm$1 = {
@@ -12634,7 +12867,7 @@ selectionToGroup(UID) {
         //..and remove it from the root in this view
         this.root.removeNode(node);
     }
-    // now we add the cables and keep track of the floating cables that were transferred
+    // now we add the cables and keep track of the trunks that were transferred
     const transfers = this.busTransfer(newGroup);
 
     // create the proxies for this group type and make the interconnections inside + outside of the group
@@ -12700,7 +12933,7 @@ busTransfer(newGroup) {
     return transfers
 },
 
-// The new bus inside the new group has to be connected to the bus outside
+// The new cable inside the group has to be connected to the cable outside
 // we filter the connections to avoid duplicates
 busInterconnect(outside, newGroup, inside) {
 
@@ -13502,13 +13735,12 @@ const ctrlKeyTable = {
         view.doEdit(tx,'newGroupNode', { view, pos: view.hit.xyLocal });
     },
 
-    // a new bus
+    // a new cable
     b: (view,tx) => {
         // only do this if there is no selection
         // if (view.selection.what != selex.nothing) return
 
-        // create a new floating cable
-        view.doEdit(tx,'cableCreate', {view, pos: view.hit.xyLocal, floating: true});
+        view.doEdit(tx,'cableCreate', {view, pos: view.hit.xyLocal});
     },
 
     // copy
@@ -14914,12 +15146,17 @@ Object.assign(View.prototype,
     viewWidgetHandling,
     dropHandling);
 
+const runtimeState = Symbol('promptRepoRuntimeState');
+
 function PromptRepo(arl = null, pathKind = Kind.Empty) {
     this.arl = arl;
     this.pathKind = pathKind;
-    this.is = {
+    this.is = attachRuntimeState(this, {
         hydrated: false, // set to true if hydration was successful
-    };
+        dirty: false,
+        pendingText: null,
+        hydratedText: null,
+    });
 }
 
 PromptRepo.prototype = {
@@ -14931,10 +15168,10 @@ PromptRepo.prototype = {
     },
 
     makeRaw(refArl) {
-        return {
+        return carryPromptRepoRuntimeState({
             arl: this.getPath(refArl),
             pathKind: this.pathKind,
-        }
+        }, this)
     },
 
     resolve(raw, refArl) {
@@ -14942,18 +15179,156 @@ PromptRepo.prototype = {
         const normalized = normalizeSeparators(raw.arl);
         this.pathKind = raw.pathKind ?? getKind(normalized);
         this.arl = this.pathKind === Kind.Absolute ? new ARL$1(normalized) : refArl.resolve(normalized);
+        this.is = attachRuntimeState(this, getPromptRepoRuntimeState(raw));
         return this
     },
 
     clone() {
         const clone = new PromptRepo(this.arl?.copy?.() ?? this.arl, this.pathKind);
-        clone.is = {...this.is};
+        clone.is = attachRuntimeState(clone, {...getPromptRepoRuntimeState(this)});
         return clone
     },
 };
 
 function resolvePromptRepo(raw, refArl) {
     return new PromptRepo().resolve(raw, refArl)
+}
+
+function getPromptRepoRuntimeState(promptRepo) {
+    if (!promptRepo) return null
+    return promptRepo[runtimeState] ?? attachRuntimeState(promptRepo, {
+        hydrated: false,
+        dirty: false,
+        pendingText: null,
+        hydratedText: null,
+    })
+}
+
+function carryPromptRepoRuntimeState(raw, promptRepo) {
+    attachRuntimeState(raw, getPromptRepoRuntimeState(promptRepo));
+    return raw
+}
+
+function attachRuntimeState(promptRepo, state) {
+    if (!promptRepo || !state) return state
+    Object.defineProperty(promptRepo, runtimeState, {
+        configurable: true,
+        value: state,
+    });
+    return state
+}
+
+const sectionNames = ['prompt', 'status', 'decisions', 'open', 'references'];
+
+function NodePrompts({prompt=null, status=null, decisions=null, open=null, references=null, repository=null}={}) {
+    this.prompt = normalizeSection(prompt);
+    this.status = normalizeSection(status);
+    this.decisions = normalizeSection(decisions);
+    this.open = normalizeSection(open);
+    this.references = normalizeSection(references);
+    this.repository = repository;
+}
+
+NodePrompts.prototype = {
+
+    apply(sections) {
+        const before = this.snapshot();
+        const after = normalizeSections(sections, before);
+        const changed = sectionNames.some(section => before[section] !== after[section]);
+        if (!changed) return {changed: false, before, after}
+
+        this.assign(after);
+        this.markDirty();
+        return {changed: true, before, after}
+    },
+
+    restore(sections) {
+        this.assign(normalizeSections(sections));
+        this.markDirty();
+    },
+
+    hydrate(sections) {
+        this.assign(normalizeSections(sections));
+        this.clearDirty();
+    },
+
+    cook(raw, refArl) {
+        this.assign({
+            prompt: raw.prompt,
+            status: raw.promptStatus,
+            decisions: raw.promptDecisions,
+            open: raw.promptOpen,
+            references: raw.promptReferences,
+        });
+        this.repository = raw.promptRepo && raw.kind !== 'dock'
+            ? resolvePromptRepo(raw.promptRepo, refArl)
+            : null;
+        return this
+    },
+
+    writeRaw(raw, refArl) {
+        if (this.repository) raw.promptRepo = this.repository.makeRaw(refArl);
+        if (this.prompt) raw.prompt = this.prompt;
+        if (this.status) raw.promptStatus = this.status;
+        if (this.decisions) raw.promptDecisions = this.decisions;
+        if (this.open) raw.promptOpen = this.open;
+        if (this.references) raw.promptReferences = this.references;
+        return raw
+    },
+
+    snapshot(empty=null) {
+        return {
+            prompt: this.prompt ?? empty,
+            status: this.status ?? empty,
+            decisions: this.decisions ?? empty,
+            open: this.open ?? empty,
+            references: this.references ?? empty,
+        }
+    },
+
+    hasContent() {
+        return sectionNames.some(section => this[section]?.length)
+    },
+
+    markDirty() {
+        const state = getPromptRepoRuntimeState(this.repository);
+        if (!state) return false
+        state.dirty = true;
+        state.pendingText = null;
+        return true
+    },
+
+    clearDirty() {
+        const state = getPromptRepoRuntimeState(this.repository);
+        if (!state) return false
+        state.dirty = false;
+        state.pendingText = null;
+        return true
+    },
+
+    clone() {
+        return new NodePrompts({
+            ...this.snapshot(),
+            repository: this.repository?.clone?.() ?? null,
+        })
+    },
+
+    assign(sections) {
+        for (const section of sectionNames) this[section] = normalizeSection(sections?.[section]);
+    },
+};
+
+function normalizeSections(sections, fallback={}) {
+    return Object.fromEntries(sectionNames.map(section => [
+        section,
+        Object.hasOwn(sections ?? {}, section)
+            ? normalizeSection(sections[section])
+            : normalizeSection(fallback[section]),
+    ]))
+}
+
+function normalizeSection(value) {
+    return value?.length ? value : null
 }
 
 // The node in a nodegraph
@@ -14986,15 +15361,8 @@ function Node (look=null, name=null, uid=null) {
     // a node can have dynamics - dynamics are passed to the runtime - (to be changed to some fixed format probably)
     this.dx = null;
 
-    // Model-owned node prompt content. The additional sections live in the
-    // prompt repository and remain out of the semantic blueprint JSON.
-    this.prompt = null;
-    this.promptStatus = null;
-    this.promptDecisions = null;
-    this.promptOpen = null;
-
-    // Optional model-owned external prompt repository for this node.
-    this.promptRepo = null;
+    // Model-owned prompt content, repository identity, and runtime save state.
+    this.prompts = new NodePrompts();
 
     // Agent probe metadata authored on source nodes.
     this.probes = null;
@@ -15198,16 +15566,8 @@ Node.prototype = {
         // check the width again - reset the width if it was not zero to start with..
         if (rc.w > 0 && this.look.rect.w > rc.w) this.look.smaller(this.look.rect.w - rc.w);
     
-        // check if the node has a comment
-        if (raw.prompt) this.prompt = raw.prompt;
-        if (raw.promptStatus) this.promptStatus = raw.promptStatus;
-        if (raw.promptDecisions) this.promptDecisions = raw.promptDecisions;
-        if (raw.promptOpen) this.promptOpen = raw.promptOpen;
-
-        // check if the node has an external prompt repo
-        if (raw.promptRepo && raw.kind !== 'dock') {
-            this.promptRepo = resolvePromptRepo(raw.promptRepo, modcom.getCurrentModel()?.getArl?.());
-        }
+        // Cook the flat persisted prompt fields into the live prompt structure.
+        this.prompts.cook(raw, modcom.getCurrentModel()?.getArl?.());
 
         // check if the node has agent probe metadata
         if (raw.probes) this.probes = raw.probes;
@@ -16130,6 +16490,7 @@ const routeMoving = {
         if (!tack?.cable?.is?.cable || !tack.is.endpoint) return false
 
         const cable = tack.cable;
+        cable.canonicalizeOrthogonalWire?.('endpoint adjustment');
         const wire = cable?.wire;
         if (!wire || wire.length < 2) return false
 
@@ -16195,6 +16556,7 @@ const routeMoving = {
         }
 
         tack.refreshPlacement?.();
+        cable.validateOrthogonalWire?.('endpoint adjustment');
 
         return true
     },
@@ -16207,36 +16569,42 @@ const routeMoving = {
     // moves a segment horizontally or vertically
     moveSegment(s,delta) {
 
-        const from = this.from;
-        const to = this.to;
+        try {
 
-        let p1 = this.wire[s-1];
-        let p2 = this.wire[s];
+            const from = this.from;
+            const to = this.to;
 
-        // if there is only one segment and one of the endpoints is a bus, add two segments
-        if (this.wire.length == 2) {
-            if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2);
+            let p1 = this.wire[s-1];
+            let p2 = this.wire[s];
+
+            // if there is only one segment and one of the endpoints is a bus, add two segments
+            if (this.wire.length == 2) {
+                if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2);
+            }
+
+            // first segment...
+            if (s == 1) {
+                // if one of the end points is a tack or pad - it can slide
+                return (from.is.tack || from.is.pad) ? from.slide(delta) : null
+            }
+
+            // last segment...
+            if (s == this.wire.length-1) {
+                return (to.is.tack || to.is.pad) ? to.slide(delta) : null
+            }
+
+            // otherwise just move the segment
+            if (p1.x == p2.x) {
+                p1.x += delta.x;
+                p2.x += delta.x;
+            }
+            else {
+                p1.y += delta.y;
+                p2.y += delta.y;
+            }
         }
-
-        // first segment...
-        if (s == 1) {
-            // if one of the end points is a tack or pad - it can slide
-            return (from.is.tack || from.is.pad) ? from.slide(delta) : null
-        }
-
-        // last segment...
-        if (s == this.wire.length-1) {
-            return (to.is.tack || to.is.pad) ? to.slide(delta) : null
-        }
-
-        // otherwise just move the segment
-        if (p1.x == p2.x) {
-            p1.x += delta.x;
-            p2.x += delta.x;
-        }
-        else {
-            p1.y += delta.y;
-            p2.y += delta.y;
+        finally {
+            this.refreshTackPlacements();
         }
     },
 
@@ -16600,10 +16968,8 @@ trunkOfTack(tack) {
 bridgeParts(from, to) {
     if (!from?.is?.tack || !to?.is?.cable) return null
     if (!from.cable?.is?.cable) return null
-    if (from.cable.is.floating === to.is.floating) return null
-    return from.cable.is.floating
-        ? {cable: to, bus: from.cable}
-        : {cable: from.cable, bus: to}
+    if (from.cable === to) return null
+    return {cable: from.cable, bus: to}
 },
 
 bridgeNeighbors(trunk) {
@@ -16652,7 +17018,7 @@ canConnectPromotedRoute(from, route) {
     if (from.is.pin || from.is.pad) return true
     if (!from.is.tack) return false
 
-    return !!from.cable?.is?.floating
+    return !!from.cable?.is?.cable
 },
 
 conxString(from, to) {
@@ -17569,18 +17935,20 @@ Cable.prototype = {
                         : this.is.highLighted ? st.cHighLighted
                         : st.cNormal;
 
-        shape.drawWire(ctx,cLine, this.is.floating ? st.wBus : st.wCable, this.wire);
+        shape.drawWire(ctx,cLine, st.wCable, this.wire);
 
-        if (this.is.floating) {
-            this.renderEndpoint(ctx, this.wire[0], cLine);
-            this.renderEndpoint(ctx, this.wire.at(-1), cLine);
-        }
+        if (this.shouldRenderEndpoint(this.wire[0])) this.renderEndpoint(ctx, this.wire[0], cLine);
+        if (this.shouldRenderEndpoint(this.wire.at(-1))) this.renderEndpoint(ctx, this.wire.at(-1), cLine);
 
         // also render the tacks
         this.tacks.forEach( tack => tack.render(ctx) );
     },
 
-    defaultTackSelectivity(widget) {
+    defaultTackSelectivity() {
+        return false
+    },
+
+    legacyTackSelectivity(widget) {
         const input = widget?.is?.pin ? widget.is.input
                     : widget?.is?.pad ? !widget.proxy.is.input
                     : false;
@@ -17589,6 +17957,10 @@ Cable.prototype = {
 
     renderEndpoint(ctx, point, color) {
         shape.emptyLabel(ctx, point.x, point.y, style.cable.radius, color);
+    },
+
+    shouldRenderEndpoint() {
+        return true
     },
 
     endpointRect(point) {
@@ -17605,6 +17977,8 @@ Cable.prototype = {
     },
 
     makeRaw() {
+        this.canonicalizeOrthogonalWire('save');
+        this.validateOrthogonalWire('save');
         const raw = {
             start: convert.pointToString(this.wire[0]),
             wire: convert.wireToString(this.wire)
@@ -17619,6 +17993,45 @@ Cable.prototype = {
         const start = convert.stringToPoint(raw.start) ?? {x: 0, y: 0};
         if (this.wire.length == 0) this.wire = [{...start}, {...start}];
         else if (this.wire.length == 1) this.wire.push({...this.wire[0]});
+        this.canonicalizeOrthogonalWire('load');
+        this.validateOrthogonalWire('load');
+    },
+
+    canonicalizeOrthogonalWire(operation = 'unknown') {
+        if (diagonalWireSegments(this.wire).length) return false
+
+        const canonical = canonicalOrthogonalWire(this.wire);
+        if (canonical.length === 1) canonical.push({...canonical[0]});
+        if (canonical.length < 2) return false
+
+        const changed = canonical.length !== this.wire.length ||
+            canonical.some((point, index) =>
+                point.x !== this.wire[index]?.x || point.y !== this.wire[index]?.y
+            );
+        if (!changed) return true
+
+        this.wire = canonical;
+        for (const tack of this.tacks) tack.refreshPlacement?.();
+        this.validateOrthogonalWire(operation);
+        return true
+    },
+
+    validateOrthogonalWire(operation = 'unknown') {
+        const diagonals = diagonalWireSegments(this.wire);
+        if (!diagonals.length) {
+            this._diagonalWarning = null;
+            return true
+        }
+
+        const signature = JSON.stringify(diagonals);
+        if (this._diagonalWarning !== signature) {
+            this._diagonalWarning = signature;
+            console.warn(`Cable wire became non-orthogonal during ${operation}.`, {
+                cable: this,
+                diagonals
+            });
+        }
+        return false
     },
 
     highLight() {
@@ -17631,13 +18044,17 @@ Cable.prototype = {
         for (const tack of this.tacks) tack.route.unHighLight();
     },
 
-    hitTest(pos) {
-        if (this.is.floating) {
-            const endpoint =   inside(pos, this.endpointRect(this.wire[0])) ? 'start'
-                             : inside(pos, this.endpointRect(this.wire.at(-1))) ? 'end'
-                             : null;
-            if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
+    setSelectivityForAll(on) {
+        for (const tack of this.tacks) {
+            if (tack.canBeSelective()) tack.is.selective = on;
         }
+    },
+
+    hitTest(pos) {
+        const endpoint =   this.shouldRenderEndpoint(this.wire[0]) && inside(pos, this.endpointRect(this.wire[0])) ? 'start'
+                         : this.shouldRenderEndpoint(this.wire.at(-1)) && inside(pos, this.endpointRect(this.wire.at(-1))) ? 'end'
+                         : null;
+        if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
 
         for (const tack of this.tacks) {
             if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
@@ -17757,6 +18174,7 @@ Cable.prototype = {
         tack.restore(route);
 
         widget.is.pin ? route.rxtxPinBus() : route.rxtxPadBus();
+        this.validateOrthogonalWire('endpoint connection');
         return tack
     },
 
@@ -18100,6 +18518,7 @@ Cable.prototype = {
             otherTack.refreshPlacement?.();
         }
 
+        this.validateOrthogonalWire('endpoint bend');
         return true
     },
 
@@ -18117,8 +18536,6 @@ Cable.prototype = {
     },
 
     moveSegment(segment, delta) {
-        if (!this.is.floating && this.tacks.some(tack => tack.is.endpoint && tack.segment == segment)) return
-
         let p = this.wire;
         const dx = delta.x;
         const dy = delta.y;
@@ -18190,6 +18607,8 @@ Cable.prototype = {
                 for (const tack of this.tacks) if (tack.segment == segment) tack.moveX(dx);
             }
         }
+
+        this.validateOrthogonalWire('segment move');
     },
 
     removeTwoPoints(segment) {
@@ -18298,8 +18717,7 @@ Cable.prototype = {
     },
 
     canCollapseToRoute() {
-        return !this.is.floating
-            && this.tacks.length === 2
+        return this.tacks.length === 2
             && this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)
     },
 
@@ -19119,11 +19537,7 @@ const jsonHandling$1 = {
 
         if (label) raw.label = label;
         if (this.team) raw.team = this.team;
-        if (this.promptRepo) raw.promptRepo = this.promptRepo.makeRaw(refArl);
-        if (this.prompt) raw.prompt = this.prompt;
-        if (this.promptStatus) raw.promptStatus = this.promptStatus;
-        if (this.promptDecisions) raw.promptDecisions = this.promptDecisions;
-        if (this.promptOpen) raw.promptOpen = this.promptOpen;
+        this.prompts.writeRaw(raw, refArl);
         if (this.savedView) raw.view = this.savedView.raw ? this.savedView : this.savedView.makeRaw();
         if (interfaces.length) raw.interfaces = interfaces;
         if (this.sx) raw.sx = this.sx;    
@@ -19206,7 +19620,7 @@ const jsonHandling$1 = {
         const legacyBuses = [];
         this._legacyBuses = legacyBuses;
 
-        // Legacy buses are now floating cables.
+        // Legacy buses are loaded as cables carrying the old format marker.
         if (raw.buses) for(const rawBus of raw.buses) {
 
             const bus = new Cable({x:0, y:0}, null, true);
@@ -19228,6 +19642,10 @@ const jsonHandling$1 = {
 
             const cable = new Cable({x:0, y:0});
             cable.node = this;
+            // The blueprint splitter migrates legacy named buses into this
+            // collection. Keep the old name just long enough to resolve their
+            // route endpoints.
+            cable._rawName = rawCable.name;
 
             cable.cook(rawCable, modcom);
 
@@ -19259,6 +19677,7 @@ const jsonHandling$1 = {
             delete bus._rawIndex;
             delete bus._rawName;
         });
+        this.cables.forEach(cable => delete cable._rawName);
         delete this._legacyBuses;
         delete this._rawCableStart;
     },
@@ -19305,7 +19724,10 @@ const jsonHandling$1 = {
             return null;
         }
 
-        const defaultSelectivity = (trunk, widget) => trunk.defaultTackSelectivity?.(widget) ?? false;
+        // Old bus endpoints often omitted the selectivity flag because it was
+        // inferred from the bus. Preserve that file-format behavior only while
+        // loading; new cable connections own selectivity entirely on the tack.
+        const defaultSelectivity = (trunk, widget) => trunk.legacyTackSelectivity?.(widget) ?? false;
 
         // if the endpoint is a bus or cable, make a tack
         if (from.is.cable) {
@@ -19381,7 +19803,8 @@ const jsonHandling$1 = {
         const findBus = (raw) => {
             const legacyBuses = this._legacyBuses ?? [];
             if (Number.isInteger(raw.index)) return legacyBuses[raw.index] ?? this.cables[raw.index]
-            return legacyBuses.find(bus => bus._rawName === raw.cable)
+            return legacyBuses.find(bus => bus._rawName === raw.bus)
+                ?? this.cables.find(cable => cable._rawName === raw.bus)
         };
         const findCable = (raw) => this.cables[(this._rawCableStart ?? 0) + (raw.index ?? 0)];
         const hasBus = (raw) => Object.hasOwn(raw, 'bus');
@@ -19403,12 +19826,20 @@ const jsonHandling$1 = {
         else if (hasBus(source)) {
 
             from = findBus(source);
-            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+            to = target.pin ? findPin(target,true)
+                : target.pad ? findPad(target, true)
+                : hasBus(target) ? findBus(target)
+                : hasCable(target) ? findCable(target)
+                : null;
         }
         else if (hasCable(source)) {
 
             from = findCable(source);
-            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+            to = target.pin ? findPin(target,true)
+                : target.pad ? findPad(target, true)
+                : hasBus(target) ? findBus(target)
+                : hasCable(target) ? findCable(target)
+                : null;
         }
 
         return [from, to]
@@ -20157,7 +20588,7 @@ const proxyHandling = {
             pos = arguments[1];
         }
 
-        // A bus is now a floating cable.
+        // Compatibility API: create a cable carrying the old format marker.
         const bus = new Cable(pos, uid, true);
         bus.node = this;
 
@@ -20223,6 +20654,67 @@ const proxyHandling = {
         this.cables.push(cable);
     }
 };
+
+function midpoint(a, b) {
+    return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
+}
+
+function extendWireEnds(wire, extraLength) {
+    const extended = wire.map(point => ({...point}));
+    if (extended.length < 2 || extraLength <= 0) return extended
+
+    const start = extended[0];
+    const afterStart = extended[1];
+    const end = extended.at(-1);
+    const beforeEnd = extended.at(-2);
+
+    if (start.x === afterStart.x) start.y += start.y < afterStart.y ? -extraLength : extraLength;
+    else start.x += start.x < afterStart.x ? -extraLength : extraLength;
+
+    if (end.x === beforeEnd.x) end.y += end.y < beforeEnd.y ? -extraLength : extraLength;
+    else end.x += end.x < beforeEnd.x ? -extraLength : extraLength;
+
+    return extended
+}
+
+function splitRouteWireForCable(routeWire) {
+    const wire = canonicalOrthogonalWire(routeWire);
+    if (wire.length < 2 || diagonalWireSegments(wire).length) return null
+
+    if (wire.length >= 4) {
+        return {
+            cableWire: wire.slice(1, -1),
+            fromWire: wire.slice(0, 2),
+            toWire: wire.slice(-2).reverse()
+        }
+    }
+
+    if (wire.length === 3) {
+        const fromTack = midpoint(wire[0], wire[1]);
+        const toTack = midpoint(wire[1], wire[2]);
+
+        return {
+            cableWire: [fromTack, {...wire[1]}, toTack],
+            fromWire: [{...wire[0]}, {...fromTack}],
+            toWire: [{...wire[2]}, {...toTack}]
+        }
+    }
+
+    const fromTack = {
+        x: wire[0].x + (wire[1].x - wire[0].x) / 3,
+        y: wire[0].y + (wire[1].y - wire[0].y) / 3
+    };
+    const toTack = {
+        x: wire[0].x + 2 * (wire[1].x - wire[0].x) / 3,
+        y: wire[0].y + 2 * (wire[1].y - wire[0].y) / 3
+    };
+
+    return {
+        cableWire: [fromTack, toTack],
+        fromWire: [{...wire[0]}, {...fromTack}],
+        toWire: [{...wire[1]}, {...toTack}]
+    }
+}
 
 const conxHandling = {
 
@@ -20640,21 +21132,29 @@ const conxHandling = {
         if (route.wire.length < 2) return null
 
         const oldRoute = route.clone();
-        const wire = route.copyWire();
-        const clickSegment = Math.min(Math.max(segment, 1), wire.length - 1);
+        const split = splitRouteWireForCable(route.copyWire());
+        if (!split) {
+            console.warn('Cannot convert a non-orthogonal or empty route to a cable.', {
+                wire: route.copyWire(),
+                diagonals: diagonalWireSegments(route.wire)
+            });
+            return null
+        }
 
-        const cable = this.addCable(wire[0]);
-        cable.wire = wire.map(point => ({...point}));
+        const firstTackPoint = split.cableWire[0];
+        const lastTackPoint = split.cableWire.at(-1);
+        const cableWire = extendWireEnds(split.cableWire, style.cable.extraLength);
+        const cable = this.addCable(cableWire[0]);
+        cable.wire = cableWire;
 
         route.disconnect();
 
-        const attach = (widget, point, tackSegment, endpoint = false) => {
+        const attach = (widget, wire, point, tackSegment) => {
             const tack = cable.newTack();
-            tack.is.endpoint = endpoint;
             tack.placeOnSegment(point, tackSegment);
 
             const leg = new Route(widget, tack);
-            leg.wire = [widget.center(), {...point}];
+            leg.wire = wire.map(next => ({...next}));
             widget.routes.push(leg);
             tack.restore(leg);
 
@@ -20663,20 +21163,15 @@ const conxHandling = {
             return leg
         };
 
-        const pointOnSegment = (wire, segment, point) => {
-            const a = wire[segment - 1];
-            const b = wire[segment];
-
-            if (!point) return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
-            if (a.x === b.x) return {x: a.x, y: Math.min(Math.max(point.y, Math.min(a.y, b.y)), Math.max(a.y, b.y))}
-            if (a.y === b.y) return {x: Math.min(Math.max(point.x, Math.min(a.x, b.x)), Math.max(a.x, b.x)), y: a.y}
-            return {x: point.x, y: point.y}
-        };
-
         const makePendingBranch = () => {
-            const point = pointOnSegment(cable.wire, clickSegment, xyLocal);
+            const closest = closestPointOnCurve(
+                cable.wire,
+                xyLocal ?? midpoint(cable.wire[0], cable.wire.at(-1))
+            );
+            const pendingSegment = closest?.segment ?? 1;
+            const point = closest?.point ?? midpoint(cable.wire[0], cable.wire[1]);
             const tack = cable.newTack();
-            tack.placeOnSegment(point, clickSegment);
+            tack.placeOnSegment(point, pendingSegment);
 
             const pendingRoute = new Route(tack, null);
             pendingRoute.wire = [{...point}, {...point}];
@@ -20685,14 +21180,13 @@ const conxHandling = {
             return {route: pendingRoute, tack}
         };
 
-        const first = cable.wire[0];
-        const last = cable.wire.at(-1);
         const routes = [
-            attach(oldRoute.from, first, 1, true),
-            attach(oldRoute.to, last, cable.wire.length - 1, true)
+            attach(oldRoute.from, split.fromWire, firstTackPoint, 1),
+            attach(oldRoute.to, split.toWire, lastTackPoint, cable.wire.length - 1)
         ];
 
         const pending = createPending ? makePendingBranch() : null;
+        cable.validateOrthogonalWire('route conversion');
         return {node: this, route, oldRoute, cable, routes, tacks: routes.map(leg => leg.from.is.tack ? leg.from : leg.to), pending}
     },
 
@@ -20745,7 +21239,7 @@ function GroupNode (look=null, name=defaultGroupNodeName, uid=null) {
     // the nodes that are part of this group
     this.nodes = [];
 
-    // legacy compatibility; bus topology is now stored as floating cables
+    // legacy compatibility for code that still inspects a buses collection
     this.buses = [];
 
     // the cables that are part of this group
@@ -20892,12 +21386,8 @@ const groupFunctions = {
         // copy the look from this node to the newNode
         this.look.copy(newNode);
 
-        // copy the comment
-        newNode.prompt = this.prompt ? this.prompt.slice() : null;
-        newNode.promptStatus = this.promptStatus ? this.promptStatus.slice() : null;
-        newNode.promptDecisions = this.promptDecisions ? this.promptDecisions.slice() : null;
-        newNode.promptOpen = this.promptOpen ? this.promptOpen.slice() : null;
-        newNode.promptRepo = this.promptRepo?.clone?.() ?? null;
+        // copy the prompt content and repository runtime state
+        newNode.prompts = this.prompts.clone();
 
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;
@@ -21129,11 +21619,7 @@ const jsonHandling = {
         // add if present
         if (label) raw.label = label;
         if (this.team) raw.team = this.team;
-        if (this.promptRepo) raw.promptRepo = this.promptRepo.makeRaw(refArl);
-        if (this.prompt) raw.prompt = this.prompt;
-        if (this.promptStatus) raw.promptStatus = this.promptStatus;
-        if (this.promptDecisions) raw.promptDecisions = this.promptDecisions;
-        if (this.promptOpen) raw.promptOpen = this.promptOpen;
+        this.prompts.writeRaw(raw, refArl);
         if (interfaces.length) raw.interfaces = interfaces;
         if (this.sx) raw.sx = this.sx;
         if (this.dx) raw.dx = this.dx;
@@ -21233,12 +21719,8 @@ const sourceFunctions = {
         // copy the look of this node to the new node
         this.look.copy(newNode);
 
-        // copy the comment
-        newNode.prompt = this.prompt ? this.prompt.slice() : null;
-        newNode.promptStatus = this.promptStatus ? this.promptStatus.slice() : null;
-        newNode.promptDecisions = this.promptDecisions ? this.promptDecisions.slice() : null;
-        newNode.promptOpen = this.promptOpen ? this.promptOpen.slice() : null;
-        newNode.promptRepo = this.promptRepo?.clone?.() ?? null;
+        // copy the prompt content and repository runtime state
+        newNode.prompts = this.prompts.clone();
 
         // copy agent probe metadata
         newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null;
@@ -21328,7 +21810,7 @@ const sourceFunctions = {
                         +'\n// ------------------------------------------------------------------';
 
         // The prompt for the node
-        let sPrompt = this.prompt?.length > 0 ? '\n\n/*\n' + this.prompt + "\n*/": "";
+        let sPrompt = this.prompts.prompt?.length > 0 ? '\n\n/*\n' + this.prompts.prompt + "\n*/": "";
 
         // The constructor
         let sConstructor =    `\n\n//Constructor for ${this.name}`
@@ -21457,8 +21939,8 @@ const TestHandling = {
 
     connectViaBus(root, sequencer, mirrorList) {
 
-        // add a bus
-        const bus = root.addBus('sequencer.cable', {x:X.cable, y:Y.headroom});
+        // add a shared cable trunk
+        const bus = root.addCable({x:X.cable, y:Y.headroom});
 
         // make it as long as the mirror list
         const rc = mirrorList.at(-1).look.rect; 
@@ -21731,7 +22213,11 @@ const PromptHandling = {
                 if (parsed) {
                     applyNodePrompts(node, parsed.node);
                     applyPinPrompts(node, parsed.pins);
-                    node.promptRepo.is = {...node.promptRepo.is, hydrated: true};
+                    const state = getPromptRepoRuntimeState(node.promptRepo);
+                    state.hydrated = true;
+                    state.dirty = false;
+                    state.pendingText = null;
+                    state.hydratedText = text;
                 }
             }
 
@@ -21759,11 +22245,15 @@ const PromptHandling = {
             }
 
             if (node.promptRepo?.arl) {
+                const state = getPromptRepoRuntimeState(node.promptRepo);
                 const repoArl = resolvePromptRepoArl(node.promptRepo, refArl);
-                if (repoArl) {
+                if (repoArl && state.dirty) {
+                    const text = state.pendingText ?? serializePromptMarkdown(node);
+                    state.pendingText = text;
                     promptFiles.push({
                         arl: repoArl,
-                        text: serializePromptMarkdown(node),
+                        text,
+                        state,
                     });
                 }
                 deleteInlinePrompts(node);
@@ -21779,12 +22269,43 @@ const PromptHandling = {
         return promptFiles
     },
 
-    savePromptRepos(promptFiles = this.preparePromptReposForSave()) {
-        for (const file of promptFiles) {
-            file.arl?.save(file.text)?.catch?.(() => {});
+    async savePromptRepos(promptFiles = this.preparePromptReposForSave()) {
+        const saves = promptFiles.map(async file => {
+            try {
+                if (file.state.hydrated) {
+                    const currentText = await file.arl.get('text').catch(() => null);
+                    if (currentText !== file.state.hydratedText) {
+                        throw new PromptRepositoryConflictError(file.arl?.getPath?.() ?? '<unknown>')
+                    }
+                }
+                const result = await file.arl.save(file.text);
+                if (result === null || result === false) throw new Error('Prompt repository write returned failure')
+                file.state.dirty = false;
+                file.state.pendingText = null;
+                file.state.hydrated = true;
+                file.state.hydratedText = file.text;
+            }
+            catch (error) {
+                console.error(`Failed to save prompt repository ${file.arl?.getPath?.() ?? '<unknown>'}:`, error);
+                throw error
+            }
+        });
+        const results = await Promise.allSettled(saves);
+        const failures = results.filter(result => result.status === 'rejected').map(result => result.reason);
+        if (failures.length) {
+            const details = failures.map(error => error?.message ?? String(error)).join('; ');
+            throw new AggregateError(failures, `One or more prompt repositories failed to save: ${details}`)
         }
     },
 };
+
+class PromptRepositoryConflictError extends Error {
+    constructor(path) {
+        super(`Prompt repository changed outside vmblu: ${path}`);
+        this.name = 'PromptRepositoryConflictError';
+        this.path = path;
+    }
+}
 
 function resolvePromptRepoArl(promptRepo, refArl) {
     if (!promptRepo?.arl || !refArl) return null
@@ -21797,10 +22318,13 @@ function resolvePromptRepoArl(promptRepo, refArl) {
 
 function makeDefaultPromptRepo(node, path) {
     const parts = [...path, node.name].filter(Boolean).map(safeName);
-    return {
+    const promptRepo = {
         arl: `./prompts/${parts.join('/')}.md`,
         pathKind: Kind.Relative,
-    }
+    };
+    carryPromptRepoRuntimeState(promptRepo, promptRepo);
+    getPromptRepoRuntimeState(promptRepo).dirty = true;
+    return promptRepo
 }
 
 function safeName(name) {
@@ -21815,6 +22339,7 @@ function hasPrompts(node) {
     if (node.promptStatus?.length) return true
     if (node.promptDecisions?.length) return true
     if (node.promptOpen?.length) return true
+    if (node.promptReferences?.length) return true
     for (const iface of node.interfaces ?? []) {
         for (const pin of iface.pins ?? []) {
             if (pin.prompt?.length) return true
@@ -21828,6 +22353,7 @@ function deleteInlinePrompts(node) {
     delete node.promptStatus;
     delete node.promptDecisions;
     delete node.promptOpen;
+    delete node.promptReferences;
     for (const iface of node.interfaces ?? []) {
         for (const pin of iface.pins ?? []) {
             delete pin.prompt;
@@ -21851,6 +22377,7 @@ function applyNodePrompts(node, sections) {
     node.promptStatus = sections.status || null;
     node.promptDecisions = sections.decisions || null;
     node.promptOpen = sections.open || null;
+    node.promptReferences = sections.references || null;
 }
 
 const nodeSectionNames = new Map([
@@ -21858,6 +22385,7 @@ const nodeSectionNames = new Map([
     ['status', 'status'],
     ['decisions', 'decisions'],
     ['open', 'open'],
+    ['references', 'references'],
 ]);
 
 function parsePromptMarkdown(text) {
@@ -21875,6 +22403,7 @@ function parsePromptMarkdown(text) {
             status: [],
             decisions: [],
             open: [],
+            references: [],
         };
         const pinMap = new Map();
         let buffer = [];
@@ -21932,6 +22461,7 @@ function parsePromptMarkdown(text) {
                 status: nodeSections.status.join('\n').trim(),
                 decisions: nodeSections.decisions.join('\n').trim(),
                 open: nodeSections.open.join('\n').trim(),
+                references: nodeSections.references.join('\n').trim(),
             },
             pins: pinMap,
         }
@@ -21962,6 +22492,10 @@ function serializePromptMarkdown(node) {
         '### Open',
         '',
         node.promptOpen ?? '',
+        '',
+        '### References',
+        '',
+        node.promptReferences ?? '',
         '',
         '## Pins',
     ];
@@ -22401,11 +22935,13 @@ FactoryMap.prototype = {
 
         for (const rawFactory of model.raw.factories) {
 
-            //const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path
-            if (!rawFactory.path) continue
+            // Top-level factories are a file index. Accept the legacy object
+            // form while models transition to canonical string entries.
+            const rawPath = typeof rawFactory === 'string' ? rawFactory : rawFactory?.path;
+            if (typeof rawPath !== 'string' || !rawPath.trim()) continue
 
             // the factories have to be resolved wrt the file that contains them
-            const normalized = normalizeFactoryPath(rawFactory.path);
+            const normalized = normalizeFactoryPath(rawPath);
             const arl = modelArl.resolve(normalized.path);
 
             // get the full path of the factory
@@ -22448,6 +22984,11 @@ FactoryMap.prototype = {
         const val = Array.from(this.map.values());
         if (!val?.length) return []
         return val.map( e => f(e))
+    },
+
+    // serialize the top-level factory file index (not node factory bindings)
+    makeRaw(refArl) {
+        return this.all(factory => factory.getPath(refArl))
     },
 
 };
@@ -22853,7 +23394,7 @@ encode(node, model) {
 
     // add the models, factories and libraries
     if (models.size() > 0) raw.imports = models.all( linkedModel => relative(linkedModel.blu.arl.getFullPath(), model.getArl().getFullPath()));
-    if (factories.size() > 0) raw.factories = factories.all( factory => factory.makeRaw(model.getArl()));
+    if (factories.size() > 0) raw.factories = factories.makeRaw(model.getArl());
     if (model.libraries?.size() > 0) raw.libraries = model.libraries.all( lib => relative(lib.blu.arl.getFullPath(), model.getArl().getFullPath()));
 
     // add the types
@@ -23169,6 +23710,36 @@ function validateEntrypoint(entrypoint, file) {
   if (path.isAbsolute(entrypoint.model) || entrypoint.model.includes('..')) {
     throw new Error(`Entrypoint ${file} model path must be a relative path without ".."`);
   }
+}
+
+// Auto-generated by cli/scripts/generate-schema-version.js
+const CLI_VERSION = "0.10.0";
+
+function parseVmbluVersion(version, label = 'version') {
+  const match = String(version ?? '').match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  if (!match) throw new Error(`Invalid vmblu ${label}: ${version}`)
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    family: `${match[1]}.${match[2]}`
+  }
+}
+
+function compatibilityFamily(version) {
+  return parseVmbluVersion(version).family
+}
+
+function assertCompatibleVersion(actualVersion, label = 'artifact', expectedVersion = CLI_VERSION) {
+  const expectedFamily = compatibilityFamily(expectedVersion);
+  const actualFamily = compatibilityFamily(actualVersion);
+  if (actualFamily !== expectedFamily) {
+    throw new Error(
+      `Incompatible ${label} version ${actualVersion}; vmblu ${expectedVersion} requires compatibility family ${expectedFamily}. ` +
+      `Migrate the project before continuing.`
+    )
+  }
+  return actualFamily
 }
 
 // extractHandlersFromFile.js
@@ -24205,6 +24776,7 @@ async function profile(argv = process.argv.slice(2)) {
     if (!raw) {
         throw new Error(`Could not load model raw data from ${modelPath}`);
     }
+    assertCompatibleVersion(raw.header?.version, 'model schema');
     model.preCook();
 
     // create a model compile object - we do not need a uid generator
@@ -24221,7 +24793,6 @@ async function profile(argv = process.argv.slice(2)) {
 
     // get all the handlers and transmissions of all the source files into the rxtx array
     const rxtx = [];
-    const generatedAt = new Date().toISOString();
     for (const sourceFile of sourceFiles) {
 
         // display file scanned..
@@ -24257,7 +24828,14 @@ async function profile(argv = process.argv.slice(2)) {
     // and write the output to that file
     const output = {
         version: PROFILE_VERSION,
-        generatedAt,
+        provenance: makeArtifactProvenance({
+            artifact: 'source-profile',
+            model: path.basename(modelPath),
+            source: model.raw,
+            generatorName: '@vizualmodel/vmblu-cli',
+            generatorVersion: PROFILE_VERSION,
+            schemaVersion: model.raw.header?.version,
+        }),
         entries: rxtx
     };
 

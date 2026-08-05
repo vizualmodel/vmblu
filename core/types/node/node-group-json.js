@@ -17,11 +17,7 @@ export const jsonHandling = {
 
         if (label) raw.label = label
         if (this.team) raw.team = this.team
-        if (this.promptRepo) raw.promptRepo = this.promptRepo.makeRaw(refArl)
-        if (this.prompt) raw.prompt = this.prompt
-        if (this.promptStatus) raw.promptStatus = this.promptStatus
-        if (this.promptDecisions) raw.promptDecisions = this.promptDecisions
-        if (this.promptOpen) raw.promptOpen = this.promptOpen
+        this.prompts.writeRaw(raw, refArl)
         if (this.savedView) raw.view = this.savedView.raw ? this.savedView : this.savedView.makeRaw();
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx    
@@ -104,7 +100,7 @@ export const jsonHandling = {
         const legacyBuses = []
         this._legacyBuses = legacyBuses
 
-        // Legacy buses are now floating cables.
+        // Legacy buses are loaded as cables carrying the old format marker.
         if (raw.buses) for(const rawBus of raw.buses) {
 
             const bus = new Cable({x:0, y:0}, null, true)
@@ -126,6 +122,10 @@ export const jsonHandling = {
 
             const cable = new Cable({x:0, y:0})
             cable.node = this
+            // The blueprint splitter migrates legacy named buses into this
+            // collection. Keep the old name just long enough to resolve their
+            // route endpoints.
+            cable._rawName = rawCable.name
 
             cable.cook(rawCable, modcom)
 
@@ -157,6 +157,7 @@ export const jsonHandling = {
             delete bus._rawIndex
             delete bus._rawName
         })
+        this.cables.forEach(cable => delete cable._rawName)
         delete this._legacyBuses
         delete this._rawCableStart
     },
@@ -203,7 +204,10 @@ export const jsonHandling = {
             return null;
         }
 
-        const defaultSelectivity = (trunk, widget) => trunk.defaultTackSelectivity?.(widget) ?? false
+        // Old bus endpoints often omitted the selectivity flag because it was
+        // inferred from the bus. Preserve that file-format behavior only while
+        // loading; new cable connections own selectivity entirely on the tack.
+        const defaultSelectivity = (trunk, widget) => trunk.legacyTackSelectivity?.(widget) ?? false
 
         // if the endpoint is a bus or cable, make a tack
         if (from.is.cable) {
@@ -279,7 +283,8 @@ export const jsonHandling = {
         const findBus = (raw) => {
             const legacyBuses = this._legacyBuses ?? []
             if (Number.isInteger(raw.index)) return legacyBuses[raw.index] ?? this.cables[raw.index]
-            return legacyBuses.find(bus => bus._rawName === raw.cable)
+            return legacyBuses.find(bus => bus._rawName === raw.bus)
+                ?? this.cables.find(cable => cable._rawName === raw.bus)
         };
         const findCable = (raw) => this.cables[(this._rawCableStart ?? 0) + (raw.index ?? 0)];
         const hasBus = (raw) => Object.hasOwn(raw, 'bus')
@@ -301,12 +306,20 @@ export const jsonHandling = {
         else if (hasBus(source)) {
 
             from = findBus(source)
-            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+            to = target.pin ? findPin(target,true)
+                : target.pad ? findPad(target, true)
+                : hasBus(target) ? findBus(target)
+                : hasCable(target) ? findCable(target)
+                : null;
         }
         else if (hasCable(source)) {
 
             from = findCable(source)
-            to = target.pin ? findPin(target,true) : target.pad ? findPad(target, true) : null;
+            to = target.pin ? findPin(target,true)
+                : target.pad ? findPad(target, true)
+                : hasBus(target) ? findBus(target)
+                : hasCable(target) ? findCable(target)
+                : null;
         }
 
         return [from, to]
