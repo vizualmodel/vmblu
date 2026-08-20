@@ -1,6 +1,11 @@
 {
   "name": "@vizualmodel/vmblu-core",
   "version": "1.10.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vizualmodel/vmblu.git",
+    "directory": "core"
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"

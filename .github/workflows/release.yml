@@ -1,0 +1,247 @@
+name: Publish vmblu release
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: Exact version already present in all release manifests (for example 1.11.0)
+                required: true
+                type: string
+            allow_existing:
+                description: Resume a partial release by allowing npm packages that already exist
+                required: true
+                default: false
+                type: boolean
+            authentication_only:
+                description: Verify Microsoft Entra and Marketplace access without building or publishing
+                required: true
+                default: false
+                type: boolean
+
+permissions:
+    contents: read
+    id-token: write
+
+concurrency:
+    group: vmblu-production-release
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        name: Validate and publish
+        runs-on: ubuntu-latest
+        environment: release
+        timeout-minutes: 45
+        env:
+            RELEASE_VERSION: ${{ inputs.version }}
+            ALLOW_EXISTING: ${{ inputs.allow_existing }}
+
+        steps:
+            - name: Require main branch
+              shell: bash
+              run: |
+                  if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+                    echo "Release workflow must be dispatched from main; received $GITHUB_REF" >&2
+                    exit 1
+                  fi
+
+            - name: Check out the release commit
+              uses: actions/checkout@v6
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+                  registry-url: https://registry.npmjs.org
+                  package-manager-cache: false
+
+            - name: Check release configuration
+              shell: bash
+              env:
+                  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+                  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+              run: |
+                  if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+                    echo "Invalid release version: $RELEASE_VERSION" >&2
+                    exit 1
+                  fi
+                  if [[ -z "$AZURE_CLIENT_ID" || -z "$AZURE_TENANT_ID" ]]; then
+                    echo "The release environment must define AZURE_CLIENT_ID and AZURE_TENANT_ID." >&2
+                    exit 1
+                  fi
+                  node --version
+                  npm --version
+
+            - name: Install vmblu dependencies
+              if: ${{ !inputs.authentication_only }}
+              run: npm ci
+
+            - name: Validate packages and compatibility
+              if: ${{ !inputs.authentication_only }}
+              run: |
+                  npm run release:check
+                  node ./cli/scripts/check-release.js "$RELEASE_VERSION"
+                  npm run lint
+
+            - name: Test and build playground
+              if: ${{ !inputs.authentication_only }}
+              run: |
+                  npm --prefix playground ci
+                  npm --prefix playground test
+                  npm --prefix playground run build
+
+            - name: Build UI library
+              if: ${{ !inputs.authentication_only }}
+              run: |
+                  npm --prefix ui-svelte ci
+                  npm --prefix ui-svelte run build
+
+            - name: Build and package VS Code extension
+              if: ${{ !inputs.authentication_only }}
+              run: |
+                  npm --prefix vscodex ci
+                  npm --prefix vscodex run vx
+
+            - name: Pack npm release artifacts
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  mkdir -p artifacts
+                  npm pack --workspace=@vizualmodel/vmblu-runtime --pack-destination artifacts
+                  npm pack --workspace=@vizualmodel/vmblu-core --pack-destination artifacts
+                  npm pack --workspace=@vizualmodel/vmblu-cli --pack-destination artifacts
+                  cp "vscodex/vmblu-${RELEASE_VERSION}.vsix" artifacts/
+                  sha256sum artifacts/* | tee artifacts/SHA256SUMS
+
+            - name: Smoke-test packed npm artifacts
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  smoke_dir="$(mktemp -d)"
+                  cd "$smoke_dir"
+                  npm init --yes >/dev/null
+                  npm install \
+                    "$GITHUB_WORKSPACE/artifacts/vizualmodel-vmblu-runtime-${RELEASE_VERSION}.tgz" \
+                    "$GITHUB_WORKSPACE/artifacts/vizualmodel-vmblu-core-${RELEASE_VERSION}.tgz" \
+                    "$GITHUB_WORKSPACE/artifacts/vizualmodel-vmblu-cli-${RELEASE_VERSION}.tgz"
+                  "./node_modules/.bin/vmblu" --version | grep "version: ${RELEASE_VERSION} schema: ${RELEASE_VERSION}"
+                  node --input-type=module -e "await import('@vizualmodel/vmblu-core'); await import('@vizualmodel/vmblu-runtime/rt-base')"
+
+            - name: Upload immutable release artifacts
+              if: ${{ !inputs.authentication_only }}
+              uses: actions/upload-artifact@v6
+              with:
+                  name: vmblu-${{ inputs.version }}
+                  path: artifacts/
+                  if-no-files-found: error
+                  retention-days: 30
+
+            - name: Install Marketplace client for authentication check
+              if: ${{ inputs.authentication_only }}
+              run: npm --prefix vscodex ci
+
+            - name: Sign in to Microsoft Entra with GitHub OIDC
+              uses: azure/login@v3
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
+                  allow-no-subscriptions: true
+
+            - name: Resolve Marketplace profile ID
+              shell: bash
+              run: |
+                  profile_id="$(az rest \
+                    --url 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me' \
+                    --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+                    --query id \
+                    --output tsv)"
+                  if [[ -z "$profile_id" ]]; then
+                    echo "Microsoft Entra identity did not return a Marketplace profile ID." >&2
+                    exit 1
+                  fi
+                  echo "Marketplace workload identity profile ID: $profile_id"
+                  {
+                    echo "## Marketplace workload identity"
+                    echo ""
+                    echo "Profile ID: \`$profile_id\`"
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Verify Marketplace publishing identity
+              working-directory: vscodex
+              run: npx --no-install vsce verify-pat vizualmodel --azure-credential
+
+            - name: Reject an accidental duplicate npm release
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  existing=0
+                  for package in \
+                    @vizualmodel/vmblu-runtime \
+                    @vizualmodel/vmblu-core \
+                    @vizualmodel/vmblu-cli
+                  do
+                    if npm view "${package}@${RELEASE_VERSION}" version >/dev/null 2>&1; then
+                      echo "${package}@${RELEASE_VERSION} already exists."
+                      existing=1
+                    fi
+                  done
+                  if [[ "$existing" == "1" && "$ALLOW_EXISTING" != "true" ]]; then
+                    echo "Refusing to continue. Set allow_existing only when resuming a verified partial release." >&2
+                    exit 1
+                  fi
+
+            - name: Publish npm packages with trusted publishing
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  publish_package() {
+                    local package="$1"
+                    local artifact="$2"
+                    if npm view "${package}@${RELEASE_VERSION}" version >/dev/null 2>&1; then
+                      echo "Skipping existing ${package}@${RELEASE_VERSION}."
+                    else
+                      npm publish "artifacts/${artifact}" --access public
+                    fi
+                  }
+
+                  publish_package @vizualmodel/vmblu-runtime "vizualmodel-vmblu-runtime-${RELEASE_VERSION}.tgz"
+                  publish_package @vizualmodel/vmblu-core "vizualmodel-vmblu-core-${RELEASE_VERSION}.tgz"
+                  publish_package @vizualmodel/vmblu-cli "vizualmodel-vmblu-cli-${RELEASE_VERSION}.tgz"
+
+            - name: Verify npm publication
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  for package in \
+                    @vizualmodel/vmblu-runtime \
+                    @vizualmodel/vmblu-core \
+                    @vizualmodel/vmblu-cli
+                  do
+                    published="$(npm view "${package}@${RELEASE_VERSION}" version)"
+                    test "$published" = "$RELEASE_VERSION"
+                  done
+
+            - name: Publish VS Code extension with Microsoft Entra
+              if: ${{ !inputs.authentication_only }}
+              working-directory: vscodex
+              run: >-
+                  npx --no-install vsce publish
+                  --azure-credential
+                  --packagePath "../artifacts/vmblu-${RELEASE_VERSION}.vsix"
+                  --skip-duplicate
+
+            - name: Release summary
+              if: ${{ !inputs.authentication_only }}
+              shell: bash
+              run: |
+                  {
+                    echo "## vmblu ${RELEASE_VERSION}"
+                    echo ""
+                    echo "Published npm packages:"
+                    echo "- @vizualmodel/vmblu-runtime@${RELEASE_VERSION}"
+                    echo "- @vizualmodel/vmblu-core@${RELEASE_VERSION}"
+                    echo "- @vizualmodel/vmblu-cli@${RELEASE_VERSION}"
+                    echo ""
+                    echo "Published VS Code extension: vizualmodel.vmblu@${RELEASE_VERSION}"
+                    echo "Release commit: ${GITHUB_SHA}"
+                  } >> "$GITHUB_STEP_SUMMARY"

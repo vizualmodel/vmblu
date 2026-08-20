@@ -7,14 +7,34 @@ import {compatibilityFamily, familyRange} from '../lib/version-policy.js'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '..', '..')
 
+const rootPackage = readJson('package.json')
 const cli = readJson('cli/package.json')
 const core = readJson('core/package.json')
 const runtime = readJson('runtime/package.json')
+const playground = readJson('playground/package.json')
+const uiSvelte = readJson('ui-svelte/package.json')
+const vscode = readJson('vscodex/package.json')
 const versions = {
   cli: cli.version,
   core: core.version,
   runtime: runtime.version,
   schema: cli.schemaVersion,
+}
+const coordinatedVersions = {
+  root: rootPackage.version,
+  ...versions,
+  playground: playground.version,
+  'ui-svelte': uiSvelte.version,
+  vscode: vscode.version,
+}
+
+const expectedVersion = process.argv[2]
+if (expectedVersion) {
+  for (const [name, version] of Object.entries(coordinatedVersions)) {
+    if (version !== expectedVersion) {
+      throw new Error(`Release ${name} version must be '${expectedVersion}', found '${version}'`)
+    }
+  }
 }
 
 const families = new Set(Object.values(versions).map(compatibilityFamily))
@@ -34,6 +54,17 @@ for (const [name, range] of Object.entries({
 
 if (!cli.files.includes('commands/verify')) {
   throw new Error('CLI package files must include commands/verify')
+}
+
+const expectedRepositoryUrl = 'https://github.com/vizualmodel/vmblu.git'
+for (const [name, manifest] of Object.entries({cli, core, runtime})) {
+  const repositoryUrl =
+    typeof manifest.repository === 'string' ? manifest.repository : manifest.repository?.url
+  if (repositoryUrl !== expectedRepositoryUrl) {
+    throw new Error(
+      `${name} repository.url must be '${expectedRepositoryUrl}' for npm trusted publishing, found '${repositoryUrl}'`,
+    )
+  }
 }
 
 const contextDir = path.join(root, 'cli', 'context', cli.schemaVersion)
@@ -69,6 +100,7 @@ if (runtimeReleaseModule.RUNTIME_VERSION !== runtime.version) {
 
 console.log(`Release compatibility check passed for family ${Array.from(families)[0]}.`)
 console.log(`CLI ${cli.version}; core ${core.version}; runtime ${runtime.version}; schema ${cli.schemaVersion}.`)
+if (expectedVersion) console.log(`Coordinated release version ${expectedVersion} is consistent.`)
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'))

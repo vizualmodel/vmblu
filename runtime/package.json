@@ -4,6 +4,11 @@
   "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vizualmodel/vmblu.git",
+    "directory": "runtime"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
