@@ -112,7 +112,7 @@ CLI, core, runtime and schema versions use `xx.yy.zz`. The `xx.yy` pair is the
 compatibility family and `zz` is an independent patch level. Components in the
 same family are compatible; crossing a family boundary requires migration.
 Package dependency ranges must therefore remain inside one family, for example
-`>=0.10.0 <0.11.0`.
+`>=1.10.0 <1.11.0`.
 
 General schemas and docs are resolved from the installed CLI package. The
 canonical agent-readable files live under `cli/context/<schema-version>/`.

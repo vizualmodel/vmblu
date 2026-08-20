@@ -5,10 +5,8 @@ export let tx
 let mainDiv
 let contentDiv
 let tabsDiv
-
-// menuDiv is initialised with a message
-let menuDiv = null;
-let legendDiv = null;
+let loadingName = ''
+let loadingError = ''
 
 onMount(async () => {
 })
@@ -19,31 +17,24 @@ export const handlers = {
         // replace the content
         contentDiv.replaceChildren(div)
 
-        // append the menu again
-        if (menuDiv) contentDiv.append(menuDiv)
-
-        // append the team legend again
-        if (legendDiv) contentDiv.append(legendDiv)
-
         // send out the div
         tx.send('div', mainDiv)
     },
 
-    // The menu div is an overlay menu
-    onMenuDiv(div) {
-
-        // save
-        menuDiv = div;
-
-        // append
-        contentDiv.append(menuDiv)
+    onContentLoading(arl) {
+        loadingName = arl?.getName?.() ?? 'document'
+        loadingError = ''
     },
 
-    // The legend div is an overlay at the top of the content
-    onLegendDiv(div) {
+    onContentLoaded() {
+        loadingName = ''
+        loadingError = ''
+    },
 
-        legendDiv = div
-        contentDiv.append(legendDiv)
+    onContentFailed(arl) {
+        const name = (arl?.getName?.() ?? loadingName) || 'document'
+        loadingName = ''
+        loadingError = `Could not load ${name}.`
     },
 
     onTabsDiv(div) {
@@ -60,7 +51,7 @@ export const handlers = {
         const w = Math.floor(contentDiv.clientWidth)
         const h = Math.floor(contentDiv.clientHeight)
 
-        tx.send("content size change", {x:0, y:0, w, h})
+        tx.send("content.size change", {x:0, y:0, w, h})
     },
 
     onShow() {
@@ -117,13 +108,58 @@ height:10px;
     width: 100%;
     background: inherit;
 }
-.content {
+.content-shell {
     position: relative;
     height: calc(100% - 24px);
     width: 100%;
 }
+.content {
+    height: 100%;
+    width: 100%;
+}
+.content-status {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    color: #d8d8d8;
+    background: rgba(24, 24, 28, 0.72);
+    font-family: var(--fFamily);
+    font-size: var(--fNormal);
+    pointer-events: none;
+}
+.content-status.error {
+    color: #ffb4ab;
+}
+.spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #666;
+    border-top-color: #0fb2e4;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation-duration: 1.5s; }
+}
 </style>
 <div class="main" bind:this={mainDiv}>
     <div class="tabs" bind:this={tabsDiv}> </div>
-    <div class="content" bind:this={contentDiv}></div>
+    <div class="content-shell">
+        <div class="content" bind:this={contentDiv}></div>
+        {#if loadingName}
+            <div class="content-status" role="status" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Loading {loadingName}...</span>
+            </div>
+        {:else if loadingError}
+            <div class="content-status error" role="alert">{loadingError}</div>
+        {/if}
+    </div>
 </div>

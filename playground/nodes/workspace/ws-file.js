@@ -13,6 +13,14 @@ export function WSFile(arl, folder) {
 }
 WSFile.prototype = {
 
+    getFileSystem() {
+        return this.folder?.getFileSystem?.() ?? null
+    },
+
+    isReadOnly() {
+        return this.arl?.canWrite?.() === false || this.getFileSystem()?.readOnly === true
+    },
+
 
     getPath() {
         let path = this.folder.getPath()
@@ -82,6 +90,8 @@ WSFile.prototype = {
 
     rename(newName) {
 
+        if (this.isReadOnly()) return
+
         // no change..
         if (newName === this.name) return
 
@@ -115,6 +125,8 @@ WSFile.prototype = {
     },
 
     remove(){
+
+        if (this.isReadOnly()) return
 
         // remove the file at the server side
         this.arl?.remove()

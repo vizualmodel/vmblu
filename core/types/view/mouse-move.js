@@ -253,7 +253,7 @@ export const mouseMoveHandling = {
         const hit = this.hit
         const conx =  hit.what == zap.pin ? hit.lookWidget 
                     : hit.what == zap.pad ? hit.pad 
-                    : hit.what == zap.busSegment ? hit.cable
+                    : (hit.what == zap.busSegment || hit.what == zap.busLabel) ? hit.cable
                     : hit.what == zap.route ? hit.route
                     : null
 

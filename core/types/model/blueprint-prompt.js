@@ -19,7 +19,7 @@ export const PromptHandling = {
                 const text = await repoArl?.get('text')?.catch(() => null)
                 const parsed = parsePromptMarkdown(text)
                 if (parsed) {
-                    applyNodePrompts(node, parsed.node)
+                    node.prompt = normalizePrompt(parsed.prompt)
                     applyPinPrompts(node, parsed.pins)
                     const state = getPromptRepoRuntimeState(node.promptRepo)
                     state.hydrated = true
@@ -143,34 +143,20 @@ function safeName(name) {
 }
 
 function hasPrompts(node) {
-    if (node.prompt?.length) return true
-    if (node.promptStatus?.length) return true
-    if (node.promptDecisions?.length) return true
-    if (node.promptOpen?.length) return true
-    if (node.promptReferences?.length) return true
-    for (const iface of node.interfaces ?? []) {
-        for (const pin of iface.pins ?? []) {
-            if (pin.prompt?.length) return true
-        }
-    }
-    return false
+    if (node.prompt?.trim().length) return true
+    return (node.interfaces ?? []).some(iface =>
+        (iface.pins ?? []).some(pin => pin.prompt?.length)
+    )
 }
 
 function deleteInlinePrompts(node) {
     delete node.prompt
-    delete node.promptStatus
-    delete node.promptDecisions
-    delete node.promptOpen
-    delete node.promptReferences
     for (const iface of node.interfaces ?? []) {
-        for (const pin of iface.pins ?? []) {
-            delete pin.prompt
-        }
+        for (const pin of iface.pins ?? []) delete pin.prompt
     }
 }
 
 function applyPinPrompts(node, prompts) {
-    if (!prompts) return
     for (const iface of node.interfaces ?? []) {
         for (const pin of iface.pins ?? []) {
             const prompt = prompts.get(pin.name)
@@ -179,103 +165,55 @@ function applyPinPrompts(node, prompts) {
     }
 }
 
-function applyNodePrompts(node, sections) {
-    if (!sections) return
-    node.prompt = sections.prompt || null
-    node.promptStatus = sections.status || null
-    node.promptDecisions = sections.decisions || null
-    node.promptOpen = sections.open || null
-    node.promptReferences = sections.references || null
-}
-
-const nodeSectionNames = new Map([
-    ['prompt', 'prompt'],
-    ['status', 'status'],
-    ['decisions', 'decisions'],
-    ['open', 'open'],
-    ['references', 'references'],
-])
-
 export function parsePromptMarkdown(text) {
     if (typeof text !== 'string') return null
 
-    try {
-        const lines = text.replace(/\r\n/g, '\n').split('\n')
-        let section = null
-        let currentNodeSection = null
-        let currentPin = null
-        let hasStructuredNodeSections = false
-        const legacyNodeLines = []
-        const nodeSections = {
-            prompt: [],
-            status: [],
-            decisions: [],
-            open: [],
-            references: [],
-        }
-        const pinMap = new Map()
-        let buffer = []
+    const lines = text.replace(/\r\n/g, '\n').split('\n')
+    const nodeLines = []
+    const pins = new Map()
+    let section = null
+    let currentPin = null
+    let buffer = []
+    let hasReservedSections = false
 
-        const flushPin = () => {
-            if (!currentPin) return
-            const prompt = buffer.join('\n').trim()
-            if (prompt) pinMap.set(currentPin, prompt)
-            buffer = []
-        }
+    const flushPin = () => {
+        if (!currentPin) return
+        const prompt = buffer.join('\n').trim()
+        if (prompt) pins.set(currentPin, prompt)
+        buffer = []
+    }
 
-        for (const line of lines) {
-            const h2 = line.match(/^##\s+(.+?)\s*$/)
-            if (h2) {
+    for (const line of lines) {
+        const h2 = line.match(/^##\s+(.+?)\s*$/)
+        if (h2) {
+            const heading = h2[1].trim().toLowerCase()
+            if (heading === 'node' || heading === 'pins') {
                 flushPin()
-                section = h2[1].trim().toLowerCase()
-                currentNodeSection = null
+                section = heading
+                hasReservedSections = true
                 currentPin = null
                 buffer = []
-                continue
             }
-
-            const h3 = line.match(/^###\s+(.+?)\s*$/)
-            if (h3 && section === 'node') {
-                const nodeSection = nodeSectionNames.get(h3[1].trim().toLowerCase())
-                if (nodeSection) {
-                    currentNodeSection = nodeSection
-                    hasStructuredNodeSections = true
-                    continue
-                }
-            }
-
-            if (h3 && section === 'pins') {
-                flushPin()
-                currentPin = h3[1].trim()
-                continue
-            }
-
-            if (section === 'node') {
-                if (currentNodeSection) nodeSections[currentNodeSection].push(line)
-                else legacyNodeLines.push(line)
-            }
+            else if (section === 'node') nodeLines.push(line)
             else if (section === 'pins' && currentPin) buffer.push(line)
+            continue
         }
-        flushPin()
 
-        const legacyPrompt = legacyNodeLines.join('\n').trim()
-        const structuredPrompt = nodeSections.prompt.join('\n').trim()
-
-        return {
-            node: {
-                prompt: hasStructuredNodeSections
-                    ? [legacyPrompt, structuredPrompt].filter(Boolean).join('\n\n')
-                    : legacyPrompt,
-                status: nodeSections.status.join('\n').trim(),
-                decisions: nodeSections.decisions.join('\n').trim(),
-                open: nodeSections.open.join('\n').trim(),
-                references: nodeSections.references.join('\n').trim(),
-            },
-            pins: pinMap,
+        const h3 = line.match(/^###\s+(.+?)\s*$/)
+        if (h3 && section === 'pins') {
+            flushPin()
+            currentPin = h3[1].trim()
+            continue
         }
+
+        if (section === 'node') nodeLines.push(line)
+        else if (section === 'pins' && currentPin) buffer.push(line)
     }
-    catch {
-        return null
+    flushPin()
+
+    return {
+        prompt: hasReservedSections ? nodeLines.join('\n').trim() : text,
+        pins,
     }
 }
 
@@ -285,25 +223,7 @@ export function serializePromptMarkdown(node) {
         '',
         '## Node',
         '',
-        '### Prompt',
-        '',
-        node.prompt ?? '',
-        '',
-        '### Status',
-        '',
-        node.promptStatus ?? '',
-        '',
-        '### Decisions',
-        '',
-        node.promptDecisions ?? '',
-        '',
-        '### Open',
-        '',
-        node.promptOpen ?? '',
-        '',
-        '### References',
-        '',
-        node.promptReferences ?? '',
+        node.prompts?.prompt ?? node.prompt ?? '',
         '',
         '## Pins',
     ]
@@ -314,4 +234,8 @@ export function serializePromptMarkdown(node) {
     }
     out.push('')
     return out.join('\n')
+}
+
+function normalizePrompt(value) {
+    return typeof value === 'string' && value.trim().length ? value : null
 }

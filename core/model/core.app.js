@@ -1,7 +1,6 @@
 // ------------------------------------------------------------------
 // Model: node-editor
-// Path: C:/dev/vmblu/core/model/core.app.js
-// Creation date 6/19/2026, 9:45:03 AM
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.0"},"source":{"model":"core.mod.blu","hash":"fnv1a64:ee07170061faba69"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -23,8 +22,8 @@ import { ModelManager } from '../nodes/model-manager/model-manager.js'
 const nodeList = [
 	//_____________________________________________LIBRARY MANAGER
 	{
-	name: "library manager", 
-	uid: "rCaA", 
+	name: "library manager",
+	uid: "xcQx",
 	factory: LibraryManager,
 	inputs: [
 		"-> add file",
@@ -37,8 +36,8 @@ const nodeList = [
 	},
 	//____________________________________________DOCUMENT MANAGER
 	{
-	name: "document manager", 
-	uid: "sQaL", 
+	name: "document manager",
+	uid: "xqNj",
 	factory: DocumentManager,
 	inputs: [
 		"-> doc.selected",
@@ -47,7 +46,12 @@ const nodeList = [
 		"-> doc.deleted",
 		"-> doc.get",
 		"-> doc.open",
+		"-> file.save active",
 		"-> file.save as",
+		"-> model.loaded",
+		"-> text.loaded",
+		"-> model.failed",
+		"-> text.failed",
 		"-> tab.request to close",
 		"-> tab.request to select"
 		],
@@ -56,16 +60,21 @@ const nodeList = [
 		"file.save -> ()",
 		"file.save as filename -> ()",
 		"file.save all -> ()",
+		"file.loading -> ()",
+		"file.loaded -> ()",
+		"file.failed -> ()",
 		"tab.select -> ()",
 		"tab.remove -> ()",
 		"tab.new -> ()",
-		"tab.rename -> ()"
+		"tab.rename -> ()",
+		"text.set active -> ()",
+		"text.save -> ()"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
-	name: "clipboard", 
-	uid: "qHzJ", 
+	name: "clipboard",
+	uid: "fVcI",
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -80,8 +89,8 @@ const nodeList = [
 	},
 	//_______________________________________________NODE SELECTOR
 	{
-	name: "node selector", 
-	uid: "ugxM", 
+	name: "node selector",
+	uid: "IRIj",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
@@ -89,16 +98,16 @@ const nodeList = [
 		],
 	outputs: [
 		"selected node -> ()",
-		"remove file -> remove file @ library manager (YGzC)",
-		"add file -> add file @ library manager (YGzC)",
-		"get path -> path @ path request (vbZx)",
+		"remove file -> remove file @ library manager (XPYP)",
+		"add file -> add file @ library manager (XPYP)",
+		"get path -> path @ path request (mfnX)",
 		"modal div -> ()"
 		]
 	},
 	//_____________________________________________LIBRARY MANAGER
 	{
-	name: "library manager", 
-	uid: "YGzC", 
+	name: "library manager",
+	uid: "XPYP",
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -106,13 +115,13 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (ugxM)"
+		"build table -> build table @ node selector (IRIj)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
-	name: "path request", 
-	uid: "vbZx", 
+	name: "path request",
+	uid: "mfnX",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -124,8 +133,8 @@ const nodeList = [
 	},
 	//________________________________________________VIEW MANAGER
 	{
-	name: "view manager", 
-	uid: "fHar", 
+	name: "view manager",
+	uid: "KrPL",
 	factory: ViewManager,
 	inputs: [
 		"-> size change",
@@ -133,6 +142,7 @@ const nodeList = [
 		"-> root",
 		"-> recalibrate",
 		"-> grid on-off",
+		"-> application prompt",
 		"-> redox.done"
 		],
 	outputs: [
@@ -154,12 +164,13 @@ const nodeList = [
 	},
 	//_______________________________________________MODEL MANAGER
 	{
-	name: "model manager", 
-	uid: "rtVY", 
+	name: "model manager",
+	uid: "nOun",
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",
 		"-> wire check",
+		"-> auto layout",
 		"-> sync model",
 		"-> sync links",
 		"-> show settings",
@@ -176,7 +187,8 @@ const nodeList = [
 	outputs: [
 		"model.header -> ()",
 		"model.root -> ()",
-		"model.resolved -> ()",
+		"model.loaded -> ()",
+		"model.failed -> ()",
 		"save point.confirm -> ()",
 		"pin profile -> ()",
 		"tool settings -> ()",
@@ -191,7 +203,9 @@ const nodeList = [
 ]
 
 // Runtime options
-const runtimeOptions = {}
+const runtimeOptions = {
+    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.0","schemaVersion":"1.10.0"}
+}
 
 // prepare the runtime
 const runtime = new Runtime(nodeList, runtimeOptions)

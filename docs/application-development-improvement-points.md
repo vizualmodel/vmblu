@@ -27,66 +27,54 @@ questions, and pin intent close to the model element concerned.
 
 The improvement points below should preserve these strengths.
 
-## 1. Make the toolchain a single compatibility contract
+## 1. Complete release-wide compatibility diagnostics
 
 ### Problem
 
-CLI, schema, runtime, editor, and generated formats can currently disagree.
-The observed `factories` mismatch is a concrete example: the schema describes
-file-path strings while CLI/core code emits objects. Such mismatches make it
-unclear whether the model, validator, generator, or installed context is
-authoritative.
+The compatibility family is enforced for the CLI, core, runtime, and schema,
+but release diagnostics do not yet cover every vmblu component or explain a
+developer's locally resolved combination.
 
 ### Suggested approach
 
-- Publish a machine-readable compatibility manifest with each release. It
-  should declare the supported CLI, core, schema, runtime, editor, and artifact
-  format versions.
-- Add a `vmblu doctor` command that reports resolved versions, incompatible
-  combinations, stale generated artifacts, and known migration requirements.
-- Build release candidates from one source revision and run canonical
-  round-trip fixtures through load, validate, save, profile, generate, and run.
-- Prevent publishing when the CLI emits artifacts that fail its own installed
-  schemas.
-- Keep readers temporarily backward-compatible where necessary, but always
-  write one canonical representation.
+- Extend the release check to include the VS Code extension and playground in
+  the shared `xx.yy` compatibility family.
+- Add a `vmblu doctor` command that reports resolved component versions,
+  incompatible combinations, stale generated artifacts, and known migration
+  requirements.
+- Exercise fixtures from earlier patch releases in the current family through
+  load, validate, save, profile, generate, and run.
+- Build and validate all release candidates from one source revision.
 
-## 2. Make authored and generated artifacts unmistakable
+## 2. Make authored and generated artifacts unmistakable in tools
 
 ### Problem
 
-A developer or agent must know which files are authoritative and which are
-derived before making a safe change. Today that knowledge depends too much on
-project instructions and experience. Editing a generated application or
-profile as if it were source can produce convincing but disposable work.
+A developer or agent must still know which files are authoritative and which
+are derived before making a safe change. Generated provenance makes that
+distinction machine-readable, but the editor and project layout do not yet use
+it consistently to prevent disposable edits.
 
 ### Suggested approach
 
-- Put an explicit generated marker, generator version, source model identity,
-  and source hash in every derived artifact.
-- Provide one command that checks whether profiles, applications,
-  capabilities, and other derived outputs match the current model.
+- Extend generated markers and provenance to any derived output that does not
+  yet carry them.
 - Make generated output locations consistent across project types.
 - Refuse or prominently warn when an editor attempts to modify a generated
   artifact directly.
-- Ensure regeneration is deterministic so an unchanged model produces no
+- Make regeneration incremental and ensure an unchanged model produces no
   unrelated file churn.
 
-## 3. Make prompt persistence safe and economical
+## 3. Reduce duplicated development context
 
 ### Problem
 
-Prompt repositories provide important architectural memory, but the current
-save path can rewrite clean prompts from stale in-memory content. Prompt,
-model, and documentation updates also create a considerable synchronization
-burden.
+Prompt repositories preserve architectural memory safely, but prompt, model,
+scenario, and documentation updates can still duplicate facts and create a
+considerable synchronization burden.
 
 ### Suggested approach
 
-- Complete dirty-only prompt saving and retain dirty state safely through the
-  full encode and save path.
-- Detect external modification before overwriting a dirty prompt and report a
-  conflict instead of silently choosing one version.
 - Give every information category one clear owner: structural facts in the
   model, application-wide and node-local development context in prompt
   repositories, and demonstrated behavior in referenced scenario documents.
@@ -188,7 +176,7 @@ Developer leadership should not mean that the first architecture is treated
 as correct by authority. It means the developer owns the hypothesis and the
 trade-offs, while implementation evidence remains allowed to overturn it.
 
-## 7. Make validation proportional and easy to trust
+## 7. Expand verification into proportional validation
 
 ### Problem
 
@@ -202,8 +190,8 @@ drift.
 - Classify changes as prompt-only, visualization-only, semantic, source-node,
   runtime, or release changes.
 - Provide a standard validation set for each class.
-- Add one `vmblu verify` command that selects the required checks from the
-  changed files and explains what it ran and skipped.
+- Extend `vmblu verify` so it selects checks from the changed files and explains
+  what it ran and skipped.
 - Include schema validation, canonical round trips, profile consistency,
   generation consistency, focused tests, and a runtime smoke test where
   applicable.
@@ -212,14 +200,16 @@ drift.
 
 ## Suggested implementation order
 
-1. Fix schema/CLI canonical-format mismatches and add release compatibility
-   checks.
-2. Complete dirty-only prompt saving with conflict detection.
-3. Add generated-artifact provenance and stale-output verification.
-4. Introduce `vmblu doctor` and `vmblu verify`.
-5. Add source-node runtime tracing and a focused test harness.
-6. Add architectural decision states and scenario-based validation support.
+1. Extend compatibility checks to every component and add `vmblu doctor`.
+2. Integrate generated-artifact provenance into editor warnings and consistent
+   output handling.
+3. Establish clear information ownership and generate routine summaries from
+   authoritative files.
+4. Add source-node watch mode, runtime tracing, and a focused test harness.
+5. Make `vmblu verify` choose proportional checks from the changed files.
+6. Document low-ceremony modeling conventions for implementation-only changes.
+7. Add architectural decision states and scenario-based validation support.
 
-The first four items improve trust in everyday work. The final two strengthen
-vmblu's distinctive value: connecting an explicit architecture to observable
-application behavior without mistaking model detail for proof.
+The first five items improve trust and speed in everyday work. The final two
+strengthen vmblu's distinctive value: connecting an explicit architecture to
+observable application behavior without mistaking model detail for proof.

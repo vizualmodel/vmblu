@@ -3,12 +3,14 @@ import FolderFileDiv from './folder-file.svelte'
 import {onMount} from 'svelte'
 import {WSFolder, WSFileSystem} from './ws-folder'
 import {WSFile} from './ws-file'
-import {ARL, LARL, Path} from '../../../core/types/arl/index.js'
+import {LARL, Path} from '../../../core/types/arl/index.js'
+import {GitHubRepositoryProvider, defaultGitHubRepository} from './github-repository.js'
 
 // The props for the workspace
 // tx is an object that allows the workspace to send messages to other components
 // sx is an object that allows to pass specific settings to the component - for the moment we do not use this
-export let tx//, sx
+export let tx
+export let sx = null
 
 //the main div
 let mainDiv
@@ -17,12 +19,13 @@ let mainDiv
 let remoteDiv
 let localDiv
 
-// This is for getting the simulated file system from a server
-const serverUrl = window.location.origin;
-const remoteFolder = '/examples/file-system.json'
-
 let remoteFS = null
 let localFS = null
+let remoteLoading = false
+let remoteError = ''
+
+const remoteConfig = {...defaultGitHubRepository, ...(sx?.remote ?? {})}
+const remoteLabel = remoteConfig.label ?? 'Examples'
 
 // allow or forbid a local file system
 const allowLocalFS = true
@@ -36,7 +39,7 @@ onMount(async () => {
     setVisibilityHandler()
 
     // get the remote file system
-    getRemoteFS()
+    await getRemoteFS()
 
 })
 
@@ -67,8 +70,6 @@ export const handlers = {
     },
 
     onFileSavedAs(arl) {},
-
-    onFileActive(arl) {},
 
     onFileClosed(arl) {}
 }
@@ -112,55 +113,49 @@ async function newLocalFS(e) {
     }
 }
 
-// Get the folders/files from a simpleServer server
+// Mount a public GitHub repository as a read-only workspace file system.
 async function getRemoteFS() {
 
-    // create the remote file system
-    remoteFS = new WSFileSystem('fixed')
+    remoteLoading = true
+    remoteError = ''
 
-    // The path to the simulated folder...
-    const arl = new ARL(remoteFolder)
-    arl.url = new URL(remoteFolder,serverUrl)
+    try {
+        const provider = new GitHubRepositoryProvider(remoteConfig)
+        const rawFolder = await provider.getTree()
 
-    // get the simulated folder
-    const rawFolder = await arl.get('json').catch(() => null)
+        remoteFS = new WSFileSystem('github', {readOnly: true, provider})
+        remoteFS.root = new WSFolder(provider.createArl(), remoteFS)
+        remoteFS.root.is.expanded = true
+        remoteFS.root.is.stale = false
 
-    // check
-    if (!rawFolder) {
-        remoteFS = null
-        return
+        expandRemoteFS(rawFolder, remoteFS.root, provider)
+        remoteFS = remoteFS
     }
-
-    // The server arl
-    const serverArl = new ARL('')
-    serverArl.url = new URL(serverUrl)
-
-    // The arl of the remote file system
-    const fsArl = serverArl.resolve('/' + rawFolder.name)
-
-    // set the root of the file system
-    remoteFS.root = new WSFolder(fsArl, remoteFS)
-
-    // now get the folder/file 
-    expandRemoteFS(rawFolder, remoteFS.root)
+    catch (error) {
+        console.error('GitHub examples repository could not be mounted:', error)
+        remoteFS = null
+        remoteError = error?.message ?? 'Examples could not be mounted.'
+    }
+    finally {
+        remoteLoading = false
+    }
 }
 
-function expandRemoteFS(rawFolder, owner) {
+function expandRemoteFS(rawFolder, owner, provider) {
 
     // add the sub folders
     if (rawFolder.folders) {
         for( const raw of rawFolder.folders) {
 
-            // make th arl for th enew folder
-            const path = owner.arl.getPath() + '/' + raw.name
-            const arl = owner.arl.resolve(path)
+            const arl = provider.createArl(raw.path)
 
             // make and save the folder
             const folder = new WSFolder(arl, owner)
+            folder.is.stale = false
             owner.folders.push(folder)
 
             // expand the folder 
-            expandRemoteFS(raw, folder)
+            expandRemoteFS(raw, folder, provider)
         }
     }
 
@@ -169,7 +164,7 @@ function expandRemoteFS(rawFolder, owner) {
         for( const raw of rawFolder.files) {
 
             // get the arl of the file
-            const arl = owner.arl.resolve(owner.arl.getPath() + '/' + raw)
+            const arl = provider.createArl(raw.path)
 
             // make and save the file
             const file = new WSFile(arl, owner)
@@ -364,6 +359,35 @@ p.no-selection {
     color: grey;
 }
 
+.loading-status {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 1.5rem;
+    padding: 0.35rem 1rem;
+    color: #cfcfcf;
+    font-family: var(--fontBase);
+    font-size: 0.82rem;
+}
+
+.spinner {
+    width: 0.8rem;
+    height: 0.8rem;
+    flex: 0 0 auto;
+    border: 2px solid #555;
+    border-top-color: var(--cModelFile, rgb(0, 225, 255));
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation-duration: 1.5s; }
+}
+
 .menu-item {
     background:transparent;
     position: relative;
@@ -396,7 +420,7 @@ p.no-selection {
 <div class="workspace" bind:this={mainDiv}>
 
     <div class="heading">
-        <h1>Examples</h1>
+        <h1>{remoteLabel}</h1>
 
         <div class="menu-item">
             <i class="material-icons-outlined" on:click={toggleRemoteFS} >{remoteFS?.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
@@ -405,10 +429,15 @@ p.no-selection {
     </div>
 
     <div class="file-system" bind:this={remoteDiv}>
-        {#if remoteFS?.root}
-            <FolderFileDiv folder={remoteFS.root} tx={tx}/>           
+        {#if remoteLoading}
+            <div class="loading-status" role="status" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Loading examples from GitHub...</span>
+            </div>
+        {:else if remoteFS?.root}
+            <FolderFileDiv folder={remoteFS.root} tx={tx}/>
         {:else}
-            <p class="no-selection">Examples could not be mounted.</p>
+            <p class="no-selection">{remoteError || 'Examples could not be mounted.'}</p>
         {/if}
     </div>
 
@@ -428,7 +457,7 @@ p.no-selection {
         </div>
         {#if localFS}
             <div class="file-system" bind:this={localDiv}>
-                <FolderFileDiv folder={localFS.root} tx={tx}/>           
+                <FolderFileDiv folder={localFS.root} tx={tx}/>
             </div> 
         {/if}
     {/if}

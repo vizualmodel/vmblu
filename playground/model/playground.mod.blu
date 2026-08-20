@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "0.10.0",
+    "version": "1.10.0",
     "created": "4/2/2024, 12:46:06 PM",
-    "saved": "12/16/2025, 10:49:03 AM",
-    "utc": "2025-12-16T09:49:03.571Z",
+    "saved": "2026-08-20T08:48:55.474Z",
+    "utc": "2026-08-20T08:48:55.474Z",
     "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
     "teams": {
       "default": {
@@ -61,6 +61,8 @@
   ],
   "factories": [
     "../nodes/workspace/factory.js",
+    "../nodes/text-editor/text-editor.js",
+    "../nodes/model-pane/model-pane.js",
     "../../ui-svelte/index.js"
   ],
   "types": {
@@ -104,6 +106,48 @@
         "library": "kernel",
         "symbol": "ARL"
       }
+    },
+    "ActiveDocument": {
+      "kind": "object",
+      "summary": "Active model or text document selected by the document manager.",
+      "fields": {
+        "kind": {
+          "vmbluType": "string"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "model": {
+          "vmbluType": "AnyPayload"
+        },
+        "view": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "kind",
+        "arl"
+      ]
+    },
+    "TabDescriptor": {
+      "kind": "object",
+      "summary": "Stable tab identity and display metadata.",
+      "fields": {
+        "id": {
+          "vmbluType": "string"
+        },
+        "label": {
+          "vmbluType": "string"
+        },
+        "readOnly": {
+          "vmbluType": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "readOnly"
+      ]
     },
     "NameChange": {
       "kind": "object",
@@ -213,16 +257,16 @@
             "interface": "",
             "pins": [
               {
-                "name": "main area",
-                "kind": "input",
+                "name": "size change",
+                "kind": "output",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
                 }
               },
               {
-                "name": "size change",
-                "kind": "output",
+                "name": "main area",
+                "kind": "input",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
@@ -331,14 +375,6 @@
                 }
               },
               {
-                "name": "file.active",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "ArlRef"
-                }
-              },
-              {
                 "name": "file.closed",
                 "kind": "input",
                 "contract": {
@@ -426,22 +462,82 @@
           }
         ],
         "sx": {
-          "name": "examples",
-          "files": [],
-          "folders": [
-            {
-              "name": "tutorial",
-              "files": [
-                {
-                  "name": "chat-client.mod.blu"
-                },
-                {
-                  "name": "chat-server.mod.blu"
-                }
-              ]
-            }
-          ]
+          "remote": {
+            "kind": "github",
+            "owner": "vizualmodel",
+            "repository": "vmblu-examples",
+            "ref": "main",
+            "label": "Examples",
+            "readOnly": true
+          }
         }
+      },
+      {
+        "kind": "source",
+        "name": "text editor",
+        "label": "Displays and edits source and text documents",
+        "team": "workspace",
+        "factory": {
+          "path": "../nodes/text-editor/text-editor.js",
+          "function": "TextEditor"
+        },
+        "interfaces": [
+          {
+            "interface": "text",
+            "pins": [
+              {
+                "name": "text.set active",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "text.save",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "dom",
+            "pins": [
+              {
+                "name": "content div",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "file",
+            "pins": [
+              {
+                "name": "text.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         "kind": "dock",
@@ -476,6 +572,55 @@
         ]
       },
       {
+        "kind": "source",
+        "name": "model pane",
+        "label": "Composes the model canvas and its overlays",
+        "team": "ui",
+        "factory": {
+          "path": "../nodes/model-pane/model-pane.js",
+          "function": "ModelPane"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "menu div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "legend div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "canvas",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "content div",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "kind": "dock",
         "name": "editor page",
         "label": "The main editor window layout",
@@ -489,40 +634,8 @@
             "interface": "",
             "pins": [
               {
-                "name": "legend div",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "menu div",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
                 "name": "tabs div",
                 "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "content div",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "content size change",
-                "kind": "output",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
@@ -537,7 +650,7 @@
                 }
               },
               {
-                "name": "show",
+                "name": "size change",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -553,11 +666,56 @@
                 }
               },
               {
-                "name": "size change",
+                "name": "show",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
                   "payload": "any"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "content",
+            "pins": [
+              {
+                "name": "content.div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "content.size change",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "content.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "content.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "content.loading",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -595,7 +753,7 @@
                 "kind": "input",
                 "contract": {
                   "role": "follower",
-                  "payload": "any"
+                  "payload": "TabDescriptor"
                 }
               },
               {
@@ -882,8 +1040,8 @@
                 "name": "tab.new",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "TabDescriptor"
                 }
               },
               {
@@ -935,8 +1093,8 @@
                 "name": "doc.set active",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "ActiveDocument"
                 }
               },
               {
@@ -993,6 +1151,14 @@
             "interface": "file",
             "pins": [
               {
+                "name": "file.save active",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
                 "name": "file.save as",
                 "kind": "input",
                 "contract": {
@@ -1001,11 +1167,35 @@
                 }
               },
               {
+                "name": "file.loading",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
                 "name": "file.save",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "Void"
                 }
               },
               {
@@ -1022,6 +1212,59 @@
                 "contract": {
                   "role": "follower",
                   "payload": "any"
+                }
+              },
+              {
+                "name": "model.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "model.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "text",
+            "pins": [
+              {
+                "name": "text.save",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "text.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
                 }
               }
             ]
@@ -1132,19 +1375,19 @@
                 }
               },
               {
-                "name": "size change",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
                 "name": "application prompt",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
                   "payload": "UiEvent"
+                }
+              },
+              {
+                "name": "size change",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -1201,16 +1444,16 @@
                 "name": "open source file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "AnyPayload"
                 }
               },
               {
                 "name": "open model",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -1382,11 +1625,19 @@
                 }
               },
               {
-                "name": "model.resolved",
+                "name": "model.loaded",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "model.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -1480,16 +1731,16 @@
                 "name": "open source file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "AnyPayload"
                 }
               },
               {
                 "name": "open model",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -1870,7 +2121,10 @@
                   }
                 ]
               }
-            ]
+            ],
+            "sx": {
+              "openPromptFile": true
+            }
           },
           {
             "kind": "dock",
@@ -2587,6 +2841,36 @@
       },
       {
         "src": {
+          "pin": "content div",
+          "node": "text editor"
+        },
+        "dst": {
+          "pin": "content.div",
+          "node": "editor page"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.failed",
+          "node": "text editor"
+        },
+        "dst": {
+          "pin": "text.failed",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.loaded",
+          "node": "text editor"
+        },
+        "dst": {
+          "pin": "text.loaded",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
           "pin": "modal div",
           "node": "single text field"
         },
@@ -2597,12 +2881,12 @@
       },
       {
         "src": {
-          "pin": "content size change",
-          "node": "editor page"
+          "pin": "content div",
+          "node": "model pane"
         },
         "dst": {
-          "pin": "size change",
-          "node": "view manager"
+          "pin": "content.div",
+          "node": "editor page"
         }
       },
       {
@@ -2613,6 +2897,16 @@
         "dst": {
           "pin": "main area",
           "node": "column-main layout"
+        }
+      },
+      {
+        "src": {
+          "pin": "content.size change",
+          "node": "editor page"
+        },
+        "dst": {
+          "pin": "size change",
+          "node": "view manager"
         }
       },
       {
@@ -2760,10 +3054,16 @@
           "pin": "save",
           "node": "side menu"
         },
-        "dst": {
-          "pin": "model.save",
-          "node": "model manager"
-        }
+        "dst": [
+          {
+            "pin": "model.save",
+            "node": "model manager"
+          },
+          {
+            "pin": "file.save active",
+            "node": "document manager"
+          }
+        ]
       },
       {
         "src": {
@@ -2782,7 +3082,7 @@
         },
         "dst": {
           "pin": "menu div",
-          "node": "editor page"
+          "node": "model pane"
         }
       },
       {
@@ -2832,14 +3132,44 @@
         },
         "dst": [
           {
-            "pin": "model.set",
-            "node": "model manager"
-          },
-          {
             "pin": "top level view",
             "node": "view manager"
+          },
+          {
+            "pin": "model.set",
+            "node": "model manager"
           }
         ]
+      },
+      {
+        "src": {
+          "pin": "file.loading",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "content.loading",
+          "node": "editor page"
+        }
+      },
+      {
+        "src": {
+          "pin": "file.loaded",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "content.loaded",
+          "node": "editor page"
+        }
+      },
+      {
+        "src": {
+          "pin": "file.failed",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "content.failed",
+          "node": "editor page"
+        }
       },
       {
         "src": {
@@ -2859,6 +3189,26 @@
         "dst": {
           "pin": "path only",
           "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.save",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "text.save",
+          "node": "text editor"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.set active",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "text.set active",
+          "node": "text editor"
         }
       },
       {
@@ -2907,8 +3257,8 @@
           "node": "view manager"
         },
         "dst": {
-          "pin": "content div",
-          "node": "editor page"
+          "pin": "canvas",
+          "node": "model pane"
         }
       },
       {
@@ -2959,6 +3309,26 @@
         "dst": {
           "pin": "name and path",
           "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "open source file",
+          "node": "view manager"
+        },
+        "dst": {
+          "pin": "doc.open",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "open model",
+          "node": "view manager"
+        },
+        "dst": {
+          "pin": "doc.open",
+          "node": "document manager"
         }
       },
       {
@@ -3009,6 +3379,26 @@
         "dst": {
           "pin": "header",
           "node": "popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "model.loaded",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "model.loaded",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "model.failed",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "model.failed",
+          "node": "document manager"
         }
       },
       {
@@ -3073,6 +3463,26 @@
       },
       {
         "src": {
+          "pin": "open source file",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "doc.open",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "open model",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "doc.open",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
           "pin": "folder.get",
           "node": "popups"
         },
@@ -3098,7 +3508,7 @@
         },
         "dst": {
           "pin": "legend div",
-          "node": "editor page"
+          "node": "model pane"
         }
       }
     ]

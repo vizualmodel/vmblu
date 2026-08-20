@@ -214,7 +214,7 @@ export const convert = {
         //const pinString = (pin) =>  '(pin) ' + pin.name + ' @ ' + pin.node.name
         const pinString = (pin) =>  `(pin ${pin.wid}) ${pin.name} @ ${pin.node.name}`
         const selectiveFlag = tack => tack.is.selective ? 'selective' : 'nonselective'
-        const cableString = (tack) => `(cable ${tack.cable._rawIndex ?? 0}${tack.is.endpoint ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})${tack.alias?.length ? ' ' + tack.alias : ''}`
+        const cableString = (tack) => `(cable ${tack.cable._rawIndex ?? 0}${tack.isEndpoint?.() ? ' endpoint' : ''}${tack.is.bridge ? ' bridge' : ''} ${selectiveFlag(tack)})${tack.alias?.length ? ' ' + tack.alias : ''}`
         const padString = (pad) =>  `(pad ${pad.proxy.wid}) ${pad.proxy.name}`
         const itfString = (itf) =>  '(itf) ' + itf.name + ' @ ' + itf.node.name
 

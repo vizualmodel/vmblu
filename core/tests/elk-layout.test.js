@@ -204,7 +204,7 @@ test('auto-layout normalization replaces cable routes with direct logical routes
     assert.equal(root.getInternalRoutes(root.nodes).length, 1)
 })
 
-test('route-to-cable conversion keeps the interior route as the cable trunk', () => {
+test('route-to-cable conversion trims the route and attaches its branches at cable endpoints', () => {
     const root = compileFixture()
     const route = root.getInternalRoutes(root.nodes)[0]
     const from = route.from.center()
@@ -226,23 +226,25 @@ test('route-to-cable conversion keeps the interior route as the cable trunk', ()
 
     assert.ok(conversion)
     assert.deepEqual(conversion.cable.wire, [
-        {x: x1, y: from.y - style.cable.extraLength},
+        {x: from.x + style.cable.extraLength, y: from.y},
+        {x: x1, y: from.y},
         {x: x1, y: yMid},
         {x: x2, y: yMid},
-        {x: x2, y: to.y - style.cable.extraLength}
+        {x: x2, y: to.y},
+        {x: to.x - style.cable.extraLength, y: to.y}
     ])
     assert.deepEqual(conversion.routes[0].wire, [
         {...from},
-        {x: x1, y: from.y}
+        {x: from.x + style.cable.extraLength, y: from.y}
     ])
     assert.deepEqual(conversion.routes[1].wire, [
         {...to},
-        {x: x2, y: to.y}
+        {x: to.x - style.cable.extraLength, y: to.y}
     ])
-    assert.equal(conversion.tacks.every(tack => !tack.is.endpoint), true)
+    assert.deepEqual(conversion.tacks.map(tack => tack.endpointLabel()), ['start', 'end'])
     assert.deepEqual(conversion.tacks.map(tack => tack.center()), [
-        {x: x1, y: from.y},
-        {x: x2, y: to.y}
+        conversion.cable.wire[0],
+        conversion.cable.wire.at(-1)
     ])
     assert.equal(conversion.cable.shouldRenderEndpoint(conversion.cable.wire[0]), true)
     assert.equal(conversion.cable.shouldRenderEndpoint(conversion.cable.wire.at(-1)), true)
@@ -251,24 +253,183 @@ test('route-to-cable conversion keeps the interior route as the cable trunk', ()
     assert.deepEqual(diagonalWireSegments(conversion.cable.wire), [])
 })
 
-test('short orthogonal routes retain a usable trunk when converted', () => {
+test('orthogonal routes are trimmed by the cable endpoint inset', () => {
     assert.deepEqual(
         splitRouteWireForCable([{x: 0, y: 0}, {x: 90, y: 0}]),
         {
-            cableWire: [{x: 30, y: 0}, {x: 60, y: 0}],
-            fromWire: [{x: 0, y: 0}, {x: 30, y: 0}],
-            toWire: [{x: 90, y: 0}, {x: 60, y: 0}]
+            cableWire: [{x: 15, y: 0}, {x: 75, y: 0}],
+            fromWire: [{x: 0, y: 0}, {x: 15, y: 0}],
+            toWire: [{x: 90, y: 0}, {x: 75, y: 0}]
         }
     )
 
     assert.deepEqual(
         splitRouteWireForCable([{x: 0, y: 0}, {x: 60, y: 0}, {x: 60, y: 80}]),
         {
-            cableWire: [{x: 30, y: 0}, {x: 60, y: 0}, {x: 60, y: 40}],
-            fromWire: [{x: 0, y: 0}, {x: 30, y: 0}],
-            toWire: [{x: 60, y: 80}, {x: 60, y: 40}]
+            cableWire: [{x: 15, y: 0}, {x: 60, y: 0}, {x: 60, y: 65}],
+            fromWire: [{x: 0, y: 0}, {x: 15, y: 0}],
+            toWire: [{x: 60, y: 80}, {x: 60, y: 65}]
         }
     )
+})
+
+test('very short routes fall back to a vertical cable', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const from = route.from.center()
+    route.wire = [{...from}, {x: from.x + 40, y: from.y}]
+
+    const conversion = root.convertRouteToCable(route, 1, {x: from.x + 20, y: from.y})
+
+    assert.ok(conversion)
+    assert.equal(conversion.cable.wire[0].x, conversion.cable.wire[1].x)
+    assert.equal(conversion.tacks.every(tack => !tack.isEndpoint()), true)
+    assert.deepEqual(diagonalWireSegments(conversion.cable.wire), [])
+})
+
+test('redrawing a cable endpoint keeps the bend threshold and carries endpoint tacks through successive bends', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const endTack = conversion.tacks[1]
+    const oldEnd = {...cable.wire.at(-1)}
+
+    cable.resumeDrawXY('end', {x: oldEnd.x, y: oldEnd.y + style.cable.split - 1}, {x: 0, y: style.cable.split - 1})
+
+    assert.equal(cable.wire.length, 2)
+    assert.deepEqual(cable.wire.at(-1), oldEnd)
+    assert.deepEqual(endTack.center(), oldEnd)
+
+    cable.resumeDrawXY('end', {x: oldEnd.x, y: oldEnd.y + style.cable.split + 1}, {x: 0, y: 2})
+
+    assert.equal(cable.wire.length, 3)
+    assert.deepEqual(endTack.center(), cable.wire.at(-1))
+
+    const firstBendEnd = {...cable.wire.at(-1)}
+    cable.resumeDrawXY('end', {x: firstBendEnd.x + style.cable.split + 1, y: firstBendEnd.y}, {x: 2, y: 0})
+
+    assert.equal(cable.wire.length, 4)
+    assert.deepEqual(endTack.center(), cable.wire.at(-1))
+    assert.equal(endTack.segment, 3)
+    assert.equal(endTack.isEndpoint('end'), true)
+    assert.deepEqual(diagonalWireSegments(cable.wire), [])
+    assert.deepEqual(diagonalWireSegments(endTack.route.wire), [])
+})
+
+test('moving a horizontal cable endpoint keeps its route arrow horizontal', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const endTack = conversion.tacks[1]
+    const oldEnd = {...cable.wire.at(-1)}
+
+    assert.equal(cable.wire.at(-2).y, oldEnd.y)
+    assert.equal(endTack.zone, 'E')
+
+    cable.resumeDrawXY('end', {x: oldEnd.x - 30, y: oldEnd.y}, {x: -30, y: 0})
+
+    assert.equal(endTack.zone, 'E')
+    assert.equal(endTack.drawingRect().y, endTack.rect.y)
+    assert.deepEqual(endTack.center(), cable.wire.at(-1))
+    assert.deepEqual(diagonalWireSegments(endTack.route.wire), [])
+})
+
+test('extending an endpoint releases its tacks as interior tacks', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const startTack = conversion.tacks[0]
+    const oldCenter = startTack.center()
+
+    const released = cable.releaseEndpointTacks('start')
+    cable.reverse()
+    const endpoint = cable.wire.at(-1)
+    cable.resumeDrawXY('end', {x: endpoint.x - 30, y: endpoint.y}, {x: -30, y: 0})
+
+    assert.deepEqual(released, [startTack])
+    assert.equal(startTack.isEndpoint(), false)
+    assert.deepEqual(startTack.center(), oldCenter)
+    assert.equal(cable.hitSegment(oldCenter) > 0, true)
+})
+
+test('dragging a vertically approaching endpoint tack turns it into an interior tack without moving the cable', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const tack = conversion.tacks[0]
+    cable.drag({x: 0, y: 30})
+    const oldCableWire = cable.copyWire()
+    const oldCenter = tack.center()
+
+    tack.slide({x: 20, y: 0})
+
+    assert.equal(tack.isEndpoint(), false)
+    assert.notDeepEqual(tack.center(), oldCenter)
+    assert.deepEqual(cable.wire, oldCableWire)
+    assert.equal(cable.hitSegment(tack.center()) > 0, true)
+})
+
+test('tack drag undo and redo restore the authoritative attachment', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const tack = conversion.tacks[0]
+    conversion.cable.drag({x: 0, y: 30})
+    const oldWire = tack.route.copyWire()
+    const oldAttachment = tack.copyAttachment()
+
+    tack.slide({x: 20, y: 0})
+    const newWire = tack.route.copyWire()
+    const newAttachment = tack.copyAttachment()
+    const history = {
+        saveEdit(verb, saved) {
+            this.verb = verb
+            this.saved = saved
+        }
+    }
+
+    redoxCable.tackDrag.doit.call(history, {tack, oldWire, newWire, oldAttachment, newAttachment})
+    redoxCable.tackDrag.undo(history.saved)
+
+    assert.equal(tack.isEndpoint('start'), true)
+    assert.deepEqual(tack.copyAttachment(), oldAttachment)
+
+    redoxCable.tackDrag.redo(history.saved)
+
+    assert.equal(tack.isEndpoint(), false)
+    assert.deepEqual(tack.copyAttachment(), newAttachment)
+})
+
+test('convert to routes removes the cable while preserving geometry and supports undo and redo', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const history = {
+        saveEdit(verb, saved) {
+            this.verb = verb
+            this.saved = saved
+        }
+    }
+
+    redoxCable.cableToRoutes.doit.call(history, {view: {root}, cable})
+
+    assert.equal(history.verb, 'cableToRoutes')
+    assert.equal(root.cables.length, 0)
+    assert.equal(root.getInternalRoutes(root.nodes).length, 1)
+    assert.deepEqual(diagonalWireSegments(root.getInternalRoutes(root.nodes)[0].wire), [])
+
+    redoxCable.cableToRoutes.undo.call(history, history.saved)
+    assert.equal(root.cables.includes(cable), true)
+    assert.equal(cable.tacks.length, 2)
+
+    redoxCable.cableToRoutes.redo.call(history, history.saved)
+    assert.equal(root.cables.length, 0)
+    assert.equal(root.getInternalRoutes(root.nodes).length, 1)
 })
 
 test('route-to-cable conversion rejects diagonal route geometry', () => {
@@ -352,7 +513,7 @@ test('legacy pin-to-pin cables retain attachments and expose normal cable handle
     const cable = root.cables[0]
 
     assert.equal(cable.tacks.length, 2)
-    assert.equal(cable.tacks.every(tack => tack.is.endpoint), true)
+    assert.equal(cable.tacks.every(tack => tack.isEndpoint()), true)
     assert.deepEqual(diagonalWireSegments(cable.wire), [])
     assert.equal(cable.shouldRenderEndpoint(cable.wire[0]), true)
     assert.equal(cable.shouldRenderEndpoint(cable.wire.at(-1)), true)

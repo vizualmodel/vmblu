@@ -386,7 +386,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "0.10.0";
+var RUNTIME_VERSION = "1.10.0";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);

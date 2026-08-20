@@ -1,5 +1,6 @@
 
 import {convert} from '../util/index.js'
+import {getNodePromptDocument} from './node-prompt-document.js'
 
 const placePopup = (pos) => ({x: pos.x - 15, y: pos.y + 10})
 const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param})
@@ -19,10 +20,9 @@ export const nodeClickHandling = {
             header,
             pos,
             uid: node.uid,
-            mode: 'node-sections',
-            sections: node.prompts.snapshot(''),
+            text: getNodePromptDocument(node),
             open: promptArl ? () => tx.send('open source file', {arl: promptArl}) : null,
-            ok: (sections) => doEdit(tx,"changeNodePrompt",{node, sections})
+            ok: (document) => doEdit(tx,"changeNodePrompt",{node, document})
         })
     },
 

@@ -4,7 +4,7 @@
 // ------------------------------------------------------------------
 
 import {Path, ARL} from '../../types/arl/index.js'
-import {Document} from './document.js'
+import {Document, TextDocument} from './document.js'
 
 //Constructor for document manager
 export function DocumentManager(tx, sx) {
@@ -14,6 +14,11 @@ export function DocumentManager(tx, sx) {
 
 	// the document that is being handled by the editor
 	this.active = null
+
+    // ARL currently being opened. Loading is owned here so every document
+    // source (workspace, source navigation, URL parameters) behaves alike.
+    this.loading = null
+    this.loadingSequence = 0
 
     // the list of documents being handled
     this.documents = []
@@ -50,26 +55,41 @@ DocumentManager.prototype = {
     haveDocument(arl) {
 
         return this.documents.find(doc =>
-            doc.model.getArl()?.equals(arl)
+            doc.getArl()?.equals(arl)
         )
     },
 
-    openDocument(arl) {
+    makeDocument(arl, line=null) {
+        return arl?.getPath?.()?.toLowerCase().endsWith('.blu')
+            ? new Document(arl)
+            : new TextDocument(arl, line)
+    },
 
-        // create a new document for a model
-        const doc = new Document(arl)
+    activateDocument(doc) {
+        this.active = doc ?? null
+
+        if (doc?.kind === 'text') {
+            this.tx.send('doc.set active', null)
+            this.tx.send('text.set active', doc)
+        }
+        else {
+            this.tx.send('text.set active', null)
+            this.tx.send('doc.set active', doc ?? null)
+        }
+    },
+
+    openDocument(arl, line=null) {
+
+        const doc = this.makeDocument(arl, line)
 
         // save in the list
         this.documents.push(doc)
 
         // set a new tab
-        this.tx.send('tab.new', arl.getName())
+        this.tx.send('tab.new', doc.getTab())
 
         // set as the active document
-        this.tx.send('doc.set active', doc)
-
-        // save here also
-        this.active = doc
+        this.activateDocument(doc)
     },
 
 	// bring an existing document to the foreground
@@ -79,13 +99,10 @@ DocumentManager.prototype = {
         if (!doc) return 
 
         // select the tab for the doc
-        this.tx.send("tab.select", doc.model.getArl().getName())
+        this.tx.send("tab.select", doc.getTabId())
 
         // set the doc as the active document
-        this.tx.send('doc.set active', doc)
-
-        // set as active
-        this.active = doc
+        this.activateDocument(doc)
     },
 
     /**
@@ -96,9 +113,19 @@ DocumentManager.prototype = {
      */
     async onDocSelected(arl) {
 
-        const docArl = await this.resolveDocumentArl(arl)
-        const doc = this.haveDocument(docArl)
-        doc ? this.toForeground(doc) : this.openDocument(docArl)
+        const request = arl?.arl ? arl : {arl}
+        const sequence = this.beginLoading(request.arl)
+        try {
+            const docArl = await this.resolveDocumentArl(request.arl)
+            if (sequence !== this.loadingSequence) return
+            this.loading = docArl
+            const doc = this.haveDocument(docArl)
+            if (doc && Number.isInteger(request.line)) doc.line = request.line
+            doc ? this.toForeground(doc) : this.openDocument(docArl, request.line)
+        }
+        catch (error) {
+            if (sequence === this.loadingSequence) this.failLoading(request.arl, error)
+        }
 	},
 
     /**
@@ -107,9 +134,19 @@ DocumentManager.prototype = {
      */
     async onDocOpen(arl) {
 
-        const docArl = await this.resolveDocumentArl(arl)
-        const doc = this.haveDocument(docArl)
-        doc ? this.toForeground(doc) : this.openDocument(docArl)
+        const request = arl?.arl ? arl : {arl}
+        const sequence = this.beginLoading(request.arl)
+        try {
+            const docArl = await this.resolveDocumentArl(request.arl)
+            if (sequence !== this.loadingSequence) return
+            this.loading = docArl
+            const doc = this.haveDocument(docArl)
+            if (doc && Number.isInteger(request.line)) doc.line = request.line
+            doc ? this.toForeground(doc) : this.openDocument(docArl, request.line)
+        }
+        catch (error) {
+            if (sequence === this.loadingSequence) this.failLoading(request.arl, error)
+        }
     },
 
     onDocGet(){},
@@ -131,13 +168,10 @@ DocumentManager.prototype = {
         doc.view.initRoot(Path.nameOnly(arl.getPath()))
 
         // show the tab
-        this.tx.send('tab.new', arl.getName())
+        this.tx.send('tab.new', doc.getTab())
 
 		// set the document
-		this.tx.send('doc set active', doc)
-
-		// set active
-		this.active = doc
+		this.activateDocument(doc)
 	},
     /**
      * @prompt Notification that a document has been renamed.
@@ -171,8 +205,12 @@ DocumentManager.prototype = {
         // notation
         const doc = this.active
 
+        // Text files save directly through their ARL. Save As remains a model
+        // operation until the workspace exposes a generic destination picker.
+        if (doc.kind !== 'model') return
+
         // save the old doc name
-        const oldName = doc.model.getArl().getName()
+        const oldName = doc.getTabId()
 
         // request the path for the save as operation
         this.tx.send("file.save as filename",{  title:  'Save as...' ,
@@ -205,7 +243,7 @@ DocumentManager.prototype = {
 
         // get all the arl
         this.documents.forEach( doc => {
-            if (doc.model.getArl()) models.push(doc.model.getArl())
+            if (doc.kind === 'model' && doc.getArl()) models.push(doc.getArl())
         })
 
         // return the array of files
@@ -218,57 +256,17 @@ DocumentManager.prototype = {
      * @param {string} name - Name of the tab to close.
      */
     onTabRequestToClose(name) {
+        const index = this.documents.findIndex((doc) => doc.getTabId() === name)
+        if (index < 0) return
 
-        // notation
-        const L = this.documents.length
+        const [closed] = this.documents.splice(index, 1)
+        this.tx.send('tab.remove', name)
 
-        // go through all documents
-        for (let i=0; i<L; i++) {
+        if (closed !== this.active) return
 
-            // find the tab to remove
-            if (name == this.documents[i].model.getArl().getName()) {
-
-                // shift the documents below one position up
-                for (let j=i; j<L-1; j++) this.documents[j] = this.documents[j+1]
-
-                // the array is one position shorter
-                this.documents.pop()
-
-                // remove the tab
-                this.tx.send("tab.remove",name)
-
-                // if we close the active doc, we have to change that
-                if (name == this.active.model.getArl().getName()) {
-
-                    // choose the doc below
-                    if (i+1<L-1) {
-                        
-                        // set the active document
-						this.active = this.documents[i+1]
-
-                        // select the tab in the ribbon
-                        this.tx.send("tab.select", this.active.model.getArl().getName())
-					}
-                    // .. or the doc above
-                    else if (i > 0) {
-
-                        // set the active document
-                        this.active = this.documents[i-1]
-
-                        // select the tab in the ribbon
-                        this.tx.send("tab.select", this.active.model.getArl().getName())
-                    }
-
-                    // or nothing..
-                    else this.active = null
-
-                    // the active view is also the selected tab
-					this.tx.send('doc.set active', this.active )
-                }
-                // no need to look to the next view
-                return
-            }
-        }       
+        const next = this.documents[index] ?? this.documents[index - 1] ?? null
+        if (next) this.tx.send('tab.select', next.getTabId())
+        this.activateDocument(next)
     },
 
     /**
@@ -279,20 +277,69 @@ DocumentManager.prototype = {
 	onTabRequestToSelect(name) {
 
         // check if the file is in the list of open files
-        const doc = this.documents.find( doc => doc.model.getArl().getName() == name)
+        const doc = this.documents.find( doc => doc.getTabId() == name)
 
         // if there is already a view, bring the view to the foreground
         if (!doc) return
 
         // set the doc as the active document
-        this.tx.send("doc.set active", doc)
+        this.activateDocument(doc)
 
         // send out a message
         this.tx.send("tab.select", name)
 
-        // set the active doc here also
-        this.active = doc
 	},
+
+    onFileSaveActive() {
+        if (this.active?.kind === 'text') this.tx.send('text.save', this.active)
+    },
+
+    beginLoading(arl) {
+        const sequence = ++this.loadingSequence
+        if (!arl) return sequence
+        this.loading = arl
+        this.tx.send('file.loading', arl)
+        return sequence
+    },
+
+    finishLoading(arl) {
+        if (!this.loading) return
+        const sameArl = !arl || this.loading?.equals?.(arl) || arl?.equals?.(this.loading)
+        const loadingPath = this.loading?.getFullPath?.()
+        const completedPath = arl?.getFullPath?.()
+        const samePath = Boolean(loadingPath && completedPath && loadingPath === completedPath)
+        if (!sameArl && !samePath) return
+        this.loading = null
+        this.tx.send('file.loaded', arl)
+    },
+
+    failLoading(arl, error) {
+        if (!this.loading) return
+        const sameArl = !arl || this.loading?.equals?.(arl) || arl?.equals?.(this.loading)
+        const loadingPath = this.loading?.getFullPath?.()
+        const failedPath = arl?.getFullPath?.()
+        const samePath = Boolean(loadingPath && failedPath && loadingPath === failedPath)
+        if (!sameArl && !samePath) return
+        if (error) console.error(`Could not load ${arl?.getPath?.() ?? 'document'}:`, error)
+        this.loading = null
+        this.tx.send('file.failed', arl)
+    },
+
+    onModelLoaded(arl) {
+        this.finishLoading(arl)
+    },
+
+    onTextLoaded(arl) {
+        this.finishLoading(arl)
+    },
+
+    onModelFailed(arl) {
+        this.failLoading(arl)
+    },
+
+    onTextFailed(arl) {
+        this.failLoading(arl)
+    },
 
     // check for URL query parameters "https://site.com/somewhere/?model=/path/to/model.vmblu"
     checkForQueryParameters() {

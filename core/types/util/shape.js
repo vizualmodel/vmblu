@@ -278,7 +278,7 @@ centerLineText(ctx, text,cText,cLine,x,y,w,h) {
     ctx.fillText(text, x + (w - tm.width)/2, y+0.75*h)
 },
 
-// interface text - link = 0, 1 or 2
+// interface text
 ifName(ctx, text,color,rc) {
 
     const {x,y,w,h} = rc
@@ -287,6 +287,8 @@ ifName(ctx, text,color,rc) {
 
     ctx.strokeStyle = color.line
     ctx.fillStyle = color.line
+    ctx.lineWidth=1
+
     const tm = ctx.measureText(text)
     const guard = 5
 
@@ -566,6 +568,13 @@ wirelessSymbol(ctx, x, y,r,color) {
     ctx.arc(cx, cy,r-4,Math.PI,-Math.PI/2)
 
     ctx.stroke()
+},
+
+xemptyLabel(ctx, x,y,r, color) {
+
+    ctx.beginPath()
+    ctx.fillStyle = color
+    ctx.fillRect(x-r,y-r,2*r,2*r)
 },
 
 emptyLabel(ctx, x,y,r, color) {

@@ -14,11 +14,29 @@ let ribbon = {
     tabs: [],
 }
 
+function tabId(tab) {
+    return typeof tab === 'string' ? tab : tab?.id
+}
+
+function tabLabel(tab) {
+    if (typeof tab !== 'string' && tab?.label) return tab.label
+    const id = tabId(tab) ?? ''
+    try {
+        const url = new URL(id)
+        return decodeURIComponent(url.pathname.split('/').filter(Boolean).at(-1) ?? id)
+    } catch {
+        return id.replaceAll('\\', '/').split('/').filter(Boolean).at(-1) ?? id
+    }
+}
+
 export const handlers =  {
 
-onTabNew(name) {
+onTabNew(tab) {
 
-    ribbon.selected = ribbon.tabs.push(name) - 1
+    const descriptor = typeof tab === 'string'
+        ? {id: tab, label: tabLabel(tab), readOnly: false}
+        : {id: tab?.id, label: tabLabel(tab), readOnly: tab?.readOnly === true}
+    ribbon.selected = ribbon.tabs.push(descriptor) - 1
     ribbon = ribbon
 },
 
@@ -30,7 +48,7 @@ onTabRemove(name) {
     // remove the tab with the name
     const L = tabs.length
     for (let i=0; i<L; i++) {
-        if (tabs[i] == name) {
+        if (tabId(tabs[i]) == name) {
             if (L > 1) for (let j=i; j<L-1; j++ )  tabs[j] = tabs[j+1]
             tabs.pop()
             break
@@ -45,8 +63,8 @@ onTabRename({oldName, newName}) {
     // notation
     const tabs = ribbon.tabs
 
-    const index = tabs.findIndex( tab => tab == oldName)
-    if (index >=0 ) tabs[index] = newName
+    const index = tabs.findIndex( tab => tabId(tab) == oldName)
+    if (index >=0 ) tabs[index] = {id: newName, label: tabLabel(newName)}
     ribbon = ribbon
 },
 
@@ -55,7 +73,7 @@ onTabSelect(name) {
     // notation
     const tabs = ribbon.tabs
 
-    const index = tabs.findIndex( tab => tab == name)
+    const index = tabs.findIndex( tab => tabId(tab) == name)
     if (index >= 0) ribbon.selected = index
     ribbon = ribbon
 },
@@ -65,10 +83,10 @@ onTabSelect(name) {
 // Event Functions 
 function onClick(e) {
     // get the uid of the tab clicked
-    const index = e.target.getAttribute("data-index") 
+    const index = Number(e.currentTarget.getAttribute("data-index"))
 
     if (index < 0 || index >= ribbon.tabs.length) return
-    tx.send("tab.request to select", ribbon.tabs[index])
+    tx.send("tab.request to select", tabId(ribbon.tabs[index]))
 }
 
 function onClose(e) {
@@ -76,10 +94,10 @@ function onClose(e) {
     e.stopPropagation()
 
     // get the uid of the tab clicked
-    const index = e.target.parentNode.getAttribute("data-index")  
+    const index = Number(e.currentTarget.parentNode.getAttribute("data-index"))
 
     if (index < 0 || index >= ribbon.tabs.length) return
-    tx.send("tab.request to close", ribbon.tabs[index])
+    tx.send("tab.request to close", tabId(ribbon.tabs[index]))
 }
 
 function onKeydown(e) {
@@ -113,6 +131,7 @@ function onKeydown(e) {
 }
 .tab {
 	display: inline-block;
+    position: relative;
     align-items: center;
     height:100%;
     font-size: var(--sFontTab);
@@ -152,7 +171,9 @@ function onKeydown(e) {
     visibility: hidden;
     font-family: var(--fontBase);
     font-size:var(--sFontFullName);
-    width: 10rem;
+    width: max-content;
+    min-width: 10rem;
+    max-width: 30rem;
     background-color: var(--bgFullName);
     color: var(--cTooltip);
     text-align: left;
@@ -161,12 +182,20 @@ function onKeydown(e) {
     padding: 0rem 0.1rem 0.1rem 0rem;
     
     /* Position the tooltip */
-    position: relative;
+    position: absolute;
     z-index: 1;
-    top: 0.2rem;
+    top: 100%;
+    left: 0;
+    overflow-wrap: anywhere;
 }
 .tab:hover .full-name {
     visibility: visible;
+}
+.read-only {
+    margin-left: 0.4rem;
+    color: #999;
+    font-size: 0.75rem;
+    vertical-align: -0.1rem;
 }
 </style>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -174,15 +203,17 @@ function onKeydown(e) {
     {#each ribbon.tabs as tab, index}
         {#if index == ribbon.selected}
             <div class="tab selected" data-index={index} on:click={onClick} on:keydown={onKeydown}>
-                {tab}
+                {tab.label}
+                {#if tab.readOnly}<span class="material-icons-outlined read-only" title="Read-only" aria-label="Read-only">lock</span>{/if}
                 <input class="button"  type="button" on:click={onClose} on:keydown={onKeydown}>
-                <div class="full-name" style="width: {tab.length*0.5}rem;">{tab}</div>
+                <div class="full-name">{tab.id}</div>
             </div>
         {:else}
             <div class="tab" data-index={index} on:click={onClick} on:keydown={onKeydown}>
-                {tab}
+                {tab.label}
+                {#if tab.readOnly}<span class="material-icons-outlined read-only" title="Read-only" aria-label="Read-only">lock</span>{/if}
                 <input class="button"  type="button" on:click={onClose} on:keydown={onKeydown}>
-                <div class="full-name" style="width: {tab.length*0.5}rem;">{tab}</div>
+                <div class="full-name">{tab.id}</div>
             </div>
         {/if}
     {/each}

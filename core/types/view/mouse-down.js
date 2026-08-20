@@ -550,6 +550,7 @@ export const mouseDownHandling = {
                     case NONE:{
  
                         state.cable = hit.cable
+                        state.busLabel = hit.busLabel
                         state.cable.is.selected = true
 
                         // highlight the bus and its connections
@@ -564,7 +565,7 @@ export const mouseDownHandling = {
                         if (hit.busLabel == 'start') hit.cable.reverse()
                         state.busLabel = 'end'
 
-                        // change state
+                        // Keep the original threshold-based cable drawing behavior.
                         this.stateSwitch(doing.busRedraw)
                     }
                     break
@@ -574,6 +575,17 @@ export const mouseDownHandling = {
                     break
 
                     case CTRL:{
+                        state.cable = hit.cable
+                        state.cable.is.selected = true
+                        state.modo.wire = hit.cable.copyWire()
+                        state.modo.tacks = hit.cable.tacks.slice()
+                        state.modo.wires = hit.cable.copyTackWires()
+
+                        // Ctrl extends the cable, leaving endpoint tacks behind as interior tacks.
+                        hit.cable.releaseEndpointTacks(hit.busLabel)
+                        if (hit.busLabel == 'start') hit.cable.reverse()
+                        state.busLabel = 'end'
+                        this.stateSwitch(doing.busRedraw)
                     }
                     break
 
@@ -676,6 +688,7 @@ export const mouseDownHandling = {
                         state.tack = hit.tack
                         state.tack.route.select()
                         state.modo.wire = hit.tack.route.copyWire()
+                        state.modo.attachment = hit.tack.copyAttachment()
                         this.stateSwitch(doing.tackDrag)
                     }
                     break

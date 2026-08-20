@@ -370,7 +370,7 @@ View.prototype = {
             }
         }
 
-        // draw all the cable routes
+        // draw all the cable routes (only the from ones, the other are already drawn !)
         for(const cable of root.cables) {
             for(const tack of cable.tacks) {
                 if(tack.route?.from == tack) tack.route.render(ctx)

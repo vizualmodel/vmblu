@@ -1,20 +1,162 @@
 {
-  "version": "0.10.0",
+  "version": "1.10.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "0.10",
-    "schemaVersion": "0.10.0",
+    "compatibilityFamily": "1.10",
+    "schemaVersion": "1.10.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "0.10.0"
+      "version": "1.10.0"
     },
     "source": {
       "model": "playground.mod.blu",
-      "hash": "fnv1a64:a5c80a601964a089"
+      "hash": "fnv1a64:90bb116be96a3ed3"
     }
   },
   "entries": [
+    {
+      "node": "text editor",
+      "handles": [
+        {
+          "pin": "text.set-active",
+          "handler": "onTextSetActive",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 219,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "text.save",
+          "handler": "onTextSave",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 220,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "text.set-active",
+          "handler": "onTextSetActive",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 151,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "doc",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "content div",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 161
+        },
+        {
+          "pin": "text.failed",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 162
+        },
+        {
+          "pin": "content div",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 181
+        },
+        {
+          "pin": "text.loaded",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 183
+        },
+        {
+          "pin": "content div",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 189
+        },
+        {
+          "pin": "text.failed",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 190
+        }
+      ]
+    },
+    {
+      "node": "model pane",
+      "handles": [
+        {
+          "pin": "canvas",
+          "handler": "onCanvas",
+          "file": "../nodes/model-pane/model-pane.js",
+          "line": 24,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "nextCanvas",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: expected DomElement but got any"
+          ]
+        },
+        {
+          "pin": "menu.div",
+          "handler": "onMenuDiv",
+          "file": "../nodes/model-pane/model-pane.js",
+          "line": 29,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "nextMenu",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "legend.div",
+          "handler": "onLegendDiv",
+          "file": "../nodes/model-pane/model-pane.js",
+          "line": 33,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "nextLegend",
+              "type": "any",
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "content div",
+          "file": "../nodes/model-pane/model-pane.js",
+          "line": 26
+        }
+      ]
+    },
     {
       "node": "document manager",
       "handles": [
@@ -22,7 +164,7 @@
           "pin": "doc selected",
           "handler": "onDocSelected",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 97,
+          "line": 114,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +180,7 @@
           "pin": "doc new",
           "handler": "onDocNew",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 122,
+          "line": 159,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -54,7 +196,7 @@
           "pin": "doc renamed",
           "handler": "onDocRenamed",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 149,
+          "line": 183,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -75,7 +217,7 @@
           "pin": "save as",
           "handler": "onFileSaveAs",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 163,
+          "line": 197,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -91,7 +233,7 @@
           "pin": "save all",
           "handler": "onFileSaveAll",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 196,
+          "line": 234,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -101,7 +243,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 202,
+          "line": 240,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -111,7 +253,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 220,
+          "line": 258,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -128,52 +270,37 @@
         {
           "pin": "tab.new",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 134
-        },
-        {
-          "pin": "doc set active",
-          "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 137
+          "line": 171
         },
         {
           "pin": "file.save as filename",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 178
+          "line": 216
         },
         {
           "pin": "file.save",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 184
+          "line": 222
         },
         {
           "pin": "tab.rename",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 187
+          "line": 225
         },
         {
           "pin": "open models",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 212
+          "line": 250
         },
         {
           "pin": "tab.remove",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 238
+          "line": 263
         },
         {
           "pin": "tab.select",
           "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 250
-        },
-        {
-          "pin": "tab.select",
-          "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 259
-        },
-        {
-          "pin": "doc.set active",
-          "file": "../../core/nodes/document-manager/document-manager.js",
-          "line": 266
+          "line": 268
         }
       ]
     },
@@ -271,7 +398,7 @@
           "pin": "root",
           "handler": "onRoot",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 37,
+          "line": 41,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -287,7 +414,7 @@
           "pin": "redox.done",
           "handler": "onRedoxDone",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 47,
+          "line": 51,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -297,7 +424,7 @@
           "pin": "recalibrate",
           "handler": "onRecalibrate",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 52,
+          "line": 56,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -307,7 +434,7 @@
           "pin": "grid.on-off",
           "handler": "onGridOnOff",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 61,
+          "line": 65,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -317,7 +444,7 @@
           "pin": "application.prompt",
           "handler": "onApplicationPrompt",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 72,
+          "line": 76,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -333,7 +460,7 @@
           "pin": "size.change",
           "handler": "onSizeChange",
           "file": "../../core/nodes/view-manager/message.js",
-          "line": 83,
+          "line": 87,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -346,7 +473,13 @@
           ]
         }
       ],
-      "transmits": []
+      "transmits": [
+        {
+          "pin": "canvas",
+          "file": "../../core/nodes/view-manager/message.js",
+          "line": 12
+        }
+      ]
     },
     {
       "node": "view manager",
@@ -392,7 +525,7 @@
           "pin": "redox.doit",
           "handler": "onRedoxDoit",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 90,
+          "line": 102,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -416,7 +549,7 @@
           "pin": "redox.undo",
           "handler": "onRedoxUndo",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 100,
+          "line": 112,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -426,7 +559,7 @@
           "pin": "redox.redo",
           "handler": "onRedoxRedo",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 111,
+          "line": 123,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -436,7 +569,7 @@
           "pin": "accept.changes",
           "handler": "onAcceptChanges",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 123,
+          "line": 135,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -446,7 +579,7 @@
           "pin": "wire.check",
           "handler": "onWireCheck",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 135,
+          "line": 147,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -456,7 +589,7 @@
           "pin": "auto.layout",
           "handler": "onAutoLayout",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 156,
+          "line": 168,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -466,7 +599,7 @@
           "pin": "show.settings",
           "handler": "onShowSettings",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 171,
+          "line": 183,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -476,7 +609,7 @@
           "pin": "sync.model",
           "handler": "onSyncModel",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 216,
+          "line": 228,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -486,7 +619,7 @@
           "pin": "sync.links",
           "handler": "onSyncLinks",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 220,
+          "line": 232,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -496,7 +629,7 @@
           "pin": "make.lib",
           "handler": "onMakeLib",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 267,
+          "line": 279,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -512,7 +645,7 @@
           "pin": "make.app",
           "handler": "onMakeApp",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 292,
+          "line": 304,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -528,7 +661,7 @@
           "pin": "model.save",
           "handler": "onModelSave",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 413,
+          "line": 425,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -552,7 +685,7 @@
           "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 458,
+          "line": 479,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -562,7 +695,7 @@
           "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 485,
+          "line": 506,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -571,24 +704,24 @@
       ],
       "transmits": [
         {
-          "pin": "model.resolved",
-          "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 71
-        },
-        {
           "pin": "model.root",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 82
+          "line": 88
         },
         {
-          "pin": "redox.done",
+          "pin": "model.loaded",
+          "file": "../../core/nodes/model-manager/model-manager.js",
+          "line": 93
+        },
+        {
+          "pin": "model.failed",
           "file": "../../core/nodes/model-manager/model-manager.js",
           "line": 97
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 108
+          "line": 109
         },
         {
           "pin": "redox.done",
@@ -601,74 +734,84 @@
           "line": 132
         },
         {
+          "pin": "redox.done",
+          "file": "../../core/nodes/model-manager/model-manager.js",
+          "line": 144
+        },
+        {
           "pin": "info popup",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 145
+          "line": 157
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 153
+          "line": 165
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 159
+          "line": 171
         },
         {
           "pin": "model.header",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 184
+          "line": 196
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 193
+          "line": 205
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 207
+          "line": 219
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 211
+          "line": 223
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 254
+          "line": 266
         },
         {
           "pin": "get path",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 306
+          "line": 318
         },
         {
           "pin": "model.root",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 402
+          "line": 414
         },
         {
           "pin": "model.root",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 407
+          "line": 419
+        },
+        {
+          "pin": "info popup",
+          "file": "../../core/nodes/model-manager/model-manager.js",
+          "line": 431
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 463
+          "line": 484
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 491
+          "line": 512
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 503
+          "line": 524
         }
       ]
     },
@@ -679,12 +822,12 @@
         {
           "pin": "redox.doit",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 5
+          "line": 6
         },
         {
           "pin": "node prompt",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 18
+          "line": 19
         },
         {
           "pin": "open source file",

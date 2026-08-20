@@ -12,7 +12,10 @@ export const routeMoving = {
     },
 
     adjustCableEndpoint(tack, otherCenter) {
-        if (!tack?.cable?.is?.cable || !tack.is.endpoint) return false
+        if (!tack?.cable?.is?.cable || !tack.isEndpoint?.()) return false
+        if (this.wire.some((point, index) => index > 0 && (
+            point.x !== this.wire[index - 1].x || point.y !== this.wire[index - 1].y
+        ))) return false
 
         const cable = tack.cable
         cable.canonicalizeOrthogonalWire?.('endpoint adjustment')
@@ -35,7 +38,7 @@ export const routeMoving = {
 
         const moveTacksOnSegment = (segment, delta, axis) => {
             for (const otherTack of cable.tacks) {
-                if (otherTack.is.endpoint || otherTack.segment != segment) continue
+                if (otherTack.isEndpoint() || otherTack.segment != segment) continue
 
                 axis == 'x' ? otherTack.moveX(delta) : otherTack.moveY(delta)
             }
@@ -268,7 +271,7 @@ export const routeMoving = {
     },
 
     // The endpoint(s) of the route have changed - make a better route
-    adjust() {
+    adjust({moveCableEndpoint = true} = {}) {
         try {
             // in autoroute situations the wire can be missing
             if (!this.wire.length) return
@@ -292,8 +295,8 @@ export const routeMoving = {
             const df = {x: fn.x - fp.x, y: fn.y - fp.y}
             const dt = {x: tn.x - tp.x, y: tn.y - tp.y}
 
-            if (from.is.tack && this.adjustCableEndpoint(from, tn)) return
-            if (to.is.tack && this.adjustCableEndpoint(to, fn)) return
+            if (moveCableEndpoint && from.is.tack && this.adjustCableEndpoint(from, tn)) return
+            if (moveCableEndpoint && to.is.tack && this.adjustCableEndpoint(to, fn)) return
 
             // check if both endpoints moved over the same distance - just move the route
             if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)

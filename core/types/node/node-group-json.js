@@ -190,6 +190,8 @@ export const jsonHandling = {
 
         const source = convert.rawToEndPoint(rawRoute.from)
         const target = convert.rawToEndPoint(rawRoute.to)
+        const sourceEndpoint = !!source?.endpoint
+        const targetEndpoint = !!target?.endpoint
 
         // check
         if (!source || !target) return null;
@@ -212,12 +214,10 @@ export const jsonHandling = {
         // if the endpoint is a bus or cable, make a tack
         if (from.is.cable) {
             from = from.newTack(source.alias, source.selective ?? defaultSelectivity(from, to));
-            from.is.endpoint = !!source.endpoint
             from.is.bridge = !!source.bridge
         }
         if (to.is.cable) {
             to = to.newTack(target.alias, target.selective ?? defaultSelectivity(to, from));
-            to.is.endpoint = !!target.endpoint
             to.is.bridge = !!target.bridge
         }
 
@@ -243,6 +243,13 @@ export const jsonHandling = {
         // save the routes for pins and pads
         from.is.tack ? from.setRoute(route) : from.routes.push(route)
         to.is.tack ? to.setRoute(route) : to.routes.push(route)
+
+        if (from.is.tack && sourceEndpoint) {
+            from.attachEndpoint(from.cable.endpointAt(from.center()) ?? from.nearestEndpoint(from.center()))
+        }
+        if (to.is.tack && targetEndpoint) {
+            to.attachEndpoint(to.cable.endpointAt(to.center()) ?? to.nearestEndpoint(to.center()))
+        }
 
         // this is required if a linked node has changed (eg more pins or pins have moved...)
         route.adjust()

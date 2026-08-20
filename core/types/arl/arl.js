@@ -9,6 +9,20 @@ export function ARL(path) {
 
     // the resolved url
     this.url = null
+
+    // Resource access travels with the locator. HTTP-backed ARLs remain
+    // writable by default for compatibility with the vmblu simple server.
+    this.access = Object.freeze({read: true, write: true})
+}
+
+export class ReadOnlyResourceError extends Error {
+    constructor(path, operation = 'write') {
+        super(`${operation} is not allowed for read-only resource ${path}`)
+        this.name = 'ReadOnlyResourceError'
+        this.code = 'ERR_ARL_READ_ONLY'
+        this.path = path
+        this.operation = operation
+    }
 }
 
 ARL.prototype =  {  // makes a url based on the components
@@ -47,6 +61,19 @@ sameDir(arl) {
 
 getPath() {
     return this._locator
+},
+
+setReadOnly(readOnly = true) {
+    this.access = Object.freeze({...this.access, write: !readOnly})
+    return this
+},
+
+canWrite() {
+    return this.access?.write !== false
+},
+
+assertWritable(operation = 'write') {
+    if (!this.canWrite()) throw new ReadOnlyResourceError(this.getPath(), operation)
 },
 
 getExt() {
@@ -95,6 +122,7 @@ resolve(path) {
     const url = new URL(normalizedPath, this.url)
     const arl = new ARL(url.pathname)
     arl.url = url
+    arl.access = this.access
 
     // done
     return arl
@@ -119,6 +147,7 @@ makeRelative(ref) {
 copy() {
     const arl = new ARL(this._locator)
     arl.url = this.url ? new URL(this.url) : null
+    arl.access = this.access
     return arl
 },
 
@@ -174,6 +203,9 @@ async get(as='text') {
 },
 
 async save(body) {
+
+    // Enforce access before performing any network operation.
+    this.assertWritable('save')
 
     // check
     if (!this.validURL()) return null

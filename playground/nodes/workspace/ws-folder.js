@@ -7,10 +7,14 @@ function showMessage(title, message) {}
 
 const contextMenu = []
 
-export function WSFileSystem(kind) {
+export function WSFileSystem(kind, options = {}) {
 
     // The type of file system: none, local, api, fixed
     this.kind = kind;
+
+    // Access is a property of the mounted file system, not merely its UI.
+    this.readOnly = options.readOnly === true;
+    this.provider = options.provider ?? null;
 
     // the root
     this.root = null;
@@ -110,6 +114,10 @@ WSFolder.prototype = {
         return parent
     },
 
+    isReadOnly() {
+        return this.getFileSystem()?.readOnly === true
+    },
+
     checkName(name) {
         if (name.length < 1) {
             return false
@@ -179,6 +187,10 @@ WSFolder.prototype = {
                 return;
 
             case 'api':
+                this.is.stale = false
+                return;
+
+            case 'github':
                 this.is.stale = false
                 return;
 
