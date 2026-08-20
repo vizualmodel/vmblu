@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-core",
-  "version": "0.10.0",
+  "version": "1.10.0",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "ajv": "^8.18.0",
-    "@vizualmodel/vmblu-cli": ">=0.10.0 <0.11.0",
+    "@vizualmodel/vmblu-cli": ">=1.10.0 <1.11.0",
     "@vizualmodel/vmblu-runtime": "file:../runtime",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"

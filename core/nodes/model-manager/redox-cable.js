@@ -49,6 +49,26 @@ cableDelete: {
     }    
 },
 
+cableToRoutes: {
+
+    doit({view, cable}) {
+        const conversion = cable.convertToRoutes(view?.root)
+        if (conversion) this.saveEdit('cableToRoutes', conversion)
+    },
+
+    undo({node, cable, tacks, routes}) {
+        for (const route of routes.slice()) route.disconnect()
+        node.restoreCable(cable)
+        cable.reconnect(tacks.slice())
+    },
+
+    redo({node, cable, routes}) {
+        cable.disconnect()
+        node.removeCable(cable)
+        for (const route of routes) route.reconnect()
+    }
+},
+
 cableStraightConnections: {
 
     doit({cable}) {
@@ -57,8 +77,8 @@ cableStraightConnections: {
 
         for(const tack of cable.tacks) {
             wireArray.push({
-                tack, 
-                oldPos:{x: tack.rect.x, y: tack.rect.y}, 
+                tack,
+                attachment: tack.copyAttachment(),
                 wire: tack.route.copyWire()
             })
         }
@@ -71,9 +91,8 @@ cableStraightConnections: {
 
         for (const entry of wireArray) {
             const tack = entry.tack
-            tack.rect.x = entry.oldPos.x
-            tack.rect.y = entry.oldPos.y
             tack.route.restoreWire(entry.wire)
+            tack.restoreAttachment(entry.attachment)
         }
     },
     redo({cable}) {
@@ -186,16 +205,16 @@ cableDrag: {
 
 tackDrag: {
 
-    doit({tack, oldWire, newWire}) {
-        this.saveEdit('tackDrag',{tack, oldWire, newWire})       
+    doit({tack, oldWire, newWire, oldAttachment, newAttachment}) {
+        this.saveEdit('tackDrag',{tack, oldWire, newWire, oldAttachment, newAttachment})
     },
-    undo({tack, oldWire}) {
+    undo({tack, oldWire, oldAttachment}) {
         tack.route.restoreWire(oldWire)
-        tack.setRoute(tack.route)
+        tack.restoreAttachment(oldAttachment)
     },
-    redo({tack, newWire}) {
+    redo({tack, newWire, newAttachment}) {
         tack.route.restoreWire(newWire)
-        tack.setRoute(tack.route)
+        tack.restoreAttachment(newAttachment)
     }
 },
 

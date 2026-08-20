@@ -4,8 +4,8 @@ import {readFile} from 'node:fs/promises'
 
 import {RawHandling} from '../types/model/blueprint-raw.js'
 
-test('0.10.0 visualization schema uses the canonical interface key', async () => {
-    const schemaUrl = new URL('../../cli/context/0.10.0/viz.schema.json', import.meta.url)
+test('1.10.0 visualization schema uses the canonical interface key', async () => {
+    const schemaUrl = new URL('../../cli/context/1.10.0/viz.schema.json', import.meta.url)
     const schema = JSON.parse(await readFile(schemaUrl, 'utf8'))
     const interfaceSchema = schema.$defs.Interface
 

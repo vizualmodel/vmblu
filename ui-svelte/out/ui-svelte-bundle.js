@@ -297,7 +297,7 @@ function createTx(runtime, source) {
     send(pin, param) {
       if (pin) {
         const tx = source.findTx(pin);
-        if (tx) return runtime.sendTo(tx, source, param);
+        if (tx) return runtime.sendTo(source, tx.pin, tx.targets, param);
       }
       console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin ?? "missing !!"}"`, source.txMap);
       return 0;
@@ -305,7 +305,7 @@ function createTx(runtime, source) {
     request(pin, param, timeout = 0) {
       if (pin) {
         const tx = source.findTx(pin);
-        if (tx) return runtime.requestFrom(tx, source, param, timeout);
+        if (tx) return runtime.requestFrom(source, tx.pin, tx.targets, param, timeout);
       }
       console.warn(`** NO OUTPUT PIN ** Node "${source.name}" pin: "${pin}"`, source.txMap);
       return runtime.reject("No such output pin");
@@ -319,7 +319,7 @@ function createTx(runtime, source) {
     reschedule() {
       if (source.msg) runtime.reschedule(source.msg);
     },
-    select(nodeName) {
+    to(nodeName) {
       const _nodeName = nodeName;
       return {
         send(pin, param) {
@@ -328,9 +328,7 @@ function createTx(runtime, source) {
             if (tx) {
               const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
               if (actualTarget) {
-                const txCopy = new TX(tx.pin, tx.channel);
-                txCopy.targets = [actualTarget];
-                return runtime.sendTo(txCopy, source, param);
+                return runtime.sendTo(source, tx.pin, [actualTarget], param);
               }
               console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
               return 0;
@@ -345,9 +343,7 @@ function createTx(runtime, source) {
             if (tx) {
               const actualTarget = tx.targets.find((target) => target.actor.name.toLowerCase() == _nodeName.toLowerCase());
               if (actualTarget) {
-                const txCopy = new TX(tx.pin, tx.channel);
-                txCopy.targets = [actualTarget];
-                return runtime.requestFrom(txCopy, source, param, timeout);
+                return runtime.requestFrom(source, tx.pin, [actualTarget], param, timeout);
               }
               console.warn(`** Select: no such target** Node "${_nodeName}" is not connected to pin ${pin}`);
               return runtime.reject("selected node not connected");
@@ -357,14 +353,37 @@ function createTx(runtime, source) {
           return runtime.reject("No such output pin");
         }
       };
+    },
+    select(nodeName) {
+      return this.to(nodeName);
     }
   };
 }
 __name(createTx, "createTx");
 
+// shared/release-version.js
+var RUNTIME_VERSION = "1.10.0";
+function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+  const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
+  return `${match[1]}.${match[2]}`;
+}
+__name(runtimeCompatibilityFamily, "runtimeCompatibilityFamily");
+function assertRuntimeCompatibility(expectedFamily) {
+  if (!expectedFamily) return runtimeCompatibilityFamily();
+  const actualFamily = runtimeCompatibilityFamily();
+  if (expectedFamily !== actualFamily) {
+    throw new Error(`Incompatible vmblu runtime ${RUNTIME_VERSION}; generated application requires compatibility family ${expectedFamily}`);
+  }
+  return actualFamily;
+}
+__name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
+
 // shared/runtime.js
 var _Runtime = class _Runtime {
   constructor(nodeList = [], options = {}) {
+    var _a;
+    assertRuntimeCompatibility((_a = options == null ? void 0 : options.vmblu) == null ? void 0 : _a.compatibilityFamily);
     this.actors = [];
     this.receiveTimer = 0;
     this.idleTimer = 0;
@@ -472,33 +491,33 @@ var _Runtime = class _Runtime {
   logNotConnected(nodeName, pinName) {
     console.log(`${nodeName}[${pinName}] : not connected.`);
   }
-  sendTo(tx, source, param) {
+  sendTo(source, pin, targets, param) {
     var _a, _b;
-    if (tx.targets.length < 1) {
-      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+    if (targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, pin);
       return 0;
     }
     ++this.msgCount;
     const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
-    for (const target of tx.targets) {
-      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+    for (const target of targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef: 0, txPin: pin, rxRef: 0, rxPin: target.pin });
       if (log) this.logMessage(this.qOut.at(-1));
     }
     this.idleCount = 0;
     if (!this.receiveTimer) this.scheduleReceive();
-    return tx.targets.length;
+    return targets.length;
   }
-  requestFrom(tx, source, param, timeout) {
+  requestFrom(source, pin, targets, param, timeout) {
     var _a, _b;
-    if (tx.targets.length < 1) {
-      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, tx.pin);
+    if (targets.length < 1) {
+      if ((_a = source.logsMessages) == null ? void 0 : _a.call(source)) this.logNotConnected(source.name, pin);
       return this.reject("Not connected");
     }
     const txRef = ++this.msgCount;
     let channelCount = 0;
     const log = (_b = source.logsMessages) == null ? void 0 : _b.call(source);
-    for (const target of tx.targets) {
-      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: tx.pin, rxRef: 0, rxPin: target.pin });
+    for (const target of targets) {
+      this.qOut.push({ source, dest: target.actor, hix: target.hix, param, txRef, txPin: pin, rxRef: 0, rxPin: target.pin });
       if (log) this.logReqReply(this.qOut.at(-1), "request");
       if (target.channel) channelCount++;
     }
@@ -5678,7 +5697,9 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$s = template(`<div class="main svelte-1pnzbgh"><div class="tabs svelte-1pnzbgh"></div> <div class="content svelte-1pnzbgh"></div></div>`);
+var root_1$n = template(`<div class="content-status svelte-hvifmj" role="status" aria-live="polite"><span class="spinner svelte-hvifmj" aria-hidden="true"></span> <span class="svelte-hvifmj"> </span></div>`);
+var root_3$5 = template(`<div class="content-status error svelte-hvifmj" role="alert"> </div>`);
+var root$s = template(`<div class="main svelte-hvifmj"><div class="tabs svelte-hvifmj"></div> <div class="content-shell svelte-hvifmj"><div class="content svelte-hvifmj"></div> <!></div></div>`);
 
 function Vertical_menu_tabs_content($$anchor, $$props) {
 	push($$props, false);
@@ -5687,9 +5708,8 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	let mainDiv = mutable_state();
 	let contentDiv = mutable_state();
 	let tabsDiv = mutable_state();
-	// menuDiv is initialised with a message
-	let menuDiv = null;
-	let legendDiv = null;
+	let loadingName = mutable_state('');
+	let loadingError = mutable_state('');
 
 	onMount(async () => {});
 
@@ -5697,22 +5717,22 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 		onContentDiv(div) {
 			// replace the content
 			get(contentDiv).replaceChildren(div);
-			// append the menu again
-			if (menuDiv) get(contentDiv).append(menuDiv);
-			// append the team legend again
-			if (legendDiv) get(contentDiv).append(legendDiv);
 			// send out the div
 			tx().send('div', get(mainDiv));
 		},
-		onMenuDiv(div) {
-			// save
-			menuDiv = div;
-			// append
-			get(contentDiv).append(menuDiv);
+		onContentLoading(arl) {
+			set(loadingName, arl?.getName?.() ?? 'document');
+			set(loadingError, '');
 		},
-		onLegendDiv(div) {
-			legendDiv = div;
-			get(contentDiv).append(legendDiv);
+		onContentLoaded() {
+			set(loadingName, '');
+			set(loadingError, '');
+		},
+		onContentFailed(arl) {
+			const name = (arl?.getName?.() ?? get(loadingName)) || 'document';
+
+			set(loadingName, '');
+			set(loadingError, `Could not load ${name}.`);
 		},
 		onTabsDiv(div) {
 			get(tabsDiv).replaceChildren(div);
@@ -5725,7 +5745,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 			const w = Math.floor(get(contentDiv).clientWidth);
 			const h = Math.floor(get(contentDiv).clientHeight);
 
-			tx().send("content size change", { x: 0, y: 0, w, h });
+			tx().send("content.size change", { x: 0, y: 0, w, h });
 		},
 		onShow() {
 			tx().send('div', get(mainDiv));
@@ -5743,8 +5763,42 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	bind_this(div_2, ($$value) => set(tabsDiv, $$value), () => get(tabsDiv));
 
 	var div_3 = sibling(div_2, 2);
+	var div_4 = child(div_3);
 
-	bind_this(div_3, ($$value) => set(contentDiv, $$value), () => get(contentDiv));
+	bind_this(div_4, ($$value) => set(contentDiv, $$value), () => get(contentDiv));
+
+	var node = sibling(div_4, 2);
+
+	if_block(
+		node,
+		() => get(loadingName),
+		($$anchor) => {
+			var div_5 = root_1$n();
+			var span = sibling(child(div_5), 2);
+			var text = child(span);
+			template_effect(() => set_text(text, `Loading ${get(loadingName) ?? ""}...`));
+			append($$anchor, div_5);
+		},
+		($$anchor) => {
+			var fragment = comment$1();
+			var node_1 = first_child(fragment);
+
+			if_block(
+				node_1,
+				() => get(loadingError),
+				($$anchor) => {
+					var div_6 = root_3$5();
+					var text_1 = child(div_6);
+					template_effect(() => set_text(text_1, get(loadingError)));
+					append($$anchor, div_6);
+				},
+				null,
+				true
+			);
+
+			append($$anchor, fragment);
+		}
+	);
 	append($$anchor, div_1);
 	bind_prop($$props, "handlers", handlers);
 	return pop({ handlers });
@@ -6428,9 +6482,11 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$e = template(`<div class="tab selected svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root_3$5 = template(`<div class="tab svelte-14ugtii"> <input class="button svelte-14ugtii" type="button"> <div class="full-name svelte-14ugtii"> </div></div>`);
-var root$m = template(`<div class="tab-ribbon svelte-14ugtii"></div>`);
+var root_3$4 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
+var root_2$d = template(`<div class="tab selected svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
+var root_5$3 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
+var root_4$4 = template(`<div class="tab svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
+var root$m = template(`<div class="tab-ribbon svelte-1ue9whs"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -6444,9 +6500,39 @@ function Tab_ribbon($$anchor, $$props) {
 	// The tabs
 	let ribbon = mutable_state({ div: null, selected: -1, tabs: [] });
 
+	function tabId(tab) {
+		return typeof tab === 'string' ? tab : tab?.id;
+	}
+
+	function tabLabel(tab) {
+		if (typeof tab !== 'string' && tab?.label) return tab.label;
+
+		const id = tabId(tab) ?? '';
+
+		try {
+			const url = new URL(id);
+
+			return decodeURIComponent(url.pathname.split('/').filter(Boolean).at(-1) ?? id);
+		} catch {
+			return id.replaceAll('\\', '/').split('/').filter(Boolean).at(-1) ?? id;
+		}
+	}
+
 	const handlers = {
-		onTabNew(name) {
-			mutate(ribbon, get(ribbon).selected = get(ribbon).tabs.push(name) - 1);
+		onTabNew(tab) {
+			const descriptor = typeof tab === 'string'
+				? {
+					id: tab,
+					label: tabLabel(tab),
+					readOnly: false
+				}
+				: {
+					id: tab?.id,
+					label: tabLabel(tab),
+					readOnly: tab?.readOnly === true
+				};
+
+			mutate(ribbon, get(ribbon).selected = get(ribbon).tabs.push(descriptor) - 1);
 			set(ribbon, get(ribbon));
 		},
 		onTabRemove(name) {
@@ -6456,7 +6542,7 @@ function Tab_ribbon($$anchor, $$props) {
 			const L = tabs.length;
 
 			for (let i = 0; i < L; (i += 1) - 1) {
-				if (tabs[i] == name) {
+				if (tabId(tabs[i]) == name) {
 					if (L > 1) for (let j = i; j < L - 1; (j += 1) - 1) tabs[j] = tabs[j + 1];
 					tabs.pop();
 					break;
@@ -6468,15 +6554,15 @@ function Tab_ribbon($$anchor, $$props) {
 		onTabRename({ oldName, newName }) {
 			// notation
 			const tabs = get(ribbon).tabs;
-			const index = tabs.findIndex((tab) => tab == oldName);
+			const index = tabs.findIndex((tab) => tabId(tab) == oldName);
 
-			if (index >= 0) tabs[index] = newName;
+			if (index >= 0) tabs[index] = { id: newName, label: tabLabel(newName) };
 			set(ribbon, get(ribbon));
 		},
 		onTabSelect(name) {
 			// notation
 			const tabs = get(ribbon).tabs;
-			const index = tabs.findIndex((tab) => tab == name);
+			const index = tabs.findIndex((tab) => tabId(tab) == name);
 
 			if (index >= 0) mutate(ribbon, get(ribbon).selected = index);
 			set(ribbon, get(ribbon));
@@ -6486,10 +6572,10 @@ function Tab_ribbon($$anchor, $$props) {
 	// Event Functions 
 	function onClick(e) {
 		// get the uid of the tab clicked
-		const index = e.target.getAttribute("data-index");
+		const index = Number(e.currentTarget.getAttribute("data-index"));
 
 		if (index < 0 || index >= get(ribbon).tabs.length) return;
-		tx().send("tab.request to select", get(ribbon).tabs[index]);
+		tx().send("tab.request to select", tabId(get(ribbon).tabs[index]));
 	}
 
 	function onClose(e) {
@@ -6497,10 +6583,10 @@ function Tab_ribbon($$anchor, $$props) {
 		e.stopPropagation();
 
 		// get the uid of the tab clicked
-		const index = e.target.parentNode.getAttribute("data-index");
+		const index = Number(e.currentTarget.parentNode.getAttribute("data-index"));
 
 		if (index < 0 || index >= get(ribbon).tabs.length) return;
-		tx().send("tab.request to close", get(ribbon).tabs[index]);
+		tx().send("tab.request to close", tabId(get(ribbon).tabs[index]));
 	}
 
 	function onKeydown(e) {}
@@ -6518,19 +6604,26 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$e();
+				var div_1 = root_2$d();
 
 				set_attribute(div_1, "data-index", index);
 
 				var text = child(div_1);
-				var input = sibling(text);
+				var node_1 = sibling(text);
+
+				if_block(node_1, () => get(tab).readOnly, ($$anchor) => {
+					var span = root_3$4();
+
+					append($$anchor, span);
+				});
+
+				var input = sibling(node_1, 2);
 				var div_2 = sibling(input, 2);
 				var text_1 = child(div_2);
 
 				template_effect(() => {
-					set_text(text, `${get(tab) ?? ""} `);
-					set_attribute(div_2, "style", `width: ${get(tab).length * 0.5 ?? ""}rem;`);
-					set_text(text_1, get(tab));
+					set_text(text, `${get(tab).label ?? ""} `);
+					set_text(text_1, get(tab).id);
 				});
 
 				event("click", input, onClose);
@@ -6540,19 +6633,26 @@ function Tab_ribbon($$anchor, $$props) {
 				append($$anchor, div_1);
 			},
 			($$anchor) => {
-				var div_3 = root_3$5();
+				var div_3 = root_4$4();
 
 				set_attribute(div_3, "data-index", index);
 
 				var text_2 = child(div_3);
-				var input_1 = sibling(text_2);
+				var node_2 = sibling(text_2);
+
+				if_block(node_2, () => get(tab).readOnly, ($$anchor) => {
+					var span_1 = root_5$3();
+
+					append($$anchor, span_1);
+				});
+
+				var input_1 = sibling(node_2, 2);
 				var div_4 = sibling(input_1, 2);
 				var text_3 = child(div_4);
 
 				template_effect(() => {
-					set_text(text_2, `${get(tab) ?? ""} `);
-					set_attribute(div_4, "style", `width: ${get(tab).length * 0.5 ?? ""}rem;`);
-					set_text(text_3, get(tab));
+					set_text(text_2, `${get(tab).label ?? ""} `);
+					set_text(text_3, get(tab).id);
 				});
 
 				event("click", input_1, onClose);
@@ -6774,8 +6874,8 @@ theme.subscribe(value => {
 });
 
 var root_1$i = template(`<i class="material-icons-outlined open svelte-e6df58">description</i>`);
-var root_2$d = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
-var root_3$4 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
+var root_2$c = template(`<i class="material-icons-outlined open svelte-e6df58">add_circle</i>`);
+var root_3$3 = template(`<div class="right-icons svelte-e6df58"><i class="material-icons-outlined trash svelte-e6df58">delete</i></div>`);
 var root$j = template(`<div><div class="hdr svelte-e6df58"><div class="left-icons svelte-e6df58"><i class="material-icons-outlined cancel svelte-e6df58">cancel</i> <i class="material-icons-outlined check svelte-e6df58">check_circle</i> <!> <!></div> <h1 class="svelte-e6df58"> </h1> <!></div> <!></div>`);
 
 function Popup_box($$anchor, $$props) {
@@ -6904,7 +7004,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$d();
+		var i_3 = root_2$c();
 
 		event("click", i_3, onAdd);
 		event("keydown", i_3, onKeydown);
@@ -6917,7 +7017,7 @@ function Popup_box($$anchor, $$props) {
 	var node_2 = sibling(h1, 2);
 
 	if_block(node_2, () => box().trash, ($$anchor) => {
-		var div_3 = root_3$4();
+		var div_3 = root_3$3();
 		var i_4 = child(div_3);
 		event("click", i_4, onTrash);
 		event("keydown", i_4, onKeydown);
@@ -7141,7 +7241,7 @@ function Button($$anchor, $$props) {
 	pop();
 }
 
-var root_2$c = template(`<li role="option" class="svelte-1pc2gyz"> </li>`);
+var root_2$b = template(`<li role="option" class="svelte-1pc2gyz"> </li>`);
 var root_1$h = template(`<ul role="listbox" class="svelte-1pc2gyz"></ul>`);
 var root$d = template(`<div class="select-field svelte-1pc2gyz"><label class="svelte-1pc2gyz"> </label> <div class="select-box svelte-1pc2gyz"><button type="button" aria-haspopup="listbox" class="svelte-1pc2gyz"> <span class="arrow svelte-1pc2gyz">▾</span></button> <!></div></div>`);
 
@@ -7238,7 +7338,7 @@ function Label_select($$anchor, $$props) {
 		set_attribute(ul, "aria-labelledby", labelId);
 
 		each(ul, 5, options, index, ($$anchor, option) => {
-			var li = root_2$c();
+			var li = root_2$b();
 
 			template_effect(() => set_attribute(li, "aria-selected", optionValue(get(option)) === value()));
 
@@ -7834,7 +7934,7 @@ function getRuntimeSettings(runtime) {
     return getRuntimeDescriptor(runtime).settings
 }
 
-var root_2$b = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
+var root_2$a = template(`<p class="runtime-warning svelte-jkuczt"> </p>`);
 var root_1$g = template(`<div class="node-security-settings svelte-jkuczt"><div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Network</h4> <!> <!></div> <div class="section svelte-jkuczt"><h4 class="svelte-jkuczt">Process</h4> <!> <!></div> <!></div>`);
 
 function Node_security_settings($$anchor, $$props) {
@@ -8150,7 +8250,7 @@ function Node_security_settings($$anchor, $$props) {
 			var node_10 = sibling(div_3, 2);
 
 			if_block(node_10, () => get(envelopeWarning), ($$anchor) => {
-				var p = root_2$b();
+				var p = root_2$a();
 				var text_1 = child(p);
 				template_effect(() => set_text(text_1, get(envelopeWarning)));
 				append($$anchor, p);
@@ -8512,8 +8612,8 @@ function Runtime_settings($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_3$3 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
-var root_2$a = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
+var root_3$2 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">File System</h4> <!> <!> <!> <!> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Network</h4> <!> <!></div> <div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Process</h4> <!> <!></div>`, 1);
+var root_2$9 = template(`<div class="section svelte-1p0odh6"><h4 class="svelte-1p0odh6">Monitor</h4> <!> <!></div> <!>`, 1);
 var root_4$2 = template(`<textarea class="json-editor svelte-1p0odh6" spellcheck="false"></textarea>`);
 var root_5$2 = template(`<div class="runtime-error svelte-1p0odh6"> </div>`);
 var root_1$e = template(`<div class="runtime-settings svelte-1p0odh6"><div class="tabs svelte-1p0odh6"><!> <!></div> <!> <!></div>`);
@@ -8727,7 +8827,7 @@ function Model_runtime_settings($$anchor, $$props) {
 				node_2,
 				() => get(view) === 'form' && get(currentSettings),
 				($$anchor) => {
-					var fragment_1 = root_2$a();
+					var fragment_1 = root_2$9();
 					var div_2 = first_child(fragment_1);
 					var node_3 = sibling(child(div_2), 2);
 
@@ -8758,7 +8858,7 @@ function Model_runtime_settings($$anchor, $$props) {
 					var node_5 = sibling(div_2, 2);
 
 					if_block(node_5, () => hasPolicySettings(get(currentSettings)), ($$anchor) => {
-						var fragment_2 = root_3$3();
+						var fragment_2 = root_3$2();
 						var div_3 = first_child(fragment_2);
 						var node_6 = sibling(child(div_3), 2);
 
@@ -8989,7 +9089,7 @@ function Context_menu($$anchor, $$props) {
 	});
 
 	const handlers = {
-		"-> context menu"({ menu, event }) {
+		onContextMenu({ menu, event }) {
 			// set the menu
 			mutate(context, get(context).menu = menu);
 			// show the menu at the requested position
@@ -9047,7 +9147,9 @@ function Context_menu($$anchor, $$props) {
 
 		// check if enabled
 		if (get(context).menu[index]) {
-			if (get(context).menu[index].state == "enabled") get(context).menu[index].action(e);
+			const choice = get(context).menu[index];
+
+			if (choice.state == "enabled") choice.action(e, tx());
 		}
 	}
 
@@ -17793,9 +17895,9 @@ MarkdownIt.prototype.renderInline = function (src, env) {
   return this.renderer.render(this.parseInline(src, env), this.options, env)
 };
 
-var root_1$b = template(`<div class="preview svelte-1uavf00" aria-label="Markdown preview" tabindex="0"><!></div>`);
-var root_2$9 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-1uavf00"></textarea>`);
-var root$7 = template(`<div class="wrapper svelte-1uavf00"><!></div>`);
+var root_1$b = template(`<div class="preview svelte-pk7clt" role="region" aria-label="Markdown preview" tabindex="0"><!></div>`);
+var root_2$8 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-pk7clt"></textarea>`);
+var root$7 = template(`<div class="wrapper svelte-pk7clt"><div class="field svelte-pk7clt"><!></div></div>`);
 
 function Markdown_input$1($$anchor, $$props) {
 	push($$props, false);
@@ -17844,30 +17946,29 @@ function Markdown_input$1($$anchor, $$props) {
 	});
 
 	legacy_pre_effect(() => (get(fieldWidth), get(fieldHeight)), () => {
-		set(fieldStyle, `width:${get(fieldWidth)}; min-height:${get(fieldHeight)};`);
+		set(fieldStyle, `width:${get(fieldWidth)}; height:${get(fieldHeight)};`);
 	});
 
 	legacy_pre_effect_reset();
 
 	var div = root$7();
-	var node = child(div);
+	var div_1 = child(div);
+	var node = child(div_1);
 
 	if_block(
 		node,
 		showPreview,
 		($$anchor) => {
-			var div_1 = root_1$b();
-			var node_1 = child(div_1);
+			var div_2 = root_1$b();
+			var node_1 = child(div_2);
 
 			html(node_1, () => get(previewHtml));
-			template_effect(() => set_attribute(div_1, "style", get(fieldStyle)));
-			append($$anchor, div_1);
+			append($$anchor, div_2);
 		},
 		($$anchor) => {
-			var textarea = root_2$9();
+			var textarea = root_2$8();
 
 			template_effect(() => {
-				set_attribute(textarea, "style", get(fieldStyle));
 				set_attribute(textarea, "rows", rows());
 				set_attribute(textarea, "cols", cols());
 			});
@@ -17877,17 +17978,16 @@ function Markdown_input$1($$anchor, $$props) {
 			append($$anchor, textarea);
 		}
 	);
+	template_effect(() => set_attribute(div_1, "style", get(fieldStyle)));
 	append($$anchor, div);
 	pop();
 }
-
-var root_3$2 = template(`<button type="button" class="tab svelte-1h4g5a9" role="tab"> </button>`);
-var root_2$8 = template(`<div class="tabs svelte-1h4g5a9" role="tablist" aria-label="Node prompt sections"></div> <!>`, 1);
 
 function Markdown_input($$anchor, $$props) {
 	push($$props, false);
 
 	let tx = prop($$props, "tx", 8);
+	let sx = prop($$props, "sx", 24, () => ({}));
 
 	// the popup box data
 	let box = mutable_state({
@@ -17905,14 +18005,7 @@ function Markdown_input($$anchor, $$props) {
 
 	// the text
 	let newText = mutable_state('');
-	let sectionTabs = mutable_state([]);
-	let activeSection = mutable_state(null);
 	let showPreview = mutable_state(false);
-
-	// only the escape key can go to the box
-	function onKeydown(e) {
-		if (e.key != "Escape" && e.key != "Esc") e.stopPropagation();
-	}
 
 	const handlers = {
 		onMarkdown(
@@ -17920,8 +18013,7 @@ function Markdown_input($$anchor, $$props) {
 				header,
 				pos,
 				text = '',
-				mode = null,
-				sections = null,
+				open = null,
 				ok = null,
 				cancel = null
 			}
@@ -17929,42 +18021,9 @@ function Markdown_input($$anchor, $$props) {
 			// set the box parameters
 			mutate(box, get(box).title = header);
 
-			const sectioned = mode === 'node-sections' || sections !== null;
-			const nodeSections = sections ?? { prompt: text };
-
-			set(sectionTabs, sectioned
-				? [
-					{
-						key: 'prompt',
-						label: 'Prompt',
-						text: nodeSections.prompt ?? ''
-					},
-					{
-						key: 'status',
-						label: 'Status',
-						text: nodeSections.status ?? ''
-					},
-					{
-						key: 'decisions',
-						label: 'Decisions',
-						text: nodeSections.decisions ?? ''
-					},
-					{
-						key: 'open',
-						label: 'Open',
-						text: nodeSections.open ?? ''
-					}
-				]
-				: []);
-			set(activeSection, get(sectionTabs)[0]?.key ?? null);
-
 			// set the ok function
 			mutate(box, get(box).ok = () => {
-				if (get(sectionTabs).length) {
-					ok?.(Object.fromEntries(get(sectionTabs).map((tab) => [tab.key, tab.text])));
-				} else {
-					ok?.(get(newText));
-				}
+				ok?.(get(newText));
 			});
 
 			// set the add function: when the add icon is pressed, the markdown is previewed
@@ -17972,6 +18031,7 @@ function Markdown_input($$anchor, $$props) {
 				set(showPreview, !get(showPreview));
 			});
 
+			mutate(box, get(box).open = sx()?.openPromptFile ? open : null);
 			// set the text field
 			set(newText, text);
 			set(showPreview, false);
@@ -17987,87 +18047,23 @@ function Markdown_input($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = comment$1();
-			var node = first_child(fragment_1);
-
-			if_block(
-				node,
-				() => get(sectionTabs).length,
-				($$anchor) => {
-					var fragment_2 = root_2$8();
-					var div = first_child(fragment_2);
-
-					each(div, 5, () => get(sectionTabs), index, ($$anchor, tab) => {
-						var button = root_3$2();
-						var text_1 = child(button);
-
-						template_effect(() => {
-							set_attribute(button, "aria-selected", get(activeSection) === get(tab).key);
-							toggle_class(button, "active", get(activeSection) === get(tab).key);
-							set_text(text_1, get(tab).label);
-						});
-
-						event("click", button, () => set(activeSection, get(tab).key));
-						event("keydown", button, onKeydown);
-						append($$anchor, button);
-					});
-
-					var node_1 = sibling(div, 2);
-
-					each(node_1, 1, () => get(sectionTabs), index, ($$anchor, tab) => {
-						var fragment_3 = comment$1();
-						var node_2 = first_child(fragment_3);
-
-						if_block(node_2, () => get(activeSection) === get(tab).key, ($$anchor) => {
-							Markdown_input$1($$anchor, {
-								get text() {
-									return get(tab).text;
-								},
-								set text($$value) {
-									(
-										get(tab).text = $$value,
-										invalidate_inner_signals(() => (get(sectionTabs)))
-									);
-								},
-								get showPreview() {
-									return get(showPreview);
-								},
-								set showPreview($$value) {
-									set(showPreview, $$value);
-								},
-								cols: "50",
-								rows: "25",
-								$$legacy: true
-							});
-						});
-
-						append($$anchor, fragment_3);
-					});
-
-					append($$anchor, fragment_2);
+			Markdown_input$1($$anchor, {
+				get text() {
+					return get(newText);
 				},
-				($$anchor) => {
-					Markdown_input$1($$anchor, {
-						get text() {
-							return get(newText);
-						},
-						set text($$value) {
-							set(newText, $$value);
-						},
-						get showPreview() {
-							return get(showPreview);
-						},
-						set showPreview($$value) {
-							set(showPreview, $$value);
-						},
-						cols: "50",
-						rows: "25",
-						$$legacy: true
-					});
-				}
-			);
-
-			append($$anchor, fragment_1);
+				set text($$value) {
+					set(newText, $$value);
+				},
+				get showPreview() {
+					return get(showPreview);
+				},
+				set showPreview($$value) {
+					set(showPreview, $$value);
+				},
+				cols: "50",
+				rows: "25",
+				$$legacy: true
+			});
 		},
 		$$slots: { default: true }
 	});
@@ -21921,8 +21917,7 @@ const NodeSelectorFactory = getFactory(Node_selector);
 
 // ------------------------------------------------------------------
 // Model: 
-// Path: C:/dev/vmblu/ui-svelte/model/ui-svelte.app.js
-// Creation date 6/19/2026, 9:40:37 AM
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.0"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:4c8cce3b9516a078"}}
 // ------------------------------------------------------------------
 
 
@@ -21932,20 +21927,21 @@ const NodeSelectorFactory = getFactory(Node_selector);
 const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
-	name: "context menu", 
-	uid: "lwKr", 
+	name: "context menu",
+	uid: "sDMI",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
+		"confirm -> ()",
 		"modal div -> ()"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
-	name: "path request", 
-	uid: "EMlc", 
+	name: "path request",
+	uid: "Thyh",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -21957,8 +21953,8 @@ const nodeList = [
 	},
 	//___________________________________________SINGLE TEXT FIELD
 	{
-	name: "single text field", 
-	uid: "IzrJ", 
+	name: "single text field",
+	uid: "OfhB",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -21969,8 +21965,8 @@ const nodeList = [
 	},
 	//_________________________________________________MESSAGE BOX
 	{
-	name: "message box", 
-	uid: "Etmw", 
+	name: "message box",
+	uid: "ynaF",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -21981,8 +21977,8 @@ const nodeList = [
 	},
 	//___________________________________________________TOAST BOX
 	{
-	name: "toast box", 
-	uid: "pyaw", 
+	name: "toast box",
+	uid: "LnSQ",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -21993,8 +21989,8 @@ const nodeList = [
 	},
 	//__________________________________________________JSON INPUT
 	{
-	name: "json input", 
-	uid: "xjHT", 
+	name: "json input",
+	uid: "LEif",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -22005,8 +22001,8 @@ const nodeList = [
 	},
 	//_______________________________________________NODE SETTINGS
 	{
-	name: "node settings", 
-	uid: "zlVV", 
+	name: "node settings",
+	uid: "HAoc",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22017,8 +22013,8 @@ const nodeList = [
 	},
 	//__________________________________________________TEXT BLOCK
 	{
-	name: "text block", 
-	uid: "ZsHN", 
+	name: "text block",
+	uid: "Kwgg",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -22029,8 +22025,8 @@ const nodeList = [
 	},
 	//_______________________________________________NODE SELECTOR
 	{
-	name: "node selector", 
-	uid: "RjcZ", 
+	name: "node selector",
+	uid: "rfLV",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -22046,8 +22042,8 @@ const nodeList = [
 	},
 	//_______________________________________________NAME AND PATH
 	{
-	name: "name and path", 
-	uid: "kibO", 
+	name: "name and path",
+	uid: "RvVU",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -22059,8 +22055,8 @@ const nodeList = [
 	},
 	//___________________________________________DOCUMENT SETTINGS
 	{
-	name: "document settings", 
-	uid: "dZZS", 
+	name: "document settings",
+	uid: "VAHU",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22073,8 +22069,8 @@ const nodeList = [
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
-	name: "model runtime settings", 
-	uid: "FDzH", 
+	name: "model runtime settings",
+	uid: "fqoJ",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22085,8 +22081,8 @@ const nodeList = [
 	},
 	//______________________________________________AGENT SETTINGS
 	{
-	name: "agent settings", 
-	uid: "CYlS", 
+	name: "agent settings",
+	uid: "OoYv",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22097,8 +22093,8 @@ const nodeList = [
 	},
 	//_________________________________________________CONFIRM BOX
 	{
-	name: "confirm box", 
-	uid: "BWgH", 
+	name: "confirm box",
+	uid: "PNwo",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -22109,8 +22105,8 @@ const nodeList = [
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
-	name: "runtime settings", 
-	uid: "SNiQ", 
+	name: "runtime settings",
+	uid: "sMAc",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22121,8 +22117,8 @@ const nodeList = [
 	},
 	//_________________________________________________PIN PROFILE
 	{
-	name: "pin profile", 
-	uid: "PCvK", 
+	name: "pin profile",
+	uid: "GckS",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -22134,8 +22130,8 @@ const nodeList = [
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
-	name: "tool settings", 
-	uid: "EmTq", 
+	name: "tool settings",
+	uid: "kRDN",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -22146,8 +22142,8 @@ const nodeList = [
 	},
 	//______________________________________________EVENT SETTINGS
 	{
-	name: "event settings", 
-	uid: "vzgT", 
+	name: "event settings",
+	uid: "YWKN",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -22158,8 +22154,8 @@ const nodeList = [
 	},
 	//______________________________________________MARKDOWN INPUT
 	{
-	name: "markdown input", 
-	uid: "TFZQ", 
+	name: "markdown input",
+	uid: "fXYo",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -22170,8 +22166,8 @@ const nodeList = [
 	},
 	//_______________________________________________CANVAS LAYOUT
 	{
-	name: "canvas layout", 
-	uid: "WDdf", 
+	name: "canvas layout",
+	uid: "NyTe",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -22186,8 +22182,8 @@ const nodeList = [
 	},
 	//____________________________________________MENU TABS WINDOW
 	{
-	name: "menu tabs window", 
-	uid: "uteu", 
+	name: "menu tabs window",
+	uid: "DRZF",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -22205,8 +22201,8 @@ const nodeList = [
 	},
 	//____________________________________________LEFT MENU LAYOUT
 	{
-	name: "left menu layout", 
-	uid: "ptMP", 
+	name: "left menu layout",
+	uid: "dbol",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -22222,8 +22218,8 @@ const nodeList = [
 	},
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
-	name: "column-main layout", 
-	uid: "woYc", 
+	name: "column-main layout",
+	uid: "Fqsj",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -22235,27 +22231,28 @@ const nodeList = [
 	},
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
-	name: "vertical menu tabs content", 
-	uid: "qupP", 
+	name: "vertical menu tabs content",
+	uid: "rTfg",
 	factory: VerticalMenuTabsContent,
 	inputs: [
-		"-> menu div",
+		"-> content.div",
+		"-> content.loading",
+		"-> content.loaded",
+		"-> content.failed",
 		"-> tabs div",
-		"-> content div",
-		"-> legend div",
 		"-> modal div",
 		"-> show",
 		"-> size change"
 		],
 	outputs: [
-		"content size change -> ()",
+		"content.size change -> ()",
 		"div -> ()"
 		]
 	},
 	//__________________________________________________TAB RIBBON
 	{
-	name: "tab ribbon", 
-	uid: "DgHL", 
+	name: "tab ribbon",
+	uid: "ydCQ",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -22271,8 +22268,8 @@ const nodeList = [
 	},
 	//________________________________________________OLD TOP MENU
 	{
-	name: "old top menu", 
-	uid: "Hrxu", 
+	name: "old top menu",
+	uid: "SeUe",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22295,8 +22292,8 @@ const nodeList = [
 	},
 	//____________________________________________________TOP MENU
 	{
-	name: "top menu", 
-	uid: "aKFk", 
+	name: "top menu",
+	uid: "PsrN",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22319,8 +22316,8 @@ const nodeList = [
 	},
 	//___________________________________________________SIDE MENU
 	{
-	name: "side menu", 
-	uid: "EXKH", 
+	name: "side menu",
+	uid: "xAFr",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22333,8 +22330,8 @@ const nodeList = [
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
-	name: "vscode side menu", 
-	uid: "NdHE", 
+	name: "vscode side menu",
+	uid: "dAGt",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22343,6 +22340,7 @@ const nodeList = [
 		"recalibrate -> ()",
 		"sync model -> ()",
 		"grid on-off -> ()",
+		"application prompt -> ()",
 		"show settings -> ()",
 		"set save point -> ()",
 		"back to save point -> ()",
@@ -22353,8 +22351,8 @@ const nodeList = [
 	},
 	//_________________________________________________TEAM LEGEND
 	{
-	name: "team legend", 
-	uid: "Hujw", 
+	name: "team legend",
+	uid: "NtmX",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -22366,7 +22364,9 @@ const nodeList = [
 ];
 
 // Runtime options
-const runtimeOptions = {};
+const runtimeOptions = {
+    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.0","schemaVersion":"1.10.0"}
+};
 
 // prepare the runtime
 const runtime = new Runtime2(nodeList, runtimeOptions);

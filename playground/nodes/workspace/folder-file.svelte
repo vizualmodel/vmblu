@@ -69,6 +69,7 @@ function showFolderContext(e) {
 
     // check
     if (!clickedFolder) return
+    if (clickedFolder.isReadOnly?.()) return
 
     // get the context menu
     const menu = folderContext(clickedFolder)
@@ -89,6 +90,7 @@ function showFileContext(e) {
 
     //check
     if (!file) return
+    if (file.isReadOnly?.()) return
 
     // get the context menu
     const menu = fileContext(file)

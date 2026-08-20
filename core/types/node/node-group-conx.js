@@ -5,60 +5,72 @@ function midpoint(a, b) {
     return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}
 }
 
-function extendWireEnds(wire, extraLength) {
-    const extended = wire.map(point => ({...point}))
-    if (extended.length < 2 || extraLength <= 0) return extended
+function cutWire(wire, distance) {
+    const leg = [{...wire[0]}]
+    let remaining = distance
 
-    const start = extended[0]
-    const afterStart = extended[1]
-    const end = extended.at(-1)
-    const beforeEnd = extended.at(-2)
+    for (let index = 1; index < wire.length; index++) {
+        const a = wire[index - 1]
+        const b = wire[index]
+        const length = Math.abs(b.x - a.x) + Math.abs(b.y - a.y)
 
-    if (start.x === afterStart.x) start.y += start.y < afterStart.y ? -extraLength : extraLength
-    else start.x += start.x < afterStart.x ? -extraLength : extraLength
+        if (remaining > length) {
+            leg.push({...b})
+            remaining -= length
+            continue
+        }
 
-    if (end.x === beforeEnd.x) end.y += end.y < beforeEnd.y ? -extraLength : extraLength
-    else end.x += end.x < beforeEnd.x ? -extraLength : extraLength
+        const ratio = length ? remaining / length : 0
+        const point = {
+            x: a.x + (b.x - a.x) * ratio,
+            y: a.y + (b.y - a.y) * ratio
+        }
+        if (leg.at(-1).x !== point.x || leg.at(-1).y !== point.y) leg.push(point)
+        return {leg, rest: [point, ...wire.slice(index).map(next => ({...next}))]}
+    }
 
-    return extended
+    return null
 }
 
-export function splitRouteWireForCable(routeWire) {
+function wireLength(wire) {
+    let length = 0
+    for (let index = 1; index < wire.length; index++) {
+        length += Math.abs(wire[index].x - wire[index - 1].x) + Math.abs(wire[index].y - wire[index - 1].y)
+    }
+    return length
+}
+
+export function splitRouteWireForCable(routeWire, inset = style.cable.extraLength) {
     const wire = canonicalOrthogonalWire(routeWire)
     if (wire.length < 2 || diagonalWireSegments(wire).length) return null
+    if (wireLength(wire) <= 2 * inset) return null
 
-    if (wire.length >= 4) {
-        return {
-            cableWire: wire.slice(1, -1),
-            fromWire: wire.slice(0, 2),
-            toWire: wire.slice(-2).reverse()
-        }
-    }
+    const from = cutWire(wire, inset)
+    if (!from) return null
 
-    if (wire.length === 3) {
-        const fromTack = midpoint(wire[0], wire[1])
-        const toTack = midpoint(wire[1], wire[2])
-
-        return {
-            cableWire: [fromTack, {...wire[1]}, toTack],
-            fromWire: [{...wire[0]}, {...fromTack}],
-            toWire: [{...wire[2]}, {...toTack}]
-        }
-    }
-
-    const fromTack = {
-        x: wire[0].x + (wire[1].x - wire[0].x) / 3,
-        y: wire[0].y + (wire[1].y - wire[0].y) / 3
-    }
-    const toTack = {
-        x: wire[0].x + 2 * (wire[1].x - wire[0].x) / 3,
-        y: wire[0].y + 2 * (wire[1].y - wire[0].y) / 3
-    }
+    const to = cutWire(from.rest.slice().reverse(), inset)
+    if (!to) return null
 
     return {
-        cableWire: [fromTack, toTack],
-        fromWire: [{...wire[0]}, {...fromTack}],
-        toWire: [{...wire[1]}, {...toTack}]
+        cableWire: canonicalOrthogonalWire(to.rest.slice().reverse()),
+        fromWire: canonicalOrthogonalWire(from.leg),
+        toWire: canonicalOrthogonalWire(to.leg)
+    }
+}
+
+function verticalCableFallback(wire, xyLocal = null) {
+    const closest = closestPointOnCurve(wire, xyLocal ?? midpoint(wire[0], wire.at(-1)))
+    const center = closest?.point ?? midpoint(wire[0], wire.at(-1))
+    const halfLength = style.cable.split / 2
+
+    return {
+        cableWire: [
+            {x: center.x, y: center.y - halfLength},
+            {x: center.x, y: center.y + halfLength}
+        ],
+        fromWire: null,
+        toWire: null,
+        fallback: true
     }
 }
 
@@ -478,31 +490,41 @@ export const conxHandling = {
         if (route.wire.length < 2) return null
 
         const oldRoute = route.clone()
-        const split = splitRouteWireForCable(route.copyWire())
+        const routeWire = route.copyWire()
+        let split = splitRouteWireForCable(routeWire)
+        if (!split) {
+            if (!diagonalWireSegments(canonicalOrthogonalWire(routeWire)).length) {
+                split = verticalCableFallback(routeWire, xyLocal)
+            }
+        }
         if (!split) {
             console.warn('Cannot convert a non-orthogonal or empty route to a cable.', {
-                wire: route.copyWire(),
+                wire: routeWire,
                 diagonals: diagonalWireSegments(route.wire)
             })
             return null
         }
 
-        const firstTackPoint = split.cableWire[0]
-        const lastTackPoint = split.cableWire.at(-1)
-        const cableWire = extendWireEnds(split.cableWire, style.cable.extraLength)
+        if (!split.fallback && wireLength(split.cableWire) < style.cable.tooClose) {
+            split = verticalCableFallback(routeWire, xyLocal)
+        }
+
+        const cableWire = split.cableWire
         const cable = this.addCable(cableWire[0])
-        cable.wire = cableWire
+        cable.wire = cableWire.map(point => ({...point}))
 
         route.disconnect()
 
-        const attach = (widget, wire, point, tackSegment) => {
+        const attach = (widget, wire, point, tackSegment, endpoint = null) => {
             const tack = cable.newTack()
             tack.placeOnSegment(point, tackSegment)
 
             const leg = new Route(widget, tack)
-            leg.wire = wire.map(next => ({...next}))
+            leg.wire = wire?.map(next => ({...next})) ?? [{...widget.center()}, {...point}]
+            if (leg.wire.length < 2) leg.wire.push({...point})
             widget.routes.push(leg)
             tack.restore(leg)
+            if (endpoint) tack.attachEndpoint(endpoint)
 
             widget.is.pin ? leg.rxtxPinBus() : leg.rxtxPadBus()
 
@@ -526,9 +548,15 @@ export const conxHandling = {
             return {route: pendingRoute, tack}
         }
 
+        const firstTackPoint = split.fallback
+            ? closestPointOnCurve(cable.wire, oldRoute.from.center())?.point ?? cable.wire[0]
+            : cable.wire[0]
+        const lastTackPoint = split.fallback
+            ? closestPointOnCurve(cable.wire, oldRoute.to.center())?.point ?? cable.wire.at(-1)
+            : cable.wire.at(-1)
         const routes = [
-            attach(oldRoute.from, split.fromWire, firstTackPoint, 1),
-            attach(oldRoute.to, split.toWire, lastTackPoint, cable.wire.length - 1)
+            attach(oldRoute.from, split.fromWire, firstTackPoint, 1, split.fallback ? null : 'start'),
+            attach(oldRoute.to, split.toWire, lastTackPoint, cable.wire.length - 1, split.fallback ? null : 'end')
         ]
 
         const pending = createPending ? makePendingBranch() : null

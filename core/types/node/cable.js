@@ -2,6 +2,80 @@ import {Route} from './route.js'
 import {Widget} from '../widget/index.js'
 import {canonicalOrthogonalWire, convert, closestPointOnCurve, diagonalWireSegments, interpolateSegment, style, shape, inside, segmentsInside, eject} from '../util/index.js'
 import {zap} from '../view/index.js'
+import {cableEndpointHandling} from './cable-endpoint.js'
+
+export {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from './cable-endpoint.js'
+
+function appendPoint(wire, point) {
+    const previous = wire.at(-1)
+    if (!previous || previous.x !== point.x || previous.y !== point.y) wire.push({...point})
+}
+
+function routeFromWidgetToTack(tack) {
+    const wire = tack.route.copyWire()
+    return tack.route.from === tack ? wire.reverse() : wire
+}
+
+function cablePosition(cable, tack) {
+    let distance = 0
+    for (let segment = 1; segment < tack.segment; segment++) {
+        const a = cable.wire[segment - 1]
+        const b = cable.wire[segment]
+        distance += Math.abs(b.x - a.x) + Math.abs(b.y - a.y)
+    }
+
+    const start = cable.wire[tack.segment - 1]
+    const point = tack.center()
+    distance += Math.abs(point.x - start.x) + Math.abs(point.y - start.y)
+    return {distance, point}
+}
+
+function cableWireBetween(cable, fromTack, toTack) {
+    const from = cablePosition(cable, fromTack)
+    const to = cablePosition(cable, toTack)
+    if (from.distance > to.distance) return cableWireBetween(cable, toTack, fromTack).reverse()
+
+    const wire = [{...from.point}]
+    for (let index = fromTack.segment; index < toTack.segment; index++) {
+        appendPoint(wire, cable.wire[index])
+    }
+    appendPoint(wire, to.point)
+    return wire
+}
+
+function individualRouteWire(cable, fromTack, toTack) {
+    const wire = []
+    for (const point of routeFromWidgetToTack(fromTack)) appendPoint(wire, point)
+    for (const point of cableWireBetween(cable, fromTack, toTack)) appendPoint(wire, point)
+    for (const point of routeFromWidgetToTack(toTack).reverse()) appendPoint(wire, point)
+    return canonicalOrthogonalWire(wire)
+}
+
+function routeEndpointApproach(route, atStart) {
+    const contact = atStart ? route.wire[0] : route.wire.at(-1)
+    const neighbour = atStart ? route.wire[1] : route.wire.at(-2)
+    if (!contact || !neighbour) return null
+    if (contact.x === neighbour.x) return 'vertical'
+    if (contact.y === neighbour.y) return 'horizontal'
+    return null
+}
+
+function preserveRouteEndpointApproach(route, tack, approach) {
+    if (!approach || route.wire.length < 2) return
+
+    const atStart = route.from === tack
+    const contact = atStart ? route.wire[0] : route.wire.at(-1)
+    const neighbour = atStart ? route.wire[1] : route.wire.at(-2)
+
+    if (route.wire.length === 2) {
+        const elbow = approach === 'vertical'
+            ? {x: contact.x, y: neighbour.y}
+            : {x: neighbour.x, y: contact.y}
+        route.wire.splice(1, 0, elbow)
+    }
+    else if (approach === 'vertical') neighbour.x = contact.x
+    else neighbour.y = contact.y
+}
 
 export function Cable(from = {x:0, y:0}, uid = null, floating = false) {
 
@@ -65,19 +139,6 @@ Cable.prototype = {
                     : widget?.is?.pad ? !widget.proxy.is.input
                     : false
         return this.is.floating ? !!input : false
-    },
-
-    renderEndpoint(ctx, point, color) {
-        shape.emptyLabel(ctx, point.x, point.y, style.cable.radius, color)
-    },
-
-    shouldRenderEndpoint() {
-        return true
-    },
-
-    endpointRect(point) {
-        const r = style.cable.radius
-        return {x: point.x - r, y: point.y - r, w: 2 * r, h: 2 * r}
     },
 
     generateWid() {
@@ -169,7 +230,7 @@ Cable.prototype = {
         if (endpoint) return [zap.busLabel, this, endpoint, null, 0]
 
         for (const tack of this.tacks) {
-            if (inside(pos, tack.rect)) return [zap.tack, this, null, tack, 0]
+            if (inside(pos, tack.drawingRect())) return [zap.tack, this, null, tack, 0]
             if (tack.alias && inside(pos, tack.rcAlias)) return [zap.tack, this, null, tack, 0]
         }
 
@@ -231,9 +292,16 @@ Cable.prototype = {
         const other = route.to == null ? route.from : route.to
         if (this.findTack(other)) return null
 
+        const approach = routeEndpointApproach(route, route.from == null)
         const newTack = new Widget.CableTack(this)
         newTack.setSelective(this.defaultTackSelectivity(other))
         newTack.setRoute(route)
+        const endpoint = this.endpointAt(newTack.center()) ?? this.endpointHitAt(newTack.center())
+        if (endpoint) {
+            newTack.attachEndpoint(endpoint)
+            preserveRouteEndpointApproach(route, newTack, approach)
+            newTack.refreshPlacement()
+        }
         this.tacks.push(newTack)
         return newTack
     },
@@ -260,36 +328,6 @@ Cable.prototype = {
         tack.restore(route)
     },
 
-    connectEndpoint(widget) {
-        if (!widget?.center) return null
-        if (this.findTack(widget)) return null
-
-        const center = widget.center()
-        const point = this.wire.at(-1)
-        const segment = this.wire.length - 1
-        const previous = this.wire.at(-2)
-
-        if (previous) {
-            previous.y === point.y ? previous.y = center.y : previous.x = center.x
-        }
-
-        point.x = center.x
-        point.y = center.y
-
-        const tack = this.newTack()
-        tack.is.endpoint = true
-        tack.placeOnSegment(point, segment)
-
-        const route = new Route(widget, tack)
-        route.wire = [{...center}, {...tack.center()}]
-        widget.routes.push(route)
-        tack.restore(route)
-
-        widget.is.pin ? route.rxtxPinBus() : route.rxtxPadBus()
-        this.validateOrthogonalWire('endpoint connection')
-        return tack
-    },
-
     copy() {
         const newCable = new Cable(this.wire[0], this.uid, this.is.floating)
         newCable.wire = this.copyWire()
@@ -302,13 +340,13 @@ Cable.prototype = {
 
             const newRoute = tack.route.clone()
             const newTack = new Widget.CableTack(newCable)
-            newTack.is.endpoint = tack.is.endpoint
             newTack.is.bridge = tack.is.bridge
             newTack.is.selective = tack.is.selective
             newTack.alias = tack.alias
 
             newRoute.to.is.tack ? newRoute.to = newTack : newRoute.from = newTack
             newTack.setRoute(newRoute)
+            newTack.restoreAttachment(tack.copyAttachment())
 
             const other = newRoute.to.is.tack ? newRoute.from : newRoute.to
 
@@ -343,7 +381,7 @@ Cable.prototype = {
         const copy = []
         for (const tack of this.tacks) {
             const track = tack.route.copyWire()
-            copy.push({segment: tack.segment, track})
+            copy.push({attachment: tack.copyAttachment(), track})
         }
         return copy
     },
@@ -352,8 +390,9 @@ Cable.prototype = {
         const tacks = this.tacks
         const L = tacks.length
         for(let i = 0; i < L; i++) {
-            tacks[i].segment = copy[i].segment
             tacks[i].route.restoreWire(copy[i].track)
+            if (copy[i].attachment) tacks[i].restoreAttachment(copy[i].attachment)
+            else tacks[i].restoreLegacyAttachment(copy[i].segment, copy[i].endpoint)
         }
     },
 
@@ -382,8 +421,9 @@ Cable.prototype = {
         tackWires ??= []
         for (let i = 0; i < tacks.length; i++) {
             if (tackWires[i]) {
-                tacks[i].segment = tackWires[i].segment
                 tacks[i].route.restoreWire(tackWires[i].track)
+                if (tackWires[i].attachment) tacks[i].restoreAttachment(tackWires[i].attachment)
+                else tacks[i].restoreLegacyAttachment(tackWires[i].segment, tackWires[i].endpoint)
             }
         }
 
@@ -413,60 +453,6 @@ Cable.prototype = {
             : other.is.pin ? tack.route.rxtxPinBus()
             : tack.route.rxtxPadBus()
         }
-    },
-
-    drawXY(next) {
-        const L = this.wire.length
-        const r1 = this.wire[L - 2]
-        const r2 = this.wire[L - 1]
-        const wCable = style.cable.wCable
-        let limit = null
-
-        const vertical = r2.x == r1.x
-        const horizontal = r2.y == r1.y
-
-        if (vertical && horizontal) {
-            (Math.abs(next.x - r1.x) < Math.abs(next.y - r1.y)) ? r2.y = next.y : r2.x = next.x
-        }
-        else if (horizontal) {
-            if (Math.abs(next.y - r2.y) > style.cable.split) {
-                this.wire.push({x:r2.x, y:next.y})
-            }
-            else {
-                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
-                    if ((r1.x < r2.x)&&(next.x < limit.r + wCable/2)) next.x = limit.r + wCable/2
-                    if ((r1.x > r2.x)&&(next.x > limit.l - wCable/2)) next.x = limit.l - wCable/2
-                }
-
-                r2.x = next.x
-                if ((L > 2) && (Math.abs(r2.x - r1.x) < style.cable.tooClose)) this.wire.pop()
-            }
-        }
-        else if (vertical) {
-            if (Math.abs(next.x - r2.x) > style.cable.split) {
-                this.wire.push({x:next.x, y:r2.y})
-            }
-            else {
-                if ((this.tacks.length)&&(limit = this.getLimit(L-1))) {
-                    if ((r1.y < r2.y)&&(next.y < limit.b)) next.y = limit.b
-                    if ((r1.y > r2.y)&&(next.y > limit.t)) next.y = limit.t
-                }
-
-                r2.y = next.y
-                if ((L > 2) && (Math.abs(r2.y - r1.y) < style.cable.tooClose)) this.wire.pop()
-            }
-        }
-    },
-
-    resumeDrawXY(label, pos, delta) {
-        const p = this.wire
-        const pa = p[p.length-2]
-        const pb = p[p.length-1]
-
-        let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.cable.split) ? pos.x : pb.x + delta.x
-        let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.cable.split) ? pos.y : pb.y + delta.y
-
-        this.drawXY({x,y})
     },
 
     resumeDrawing(segment, point) {
@@ -532,7 +518,7 @@ Cable.prototype = {
         const L = p.length
 
         for (let i=0; i<L/2; i++) [p[i], p[L-i-1]] = [p[L-i-1], p[i]]
-        this.tacks.forEach(tack => tack.segment = L - tack.segment)
+        this.tacks.forEach(tack => tack.reverseAttachment(L))
     },
 
     getLimit(segment) {
@@ -560,8 +546,12 @@ Cable.prototype = {
         }
 
         for(const tack of this.tacks) {
-            tack.rect.x += dx
-            tack.rect.y += dy
+            if (!tack.isEndpoint() && tack.attachment.point) {
+                tack.attachment.point.x += dx
+                tack.attachment.point.y += dy
+            }
+            tack.syncRouteContact()
+            tack.placeAttachment()
         }
     },
 
@@ -578,60 +568,6 @@ Cable.prototype = {
         this.tacks.forEach(tack => { 
             if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y)
         })
-    },
-
-    bendEndpoint(tack, point) {
-        if (!tack?.is?.endpoint || !this.singleSegment()) return false
-
-        const oldStart = {...this.wire[0]}
-        const oldEnd = {...this.wire[1]}
-        const horizontal = oldStart.y === oldEnd.y
-        const vertical = oldStart.x === oldEnd.x
-        if (!horizontal && !vertical) return false
-
-        if (horizontal && point.y === oldStart.y) return false
-        if (vertical && point.x === oldStart.x) return false
-
-        const tackPoint = tack.center()
-        const startDistance = Math.hypot(tackPoint.x - oldStart.x, tackPoint.y - oldStart.y)
-        const endDistance = Math.hypot(tackPoint.x - oldEnd.x, tackPoint.y - oldEnd.y)
-        const moveStart = startDistance <= endDistance
-
-        const elbow = horizontal
-            ? (moveStart ? {x: oldStart.x, y: point.y} : {x: oldEnd.x, y: point.y})
-            : (moveStart ? {x: point.x, y: oldStart.y} : {x: point.x, y: oldEnd.y})
-
-        const addPoint = (wire, next) => {
-            const previous = wire.at(-1)
-            if (previous && previous.x === next.x && previous.y === next.y) return
-            wire.push({...next})
-        }
-
-        const nextWire = []
-        const rawWire = moveStart
-            ? [{...point}, elbow, oldStart, oldEnd]
-            : [oldStart, oldEnd, elbow, {...point}]
-        for (const next of rawWire) addPoint(nextWire, next)
-        if (nextWire.length < 2) return false
-
-        this.wire = nextWire
-        const movedSegment = moveStart ? 1 : this.wire.length - 1
-        const trunkSegment = moveStart ? this.wire.length - 1 : 1
-
-        for (const otherTack of this.tacks) {
-            if (otherTack === tack) {
-                otherTack.placeOnSegment(point, movedSegment)
-                continue
-            }
-            else if (moveStart && otherTack.segment === 1) {
-                otherTack.segment = trunkSegment
-            }
-
-            otherTack.refreshPlacement?.()
-        }
-
-        this.validateOrthogonalWire('endpoint bend')
-        return true
     },
 
     getCombinedLimit(s1,s2) {
@@ -732,7 +668,9 @@ Cable.prototype = {
         p.pop()
         p.pop()
 
-        this.tacks.forEach(w => { if (w.segment > segment) w.segment -= 2 })
+        this.tacks.forEach(tack => {
+            if (!tack.isEndpoint() && tack.segment > segment) tack.segment -= 2
+        })
     },
 
     fuseSegment(s) {
@@ -779,8 +717,9 @@ Cable.prototype = {
                 [a, b] = a.y > b.y ? [b, a] : [a, b]
 
                 if (other.rect.y > a.y && other.rect.y < b.y) {
-                    tack.rect.y = other.rect.y + other.rect.h/2 - tack.rect.h/2
-                    for(const p of route.wire) p.y = other.rect.y + other.rect.h/2
+                    const y = other.rect.y + other.rect.h/2
+                    tack.attachInterior({x: tack.center().x, y}, tack.segment)
+                    for(const p of route.wire) p.y = y
                 }
             }
         }
@@ -828,104 +767,57 @@ Cable.prototype = {
         return 'incomplete'
     },
 
-    canCollapseToRoute() {
-        return this.tacks.length === 2
-            && this.tacks.every(tack => tack.is.endpoint && tack.route?.from && tack.route?.to)
+    individualRoutePlans() {
+        if (this.tacks.some(tack => tack.getOther()?.is?.tack)) return []
+
+        const plans = []
+        const sources = this.tacks.filter(tack => !tack.endpointIsInput())
+        const targets = this.tacks.filter(tack => tack.endpointIsInput())
+
+        for (const source of sources) {
+            for (const target of targets) {
+                if (!source.areConnected(target)) continue
+                plans.push({
+                    from: source.getOther(),
+                    to: target.getOther(),
+                    wire: individualRouteWire(this, source, target)
+                })
+            }
+        }
+        return plans
     },
 
-    collapseIfOnlyEndpointTacks(node) {
-        if (!this.canCollapseToRoute()) return null
+    canConvertToRoutes() {
+        return this.individualRoutePlans().length > 0
+    },
+
+    convertToRoutes(node) {
+        node ??= this.node
         if (!node) return null
 
-        const wire = this.copyWire()
-        const start = wire[0]
+        const plans = this.individualRoutePlans()
+        if (!plans.length) return null
 
-        const [startTack, endTack] =
-            Math.hypot(this.tacks[0].center().x - start.x, this.tacks[0].center().y - start.y) <=
-            Math.hypot(this.tacks[1].center().x - start.x, this.tacks[1].center().y - start.y)
-                ? [this.tacks[0], this.tacks[1]]
-                : [this.tacks[1], this.tacks[0]]
-
-        const startWidget = startTack.getOther()
-        const endWidget = endTack.getOther()
-        if (!startWidget || !endWidget || startWidget.is.tack || endWidget.is.tack) return null
-
-        const connectDirect = (from, to, routeWire) => {
-            const route = new Route(from, null)
-            route.wire = routeWire.map(point => ({...point}))
-            from.routes.push(route)
-
-            if (route.connect(to)) return route
-
-            from.routes.pop()
-            return null
-        }
-
-        const endpointTacks = this.tacks.slice()
-        for (const tack of endpointTacks) tack.route.disconnect()
+        const conversion = {node, cable: this, tacks: this.tacks.slice(), routes: []}
+        this.disconnect()
         node.removeCable(this)
 
-        const route = connectDirect(startWidget, endWidget, wire) ?? connectDirect(endWidget, startWidget, wire.slice().reverse())
-        return route ? {route} : null
-    },
-
-    collapseToRoute(node) {
-        if (!this.canCollapseToRoute()) return null
-
-        const collapse = {
-            node: this.node ?? node,
-            cable: this,
-            tacks: this.tacks.slice(),
-            route: null,
+        for (const plan of plans) {
+            const route = new Route(plan.from, null)
+            route.wire = plan.wire.map(point => ({...point}))
+            plan.from.routes.push(route)
+            if (!route.connect(plan.to)) {
+                plan.from.routes.pop()
+                for (const connected of conversion.routes.slice()) connected.disconnect()
+                node.restoreCable(this)
+                this.reconnect(conversion.tacks.slice())
+                return null
+            }
+            conversion.routes.push(route)
         }
 
-        if (!collapse.node) return null
-
-        const collapsed = this.collapseIfOnlyEndpointTacks(collapse.node)
-        if (!collapsed) return null
-
-        collapse.route = collapsed.route
-        return collapse
+        return conversion
     },
 
-    undoCollapse(collapse) {
-        if (!collapse?.route) return
-
-        collapse.route.disconnect()
-        collapse.node.restoreCable(this)
-        this.reconnect(collapse.tacks.slice())
-    },
-
-    redoCollapse(collapse) {
-        if (!collapse) return
-
-        collapse.route = this.collapseIfOnlyEndpointTacks(collapse.node)?.route
-    },
 }
-
-export function collapseEndpointOnlyCables(cables = [], fallbackNode = null) {
-    const collapses = []
-    const checked = []
-
-    for (const cable of cables) {
-        if (!cable || checked.includes(cable)) continue
-        checked.push(cable)
-
-        const collapse = cable.collapseToRoute(fallbackNode)
-        if (collapse) collapses.push(collapse)
-    }
-
-    return collapses
-}
-
-export function undoCableCollapses(collapses = []) {
-    for (const collapse of collapses.slice().reverse()) {
-        collapse?.cable?.undoCollapse(collapse)
-    }
-}
-
-export function redoCableCollapses(collapses = []) {
-    for (const collapse of collapses) {
-        collapse?.cable?.redoCollapse(collapse)
-    }
-}
+Object.assign(Cable.prototype, cableEndpointHandling)

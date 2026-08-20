@@ -55,35 +55,47 @@ ModelManager.prototype = {
 
         let model = doc?.model ?? null;
 
-        if (!model) return
+        if (!model) {
+            this.model = null
+            return
+        }
 
-        model = this.models.findArl(model.getArl()) ?? model
+        const arl = model.getArl()
+        model = this.models.findArl(arl) ?? model
         doc.model = model
         this.model = model
 
-        // rest the main flag
-        this.setMainFlag(model)
+        try {
 
-        // We also want the prompts here
-        model.is.withPrompts = true
+            // rest the main flag
+            this.setMainFlag(model)
 
-        await this.modcom.refreshRaw(model)
-        this.tx.send('model.resolved', model.getArl())
+            // We also want the prompts here
+            model.is.withPrompts = true
 
-        // set a save point if there is none yet
-        if (!model.savePoint) model.savePoint = model.raw
+            await this.modcom.refreshRaw(model)
+            if (!model.raw) throw new Error('The model could not be loaded.')
 
-        // recompile or set the root
-        if (!model.root || this.modcom.hasFresh()) {
-            this.reCompile(model.raw)
+            // set a save point if there is none yet
+            if (!model.savePoint) model.savePoint = model.raw
+
+            // recompile or set the root
+            if (!model.root || this.modcom.hasFresh()) {
+                this.reCompile(model.raw)
+            }
+            else {
+                model.root = this.ensureContainerRoot(model.root)
+                this.tx.send('model.root', model.root)
+            }
+
+            this.modcom.resetFresh()
+            model.libraries?.load()
+            this.tx.send('model.loaded', model.getArl())
         }
-        else {
-            model.root = this.ensureContainerRoot(model.root)
-            this.tx.send('model.root', model.root)
+        catch (error) {
+            console.error(`Could not load model ${arl?.getPath?.() ?? ''}:`, error)
+            this.tx.send('model.failed', arl)
         }
-
-        this.modcom.resetFresh()
-        model.libraries?.load()
     },
 
     // some edits are async
@@ -414,6 +426,15 @@ ModelManager.prototype = {
 
         // check
         if (! this.model) return null
+
+        if (!path && this.model.blu.arl?.canWrite?.() === false) {
+            this.tx.send('info popup', {
+                title: 'Read-only model',
+                message: 'This model comes from a read-only repository. Use Save As to copy it into a local workspace.',
+                duration: 4500
+            })
+            return null
+        }
 
         const originalBluArl = this.model.blu.arl
         const originalVizArl = this.model.viz.arl

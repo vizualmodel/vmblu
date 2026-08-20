@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "0.10.0",
+    "version": "1.10.0",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "12/16/2025, 10:49:03 AM",
-    "utc": "2025-12-16T09:49:03.571Z",
+    "utc": "2026-08-20T08:48:55.477Z",
     "style": "#00aaff"
   },
   "root": {
@@ -19,13 +19,13 @@
       {
         "kind": "dock",
         "name": "column-main layout",
-        "rect": "x 424 y 347 w 185 h 71",
+        "rect": "x 470 y 283 w 185 h 71",
         "interfaces": [
           {
             "interface": "(0)",
             "pins": [
-              "(4 R)main area",
               "(9 R)size change",
+              "(4 R)main area",
               "(3 R)left column"
             ]
           }
@@ -34,7 +34,7 @@
       {
         "kind": "source",
         "name": "workspace",
-        "rect": "x 469 y 573 w 185 h 371",
+        "rect": "x 469 y 573 w 185 h 356",
         "interfaces": [
           {
             "interface": "(41) dom",
@@ -53,7 +53,6 @@
               "(7 R)file.get name",
               "(8 R)file.context menu",
               "(29 R)file.savedAs",
-              "(30 R)file.active",
               "(31 R)file.closed"
             ]
           },
@@ -81,6 +80,33 @@
         ]
       },
       {
+        "kind": "source",
+        "name": "text editor",
+        "rect": "x 1191 y 1067 w 180 h 146",
+        "interfaces": [
+          {
+            "interface": "(21) text",
+            "pins": [
+              "(9 L)text.set active",
+              "(10 L)text.save"
+            ]
+          },
+          {
+            "interface": "(22) dom",
+            "pins": [
+              "(12 L)content div"
+            ]
+          },
+          {
+            "interface": "(23) file",
+            "pins": [
+              "(20 R)text.failed",
+              "(16 R)text.loaded"
+            ]
+          }
+        ]
+      },
+      {
         "kind": "dock",
         "name": "single text field",
         "rect": "x 199 y 588 w 150 h 56",
@@ -95,22 +121,44 @@
         ]
       },
       {
-        "kind": "dock",
-        "name": "editor page",
-        "rect": "x 786 y 242 w 190 h 161",
+        "kind": "source",
+        "name": "model pane",
+        "rect": "x 784 y 139 w 150 h 86",
         "interfaces": [
           {
             "interface": "(0)",
             "pins": [
-              "(9 R)legend div",
-              "(1 R)menu div",
+              "(6 R)menu div",
+              "(7 R)legend div",
+              "(5 R)canvas",
+              "(8 R)content div"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "editor page",
+        "rect": "x 776 y 253 w 190 h 191",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
               "(2 R)tabs div",
-              "(3 R)content div",
-              "(4 R)content size change",
               "(5 R)modal div",
-              "(6 L)show",
+              "(7 L)size change",
               "(8 L)div",
-              "(7 L)size change"
+              "(6 L)show"
+            ]
+          },
+          {
+            "interface": "(18) content",
+            "pins": [
+              "(13 R)content.div",
+              "(14 R)content.size change",
+              "(17 L)content.failed",
+              "(16 L)content.loaded",
+              "(15 L)content.loading"
             ]
           }
         ]
@@ -118,7 +166,7 @@
       {
         "kind": "dock",
         "name": "tab ribbon",
-        "rect": "x 791 y 483 w 185 h 146",
+        "rect": "x 784 y 483 w 185 h 146",
         "interfaces": [
           {
             "interface": "(0)",
@@ -142,10 +190,10 @@
       {
         "kind": "source",
         "name": "side menu",
-        "rect": "x 793 y -178 w 150 h 266",
+        "rect": "x 784 y -178 w 150 h 266",
         "interfaces": [
           {
-            "interface": "(17) menu items",
+            "interface": "(19) menu items",
             "pins": [
               "(5 R)sync model",
               "(3 R)accept changes",
@@ -163,7 +211,7 @@
             ]
           },
           {
-            "interface": "(19) dom",
+            "interface": "(20) dom",
             "pins": [
               "(2 R)div"
             ]
@@ -173,10 +221,10 @@
       {
         "kind": "dock",
         "name": "document manager",
-        "rect": "x 1186 y 498 w 180 h 326",
+        "rect": "x 1179 y 498 w 180 h 491",
         "interfaces": [
           {
-            "interface": "(50) tab",
+            "interface": "(62) tab",
             "pins": [
               "(46 L)tab.new",
               "(47 L)tab.rename",
@@ -187,7 +235,7 @@
             ]
           },
           {
-            "interface": "(48) doc",
+            "interface": "(53) doc",
             "pins": [
               "(34 L)doc.set active",
               "(29 L)doc.selected",
@@ -195,16 +243,31 @@
               "(31 L)doc.renamed",
               "(32 L)doc.deleted",
               "(33 L)doc.get",
-              "(35 L)doc.open"
+              "(35 R)doc.open"
             ]
           },
           {
-            "interface": "(49) file",
+            "interface": "(54) file",
             "pins": [
+              "(51 L)file.save active",
               "(37 L)file.save as",
+              "(59 L)file.loading",
+              "(60 L)file.loaded",
+              "(61 L)file.failed",
               "(38 R)file.save",
               "(39 R)file.save as filename",
-              "(40 R)file.save all"
+              "(40 R)file.save all",
+              "(55 R)model.loaded",
+              "(57 R)model.failed",
+              "(56 R)text.loaded",
+              "(58 R)text.failed"
+            ]
+          },
+          {
+            "interface": "(63) text",
+            "pins": [
+              "(52 L)text.save",
+              "(49 L)text.set active"
             ]
           }
         ]
@@ -212,10 +275,10 @@
       {
         "kind": "dock",
         "name": "view manager",
-        "rect": "x 1513 y 107 w 180 h 431",
+        "rect": "x 1509 y 122 w 180 h 431",
         "interfaces": [
           {
-            "interface": "(55) redox",
+            "interface": "(59) redox",
             "pins": [
               "(17 R)redox.doit",
               "(18 R)redox.undo",
@@ -224,7 +287,7 @@
             ]
           },
           {
-            "interface": "(49) setup",
+            "interface": "(54) setup",
             "pins": [
               "(22 R)root",
               "(39 L)top level view",
@@ -232,17 +295,17 @@
             ]
           },
           {
-            "interface": "(50) visuals",
+            "interface": "(55) visuals",
             "pins": [
               "(46 L)team legend",
               "(42 L)grid on-off",
               "(37 L)canvas",
-              "(38 L)size change",
-              "(53 L)application prompt"
+              "(53 L)application prompt",
+              "(38 L)size change"
             ]
           },
           {
-            "interface": "(52) ui",
+            "interface": "(57) ui",
             "pins": [
               "(25 R)node settings (sx)",
               "(24 R)runtime settings (dx)",
@@ -252,14 +315,14 @@
             ]
           },
           {
-            "interface": "(54) files",
+            "interface": "(58) files",
             "pins": [
-              "(26 R)open source file",
-              "(28 R)open model"
+              "(26 L)open source file",
+              "(28 L)open model"
             ]
           },
           {
-            "interface": "(51) clipboard",
+            "interface": "(56) clipboard",
             "pins": [
               "(44 L)clipboard.get",
               "(45 L)clipboard.set"
@@ -270,10 +333,10 @@
       {
         "kind": "dock",
         "name": "model manager",
-        "rect": "x 1792 y -178 w 180 h 521",
+        "rect": "x 1792 y -178 w 180 h 536",
         "interfaces": [
           {
-            "interface": "(109) actions",
+            "interface": "(111) actions",
             "pins": [
               "(96 L)sync model",
               "(73 L)accept changes",
@@ -286,7 +349,7 @@
             ]
           },
           {
-            "interface": "(112) save point",
+            "interface": "(115) save point",
             "pins": [
               "(81 L)save point.set",
               "(82 L)save point.back",
@@ -294,17 +357,18 @@
             ]
           },
           {
-            "interface": "(111) model",
+            "interface": "(112) model",
             "pins": [
               "(64 L)model.save",
               "(78 L)model.set",
               "(60 L)model.root",
               "(79 R)model.header",
-              "(98 R)model.resolved"
+              "(113 L)model.loaded",
+              "(114 L)model.failed"
             ]
           },
           {
-            "interface": "(114) redox",
+            "interface": "(117) redox",
             "pins": [
               "(56 L)redox.doit",
               "(57 L)redox.undo",
@@ -313,7 +377,7 @@
             ]
           },
           {
-            "interface": "(113) info",
+            "interface": "(116) info",
             "pins": [
               "(94 R)event settings",
               "(93 R)tool settings",
@@ -323,10 +387,10 @@
             ]
           },
           {
-            "interface": "(115) files",
+            "interface": "(118) files",
             "pins": [
-              "(88 R)open source file",
-              "(62 R)open model"
+              "(88 L)open source file",
+              "(62 L)open model"
             ]
           }
         ]
@@ -352,9 +416,9 @@
       {
         "kind": "group",
         "name": "popups",
-        "rect": "x 2180 y 167 w 150 h 236",
+        "rect": "x 2182 y 182 w 150 h 236",
         "view": {
-          "state": "open",
+          "state": "closed",
           "rect": "x 1030 y -235 w 1488 h 1514",
           "transform": "sx 0.882 sy 0.882 dx 1536.716 dy -249.100"
         },
@@ -488,7 +552,7 @@
           {
             "kind": "dock",
             "name": "model runtime settings",
-            "rect": "x 147 y 950 w 195 h 56",
+            "rect": "x 147 y 950 w 150 h 56",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -660,12 +724,12 @@
           {
             "from": "(pin 3) model runtime settings @ doc settings",
             "to": "(pin 1) show @ model runtime settings",
-            "wire": "x 31.1 y 72.1 x -37.0"
+            "wire": "x 31.1 y 72.0 x -82.1"
           },
           {
             "from": "(pin 2) modal div @ model runtime settings",
             "to": "(cable 0 nonselective)",
-            "wire": "x 62.0 y 0.0 x 209.7"
+            "wire": "x 62.0 y 0.0 x 254.7"
           },
           {
             "from": "(pin 2) modal div @ agent settings",
@@ -777,7 +841,7 @@
       {
         "kind": "source",
         "name": "team legend",
-        "rect": "x 791 y 132 w 150 h 56",
+        "rect": "x 784 y -303 w 150 h 56",
         "interfaces": [
           {
             "interface": "(0)",
@@ -791,49 +855,64 @@
     ],
     "cables": [
       {
-        "start": "x 1186 y 645.5",
-        "wire": "x -46.4 y -571.0 x 652.4"
+        "start": "x 1143.9572984749454 y 654.224183006536",
+        "wire": "y -602.4"
       },
       {
-        "start": "x 1972 y 284.5",
-        "wire": "x 208.0"
+        "start": "x 1392.8551198257094 y 445.0601217645286",
+        "wire": "y 313.0"
       }
     ],
     "routes": [
       {
         "from": "(pin 9) size change @ column-main layout",
         "to": "(pin 7) size change @ editor page",
-        "wire": "x 31.8 y 0.0 x 145.2"
+        "wire": "x 20.0 y 0.0 x 101.0"
       },
       {
         "from": "(pin 3) dom.workspace div @ workspace",
         "to": "(pin 3) left column @ column-main layout",
-        "wire": "x 24.8 y -226.0 x -69.8"
+        "wire": "x 24.8 y -290.0 x -23.8"
       },
       {
         "from": "(pin 5) file.selected @ workspace",
         "to": "(pin 29) doc.selected @ document manager",
-        "wire": "x 266.0 y 0.0 x 266.0"
+        "wire": "x 266.0 y 0.0 x 259.0"
       },
       {
         "from": "(pin 21) file.new @ workspace",
         "to": "(pin 30) doc.new @ document manager",
-        "wire": "x 266.0 y 0.0 x 266.0"
+        "wire": "x 266.0 y 0.0 x 259.0"
       },
       {
         "from": "(pin 27) file.renamed @ workspace",
         "to": "(pin 31) doc.renamed @ document manager",
-        "wire": "x 266.0 y 0.0 x 266.0"
+        "wire": "x 266.0 y 0.0 x 259.0"
       },
       {
         "from": "(pin 28) file.deleted @ workspace",
         "to": "(pin 32) doc.deleted @ document manager",
-        "wire": "x 266.0 y 0.0 x 266.0"
+        "wire": "x 266.0 y 0.0 x 259.0"
       },
       {
         "from": "(pin 7) file.get name @ workspace",
         "to": "(pin 33) doc.get @ document manager",
-        "wire": "x 266.0 y 0.0 x 266.0"
+        "wire": "x 266.0 y 0.0 x 259.0"
+      },
+      {
+        "from": "(pin 12) content div @ text editor",
+        "to": "(pin 13) content.div @ editor page",
+        "wire": "x -129.6 y -784.0 x -95.4"
+      },
+      {
+        "from": "(pin 20) text.failed @ text editor",
+        "to": "(pin 58) text.failed @ document manager",
+        "wire": "x 86.8 y -254.0 x -98.8"
+      },
+      {
+        "from": "(pin 16) text.loaded @ text editor",
+        "to": "(pin 56) text.loaded @ document manager",
+        "wire": "x 100.2 y -284.0 x -112.2"
       },
       {
         "from": "(pin 2) modal div @ single text field",
@@ -841,269 +920,334 @@
         "wire": "x 59.6 y 0.0 x 60.4"
       },
       {
-        "from": "(pin 4) content size change @ editor page",
-        "to": "(pin 38) size change @ view manager",
-        "wire": "x 105.5 y 0.0 x 431.5"
+        "from": "(pin 8) content div @ model pane",
+        "to": "(pin 13) content.div @ editor page",
+        "wire": "x 81.8 y 159.0 x -49.8"
       },
       {
         "from": "(pin 8) div @ editor page",
         "to": "(pin 4) main area @ column-main layout",
-        "wire": "x -42.3 y 0.0 x -134.7"
+        "wire": "x -31.7 y 0.0 x -89.3"
+      },
+      {
+        "from": "(pin 14) content.size change @ editor page",
+        "to": "(pin 38) size change @ view manager",
+        "wire": "x 203.1 y -26.0 x 339.9"
       },
       {
         "from": "(pin 4) div @ tab ribbon",
         "to": "(pin 2) tabs div @ editor page",
-        "wire": "x 72.6 y -211.0 x -72.6"
+        "wire": "x 34.8 y -230.0 x -37.8"
       },
       {
         "from": "(pin 14) tab.request to close @ tab ribbon",
         "to": "(pin 42) tab.request to close @ document manager",
-        "wire": "x 107.4 y 0.0 x 102.6"
+        "wire": "x 116.4 y 0.0 x 93.6"
       },
       {
         "from": "(pin 15) tab.request to select @ tab ribbon",
         "to": "(pin 43) tab.request to select @ document manager",
-        "wire": "x 107.4 y 0.0 x 102.6"
+        "wire": "x 116.4 y 0.0 x 93.6"
       },
       {
         "from": "(pin 5) sync model @ side menu",
         "to": "(pin 96) sync model @ model manager",
-        "wire": "x 423.6 y 0.0 x 425.4"
+        "wire": "x 423.6 y 0.0 x 434.4"
       },
       {
         "from": "(pin 3) accept changes @ side menu",
         "to": "(pin 73) accept changes @ model manager",
-        "wire": "x 160.6 y 0.0 x 688.4"
+        "wire": "x 160.6 y 0.0 x 697.4"
       },
       {
         "from": "(pin 12) wire check @ side menu",
         "to": "(pin 101) wire check @ model manager",
-        "wire": "x 160.6 y 0.0 x 688.4"
+        "wire": "x 160.6 y 0.0 x 697.4"
       },
       {
         "from": "(pin 7) show settings @ side menu",
         "to": "(pin 76) show settings @ model manager",
-        "wire": "x 160.6 y 15.0 x 688.4"
+        "wire": "x 444.5 y 15.0 x 413.5"
       },
       {
         "from": "(pin 11) make app @ side menu",
         "to": "(pin 53) make app @ model manager",
-        "wire": "x 160.7 y 15.0 x 688.3"
+        "wire": "x 425.2 y 15.0 x 432.8"
       },
       {
         "from": "(pin 10) make lib @ side menu",
         "to": "(pin 54) make lib @ model manager",
-        "wire": "x 160.7 y 15.0 x 688.3"
+        "wire": "x 401.3 y 15.0 x 456.7"
       },
       {
         "from": "(pin 8) set save point @ side menu",
         "to": "(pin 81) save point.set @ model manager",
-        "wire": "x 282.5 y 45.0 x 566.5"
+        "wire": "x 282.5 y 45.0 x 575.5"
       },
       {
         "from": "(pin 9) back to save point @ side menu",
         "to": "(pin 82) save point.back @ model manager",
-        "wire": "x 273.2 y 45.0 x 575.8"
+        "wire": "x 273.2 y 45.0 x 584.8"
       },
       {
         "from": "(pin 4) recalibrate @ side menu",
         "to": "(pin 41) recalibrate @ view manager",
-        "wire": "x 263.9 y 270.0 x 306.1"
+        "wire": "x 263.9 y 285.0 x 311.1"
       },
       {
         "from": "(pin 6) grid on-off @ side menu",
         "to": "(pin 42) grid on-off @ view manager",
-        "wire": "x 253.6 y 300.0 x 316.4"
+        "wire": "x 253.6 y 315.0 x 321.4"
       },
       {
         "from": "(pin 18) application prompt @ side menu",
         "to": "(pin 53) application prompt @ view manager",
-        "wire": "x 234.2 y 330.0 x 335.8"
+        "wire": "x 234.2 y 330.0 x 340.8"
       },
       {
         "from": "(pin 13) save @ side menu",
         "to": "(pin 64) model.save @ model manager",
-        "wire": "x 488.6 y 30.0 x 360.4"
+        "wire": "x 488.6 y 30.0 x 369.4"
+      },
+      {
+        "from": "(pin 13) save @ side menu",
+        "to": "(pin 51) file.save active @ document manager",
+        "wire": "x 182.7 y 736.0 x 62.3"
       },
       {
         "from": "(pin 14) save as @ side menu",
         "to": "(pin 37) file.save as @ document manager",
-        "wire": "x 169.4 y 721.0 x 73.6"
+        "wire": "x 169.4 y 736.0 x 75.6"
       },
       {
         "from": "(pin 2) div @ side menu",
-        "to": "(pin 1) menu div @ editor page",
-        "wire": "x 104.6 y 210.0 x -71.6"
+        "to": "(pin 6) menu div @ model pane",
+        "wire": "x 110.3 y 92.0 x -110.3"
       },
       {
         "from": "(pin 46) tab.new @ document manager",
         "to": "(pin 10) tab.new @ tab ribbon",
-        "wire": "x -103.0 y 0.0 x -107.0"
+        "wire": "x -96.5 y 0.0 x -113.5"
       },
       {
         "from": "(pin 47) tab.rename @ document manager",
         "to": "(pin 11) tab.rename @ tab ribbon",
-        "wire": "x -103.0 y 0.0 x -107.0"
+        "wire": "x -96.5 y 0.0 x -113.5"
       },
       {
         "from": "(pin 44) tab.select @ document manager",
         "to": "(pin 12) tab.select @ tab ribbon",
-        "wire": "x -103.0 y 0.0 x -107.0"
+        "wire": "x -96.5 y 0.0 x -113.5"
       },
       {
         "from": "(pin 45) tab.remove @ document manager",
         "to": "(pin 13) tab.remove @ tab ribbon",
-        "wire": "x -96.2 y 0.0 x -113.8"
+        "wire": "x -89.7 y 0.0 x -120.3"
       },
       {
         "from": "(pin 34) doc.set active @ document manager",
-        "to": "(cable 0 endpoint nonselective)",
-        "wire": "y 0.0"
+        "to": "(cable 0 nonselective)",
+        "wire": "x -35.0"
+      },
+      {
+        "from": "(pin 59) file.loading @ document manager",
+        "to": "(pin 15) content.loading @ editor page",
+        "wire": "x -432.8 y -365.0 x 29.8"
+      },
+      {
+        "from": "(pin 60) file.loaded @ document manager",
+        "to": "(pin 16) content.loaded @ editor page",
+        "wire": "x -443.1 y -395.0 x 40.1"
+      },
+      {
+        "from": "(pin 61) file.failed @ document manager",
+        "to": "(pin 17) content.failed @ editor page",
+        "wire": "x -455.3 y -425.0 x 52.3"
       },
       {
         "from": "(pin 38) file.save @ document manager",
         "to": "(pin 64) model.save @ model manager",
-        "wire": "x 65.5 y -721.0 x 360.5"
+        "wire": "x 72.0 y -781.0 x 361.0"
       },
       {
         "from": "(pin 39) file.save as filename @ document manager",
-        "to": "(cable 1 nonselective)",
-        "wire": "x 646.8 y -511.0"
+        "to": "(pin 3) path only @ popups",
+        "wire": "x 649.7 y -556.0 x 173.3"
+      },
+      {
+        "from": "(pin 52) text.save @ document manager",
+        "to": "(pin 10) text.save @ text editor",
+        "wire": "x -71.2 y 164.0 x 83.2"
+      },
+      {
+        "from": "(pin 49) text.set active @ document manager",
+        "to": "(pin 9) text.set active @ text editor",
+        "wire": "x -57.0 y 134.0 x 69.0"
       },
       {
         "from": "(pin 17) redox.doit @ view manager",
         "to": "(pin 56) redox.doit @ model manager",
-        "wire": "x 40.0 y 0.0 x 59.0"
+        "wire": "x 44.4 y 0.0 x 58.6"
       },
       {
         "from": "(pin 18) redox.undo @ view manager",
         "to": "(pin 57) redox.undo @ model manager",
-        "wire": "x 45.2 y 0.0 x 53.8"
+        "wire": "x 49.6 y 0.0 x 53.4"
       },
       {
         "from": "(pin 19) redox.redo @ view manager",
         "to": "(pin 58) redox.redo @ model manager",
-        "wire": "x 52.4 y 0.0 x 46.6"
+        "wire": "x 56.8 y 0.0 x 46.2"
       },
       {
         "from": "(pin 46) team legend @ view manager",
         "to": "(pin 3) teams @ team legend",
-        "wire": "x -448.6 y -125.0 x -123.4"
+        "wire": "x -43.7 y -575.0 x -531.3"
       },
       {
         "from": "(pin 37) canvas @ view manager",
-        "to": "(pin 3) content div @ editor page",
-        "wire": "x -424.1 y 0.0 x -112.9"
+        "to": "(pin 5) canvas @ model pane",
+        "wire": "x -432.0 y -133.0 x -143.0"
       },
       {
         "from": "(pin 25) node settings (sx) @ view manager",
         "to": "(pin 7) node settings (sx) @ popups",
-        "wire": "x 339.0 y -75.0 x 148.0"
+        "wire": "x 343.4 y -75.0 x 149.6"
       },
       {
         "from": "(pin 24) runtime settings (dx) @ view manager",
         "to": "(pin 10) runtime settings (dx) @ popups",
-        "wire": "x 349.3 y -75.0 x 137.7"
+        "wire": "x 353.7 y -75.0 x 139.3"
       },
       {
         "from": "(pin 23) node prompt @ view manager",
         "to": "(pin 5) node prompt @ popups",
-        "wire": "x 360.9 y -75.0 x 126.1"
+        "wire": "x 365.3 y -75.0 x 127.7"
       },
       {
         "from": "(pin 48) context menu @ view manager",
         "to": "(pin 8) context menu @ popups",
-        "wire": "x 373.5 y -75.0 x 113.5"
+        "wire": "x 377.9 y -75.0 x 115.1"
       },
       {
         "from": "(pin 47) name and path @ view manager",
         "to": "(pin 4) name and path @ popups",
-        "wire": "x 387.2 y -75.0 x 99.8"
+        "wire": "x 391.6 y -75.0 x 101.4"
+      },
+      {
+        "from": "(pin 26) open source file @ view manager",
+        "to": "(cable 1 nonselective)",
+        "wire": "x -116.1"
+      },
+      {
+        "from": "(pin 28) open model @ view manager",
+        "to": "(cable 1 nonselective)",
+        "wire": "x -116.1"
       },
       {
         "from": "(pin 44) clipboard.get @ view manager",
         "to": "(pin 18) get @ clipboard",
-        "wire": "x -51.3 y 117.0 x 57.3"
+        "wire": "x -46.9 y 102.0 x 56.9"
       },
       {
         "from": "(pin 45) clipboard.set @ view manager",
         "to": "(pin 17) set @ clipboard",
-        "wire": "x -37.9 y 87.0 x 43.9"
+        "wire": "x -33.5 y 72.0 x 43.5"
       },
       {
         "from": "(pin 63) save point.confirm @ model manager",
         "to": "(pin 11) confirm @ popups",
-        "wire": "x 94.5 y 165.0 x 113.5"
+        "wire": "x 94.5 y 180.0 x 115.5"
       },
       {
         "from": "(pin 60) model.root @ model manager",
         "to": "(pin 22) root @ view manager",
-        "wire": "x -27.3 y 135.0 x -71.7"
+        "wire": "x -27.3 y 150.0 x -75.7"
       },
       {
         "from": "(pin 79) model.header @ model manager",
         "to": "(pin 9) header @ popups",
-        "wire": "x 83.2 y 105.0 x 124.8"
+        "wire": "x 83.2 y 120.0 x 126.8"
+      },
+      {
+        "from": "(pin 113) model.loaded @ model manager",
+        "to": "(pin 55) model.loaded @ document manager",
+        "wire": "x -60.9 y 766.0 x -372.1"
+      },
+      {
+        "from": "(pin 114) model.failed @ model manager",
+        "to": "(pin 57) model.failed @ document manager",
+        "wire": "x -46.8 y 766.0 x -386.2"
       },
       {
         "from": "(pin 86) redox.done @ model manager",
         "to": "(pin 21) redox.done @ view manager",
-        "wire": "x -39.0 y 0.0 x -60.0"
+        "wire": "x -39.0 y 0.0 x -64.0"
       },
       {
         "from": "(pin 94) event settings @ model manager",
         "to": "(pin 13) event settings @ popups",
-        "wire": "x 21.4 y 0.0 x 186.6"
+        "wire": "x 21.4 y 0.0 x 188.6"
       },
       {
         "from": "(pin 93) tool settings @ model manager",
         "to": "(pin 14) tool settings @ popups",
-        "wire": "x 30.1 y 0.0 x 177.9"
+        "wire": "x 30.1 y 0.0 x 179.9"
       },
       {
         "from": "(pin 84) pin profile @ model manager",
         "to": "(pin 6) pin profile @ popups",
-        "wire": "x 36.8 y 0.0 x 171.2"
+        "wire": "x 36.8 y 0.0 x 173.2"
       },
       {
         "from": "(pin 106) info popup @ model manager",
         "to": "(pin 15) temp message @ popups",
-        "wire": "x 156.7 y 0.0 x 51.3"
+        "wire": "x 156.7 y 0.0 x 53.3"
       },
       {
         "from": "(pin 59) get path @ model manager",
-        "to": "(cable 1 endpoint nonselective)",
-        "wire": "y 0.0"
+        "to": "(pin 3) path only @ popups",
+        "wire": "x 104.0 y 0.0 x 106.0"
+      },
+      {
+        "from": "(pin 88) open source file @ model manager",
+        "to": "(cable 1 nonselective)",
+        "wire": "x -36.9 y 406.2 x -362.2"
+      },
+      {
+        "from": "(pin 62) open model @ model manager",
+        "to": "(cable 1 nonselective)",
+        "wire": "x -18.4 y 408.6 x -380.7"
       },
       {
         "from": "(pin 12) folder.get @ popups",
         "to": "(pin 40) folder.get @ workspace",
-        "wire": "x 45.1 y 496.0 x -1721.1"
+        "wire": "x 39.9 y 628.0 x -1664.0 y -162.0 x -53.9"
       },
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 5) modal div @ editor page",
-        "wire": "x 24.4 y 444.4 x -1326.6 y -489.4 x -51.8"
+        "wire": "x 22.2 y 599.7 x -1360.4 y -708.7 x -27.8"
       },
       {
         "from": "(pin 4) div @ team legend",
-        "to": "(pin 9) legend div @ editor page",
-        "wire": "x 76.4 y 95.0 x -41.4"
-      },
-      {
-        "from": "(cable 0 endpoint nonselective)",
-        "to": "(pin 78) model.set @ model manager",
-        "wire": "y 0.0"
+        "to": "(pin 7) legend div @ model pane",
+        "wire": "x 66.0 y 442.0 x -66.0"
       },
       {
         "from": "(cable 0 nonselective)",
         "to": "(pin 39) top level view @ view manager",
-        "wire": "x 187.9 y 0.0 x 185.5"
+        "wire": "x 365.0"
       },
       {
-        "from": "(cable 1 endpoint nonselective)",
-        "to": "(pin 3) path only @ popups",
-        "wire": "y 0.0"
+        "from": "(cable 0 nonselective)",
+        "to": "(pin 78) model.set @ model manager",
+        "wire": "x 19.5 y 0.0 x 628.5"
+      },
+      {
+        "from": "(cable 1 nonselective)",
+        "to": "(pin 35) doc.open @ document manager",
+        "wire": "x -9.5 y 0.0 x -24.4"
       }
     ]
   }

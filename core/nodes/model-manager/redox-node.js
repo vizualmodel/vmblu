@@ -1,6 +1,7 @@
 import {getRuntimeSettings} from '@vizualmodel/vmblu-runtime/runtime-settings'
 
 import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
+import {applyNodePromptDocument, getNodePromptDocument} from '../../types/node/node-prompt-document.js'
 
 export const redoxNode = {
 
@@ -333,18 +334,17 @@ changeNodeDynamics: {
 },
 
 changeNodePrompt: {
-    doit({node, prompt, sections=null}) {
-
-        const next = sections ?? {prompt}
-        const edit = node.prompts.apply(next)
-        if (!edit.changed) return
-        this.saveEdit('changeNodePrompt', {node, oldSections: edit.before, newSections: edit.after})
+    doit({node, document}) {
+        const oldDocument = getNodePromptDocument(node)
+        if (oldDocument === document) return
+        if (!applyNodePromptDocument(node, document)) return
+        this.saveEdit('changeNodePrompt', {node, oldDocument, newDocument: document})
     },
-    undo({node, oldSections}) {
-        node.prompts.restore(oldSections)
+    undo({node, oldDocument}) {
+        applyNodePromptDocument(node, oldDocument)
     },
-    redo({node, newSections}){
-        node.prompts.restore(newSections)
+    redo({node, newDocument}){
+        applyNodePromptDocument(node, newDocument)
     }
 }
 

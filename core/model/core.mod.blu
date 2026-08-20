@@ -1,10 +1,15 @@
 {
   "header": {
-    "version": "0.10.0",
+    "version": "1.10.0",
     "created": "4/2/2024, 1:26:41 PM",
-    "saved": "3/9/2026, 6:56:39 PM",
-    "utc": "2026-03-09T17:56:39.260Z",
-    "runtime": "@vizualmodel/vmblu-runtime/rt-base"
+    "saved": "2026-08-20T08:48:55.426Z",
+    "utc": "2026-08-20T08:48:55.426Z",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-base",
+    "teams": {
+      "default": {
+        "color": "#00aaff"
+      }
+    }
   },
   "imports": [
     "../../ui-svelte/model/ui-svelte.mod.blu"
@@ -30,6 +35,26 @@
       "kind": "primitive",
       "summary": "Tab/document display name."
     },
+    "TabDescriptor": {
+      "kind": "object",
+      "summary": "Stable tab identity and display metadata.",
+      "fields": {
+        "id": {
+          "vmbluType": "string"
+        },
+        "label": {
+          "vmbluType": "string"
+        },
+        "readOnly": {
+          "vmbluType": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "readOnly"
+      ]
+    },
     "ArlRef": {
       "kind": "external",
       "summary": "Workspace/model path reference.",
@@ -40,8 +65,14 @@
     },
     "ActiveDocument": {
       "kind": "object",
-      "summary": "Active document payload containing model and optional view.",
+      "summary": "Active model or text document selected by the document manager.",
       "fields": {
+        "kind": {
+          "vmbluType": "string"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
         "model": {
           "vmbluType": "AnyPayload"
         },
@@ -50,7 +81,8 @@
         }
       },
       "required": [
-        "model"
+        "kind",
+        "arl"
       ]
     },
     "ModelHeader": {
@@ -209,7 +241,10 @@
         "kind": "source",
         "name": "document manager",
         "label": "Manages the list of open documents",
-        "prompt": "The document manager is typically used together with a tab-ribbon ui element.\n\nThe document manager is also the node that gets and saves the content of the documents.\n\nThe selection, closing, renaming etc is typically handled here.\n\nThe editor is typically only aware of one document - the active document - that is set by the document manager.",
+        "promptRepo": {
+          "arl": "./prompts/document-manager.md",
+          "pathKind": 2
+        },
         "factory": {
           "path": "../nodes/document-manager/document-manager.js",
           "function": "DocumentManager"
@@ -262,7 +297,7 @@
                 "name": "doc.set active",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "ActiveDocument"
                 }
               },
@@ -280,6 +315,14 @@
             "interface": "file",
             "pins": [
               {
+                "name": "file.save active",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
                 "name": "file.save as",
                 "kind": "input",
                 "contract": {
@@ -291,7 +334,7 @@
                 "name": "file.save",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "Void"
                 }
               },
@@ -309,6 +352,62 @@
                 "contract": {
                   "role": "follower",
                   "payload": "Void"
+                }
+              },
+              {
+                "name": "model.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "model.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.loading",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -352,8 +451,8 @@
                 "name": "tab.new",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "TabName"
+                  "role": "owner",
+                  "payload": "TabDescriptor"
                 }
               },
               {
@@ -362,6 +461,27 @@
                 "contract": {
                   "role": "follower",
                   "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "text",
+            "pins": [
+              {
+                "name": "text.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "text.save",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
                 }
               }
             ]
@@ -890,7 +1010,7 @@
                 "name": "open source file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "AnyPayload"
                 }
               },
@@ -898,7 +1018,7 @@
                 "name": "open model",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "ArlRef"
                 }
               }
@@ -1049,11 +1169,19 @@
                 }
               },
               {
-                "name": "model.resolved",
+                "name": "model.loaded",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "model.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
                 }
               },
               {
@@ -1184,7 +1312,7 @@
                 "name": "open source file",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "AnyPayload"
                 }
               },
@@ -1192,7 +1320,7 @@
                 "name": "open model",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "ArlRef"
                 }
               }

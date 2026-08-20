@@ -105,7 +105,7 @@ export const messageBrokerWebview = {
 		vscode.postMessage({verb: 'report edit', edit: edit?.verb ?? 'unspecified'})
 	},
 
-	onModelResolved(arl) {
+	onModelLoaded(arl) {
 
 		// signal vscode which backing model file should be watched
 		vscode.postMessage({verb: 'model resolved', model: arl})

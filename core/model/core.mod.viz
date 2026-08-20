@@ -1,7 +1,9 @@
 {
   "header": {
-    "version": "0.10.0",
-    "utc": "2026-03-09T17:56:39.260Z",
+    "version": "1.10.0",
+    "created": "4/2/2024, 1:26:41 PM",
+    "saved": "3/9/2026, 6:56:39 PM",
+    "utc": "2026-08-20T08:48:55.428Z",
     "style": "#00aaff"
   },
   "root": {
@@ -33,7 +35,7 @@
       {
         "kind": "source",
         "name": "document manager",
-        "rect": "x 123 y -9 w 180 h 326",
+        "rect": "x 123 y -9 w 180 h 386",
         "interfaces": [
           {
             "interface": "(48) doc",
@@ -48,8 +50,9 @@
             ]
           },
           {
-            "interface": "(49) file",
+            "interface": "(50) file",
             "pins": [
+              "(51 R)file.save active",
               "(37 R)file.save as",
               "(38 R)file.save",
               "(39 R)file.save as filename",
@@ -57,7 +60,7 @@
             ]
           },
           {
-            "interface": "(50) tab",
+            "interface": "(53) tab",
             "pins": [
               "(42 R)tab.request to close",
               "(43 R)tab.request to select",
@@ -65,6 +68,13 @@
               "(45 R)tab.remove",
               "(46 R)tab.new",
               "(47 R)tab.rename"
+            ]
+          },
+          {
+            "interface": "(54) text",
+            "pins": [
+              "(49 R)text.set active",
+              "(52 R)text.save"
             ]
           }
         ]
@@ -211,10 +221,10 @@
       {
         "kind": "source",
         "name": "view manager",
-        "rect": "x 415 y -8 w 165 h 401",
+        "rect": "x 415 y -8 w 165 h 431",
         "interfaces": [
           {
-            "interface": "(78) setup",
+            "interface": "(49) setup",
             "pins": [
               "(37 R)canvas",
               "(46 R)team legend",
@@ -224,38 +234,39 @@
             ]
           },
           {
-            "interface": "(79) visuals",
+            "interface": "(50) visuals",
             "pins": [
               "(41 R)recalibrate",
               "(42 R)grid on-off"
             ]
           },
           {
-            "interface": "(80) clipboard",
+            "interface": "(51) clipboard",
             "pins": [
               "(44 R)clipboard.get",
               "(45 R)clipboard.set"
             ]
           },
           {
-            "interface": "(81) ui",
+            "interface": "(52) ui",
             "pins": [
               "(47 R)name and path",
               "(48 R)context menu",
               "(23 R)node prompt",
+              "(53 R)application prompt",
               "(24 R)runtime settings (dx)",
               "(25 R)node settings (sx)"
             ]
           },
           {
-            "interface": "(82) files",
+            "interface": "(54) files",
             "pins": [
               "(26 R)open source file",
               "(28 R)open model"
             ]
           },
           {
-            "interface": "(83) redox",
+            "interface": "(55) redox",
             "pins": [
               "(17 R)redox.doit",
               "(18 R)redox.undo",
@@ -268,13 +279,14 @@
       {
         "kind": "source",
         "name": "model manager",
-        "rect": "x 676 y -11 w 165 h 506",
+        "rect": "x 676 y -11 w 165 h 521",
         "interfaces": [
           {
             "interface": "(109) actions",
             "pins": [
               "(73 R)accept changes",
               "(101 R)wire check",
+              "(110 R)auto layout",
               "(96 R)sync model",
               "(108 R)sync links",
               "(76 R)show settings",
@@ -283,7 +295,7 @@
             ]
           },
           {
-            "interface": "(110) model",
+            "interface": "(111) model",
             "pins": [
               "(78 R)model.set",
               "(79 R)model.header",
@@ -293,7 +305,7 @@
             ]
           },
           {
-            "interface": "(111) save point",
+            "interface": "(112) save point",
             "pins": [
               "(81 R)save point.set",
               "(82 R)save point.back",
@@ -301,7 +313,7 @@
             ]
           },
           {
-            "interface": "(112) info",
+            "interface": "(113) info",
             "pins": [
               "(84 R)pin profile",
               "(93 R)tool settings",
@@ -311,7 +323,7 @@
             ]
           },
           {
-            "interface": "(113) redox",
+            "interface": "(114) redox",
             "pins": [
               "(56 R)redox.doit",
               "(57 R)redox.undo",
@@ -320,7 +332,7 @@
             ]
           },
           {
-            "interface": "(114) files",
+            "interface": "(115) files",
             "pins": [
               "(88 R)open source file",
               "(62 R)open model"

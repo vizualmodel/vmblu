@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import path from 'path';
 import { createRequire } from 'module';
+import { familyRange } from '../../lib/version-policy.js';
 
 const require = createRequire(import.meta.url);
 const pckg = require('../../package.json');
@@ -38,7 +39,7 @@ export async function makePackageJson({
     version: "0.0.0",
     type: "module",
     dependencies: {
-      "@vizualmodel/vmblu-runtime": "^0.4.0"
+      "@vizualmodel/vmblu-runtime": familyRange(pckg.version)
     },
     devDependencies : {
       "@vizualmodel/vmblu-cli": cliVersion,

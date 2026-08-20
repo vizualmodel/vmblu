@@ -32,7 +32,7 @@ export const mouseUpHandling = {
                 // Use the active hit kind to avoid stale hit fields from an earlier mouse target.
                 const conx = this.hit.what == zap.pin ? this.hit.lookWidget
                             : this.hit.what == zap.pad ? this.hit.pad
-                            : this.hit.what == zap.busSegment ? this.hit.cable
+                            : (this.hit.what == zap.busSegment || this.hit.what == zap.busLabel) ? this.hit.cable
                             : this.hit.what == zap.route ? this.hit.route
                             : null
 
@@ -130,7 +130,13 @@ export const mouseUpHandling = {
                 tack.fuseEndSegment()
                 tack.route.unSelect()
 
-                this.doEdit(tx,'tackDrag', {tack, oldWire: state.modo.wire, newWire: tack.route.copyWire()})
+                this.doEdit(tx,'tackDrag', {
+                    tack,
+                    oldWire: state.modo.wire,
+                    newWire: tack.route.copyWire(),
+                    oldAttachment: state.modo.attachment,
+                    newAttachment: tack.copyAttachment()
+                })
                 break
 
             case doing.pinDrag:

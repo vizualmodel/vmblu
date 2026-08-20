@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "0.10.0",
+    "version": "1.10.0",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "12/16/2025, 1:00:06 PM",
-    "utc": "2025-12-16T12:00:06.433Z",
+    "utc": "2026-08-20T08:48:55.524Z",
     "style": "#00aaff"
   },
   "root": {
@@ -396,16 +396,17 @@
           {
             "kind": "source",
             "name": "vertical menu tabs content",
-            "rect": "x 339 y 197 w 250 h 161",
+            "rect": "x 339 y 197 w 250 h 191",
             "interfaces": [
               {
-                "interface": "(0)",
+                "interface": "(12) content",
                 "pins": [
-                  "(1 R)menu div",
+                  "(13 R)content.div",
+                  "(14 R)content.size change",
+                  "(15 R)content.loading",
+                  "(16 R)content.loaded",
+                  "(17 R)content.failed",
                   "(2 R)tabs div",
-                  "(3 R)content div",
-                  "(4 R)content size change",
-                  "(9 R)legend div",
                   "(5 R)modal div",
                   "(6 R)show",
                   "(7 R)size change",

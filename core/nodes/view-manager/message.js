@@ -7,6 +7,10 @@ export const messageHandling = {
 
     onTopLevelView(doc) {
 
+        // The editor page may currently be showing a text editor. Re-publish
+        // the canvas whenever a model document becomes active again.
+        if (doc) this.tx.send('canvas', this.canvas)
+
         const view = doc?.view ?? null;
 
         if (!view) {

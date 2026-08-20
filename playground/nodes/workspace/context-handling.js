@@ -8,6 +8,8 @@ export function folderContext(folder) {
 
     contextMenu.length = 0
 
+    if (folder?.isReadOnly?.()) return contextMenu
+
     contextMenu.push({icon:"sell", text:"change name", state: "enabled",action:folder.nameDialog})
 
     contextMenu.push({
@@ -42,6 +44,8 @@ export function fileContext(file) {
 
     contextMenu.length = 0
 
+    if (file?.isReadOnly?.()) return contextMenu
+
     contextMenu.push({
         icon:"sell", text:"change name", state: "enabled", 
         action: (e) => tx.send( 'name.request',{label:"Name ", value:this.name, regex:/^[\w,-]+$/, pos:{x:e.clientX, y:e.clientY},
@@ -58,4 +62,3 @@ export function fileContext(file) {
 
     return contextMenu
 }
-

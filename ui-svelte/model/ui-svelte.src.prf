@@ -1,17 +1,17 @@
 {
-  "version": "0.10.0",
+  "version": "1.10.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "0.10",
-    "schemaVersion": "0.10.0",
+    "compatibilityFamily": "1.10",
+    "schemaVersion": "1.10.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "0.10.0"
+      "version": "1.10.0"
     },
     "source": {
       "model": "ui-svelte.mod.blu",
-      "hash": "fnv1a64:f65092ce63411ec6"
+      "hash": "fnv1a64:4c8cce3b9516a078"
     }
   },
   "entries": []

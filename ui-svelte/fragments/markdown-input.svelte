@@ -33,7 +33,7 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
 $: previewHtml = md.render(text ?? '')
 $: fieldWidth = `${Number(cols) || 50}ch`
 $: fieldHeight = `${((Number(rows) || 10) * 1.35) + 1}em`
-$: fieldStyle = `width:${fieldWidth}; min-height:${fieldHeight};`
+$: fieldStyle = `width:${fieldWidth}; height:${fieldHeight};`
 </script>
 <style>
 :global(:root) {
@@ -51,9 +51,18 @@ $: fieldStyle = `width:${fieldWidth}; min-height:${fieldHeight};`
     gap: 0.35rem;
 }
 
+.field {
+    box-sizing: border-box;
+    overflow: hidden;
+    resize: both;
+}
+
 .preview,
 textarea {
     box-sizing: border-box;
+    display: block;
+    width: 100%;
+    height: 100%;
     font-size: 0.9rem;
     padding: 0.5rem;
     background: var(--md-bg);
@@ -96,17 +105,19 @@ textarea {
 textarea {
     font-family: var(--md-editor-font);
     line-height: 1.35;
-    resize: vertical;
+    resize: none;
 }
 </style>
 
 <div class="wrapper">
-    {#if showPreview}
-        <div class="preview" style={fieldStyle} aria-label="Markdown preview" tabindex="0">
-            {@html previewHtml}
-        </div>
-    {:else}
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <textarea style={fieldStyle} bind:value={text} name="txt-name" spellcheck="false" rows={rows} cols={cols} on:keydown={onKeydown}></textarea>
-    {/if}
+    <div class="field" style={fieldStyle}>
+        {#if showPreview}
+            <div class="preview" role="region" aria-label="Markdown preview" tabindex="0">
+                {@html previewHtml}
+            </div>
+        {:else}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <textarea bind:value={text} name="txt-name" spellcheck="false" rows={rows} cols={cols} on:keydown={onKeydown}></textarea>
+        {/if}
+    </div>
 </div>

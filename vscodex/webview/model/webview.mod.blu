@@ -1,13 +1,19 @@
 {
   "header": {
-    "version": "0.10.0",
+    "version": "1.10.0",
     "created": "4/2/2024, 1:40:46 PM",
-    "saved": "12/16/2025, 1:00:24 PM",
-    "utc": "2025-12-16T12:00:24.931Z",
+    "saved": "2026-08-20T08:48:55.570Z",
+    "utc": "2026-08-20T08:48:55.570Z",
     "runtime": "../../../runtime/rt-base/runtime.js",
     "teams": {
       "default": {
         "color": "#00aaff"
+      },
+      "core": {
+        "color": "#90753c"
+      },
+      "ui": {
+        "color": "#889810"
       }
     }
   },
@@ -27,6 +33,7 @@
         "kind": "source",
         "name": "message broker",
         "label": "The broker communicates with vscode",
+        "team": "default",
         "factory": {
           "path": "../message-broker.js",
           "function": "MessageBroker"
@@ -105,7 +112,7 @@
                 }
               },
               {
-                "name": "model.resolved",
+                "name": "model.loaded",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -217,6 +224,7 @@
       {
         "kind": "dock",
         "name": "view manager",
+        "team": "core",
         "link": {
           "path": "../../../core/model/core.mod.blu",
           "node": "view manager"
@@ -329,6 +337,14 @@
             "interface": "ui",
             "pins": [
               {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
                 "name": "node settings (sx)",
                 "kind": "output",
                 "contract": {
@@ -350,14 +366,6 @@
                 "contract": {
                   "role": "follower",
                   "payload": "any"
-                }
-              },
-              {
-                "name": "application prompt",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "UiEvent"
                 }
               },
               {
@@ -425,6 +433,7 @@
       {
         "kind": "dock",
         "name": "model manager",
+        "team": "core",
         "link": {
           "path": "../../../core/model/core.mod.blu",
           "node": "model manager"
@@ -577,7 +586,7 @@
                 }
               },
               {
-                "name": "model.header",
+                "name": "model.loaded",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -585,7 +594,15 @@
                 }
               },
               {
-                "name": "model.resolved",
+                "name": "model.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "model.header",
                 "kind": "output",
                 "contract": {
                   "role": "follower",
@@ -681,6 +698,7 @@
       {
         "kind": "dock",
         "name": "clipboard",
+        "team": "core",
         "link": {
           "path": "../../../core/model/core.mod.blu",
           "node": "clipboard"
@@ -744,6 +762,7 @@
       {
         "kind": "group",
         "name": "popups",
+        "team": "ui",
         "interfaces": [
           {
             "interface": "",
@@ -1462,21 +1481,21 @@
           },
           {
             "src": {
-              "pin": "modal div",
-              "node": "context menu"
-            },
-            "dst": {
-              "pin": "modal div"
-            }
-          },
-          {
-            "src": {
               "pin": "confirm",
               "node": "context menu"
             },
             "dst": {
               "pin": "show",
               "node": "confirm box"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "context menu"
+            },
+            "dst": {
+              "pin": "modal div"
             }
           },
           {
@@ -1693,6 +1712,7 @@
       {
         "kind": "dock",
         "name": "vscode side menu",
+        "team": "ui",
         "link": {
           "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
           "node": "vscode side menu"
@@ -1910,12 +1930,12 @@
         },
         "dst": [
           {
-            "pin": "model.set",
-            "node": "model manager"
-          },
-          {
             "pin": "top level view",
             "node": "view manager"
+          },
+          {
+            "pin": "model.set",
+            "node": "model manager"
           }
         ]
       },
@@ -2161,11 +2181,11 @@
       },
       {
         "src": {
-          "pin": "model.resolved",
+          "pin": "model.loaded",
           "node": "model manager"
         },
         "dst": {
-          "pin": "model.resolved",
+          "pin": "model.loaded",
           "node": "message broker"
         }
       },

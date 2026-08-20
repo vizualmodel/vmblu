@@ -1,47 +1,29 @@
 import {getPromptRepoRuntimeState, resolvePromptRepo} from './prompt-repo.js'
 
-const sectionNames = ['prompt', 'status', 'decisions', 'open', 'references']
-
-export function NodePrompts({prompt=null, status=null, decisions=null, open=null, references=null, repository=null}={}) {
-    this.prompt = normalizeSection(prompt)
-    this.status = normalizeSection(status)
-    this.decisions = normalizeSection(decisions)
-    this.open = normalizeSection(open)
-    this.references = normalizeSection(references)
+export function NodePrompts({prompt=null, repository=null}={}) {
+    this.prompt = normalizePrompt(prompt)
     this.repository = repository
 }
 
 NodePrompts.prototype = {
 
-    apply(sections) {
-        const before = this.snapshot()
-        const after = normalizeSections(sections, before)
-        const changed = sectionNames.some(section => before[section] !== after[section])
-        if (!changed) return {changed: false, before, after}
+    apply(prompt) {
+        const before = this.prompt
+        const after = normalizePrompt(prompt)
+        if (before === after) return {changed: false, before, after}
 
-        this.assign(after)
+        this.prompt = after
         this.markDirty()
         return {changed: true, before, after}
     },
 
-    restore(sections) {
-        this.assign(normalizeSections(sections))
+    restore(prompt) {
+        this.prompt = normalizePrompt(prompt)
         this.markDirty()
     },
 
-    hydrate(sections) {
-        this.assign(normalizeSections(sections))
-        this.clearDirty()
-    },
-
     cook(raw, refArl) {
-        this.assign({
-            prompt: raw.prompt,
-            status: raw.promptStatus,
-            decisions: raw.promptDecisions,
-            open: raw.promptOpen,
-            references: raw.promptReferences,
-        })
+        this.prompt = normalizePrompt(raw.prompt)
         this.repository = raw.promptRepo && raw.kind !== 'dock'
             ? resolvePromptRepo(raw.promptRepo, refArl)
             : null
@@ -51,25 +33,11 @@ NodePrompts.prototype = {
     writeRaw(raw, refArl) {
         if (this.repository) raw.promptRepo = this.repository.makeRaw(refArl)
         if (this.prompt) raw.prompt = this.prompt
-        if (this.status) raw.promptStatus = this.status
-        if (this.decisions) raw.promptDecisions = this.decisions
-        if (this.open) raw.promptOpen = this.open
-        if (this.references) raw.promptReferences = this.references
         return raw
     },
 
-    snapshot(empty=null) {
-        return {
-            prompt: this.prompt ?? empty,
-            status: this.status ?? empty,
-            decisions: this.decisions ?? empty,
-            open: this.open ?? empty,
-            references: this.references ?? empty,
-        }
-    },
-
     hasContent() {
-        return sectionNames.some(section => this[section]?.length)
+        return Boolean(this.prompt?.trim().length)
     },
 
     markDirty() {
@@ -80,35 +48,14 @@ NodePrompts.prototype = {
         return true
     },
 
-    clearDirty() {
-        const state = getPromptRepoRuntimeState(this.repository)
-        if (!state) return false
-        state.dirty = false
-        state.pendingText = null
-        return true
-    },
-
     clone() {
         return new NodePrompts({
-            ...this.snapshot(),
+            prompt: this.prompt,
             repository: this.repository?.clone?.() ?? null,
         })
     },
-
-    assign(sections) {
-        for (const section of sectionNames) this[section] = normalizeSection(sections?.[section])
-    },
 }
 
-function normalizeSections(sections, fallback={}) {
-    return Object.fromEntries(sectionNames.map(section => [
-        section,
-        Object.hasOwn(sections ?? {}, section)
-            ? normalizeSection(sections[section])
-            : normalizeSection(fallback[section]),
-    ]))
-}
-
-function normalizeSection(value) {
-    return value?.length ? value : null
+function normalizePrompt(value) {
+    return typeof value === 'string' && value.trim().length ? value : null
 }

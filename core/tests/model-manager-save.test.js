@@ -67,3 +67,20 @@ test('regular Save As keeps the new model target', async () => {
     assert.equal(fixture.model.blu.arl, fixture.backupBlu)
     assert.equal(fixture.model.viz.arl, fixture.backupViz)
 })
+
+test('direct save of a read-only model is blocked before encoding', async () => {
+    const fixture = makeManager()
+    fixture.canonicalBlu.canWrite = () => false
+    fixture.manager.tx = {
+        send(pin, payload) {
+            fixture.observations.popup = {pin, payload}
+        }
+    }
+
+    await fixture.manager.onModelSave({})
+
+    assert.equal(fixture.observations.raw, undefined)
+    assert.equal(fixture.observations.savedBlu, undefined)
+    assert.equal(fixture.observations.popup.pin, 'info popup')
+    assert.match(fixture.observations.popup.payload.message, /Save As/)
+})

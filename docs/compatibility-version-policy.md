@@ -22,4 +22,5 @@ behaviour starts a new compatibility family. Precise patch versions remain in
 diagnostics and generated-artifact provenance, but do not determine
 compatibility.
 
-The first release governed by this policy is family `0.10`.
+The first release governed by this policy was family `0.10`. The first public
+stable release family is `1.10`.
