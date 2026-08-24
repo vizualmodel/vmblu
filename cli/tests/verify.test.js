@@ -14,7 +14,7 @@ test('verify accepts current generated artifacts and reports stale output', asyn
     const modelPath = path.join(dir, 'sample.mod.blu')
     const visualPath = path.join(dir, 'sample.mod.viz')
     const header = {
-      version: '1.10.0',
+      version: '1.10.1',
       created: '2026-08-05T00:00:00.000Z',
       saved: '2026-08-05T00:00:00.000Z',
       utc: '2026-08-05T00:00:00.000Z',
@@ -41,13 +41,13 @@ test('verify accepts current generated artifacts and reports stale output', asyn
     const common = {
       model: 'sample.mod.blu',
       source: model.raw,
-      schemaVersion: '1.10.0',
+      schemaVersion: '1.10.1',
     }
     const profile = makeArtifactProvenance({
       ...common,
       artifact: 'source-profile',
       generatorName: '@vizualmodel/vmblu-cli',
-      generatorVersion: '1.10.0',
+      generatorVersion: '1.10.1',
     })
     const compiler = new ModelCompiler(new UIDGenerator())
     const root = compiler.compileRawNode(model, model.raw.root)
@@ -61,7 +61,7 @@ test('verify accepts current generated artifacts and reports stale output', asyn
     model.preCook()
     const capabilities = model.makeCapabilityObject(root)
 
-    await writeFile(path.join(dir, 'sample.src.prf'), JSON.stringify({version: '1.10.0', provenance: profile, entries: []}))
+    await writeFile(path.join(dir, 'sample.src.prf'), JSON.stringify({version: '1.10.1', provenance: profile, entries: []}))
     await writeFile(path.join(dir, 'sample.app.js'), application)
     await writeFile(path.join(dir, 'sample.cap.json'), JSON.stringify(capabilities))
 
@@ -70,7 +70,7 @@ test('verify accepts current generated artifacts and reports stale output', asyn
 
     const staleProfile = structuredClone(profile)
     staleProfile.source.hash = 'fnv1a64:0000000000000000'
-    await writeFile(path.join(dir, 'sample.src.prf'), JSON.stringify({version: '1.10.0', provenance: staleProfile, entries: []}))
+    await writeFile(path.join(dir, 'sample.src.prf'), JSON.stringify({version: '1.10.1', provenance: staleProfile, entries: []}))
 
     const stale = await verifyProject(modelPath, {requireGenerated: true})
     assert.equal(stale.ok, false)

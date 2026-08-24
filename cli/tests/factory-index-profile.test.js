@@ -16,7 +16,7 @@ test('profile discovers source files from a canonical string factory index', asy
         const outputPath = path.join(dir, 'sample.src.prf')
         const raw = {
             header: {
-                version: '1.10.0',
+                version: '1.10.1',
                 created: '2026-08-05T00:00:00.000Z',
                 saved: '2026-08-05T00:00:00.000Z',
                 utc: '2026-08-05T00:00:00.000Z',

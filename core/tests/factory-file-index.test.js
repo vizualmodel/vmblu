@@ -11,7 +11,7 @@ import {Factory} from '../types/node/index.js'
 import {importExportHandling} from '../nodes/model-manager/import-export.js'
 
 const header = {
-    version: '1.10.0',
+    version: '1.10.1',
     created: '2026-08-05T00:00:00.000Z',
     saved: '2026-08-05T00:00:00.000Z',
     utc: '2026-08-05T00:00:00.000Z',
@@ -161,7 +161,7 @@ test('encoding retains distinct factory files and produces schema-valid blueprin
 
     const {model, encoded} = compileAndEncode('C:/project/model/main.mod.blu', raw)
     const blueprint = model.splitRaw(encoded).blu
-    const schemaUrl = new URL('../../cli/context/1.10.0/blu.schema.json', import.meta.url)
+    const schemaUrl = new URL('../../cli/context/1.10.1/blu.schema.json', import.meta.url)
     const schema = JSON.parse(await readFile(schemaUrl, 'utf8'))
     const validate = new Ajv2020({strict: false, validateFormats: false}).compile(schema)
 
