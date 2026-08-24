@@ -21,10 +21,7 @@ function collapseIfReady(collapse) {
 
 function undoCollapse(collapse) {
     if (!collapse) return false
-
-    collapse.route.disconnect()
-    collapse.node.restoreCable(collapse.cable)
-    collapse.cable.reconnect(collapse.tacks.slice())
+    collapse.cable.undoCollapse(collapse)
     return true
 }
 
@@ -106,7 +103,7 @@ routeCancel: {
     },
 
     redo({collapse}) {
-        collapse.route = collapse.cable.collapseIfOnlyEndpointTacks(collapse.node)?.route
+        collapse.cable.redoCollapse(collapse)
     }
 },
 

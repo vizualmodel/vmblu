@@ -1,4 +1,18 @@
-import {shape, convert, style, closestPointOnCurve} from '../util/index.js'
+import {canonicalOrthogonalWire, shape, convert, style, closestPointOnCurve} from '../util/index.js'
+
+const endpointZones = new Set(['N', 'E', 'S', 'W'])
+
+function zoneVector(zone) {
+    if (zone === 'N') return {x: 0, y: -1}
+    if (zone === 'S') return {x: 0, y: 1}
+    if (zone === 'W') return {x: -1, y: 0}
+    return {x: 1, y: 0}
+}
+
+function movementZone(delta) {
+    if (Math.abs(delta.x) >= Math.abs(delta.y)) return delta.x < 0 ? 'W' : 'E'
+    return delta.y < 0 ? 'N' : 'S'
+}
 
 export function CableTack(cable, wid = null) {
 
@@ -52,6 +66,11 @@ CableTack.prototype = {
         return this.isEndpoint() ? this.attachment.endpoint : null
     },
 
+    endpointApproach() {
+        if (!this.isEndpoint()) return null
+        return endpointZones.has(this.attachment.approach) ? this.attachment.approach : this.aliasZone()
+    },
+
     nearestEndpoint(point) {
         const start = this.cable.wire[0]
         const end = this.cable.wire.at(-1)
@@ -76,7 +95,7 @@ CableTack.prototype = {
 
     copyAttachment() {
         return this.isEndpoint()
-            ? {kind: 'endpoint', endpoint: this.endpointLabel()}
+            ? {kind: 'endpoint', endpoint: this.endpointLabel(), approach: this.endpointApproach()}
             : {
                 kind: 'interior',
                 segment: this.attachment.segment,
@@ -85,7 +104,7 @@ CableTack.prototype = {
     },
 
     restoreAttachment(attachment) {
-        if (attachment?.kind === 'endpoint') this.attachEndpoint(attachment.endpoint)
+        if (attachment?.kind === 'endpoint') this.attachEndpoint(attachment.endpoint, attachment.approach)
         else this.attachInterior(attachment?.point ?? this.center(), attachment?.segment ?? this.segment)
     },
 
@@ -95,16 +114,29 @@ CableTack.prototype = {
         else this.attachInterior(point, segment)
     },
 
-    setEndpointAttachment(label) {
+    endpointAttachment(label, approach = null) {
         if (label !== 'start' && label !== 'end') return false
-        this.attachment = {kind: 'endpoint', endpoint: label}
+        const current = this.isEndpoint(label) ? this.attachment.approach : null
+        const inferred = this.route ? this.aliasZone() : this.zone
+        this.attachment = {
+            kind: 'endpoint',
+            endpoint: label,
+            approach: endpointZones.has(approach) ? approach
+                    : endpointZones.has(current) ? current
+                    : endpointZones.has(inferred) ? inferred
+                    : 'E'
+        }
+        return true
+    },
+
+    setEndpointAttachment(label, approach = null) {
+        if (!this.endpointAttachment(label, approach)) return false
         this.placeAttachment()
         return true
     },
 
-    attachEndpoint(label) {
-        if (label !== 'start' && label !== 'end') return false
-        this.attachment = {kind: 'endpoint', endpoint: label}
+    attachEndpoint(label, approach = null) {
+        if (!this.endpointAttachment(label, approach)) return false
         this.syncRouteContact()
         this.placeAttachment()
         return true
@@ -189,6 +221,7 @@ CableTack.prototype = {
         }
 
         if (!b) return this.zone ?? 'E'
+        if (a.x !== b.x && a.y !== b.y) return this.zone ?? 'E'
         return (a.x === b.x) ? (a.y < b.y ? 'S' : 'N') : (a.x < b.x ? 'E' : 'W')
     },
 
@@ -301,7 +334,7 @@ CableTack.prototype = {
         }
         // place the tack in the right zone
         else {
-            this.zone = this.aliasZone()
+            this.zone = this.isEndpoint() ? this.endpointApproach() : this.aliasZone()
             const delta =  this.zoneDelta()
             this.rect.x = point.x - delta.x
             this.rect.y = point.y - delta.y
@@ -314,6 +347,16 @@ CableTack.prototype = {
 
         this.rcAlias = null
         this.is.bridge ? this.bridgeRect() : this.tackRect()
+    },
+
+    beginSlide() {
+        this.slideGesture = {delta: {x: 0, y: 0}, mode: null}
+    },
+
+    endSlide() {
+        const mode = this.slideGesture?.mode ?? null
+        this.slideGesture = null
+        return mode
     },
 
     horizontal() {
@@ -354,6 +397,7 @@ CableTack.prototype = {
         const p = this.getContactPoint()
         p.x += dx
         this.placeOnSegment(p, this.segment)
+        if (this.isEndpoint()) this.alignRouteEndpoint()
     },
 
     moveY(dy) {
@@ -367,6 +411,7 @@ CableTack.prototype = {
         const p = this.getContactPoint()
         p.y += dy
         this.placeOnSegment(p, this.segment)
+        if (this.isEndpoint()) this.alignRouteEndpoint()
     },
 
     moveXY(dx,dy) {
@@ -424,6 +469,104 @@ CableTack.prototype = {
         return !!(wire?.[this.segment - 1] && wire?.[this.segment])
     },
 
+    inwardEndpointZone() {
+        if (!this.isEndpoint()) return null
+        const endpoint = this.endpointLabel() === 'start' ? this.cable.wire[0] : this.cable.wire.at(-1)
+        const adjacent = this.endpointLabel() === 'start' ? this.cable.wire[1] : this.cable.wire.at(-2)
+        if (!endpoint || !adjacent) return null
+        return movementZone({x: adjacent.x - endpoint.x, y: adjacent.y - endpoint.y})
+    },
+
+    setEndpointApproach(approach) {
+        if (!this.isEndpoint() || !endpointZones.has(approach)) return false
+        this.attachment.approach = approach
+        this.applyEndpointApproach()
+        this.placeAttachment()
+        return true
+    },
+
+    applyEndpointApproach() {
+        if (!this.isEndpoint() || !this.route?.from || !this.route?.to) return false
+
+        const approach = this.endpointApproach()
+        if (!endpointZones.has(approach)) return false
+
+        const route = this.route
+        if (route.wire.length < 2) return false
+        this.syncRouteContact()
+        const atStart = route.from === this
+        const routeContact = atStart ? route.wire[0] : route.wire.at(-1)
+        const routeNeighbour = atStart ? route.wire.slice(1).find(point => point.x !== routeContact.x || point.y !== routeContact.y)
+                                       : route.wire.slice(0, -1).reverse().find(point => point.x !== routeContact.x || point.y !== routeContact.y)
+        if (routeNeighbour
+            && (routeContact.x === routeNeighbour.x || routeContact.y === routeNeighbour.y)
+            && this.aliasZone() === approach) return true
+
+        const forward = (route.from === this ? route.wire : route.wire.slice().reverse())
+            .map(point => ({...point}))
+        if (forward.length < 2) return false
+
+        const contact = this.attachmentPoint()
+        const anchorIndex = Math.min(2, forward.length - 1)
+        const anchor = forward[anchorIndex]
+        const tail = forward.slice(anchorIndex + 1)
+        const vector = zoneVector(approach)
+        const distance = style.route.tooClose
+        const leg = {x: contact.x + vector.x * distance, y: contact.y + vector.y * distance}
+        const horizontal = vector.x !== 0
+        const sameApproach = horizontal
+            ? anchor.y === contact.y && (anchor.x - contact.x) * vector.x > 0
+            : anchor.x === contact.x && (anchor.y - contact.y) * vector.y > 0
+        const oppositeApproach = horizontal
+            ? anchor.y === contact.y && (anchor.x - contact.x) * vector.x <= 0
+            : anchor.x === contact.x && (anchor.y - contact.y) * vector.y <= 0
+
+        let head
+        if (sameApproach) {
+            head = [contact, anchor]
+        }
+        else if (oppositeApproach) {
+            const oldNext = forward.find(point => point.x !== contact.x || point.y !== contact.y) ?? anchor
+            const side = horizontal ? Math.sign(oldNext.y - contact.y) || 1 : Math.sign(oldNext.x - contact.x) || 1
+            head = horizontal
+                ? [contact, leg, {x: leg.x, y: contact.y + side * distance}, {x: anchor.x, y: contact.y + side * distance}, anchor]
+                : [contact, leg, {x: contact.x + side * distance, y: leg.y}, {x: contact.x + side * distance, y: anchor.y}, anchor]
+        }
+        else {
+            head = horizontal
+                ? [contact, leg, {x: leg.x, y: anchor.y}, anchor]
+                : [contact, leg, {x: anchor.x, y: leg.y}, anchor]
+        }
+
+        const nextWire = canonicalOrthogonalWire([...head, ...tail])
+        route.wire = route.from === this ? nextWire : nextWire.reverse()
+        return true
+    },
+
+    slideEndpointInward(delta, a, b) {
+        const label = this.endpointLabel()
+        const cableEndpoint = label === 'start' ? this.cable.wire[0] : this.cable.wire.at(-1)
+        const other = cableEndpoint === a ? b : a
+        const horizontal = a.y === b.y
+        const axis = horizontal ? 'x' : 'y'
+        const point = this.center()
+        const direction = Math.sign(other[axis] - cableEndpoint[axis])
+        const inwardDistance = delta[axis] * direction
+        const segmentLength = Math.abs(other[axis] - cableEndpoint[axis])
+        const maximumDistance = Math.max(0, segmentLength - style.cable.radius)
+
+        if (inwardDistance <= 0 || maximumDistance === 0) {
+            this.attachEndpoint(label)
+            return
+        }
+
+        const distance = Math.min(Math.max(inwardDistance, style.cable.radius), maximumDistance)
+        point[axis] = cableEndpoint[axis] + direction * distance
+
+        this.setInteriorAttachment(point, this.segment)
+        this.route.adjust({moveCableEndpoint: false})
+    },
+
     slide(delta) {
         if (!this.ensureSegment()) return
 
@@ -435,36 +578,23 @@ CableTack.prototype = {
         let endpoint = null
 
         if (this.isEndpoint()) {
-            const label = this.endpointLabel()
-            const cableEndpoint = label === 'start' ? this.cable.wire[0] : this.cable.wire.at(-1)
-            const other = cableEndpoint === a ? b : a
+            if (this.slideGesture) {
+                this.slideGesture.delta.x += delta.x
+                this.slideGesture.delta.y += delta.y
+                const movement = this.slideGesture.delta
+                const zone = movementZone(movement)
 
-            // A horizontal route collinear with a horizontal cable has no
-            // meaningful interior side: sliding it would put the route behind
-            // the endpoint. Keep both attached until the route approaches the
-            // cable vertically.
-            const routeZone = this.aliasZone()
-            if (horizontal && (routeZone === 'E' || routeZone === 'W')) {
-                this.attachEndpoint(label)
+                if (zone === this.inwardEndpointZone()) {
+                    this.slideGesture.mode = 'slide'
+                    this.slideEndpointInward(movement, a, b)
+                }
+                else if (Math.max(Math.abs(movement.x), Math.abs(movement.y)) >= style.cable.radius) {
+                    this.slideGesture.mode = 'orientation'
+                    this.setEndpointApproach(zone)
+                }
                 return
             }
-
-            const direction = Math.sign(other[axis] - cableEndpoint[axis])
-            const inwardDistance = delta[axis] * direction
-            const segmentLength = Math.abs(other[axis] - cableEndpoint[axis])
-            const maximumDistance = Math.max(0, segmentLength - radius)
-
-            if (inwardDistance <= 0 || maximumDistance === 0) {
-                this.attachEndpoint(label)
-                return
-            }
-
-            const distance = Math.min(Math.max(inwardDistance, radius), maximumDistance)
-            point[axis] = cableEndpoint[axis] + direction * distance
-
-            this.setInteriorAttachment(point, this.segment)
-            this.route.adjust({moveCableEndpoint: false})
-            return
+            return this.slideEndpointInward(delta, a, b)
         }
 
         point[axis] += delta[axis]
@@ -500,17 +630,19 @@ CableTack.prototype = {
         const center = this.center()
         const trunk = this.cable.wire
         const [a,b] = [trunk[this.segment - 1], trunk[this.segment]]
-        const horizontal = a.y === b.y
+        const horizontal = this.isEndpoint()
+            ? ['E', 'W'].includes(this.endpointApproach())
+            : a.x === b.x
 
         if (p.length < 3) {
-            horizontal ? route.threePointRoute(this === route.to) : route.fourPointRoute()
+            horizontal ? route.fourPointRoute() : route.threePointRoute(this === route.to)
         }
 
         if (route.from === this) {
             p[0].x = center.x
             p[0].y = center.y
 
-            horizontal ? p[1].x = center.x : p[1].y = center.y
+            horizontal ? p[1].y = center.y : p[1].x = center.x
         }
         else {
             const last = p.length - 1
@@ -518,9 +650,10 @@ CableTack.prototype = {
             p[last].x = center.x
             p[last].y = center.y
 
-            horizontal ? p[last - 1].x = center.x : p[last - 1].y = center.y
+            horizontal ? p[last - 1].y = center.y : p[last - 1].x = center.x
         }
 
+        route.keepEndpointApproach?.(this)
         this.refreshPlacement()
     },
 
@@ -532,15 +665,22 @@ CableTack.prototype = {
         const [a,b,c, front] = (this == route.from) ? [p[0],p[1],p[2], true] : [p.at(-1),p.at(-2),p.at(-3), false]
 
         if ((a.y == b.y) && (Math.abs(c.y - b.y) < style.route.tooClose)) {
+            const point = {x: a.x, y: c.y}
+            if (this.isEndpoint() && !this.cable.moveEndpoint(this.endpointLabel(), point, {skipRouteFor: this})) return false
             a.y = c.y
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p)
             this.placeOnSegment(a, this.segment)
+            return true
         }
         else if ((a.x == b.x)&&(Math.abs(b.x - c.x) < style.route.tooClose)) {
+            const point = {x: c.x, y: a.y}
+            if (this.isEndpoint() && !this.cable.moveEndpoint(this.endpointLabel(), point, {skipRouteFor: this})) return false
             a.x = c.x
             front ? route.removeTwoPoints(1,p) : route.removeTwoPoints(p.length-3,p)
             this.placeOnSegment(a, this.segment)
+            return true
         }
+        return false
     },
 
     restore(route) {

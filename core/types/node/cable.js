@@ -6,77 +6,6 @@ import {cableEndpointHandling} from './cable-endpoint.js'
 
 export {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from './cable-endpoint.js'
 
-function appendPoint(wire, point) {
-    const previous = wire.at(-1)
-    if (!previous || previous.x !== point.x || previous.y !== point.y) wire.push({...point})
-}
-
-function routeFromWidgetToTack(tack) {
-    const wire = tack.route.copyWire()
-    return tack.route.from === tack ? wire.reverse() : wire
-}
-
-function cablePosition(cable, tack) {
-    let distance = 0
-    for (let segment = 1; segment < tack.segment; segment++) {
-        const a = cable.wire[segment - 1]
-        const b = cable.wire[segment]
-        distance += Math.abs(b.x - a.x) + Math.abs(b.y - a.y)
-    }
-
-    const start = cable.wire[tack.segment - 1]
-    const point = tack.center()
-    distance += Math.abs(point.x - start.x) + Math.abs(point.y - start.y)
-    return {distance, point}
-}
-
-function cableWireBetween(cable, fromTack, toTack) {
-    const from = cablePosition(cable, fromTack)
-    const to = cablePosition(cable, toTack)
-    if (from.distance > to.distance) return cableWireBetween(cable, toTack, fromTack).reverse()
-
-    const wire = [{...from.point}]
-    for (let index = fromTack.segment; index < toTack.segment; index++) {
-        appendPoint(wire, cable.wire[index])
-    }
-    appendPoint(wire, to.point)
-    return wire
-}
-
-function individualRouteWire(cable, fromTack, toTack) {
-    const wire = []
-    for (const point of routeFromWidgetToTack(fromTack)) appendPoint(wire, point)
-    for (const point of cableWireBetween(cable, fromTack, toTack)) appendPoint(wire, point)
-    for (const point of routeFromWidgetToTack(toTack).reverse()) appendPoint(wire, point)
-    return canonicalOrthogonalWire(wire)
-}
-
-function routeEndpointApproach(route, atStart) {
-    const contact = atStart ? route.wire[0] : route.wire.at(-1)
-    const neighbour = atStart ? route.wire[1] : route.wire.at(-2)
-    if (!contact || !neighbour) return null
-    if (contact.x === neighbour.x) return 'vertical'
-    if (contact.y === neighbour.y) return 'horizontal'
-    return null
-}
-
-function preserveRouteEndpointApproach(route, tack, approach) {
-    if (!approach || route.wire.length < 2) return
-
-    const atStart = route.from === tack
-    const contact = atStart ? route.wire[0] : route.wire.at(-1)
-    const neighbour = atStart ? route.wire[1] : route.wire.at(-2)
-
-    if (route.wire.length === 2) {
-        const elbow = approach === 'vertical'
-            ? {x: contact.x, y: neighbour.y}
-            : {x: neighbour.x, y: contact.y}
-        route.wire.splice(1, 0, elbow)
-    }
-    else if (approach === 'vertical') neighbour.x = contact.x
-    else neighbour.y = contact.y
-}
-
 export function Cable(from = {x:0, y:0}, uid = null, floating = false) {
 
     if (uid && typeof uid === 'object') {
@@ -292,16 +221,12 @@ Cable.prototype = {
         const other = route.to == null ? route.from : route.to
         if (this.findTack(other)) return null
 
-        const approach = routeEndpointApproach(route, route.from == null)
+        const tackAtStart = route.from == null
+        const endpointZone = this.routeEndpointZone(route, tackAtStart)
         const newTack = new Widget.CableTack(this)
         newTack.setSelective(this.defaultTackSelectivity(other))
         newTack.setRoute(route)
-        const endpoint = this.endpointAt(newTack.center()) ?? this.endpointHitAt(newTack.center())
-        if (endpoint) {
-            newTack.attachEndpoint(endpoint)
-            preserveRouteEndpointApproach(route, newTack, approach)
-            newTack.refreshPlacement()
-        }
+        this.attachRouteEndpointTack(route, newTack, tackAtStart, endpointZone)
         this.tacks.push(newTack)
         return newTack
     },
@@ -521,24 +446,6 @@ Cable.prototype = {
         this.tacks.forEach(tack => tack.reverseAttachment(L))
     },
 
-    getLimit(segment) {
-        let limit=null
-
-        this.tacks.forEach(tack => {
-            if (tack.segment == segment) {
-                const rc = tack.rect
-                if (limit) {
-                    if (rc.x < limit.l)         limit.l = rc.x
-                    if (rc.x + rc.w > limit.r)  limit.r = rc.x + rc.w
-                    if (rc.y < limit.t)         limit.t = rc.y
-                    if (rc.y + rc.h > limit.b)  limit.b = rc.y + rc.h
-                }
-                else limit = {l: rc.x, r:rc.x + rc.w, t: rc.y, b:rc.y + rc.h}
-            }
-        })
-        return limit
-    },
-
     move(dx, dy) {
         for(const point of this.wire) {
             point.x += dx
@@ -568,19 +475,6 @@ Cable.prototype = {
         this.tacks.forEach(tack => { 
             if (tack.is.tack && tack.route.from == tack) tack.route.moveAllPoints(x,y)
         })
-    },
-
-    getCombinedLimit(s1,s2) {
-        let limit1 = this.getLimit(s1)
-        let limit2 = this.getLimit(s2)
-
-        if (limit1 && limit2) {
-            if (limit2.l < limit1.l) limit1.l = limit2.l
-            if (limit2.r > limit1.r) limit1.r = limit2.r
-            if (limit2.t < limit1.t) limit1.t = limit2.t
-            if (limit2.b > limit1.b) limit1.b = limit2.b
-        }
-        return limit1 ? limit1 : limit2
     },
 
     moveSegment(segment, delta) {
@@ -720,6 +614,8 @@ Cable.prototype = {
                     const y = other.rect.y + other.rect.h/2
                     tack.attachInterior({x: tack.center().x, y}, tack.segment)
                     for(const p of route.wire) p.y = y
+                    route.wire = canonicalOrthogonalWire(route.wire)
+                    if (route.wire.length === 1) route.wire.push({...route.wire[0]})
                 }
             }
         }
@@ -748,25 +644,6 @@ Cable.prototype = {
         }
     },
 
-    sources() {
-        return this.tacks.filter(tack => tack.incoming())
-    },
-
-    targets() {
-        return this.tacks.filter(tack => !tack.incoming())
-    },
-
-    topology() {
-        const sources = this.sources().length
-        const targets = this.targets().length
-
-        if (sources === 1 && targets === 1) return 'one-to-one'
-        if (sources === 1 && targets > 1) return 'one-to-many'
-        if (sources > 1 && targets === 1) return 'many-to-one'
-        if (sources > 1 && targets > 1) return 'many-to-many'
-        return 'incomplete'
-    },
-
     individualRoutePlans() {
         if (this.tacks.some(tack => tack.getOther()?.is?.tack)) return []
 
@@ -780,7 +657,7 @@ Cable.prototype = {
                 plans.push({
                     from: source.getOther(),
                     to: target.getOther(),
-                    wire: individualRouteWire(this, source, target)
+                    wire: this.individualRouteWire(source, target)
                 })
             }
         }
