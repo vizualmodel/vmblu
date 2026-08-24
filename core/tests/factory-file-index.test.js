@@ -170,7 +170,9 @@ test('encoding retains distinct factory files and produces schema-valid blueprin
 })
 
 test('factory paths round trip relative to the declaring model', () => {
-    const model = makeModel('C:/project/models/main.mod.blu', {
+    const modelPath = path.resolve('project/models/main.mod.blu')
+    const expectedFactoryPath = path.resolve('project/nodes/shared.js').replace(/\\/g, '/')
+    const model = makeModel(modelPath, {
         header,
         factories: ['../nodes/shared'],
         root: {kind: 'group', name: 'Root', nodes: []}
@@ -181,8 +183,8 @@ test('factory paths round trip relative to the declaring model', () => {
 
     assert.deepEqual(factories.makeRaw(model.getArl()), ['../nodes/shared.js'])
     assert.equal(
-        Array.from(factories.map.values())[0].arl.getFullPath(),
-        'C:/project/nodes/shared.js'
+        Array.from(factories.map.values())[0].arl.getFullPath().replace(/\\/g, '/'),
+        expectedFactoryPath
     )
 })
 
