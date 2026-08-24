@@ -1,48 +1,86 @@
-
 ![vmblu header](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-header.png)
 
-Modern LLMs make it easy to “vibe code”. But as your app grows, features break, code bloat creeps in and the big picture fades. It is hard to find out what exactly is going on in a non-trivial application.
+Modern LLMs make it easy to “vibe code.” But as your application grows, features break, code bloat creeps in, and the big picture fades. It becomes difficult to understand exactly what is happening in a non-trivial application.
 
-**vmblu** fixes that by making your architecture *structured, visual, and AI-native*. With vmblu, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
+**vmblu** makes your architecture structured, visual, and AI-native. With vmblu, you can co-write your project with an LLM while keeping the architecture clear, the codebase maintainable, and the system navigable.
 
-## `What is vmblu?`
+## What is vmblu?
 
-**vmblu** is a format spec and tool set, for building trusted, maintainable software with AI. **vmblu** makes the architecture of your software explicit and easier to navigate and understand — by humans and LLMs. With **vmblu** architecture comes first.
+**vmblu** is a format specification and toolset for building trusted, maintainable software with AI. It makes your software architecture explicit and easier for humans and LLMs to navigate and understand. With vmblu, architecture comes first.
 
-**vmblu** is 
-- **AI-native** - LLMs can design the architecture, write the code and interact with the running system.
-- A **visual modeler** - makes your architecture explicit and navigable  
-- A **runnable scaffold** - vmblu nodes communicate via messages. The vmblu runtime that takes care of message switching between nodes and blocks unauthorised behaviour.
-- **Framework-agnostic** - use any stack or package, from JS/TS to Svelte or Three.js  
+vmblu is:
 
-The **vmblu model** is not documentation, it is the actual system. The graphical **vmblu** model lets you understand and reason about the architecture. The **vmblu** runtime keeps the application safe.
+- **AI-native** — LLMs can design the architecture, write the code, and interact with the running system.
+- A **visual modeler** — make your architecture explicit and navigable.
+- A **runnable scaffold** — vmblu nodes communicate through messages, with the runtime handling message routing between nodes.
+- **Agent-ready** — expose selected application behavior through explicit capabilities, policy checks, and approvals.
+- **Framework-agnostic** — use any stack or package, from JavaScript and TypeScript to Svelte or Three.js.
 
-## `vmblu is for developers`
+The **vmblu model** is not a diagram maintained separately from the code. It is the architectural source of truth used to generate and run the application. The graphical editor helps you understand and evolve that architecture, while the agent runtime provides controlled entry points for external agents.
 
-- **vmblu** is a tool targeted at developers whose role is changing with the arrival of powerful AI.
-- **vmblu** is for building real, complex systems. It is an excellent foundation to build agentic systems. 
-- **Message-based architectures** — the foundation of vmblu — enable this.
+## The VS Code extension
 
-**vmblu** is currently at version 0.x.y, with version 1.0.0 planned in the second quarter of the year (2026). It is in good shape, but expect updates.
+The extension registers a visual editor for `*.blu` files. Use it to:
 
-## `Quick start`
+- Open a project through its root `*.blu` entrypoint or open a model file directly.
+- Navigate and edit the nodes, pins, routes, and groups that make up the application.
+- Move between the architecture and its source files without losing the system-level view.
 
-- Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=vizualmodel.vmblu)
-- Add the runtime with: `npm install @vizualmodel/vmblu-runtime`  
-- Add the cli with: `npm install @vizualmodel/vmblu-cli`  
-- Read more at 🌐 [vmblu.dev](https://vmblu.dev)  
-- Contribute on 🔗 [GitHub](https://github.com/vizualmodel/vmblu)
+## vmblu is for developers
 
-## `Open source`
+- **vmblu** is for developers whose role is changing with the arrival of powerful AI.
+- **vmblu** is designed for real, complex systems and provides a strong foundation for agentic applications.
+- **Message-based architecture** gives components explicit boundaries and makes system behavior easier to understand, test, and control.
+
+## Quick start
+
+1. Install the [vmblu VS Code extension](https://marketplace.visualstudio.com/items?itemName=vizualmodel.vmblu).
+2. Create a project and install its dependencies:
+
+    ```bash
+    npx @vizualmodel/vmblu-cli init my-app
+    cd my-app
+    npm install
+    ```
+
+3. Open the project folder in VS Code, then open `my-app.blu` to launch the visual editor.
+
+To add vmblu guidance for a supported coding agent, list the available integrations and install the one you use. For example:
+
+```bash
+npx @vizualmodel/vmblu-cli agent list
+npx @vizualmodel/vmblu-cli agent install codex
+```
+
+For an existing project that was not created with `vmblu init`, install the runtime and CLI locally:
+
+```bash
+npm install @vizualmodel/vmblu-runtime
+npm install --save-dev @vizualmodel/vmblu-cli
+```
+
+## Requirements
+
+- VS Code 1.74 or later for the extension.
+- Node.js 18 or later for the CLI and runtime.
+
+## Learn more and contribute
+
+- Read the documentation at [vmblu.dev](https://vmblu.dev).
+- Browse the source and contribute on [GitHub](https://github.com/vizualmodel/vmblu).
+- Report problems or suggest improvements in [GitHub Issues](https://github.com/vizualmodel/vmblu/issues).
+
+## Open source
 
 **vmblu** is licensed under the [Apache License 2.0](./LICENSE.txt).
 
-## `Screenshot`
+## Screenshot
 
 ![vmblu screenshot](https://raw.githubusercontent.com/vizualmodel/vmblu/main/vscodex/assets/vmblu-screenshot.png)
 
 ---
+
 <p align="center">
-  <span style="font-size:1.4em; color:#0066ff;"><b>vmblu</br></span>
-  <span style="font-size:1em; color:#0066ff;">clarity at scale</span>
+  <strong>vmblu</strong><br>
+  <span>clarity at scale</span>
 </p>

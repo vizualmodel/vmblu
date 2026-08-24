@@ -205,14 +205,16 @@ cableDrag: {
 
 tackDrag: {
 
-    doit({tack, oldWire, newWire, oldAttachment, newAttachment}) {
-        this.saveEdit('tackDrag',{tack, oldWire, newWire, oldAttachment, newAttachment})
+    doit({tack, oldWire, newWire, oldAttachment, newAttachment, oldCableWire, newCableWire, oldCableTackWires, newCableTackWires}) {
+        this.saveEdit('tackDrag',{tack, oldWire, newWire, oldAttachment, newAttachment, oldCableWire, newCableWire, oldCableTackWires, newCableTackWires})
     },
-    undo({tack, oldWire, oldAttachment}) {
+    undo({tack, oldWire, oldAttachment, oldCableWire, oldCableTackWires}) {
+        if (oldCableWire) return tack.cable.restoreWireState(oldCableWire, oldCableTackWires)
         tack.route.restoreWire(oldWire)
         tack.restoreAttachment(oldAttachment)
     },
-    redo({tack, newWire, newAttachment}) {
+    redo({tack, newWire, newAttachment, newCableWire, newCableTackWires}) {
+        if (newCableWire) return tack.cable.restoreWireState(newCableWire, newCableTackWires)
         tack.route.restoreWire(newWire)
         tack.restoreAttachment(newAttachment)
     }

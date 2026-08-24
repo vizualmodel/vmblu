@@ -689,6 +689,9 @@ export const mouseDownHandling = {
                         state.tack.route.select()
                         state.modo.wire = hit.tack.route.copyWire()
                         state.modo.attachment = hit.tack.copyAttachment()
+                        state.modo.cableWire = hit.tack.cable.copyWire()
+                        state.modo.cableTackWires = hit.tack.cable.copyTackWires()
+                        state.tack.beginSlide()
                         this.stateSwitch(doing.tackDrag)
                     }
                     break

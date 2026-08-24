@@ -1,7 +1,93 @@
 import {Route} from './route.js'
-import {inside, style, shape} from '../util/index.js'
+import {canonicalOrthogonalWire, diagonalWireSegments, inside, style, shape} from '../util/index.js'
+
+function appendPoint(wire, point) {
+    const previous = wire.at(-1)
+    if (!previous || previous.x !== point.x || previous.y !== point.y) wire.push({...point})
+}
+
+function routeFromWidgetToTack(tack) {
+    const wire = tack.route.copyWire()
+    return tack.route.from === tack ? wire.reverse() : wire
+}
+
+function cablePosition(cable, tack) {
+    let distance = 0
+    for (let segment = 1; segment < tack.segment; segment++) {
+        const a = cable.wire[segment - 1]
+        const b = cable.wire[segment]
+        distance += Math.abs(b.x - a.x) + Math.abs(b.y - a.y)
+    }
+
+    const start = cable.wire[tack.segment - 1]
+    const point = tack.center()
+    distance += Math.abs(point.x - start.x) + Math.abs(point.y - start.y)
+    return {distance, point}
+}
+
+function cableWireBetween(cable, fromTack, toTack) {
+    const from = cablePosition(cable, fromTack)
+    const to = cablePosition(cable, toTack)
+    if (from.distance > to.distance) return cableWireBetween(cable, toTack, fromTack).reverse()
+
+    const wire = [{...from.point}]
+    for (let index = fromTack.segment; index < toTack.segment; index++) {
+        appendPoint(wire, cable.wire[index])
+    }
+    appendPoint(wire, to.point)
+    return wire
+}
+
+function routeEndpointZone(route, atStart) {
+    const contact = atStart ? route.wire[0] : route.wire.at(-1)
+    if (!contact) return null
+    const candidates = atStart ? route.wire.slice(1) : route.wire.slice(0, -1).reverse()
+    const neighbour = candidates.find(point => point.x !== contact.x || point.y !== contact.y)
+    if (!neighbour) return null
+    if (contact.x === neighbour.x) return contact.y < neighbour.y ? 'S' : 'N'
+    if (contact.y === neighbour.y) return contact.x < neighbour.x ? 'E' : 'W'
+    return null
+}
 
 export const cableEndpointHandling = {
+
+    routeEndpointZone(route, atStart) {
+        return routeEndpointZone(route, atStart)
+    },
+
+    endpointGeometry(label) {
+        if (label !== 'start' && label !== 'end') return null
+        return label === 'start'
+            ? {point: this.wire[0], adjacent: this.wire[1], segment: 1}
+            : {point: this.wire.at(-1), adjacent: this.wire.at(-2), segment: this.wire.length - 1}
+    },
+
+    realignEndpointTacks(label, {include = [], skipRouteFor = null} = {}) {
+        const tacks = [...new Set([...this.endpointTacks(label), ...include])]
+        for (const tack of tacks) {
+            tack.setEndpointAttachment(label)
+            if (tack !== skipRouteFor) tack.route.adjust({moveCableEndpoint: false})
+        }
+        return tacks
+    },
+
+    attachRouteEndpointTack(route, tack, atStart, zone = routeEndpointZone(route, atStart)) {
+        const endpoint = this.endpointAt(tack.center()) ?? this.endpointHitAt(tack.center())
+        if (!endpoint) return false
+
+        tack.attachEndpoint(endpoint, zone)
+        if (zone) tack.setEndpointApproach(zone)
+        tack.refreshPlacement()
+        return true
+    },
+
+    individualRouteWire(fromTack, toTack) {
+        const wire = []
+        for (const point of routeFromWidgetToTack(fromTack)) appendPoint(wire, point)
+        for (const point of cableWireBetween(this, fromTack, toTack)) appendPoint(wire, point)
+        for (const point of routeFromWidgetToTack(toTack).reverse()) appendPoint(wire, point)
+        return canonicalOrthogonalWire(wire)
+    },
 
     renderEndpoint(ctx, point, color) {
         shape.emptyLabel(ctx, point.x, point.y, style.cable.radius, color)
@@ -45,6 +131,7 @@ export const cableEndpointHandling = {
 
         point.x = center.x
         point.y = center.y
+        this.realignEndpointTacks('end')
 
         const tack = this.newTack()
         tack.placeOnSegment(point, segment)
@@ -108,17 +195,77 @@ export const cableEndpointHandling = {
         const p = this.wire
         const pa = p[p.length-2]
         const pb = p[p.length-1]
-        const endpointTacks = this.endpointTacks(label)
 
         let x = (pa.x == pb.x)&&(Math.abs(pos.x - pa.x) > style.cable.split) ? pos.x : pb.x + delta.x
         let y = (pa.y == pb.y)&&(Math.abs(pos.y - pa.y) > style.cable.split) ? pos.y : pb.y + delta.y
+        const capture = this.endpointTackCapture(label, {x,y})
 
         this.drawXY({x,y})
+        const captured = capture && this.moveEndpoint(label, capture.point, {capture: capture.tacks})
 
-        for (const tack of endpointTacks) {
-            tack.setEndpointAttachment(label)
-            tack.route.adjust({moveCableEndpoint: false})
+        if (!captured) this.realignEndpointTacks(label)
+    },
+
+    endpointTackCapture(label, next) {
+        const geometry = this.endpointGeometry(label)
+        if (!geometry?.point || !geometry.adjacent) return null
+        const {point: endpoint, adjacent, segment} = geometry
+
+        const horizontal = endpoint.y === adjacent.y
+        const axis = horizontal ? 'x' : 'y'
+        if ((horizontal && next.y !== endpoint.y) || (!horizontal && next.x !== endpoint.x)) return null
+
+        const direction = Math.sign(endpoint[axis] - adjacent[axis])
+        if (!direction || (next[axis] - endpoint[axis]) * direction >= 0) return null
+
+        const candidates = this.tacks
+            .filter(tack => tack.segment === segment && !tack.isEndpoint())
+            .map(tack => ({tack, point: tack.center()}))
+            .filter(({point}) => (endpoint[axis] - point[axis]) * direction > 0)
+            .sort((a,b) => Math.abs(endpoint[axis] - a.point[axis]) - Math.abs(endpoint[axis] - b.point[axis]))
+        if (!candidates.length) return null
+
+        const coordinate = candidates[0].point[axis]
+        const boundary = coordinate + direction * style.cable.gap
+        if ((next[axis] - boundary) * direction > 0) return null
+
+        return {
+            point: {...candidates[0].point},
+            tacks: candidates.filter(({point}) => point[axis] === coordinate).map(({tack}) => tack)
         }
+    },
+
+    moveEndpoint(label, point, {capture = [], skipRouteFor = null} = {}) {
+        const geometry = this.endpointGeometry(label)
+        if (!geometry?.point || !geometry.adjacent) return false
+        const {point: endpoint, adjacent, segment} = geometry
+
+        const horizontal = endpoint.y === adjacent.y
+        const axis = horizontal ? 'x' : 'y'
+        if ((horizontal && point.y !== endpoint.y) || (!horizontal && point.x !== endpoint.x)) return false
+
+        const direction = Math.sign(endpoint[axis] - adjacent[axis])
+        if (!direction || (point[axis] - adjacent[axis]) * direction <= 0) return false
+        if (!capture.length && this.wire.length > 2 && Math.abs(point[axis] - adjacent[axis]) < style.cable.tooClose) return false
+
+        const captured = new Set(capture)
+        const remaining = this.tacks
+            .filter(tack => tack.segment === segment && !tack.isEndpoint() && !captured.has(tack))
+            .map(tack => tack.center())
+            .filter(center => (endpoint[axis] - center[axis]) * direction > 0)
+            .sort((a,b) => Math.abs(endpoint[axis] - a[axis]) - Math.abs(endpoint[axis] - b[axis]))
+
+        if ((point[axis] - endpoint[axis]) * direction < 0 && remaining.length) {
+            const boundary = remaining[0][axis] + direction * style.cable.gap
+            if ((point[axis] - boundary) * direction < 0) return false
+        }
+
+        endpoint.x = point.x
+        endpoint.y = point.y
+        this.realignEndpointTacks(label, {include: capture, skipRouteFor})
+
+        this.validateOrthogonalWire('endpoint move')
+        return true
     },
 
     getInteriorTackLimit(segment) {
@@ -141,8 +288,7 @@ export const cableEndpointHandling = {
 
     releaseEndpointTacks(label) {
         const tacks = this.endpointTacks(label)
-        const point = label === 'start' ? this.wire[0] : this.wire.at(-1)
-        const segment = label === 'start' ? 1 : this.wire.length - 1
+        const {point, segment} = this.endpointGeometry(label)
         for (const tack of tacks) tack.attachInterior(point, segment)
         return tacks
     },
@@ -179,19 +325,17 @@ export const cableEndpointHandling = {
         if (nextWire.length < 2) return false
 
         this.wire = nextWire
-        const movedSegment = moveStart ? 1 : this.wire.length - 1
         const trunkSegment = moveStart ? this.wire.length - 1 : 1
 
         for (const otherTack of this.tacks) {
-            if (otherTack === tack) {
-                otherTack.placeOnSegment(point, movedSegment)
-                continue
-            }
-            else if (!otherTack.isEndpoint() && moveStart && otherTack.segment === 1) {
+            if (!otherTack.isEndpoint() && moveStart && otherTack.segment === 1) {
                 otherTack.segment = trunkSegment
             }
+        }
 
-            otherTack.refreshPlacement?.()
+        this.realignEndpointTacks(moveStart ? 'start' : 'end', {skipRouteFor: tack})
+        for (const otherTack of this.tacks) {
+            if (!otherTack.isEndpoint(moveStart ? 'start' : 'end')) otherTack.refreshPlacement?.()
         }
 
         this.validateOrthogonalWire('endpoint bend')
@@ -209,7 +353,6 @@ export const cableEndpointHandling = {
         if (!this.canCollapseToRoute()) return null
         if (!node) return null
 
-        const wire = this.copyWire()
         const startTack = this.tacks.find(tack => tack.isEndpoint('start'))
         const endTack = this.tacks.find(tack => tack.isEndpoint('end'))
 
@@ -217,23 +360,31 @@ export const cableEndpointHandling = {
         const endWidget = endTack.getOther()
         if (!startWidget || !endWidget || startWidget.is.tack || endWidget.is.tack) return null
 
-        const connectDirect = (from, to, routeWire) => {
-            const route = new Route(from, null)
-            route.wire = routeWire.map(point => ({...point}))
-            from.routes.push(route)
-
-            if (route.connect(to)) return route
-
-            from.routes.pop()
-            return null
-        }
+        const wire = this.individualRouteWire(startTack, endTack)
+        if (wire.length < 2 || diagonalWireSegments(wire).length) return null
+        const candidates = [
+            {from: startWidget, to: endWidget, wire},
+            {from: endWidget, to: startWidget, wire: wire.slice().reverse()}
+        ]
+        const plan = candidates.find(candidate => {
+            const route = new Route(candidate.from, null)
+            return route.checkConxType(candidate.from, candidate.to)
+        })
+        if (!plan) return null
 
         const endpointTacks = this.tacks.slice()
         for (const tack of endpointTacks) tack.route.disconnect()
         node.removeCable(this)
 
-        const route = connectDirect(startWidget, endWidget, wire) ?? connectDirect(endWidget, startWidget, wire.slice().reverse())
-        return route ? {route} : null
+        const route = new Route(plan.from, null)
+        route.wire = plan.wire.map(point => ({...point}))
+        plan.from.routes.push(route)
+        if (route.connect(plan.to)) return {route}
+
+        plan.from.routes.pop()
+        node.restoreCable(this)
+        this.reconnect(endpointTacks.slice())
+        return null
     },
 
     collapseToRoute(node) {

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import {ModelCompiler, UIDGenerator} from '../types/model/index.js'
 import {applyLayoutPatch, layoutElk, normalizeLayoutRoutes, restoreAutoLayoutState, captureAutoLayoutState, toElkGraph} from '../types/elk/index.js'
 import {splitRouteWireForCable} from '../types/node/node-group-conx.js'
-import {diagonalWireSegments, style} from '../types/util/index.js'
+import {canonicalOrthogonalWire, diagonalWireSegments, style} from '../types/util/index.js'
 import {zap} from '../types/view/index.js'
 import {redoxCable} from '../nodes/model-manager/redox-cable.js'
 
@@ -253,6 +253,45 @@ test('route-to-cable conversion trims the route and attaches its branches at cab
     assert.deepEqual(diagonalWireSegments(conversion.cable.wire), [])
 })
 
+test('collapsing an endpoint-only cable restores the complete original route geometry', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const originalWire = canonicalOrthogonalWire(route.copyWire())
+    const conversion = root.convertRouteToCable(route, 1)
+
+    const collapse = conversion.cable.collapseToRoute(root)
+
+    assert.ok(collapse?.route)
+    assert.deepEqual(collapse.route.wire, originalWire)
+    assert.deepEqual(collapse.route.wire[0], collapse.route.from.center())
+    assert.deepEqual(collapse.route.wire.at(-1), collapse.route.to.center())
+    assert.deepEqual(diagonalWireSegments(collapse.route.wire), [])
+    assert.equal(root.cables.includes(conversion.cable), false)
+
+    conversion.cable.undoCollapse(collapse)
+    assert.equal(root.cables.includes(conversion.cable), true)
+    assert.equal(conversion.cable.tacks.length, 2)
+
+    conversion.cable.redoCollapse(collapse)
+    assert.deepEqual(collapse.route.wire, originalWire)
+    assert.equal(root.cables.includes(conversion.cable), false)
+})
+
+test('a rejected endpoint-only collapse leaves the cable and its routes connected', () => {
+    const root = compileFixture()
+    const route = root.getInternalRoutes(root.nodes)[0]
+    const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
+    const tacks = cable.tacks.slice()
+    const widgets = tacks.map(tack => tack.getOther())
+    widgets[0].is.input = widgets[1].is.input
+
+    assert.equal(cable.collapseToRoute(root), null)
+    assert.equal(root.cables.includes(cable), true)
+    assert.deepEqual(cable.tacks, tacks)
+    assert.equal(tacks.every(tack => tack.route.from && tack.route.to), true)
+})
+
 test('orthogonal routes are trimmed by the cable endpoint inset', () => {
     assert.deepEqual(
         splitRouteWireForCable([{x: 0, y: 0}, {x: 90, y: 0}]),
@@ -377,14 +416,19 @@ test('tack drag undo and redo restore the authoritative attachment', () => {
     const root = compileFixture()
     const route = root.getInternalRoutes(root.nodes)[0]
     const conversion = root.convertRouteToCable(route, 1)
+    const cable = conversion.cable
     const tack = conversion.tacks[0]
-    conversion.cable.drag({x: 0, y: 30})
+    cable.drag({x: 0, y: 30})
     const oldWire = tack.route.copyWire()
     const oldAttachment = tack.copyAttachment()
+    const oldCableWire = cable.copyWire()
+    const oldCableTackWires = cable.copyTackWires()
 
     tack.slide({x: 20, y: 0})
     const newWire = tack.route.copyWire()
     const newAttachment = tack.copyAttachment()
+    const newCableWire = cable.copyWire()
+    const newCableTackWires = cable.copyTackWires()
     const history = {
         saveEdit(verb, saved) {
             this.verb = verb
@@ -392,7 +436,10 @@ test('tack drag undo and redo restore the authoritative attachment', () => {
         }
     }
 
-    redoxCable.tackDrag.doit.call(history, {tack, oldWire, newWire, oldAttachment, newAttachment})
+    redoxCable.tackDrag.doit.call(history, {
+        tack, oldWire, newWire, oldAttachment, newAttachment,
+        oldCableWire, newCableWire, oldCableTackWires, newCableTackWires
+    })
     redoxCable.tackDrag.undo(history.saved)
 
     assert.equal(tack.isEndpoint('start'), true)

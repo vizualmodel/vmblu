@@ -127,7 +127,7 @@ export const mouseUpHandling = {
             case doing.tackDrag:
                 // notation
                 const tack = state.tack
-                tack.fuseEndSegment()
+                if (tack.endSlide() !== 'orientation') tack.fuseEndSegment()
                 tack.route.unSelect()
 
                 this.doEdit(tx,'tackDrag', {
@@ -135,7 +135,11 @@ export const mouseUpHandling = {
                     oldWire: state.modo.wire,
                     newWire: tack.route.copyWire(),
                     oldAttachment: state.modo.attachment,
-                    newAttachment: tack.copyAttachment()
+                    newAttachment: tack.copyAttachment(),
+                    oldCableWire: state.modo.cableWire,
+                    newCableWire: tack.cable.copyWire(),
+                    oldCableTackWires: state.modo.cableTackWires,
+                    newCableTackWires: tack.cable.copyTackWires()
                 })
                 break
 

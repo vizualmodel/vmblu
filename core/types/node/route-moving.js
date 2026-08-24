@@ -11,6 +11,76 @@ export const routeMoving = {
         return !!(a && b && a.y === b.y)
     },
 
+    endpointAxis(widget) {
+        if (!widget?.is?.tack) return 'horizontal'
+
+        if (widget.isEndpoint?.()) {
+            return ['N', 'S'].includes(widget.endpointApproach?.()) ? 'vertical' : 'horizontal'
+        }
+
+        return this.tackOnHorizontalTrunk(widget) ? 'vertical' : 'horizontal'
+    },
+
+    adjustEndpointAxes(from, to) {
+        const fromAxis = this.endpointAxis(from)
+        const toAxis = this.endpointAxis(to)
+
+        if (fromAxis === 'vertical') {
+            toAxis === 'vertical' ? this.adjustVV(from.center(), to.center())
+                                  : this.adjustVH(from.center(), to.center())
+        }
+        else {
+            toAxis === 'vertical' ? this.adjustHV(from.center(), to.center())
+                                  : this.adjustHH(from.center(), to.center())
+        }
+
+        this.keepEndpointApproach(from)
+        this.keepEndpointApproach(to)
+    },
+
+    keepEndpointApproach(tack) {
+        if (!tack?.is?.tack || !tack.isEndpoint?.() || this.wire.length < 2) return
+
+        const approach = tack.endpointApproach?.()
+        const vertical = approach === 'N' || approach === 'S'
+        const direction = approach === 'N' || approach === 'W' ? -1 : 1
+        const atStart = this.from === tack
+        const contactIndex = atStart ? 0 : this.wire.length - 1
+        const neighbourIndex = atStart ? 1 : this.wire.length - 2
+        const cornerIndex = atStart ? 2 : this.wire.length - 3
+        const contact = this.wire[contactIndex]
+        const neighbour = this.wire[neighbourIndex]
+        const corner = this.wire[cornerIndex]
+        const axis = vertical ? 'y' : 'x'
+        const distance = (neighbour[axis] - contact[axis]) * direction
+
+        if (distance >= style.route.tooClose) return
+
+        const coordinate = contact[axis] + direction * style.route.tooClose
+
+        // A vertical-to-horizontal two-segment route has no spare corner to
+        // move. Promote it once to a fixed dogleg; later adjustments only move
+        // those existing points.
+        if (vertical && this.wire.length === 3) {
+            const other = atStart ? this.wire.at(-1) : this.wire[0]
+            let middleX = (contact.x + other.x) / 2
+            if (middleX === contact.x) middleX += style.route.tooClose
+            const forward = [
+                {...contact},
+                {x: contact.x, y: coordinate},
+                {x: middleX, y: coordinate},
+                {x: middleX, y: other.y},
+                {...other}
+            ]
+            this.wire.splice(0, this.wire.length, ...(atStart ? forward : forward.reverse()))
+            return
+        }
+
+        if (this.wire.length < 4) return
+        neighbour[axis] = coordinate
+        corner[axis] = coordinate
+    },
+
     adjustCableEndpoint(tack, otherCenter) {
         if (!tack?.cable?.is?.cable || !tack.isEndpoint?.()) return false
         if (this.wire.some((point, index) => index > 0 && (
@@ -301,35 +371,8 @@ export const routeMoving = {
             // check if both endpoints moved over the same distance - just move the route
             if ((df.x == dt.x) && (df.y == dt.y)) return this.moveAllPoints(df.x, df.y)
 
-            // adjust the routes - there are 3 topologies
-            if (from.is.tack && to.is.tack) {
-                if (this.tackOnHorizontalTrunk(from)) {
-                    this.adjustTH(fn, tn)
-                    return
-                }
-                if (this.tackOnHorizontalTrunk(to)) {
-                    this.adjustHT(fn, tn)
-                    return
-                }
-                this.adjustHH(fn, tn)
-            }
-            else if (to.is.tack) {
-                if (this.tackOnHorizontalTrunk(to)) {
-                    this.adjustHT(fn, tn)
-                    return
-                }
-                (to.cable?.is?.cable || to.dir == "left" || to.dir == "right") ? this.adjustHH(fn,tn) : this.adjustHV(fn,tn)
-            }
-            else if (from.is.tack) {
-                if (this.tackOnHorizontalTrunk(from)) {
-                    this.adjustTH(fn, tn)
-                    return
-                }
-                (from.cable?.is?.cable || from.dir == "left" || from.dir == "right") ? this.adjustHH(fn,tn) : this.adjustVH(fn,tn)
-            }
-            else {
-                this.adjustHH(fn,tn)      
-            }
+            if (from.is.tack || to.is.tack) this.adjustEndpointAxes(from, to)
+            else this.adjustHH(fn,tn)
         }
         finally {
             this.refreshTackPlacements()
@@ -415,7 +458,7 @@ export const routeMoving = {
     // horizontal / vertical
     adjustVH(a, b) {
         // maybe create an extra segment
-        if (this.wire.length == 2) return this.makeTwoSegments(a, b)
+        if (this.wire.length == 2) return this.threePointRoute(false)
 
         const p = this.wire
         const last = p.length-1
@@ -427,6 +470,20 @@ export const routeMoving = {
         p[last].y = b.y
         p[last-1].x = p[last-2].x
         p[last-1].y = b.y
+    },
+
+    // Starts and ends vertically. Reuse the horizontal implementation with
+    // transposed coordinates so there is still only one same-axis algorithm.
+    adjustVV(a, b) {
+        const transpose = point => [point.x, point.y] = [point.y, point.x]
+        this.wire.forEach(transpose)
+
+        try {
+            this.adjustHH({x: a.y, y: a.x}, {x: b.y, y: b.x})
+        }
+        finally {
+            this.wire.forEach(transpose)
+        }
     },
 
     makeTwoSegments(a, b) {
@@ -456,32 +513,6 @@ export const routeMoving = {
         w.push({x: (a.x+b.x)/2, y: a.y})
         w.push({x: (a.x+b.x)/2, y: b.y})
         w.push({x: b.x, y: b.y})
-    },
-
-    // tack on horizontal trunk -> widget
-    adjustTH(a, b) {
-        const p = this.wire
-        if (p.length !== 3) return this.threePointRoute(false)
-
-        p[0].x = a.x
-        p[0].y = a.y
-        p[1].x = a.x
-        p[1].y = b.y
-        p[2].x = b.x
-        p[2].y = b.y
-    },
-
-    // widget -> tack on horizontal trunk
-    adjustHT(a, b) {
-        const p = this.wire
-        if (p.length !== 3) return this.threePointRoute(true)
-
-        p[0].x = a.x
-        p[0].y = a.y
-        p[1].x = b.x
-        p[1].y = a.y
-        p[2].x = b.x
-        p[2].y = b.y
     },
 
 }
