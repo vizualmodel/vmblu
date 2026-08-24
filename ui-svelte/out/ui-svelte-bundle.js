@@ -362,7 +362,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.10.0";
+var RUNTIME_VERSION = "1.10.1";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
@@ -21917,7 +21917,7 @@ const NodeSelectorFactory = getFactory(Node_selector);
 
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.0"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:4c8cce3b9516a078"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.1"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:77afb485e32d587b"}}
 // ------------------------------------------------------------------
 
 
@@ -21928,7 +21928,7 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "sDMI",
+	uid: "tgBe",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -21941,7 +21941,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "Thyh",
+	uid: "msqt",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -21954,7 +21954,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "OfhB",
+	uid: "TSdq",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -21966,7 +21966,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "ynaF",
+	uid: "aHSZ",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -21978,7 +21978,7 @@ const nodeList = [
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "LnSQ",
+	uid: "fxOx",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -21990,7 +21990,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input",
-	uid: "LEif",
+	uid: "QZFy",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -22002,7 +22002,7 @@ const nodeList = [
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "HAoc",
+	uid: "DDkz",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22014,7 +22014,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block",
-	uid: "Kwgg",
+	uid: "mdiV",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -22026,7 +22026,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "rfLV",
+	uid: "BWYG",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -22043,7 +22043,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "RvVU",
+	uid: "PaIW",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -22056,7 +22056,7 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings",
-	uid: "VAHU",
+	uid: "LsWL",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22070,7 +22070,7 @@ const nodeList = [
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "fqoJ",
+	uid: "DsYH",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22082,7 +22082,7 @@ const nodeList = [
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "OoYv",
+	uid: "KURo",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22094,7 +22094,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "PNwo",
+	uid: "Shjk",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -22106,7 +22106,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "sMAc",
+	uid: "UHQQ",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22118,7 +22118,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "GckS",
+	uid: "FppP",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -22131,7 +22131,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "kRDN",
+	uid: "czOz",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -22143,7 +22143,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "YWKN",
+	uid: "Vdwq",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -22155,7 +22155,7 @@ const nodeList = [
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "fXYo",
+	uid: "tYcM",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -22167,7 +22167,7 @@ const nodeList = [
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout",
-	uid: "NyTe",
+	uid: "SYUe",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -22183,7 +22183,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window",
-	uid: "DRZF",
+	uid: "Pmtb",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -22202,7 +22202,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout",
-	uid: "dbol",
+	uid: "Xsvr",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -22219,7 +22219,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "Fqsj",
+	uid: "dvvT",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -22232,7 +22232,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content",
-	uid: "rTfg",
+	uid: "KlfN",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> content.div",
@@ -22252,7 +22252,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "ydCQ",
+	uid: "hblt",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -22269,7 +22269,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu",
-	uid: "SeUe",
+	uid: "Asjj",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22293,7 +22293,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu",
-	uid: "PsrN",
+	uid: "NWuu",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22317,7 +22317,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "xAFr",
+	uid: "UfSx",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22331,7 +22331,7 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "dAGt",
+	uid: "EpYJ",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -22352,7 +22352,7 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "NtmX",
+	uid: "pIkz",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -22365,7 +22365,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.0","schemaVersion":"1.10.0"}
+    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.1","schemaVersion":"1.10.1"}
 };
 
 // prepare the runtime

@@ -1,6 +1,6 @@
 {
   "name": "ui-svelte",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "",
   "main": "ui-svelte.js",
   "type": "module",
