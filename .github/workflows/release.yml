@@ -200,7 +200,7 @@ jobs:
                     if npm view "${package}@${RELEASE_VERSION}" version >/dev/null 2>&1; then
                       echo "Skipping existing ${package}@${RELEASE_VERSION}."
                     else
-                      npm publish "artifacts/${artifact}" --access public
+                            npm publish "./artifacts/${artifact}" --access public
                     fi
                   }
 
