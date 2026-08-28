@@ -4,7 +4,6 @@ import test from 'node:test'
 import Ajv2020 from 'ajv/dist/2020.js'
 
 const schemaUrl = new URL('../context/1.11.0/sys.schema.json', import.meta.url)
-const chatSystemUrl = new URL('../../../vmblu-examples/chat-application/system/active.sys.blu', import.meta.url)
 
 async function makeValidator() {
   const schema = JSON.parse(await readFile(schemaUrl, 'utf8'))
@@ -99,9 +98,9 @@ test('1.11.0 system schema accepts vmblu and non-vmblu applications with protoco
   assert.equal(validate(system), true, JSON.stringify(validate.errors))
 })
 
-test('1.11.0 system schema accepts the real Chat command references', async () => {
+test('1.11.0 system schema accepts Chat command references', async () => {
   const validate = await makeValidator()
-  const system = JSON.parse(await readFile(chatSystemUrl, 'utf8'))
+  const system = chatSystem()
 
   assert.equal(validate(system), true, JSON.stringify(validate.errors))
   assert.equal(system.nodes[0].references.find(reference => reference.kind === 'build').command, 'npm run build')

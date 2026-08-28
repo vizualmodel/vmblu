@@ -3,20 +3,27 @@ import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import {fileURLToPath} from 'node:url'
 
 import {ARL} from '@vizualmodel/vmblu-core/types/arl/arl-node'
 import {makeArtifactProvenance, ModelBlueprint, ModelCompiler, UIDGenerator} from '@vizualmodel/vmblu-core/types/model'
 import {verifyProject} from '../commands/verify/index.js'
-
-const chatProtocolUrl = new URL('../../../vmblu-examples/chat-application/system/chat.protocol.json', import.meta.url)
+import {chatProtocolFixture} from './fixtures/chat-protocol.js'
 
 test('verify accepts a protocol document and runs semantic reference checks', async () => {
-  const report = await verifyProject(fileURLToPath(chatProtocolUrl))
+  const dir = await mkdtemp(path.join(tmpdir(), 'vmblu-protocol-'))
+  try {
+    const protocolPath = path.join(dir, 'chat.protocol.json')
+    await writeFile(protocolPath, JSON.stringify(chatProtocolFixture()))
 
-  assert.equal(report.ok, true, report.failures.join('\n'))
-  assert.ok(report.checks.some(check => check.startsWith('protocol schema:')))
-  assert.ok(report.checks.some(check => check.startsWith('protocol references:')))
+    const report = await verifyProject(protocolPath)
+
+    assert.equal(report.ok, true, report.failures.join('\n'))
+    assert.ok(report.checks.some(check => check.startsWith('protocol schema:')))
+    assert.ok(report.checks.some(check => check.startsWith('protocol references:')))
+  }
+  finally {
+    await rm(dir, {recursive: true, force: true})
+  }
 })
 
 test('verify accepts current generated artifacts and reports stale output', async () => {
