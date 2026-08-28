@@ -1,7 +1,7 @@
 {
   "name": "@vizualmodel/vmblu-cli",
-  "version": "1.10.1",
-  "schemaVersion": "1.10.1",
+  "version": "1.11.0",
+  "schemaVersion": "1.11.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vizualmodel/vmblu.git",
@@ -51,8 +51,8 @@
     "tsup": "^8.5.0"
   },
   "dependencies": {
-    "@vizualmodel/vmblu-core": ">=1.10.0 <1.11.0",
-    "@vizualmodel/vmblu-runtime": ">=1.10.0 <1.11.0",
+    "@vizualmodel/vmblu-core": ">=1.11.0 <1.12.0",
+    "@vizualmodel/vmblu-runtime": ">=1.11.0 <1.12.0",
     "ajv": "^8.18.0",
     "ts-morph": "^26.0.0",
     "typescript": "^5.8.3"

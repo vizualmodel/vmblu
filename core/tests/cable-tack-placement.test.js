@@ -336,6 +336,28 @@ test('an inward drag slides a collinear horizontal endpoint route onto the cable
     assert.deepEqual(diagonalWireSegments(route.wire), [])
 })
 
+for (const tackIsFrom of [true, false]) {
+    test(`dragging a single horizontal segment slides its ${tackIsFrom ? 'from' : 'to'} endpoint tack along a vertical cable`, () => {
+        const cable = new Cable({x: 20, y: 0})
+        cable.wire = [{x: 20, y: 0}, {x: 20, y: 100}]
+        const pin = {is: {pin: true, input: false}, center: () => ({x: 0, y: 0}), routes: []}
+        const tack = cable.newTack()
+        const route = tackIsFrom ? new Route(tack, pin) : new Route(pin, tack)
+        route.wire = tackIsFrom
+            ? [{...cable.wire[0]}, pin.center()]
+            : [pin.center(), {...cable.wire[0]}]
+        pin.routes.push(route)
+        tack.setRoute(route)
+        tack.attachEndpoint('start')
+
+        route.moveSegment(1, {x: 0, y: 20})
+
+        assert.equal(tack.isEndpoint(), false)
+        assert.deepEqual(tack.center(), {x: 20, y: 20})
+        assert.deepEqual(diagonalWireSegments(route.wire), [])
+    })
+}
+
 for (const {description, cableWire, label, routeWire, zones} of [
     {
         description: 'horizontal cable start',

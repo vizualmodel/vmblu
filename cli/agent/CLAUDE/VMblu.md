@@ -9,8 +9,9 @@ When working in a vmblu project:
 - Use `vmblu make-app <entrypoint>.blu`, `vmblu make-capabilities <entrypoint>.blu`, and related CLI commands for generated artifacts.
 - Do not assume copied schemas or general docs in `.vmblu/` are canonical.
 - Before editing a blueprint (`*.mod.blu`), read `context/<schema-version>/blu.schema.json` and `context/<schema-version>/blu.annex.md` from this installed vmblu support folder.
-- Before editing or validating `*.mod.viz`, `*.src.prf`, or `*.cap.json`, read the matching schema in `context/<schema-version>/`.
+- Before editing or validating `*.mod.viz`, `*.sys.blu`, `*.protocol.json`, `*.src.prf`, or `*.cap.json`, read the matching schema in `context/<schema-version>/`.
 - Use the version declared by the root entrypoint or model header. If that version is not installed, use the latest installed context version and report the mismatch.
+- When system-level interaction context is needed, look for the optional `system/active.sys.blu`; keep every referenced path explicit and resolve it relative to the document that contains it.
 
 vmblu capabilities are the common model for agent interaction. MCP and provider
 tools should be treated as adapters over the vmblu capability manifest and

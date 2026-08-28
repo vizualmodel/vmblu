@@ -55,10 +55,17 @@ Before editing a vmblu blueprint (`*.mod.blu`), read:
 Before editing or validating other vmblu artifacts, read the matching reference:
 
 - `context/<schema-version>/viz.schema.json` for `*.mod.viz`
+- `context/<schema-version>/sys.schema.json` for `*.sys.blu`
+- `context/<schema-version>/protocol.schema.json` for `*.protocol.json`
 - `context/<schema-version>/prf.schema.json` for `*.src.prf`
 - `context/<schema-version>/capabilities.schema.json` for `*.cap.json`
 
 Treat `*.mod.blu` as the architectural source of truth. Treat `*.mod.viz`, `*.src.prf`, `*.app.js`, and `*.cap.json` as generated or derived artifacts unless the user explicitly asks to inspect or regenerate them.
+
+When an agent needs to understand how several applications interact, look for
+`system/active.sys.blu`. The `system/` folder is optional; all paths in the
+system and protocol documents remain explicit and relative to the document
+that contains them.
 
 Agent-facing tools, probes and events should be modeled as vmblu capabilities. MCP and provider-specific tool formats are adapters over the generated capability manifest, not the source of truth.
 

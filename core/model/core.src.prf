@@ -1,17 +1,17 @@
 {
-  "version": "1.10.1",
+  "version": "1.11.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "1.10",
-    "schemaVersion": "1.10.1",
+    "compatibilityFamily": "1.11",
+    "schemaVersion": "1.11.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.10.1"
+      "version": "1.11.0"
     },
     "source": {
       "model": "core.mod.blu",
-      "hash": "fnv1a64:7ed5f990f55e08ce"
+      "hash": "fnv1a64:3be5ad0daea27a50"
     }
   },
   "entries": [
@@ -19,10 +19,10 @@
       "node": "document manager",
       "handles": [
         {
-          "pin": "doc selected",
-          "handler": "onDocSelected",
+          "pin": "file selected",
+          "handler": "onFileSelected",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 114,
+          "line": 128,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -35,10 +35,10 @@
           ]
         },
         {
-          "pin": "doc new",
-          "handler": "onDocNew",
+          "pin": "file new",
+          "handler": "onFileNew",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 159,
+          "line": 173,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -51,10 +51,10 @@
           ]
         },
         {
-          "pin": "doc renamed",
-          "handler": "onDocRenamed",
+          "pin": "file renamed",
+          "handler": "onFileRenamed",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 183,
+          "line": 197,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -75,7 +75,7 @@
           "pin": "save as",
           "handler": "onFileSaveAs",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 197,
+          "line": 211,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -91,7 +91,7 @@
           "pin": "save all",
           "handler": "onFileSaveAll",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 234,
+          "line": 248,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -101,7 +101,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 240,
+          "line": 254,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -111,7 +111,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 258,
+          "line": 272,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -128,37 +128,37 @@
         {
           "pin": "tab.new",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 171
+          "line": 185
         },
         {
           "pin": "file.save as filename",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 216
+          "line": 230
         },
         {
-          "pin": "file.save",
+          "pin": "model.save",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 222
+          "line": 236
         },
         {
           "pin": "tab.rename",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 225
+          "line": 239
         },
         {
           "pin": "open models",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 250
+          "line": 264
         },
         {
           "pin": "tab.remove",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 263
+          "line": 277
         },
         {
           "pin": "tab.select",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 268
+          "line": 282
         }
       ]
     },

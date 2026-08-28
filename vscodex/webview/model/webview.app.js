@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.1"},"source":{"model":"webview.mod.blu","hash":"fnv1a64:d4c249a793babe2a"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.11","schemaVersion":"1.11.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.11.0"},"source":{"model":"webview.mod.blu","hash":"fnv1a64:6b77c4e2eda615fe"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -37,7 +37,7 @@ const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker",
-	uid: "VmKR",
+	uid: "CdUC",
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
@@ -55,21 +55,21 @@ const nodeList = [
 		],
 	outputs: [
 		`set document -> [ 
-			"top level view @ view manager (vVff)",
-			"model.set @ model manager (mXmH)" ]`,
+			"top level view @ view manager (sRFD)",
+			"model.set @ model manager (LCIF)" ]`,
 		"get document -> ()",
-		"reload model -> sync model @ model manager (mXmH)",
-		"model.save -> model.save @ model manager (mXmH)",
-		"sync links -> sync links @ model manager (mXmH)",
-		"canvas resize -> size change @ view manager (vVff)",
-		"clipboard.local => local @ clipboard (SDAc)",
-		"clipboard.switched -> switched @ clipboard (SDAc)"
+		"reload model -> sync model @ model manager (LCIF)",
+		"model.save -> model.save @ model manager (LCIF)",
+		"sync links -> sync links @ model manager (LCIF)",
+		"canvas resize -> size change @ view manager (sRFD)",
+		"clipboard.local => local @ clipboard (nfHE)",
+		"clipboard.switched -> switched @ clipboard (nfHE)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager",
-	uid: "vVff",
+	uid: "sRFD",
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -81,26 +81,26 @@ const nodeList = [
 		"-> application prompt"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (mXmH)",
-		"redox.undo -> redox.undo @ model manager (mXmH)",
-		"redox.redo -> redox.redo @ model manager (mXmH)",
-		"team legend -> teams @ team legend (OIls)",
-		"canvas -> canvas @ message broker (VmKR)",
-		"node settings (sx) -> show @ node settings (xRcj)",
-		"runtime settings (dx) -> show @ runtime settings (dYRC)",
-		"node prompt -> markdown @ markdown prompt (tulP)",
-		"context menu -> context menu @ context menu (JgbE)",
-		"name and path -> name and path @ name and path (HvUZ)",
-		"open model -> open document @ message broker (VmKR)",
-		"open source file -> open js file @ message broker (VmKR)",
-		"clipboard.get => get @ clipboard (SDAc)",
-		"clipboard.set -> set @ clipboard (SDAc)"
+		"redox.doit -> redox.doit @ model manager (LCIF)",
+		"redox.undo -> redox.undo @ model manager (LCIF)",
+		"redox.redo -> redox.redo @ model manager (LCIF)",
+		"team legend -> teams @ team legend (ZOFv)",
+		"canvas -> canvas @ message broker (CdUC)",
+		"node settings (sx) -> show @ node settings (qtdD)",
+		"runtime settings (dx) -> show @ runtime settings (DlNJ)",
+		"node prompt -> markdown @ markdown prompt (knBW)",
+		"context menu -> context menu @ context menu (yPgP)",
+		"name and path -> name and path @ name and path (CLIz)",
+		"open model -> open document @ message broker (CdUC)",
+		"open source file -> open js file @ message broker (CdUC)",
+		"clipboard.get => get @ clipboard (nfHE)",
+		"clipboard.set -> set @ clipboard (nfHE)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager",
-	uid: "mXmH",
+	uid: "LCIF",
 	factory: ModelManager,
 	inputs: [
 		"-> sync model",
@@ -120,27 +120,27 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (cWAO)",
-		"open source file -> open js file @ message broker (VmKR)",
+		"save point.confirm -> show @ confirm box (OfCF)",
+		"open source file -> open js file @ message broker (CdUC)",
 		"open model -> ()",
-		"model.root -> root @ view manager (vVff)",
-		"model.loaded -> model.loaded @ message broker (VmKR)",
+		"model.root -> root @ view manager (sRFD)",
+		"model.loaded -> model.loaded @ message broker (CdUC)",
 		"model.failed -> ()",
-		"model.header -> show @ doc settings(0) (kupF)",
+		"model.header -> show @ doc settings(0) (rCpR)",
 		`redox.done -> [ 
-			"redox.done @ view manager (vVff)",
-			"new edit @ message broker (VmKR)" ]`,
-		"pin profile -> show @ pin profile (BmYL)",
-		"get path -> path @ path request (qElV)",
-		"tool settings -> show @ tool settings (uHpB)",
-		"event settings -> show @ event settings (Rnxs)",
-		"info popup -> show @ toast box (WDTB)"
+			"redox.done @ view manager (sRFD)",
+			"new edit @ message broker (CdUC)" ]`,
+		"pin profile -> show @ pin profile (InFZ)",
+		"get path -> path @ path request (CeNu)",
+		"tool settings -> show @ tool settings (FlaL)",
+		"event settings -> show @ event settings (QrWJ)",
+		"info popup -> show @ toast box (vTzs)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard",
-	uid: "SDAc",
+	uid: "nfHE",
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -149,71 +149,71 @@ const nodeList = [
 		"-> switched"
 		],
 	outputs: [
-		"remote => clipboard.remote @ message broker (VmKR)",
-		"switch -> clipboard.switch @ message broker (VmKR)"
+		"remote => clipboard.remote @ message broker (CdUC)",
+		"switch -> clipboard.switch @ message broker (CdUC)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "qElV",
+	uid: "CeNu",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"folder.get => folder.get @ message broker (VmKR)",
-		"modal div -> modal div @ message broker (VmKR)"
+		"folder.get => folder.get @ message broker (CdUC)",
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "xRcj",
+	uid: "qtdD",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "HvUZ",
+	uid: "CLIz",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)",
-		"folder.get => folder.get @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)",
+		"folder.get => folder.get @ message broker (CdUC)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "BmYL",
+	uid: "InFZ",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"pin prompt -> markdown @ markdown prompt (tulP)",
-		"modal div -> modal div @ message broker (VmKR)"
+		"pin prompt -> markdown @ markdown prompt (knBW)",
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_____________________________________________MARKDOWN PROMPT
 	{
 	name: "markdown prompt",
-	uid: "tulP",
+	uid: "knBW",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		],
 	sx:	{
 		    "openPromptFile": true
@@ -222,145 +222,145 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "JgbE",
+	uid: "yPgP",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"confirm -> show @ confirm box (cWAO)",
-		"modal div -> modal div @ message broker (VmKR)"
+		"confirm -> show @ confirm box (OfCF)",
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "dYRC",
+	uid: "DlNJ",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "uHpB",
+	uid: "FlaL",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "Rnxs",
+	uid: "QrWJ",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "cWAO",
+	uid: "OfCF",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_____________________________________________DOC SETTINGS(0)
 	{
 	name: "doc settings(0)",
-	uid: "kupF",
+	uid: "rCpR",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)",
-		"agent settings -> show @ agent settings (Bloa)",
-		"model runtime settings -> show @ model runtime settings (jGeh)"
+		"modal div -> modal div @ message broker (CdUC)",
+		"agent settings -> show @ agent settings (Rdrc)",
+		"model runtime settings -> show @ model runtime settings (nwWx)"
 		]
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "jGeh",
+	uid: "nwWx",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "Bloa",
+	uid: "Rdrc",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "Nxqy",
+	uid: "gorC",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "WDTB",
+	uid: "vTzs",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (VmKR)"
+		"modal div -> modal div @ message broker (CdUC)"
 		]
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "LvnA",
+	uid: "ioYj",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (VmKR)",
-		"sync model -> sync model @ model manager (mXmH)",
-		"accept changes -> accept changes @ model manager (mXmH)",
-		"wire check -> wire check @ model manager (mXmH)",
-		"show settings -> show settings @ model manager (mXmH)",
-		"make app -> make app @ model manager (mXmH)",
-		"make lib -> make lib @ model manager (mXmH)",
-		"set save point -> save point.set @ model manager (mXmH)",
-		"back to save point -> save point.back @ model manager (mXmH)",
-		"recalibrate -> recalibrate @ view manager (vVff)",
-		"grid on-off -> grid on-off @ view manager (vVff)",
-		"application prompt -> application prompt @ view manager (vVff)"
+		"div -> floating menu @ message broker (CdUC)",
+		"sync model -> sync model @ model manager (LCIF)",
+		"accept changes -> accept changes @ model manager (LCIF)",
+		"wire check -> wire check @ model manager (LCIF)",
+		"show settings -> show settings @ model manager (LCIF)",
+		"make app -> make app @ model manager (LCIF)",
+		"make lib -> make lib @ model manager (LCIF)",
+		"set save point -> save point.set @ model manager (LCIF)",
+		"back to save point -> save point.back @ model manager (LCIF)",
+		"recalibrate -> recalibrate @ view manager (sRFD)",
+		"grid on-off -> grid on-off @ view manager (sRFD)",
+		"application prompt -> application prompt @ view manager (sRFD)"
 		],
 	sx:	[
 		    {
@@ -434,20 +434,20 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "OIls",
+	uid: "ZOFv",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
 		],
 	outputs: [
-		"div -> legend div @ message broker (VmKR)"
+		"div -> legend div @ message broker (CdUC)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.1","schemaVersion":"1.10.1"}
+    vmblu: {"compatibilityFamily":"1.11","generatorVersion":"1.11.0","schemaVersion":"1.11.0"}
 }
 
 // prepare the runtime

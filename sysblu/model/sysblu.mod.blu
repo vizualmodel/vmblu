@@ -1,0 +1,811 @@
+{
+  "header": {
+    "version": "1.11.0",
+    "created": "2026-08-24T14:00:22.255Z",
+    "saved": "2026-08-24T15:36:41.166Z",
+    "utc": "2026-08-24T15:36:41.166Z",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-base",
+    "teams": {
+      "default": {
+        "color": "#2c7be5"
+      }
+    }
+  },
+  "factories": [
+    "../nodes/sysblu-view/sysblu-view.js",
+    "../nodes/sysblu-manager/sysblu-manager.js"
+  ],
+  "types": {
+    "AnyPayload": {
+      "kind": "primitive",
+      "summary": "Opaque payload whose detailed structure is not yet stabilized."
+    },
+    "Void": {
+      "kind": "object",
+      "summary": "No payload.",
+      "fields": {}
+    },
+    "ArlRef": {
+      "kind": "external",
+      "summary": "Workspace or model path reference.",
+      "external": {
+        "library": "kernel",
+        "symbol": "ARL"
+      }
+    },
+    "StringList": {
+      "kind": "array",
+      "summary": "Ordered diagnostic messages.",
+      "items": {
+        "vmbluType": "string"
+      }
+    },
+    "SystemDiagnostics": {
+      "kind": "object",
+      "summary": "Validation diagnostics for the active system document.",
+      "fields": {
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "errors": {
+          "vmbluType": "StringList"
+        }
+      },
+      "required": [
+        "errors"
+      ]
+    },
+    "CommandRequest": {
+      "kind": "object",
+      "summary": "Terminal command request for execution by a trusted host.",
+      "fields": {
+        "command": {
+          "vmbluType": "string"
+        },
+        "workingDirectory": {
+          "vmbluType": "ArlRef"
+        }
+      },
+      "required": [
+        "command",
+        "workingDirectory"
+      ]
+    },
+    "ActiveDocument": {
+      "kind": "object",
+      "summary": "Active system document selected by the host document manager.",
+      "fields": {
+        "kind": {
+          "vmbluType": "string"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "model": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "kind",
+        "arl"
+      ]
+    },
+    "SystemDocument": {
+      "kind": "primitive",
+      "summary": "Schema-valid sysblu system configuration supplied as one opaque document value."
+    },
+    "SystemSnapshot": {
+      "kind": "object",
+      "summary": "Immutable view snapshot of the active system document and its source reference.",
+      "fields": {
+        "document": {
+          "vmbluType": "SystemDocument"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "dirty": {
+          "vmbluType": "boolean"
+        }
+      },
+      "required": [
+        "document",
+        "dirty"
+      ]
+    },
+    "ViewSize": {
+      "kind": "object",
+      "summary": "Canvas size update in CSS pixels with an optional device-pixel ratio.",
+      "fields": {
+        "w": {
+          "vmbluType": "number"
+        },
+        "h": {
+          "vmbluType": "number"
+        },
+        "dpr": {
+          "vmbluType": "number"
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ]
+    },
+    "SysmodDoit": {
+      "kind": "object",
+      "summary": "Command requesting one reversible change to the active system document.",
+      "fields": {
+        "verb": {
+          "vmbluType": "string"
+        },
+        "param": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "verb"
+      ]
+    },
+    "SysmodDone": {
+      "kind": "object",
+      "summary": "Notification that a sysmod action finished and the resulting history state.",
+      "fields": {
+        "verb": {
+          "vmbluType": "string"
+        },
+        "undo": {
+          "vmbluType": "boolean"
+        },
+        "redo": {
+          "vmbluType": "boolean"
+        },
+        "dirty": {
+          "vmbluType": "boolean"
+        },
+        "error": {
+          "vmbluType": "string"
+        }
+      },
+      "required": [
+        "verb",
+        "undo",
+        "redo",
+        "dirty"
+      ]
+    },
+    "ApplicationInspectorRequest": {
+      "kind": "primitive",
+      "summary": "UI request containing an application snapshot, popup placement, and completion callback."
+    },
+    "EndpointInspectorRequest": {
+      "kind": "primitive",
+      "summary": "UI request containing an endpoint snapshot, popup placement, and completion callback."
+    },
+    "ConnectionInspectorRequest": {
+      "kind": "primitive",
+      "summary": "UI request containing a system connection snapshot, popup placement, and completion callback."
+    }
+  },
+  "root": {
+    "kind": "group",
+    "name": "sysblu",
+    "promptRepo": {
+      "arl": "./prompts/sysblu.md",
+      "pathKind": 2
+    },
+    "interfaces": [
+      {
+        "interface": "sysblu",
+        "pins": [
+          {
+            "name": "sysblu.set",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "ActiveDocument"
+            }
+          },
+          {
+            "name": "sysblu.save",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "Void"
+            }
+          },
+          {
+            "name": "sysblu.undo",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "Void"
+            }
+          },
+          {
+            "name": "sysblu.redo",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "Void"
+            }
+          },
+          {
+            "name": "sysblu.loaded",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ArlRef"
+            }
+          },
+          {
+            "name": "sysblu.failed",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ArlRef"
+            }
+          },
+          {
+            "name": "system.updated",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "SystemSnapshot"
+            }
+          },
+          {
+            "name": "sysblu.diagnostics",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "SystemDiagnostics"
+            }
+          }
+        ]
+      },
+      {
+        "interface": "setup",
+        "pins": [
+          {
+            "name": "canvas",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "AnyPayload"
+            }
+          },
+          {
+            "name": "size change",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "ViewSize"
+            }
+          },
+          {
+            "name": "application prompt",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "Void"
+            }
+          },
+          {
+            "name": "add application",
+            "kind": "input",
+            "contract": {
+              "role": "owner",
+              "payload": "AnyPayload"
+            }
+          },
+          {
+            "name": "application settings",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ApplicationInspectorRequest"
+            }
+          },
+          {
+            "name": "endpoint settings",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "EndpointInspectorRequest"
+            }
+          },
+          {
+            "name": "connection settings",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ConnectionInspectorRequest"
+            }
+          }
+        ]
+      },
+      {
+        "interface": "files",
+        "pins": [
+          {
+            "name": "open reference",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ArlRef"
+            }
+          },
+          {
+            "name": "execute command",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "CommandRequest"
+            }
+          }
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "sysblu view",
+        "label": "Draws the system and handles user interaction",
+        "promptRepo": {
+          "arl": "./prompts/sysblu-view.md",
+          "pathKind": 2
+        },
+        "factory": {
+          "path": "../nodes/sysblu-view/sysblu-view.js",
+          "function": "SysbluView"
+        },
+        "interfaces": [
+          {
+            "interface": "setup",
+            "pins": [
+              {
+                "name": "canvas",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "size change",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ViewSize"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "add application",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "application settings",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ApplicationInspectorRequest"
+                }
+              },
+              {
+                "name": "endpoint settings",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "EndpointInspectorRequest"
+                }
+              },
+              {
+                "name": "connection settings",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ConnectionInspectorRequest"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "system",
+            "pins": [
+              {
+                "name": "system.updated",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "SystemSnapshot"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "sysmod",
+            "pins": [
+              {
+                "name": "sysmod.doit",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "SysmodDoit"
+                }
+              },
+              {
+                "name": "sysmod.undo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysmod.redo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysmod.done",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "SysmodDone"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open reference",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "execute command",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "CommandRequest"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu manager",
+        "label": "Owns and modifies the active system document",
+        "promptRepo": {
+          "arl": "./prompts/sysblu-manager.md",
+          "pathKind": 2
+        },
+        "factory": {
+          "path": "../nodes/sysblu-manager/sysblu-manager.js",
+          "function": "SysbluManager"
+        },
+        "interfaces": [
+          {
+            "interface": "sysblu",
+            "pins": [
+              {
+                "name": "sysblu.set",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.save",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.diagnostics",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SystemDiagnostics"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "system",
+            "pins": [
+              {
+                "name": "system.updated",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SystemSnapshot"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "sysmod",
+            "pins": [
+              {
+                "name": "sysmod.doit",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SysmodDoit"
+                }
+              },
+              {
+                "name": "sysmod.undo",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysmod.redo",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysmod.done",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SysmodDone"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "src": {
+          "pin": "canvas",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "canvas"
+        }
+      },
+      {
+        "src": {
+          "pin": "application settings",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "application settings"
+        }
+      },
+      {
+        "src": {
+          "pin": "endpoint settings",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "endpoint settings"
+        }
+      },
+      {
+        "src": {
+          "pin": "connection settings",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "connection settings"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysmod.doit",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "sysmod.doit",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysmod.undo",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "sysmod.undo",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysmod.redo",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "sysmod.redo",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "open reference",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "open reference"
+        }
+      },
+      {
+        "src": {
+          "pin": "execute command",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "execute command"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.loaded",
+          "node": "sysblu manager"
+        },
+        "dst": {
+          "pin": "sysblu.loaded"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.failed",
+          "node": "sysblu manager"
+        },
+        "dst": {
+          "pin": "sysblu.failed"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.diagnostics",
+          "node": "sysblu manager"
+        },
+        "dst": {
+          "pin": "sysblu.diagnostics"
+        }
+      },
+      {
+        "src": {
+          "pin": "system.updated",
+          "node": "sysblu manager"
+        },
+        "dst": [
+          {
+            "pin": "system.updated",
+            "node": "sysblu view"
+          },
+          {
+            "pin": "system.updated"
+          }
+        ]
+      },
+      {
+        "src": {
+          "pin": "sysmod.done",
+          "node": "sysblu manager"
+        },
+        "dst": {
+          "pin": "sysmod.done",
+          "node": "sysblu view"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.set"
+        },
+        "dst": {
+          "pin": "sysblu.set",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.save"
+        },
+        "dst": {
+          "pin": "sysblu.save",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.undo"
+        },
+        "dst": {
+          "pin": "sysmod.undo",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.redo"
+        },
+        "dst": {
+          "pin": "sysmod.redo",
+          "node": "sysblu manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "size change"
+        },
+        "dst": {
+          "pin": "size change",
+          "node": "sysblu view"
+        }
+      },
+      {
+        "src": {
+          "pin": "application prompt"
+        },
+        "dst": {
+          "pin": "application prompt",
+          "node": "sysblu view"
+        }
+      },
+      {
+        "src": {
+          "pin": "add application"
+        },
+        "dst": {
+          "pin": "add application",
+          "node": "sysblu view"
+        }
+      }
+    ]
+  }
+}

@@ -8,6 +8,8 @@ export let check
 export let maxSuggestions = 12
 export let fileExtensions = ''
 export let getFolder = null
+export let openFile = null
+export let showOpenFile = false
 
 let field
 let listOpen = false
@@ -17,6 +19,7 @@ let queryToken = 0
 let listRect = null
 let cachedFolderPath = null
 let cachedFolder = {folders: [], files: []}
+let hasOpenFile = false
 
 const fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
 
@@ -200,6 +203,11 @@ function onBlur() {
     }, 120)
 }
 
+function openInputFile() {
+    const target = String(input ?? '').trim()
+    if (target && typeof openFile === 'function') openFile(target)
+}
+
 onMount(() => {
     savedColor = field.style.color
     setFieldWidth()
@@ -220,6 +228,7 @@ onMount(() => {
 
 $: if (field) setFieldWidth()
 $: if (field && listOpen) updateListRect()
+$: hasOpenFile = showOpenFile || typeof openFile === 'function'
 </script>
 <style>
 .input-field {
@@ -233,6 +242,7 @@ $: if (field && listOpen) updateListRect()
     --cField: #ccc;
     display: flex;
     align-items: center;
+    margin: 0 0 0.45rem;
     background: transparent;
 }
 
@@ -263,6 +273,47 @@ input:hover {
 
 input:focus {
     background: var(--bgFieldFocus);
+}
+
+input.has-open-file {
+    margin-left: 0;
+}
+
+.open-file {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.55rem;
+    height: 1.55rem;
+    margin-left: 1rem;
+    margin-right: 0.35rem;
+    padding: 0;
+    color: #e2c64e;
+    background: #171500;
+    border: 1px solid #6d6328;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.open-file:hover:not(:disabled),
+.open-file:focus-visible {
+    color: #fff27a;
+    background: #302b00;
+    border-color: #e2c64e;
+    outline: none;
+}
+
+.open-file:disabled {
+    color: #706a45;
+    background: #111;
+    border-color: #3f3b27;
+    cursor: default;
+}
+
+.open-file .material-icons-outlined {
+    font-size: 1.1rem;
+    line-height: 1;
 }
 
 .suggestions {
@@ -313,10 +364,24 @@ input:focus {
 
 <div class="input-field">
     <label for={fid} style={style}>{label}</label>
+    {#if hasOpenFile}
+        <button
+            class="open-file"
+            type="button"
+            title="Open file"
+            aria-label="Open file"
+            disabled={!String(input ?? '').trim() || typeof openFile !== 'function'}
+            on:mousedown|preventDefault|stopPropagation
+            on:click|stopPropagation={openInputFile}
+        >
+            <span class="material-icons-outlined">file_open</span>
+        </button>
+    {/if}
     <input
         id={fid}
         type="text"
         spellcheck="false"
+        class:has-open-file={hasOpenFile}
         bind:value={input}
         bind:this={field}
         on:input={onInput}

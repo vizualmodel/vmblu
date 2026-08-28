@@ -131,9 +131,9 @@ function StyleFactory() {
         cAdded: color.add, cDeleted: color.red
     } 
     this.cable = {
-        wNormal: 6, wBus: 4, split: 30, tooClose: 15, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 6, gap: 4,
+        wNormal: 6, split: 30, tooClose: 15, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 6.5, gap: 4,
         cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
-        wCable: 4, cTack: color.shade4, rTack: 5, extraLength: 15,
+        wCable: 6, cTack: color.shade4, rTack: 5, extraLength: 15,
         wBridge: 6, hBridge: 6
     } 
     this.selection = {

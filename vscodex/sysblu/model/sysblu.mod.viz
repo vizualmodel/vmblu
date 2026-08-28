@@ -1,0 +1,267 @@
+{
+  "header": {
+    "version": "1.11.0",
+    "created": "2026-08-28T09:56:57.923Z",
+    "saved": "2026-08-28T09:56:57.923Z",
+    "utc": "2026-08-28T09:56:57.923Z",
+    "style": "#0066ff"
+  },
+  "root": {
+    "kind": "group",
+    "name": "sysblu vscode editor",
+    "rect": "x 90 y 30 w 210 h 26",
+    "view": {
+      "state": "open",
+      "rect": "x 0 y 0 w 1200 h 800",
+      "transform": "sx 1.000 sy 1.000 dx 0.000 dy 0.000"
+    },
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "system message broker",
+        "rect": "x 855 y 12 w 210 h 296",
+        "interfaces": [
+          {
+            "interface": "(37) sysblu",
+            "pins": [
+              "(20 L)sysblu.set",
+              "(21 L)sysblu.save",
+              "(22 L)sysblu.undo",
+              "(23 L)sysblu.redo",
+              "(24 L)sysblu.loaded",
+              "(25 L)sysblu.failed",
+              "(26 L)sysblu.diagnostics",
+              "(27 L)system.updated"
+            ]
+          },
+          {
+            "interface": "(38) dom",
+            "pins": [
+              "(29 L)canvas",
+              "(30 L)floating menu",
+              "(31 L)modal div",
+              "(32 L)save",
+              "(33 L)size change"
+            ]
+          },
+          {
+            "interface": "(39) files",
+            "pins": [
+              "(35 L)open reference",
+              "(36 L)execute command"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "sysblu",
+        "rect": "x 258 y 12 w 150 h 326",
+        "interfaces": [
+          {
+            "interface": "(30) sysblu",
+            "pins": [
+              "(12 R)sysblu.set",
+              "(13 R)sysblu.save",
+              "(31 R)sysblu.undo",
+              "(32 R)sysblu.redo",
+              "(14 R)sysblu.loaded",
+              "(15 R)sysblu.failed",
+              "(34 R)sysblu.diagnostics",
+              "(33 R)system.updated"
+            ]
+          },
+          {
+            "interface": "(35) setup",
+            "pins": [
+              "(17 R)canvas",
+              "(18 R)size change",
+              "(23 L)application prompt",
+              "(24 L)add application",
+              "(25 R)application settings",
+              "(26 R)endpoint settings",
+              "(27 R)connection settings"
+            ]
+          },
+          {
+            "interface": "(36) files",
+            "pins": [
+              "(20 R)open reference",
+              "(29 R)execute command"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "system menu",
+        "rect": "x 12 y 330 w 150 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(5 R)div",
+              "(6 R)save",
+              "(7 R)application prompt",
+              "(8 R)add application"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "application inspector",
+        "rect": "x 544 y 199 w 195 h 56",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 L)application settings",
+              "(4 R)modal div"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "endpoint inspector",
+        "rect": "x 552 y 295 w 180 h 56",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 L)endpoint settings",
+              "(4 R)modal div"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "connection inspector",
+        "rect": "x 544 y 391 w 195 h 56",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 L)connection settings",
+              "(4 R)modal div"
+            ]
+          }
+        ]
+      }
+    ],
+    "routes": [
+      {
+        "from": "(pin 20) sysblu.set @ system message broker",
+        "to": "(pin 12) sysblu.set @ sysblu",
+        "wire": "x -447.0"
+      },
+      {
+        "from": "(pin 21) sysblu.save @ system message broker",
+        "to": "(pin 13) sysblu.save @ sysblu",
+        "wire": "x -447.0"
+      },
+      {
+        "from": "(pin 22) sysblu.undo @ system message broker",
+        "to": "(pin 31) sysblu.undo @ sysblu",
+        "wire": "x -447.0"
+      },
+      {
+        "from": "(pin 23) sysblu.redo @ system message broker",
+        "to": "(pin 32) sysblu.redo @ sysblu",
+        "wire": "x -447.0"
+      },
+      {
+        "from": "(pin 33) size change @ system message broker",
+        "to": "(pin 18) size change @ sysblu",
+        "wire": "x -58.0 y 228.0 x -271.0 y -273.0 x -118.0"
+      },
+      {
+        "from": "(pin 14) sysblu.loaded @ sysblu",
+        "to": "(pin 24) sysblu.loaded @ system message broker",
+        "wire": "x 447.0"
+      },
+      {
+        "from": "(pin 15) sysblu.failed @ sysblu",
+        "to": "(pin 25) sysblu.failed @ system message broker",
+        "wire": "x 447.0"
+      },
+      {
+        "from": "(pin 34) sysblu.diagnostics @ sysblu",
+        "to": "(pin 26) sysblu.diagnostics @ system message broker",
+        "wire": "x 447.0"
+      },
+      {
+        "from": "(pin 33) system.updated @ sysblu",
+        "to": "(pin 27) system.updated @ system message broker",
+        "wire": "x 389.0 y 0.0 x 58.0"
+      },
+      {
+        "from": "(pin 17) canvas @ sysblu",
+        "to": "(pin 29) canvas @ system message broker",
+        "wire": "x 38.0 y -23.0 x 331.0 y 23.0 x 78.0"
+      },
+      {
+        "from": "(pin 25) application settings @ sysblu",
+        "to": "(pin 3) application settings @ application inspector",
+        "wire": "x 98.0 y -23.0 x 38.0"
+      },
+      {
+        "from": "(pin 26) endpoint settings @ sysblu",
+        "to": "(pin 3) endpoint settings @ endpoint inspector",
+        "wire": "x 98.0 y 58.0 x 46.0"
+      },
+      {
+        "from": "(pin 27) connection settings @ sysblu",
+        "to": "(pin 3) connection settings @ connection inspector",
+        "wire": "x 58.0 y 139.0 x 78.0"
+      },
+      {
+        "from": "(pin 20) open reference @ sysblu",
+        "to": "(pin 35) open reference @ system message broker",
+        "wire": "x 38.0 y 179.0 x 371.0 y -209.0 x 38.0"
+      },
+      {
+        "from": "(pin 29) execute command @ sysblu",
+        "to": "(pin 36) execute command @ system message broker",
+        "wire": "x 18.0 y 175.0 x 411.0 y -205.0 x 18.0"
+      },
+      {
+        "from": "(pin 5) div @ system menu",
+        "to": "(pin 30) floating menu @ system message broker",
+        "wire": "x 324.0 y -180.0 x 271.0 y 27.0 x 98.0"
+      },
+      {
+        "from": "(pin 6) save @ system menu",
+        "to": "(pin 32) save @ system message broker",
+        "wire": "x 58.0 y 94.0 x 557.0 y -232.0 x 78.0"
+      },
+      {
+        "from": "(pin 7) application prompt @ system menu",
+        "to": "(pin 23) application prompt @ sysblu",
+        "wire": "x 18.0 y -168.0 x 78.0"
+      },
+      {
+        "from": "(pin 8) add application @ system menu",
+        "to": "(pin 24) add application @ sysblu",
+        "wire": "x 38.0 y -168.0 x 58.0"
+      },
+      {
+        "from": "(pin 4) modal div @ application inspector",
+        "to": "(pin 31) modal div @ system message broker",
+        "wire": "x 18.0 y -22.0 x 98.0"
+      },
+      {
+        "from": "(pin 4) modal div @ endpoint inspector",
+        "to": "(pin 31) modal div @ system message broker",
+        "wire": "x 25.0 y -118.0 x 98.0"
+      },
+      {
+        "from": "(pin 4) modal div @ connection inspector",
+        "to": "(pin 31) modal div @ system message broker",
+        "wire": "x 18.0 y -214.0 x 98.0"
+      }
+    ]
+  }
+}
