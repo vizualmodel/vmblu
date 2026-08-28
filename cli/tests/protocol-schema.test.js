@@ -4,9 +4,9 @@ import test from 'node:test'
 import Ajv2020 from 'ajv/dist/2020.js'
 
 import {validateProtocolReferences} from '../lib/protocol-validation.js'
+import {chatProtocolFixture} from './fixtures/chat-protocol.js'
 
 const contextUrl = new URL('../context/1.11.0/', import.meta.url)
-const chatProtocolUrl = new URL('../../../vmblu-examples/chat-application/system/chat.protocol.json', import.meta.url)
 
 async function makeValidator() {
   const blueprintSchema = JSON.parse(await readFile(new URL('blu.schema.json', contextUrl), 'utf8'))
@@ -16,13 +16,9 @@ async function makeValidator() {
   return ajv.compile(protocolSchema)
 }
 
-async function chatProtocol() {
-  return JSON.parse(await readFile(chatProtocolUrl, 'utf8'))
-}
-
-test('1.11.0 protocol schema accepts the real Chat protocol', async () => {
+test('1.11.0 protocol schema accepts the Chat protocol fixture', async () => {
   const validate = await makeValidator()
-  const protocol = await chatProtocol()
+  const protocol = chatProtocolFixture()
 
   assert.equal(validate(protocol), true, JSON.stringify(validate.errors))
   assert.deepEqual(validateProtocolReferences(protocol), {ok: true, errors: []})
@@ -30,7 +26,7 @@ test('1.11.0 protocol schema accepts the real Chat protocol', async () => {
 
 test('protocol interactions require explicit flow, type, and response semantics', async () => {
   const validate = await makeValidator()
-  const protocol = await chatProtocol()
+  const protocol = chatProtocolFixture()
   delete protocol.interactions[0].response
 
   assert.equal(validate(protocol), false)
@@ -41,7 +37,7 @@ test('protocol interactions require explicit flow, type, and response semantics'
 })
 
 test('protocol semantic validation rejects duplicate and dangling interaction references', async () => {
-  const protocol = await chatProtocol()
+  const protocol = chatProtocolFixture()
   protocol.interactions[1].id = protocol.interactions[0].id
   protocol.interactions[0].response = [{id: 'missing-reply'}]
 
@@ -52,7 +48,7 @@ test('protocol semantic validation rejects duplicate and dangling interaction re
 })
 
 test('protocol semantic validation accepts recursive types and rejects unknown type references', async () => {
-  const protocol = await chatProtocol()
+  const protocol = chatProtocolFixture()
   protocol.types.ChatMessage.fields.replyTo = {vmbluType: 'ChatMessage'}
   assert.equal(validateProtocolReferences(protocol).ok, true)
 
