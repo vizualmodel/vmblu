@@ -108,7 +108,16 @@ test('attributes fs writes to the active node across await in runtime dispatch',
         const event = await waitFor(() => events.find((item) => item.cap === 'fs:write'))
         assert.equal(event.node, 'Sink')
         assert.equal(event.detail.path, targetFile)
-        assert.equal(await fsp.readFile(targetFile, 'utf8'), 'ok')
+        const content = await waitFor(() => {
+            try {
+                const value = fs.readFileSync(targetFile, 'utf8')
+                return value === 'ok' ? value : null
+            } catch (error) {
+                if (error?.code === 'ENOENT') return null
+                throw error
+            }
+        })
+        assert.equal(content, 'ok')
     } finally {
         runtime.stop()
     }

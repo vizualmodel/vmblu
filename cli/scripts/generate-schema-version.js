@@ -23,6 +23,8 @@ const requiredContextFiles = [
   'blu.schema.json',
   'blu.annex.md',
   'viz.schema.json',
+  'sys.schema.json',
+  'protocol.schema.json',
   'prf.schema.json',
   'capabilities.schema.json'
 ];
@@ -43,6 +45,16 @@ const schemaMetadata = [
   {
     file: 'prf.schema.json',
     id: `https://vmblu.dev/context/${schemaVersion}/prf.schema.json`
+  },
+  {
+    file: 'sys.schema.json',
+    id: `https://vmblu.dev/context/${schemaVersion}/sys.schema.json`,
+    title: `vmblu System Configuration (v${schemaVersion})`
+  },
+  {
+    file: 'protocol.schema.json',
+    id: `https://vmblu.dev/context/${schemaVersion}/protocol.schema.json`,
+    title: `vmblu Protocol Definition (v${schemaVersion})`
   }
 ];
 

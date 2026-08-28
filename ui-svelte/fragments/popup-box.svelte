@@ -10,11 +10,14 @@
 	let dragging = false;
 	let pendingShowPos = null;
 
+	// Handlers can receive a request as soon as the runtime starts. Install the
+	// popup API synchronously so an early request can use show() and let it queue
+	// the position until the DOM node is mounted.
+	box.show = show;
+	box.hide = hide;
+	box.update = () => (box = box);
+
 	onMount(() => {
-		// set the show, hide and update functions
-		box.show = show;
-		box.hide = hide;
-		box.update = () => (box = box);
 		if (pendingShowPos !== null) {
 			const pos = pendingShowPos;
 			pendingShowPos = null;
@@ -75,8 +78,7 @@
 	}
 
 	function onOk(e) {
-		hide();
-		box.ok?.(e);
+		if (box.ok?.(e) !== false) hide();
 	}
 
 	function onOpen(e) {
@@ -205,6 +207,10 @@ h1 {
     color: var(--cBoxHeader);
     margin: 0;          /* reset default margins */
 }
+
+h1.largeTitle {
+    font-size: 1.15rem;
+}
 </style>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -223,7 +229,7 @@ h1 {
 		</div>
 
 		<!-- Title -->
-		<h1>{box.title}</h1>
+		<h1 class:largeTitle={box.largeTitle}>{box.title}</h1>
 
 		<!-- Right icon (delete/trash) -->
 		{#if box.trash}

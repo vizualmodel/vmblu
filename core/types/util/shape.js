@@ -584,9 +584,12 @@ emptyLabel(ctx, x,y,r, color) {
     ctx.arc(x,y,r,0,2*Math.PI)
     ctx.fill()
 
+    // inner radius
+    const ir = r - 2.5
     ctx.beginPath()
+    ctx.lineWidth = ir
     ctx.strokeStyle = '#000000'
-    ctx.arc(x,y,r-2.5,0,2*Math.PI)
+    ctx.arc(x,y,ir,0,2*Math.PI)
     ctx.stroke()
 },
 

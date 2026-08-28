@@ -4,13 +4,14 @@
 // ------------------------------------------------------------------
 
 import {Path, ARL} from '../../types/arl/index.js'
-import {Document, TextDocument} from './document.js'
+import {Document, SystemDocument, TextDocument} from './document.js'
 
 //Constructor for document manager
 export function DocumentManager(tx, sx) {
 
     // save the transmitter
     this.tx = tx
+    this.openExternal = sx?.openExternal ?? ((url, target, features) => globalThis.open?.(url, target, features))
 
 	// the document that is being handled by the editor
 	this.active = null
@@ -40,6 +41,25 @@ DocumentManager.prototype = {
         const path = arl.getPath?.()
         if (!path) return arl
 
+        const lowerPath = path.toLowerCase()
+
+        if (lowerPath.endsWith('.sys')) {
+            const raw = await arl.get?.('json')
+            if (raw?.kind !== 'sysblu.entrypoint') {
+                throw new Error(`System entrypoint ${path} must have kind "sysblu.entrypoint"`)
+            }
+            if (raw.version !== 1) {
+                throw new Error(`Unsupported sysblu entrypoint version in ${path}: ${raw.version}`)
+            }
+            if (typeof raw.system !== 'string' || !raw.system.length) {
+                throw new Error(`System entrypoint ${path} requires a string "system" field`)
+            }
+
+            const systemArl = arl.resolve?.(raw.system)
+            if (!systemArl) throw new Error(`System entrypoint ${path} could not resolve ${raw.system}`)
+            return systemArl
+        }
+
         const split = Path.split(path)
 
         if (split.ext === '.blu') {
@@ -60,22 +80,17 @@ DocumentManager.prototype = {
     },
 
     makeDocument(arl, line=null) {
-        return arl?.getPath?.()?.toLowerCase().endsWith('.blu')
-            ? new Document(arl)
-            : new TextDocument(arl, line)
+        const path = arl?.getPath?.()?.toLowerCase() ?? ''
+        if (path.endsWith('.sys.blu')) return new SystemDocument(arl)
+        if (path.endsWith('.blu')) return new Document(arl)
+        return new TextDocument(arl, line)
     },
 
     activateDocument(doc) {
         this.active = doc ?? null
-
-        if (doc?.kind === 'text') {
-            this.tx.send('doc.set active', null)
-            this.tx.send('text.set active', doc)
-        }
-        else {
-            this.tx.send('text.set active', null)
-            this.tx.send('doc.set active', doc ?? null)
-        }
+        this.tx.send('model.set active', doc?.kind === 'model' ? doc : null)
+        this.tx.send('text.set active', doc?.kind === 'text' ? doc : null)
+        this.tx.send('sysblu.set active', doc?.kind === 'sysblu' ? doc : null)
     },
 
     openDocument(arl, line=null) {
@@ -108,10 +123,10 @@ DocumentManager.prototype = {
     /**
      * @prompt User selected a document 
      * This will bring the document to the foreground.
-     * @pin doc selected @ document manager
+     * @pin file selected @ document manager
      * @param {ARL} arl - The ARL of the selected document.
      */
-    async onDocSelected(arl) {
+    async onFileSelected(arl) {
 
         const request = arl?.arl ? arl : {arl}
         const sequence = this.beginLoading(request.arl)
@@ -132,9 +147,15 @@ DocumentManager.prototype = {
      * @prompt Open a document using its ARL.
      * @param {ARL} arl - The ARL of the document to open.
      */
-    async onDocOpen(arl) {
+    async onFileOpen(arl) {
 
-        const request = arl?.arl ? arl : {arl}
+        const request = arl?.arl || arl?.externalUrl ? arl : {arl}
+        if (request.externalUrl) {
+            const url = new URL(request.externalUrl)
+            if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`Unsupported external reference protocol: ${url.protocol}`)
+            this.openExternal?.(url.href, '_blank', 'noopener,noreferrer')
+            return
+        }
         const sequence = this.beginLoading(request.arl)
         try {
             const docArl = await this.resolveDocumentArl(request.arl)
@@ -149,14 +170,14 @@ DocumentManager.prototype = {
         }
     },
 
-    onDocGet(){},
+    onFileGet(){},
 
     /**
      * @prompt Create a new, empty document with the given ARL.
-     * @pin doc new @ document manager
+     * @pin file new @ document manager
      * @param {ARL} arl - ARL for the new document to be created.
      */
-	onDocNew(arl) {
+	onFileNew(arl) {
         
         // create a new tab
         const doc = new Document(arl) 
@@ -175,18 +196,18 @@ DocumentManager.prototype = {
 	},
     /**
      * @prompt Notification that a document has been renamed.
-     * @pin doc renamed @ document manager
+     * @pin file renamed @ document manager
      * @param {Object} info
      * @param {string} info.oldName - Previous document name.
      * @param {string} info.newName - New document name.
      */
-    onDocRenamed({oldName, newName}) {
+    onFileRenamed({oldName, newName}) {
 
         //DEV ONLY
         console.log('old-new', oldName, newName)
     },
 
-    onDocDeleted(arl) {
+    onFileDeleted(arl) {
     },
     /**
      * @prompt Save the currently active document.
@@ -219,7 +240,7 @@ DocumentManager.prototype = {
                                                 ok:     (userPath) => {
 
                                                             // save the active document as 
-                                                            this.tx.send('file.save',{path:userPath})
+                                                            this.tx.send('model.save',{path:userPath})
                                                             
                                                             // and change the doc name
                                                             this.tx.send('tab.rename',{oldName, newName: userPath})
@@ -292,6 +313,7 @@ DocumentManager.prototype = {
 
     onFileSaveActive() {
         if (this.active?.kind === 'text') this.tx.send('text.save', this.active)
+        else if (this.active?.kind === 'sysblu') this.tx.send('sysblu.save')
     },
 
     beginLoading(arl) {
@@ -333,11 +355,19 @@ DocumentManager.prototype = {
         this.finishLoading(arl)
     },
 
+    onSysbluLoaded(arl) {
+        this.finishLoading(arl)
+    },
+
     onModelFailed(arl) {
         this.failLoading(arl)
     },
 
     onTextFailed(arl) {
+        this.failLoading(arl)
+    },
+
+    onSysbluFailed(arl) {
         this.failLoading(arl)
     },
 
@@ -361,7 +391,7 @@ DocumentManager.prototype = {
         arl.url = new URL(modelPath, origin)
 
         // open the document
-        this.onDocOpen(arl)
+        this.onFileOpen(arl)
     }
 
 } // document manager.prototype

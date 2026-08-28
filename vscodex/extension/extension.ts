@@ -12,6 +12,7 @@ export const vmbluViewType = 'vmblu.vmblu';
 
 // The context
 let extensionContext: vscode.ExtensionContext;
+let systemDiagnostics: vscode.DiagnosticCollection;
 
 export function setExtensionContext(ctx: vscode.ExtensionContext) {
   	extensionContext = ctx;
@@ -24,12 +25,18 @@ export function getExtensionContext(): vscode.ExtensionContext {
   	return extensionContext;
 }
 
+export function getSystemDiagnostics(): vscode.DiagnosticCollection {
+	return systemDiagnostics;
+}
+
 
 // The activate function is called when the extension is activated
 export function activate(context: vscode.ExtensionContext) {
 
 	// save the context
 	setExtensionContext(context);
+	systemDiagnostics = vscode.languages.createDiagnosticCollection('vmblu-system');
+	context.subscriptions.push(systemDiagnostics);
 
 	// Register our custom editor providers
 	context.subscriptions.push(VmbluEditorProvider.register(context));
@@ -161,7 +168,7 @@ export class VmbluEditorProvider implements vscode.CustomEditorProvider<VmbluDoc
 		webviewPanel.webview.onDidReceiveMessage(e => document.onMessage(e));
 	
 		// Get the initial HTML for the webview
-		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document.editorKind);
 	
 		// Handle view state changes to focus the webview when visible
 		const viewStateSubscription = webviewPanel.onDidChangeViewState(e => {
@@ -221,19 +228,21 @@ export class VmbluEditorProvider implements vscode.CustomEditorProvider<VmbluDoc
 	}
 	
 	// returns the html page for the webview
-	private getHtmlForWebview(webview: vscode.Webview): string {
+	private getHtmlForWebview(webview: vscode.Webview, editorKind: 'model' | 'system'): string {
+		const assetRoot = editorKind === 'system' ? 'sysblu' : 'webview';
+		const bundleName = editorKind === 'system' ? 'sysblu-bundle' : 'webview-bundle';
 
 		// Get the special URI to use with the webview
-		const appWebviewUri = this.getWebviewUri(webview, 'webview', 'webview-bundle.js');
+		const appWebviewUri = this.getWebviewUri(webview, assetRoot, `${bundleName}.js`);
 
 		// The uri for the styling to be used in vscode
-		const cssWebviewUri = this.getWebviewUri(webview, 'webview', 'webview-bundle.css');
+		const cssWebviewUri = this.getWebviewUri(webview, assetRoot, `${bundleName}.css`);
 
 		// !! IMPORTANT - Dont'forget to adapt the ./ to ../ for the woff files in the css file when using it in vscode !!!
 		const iconWebviewUri = this.getWebviewUri(webview, 'webview/material-icons/iconfont', 'outlined.css');
 		
 		// make the html page using the csp setting, the app and the css Uri
-		return makeHtmlPage(webview.cspSource, appWebviewUri, cssWebviewUri, iconWebviewUri);
+		return makeHtmlPage(webview.cspSource, appWebviewUri, cssWebviewUri, iconWebviewUri, editorKind === 'system' ? 'vmblu System' : 'vmblu');
 	}
 
 	// gets called when the extension has to shuffle clipboard content between several editors...

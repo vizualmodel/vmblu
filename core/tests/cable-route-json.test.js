@@ -5,6 +5,8 @@ import {convert} from '../types/util/convert.js'
 import {Bus} from '../types/node/bus.js'
 import {Cable} from '../types/node/cable.js'
 import {Route} from '../types/node/route.js'
+import {jsonHandling} from '../types/node/node-group-json.js'
+import {diagonalWireSegments} from '../types/util/wire-geometry.js'
 
 test('unnamed cable route endpoint keeps cable property, index and flags after raw parsing', () => {
     const source = convert.rawToEndPoint('(cable 2 endpoint bridge)')
@@ -75,3 +77,55 @@ test('cables can bridge other distinct cables regardless of legacy floating mark
     assert.equal(route.checkConxType(tack, second), true)
     assert.equal(route.checkConxType(tack, legacy), true)
 })
+
+for (const {name, pinCenter, cableWire, routeWire, endpoint, approach} of [
+    {
+        name: 'a rounded vertical terminal segment',
+        pinCenter: {x: 964, y: 210.5},
+        cableWire: [
+            {x: 1029.2273218752528, y: 370.45308104037156},
+            {x: 1029.2273218752528, y: 1288.4530810403717}
+        ],
+        routeWire: 'y -1.2 x 65.2 y 161.2',
+        endpoint: 'start',
+        approach: 'N'
+    },
+    {
+        name: 'a stale horizontal terminal segment',
+        pinCenter: {x: 1357, y: 1611.5},
+        cableWire: [
+            {x: 1389.8665749183394, y: 479.45366858830215},
+            {x: 1389.8665749183394, y: 750.2536685883022}
+        ],
+        routeWire: 'x 137.0 y -891.2 x -103.1',
+        endpoint: 'end',
+        approach: 'E'
+    }
+]) {
+    test(`loading ${name} preserves its approach and repairs the endpoint geometry`, () => {
+        const cable = new Cable(cableWire[0])
+        cable.wire = cableWire.map(point => ({...point}))
+        const pin = {
+            is: {pin: true, input: false},
+            center: () => ({...pinCenter}),
+            routes: []
+        }
+        const group = {
+            nodes: [],
+            getEndPoints: () => [pin, cable]
+        }
+
+        const route = jsonHandling.cookRoute.call(group, {
+            from: '(pin 1) output @ source',
+            to: '(cable 0 endpoint nonselective)',
+            wire: routeWire
+        })
+        const tack = route.to
+
+        assert.equal(tack.endpointApproach(), approach)
+        assert.equal(tack.aliasZone(), approach)
+        assert.equal(tack.endpointLabel(), endpoint)
+        assert.deepEqual(tack.getContactPoint(), endpoint === 'start' ? cable.wire[0] : cable.wire.at(-1))
+        assert.deepEqual(diagonalWireSegments(route.wire), [])
+    })
+}

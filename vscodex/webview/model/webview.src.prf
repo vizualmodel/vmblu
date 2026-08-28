@@ -1,17 +1,17 @@
 {
-  "version": "1.10.1",
+  "version": "1.11.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "1.10",
-    "schemaVersion": "1.10.1",
+    "compatibilityFamily": "1.11",
+    "schemaVersion": "1.11.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.10.1"
+      "version": "1.11.0"
     },
     "source": {
       "model": "webview.mod.blu",
-      "hash": "fnv1a64:d4c249a793babe2a"
+      "hash": "fnv1a64:6b77c4e2eda615fe"
     }
   },
   "entries": [
@@ -279,10 +279,10 @@
       "node": "document manager",
       "handles": [
         {
-          "pin": "doc selected",
-          "handler": "onDocSelected",
+          "pin": "file selected",
+          "handler": "onFileSelected",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 114,
+          "line": 129,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -295,10 +295,10 @@
           ]
         },
         {
-          "pin": "doc new",
-          "handler": "onDocNew",
+          "pin": "file new",
+          "handler": "onFileNew",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 159,
+          "line": 180,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -311,10 +311,10 @@
           ]
         },
         {
-          "pin": "doc renamed",
-          "handler": "onDocRenamed",
+          "pin": "file renamed",
+          "handler": "onFileRenamed",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 183,
+          "line": 204,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -335,7 +335,7 @@
           "pin": "save as",
           "handler": "onFileSaveAs",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 197,
+          "line": 218,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -351,7 +351,7 @@
           "pin": "save all",
           "handler": "onFileSaveAll",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 234,
+          "line": 255,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -361,7 +361,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 240,
+          "line": 261,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -371,7 +371,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 258,
+          "line": 279,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -388,37 +388,37 @@
         {
           "pin": "tab.new",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 171
+          "line": 192
         },
         {
           "pin": "file.save as filename",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 216
+          "line": 237
         },
         {
-          "pin": "file.save",
+          "pin": "model.save",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 222
+          "line": 243
         },
         {
           "pin": "tab.rename",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 225
+          "line": 246
         },
         {
           "pin": "open models",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 250
+          "line": 271
         },
         {
           "pin": "tab.remove",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 263
+          "line": 284
         },
         {
           "pin": "tab.select",
           "file": "../../../core/nodes/document-manager/document-manager.js",
-          "line": 268
+          "line": 289
         }
       ]
     },

@@ -14,6 +14,8 @@ vmblu/
         blu.schema.json
         blu.annex.md
         viz.schema.json
+        sys.schema.json
+        protocol.schema.json
         prf.schema.json
         capabilities.schema.json
     bin/
