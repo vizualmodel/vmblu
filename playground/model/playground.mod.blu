@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.10.1",
+    "version": "1.11.0",
     "created": "4/2/2024, 12:46:06 PM",
-    "saved": "2026-08-20T08:48:55.474Z",
-    "utc": "2026-08-20T08:48:55.474Z",
+    "saved": "2026-08-25T14:01:46.420Z",
+    "utc": "2026-08-25T14:01:46.420Z",
     "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
     "teams": {
       "default": {
@@ -57,7 +57,8 @@
   },
   "imports": [
     "../../ui-svelte/model/ui-svelte.mod.blu",
-    "../../core/model/core.mod.blu"
+    "../../core/model/core.mod.blu",
+    "../../sysblu/model/sysblu.mod.blu"
   ],
   "factories": [
     "../nodes/workspace/factory.js",
@@ -106,6 +107,22 @@
         "library": "kernel",
         "symbol": "ARL"
       }
+    },
+    "CommandRequest": {
+      "kind": "object",
+      "summary": "Terminal command and resolved working directory requested by sysblu.",
+      "fields": {
+        "command": {
+          "vmbluType": "string"
+        },
+        "workingDirectory": {
+          "vmbluType": "ArlRef"
+        }
+      },
+      "required": [
+        "command",
+        "workingDirectory"
+      ]
     },
     "ActiveDocument": {
       "kind": "object",
@@ -500,25 +517,7 @@
                   "role": "follower",
                   "payload": "ActiveDocument"
                 }
-              }
-            ]
-          },
-          {
-            "interface": "dom",
-            "pins": [
-              {
-                "name": "content div",
-                "kind": "output",
-                "contract": {
-                  "role": "owner",
-                  "payload": "DomElement"
-                }
-              }
-            ]
-          },
-          {
-            "interface": "file",
-            "pins": [
+              },
               {
                 "name": "text.failed",
                 "kind": "output",
@@ -533,6 +532,19 @@
                 "contract": {
                   "role": "owner",
                   "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "dom",
+            "pins": [
+              {
+                "name": "content div",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
                 }
               }
             ]
@@ -1026,7 +1038,7 @@
       {
         "kind": "dock",
         "name": "document manager",
-        "label": "doc = view + model",
+        "label": "directs files to the correct consumer",
         "team": "core",
         "link": {
           "path": "../../core/model/core.mod.blu",
@@ -1087,69 +1099,56 @@
             ]
           },
           {
-            "interface": "doc",
-            "pins": [
-              {
-                "name": "doc.set active",
-                "kind": "output",
-                "contract": {
-                  "role": "owner",
-                  "payload": "ActiveDocument"
-                }
-              },
-              {
-                "name": "doc.selected",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "doc.new",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "doc.renamed",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "doc.deleted",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "doc.get",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "doc.open",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              }
-            ]
-          },
-          {
             "interface": "file",
             "pins": [
+              {
+                "name": "file.selected",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.new",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "file.renamed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.deleted",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.get",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "file.open",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
               {
                 "name": "file.save active",
                 "kind": "input",
@@ -1163,7 +1162,23 @@
                 "kind": "input",
                 "contract": {
                   "role": "follower",
-                  "payload": "any"
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.save as filename",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "file.save all",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
                 }
               },
               {
@@ -1189,29 +1204,26 @@
                   "role": "owner",
                   "payload": "ArlRef"
                 }
-              },
+              }
+            ]
+          },
+          {
+            "interface": "model",
+            "pins": [
               {
-                "name": "file.save",
+                "name": "model.set active",
                 "kind": "output",
                 "contract": {
                   "role": "owner",
-                  "payload": "Void"
+                  "payload": "ActiveDocument"
                 }
               },
               {
-                "name": "file.save as filename",
+                "name": "model.save",
                 "kind": "output",
                 "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
-                "name": "file.save all",
-                "kind": "output",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
+                  "role": "owner",
+                  "payload": "AnyPayload"
                 }
               },
               {
@@ -1229,20 +1241,41 @@
                   "role": "follower",
                   "payload": "ArlRef"
                 }
-              },
+              }
+            ]
+          },
+          {
+            "interface": "sysblu",
+            "pins": [
               {
-                "name": "text.loaded",
-                "kind": "input",
+                "name": "sysblu.save",
+                "kind": "output",
                 "contract": {
                   "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
                   "payload": "ArlRef"
                 }
               },
               {
-                "name": "text.failed",
+                "name": "sysblu.failed",
                 "kind": "input",
                 "contract": {
-                  "role": "follower",
+                  "role": "owner",
                   "payload": "ArlRef"
                 }
               }
@@ -1265,6 +1298,22 @@
                 "contract": {
                   "role": "owner",
                   "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "text.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
                 }
               }
             ]
@@ -1808,6 +1857,335 @@
                 }
               }
             ]
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "sysblu",
+        "label": "Displays the system architecture",
+        "team": "core",
+        "link": {
+          "path": "../../sysblu/model/sysblu.mod.blu",
+          "node": "sysblu"
+        },
+        "interfaces": [
+          {
+            "interface": "sysblu",
+            "pins": [
+              {
+                "name": "sysblu.set",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.save",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "setup",
+            "pins": [
+              {
+                "name": "size change",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ViewSize"
+                }
+              },
+              {
+                "name": "canvas",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "add application",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "application settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "endpoint settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "connection settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open reference",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "execute command",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "CommandRequest"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "sysblu popups",
+        "team": "ui",
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "application settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "endpoint settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "connection settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "application inspector",
+            "team": "ui",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "application inspector"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "application settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "endpoint inspector",
+            "team": "ui",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "endpoint inspector"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "endpoint settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "connection inspector",
+            "team": "ui",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "connection inspector"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "connection settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "application inspector"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "endpoint inspector"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "connection inspector"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
+              "pin": "application settings"
+            },
+            "dst": {
+              "pin": "application settings",
+              "node": "application inspector"
+            }
+          },
+          {
+            "src": {
+              "pin": "endpoint settings"
+            },
+            "dst": {
+              "pin": "endpoint settings",
+              "node": "endpoint inspector"
+            }
+          },
+          {
+            "src": {
+              "pin": "connection settings"
+            },
+            "dst": {
+              "pin": "connection settings",
+              "node": "connection inspector"
+            }
           }
         ]
       },
@@ -2766,6 +3144,129 @@
             ]
           }
         ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu pane",
+        "label": "Composes the sysblu canvas and its overlays",
+        "team": "ui",
+        "factory": {
+          "path": "../nodes/model-pane/model-pane.js",
+          "function": "ModelPane"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "content div",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "menu div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "legend div",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "canvas",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu menu",
+        "label": "System editor menu",
+        "team": "ui",
+        "factory": {
+          "path": "../../ui-svelte/index.js",
+          "function": "VscodeSideMenuFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "dom",
+            "pins": [
+              {
+                "name": "div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "menu items",
+            "pins": [
+              {
+                "name": "save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              },
+              {
+                "name": "add application",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "UiEvent"
+                }
+              }
+            ]
+          }
+        ],
+        "sx": [
+          {
+            "icon": "add_box",
+            "color": "#0fb2e4",
+            "message": "add application",
+            "help": "Add application"
+          },
+          {
+            "icon": "comment",
+            "color": "#0fb2e4",
+            "message": "application prompt",
+            "help": "Application prompt"
+          },
+          {
+            "icon": "save",
+            "color": "#0fb2e4",
+            "message": "save",
+            "help": "Save system"
+          }
+        ]
       }
     ],
     "connections": [
@@ -2795,7 +3296,7 @@
           "node": "workspace"
         },
         "dst": {
-          "pin": "doc.selected",
+          "pin": "file.selected",
           "node": "document manager"
         }
       },
@@ -2805,7 +3306,7 @@
           "node": "workspace"
         },
         "dst": {
-          "pin": "doc.new",
+          "pin": "file.new",
           "node": "document manager"
         }
       },
@@ -2815,7 +3316,7 @@
           "node": "workspace"
         },
         "dst": {
-          "pin": "doc.renamed",
+          "pin": "file.renamed",
           "node": "document manager"
         }
       },
@@ -2825,7 +3326,7 @@
           "node": "workspace"
         },
         "dst": {
-          "pin": "doc.deleted",
+          "pin": "file.deleted",
           "node": "document manager"
         }
       },
@@ -2835,7 +3336,27 @@
           "node": "workspace"
         },
         "dst": {
-          "pin": "doc.get",
+          "pin": "file.get",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.failed",
+          "node": "text editor"
+        },
+        "dst": {
+          "pin": "text.failed",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "text.loaded",
+          "node": "text editor"
+        },
+        "dst": {
+          "pin": "text.loaded",
           "node": "document manager"
         }
       },
@@ -2847,26 +3368,6 @@
         "dst": {
           "pin": "content.div",
           "node": "editor page"
-        }
-      },
-      {
-        "src": {
-          "pin": "text.failed",
-          "node": "text editor"
-        },
-        "dst": {
-          "pin": "text.failed",
-          "node": "document manager"
-        }
-      },
-      {
-        "src": {
-          "pin": "text.loaded",
-          "node": "text editor"
-        },
-        "dst": {
-          "pin": "text.loaded",
-          "node": "document manager"
         }
       },
       {
@@ -2904,10 +3405,16 @@
           "pin": "content.size change",
           "node": "editor page"
         },
-        "dst": {
-          "pin": "size change",
-          "node": "view manager"
-        }
+        "dst": [
+          {
+            "pin": "size change",
+            "node": "view manager"
+          },
+          {
+            "pin": "size change",
+            "node": "sysblu"
+          }
+        ]
       },
       {
         "src": {
@@ -3127,19 +3634,13 @@
       },
       {
         "src": {
-          "pin": "doc.set active",
+          "pin": "file.save as filename",
           "node": "document manager"
         },
-        "dst": [
-          {
-            "pin": "top level view",
-            "node": "view manager"
-          },
-          {
-            "pin": "model.set",
-            "node": "model manager"
-          }
-        ]
+        "dst": {
+          "pin": "path only",
+          "node": "popups"
+        }
       },
       {
         "src": {
@@ -3173,7 +3674,23 @@
       },
       {
         "src": {
-          "pin": "file.save",
+          "pin": "model.set active",
+          "node": "document manager"
+        },
+        "dst": [
+          {
+            "pin": "top level view",
+            "node": "view manager"
+          },
+          {
+            "pin": "model.set",
+            "node": "model manager"
+          }
+        ]
+      },
+      {
+        "src": {
+          "pin": "model.save",
           "node": "document manager"
         },
         "dst": {
@@ -3183,12 +3700,22 @@
       },
       {
         "src": {
-          "pin": "file.save as filename",
+          "pin": "sysblu.save",
           "node": "document manager"
         },
         "dst": {
-          "pin": "path only",
-          "node": "popups"
+          "pin": "sysblu.save",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.set active",
+          "node": "document manager"
+        },
+        "dst": {
+          "pin": "sysblu.set",
+          "node": "sysblu"
         }
       },
       {
@@ -3317,7 +3844,7 @@
           "node": "view manager"
         },
         "dst": {
-          "pin": "doc.open",
+          "pin": "file.open",
           "node": "document manager"
         }
       },
@@ -3327,7 +3854,7 @@
           "node": "view manager"
         },
         "dst": {
-          "pin": "doc.open",
+          "pin": "file.open",
           "node": "document manager"
         }
       },
@@ -3467,7 +3994,7 @@
           "node": "model manager"
         },
         "dst": {
-          "pin": "doc.open",
+          "pin": "file.open",
           "node": "document manager"
         }
       },
@@ -3477,8 +4004,88 @@
           "node": "model manager"
         },
         "dst": {
-          "pin": "doc.open",
+          "pin": "file.open",
           "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.failed",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "sysblu.failed",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.loaded",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "sysblu.loaded",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "canvas",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "canvas",
+          "node": "sysblu pane"
+        }
+      },
+      {
+        "src": {
+          "pin": "application settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "application settings",
+          "node": "sysblu popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "endpoint settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "endpoint settings",
+          "node": "sysblu popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "connection settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "connection settings",
+          "node": "sysblu popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "open reference",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "file.open",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "modal div",
+          "node": "sysblu popups"
+        },
+        "dst": {
+          "pin": "modal div",
+          "node": "editor page"
         }
       },
       {
@@ -3509,6 +4116,56 @@
         "dst": {
           "pin": "legend div",
           "node": "model pane"
+        }
+      },
+      {
+        "src": {
+          "pin": "content div",
+          "node": "sysblu pane"
+        },
+        "dst": {
+          "pin": "content.div",
+          "node": "editor page"
+        }
+      },
+      {
+        "src": {
+          "pin": "div",
+          "node": "sysblu menu"
+        },
+        "dst": {
+          "pin": "menu div",
+          "node": "sysblu pane"
+        }
+      },
+      {
+        "src": {
+          "pin": "save",
+          "node": "sysblu menu"
+        },
+        "dst": {
+          "pin": "file.save active",
+          "node": "document manager"
+        }
+      },
+      {
+        "src": {
+          "pin": "application prompt",
+          "node": "sysblu menu"
+        },
+        "dst": {
+          "pin": "application prompt",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "add application",
+          "node": "sysblu menu"
+        },
+        "dst": {
+          "pin": "add application",
+          "node": "sysblu"
         }
       }
     ]

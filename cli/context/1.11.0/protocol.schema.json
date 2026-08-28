@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/context/1.11.0/protocol.schema.json",
+  "title": "vmblu Protocol Definition (v1.11.0)",
+  "description": "Framework-neutral message interactions and payload types for one application protocol.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["header", "interactions", "types"],
+  "properties": {
+    "header": { "$ref": "#/$defs/Header" },
+    "interactions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Interaction" }
+    },
+    "types": {
+      "description": "Named message and reusable payload types, using the vmblu type representation.",
+      "$ref": "blu.schema.json#/$defs/Types"
+    },
+    "extensions": { "$ref": "#/$defs/Extensions" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "name"],
+      "properties": {
+        "version": { "const": "1.11.0" },
+        "name": { "$ref": "#/$defs/NonEmptyString" },
+        "description": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "Interaction": {
+      "description": "One message that may cross the protocol boundary. Response describes correlated direct replies, not later state-machine transitions.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "flow", "type", "response"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "flow": {
+          "description": "right is left participant to right participant; left is the reverse; both permits either direction.",
+          "enum": ["left", "right", "both"]
+        },
+        "type": {
+          "description": "A vmblu primitive or a key in the top-level types object.",
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "response": {
+          "description": "Correlated direct replies: any interaction, no reply ([]), or an explicit list of allowed interaction ids.",
+          "oneOf": [
+            { "const": "any" },
+            {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Response" },
+              "uniqueItems": true
+            }
+          ]
+        }
+      }
+    },
+    "Response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "remark": { "type": "string" }
+      }
+    },
+    "Extensions": {
+      "description": "Explicit namespace for vendor-specific or experimental data.",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

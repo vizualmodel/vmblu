@@ -119,6 +119,15 @@ export const ToastBoxFactory = getFactory(ToastBoxSvelte)
 import NameAndPathSvelte from './nodes/name-path/name-path.svelte'
 export const NameAndPathFactory = getFactory(NameAndPathSvelte)
 
+import ApplicationInspectorSvelte from './nodes/application-inspector/application-inspector.svelte'
+export const ApplicationInspectorFactory = getFactory(ApplicationInspectorSvelte)
+
+import EndpointInspectorSvelte from './nodes/endpoint-inspector/endpoint-inspector.svelte'
+export const EndpointInspectorFactory = getFactory(EndpointInspectorSvelte)
+
+import ConnectionInspectorSvelte from './nodes/connection-inspector/connection-inspector.svelte'
+export const ConnectionInspectorFactory = getFactory(ConnectionInspectorSvelte)
+
 import PathSvelte from './nodes/path-request/path.svelte'
 export const PathRequestFactory = getFactory(PathSvelte)
 

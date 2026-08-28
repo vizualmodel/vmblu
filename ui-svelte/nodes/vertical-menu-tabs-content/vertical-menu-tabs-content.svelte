@@ -133,6 +133,24 @@ height:10px;
 }
 .content-status.error {
     color: #ffb4ab;
+    inset: 0.75rem 0.75rem auto auto;
+    max-width: min(32rem, calc(100% - 1.5rem));
+    padding: 0.65rem 0.8rem;
+    justify-content: flex-start;
+    border: 1px solid #9c3f3f;
+    border-radius: 0.35rem;
+    background: #2b2022;
+    box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+}
+.content-status.error button {
+    flex: 0 0 auto;
+    margin-left: 0.35rem;
+    color: #ffb4ab;
+    background: transparent;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
 }
 .spinner {
     width: 1rem;
@@ -159,7 +177,10 @@ height:10px;
                 <span>Loading {loadingName}...</span>
             </div>
         {:else if loadingError}
-            <div class="content-status error" role="alert">{loadingError}</div>
+            <div class="content-status error" role="alert">
+                <span>{loadingError}</span>
+                <button type="button" aria-label="Dismiss error" title="Dismiss" on:click={() => loadingError = ''}>×</button>
+            </div>
         {/if}
     </div>
 </div>

@@ -4,17 +4,20 @@ import Ajv2020 from 'ajv/dist/2020.js'
 
 import {ARL} from '@vizualmodel/vmblu-core/types/arl/arl-node'
 import {ModelBlueprint, sourceHash} from '@vizualmodel/vmblu-core/types/model'
+import {validateProtocolReferences} from '../../lib/protocol-validation.js'
 import {resolveEntrypoint} from '../../lib/resolve-entrypoint.js'
 import {assertCompatibleVersion, compatibilityFamily, CLI_VERSION, SCHEMA_VERSION} from '../../lib/version-policy.js'
 
-export const command = 'verify <model-file>'
-export const describe = 'Verify model compatibility, canonical format and generated artifact freshness'
+export const command = 'verify <file>'
+export const describe = 'Verify a model project or protocol document'
 
 export const builder = [
   {flag: '--require-generated', desc: 'fail when standard generated artifacts are missing'}
 ]
 
 export async function verifyProject(inputPath, {requireGenerated = false} = {}) {
+  if (path.resolve(inputPath).toLowerCase().endsWith('.protocol.json')) return verifyProtocol(inputPath)
+
   const resolved = resolveEntrypoint(inputPath)
   const model = new ModelBlueprint(new ARL(resolved.modelPath))
   const raw = await model.getRaw()
@@ -94,6 +97,40 @@ export async function verifyProject(inputPath, {requireGenerated = false} = {}) 
   }
 }
 
+function verifyProtocol(inputPath) {
+  const protocolPath = path.resolve(inputPath)
+  if (!fs.existsSync(protocolPath) || !fs.statSync(protocolPath).isFile()) {
+    throw new Error(`${inputPath} is not a file`)
+  }
+  const document = JSON.parse(fs.readFileSync(protocolPath, 'utf8'))
+  const checks = []
+  const failures = []
+
+  runCheck(checks, failures, 'compatibility', () => {
+    const family = assertCompatibleVersion(document.header?.version, 'protocol schema')
+    return `family ${family}`
+  })
+  runCheck(checks, failures, 'protocol schema', () => {
+    validateDocument(document, 'protocol.schema.json')
+    return SCHEMA_VERSION
+  })
+  runCheck(checks, failures, 'protocol references', () => {
+    const result = validateProtocolReferences(document)
+    if (!result.ok) throw new Error(result.errors.join('; '))
+    return `${document.interactions?.length ?? 0} interactions, ${Object.keys(document.types ?? {}).length} types`
+  })
+
+  return {
+    ok: failures.length === 0,
+    cliVersion: CLI_VERSION,
+    compatibilityFamily: compatibilityFamily(CLI_VERSION),
+    model: protocolPath,
+    checks,
+    skipped: [],
+    failures,
+  }
+}
+
 export const handler = async argv => {
   const args = parseArgs(argv)
   if (!args.modelFile) throw new Error('Usage: vmblu verify <model-file> [--require-generated]')
@@ -133,7 +170,12 @@ function validateDocument(document, schemaFile) {
   if (!validate) {
     const schemaUrl = new URL(`../../context/${SCHEMA_VERSION}/${schemaFile}`, import.meta.url)
     const schema = JSON.parse(fs.readFileSync(schemaUrl, 'utf8'))
-    validate = new Ajv2020({strict: false, validateFormats: false}).compile(schema)
+    const ajv = new Ajv2020({strict: false, validateFormats: false})
+    if (schemaFile === 'protocol.schema.json') {
+      const blueprintUrl = new URL(`../../context/${SCHEMA_VERSION}/blu.schema.json`, import.meta.url)
+      ajv.addSchema(JSON.parse(fs.readFileSync(blueprintUrl, 'utf8')))
+    }
+    validate = ajv.compile(schema)
     validators.set(schemaFile, validate)
   }
   if (!validate(document)) {

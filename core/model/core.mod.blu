@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.10.1",
+    "version": "1.11.0",
     "created": "4/2/2024, 1:26:41 PM",
-    "saved": "2026-08-20T08:48:55.426Z",
-    "utc": "2026-08-20T08:48:55.426Z",
+    "saved": "2026-08-25T14:01:46.352Z",
+    "utc": "2026-08-25T14:01:46.352Z",
     "runtime": "@vizualmodel/vmblu-runtime/rt-base",
     "teams": {
       "default": {
@@ -65,7 +65,7 @@
     },
     "ActiveDocument": {
       "kind": "object",
-      "summary": "Active model or text document selected by the document manager.",
+      "summary": "Active model, text, or system document selected by the document manager.",
       "fields": {
         "kind": {
           "vmbluType": "string"
@@ -251,10 +251,10 @@
         },
         "interfaces": [
           {
-            "interface": "doc",
+            "interface": "file",
             "pins": [
               {
-                "name": "doc.selected",
+                "name": "file.selected",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -262,7 +262,7 @@
                 }
               },
               {
-                "name": "doc.new",
+                "name": "file.new",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -270,7 +270,7 @@
                 }
               },
               {
-                "name": "doc.renamed",
+                "name": "file.renamed",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -278,7 +278,7 @@
                 }
               },
               {
-                "name": "doc.deleted",
+                "name": "file.deleted",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -286,7 +286,7 @@
                 }
               },
               {
-                "name": "doc.get",
+                "name": "file.get",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -294,26 +294,13 @@
                 }
               },
               {
-                "name": "doc.set active",
-                "kind": "output",
-                "contract": {
-                  "role": "owner",
-                  "payload": "ActiveDocument"
-                }
-              },
-              {
-                "name": "doc.open",
+                "name": "file.open",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
                   "payload": "ArlRef"
                 }
-              }
-            ]
-          },
-          {
-            "interface": "file",
-            "pins": [
+              },
               {
                 "name": "file.save active",
                 "kind": "input",
@@ -331,14 +318,6 @@
                 }
               },
               {
-                "name": "file.save",
-                "kind": "output",
-                "contract": {
-                  "role": "owner",
-                  "payload": "Void"
-                }
-              },
-              {
                 "name": "file.save as filename",
                 "kind": "output",
                 "contract": {
@@ -352,38 +331,6 @@
                 "contract": {
                   "role": "follower",
                   "payload": "Void"
-                }
-              },
-              {
-                "name": "model.loaded",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "ArlRef"
-                }
-              },
-              {
-                "name": "text.loaded",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "ArlRef"
-                }
-              },
-              {
-                "name": "model.failed",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "ArlRef"
-                }
-              },
-              {
-                "name": "text.failed",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "ArlRef"
                 }
               },
               {
@@ -407,6 +354,43 @@
                 "kind": "output",
                 "contract": {
                   "role": "owner",
+                  "payload": "ArlRef"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "model",
+            "pins": [
+              {
+                "name": "model.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "model.save",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "model.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "model.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
                   "payload": "ArlRef"
                 }
               }
@@ -477,11 +461,64 @@
                 }
               },
               {
+                "name": "text.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "text.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
                 "name": "text.save",
                 "kind": "output",
                 "contract": {
                   "role": "owner",
                   "payload": "ActiveDocument"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "sysblu",
+            "pins": [
+              {
+                "name": "sysblu.set active",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
                 }
               }
             ]

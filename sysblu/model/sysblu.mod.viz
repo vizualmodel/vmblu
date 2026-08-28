@@ -1,0 +1,230 @@
+{
+  "header": {
+    "version": "1.11.0",
+    "created": "2026-08-24T14:00:22.255Z",
+    "saved": "2026-08-24T15:36:41.166Z",
+    "utc": "2026-08-24T15:36:41.166Z",
+    "style": "#2c7be5"
+  },
+  "root": {
+    "kind": "group",
+    "name": "sysblu",
+    "rect": "x 90 y 30 w 150 h 266",
+    "view": {
+      "state": "open",
+      "rect": "x 101 y 301 w 1200 h 800",
+      "transform": "sx 1.100 sy 1.100 dx 314.617 dy 536.637"
+    },
+    "interfaces": [
+      {
+        "interface": "(21) sysblu",
+        "pins": [
+          "(12 R)sysblu.set",
+          "(13 R)sysblu.save",
+          "(14 R)sysblu.loaded",
+          "(15 R)sysblu.failed"
+        ]
+      },
+      {
+        "interface": "(22) setup",
+        "pins": [
+          "(17 R)canvas",
+          "(18 R)size change",
+          "(23 R)application prompt",
+          "(24 R)add application",
+          "(25 R)application settings",
+          "(26 R)endpoint settings",
+          "(27 R)connection settings"
+        ]
+      },
+      {
+        "interface": "(28) files",
+        "pins": [
+          "(20 R)open reference",
+          "(29 R)execute command"
+        ]
+      }
+    ],
+    "pads": [
+      "(12 L)x -38 y -68 w 82 h 15|sysblu.set",
+      "(13 L)x -38 y -52 w 90 h 15|sysblu.save",
+      "(14 R)x 691 y 107 w 102 h 15|sysblu.loaded",
+      "(15 R)x 698 y 122 w 95 h 15|sysblu.failed",
+      "(17 L)x -38 y 32 w 66 h 15|canvas",
+      "(18 L)x -38 y 47 w 92 h 15|size change",
+      "(23 R)x 664 y 354 w 129 h 15|application prompt",
+      "(24 R)x 683 y 378 w 110 h 15|add application",
+      "(25 R)x 661 y 281 w 132 h 15|application settings",
+      "(26 R)x 672 y 306 w 121 h 15|endpoint settings",
+      "(27 R)x 661 y 330 w 132 h 15|connection settings",
+      "(20 R)x 683 y 257 w 110 h 15|open reference",
+      "(29 R)x 666 y 403 w 127 h 15|execute command"
+    ],
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "sysblu view",
+        "rect": "x 114 y -3 w 150 h 296",
+        "interfaces": [
+          {
+            "interface": "(25) setup",
+            "pins": [
+              "(14 L)canvas",
+              "(15 L)size change",
+              "(26 R)application prompt",
+              "(27 R)add application",
+              "(28 R)application settings",
+              "(29 R)endpoint settings",
+              "(30 R)connection settings"
+            ]
+          },
+          {
+            "interface": "(31) system",
+            "pins": [
+              "(17 R)system.updated"
+            ]
+          },
+          {
+            "interface": "(32) sysmod",
+            "pins": [
+              "(19 R)sysmod.doit",
+              "(20 R)sysmod.undo",
+              "(21 R)sysmod.redo",
+              "(22 R)sysmod.done"
+            ]
+          },
+          {
+            "interface": "(33) files",
+            "pins": [
+              "(24 R)open reference",
+              "(34 R)execute command"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu manager",
+        "rect": "x 438 y 42 w 165 h 206",
+        "interfaces": [
+          {
+            "interface": "(25) sysblu",
+            "pins": [
+              "(14 L)sysblu.set",
+              "(15 L)sysblu.save",
+              "(16 R)sysblu.loaded",
+              "(17 R)sysblu.failed"
+            ]
+          },
+          {
+            "interface": "(26) system",
+            "pins": [
+              "(19 L)system.updated"
+            ]
+          },
+          {
+            "interface": "(27) sysmod",
+            "pins": [
+              "(21 L)sysmod.doit",
+              "(22 L)sysmod.undo",
+              "(23 L)sysmod.redo",
+              "(24 L)sysmod.done"
+            ]
+          }
+        ]
+      }
+    ],
+    "routes": [
+      {
+        "from": "(pin 14) canvas @ sysblu view",
+        "to": "(pad 17) canvas",
+        "wire": "x -86.0"
+      },
+      {
+        "from": "(pin 28) application settings @ sysblu view",
+        "to": "(pad 25) application settings",
+        "wire": "x 105.0 y 189.3 x 292.4"
+      },
+      {
+        "from": "(pin 29) endpoint settings @ sysblu view",
+        "to": "(pad 26) endpoint settings",
+        "wire": "x 95.0 y 198.5 x 313.0"
+      },
+      {
+        "from": "(pin 30) connection settings @ sysblu view",
+        "to": "(pad 27) connection settings",
+        "wire": "x 85.0 y 207.8 x 312.0"
+      },
+      {
+        "from": "(pin 19) sysmod.doit @ sysblu view",
+        "to": "(pin 21) sysmod.doit @ sysblu manager",
+        "wire": "x 125.0 y 0.0 x 49.0"
+      },
+      {
+        "from": "(pin 20) sysmod.undo @ sysblu view",
+        "to": "(pin 22) sysmod.undo @ sysblu manager",
+        "wire": "x 125.0 y 0.0 x 49.0"
+      },
+      {
+        "from": "(pin 21) sysmod.redo @ sysblu view",
+        "to": "(pin 23) sysmod.redo @ sysblu manager",
+        "wire": "x 125.0 y 0.0 x 49.0"
+      },
+      {
+        "from": "(pin 24) open reference @ sysblu view",
+        "to": "(pad 20) open reference",
+        "wire": "x 419.0"
+      },
+      {
+        "from": "(pin 34) execute command @ sysblu view",
+        "to": "(pad 29) execute command",
+        "wire": "x 35.0 y 130.5 x 367.4"
+      },
+      {
+        "from": "(pin 16) sysblu.loaded @ sysblu manager",
+        "to": "(pad 14) sysblu.loaded",
+        "wire": "x 44.5 y 0.0 x 43.5"
+      },
+      {
+        "from": "(pin 17) sysblu.failed @ sysblu manager",
+        "to": "(pad 15) sysblu.failed",
+        "wire": "x 47.5 y 0.0 x 47.5"
+      },
+      {
+        "from": "(pin 19) system.updated @ sysblu manager",
+        "to": "(pin 17) system.updated @ sysblu view",
+        "wire": "x -49.0 y 0.0 x -125.0"
+      },
+      {
+        "from": "(pin 24) sysmod.done @ sysblu manager",
+        "to": "(pin 22) sysmod.done @ sysblu view",
+        "wire": "x -49.0 y 0.0 x -125.0"
+      },
+      {
+        "from": "(pad 12) sysblu.set",
+        "to": "(pin 14) sysblu.set @ sysblu manager",
+        "wire": "x 354.9 y 145.0 x 39.1"
+      },
+      {
+        "from": "(pad 13) sysblu.save",
+        "to": "(pin 15) sysblu.save @ sysblu manager",
+        "wire": "x 338.0 y 144.0 x 48.0"
+      },
+      {
+        "from": "(pad 18) size change",
+        "to": "(pin 15) size change @ sysblu view",
+        "wire": "x 60.0"
+      },
+      {
+        "from": "(pad 23) application prompt",
+        "to": "(pin 26) application prompt @ sysblu view",
+        "wire": "x -279.3 y -292.0 x -121.0"
+      },
+      {
+        "from": "(pad 24) add application",
+        "to": "(pin 27) add application @ sysblu view",
+        "wire": "x -303.8 y -301.3 x -115.0"
+      }
+    ]
+  }
+}

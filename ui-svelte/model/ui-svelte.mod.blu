@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.10.1",
+    "version": "1.11.0",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "2026-08-20T08:48:55.522Z",
     "utc": "2026-08-20T08:48:55.522Z",
@@ -125,6 +125,99 @@
         "kind": "group",
         "name": "modal boxes",
         "nodes": [
+          {
+            "kind": "source",
+            "name": "application inspector",
+            "factory": {
+              "path": "../index.js",
+              "function": "ApplicationInspectorFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "application settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "endpoint inspector",
+            "factory": {
+              "path": "../index.js",
+              "function": "EndpointInspectorFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "endpoint settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "connection inspector",
+            "factory": {
+              "path": "../index.js",
+              "function": "ConnectionInspectorFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "connection settings",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
           {
             "kind": "source",
             "name": "context menu",

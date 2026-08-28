@@ -13,10 +13,13 @@ export const documentFlags = {
 	LOGVSCODE : 0x1		// log messages to/from vscode
 };
 
+export type VmbluEditorKind = 'model' | 'system';
+
 // Define the vmblu document model
 export class VmbluDocument implements vscode.CustomDocument {
 
 	public readonly uri: vscode.Uri;
+	public readonly editorKind: VmbluEditorKind;
 	readonly backupId: string | undefined;
 
 	// save this as we wait for a promise to resolve - we save the resolve function here
@@ -53,6 +56,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 		// save the parameters
 		this.backupId = backupId;
 		this.uri = uri;
+		this.editorKind = uri.path.toLowerCase().endsWith('.sys.blu') ? 'system' : 'model';
 
 		// we have to release the emitter at the end
 		this.disposables.push(this._didEdit);
@@ -164,8 +168,8 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 		// fire an edit event - the parameter is of type SomeEdit
 		this._didEdit.fire( {	label: edit,
-								undo: ()=>{},
-								redo: ()=>{} });
+								undo: () => this.panel?.webview.postMessage({verb: 'host undo'}),
+								redo: () => this.panel?.webview.postMessage({verb: 'host redo'}) });
 
 	}
 
@@ -229,9 +233,13 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	// Called by VS Code when the user calls `revert` on a document.
 	async revert(_cancellation: vscode.CancellationToken): Promise<void> {
+		if (this.editorKind === 'system') {
+			this.panel?.webview.postMessage({verb: 'system changed'});
+			return;
+		}
 
 		// read the content of the document...
-		const diskContent = await VmbluDocument.readFileAsBytes(this.uri);
+		await VmbluDocument.readFileAsBytes(this.uri);
 	}
 
 	// my own internal save function
@@ -242,6 +250,20 @@ export class VmbluDocument implements vscode.CustomDocument {
 	// Called by VS Code to backup the edited document.
 	// These backups are used to implement hot exit.
 	async backup(destination: vscode.Uri, cancellation: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
+		if (this.editorKind === 'system') {
+			await this.runSave(destination, cancellation, true);
+			return {
+				id: destination.toString(),
+				delete: async () => {
+					try {
+						await vscode.workspace.fs.delete(destination);
+					} catch {
+						// noop
+					}
+				}
+			};
+		}
+
 		// Keep both halves of the backup beside the canonical model so relative
 		// model paths remain valid. The model manager restores its original target
 		// immediately after writing this temporary pair.

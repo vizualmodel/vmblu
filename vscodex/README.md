@@ -25,6 +25,9 @@ The extension registers a visual editor for `*.blu` files. Use it to:
 - Open a project through its root `*.blu` entrypoint or open a model file directly.
 - Navigate and edit the nodes, pins, routes, and groups that make up the application.
 - Move between the architecture and its source files without losing the system-level view.
+- Open `*.sys.blu` files in vmblu System to edit applications, endpoints, and transport connections across a complete system.
+
+The application editor and vmblu System are separate webview applications inside one extension. Projects can use vmblu without adding a system document; when system context is useful, the conventional active configuration is `system/active.sys.blu`.
 
 ## vmblu is for developers
 

@@ -1,0 +1,863 @@
+{
+  "header": {
+    "version": "1.11.0",
+    "created": "2026-08-28T09:56:57.923Z",
+    "saved": "2026-08-28T09:56:57.923Z",
+    "utc": "2026-08-28T09:56:57.923Z",
+    "runtime": "@vizualmodel/vmblu-runtime/rt-base",
+    "teams": {
+      "default": {
+        "color": "#2c7be5"
+      },
+      "host": {
+        "color": "#6f42c1"
+      },
+      "ui": {
+        "color": "#0fb2e4"
+      },
+      "system": {
+        "color": "#22a06b"
+      }
+    }
+  },
+  "imports": [
+    "../../../sysblu/model/sysblu.mod.blu"
+  ],
+  "factories": [
+    "../system-message-broker.js",
+    "../../../ui-svelte/index.js"
+  ],
+  "types": {
+    "AnyPayload": {
+      "kind": "primitive",
+      "summary": "Opaque host or UI payload."
+    },
+    "Void": {
+      "kind": "object",
+      "summary": "No payload.",
+      "fields": {}
+    },
+    "ArlRef": {
+      "kind": "external",
+      "summary": "Workspace or model path reference.",
+      "external": {
+        "library": "kernel",
+        "symbol": "ARL"
+      }
+    },
+    "DomElement": {
+      "kind": "external",
+      "summary": "Browser DOM element composed by the webview host.",
+      "external": {
+        "library": "browser",
+        "symbol": "HTMLElement"
+      }
+    },
+    "StringList": {
+      "kind": "array",
+      "summary": "Ordered diagnostic messages.",
+      "items": {
+        "vmbluType": "string"
+      }
+    },
+    "SystemDiagnostics": {
+      "kind": "object",
+      "summary": "Validation diagnostics for the active system document.",
+      "fields": {
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "errors": {
+          "vmbluType": "StringList"
+        }
+      },
+      "required": [
+        "errors"
+      ]
+    },
+    "ViewSize": {
+      "kind": "object",
+      "summary": "Available canvas size in CSS pixels.",
+      "fields": {
+        "w": {
+          "vmbluType": "number"
+        },
+        "h": {
+          "vmbluType": "number"
+        },
+        "dpr": {
+          "vmbluType": "number"
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ]
+    },
+    "ActiveDocument": {
+      "kind": "object",
+      "summary": "System document selected by the VS Code host.",
+      "fields": {
+        "kind": {
+          "vmbluType": "string"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "model": {
+          "vmbluType": "AnyPayload"
+        }
+      },
+      "required": [
+        "kind",
+        "arl"
+      ]
+    },
+    "SystemSnapshot": {
+      "kind": "object",
+      "summary": "Current system document and dirty state.",
+      "fields": {
+        "document": {
+          "vmbluType": "AnyPayload"
+        },
+        "arl": {
+          "vmbluType": "ArlRef"
+        },
+        "dirty": {
+          "vmbluType": "boolean"
+        }
+      },
+      "required": [
+        "document",
+        "dirty"
+      ]
+    },
+    "CommandRequest": {
+      "kind": "object",
+      "summary": "Terminal command requested for trusted host execution.",
+      "fields": {
+        "command": {
+          "vmbluType": "string"
+        },
+        "workingDirectory": {
+          "vmbluType": "ArlRef"
+        }
+      },
+      "required": [
+        "command",
+        "workingDirectory"
+      ]
+    }
+  },
+  "root": {
+    "kind": "group",
+    "name": "sysblu vscode editor",
+    "promptRepo": {
+      "arl": "./prompts/sysblu-vscode.md",
+      "pathKind": 2
+    },
+    "nodes": [
+      {
+        "kind": "source",
+        "name": "system message broker",
+        "label": "Bridges sysblu to the VS Code custom editor host",
+        "team": "host",
+        "promptRepo": {
+          "arl": "./prompts/system-message-broker.md",
+          "pathKind": 2
+        },
+        "factory": {
+          "path": "../system-message-broker.js",
+          "function": "SystemMessageBroker"
+        },
+        "interfaces": [
+          {
+            "interface": "sysblu",
+            "pins": [
+              {
+                "name": "sysblu.set",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.undo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.redo",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.failed",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.diagnostics",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SystemDiagnostics"
+                }
+              },
+              {
+                "name": "system.updated",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "SystemSnapshot"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "dom",
+            "pins": [
+              {
+                "name": "canvas",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "floating menu",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "save",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "size change",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ViewSize"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open reference",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "execute command",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "CommandRequest"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "dock",
+        "name": "sysblu",
+        "label": "Owns and renders the system document",
+        "team": "system",
+        "link": {
+          "path": "../../../sysblu/model/sysblu.mod.blu",
+          "node": "sysblu"
+        },
+        "interfaces": [
+          {
+            "interface": "sysblu",
+            "pins": [
+              {
+                "name": "sysblu.set",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ActiveDocument"
+                }
+              },
+              {
+                "name": "sysblu.save",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.undo",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.redo",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "sysblu.loaded",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.failed",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.diagnostics",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "SystemDiagnostics"
+                }
+              },
+              {
+                "name": "system.updated",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "SystemSnapshot"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "setup",
+            "pins": [
+              {
+                "name": "canvas",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "size change",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ViewSize"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "add application",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "application settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "endpoint settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "connection settings",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          },
+          {
+            "interface": "files",
+            "pins": [
+              {
+                "name": "open reference",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "execute command",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "CommandRequest"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "system menu",
+        "label": "Provides the system editor actions",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "VscodeSideMenuFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              },
+              {
+                "name": "save",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "application prompt",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "Void"
+                }
+              },
+              {
+                "name": "add application",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
+              }
+            ]
+          }
+        ],
+        "sx": [
+          {
+            "icon": "add_box",
+            "color": "#0fb2e4",
+            "message": "add application",
+            "help": "Add application"
+          },
+          {
+            "icon": "comment",
+            "color": "#0fb2e4",
+            "message": "application prompt",
+            "help": "Application prompt"
+          },
+          {
+            "icon": "save",
+            "color": "#0fb2e4",
+            "message": "save",
+            "help": "Save system"
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "application inspector",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "ApplicationInspectorFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "application settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "endpoint inspector",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "EndpointInspectorFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "endpoint settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "connection inspector",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "ConnectionInspectorFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "connection settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "src": {
+          "pin": "sysblu.set",
+          "node": "system message broker"
+        },
+        "dst": {
+          "pin": "sysblu.set",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.save",
+          "node": "system message broker"
+        },
+        "dst": {
+          "pin": "sysblu.save",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.undo",
+          "node": "system message broker"
+        },
+        "dst": {
+          "pin": "sysblu.undo",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.redo",
+          "node": "system message broker"
+        },
+        "dst": {
+          "pin": "sysblu.redo",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "size change",
+          "node": "system message broker"
+        },
+        "dst": {
+          "pin": "size change",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.loaded",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "sysblu.loaded",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.failed",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "sysblu.failed",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "sysblu.diagnostics",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "sysblu.diagnostics",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "system.updated",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "system.updated",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "canvas",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "canvas",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "application settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "application settings",
+          "node": "application inspector"
+        }
+      },
+      {
+        "src": {
+          "pin": "endpoint settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "endpoint settings",
+          "node": "endpoint inspector"
+        }
+      },
+      {
+        "src": {
+          "pin": "connection settings",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "connection settings",
+          "node": "connection inspector"
+        }
+      },
+      {
+        "src": {
+          "pin": "open reference",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "open reference",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "execute command",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "execute command",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "div",
+          "node": "system menu"
+        },
+        "dst": {
+          "pin": "floating menu",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "save",
+          "node": "system menu"
+        },
+        "dst": {
+          "pin": "save",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "application prompt",
+          "node": "system menu"
+        },
+        "dst": {
+          "pin": "application prompt",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "add application",
+          "node": "system menu"
+        },
+        "dst": {
+          "pin": "add application",
+          "node": "sysblu"
+        }
+      },
+      {
+        "src": {
+          "pin": "modal div",
+          "node": "application inspector"
+        },
+        "dst": {
+          "pin": "modal div",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "modal div",
+          "node": "endpoint inspector"
+        },
+        "dst": {
+          "pin": "modal div",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "modal div",
+          "node": "connection inspector"
+        },
+        "dst": {
+          "pin": "modal div",
+          "node": "system message broker"
+        }
+      }
+    ]
+  }
+}

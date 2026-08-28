@@ -240,15 +240,23 @@ export const jsonHandling = {
         // check if we have a route - otherwise make a route
         if (route.wire.length < 2) route.autoRoute(this.nodes)
 
+        // The serialized wire still contains the authored terminal direction.
+        // Preserve it before setRoute snaps a cable contact to the trunk, since
+        // route and cable coordinates can have different serialized precision.
+        const sourceApproach = from.is.tack && sourceEndpoint ? from.inferRouteApproach(route) : null
+        const targetApproach = to.is.tack && targetEndpoint ? to.inferRouteApproach(route) : null
+
         // save the routes for pins and pads
         from.is.tack ? from.setRoute(route) : from.routes.push(route)
         to.is.tack ? to.setRoute(route) : to.routes.push(route)
 
         if (from.is.tack && sourceEndpoint) {
-            from.attachEndpoint(from.cable.endpointAt(from.center()) ?? from.nearestEndpoint(from.center()))
+            from.attachEndpoint(from.cable.endpointAt(from.center()) ?? from.nearestEndpoint(from.center()), sourceApproach)
+            from.alignRouteEndpoint()
         }
         if (to.is.tack && targetEndpoint) {
-            to.attachEndpoint(to.cable.endpointAt(to.center()) ?? to.nearestEndpoint(to.center()))
+            to.attachEndpoint(to.cable.endpointAt(to.center()) ?? to.nearestEndpoint(to.center()), targetApproach)
+            to.alignRouteEndpoint()
         }
 
         // this is required if a linked node has changed (eg more pins or pins have moved...)
