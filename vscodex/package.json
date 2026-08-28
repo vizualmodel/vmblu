@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "1.10.1",
+    "version": "1.11.0",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -81,6 +81,9 @@
         "webview/webview-bundle.js",
         "webview/webview-bundle.js.map",
         "webview/webview-bundle.css",
+        "sysblu/sysblu-bundle.js",
+        "sysblu/sysblu-bundle.js.map",
+        "sysblu/sysblu-bundle.css",
         "webview/material-icons/iconfont/outlined.css",
         "webview/material-icons/iconfont/material-icons-outlined.woff2",
         "webview/material-icons/iconfont/material-icons-outlined.woff",
@@ -89,13 +92,14 @@
         "assets/vmblu-screenshot.png"
     ],
     "scripts": {
-        "vscode:prepublish": "npm run webview && npm run ext && npm run bundle",
-        "vx": "npm run webview && npm run ext &&  npm run bundle && npm run vsix",
+        "vscode:prepublish": "npm run webview && npm run sysblu && npm run ext && npm run bundle",
+        "vx": "npm run webview && npm run sysblu && npm run ext && npm run bundle && npm run vsix",
         "vsix": "vsce package --no-rewrite-relative-links",
-        "publish:patch": "npm run webview && vsce publish patch",
+        "publish:patch": "npm run webview && npm run sysblu && vsce publish patch",
         "sync:schema": "node ../cli/scripts/generate-schema-version.js",
         "prewebview": "npm run sync:schema",
         "webview": "cd ./webview && rollup -c",
+        "sysblu": "node ../cli/bin/vmblu.js profile ./sysblu/sysblu.blu && node ../cli/bin/vmblu.js make-app ./sysblu/sysblu.blu && node ../cli/bin/vmblu.js make-capabilities ./sysblu/sysblu.blu && cd ./sysblu && rollup -c",
         "ext": "tsc -p tsconfig.json",
         "bundle": "rollup -c ./extension/rollup.config.mjs",
         "lint": "eslint \"extension/**/*.ts\"",
@@ -124,6 +128,7 @@
         "typescript": "^5.8.3"
     },
     "activationEvents": [
-        "onStartupFinished"
+        "onCustomEditor:vmblu.vmblu",
+        "onCommand:vmblu.globe"
     ]
 }

@@ -49,3 +49,13 @@ export function TextDocument(arl=null, line=null) {
 }
 TextDocument.prototype = Object.create(Document.prototype)
 TextDocument.prototype.constructor = TextDocument
+
+export function SystemDocument(arl=null) {
+    this.kind = 'sysblu'
+    this.arl = arl
+    this.line = null
+    this.view = null
+    this.model = null
+}
+SystemDocument.prototype = Object.create(Document.prototype)
+SystemDocument.prototype.constructor = SystemDocument

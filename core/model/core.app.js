@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: node-editor
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.10","schemaVersion":"1.10.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.10.1"},"source":{"model":"core.mod.blu","hash":"fnv1a64:7ed5f990f55e08ce"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.11","schemaVersion":"1.11.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.11.0"},"source":{"model":"core.mod.blu","hash":"fnv1a64:3be5ad0daea27a50"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -23,7 +23,7 @@ const nodeList = [
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager",
-	uid: "tsGj",
+	uid: "spwG",
 	factory: LibraryManager,
 	inputs: [
 		"-> add file",
@@ -37,44 +37,48 @@ const nodeList = [
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager",
-	uid: "blKF",
+	uid: "FNfj",
 	factory: DocumentManager,
 	inputs: [
-		"-> doc.selected",
-		"-> doc.new",
-		"-> doc.renamed",
-		"-> doc.deleted",
-		"-> doc.get",
-		"-> doc.open",
+		"-> file.selected",
+		"-> file.new",
+		"-> file.renamed",
+		"-> file.deleted",
+		"-> file.get",
+		"-> file.open",
 		"-> file.save active",
 		"-> file.save as",
 		"-> model.loaded",
-		"-> text.loaded",
 		"-> model.failed",
-		"-> text.failed",
 		"-> tab.request to close",
-		"-> tab.request to select"
+		"-> tab.request to select",
+		"-> text.loaded",
+		"-> text.failed",
+		"-> sysblu.loaded",
+		"-> sysblu.failed"
 		],
 	outputs: [
-		"doc.set active -> ()",
-		"file.save -> ()",
 		"file.save as filename -> ()",
 		"file.save all -> ()",
 		"file.loading -> ()",
 		"file.loaded -> ()",
 		"file.failed -> ()",
+		"model.set active -> ()",
+		"model.save -> ()",
 		"tab.select -> ()",
 		"tab.remove -> ()",
 		"tab.new -> ()",
 		"tab.rename -> ()",
 		"text.set active -> ()",
-		"text.save -> ()"
+		"text.save -> ()",
+		"sysblu.set active -> ()",
+		"sysblu.save -> ()"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard",
-	uid: "hlWj",
+	uid: "TdrT",
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -90,7 +94,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "CupF",
+	uid: "nmuc",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
@@ -98,16 +102,16 @@ const nodeList = [
 		],
 	outputs: [
 		"selected node -> ()",
-		"remove file -> remove file @ library manager (qhLJ)",
-		"add file -> add file @ library manager (qhLJ)",
-		"get path -> path @ path request (othy)",
+		"remove file -> remove file @ library manager (JIBB)",
+		"add file -> add file @ library manager (JIBB)",
+		"get path -> path @ path request (XCja)",
 		"modal div -> ()"
 		]
 	},
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager",
-	uid: "qhLJ",
+	uid: "JIBB",
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -115,13 +119,13 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (CupF)"
+		"build table -> build table @ node selector (nmuc)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "othy",
+	uid: "XCja",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -134,7 +138,7 @@ const nodeList = [
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager",
-	uid: "snlc",
+	uid: "TZwd",
 	factory: ViewManager,
 	inputs: [
 		"-> size change",
@@ -165,7 +169,7 @@ const nodeList = [
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager",
-	uid: "SNZn",
+	uid: "acPU",
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",
@@ -204,7 +208,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.10","generatorVersion":"1.10.1","schemaVersion":"1.10.1"}
+    vmblu: {"compatibilityFamily":"1.11","generatorVersion":"1.11.0","schemaVersion":"1.11.0"}
 }
 
 // prepare the runtime

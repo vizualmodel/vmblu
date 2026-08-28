@@ -55,6 +55,7 @@ $: if (field) setFieldWidth();
 
     display: flex;
     align-items: center;
+    margin: 0 0 0.45rem;
     background:transparent;
 }
 label {

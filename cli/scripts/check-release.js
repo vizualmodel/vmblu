@@ -68,13 +68,15 @@ for (const [name, manifest] of Object.entries({cli, core, runtime})) {
 }
 
 const contextDir = path.join(root, 'cli', 'context', cli.schemaVersion)
-for (const file of ['blu.schema.json', 'blu.annex.md', 'viz.schema.json', 'prf.schema.json', 'capabilities.schema.json']) {
+for (const file of ['blu.schema.json', 'blu.annex.md', 'viz.schema.json', 'sys.schema.json', 'protocol.schema.json', 'prf.schema.json', 'capabilities.schema.json']) {
   if (!fs.existsSync(path.join(contextDir, file))) throw new Error(`Missing release context file: ${file}`)
 }
 
 for (const [file, title] of [
   ['blu.schema.json', `vmblu Blueprint Model (v${cli.schemaVersion})`],
   ['viz.schema.json', `vmblu Visual Model (v${cli.schemaVersion})`],
+  ['sys.schema.json', `vmblu System Configuration (v${cli.schemaVersion})`],
+  ['protocol.schema.json', `vmblu Protocol Definition (v${cli.schemaVersion})`],
 ]) {
   const schema = JSON.parse(fs.readFileSync(path.join(contextDir, file), 'utf8'))
   const expectedId = `https://vmblu.dev/context/${cli.schemaVersion}/${file}`

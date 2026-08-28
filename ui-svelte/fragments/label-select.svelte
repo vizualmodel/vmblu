@@ -58,7 +58,7 @@ function onKeydown(e) {
 .select-field {
     display: flex;
     align-items: center;
-    /* margin: 0rem 0rem 0.3rem 0rem; */
+    margin: 0 0 0.45rem;
     background: transparent;
 }
 

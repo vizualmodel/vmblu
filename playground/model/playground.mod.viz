@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.10.1",
+    "version": "1.11.0",
     "created": "4/2/2024, 12:46:06 PM",
-    "saved": "12/16/2025, 10:49:03 AM",
-    "utc": "2026-08-20T08:48:55.477Z",
+    "saved": "2026-08-25T14:01:46.420Z",
+    "utc": "2026-08-25T14:01:46.420Z",
     "style": "#00aaff"
   },
   "root": {
@@ -34,7 +34,7 @@
       {
         "kind": "source",
         "name": "workspace",
-        "rect": "x 469 y 573 w 185 h 356",
+        "rect": "x 469 y 558 w 185 h 356",
         "interfaces": [
           {
             "interface": "(41) dom",
@@ -82,13 +82,15 @@
       {
         "kind": "source",
         "name": "text editor",
-        "rect": "x 1191 y 1067 w 180 h 146",
+        "rect": "x 1179 y 1171 w 180 h 131",
         "interfaces": [
           {
             "interface": "(21) text",
             "pins": [
               "(9 L)text.set active",
-              "(10 L)text.save"
+              "(10 L)text.save",
+              "(20 R)text.failed",
+              "(16 R)text.loaded"
             ]
           },
           {
@@ -96,20 +98,13 @@
             "pins": [
               "(12 L)content div"
             ]
-          },
-          {
-            "interface": "(23) file",
-            "pins": [
-              "(20 R)text.failed",
-              "(16 R)text.loaded"
-            ]
           }
         ]
       },
       {
         "kind": "dock",
         "name": "single text field",
-        "rect": "x 199 y 588 w 150 h 56",
+        "rect": "x 202 y 573 w 150 h 56",
         "interfaces": [
           {
             "interface": "(0)",
@@ -123,7 +118,7 @@
       {
         "kind": "source",
         "name": "model pane",
-        "rect": "x 784 y 139 w 150 h 86",
+        "rect": "x 784 y 138 w 180 h 86",
         "interfaces": [
           {
             "interface": "(0)",
@@ -221,10 +216,10 @@
       {
         "kind": "dock",
         "name": "document manager",
-        "rect": "x 1179 y 498 w 180 h 491",
+        "rect": "x 1179 y 498 w 180 h 566",
         "interfaces": [
           {
-            "interface": "(62) tab",
+            "interface": "(75) tab",
             "pins": [
               "(46 L)tab.new",
               "(47 L)tab.rename",
@@ -235,39 +230,48 @@
             ]
           },
           {
-            "interface": "(53) doc",
+            "interface": "(73) file",
             "pins": [
-              "(34 L)doc.set active",
-              "(29 L)doc.selected",
-              "(30 L)doc.new",
-              "(31 L)doc.renamed",
-              "(32 L)doc.deleted",
-              "(33 L)doc.get",
-              "(35 R)doc.open"
-            ]
-          },
-          {
-            "interface": "(54) file",
-            "pins": [
+              "(29 L)file.selected",
+              "(30 L)file.new",
+              "(31 L)file.renamed",
+              "(32 L)file.deleted",
+              "(33 L)file.get",
+              "(35 R)file.open",
               "(51 L)file.save active",
               "(37 L)file.save as",
-              "(59 L)file.loading",
-              "(60 L)file.loaded",
-              "(61 L)file.failed",
-              "(38 R)file.save",
               "(39 R)file.save as filename",
               "(40 R)file.save all",
-              "(55 R)model.loaded",
-              "(57 R)model.failed",
-              "(56 R)text.loaded",
-              "(58 R)text.failed"
+              "(59 L)file.loading",
+              "(60 L)file.loaded",
+              "(61 L)file.failed"
             ]
           },
           {
-            "interface": "(63) text",
+            "interface": "(74) model",
+            "pins": [
+              "(34 R)model.set active",
+              "(38 R)model.save",
+              "(55 R)model.loaded",
+              "(57 R)model.failed"
+            ]
+          },
+          {
+            "interface": "(77) sysblu",
+            "pins": [
+              "(72 L)sysblu.save",
+              "(69 L)sysblu.set active",
+              "(70 R)sysblu.loaded",
+              "(71 R)sysblu.failed"
+            ]
+          },
+          {
+            "interface": "(76) text",
             "pins": [
               "(52 L)text.save",
-              "(49 L)text.set active"
+              "(49 L)text.set active",
+              "(56 R)text.loaded",
+              "(58 R)text.failed"
             ]
           }
         ]
@@ -336,7 +340,7 @@
         "rect": "x 1792 y -178 w 180 h 536",
         "interfaces": [
           {
-            "interface": "(111) actions",
+            "interface": "(115) actions",
             "pins": [
               "(96 L)sync model",
               "(73 L)accept changes",
@@ -349,7 +353,7 @@
             ]
           },
           {
-            "interface": "(115) save point",
+            "interface": "(117) save point",
             "pins": [
               "(81 L)save point.set",
               "(82 L)save point.back",
@@ -357,7 +361,7 @@
             ]
           },
           {
-            "interface": "(112) model",
+            "interface": "(116) model",
             "pins": [
               "(64 L)model.save",
               "(78 L)model.set",
@@ -368,7 +372,7 @@
             ]
           },
           {
-            "interface": "(117) redox",
+            "interface": "(119) redox",
             "pins": [
               "(56 L)redox.doit",
               "(57 L)redox.undo",
@@ -377,7 +381,7 @@
             ]
           },
           {
-            "interface": "(116) info",
+            "interface": "(118) info",
             "pins": [
               "(94 R)event settings",
               "(93 R)tool settings",
@@ -387,7 +391,7 @@
             ]
           },
           {
-            "interface": "(118) files",
+            "interface": "(120) files",
             "pins": [
               "(88 L)open source file",
               "(62 L)open model"
@@ -398,7 +402,7 @@
       {
         "kind": "dock",
         "name": "clipboard",
-        "rect": "x 1519 y 584 w 150 h 116",
+        "rect": "x 1517 y 597 w 150 h 116",
         "interfaces": [
           {
             "interface": "(0)",
@@ -414,13 +418,146 @@
         ]
       },
       {
+        "kind": "dock",
+        "name": "sysblu",
+        "rect": "x 1176 y 1374 w 180 h 266",
+        "interfaces": [
+          {
+            "interface": "(21) sysblu",
+            "pins": [
+              "(12 L)sysblu.set",
+              "(13 L)sysblu.save",
+              "(15 R)sysblu.failed",
+              "(14 R)sysblu.loaded"
+            ]
+          },
+          {
+            "interface": "(22) setup",
+            "pins": [
+              "(18 L)size change",
+              "(17 L)canvas",
+              "(23 L)application prompt",
+              "(24 L)add application",
+              "(25 L)application settings",
+              "(26 L)endpoint settings",
+              "(27 L)connection settings"
+            ]
+          },
+          {
+            "interface": "(28) files",
+            "pins": [
+              "(20 R)open reference",
+              "(29 R)execute command"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "group",
+        "name": "sysblu popups",
+        "rect": "x 475 y 1578 w 165 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(4 R)modal div",
+              "(3 R)application settings",
+              "(5 R)endpoint settings",
+              "(6 R)connection settings"
+            ]
+          }
+        ],
+        "pads": [
+          "(4 R)x 1050 y 53 w 81 h 15|modal div",
+          "(3 R)x 1050 y 23 w 132 h 15|application settings",
+          "(5 R)x 1050 y 83 w 121 h 15|endpoint settings",
+          "(6 R)x 1050 y 113 w 132 h 15|connection settings"
+        ],
+        "nodes": [
+          {
+            "kind": "dock",
+            "name": "application inspector",
+            "rect": "x 210 y 30 w 195 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)application settings",
+                  "(4 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "endpoint inspector",
+            "rect": "x 810 y 186 w 180 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)endpoint settings",
+                  "(4 R)modal div"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "connection inspector",
+            "rect": "x 210 y 186 w 195 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)connection settings",
+                  "(4 R)modal div"
+                ]
+              }
+            ]
+          }
+        ],
+        "routes": [
+          {
+            "from": "(pin 4) modal div @ application inspector",
+            "to": "(pad 4) modal div",
+            "wire": "x 35.0 y -12.0 x 610.0"
+          },
+          {
+            "from": "(pin 4) modal div @ endpoint inspector",
+            "to": "(pad 4) modal div",
+            "wire": "x 15.0 y -168.0 x 45.0"
+          },
+          {
+            "from": "(pin 4) modal div @ connection inspector",
+            "to": "(pad 4) modal div",
+            "wire": "x 55.0 y -168.0 x 590.0"
+          },
+          {
+            "from": "(pad 3) application settings",
+            "to": "(pin 3) application settings @ application inspector",
+            "wire": "x -25.0 y 27.0 x -620.0"
+          },
+          {
+            "from": "(pad 5) endpoint settings",
+            "to": "(pin 3) endpoint settings @ endpoint inspector",
+            "wire": "x -5.0 y 123.0 x -55.0"
+          },
+          {
+            "from": "(pad 6) connection settings",
+            "to": "(pin 3) connection settings @ connection inspector",
+            "wire": "x -25.0 y 35.5 x -595.0 y 57.5 x -25.0"
+          }
+        ]
+      },
+      {
         "kind": "group",
         "name": "popups",
         "rect": "x 2182 y 182 w 150 h 236",
         "view": {
           "state": "closed",
           "rect": "x 1030 y -235 w 1488 h 1514",
-          "transform": "sx 0.882 sy 0.882 dx 1536.716 dy -249.100"
+          "transform": "sx 0.882 sy 0.882 dx 1563.716 dy -205.100"
         },
         "interfaces": [
           {
@@ -851,16 +988,57 @@
             ]
           }
         ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu pane",
+        "rect": "x 786 y 1404 w 180 h 86",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(8 R)content div",
+              "(6 L)menu div",
+              "(7 R)legend div",
+              "(5 R)canvas"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "sysblu menu",
+        "rect": "x 472 y 1434 w 165 h 116",
+        "interfaces": [
+          {
+            "interface": "(20) dom",
+            "pins": [
+              "(2 R)div"
+            ]
+          },
+          {
+            "interface": "(21) menu items",
+            "pins": [
+              "(13 R)save",
+              "(16 R)application prompt",
+              "(19 R)add application"
+            ]
+          }
+        ]
       }
     ],
     "cables": [
       {
-        "start": "x 1143.9572984749454 y 654.224183006536",
-        "wire": "y -602.4"
+        "start": "x 1426.3747922214113 y 74.5",
+        "wire": "y 781.0"
       },
       {
-        "start": "x 1392.8551198257094 y 445.0601217645286",
-        "wire": "y 313.0"
+        "start": "x 1389.8665749183394 y 479.45366858830215",
+        "wire": "y 270.8"
+      },
+      {
+        "start": "x 1029.2273218752528 y 370.45308104037156",
+        "wire": "y 918.0"
       }
     ],
     "routes": [
@@ -872,57 +1050,57 @@
       {
         "from": "(pin 3) dom.workspace div @ workspace",
         "to": "(pin 3) left column @ column-main layout",
-        "wire": "x 24.8 y -290.0 x -23.8"
+        "wire": "x 24.8 y -275.0 x -23.8"
       },
       {
         "from": "(pin 5) file.selected @ workspace",
-        "to": "(pin 29) doc.selected @ document manager",
-        "wire": "x 266.0 y 0.0 x 259.0"
+        "to": "(pin 29) file.selected @ document manager",
+        "wire": "x 262.5 y 0.0 x 262.5"
       },
       {
         "from": "(pin 21) file.new @ workspace",
-        "to": "(pin 30) doc.new @ document manager",
-        "wire": "x 266.0 y 0.0 x 259.0"
+        "to": "(pin 30) file.new @ document manager",
+        "wire": "x 282.5 y 0.0 x 242.5"
       },
       {
         "from": "(pin 27) file.renamed @ workspace",
-        "to": "(pin 31) doc.renamed @ document manager",
-        "wire": "x 266.0 y 0.0 x 259.0"
+        "to": "(pin 31) file.renamed @ document manager",
+        "wire": "x 242.5 y 0.0 x 282.5"
       },
       {
         "from": "(pin 28) file.deleted @ workspace",
-        "to": "(pin 32) doc.deleted @ document manager",
-        "wire": "x 266.0 y 0.0 x 259.0"
+        "to": "(pin 32) file.deleted @ document manager",
+        "wire": "x 272.5 y 0.0 x 252.5"
       },
       {
         "from": "(pin 7) file.get name @ workspace",
-        "to": "(pin 33) doc.get @ document manager",
-        "wire": "x 266.0 y 0.0 x 259.0"
-      },
-      {
-        "from": "(pin 12) content div @ text editor",
-        "to": "(pin 13) content.div @ editor page",
-        "wire": "x -129.6 y -784.0 x -95.4"
+        "to": "(pin 33) file.get @ document manager",
+        "wire": "x 252.5 y 0.0 x 272.5"
       },
       {
         "from": "(pin 20) text.failed @ text editor",
         "to": "(pin 58) text.failed @ document manager",
-        "wire": "x 86.8 y -254.0 x -98.8"
+        "wire": "x 69.3 y -193.0 x -69.3"
       },
       {
         "from": "(pin 16) text.loaded @ text editor",
         "to": "(pin 56) text.loaded @ document manager",
-        "wire": "x 100.2 y -284.0 x -112.2"
+        "wire": "x 77.3 y -223.0 x -77.3"
+      },
+      {
+        "from": "(pin 12) content div @ text editor",
+        "to": "(cable 2 endpoint nonselective)",
+        "wire": "x -149.8"
       },
       {
         "from": "(pin 2) modal div @ single text field",
         "to": "(pin 2) dom.add modal div @ workspace",
-        "wire": "x 59.6 y 0.0 x 60.4"
+        "wire": "x 56.6 y 0.0 x 60.4"
       },
       {
         "from": "(pin 8) content div @ model pane",
-        "to": "(pin 13) content.div @ editor page",
-        "wire": "x 81.8 y 159.0 x -49.8"
+        "to": "(cable 2 endpoint nonselective)",
+        "wire": "y -1.2 x 65.2 y 161.2"
       },
       {
         "from": "(pin 8) div @ editor page",
@@ -933,6 +1111,11 @@
         "from": "(pin 14) content.size change @ editor page",
         "to": "(pin 38) size change @ view manager",
         "wire": "x 203.1 y -26.0 x 339.9"
+      },
+      {
+        "from": "(pin 14) content.size change @ editor page",
+        "to": "(pin 18) size change @ sysblu",
+        "wire": "x 109.0 y 1106.0 x 101.0"
       },
       {
         "from": "(pin 4) div @ tab ribbon",
@@ -1002,27 +1185,27 @@
       {
         "from": "(pin 18) application prompt @ side menu",
         "to": "(pin 53) application prompt @ view manager",
-        "wire": "x 234.2 y 330.0 x 340.8"
+        "wire": "x 222.2 y 330.0 x 352.8"
       },
       {
         "from": "(pin 13) save @ side menu",
         "to": "(pin 64) model.save @ model manager",
-        "wire": "x 488.6 y 30.0 x 369.4"
+        "wire": "x 503.5 y 30.0 x 354.5"
       },
       {
         "from": "(pin 13) save @ side menu",
         "to": "(pin 51) file.save active @ document manager",
-        "wire": "x 182.7 y 736.0 x 62.3"
+        "wire": "x 182.7 y 706.0 x 62.3"
       },
       {
         "from": "(pin 14) save as @ side menu",
         "to": "(pin 37) file.save as @ document manager",
-        "wire": "x 169.4 y 736.0 x 75.6"
+        "wire": "x 169.4 y 706.0 x 75.6"
       },
       {
         "from": "(pin 2) div @ side menu",
         "to": "(pin 6) menu div @ model pane",
-        "wire": "x 110.3 y 92.0 x -110.3"
+        "wire": "x 110.3 y 91.0 x -80.3"
       },
       {
         "from": "(pin 46) tab.new @ document manager",
@@ -1045,9 +1228,9 @@
         "wire": "x -89.7 y 0.0 x -120.3"
       },
       {
-        "from": "(pin 34) doc.set active @ document manager",
-        "to": "(cable 0 nonselective)",
-        "wire": "x -35.0"
+        "from": "(pin 39) file.save as filename @ document manager",
+        "to": "(pin 3) path only @ popups",
+        "wire": "x 649.7 y -466.0 x 173.3"
       },
       {
         "from": "(pin 59) file.loading @ document manager",
@@ -1065,24 +1248,34 @@
         "wire": "x -455.3 y -425.0 x 52.3"
       },
       {
-        "from": "(pin 38) file.save @ document manager",
-        "to": "(pin 64) model.save @ model manager",
-        "wire": "x 72.0 y -781.0 x 361.0"
+        "from": "(pin 34) model.set active @ document manager",
+        "to": "(cable 0 endpoint nonselective)",
+        "wire": "x 44.9 y 0.0 x 22.5"
       },
       {
-        "from": "(pin 39) file.save as filename @ document manager",
-        "to": "(pin 3) path only @ popups",
-        "wire": "x 649.7 y -556.0 x 173.3"
+        "from": "(pin 38) model.save @ document manager",
+        "to": "(pin 64) model.save @ model manager",
+        "wire": "x 88.9 y -811.0 x 344.1"
+      },
+      {
+        "from": "(pin 72) sysblu.save @ document manager",
+        "to": "(pin 13) sysblu.save @ sysblu",
+        "wire": "x -69.0 y 501.0 x 66.0"
+      },
+      {
+        "from": "(pin 69) sysblu.set active @ document manager",
+        "to": "(pin 12) sysblu.set @ sysblu",
+        "wire": "x -58.3 y 471.0 x 55.3"
       },
       {
         "from": "(pin 52) text.save @ document manager",
         "to": "(pin 10) text.save @ text editor",
-        "wire": "x -71.2 y 164.0 x 83.2"
+        "wire": "x -44.3 y 223.0 x 44.3"
       },
       {
         "from": "(pin 49) text.set active @ document manager",
         "to": "(pin 9) text.set active @ text editor",
-        "wire": "x -57.0 y 134.0 x 69.0"
+        "wire": "x -34.1 y 193.0 x 34.1"
       },
       {
         "from": "(pin 17) redox.doit @ view manager",
@@ -1102,12 +1295,12 @@
       {
         "from": "(pin 46) team legend @ view manager",
         "to": "(pin 3) teams @ team legend",
-        "wire": "x -43.7 y -575.0 x -531.3"
+        "wire": "x -278.3 y -575.0 x -296.7"
       },
       {
         "from": "(pin 37) canvas @ view manager",
         "to": "(pin 5) canvas @ model pane",
-        "wire": "x -432.0 y -133.0 x -143.0"
+        "wire": "x -432.0 y -134.0 x -113.0"
       },
       {
         "from": "(pin 25) node settings (sx) @ view manager",
@@ -1136,23 +1329,23 @@
       },
       {
         "from": "(pin 26) open source file @ view manager",
-        "to": "(cable 1 nonselective)",
-        "wire": "x -116.1"
+        "to": "(cable 1 endpoint nonselective)",
+        "wire": "x -55.0 y 0.0 x -64.1"
       },
       {
         "from": "(pin 28) open model @ view manager",
         "to": "(cable 1 nonselective)",
-        "wire": "x -116.1"
+        "wire": "x -45.0 y 0.0 x -74.1"
       },
       {
         "from": "(pin 44) clipboard.get @ view manager",
         "to": "(pin 18) get @ clipboard",
-        "wire": "x -46.9 y 102.0 x 56.9"
+        "wire": "x -46.9 y 115.0 x 54.9"
       },
       {
         "from": "(pin 45) clipboard.set @ view manager",
         "to": "(pin 17) set @ clipboard",
-        "wire": "x -33.5 y 72.0 x 43.5"
+        "wire": "x -33.5 y 85.0 x 41.5"
       },
       {
         "from": "(pin 63) save point.confirm @ model manager",
@@ -1162,7 +1355,7 @@
       {
         "from": "(pin 60) model.root @ model manager",
         "to": "(pin 22) root @ view manager",
-        "wire": "x -27.3 y 150.0 x -75.7"
+        "wire": "x -75.6 y 150.0 x -27.4"
       },
       {
         "from": "(pin 79) model.header @ model manager",
@@ -1212,42 +1405,112 @@
       {
         "from": "(pin 88) open source file @ model manager",
         "to": "(cable 1 nonselective)",
-        "wire": "x -36.9 y 406.2 x -362.2"
+        "wire": "x -36.9 y 391.0 x -365.2"
       },
       {
         "from": "(pin 62) open model @ model manager",
         "to": "(cable 1 nonselective)",
-        "wire": "x -18.4 y 408.6 x -380.7"
+        "wire": "x -18.4 y 391.5 x -383.7"
+      },
+      {
+        "from": "(pin 15) sysblu.failed @ sysblu",
+        "to": "(pin 71) sysblu.failed @ document manager",
+        "wire": "x 108.4 y -471.0 x -105.4"
+      },
+      {
+        "from": "(pin 14) sysblu.loaded @ sysblu",
+        "to": "(pin 70) sysblu.loaded @ document manager",
+        "wire": "x 119.2 y -501.0 x -116.2"
+      },
+      {
+        "from": "(pin 17) canvas @ sysblu",
+        "to": "(pin 5) canvas @ sysblu pane",
+        "wire": "x -168.9 y -30.0 x -41.1"
+      },
+      {
+        "from": "(pin 25) application settings @ sysblu",
+        "to": "(pin 3) application settings @ sysblu popups",
+        "wire": "x -134.1 y 69.0 x -401.9"
+      },
+      {
+        "from": "(pin 26) endpoint settings @ sysblu",
+        "to": "(pin 5) endpoint settings @ sysblu popups",
+        "wire": "x -116.1 y 69.0 x -419.9"
+      },
+      {
+        "from": "(pin 27) connection settings @ sysblu",
+        "to": "(pin 6) connection settings @ sysblu popups",
+        "wire": "x -106.7 y 69.0 x -429.3"
+      },
+      {
+        "from": "(pin 20) open reference @ sysblu",
+        "to": "(cable 1 endpoint nonselective)",
+        "wire": "x 137.0 y -891.2 x -103.1"
+      },
+      {
+        "from": "(pin 4) modal div @ sysblu popups",
+        "to": "(pin 5) modal div @ editor page",
+        "wire": "x 353.4 y -1310.0 x -27.4"
       },
       {
         "from": "(pin 12) folder.get @ popups",
         "to": "(pin 40) folder.get @ workspace",
-        "wire": "x 39.9 y 628.0 x -1664.0 y -162.0 x -53.9"
+        "wire": "x 39.9 y 707.3 x -1664.0 y -256.3 x -53.9"
       },
       {
         "from": "(pin 2) modal div @ popups",
         "to": "(pin 5) modal div @ editor page",
-        "wire": "x 22.2 y 599.7 x -1360.4 y -708.7 x -27.8"
+        "wire": "x 23.5 y 676.4 x -1361.7 y -785.4 x -27.8"
       },
       {
         "from": "(pin 4) div @ team legend",
         "to": "(pin 7) legend div @ model pane",
-        "wire": "x 66.0 y 442.0 x -66.0"
+        "wire": "x 66.0 y 441.0 x -36.0"
+      },
+      {
+        "from": "(pin 8) content div @ sysblu pane",
+        "to": "(cable 2 endpoint nonselective)",
+        "wire": "y 0.0 x 63.0 y -143.0"
+      },
+      {
+        "from": "(pin 2) div @ sysblu menu",
+        "to": "(pin 6) menu div @ sysblu pane",
+        "wire": "x 91.9 y -30.0 x 57.1"
+      },
+      {
+        "from": "(pin 13) save @ sysblu menu",
+        "to": "(pin 51) file.save active @ document manager",
+        "wire": "x 123.8 y -771.0 x 418.2"
+      },
+      {
+        "from": "(pin 16) application prompt @ sysblu menu",
+        "to": "(pin 23) application prompt @ sysblu",
+        "wire": "x 250.4 y 0.0 x 288.6"
+      },
+      {
+        "from": "(pin 19) add application @ sysblu menu",
+        "to": "(pin 24) add application @ sysblu",
+        "wire": "x 249.5 y 0.0 x 289.5"
       },
       {
         "from": "(cable 0 nonselective)",
         "to": "(pin 39) top level view @ view manager",
-        "wire": "x 365.0"
+        "wire": "x 7.0 y 0.0 x 75.6"
       },
       {
-        "from": "(cable 0 nonselective)",
+        "from": "(cable 0 endpoint nonselective)",
         "to": "(pin 78) model.set @ model manager",
-        "wire": "x 19.5 y 0.0 x 628.5"
+        "wire": "x 365.6"
       },
       {
         "from": "(cable 1 nonselective)",
-        "to": "(pin 35) doc.open @ document manager",
-        "wire": "x -9.5 y 0.0 x -24.4"
+        "to": "(pin 35) file.open @ document manager",
+        "wire": "x -7.5 y 0.0 x -23.4"
+      },
+      {
+        "from": "(cable 2 endpoint nonselective)",
+        "to": "(pin 13) content.div @ editor page",
+        "wire": "x -63.2"
       }
     ]
   }

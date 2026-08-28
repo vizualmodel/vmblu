@@ -10,7 +10,7 @@ let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring
 .textarea-field {
     display: flex;
     align-items: flex-start;
-    margin: 0rem 0rem 0.3rem 0rem;
+    margin: 0 0 0.45rem;
     background: transparent;
 }
 

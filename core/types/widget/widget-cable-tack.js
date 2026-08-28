@@ -199,11 +199,11 @@ CableTack.prototype = {
         }
     },
 
-    aliasZone() {
-        if (!this.route) return
-        const wire = this.route.wire
+    inferRouteApproach(route = this.route) {
+        if (!route) return
+        const wire = route.wire
         if (!wire || wire.length < 2) return 'E'
-        const atStart = this.route.from == this
+        const atStart = route.from == this
         const a = atStart ? wire[0] : wire.at(-1)
         if (!a) return 'E'
         let b
@@ -223,6 +223,10 @@ CableTack.prototype = {
         if (!b) return this.zone ?? 'E'
         if (a.x !== b.x && a.y !== b.y) return this.zone ?? 'E'
         return (a.x === b.x) ? (a.y < b.y ? 'S' : 'N') : (a.x < b.x ? 'E' : 'W')
+    },
+
+    aliasZone() {
+        return this.inferRouteApproach()
     },
 
     setRoute(route) {

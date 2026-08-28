@@ -175,9 +175,14 @@ export const routeMoving = {
             let p1 = this.wire[s-1]
             let p2 = this.wire[s]
 
-            // if there is only one segment and one of the endpoints is a bus, add two segments
+            // A single segment is both the first and last segment. Let its tack
+            // or pad classify the movement before changing the topology; route
+            // adjustment can add only the bends required by the new position.
             if (this.wire.length == 2) {
-                if (from.is.tack || to.is.tack || from.is.pad || to.is.pad) this.makeThreeSegments(p1, p2)
+                const slidingEndpoint = (from.is.tack || from.is.pad) ? from
+                                      : (to.is.tack || to.is.pad) ? to
+                                      : null
+                if (slidingEndpoint) return slidingEndpoint.slide(delta)
             }
 
             // first segment...

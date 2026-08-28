@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {cout} from './util.js';
-import {vmbluViewType} from './extension.js';
+import {getSystemDiagnostics, vmbluViewType} from './extension.js';
 import {VmbluDocument, documentFlags} from './document-model.js';
 //import * as documentation from 'documentation';
 import { execFile } from 'child_process';
@@ -79,6 +79,44 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			return;
 		}
 
+		case 'file save failed': {
+			const error = new Error(message.error ?? 'The document could not be saved.');
+			this.wait.reject(error);
+			vscode.window.showErrorMessage(error.message);
+			return;
+		}
+
+		case 'save document': {
+			await this.straightSave();
+			return;
+		}
+
+		case 'undo document': {
+			await vscode.commands.executeCommand('undo');
+			return;
+		}
+
+		case 'redo document': {
+			await vscode.commands.executeCommand('redo');
+			return;
+		}
+
+		case 'system diagnostics': {
+			const errors = Array.isArray(message.diagnostics?.errors) ? message.diagnostics.errors : [];
+			if (!errors.length) {
+				getSystemDiagnostics().delete(this.uri);
+				return;
+			}
+
+			const range = new vscode.Range(0, 0, 0, 1);
+			getSystemDiagnostics().set(this.uri, errors.map((text: string) => {
+				const diagnostic = new vscode.Diagnostic(range, text, vscode.DiagnosticSeverity.Error);
+				diagnostic.source = 'vmblu System';
+				return diagnostic;
+			}));
+			return;
+		}
+
 		// this document instance holds the clipboard
 		case 'clipboard switch' : {
 
@@ -119,6 +157,62 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			vscode.commands.executeCommand("vscode.openWith", uri, vmbluViewType);
 
 			// done
+			return;
+		}
+
+		case 'open reference': {
+			const reference = message.reference;
+			if (reference?.externalUrl) {
+				await vscode.env.openExternal(vscode.Uri.parse(reference.externalUrl));
+				return;
+			}
+
+			const uri = this.makeUri(reference);
+			if (!uri) {
+				vscode.window.showWarningMessage('The referenced document could not be resolved.');
+				return;
+			}
+
+			if (uri.path.toLowerCase().endsWith('.blu')) {
+				await vscode.commands.executeCommand('vscode.openWith', uri, vmbluViewType);
+				return;
+			}
+
+			try {
+				const doc = await vscode.workspace.openTextDocument(uri);
+				await vscode.window.showTextDocument(doc, {preview: false});
+			}
+			catch {
+				vscode.window.showWarningMessage(`The referenced document does not exist: ${uri.fsPath || uri.toString()}`);
+			}
+			return;
+		}
+
+		case 'execute command': {
+			const request = message.request;
+			if (!request?.command || !request?.workingDirectory) return;
+
+			if (!vscode.workspace.isTrusted) {
+				vscode.window.showWarningMessage('Trust this workspace before running commands from a vmblu System document.');
+				return;
+			}
+
+			const cwd = this.makeUri(request.workingDirectory);
+			if (!cwd) {
+				vscode.window.showWarningMessage('The command working directory could not be resolved.');
+				return;
+			}
+
+			const choice = await vscode.window.showWarningMessage(
+				`Run "${request.command}" in ${cwd.fsPath || cwd.toString()}?`,
+				{modal: true},
+				'Run'
+			);
+			if (choice !== 'Run') return;
+
+			const terminal = vscode.window.createTerminal({name: 'vmblu System', cwd});
+			terminal.show();
+			terminal.sendText(request.command, true);
 			return;
 		}
 
@@ -173,6 +267,15 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			if (this.resolvedModelArl) modelWatcher.setModelFile(this.resolvedModelArl);
 			this.modelWatcher = modelWatcher;
 
+			return;
+		}
+
+		case 'start system watcher': {
+			const systemWatcher = new ModelFileWatcher(() => {broker.postMessage({verb: 'system changed'});});
+			getExtensionContext()?.subscriptions.push(systemWatcher);
+			systemWatcher.setModelFile(message.system);
+			systemWatcher.start();
+			this.modelWatcher = systemWatcher;
 			return;
 		}
 

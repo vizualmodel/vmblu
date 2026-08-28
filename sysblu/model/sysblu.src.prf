@@ -1,0 +1,317 @@
+{
+  "version": "1.11.0",
+  "provenance": {
+    "generated": true,
+    "artifact": "source-profile",
+    "compatibilityFamily": "1.11",
+    "schemaVersion": "1.11.0",
+    "generator": {
+      "name": "@vizualmodel/vmblu-cli",
+      "version": "1.11.0"
+    },
+    "source": {
+      "model": "sysblu.mod.blu",
+      "hash": "fnv1a64:2da472c875bd4286"
+    }
+  },
+  "entries": [
+    {
+      "node": "sysblu view",
+      "handles": [
+        {
+          "pin": "system.updated",
+          "handler": "onSystemUpdated",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 77,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "snapshot",
+              "type": "SystemSnapshot",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "sysmod.done",
+          "handler": "onSysmodDone",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 91,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "result",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "typeErrors": [
+            "typeWarning: unexpected field \"result\""
+          ]
+        },
+        {
+          "pin": "size.change",
+          "handler": "onSizeChange",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 97,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "size",
+              "type": "ViewSize",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "add.application",
+          "handler": "onAddApplication",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 329,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "event",
+              "type": "{}",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "application.prompt",
+          "handler": "onApplicationPrompt",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 546,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "canvas",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 88
+        },
+        {
+          "pin": "application settings",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 160
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 165
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 173
+        },
+        {
+          "pin": "endpoint settings",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 186
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 193
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 204
+        },
+        {
+          "pin": "connection settings",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 241
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 249
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 257
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 267
+        },
+        {
+          "pin": "application settings",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 337
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 344
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 508
+        },
+        {
+          "pin": "execute command",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 531
+        },
+        {
+          "pin": "open reference",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 539
+        },
+        {
+          "pin": "open reference",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 543
+        },
+        {
+          "pin": "sysmod.redo",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 569
+        },
+        {
+          "pin": "sysmod.undo",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 570
+        },
+        {
+          "pin": "sysmod.redo",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 571
+        }
+      ]
+    },
+    {
+      "node": "sysblu manager",
+      "handles": [
+        {
+          "pin": "sysblu.set",
+          "handler": "onSysbluSet",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 26,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "active",
+              "type": "ActiveDocument",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "sysblu.save",
+          "handler": "onSysbluSave",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 59,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sysmod.doit",
+          "handler": "onSysmodDoit",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 84,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": [
+            {
+              "name": "command",
+              "type": "SysmodDoit",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "pin": "sysmod.undo",
+          "handler": "onSysmodUndo",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 90,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        },
+        {
+          "pin": "sysmod.redo",
+          "handler": "onSysmodRedo",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 94,
+          "summary": "",
+          "returns": "",
+          "examples": [],
+          "params": []
+        }
+      ],
+      "transmits": [
+        {
+          "pin": "sysblu.diagnostics",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 47
+        },
+        {
+          "pin": "sysblu.loaded",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 48
+        },
+        {
+          "pin": "sysblu.diagnostics",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 54
+        },
+        {
+          "pin": "sysblu.failed",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 55
+        },
+        {
+          "pin": "sysblu.failed",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 62
+        },
+        {
+          "pin": "sysblu.failed",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 78
+        },
+        {
+          "pin": "sysmod.done",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 102
+        },
+        {
+          "pin": "sysmod.done",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 111
+        },
+        {
+          "pin": "system.updated",
+          "file": "../nodes/sysblu-manager/sysblu-manager.js",
+          "line": 120
+        }
+      ]
+    }
+  ]
+}

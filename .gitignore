@@ -9,6 +9,8 @@ core/ai/.vault.txt
 # Runtime data
 *.log
 *.map
+**/.vmblu/cache/
+**/.vmblu/logs/
 
 # Build output
 browser/out/
