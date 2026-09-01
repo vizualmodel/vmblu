@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/context/1.11.0/sys.schema.json",
+  "title": "vmblu System Configuration (v1.11.0)",
+  "description": "The authored semantic and graphical description stored in a <system-name>.sys.blu file.",
+  "$comment": "System context is optional. An explicitly supplied *.sys.blu path takes precedence. Otherwise, starting at the application entrypoint directory, search upward to the workspace boundary for system/active.sys.blu; the nearest match wins. Other *.sys.blu files are not implicitly active. Files and folders beside the active configuration have no implicit meaning: prompts, contracts, documentation, and other material must remain explicit references in the sysblu document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["header", "nodes", "connections"],
+  "properties": {
+    "header": { "$ref": "#/$defs/Header" },
+    "nodes": {
+      "description": "vmblu and non-vmblu applications inside the modeled system boundary.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/Node" }
+    },
+    "connections": {
+      "description": "Architecturally meaningful communication channels between system nodes.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/Connection" }
+    },
+    "references": {
+      "description": "Project-level documentation and navigation references for the system.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/Reference" }
+    },
+    "view": { "$ref": "#/$defs/View" },
+    "extensions": { "$ref": "#/$defs/Extensions" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Header": {
+      "description": "Identity and lifecycle metadata for the system configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "name"],
+      "properties": {
+        "version": { "const": "1.11.0" },
+        "name": { "$ref": "#/$defs/NonEmptyString" },
+        "description": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "saved": { "type": "string", "format": "date-time" },
+        "utc": { "type": "string", "format": "date-time" },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "Node": {
+      "description": "An application or system participant. The vmblu flag controls whether it is rendered as a vmblu application.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "name", "vmblu", "position"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "kind": { "const": "application" },
+        "name": { "$ref": "#/$defs/NonEmptyString" },
+        "vmblu": {
+          "description": "True when this participant is a vmblu application; false for a non-vmblu participant.",
+          "type": "boolean"
+        },
+        "description": { "type": "string" },
+        "position": { "$ref": "#/$defs/Point" },
+        "size": { "$ref": "#/$defs/Size" },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Reference" }
+        },
+        "endpoints": {
+          "description": "Named API or protocol attachment points rendered on the system node.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Endpoint" }
+        },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "Endpoint": {
+      "description": "A named API or protocol attachment point on a system node.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "role"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "name": { "$ref": "#/$defs/NonEmptyString" },
+        "remarks": { "type": "string" },
+        "role": {
+          "description": "The node's role in the API or protocol. More specialized roles may be added as real systems require them.",
+          "enum": ["client", "server", "peer"]
+        },
+        "protocol": {
+          "description": "Optional path, ARL, or absolute HTTP(S) URL of a protocol definition; relative targets resolve from this system configuration.",
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "Connection": {
+      "description": "One independently meaningful transport binding between endpoints.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "transport"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "remarks": { "type": "string" },
+        "from": { "$ref": "#/$defs/ConnectionEnd" },
+        "to": { "$ref": "#/$defs/ConnectionEnd" },
+        "transport": {
+          "description": "Explicit transport used by this binding, such as websocket, https, udp, ipc, in-process, queue, file, shared-store, other, or unspecified.",
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "route": {
+          "description": "Optional intermediate points used to draw the connection.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Point" }
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Reference" }
+        },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "ConnectionEnd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node"],
+      "properties": {
+        "node": { "$ref": "#/$defs/Identifier" },
+        "endpoint": { "$ref": "#/$defs/Identifier" }
+      }
+    },
+    "Reference": {
+      "description": "A typed navigation target. Targets may be paths resolved relative to the system configuration, absolute ARLs, or absolute HTTP(S) URLs.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "kind": {
+          "enum": ["prompt", "documentation", "model", "source", "build", "deployment", "test", "operations", "other"]
+        },
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "target": { "$ref": "#/$defs/NonEmptyString" },
+        "command": {
+          "description": "Terminal command requested by Ctrl/Cmd-click. Sysblu passes this string to the host without interpreting it.",
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "workingDirectory": {
+          "description": "Working directory for command execution, resolved relative to this system configuration.",
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      },
+      "dependentRequired": {
+        "command": ["workingDirectory"],
+        "workingDirectory": ["command"]
+      }
+    },
+    "View": {
+      "description": "Presentation state for the single initial system view.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": { "$ref": "#/$defs/Point" },
+        "zoom": { "type": "number", "exclusiveMinimum": 0 },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "Size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "Extensions": {
+      "description": "Explicit namespace for vendor-specific or experimental data.",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

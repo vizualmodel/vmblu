@@ -1,3 +1,5 @@
+import {SCHEMA_VERSION} from '../../../core/types/model/schema-version.js'
+
 export function cloneSystemDocument(document) {
     if (document == null) return null
     return JSON.parse(JSON.stringify(document))
@@ -27,7 +29,9 @@ export function validateSystemDocument(document) {
     }
 
     if (!document.header || typeof document.header !== 'object') errors.push('Missing system header.')
-    if (document.header?.version !== '1.11.0') errors.push('The system document must use schema version 1.11.0.')
+    if (document.header?.version !== SCHEMA_VERSION) {
+        errors.push(`The system document must use schema version ${SCHEMA_VERSION}.`)
+    }
     if (typeof document.header?.name !== 'string' || !document.header.name.trim()) errors.push('The system header needs a name.')
     if (!Array.isArray(document.nodes)) errors.push('The system document needs a nodes array.')
     if (!Array.isArray(document.connections)) errors.push('The system document needs a connections array.')

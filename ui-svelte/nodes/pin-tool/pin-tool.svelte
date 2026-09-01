@@ -1,8 +1,11 @@
 <script>
 import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
+import Button from '../../fragments/button.svelte'
 
 export let tx
+
+const ID_PATTERN = /^[A-Za-z0-9_.-]+$/
 
 let box = {
     div: null,
@@ -14,36 +17,40 @@ let box = {
 
 let pin = null
 let ok = null
-let settings = makeSettings(null)
-let schemaText = '{}'
-let effectsText = '[]'
-let examplesText = ''
-let usageGuidanceText = ''
+let settings = makeSettings()
+let inputSchema = {type: 'object'}
+let outputSchema = null
+let available = {events: [], probes: []}
+let verificationOpen = false
 let error = ''
+let migrationWarning = ''
 
 onMount(() => {
     tx.send('modal div', box.div)
 })
 
-// small helper
 const closeBox = () => {
     pin = null
-    box.hide()        
+    box.hide()
 }
 
 export const handlers = {
-    onShow({pos, pin: shownPin, ok: okFn, cancel}) {
-
-        // toggle behaviour for repeat key press
-        if (pin && pin == shownPin) return closeBox();
+    onShow({pos, pin: shownPin, capability = {}, capabilities = {}, ok: okFn, cancel}) {
+        if (pin && pin === shownPin) return closeBox()
 
         pin = shownPin
         ok = okFn
-        settings = makeSettings(pin)
-        schemaText = jsonText(settings.schema, '{}')
-        effectsText = jsonText(settings.effects, '[]')
-        examplesText = jsonText(settings.examples, '')
-        usageGuidanceText = jsonText(settings.usageGuidance, '')
+        settings = makeSettings(pin, capability.suggestedId)
+        inputSchema = capability.inputSchema ?? {type: 'object'}
+        outputSchema = capability.hasOutput ? (capability.outputSchema ?? {type: 'object'}) : null
+        available = {
+            events: Array.isArray(capabilities?.events) ? capabilities.events : [],
+            probes: Array.isArray(capabilities?.probes) ? capabilities.probes : [],
+        }
+        verificationOpen = settings.verification.events.length > 0
+            || settings.verification.probes.length > 0
+            || !!settings.verification.description
+        migrationWarning = legacyWarning(pin?.tool)
         error = ''
 
         box.title = `Tool settings: ${pin?.name ?? ''} @ ${pin?.node?.name ?? ''}`
@@ -54,122 +61,141 @@ export const handlers = {
     },
 }
 
+$: verificationSummary = [
+    settings.verification.events.length ? `${settings.verification.events.length} event(s)` : '',
+    settings.verification.probes.length ? `${settings.verification.probes.length} probe(s)` : '',
+].filter(Boolean).join(', ') || 'No verification evidence'
+
+function makeSettings(value = null, suggestedId = '') {
+    const current = value?.tool ?? {}
+    const effects = Array.isArray(current.effects) ? current.effects : []
+    const events = new Set()
+    const probes = new Set()
+    let timeoutMs = ''
+
+    for (const effect of effects) {
+        for (const id of effect?.verifyWith?.events ?? []) if (id) events.add(id)
+        for (const value of effect?.verifyWith?.probes ?? []) {
+            const id = typeof value === 'string' ? value : value?.id
+            if (id) probes.add(id)
+        }
+        if (Number.isInteger(effect?.timeoutMs)) timeoutMs = Math.max(Number(timeoutMs) || 0, effect.timeoutMs)
+    }
+
+    return {
+        enabled: current.enabled ?? false,
+        id: current.id ?? suggestedId ?? makeFallbackId(value),
+        risk: current.risk ?? 'low',
+        approval: current.approval === 'always' ? 'always' : 'never',
+        verification: {
+            description: effects[0]?.description ?? '',
+            events: [...events],
+            probes: [...probes],
+            timeoutMs,
+        },
+    }
+}
+
 function submit() {
-    const next = collectSettings()
-    if (!next) {
+    error = ''
+    const id = String(settings.id ?? '').trim()
+
+    if (settings.enabled && !id) {
+        error = 'id is required'
+        box.show(box.pos)
+        return
+    }
+    if (id && !ID_PATTERN.test(id)) {
+        error = 'id may contain only letters, digits, dot, dash, and underscore'
         box.show(box.pos)
         return
     }
 
-    ok?.(next)
-}
-
-function makeSettings(pin) {
-    const current = pin?.tool ?? {}
-    return {
-        enabled: current.enabled ?? false,
-        id: current.id ?? defaultId(pin),
-        title: current.title ?? titleFromName(pin?.name),
-        description: current.description ?? pin?.prompt ?? '',
-        risk: current.risk ?? 'low',
-        approval: current.approval ?? 'never',
-        timeoutMs: current.timeoutMs ?? '',
-        effects: current.effects ?? [],
-        examples: current.examples,
-        usageGuidance: current.usageGuidance,
-        schema: current.schema,
-    }
-}
-
-function collectSettings() {
-    error = ''
-
     const next = {
-        enabled: settings.enabled,
-        id: settings.id.trim(),
-        title: settings.title.trim(),
-        description: settings.description.trim(),
+        enabled: !!settings.enabled,
+        ...(id ? {id} : {}),
         risk: settings.risk,
         approval: settings.approval,
     }
 
-    if (!next.enabled) return {enabled: false}
-
-    if (!next.id) {
-        error = 'id is required'
-        return null
+    const effect = collectEffect(id)
+    if (error) {
+        box.show(box.pos)
+        return
     }
+    if (effect) next.effects = [effect]
+    ok?.(next)
+}
 
-    const schema = parseOptionalJson(schemaText, 'schema')
-    if (schema === undefined) return null
-    if (schema !== null) next.schema = schema
+function collectEffect(toolId) {
+    const verification = settings.verification
+    const timeoutText = String(verification.timeoutMs ?? '').trim()
+    let timeoutMs = null
 
-    const effects = parseOptionalJson(effectsText, 'effects')
-    if (effects === undefined) return null
-    next.effects = Array.isArray(effects) ? effects : []
-
-    if (settings.timeoutMs !== '') {
-        const timeoutMs = Number(settings.timeoutMs)
-        if (!Number.isInteger(timeoutMs) || timeoutMs < 0) {
-            error = 'timeoutMs must be a positive integer'
+    if (timeoutText) {
+        timeoutMs = Number(timeoutText)
+        if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+            error = 'verification timeout must be a positive integer'
             return null
         }
-        next.timeoutMs = timeoutMs
     }
 
-    const examples = parseOptionalJson(examplesText, 'examples')
-    if (examples === undefined) return null
-    if (examples !== null) next.examples = examples
+    if (!verification.description.trim() && !verification.events.length && !verification.probes.length) return null
 
-    const usageGuidance = parseOptionalJson(usageGuidanceText, 'usageGuidance')
-    if (usageGuidance === undefined) return null
-    if (usageGuidance !== null) next.usageGuidance = usageGuidance
-
-    return next
-}
-
-function parseOptionalJson(text, label) {
-    if (!text?.trim()) return null
-
-    try {
-        return JSON.parse(text)
+    const effect = {
+        id: `${toolId || 'tool'}.effect`,
+        description: verification.description.trim(),
+        verifyWith: {
+            events: [...verification.events],
+            probes: [...verification.probes],
+        },
     }
-    catch (err) {
-        error = `${label} is not valid JSON`
-        return undefined
-    }
+    if (timeoutMs != null) effect.timeoutMs = timeoutMs
+    return effect
 }
 
-function jsonText(value, fallback) {
-    return value == null ? fallback : JSON.stringify(value, null, 2)
+function toggleEvidence(kind, id, checked) {
+    const selected = new Set(settings.verification[kind])
+    if (checked) selected.add(id)
+    else selected.delete(id)
+    settings.verification[kind] = [...selected]
+    settings = {...settings}
 }
 
-function defaultId(pin) {
-    const pinName = String(pin?.name ?? '').trim()
-    const nodeName = String(pin?.node?.name ?? '').trim()
-
-    if (pinName && nodeName) return `${pinName} @ ${nodeName}`
-    return pinName || nodeName
+function hasEvidence(kind, id) {
+    return settings.verification[kind].includes(id)
 }
 
-function titleFromName(name) {
-    return String(name ?? '')
-        .replace(/[-_.]+/g, ' ')
-        .replace(/\b\w/g, char => char.toUpperCase())
+function makeFallbackId(value) {
+    return [value?.node?.name, value?.name]
+        .map(part => String(part ?? '').trim().replace(/[^A-Za-z0-9_.-]+/g, '-').replace(/^[._-]+|[._-]+$/g, ''))
+        .filter(Boolean)
+        .join('.') || 'tool'
+}
+
+function legacyWarning(current = {}) {
+    const legacy = ['title', 'description', 'schema', 'examples', 'usageGuidance', 'timeoutMs']
+        .filter(key => current?.[key] != null)
+    if ((current?.effects?.length ?? 0) > 1) legacy.push('multiple effects')
+    return legacy.length
+        ? `Legacy ${legacy.join(', ')} metadata will be replaced by canonical derived or structured values when you save.`
+        : ''
 }
 </script>
 
 <style>
 .form {
     display: grid;
-    gap: 0.45rem;
-    min-width: 24rem;
-    max-width: 34rem;
+    gap: 0.55rem;
+    min-width: 30rem;
+    max-width: 46rem;
+    max-height: 76vh;
+    overflow: auto;
 }
 
 label {
     display: grid;
-    gap: 0.15rem;
+    gap: 0.2rem;
     color: #ddd;
     font-family: var(--fBase);
     font-size: 0.78rem;
@@ -179,6 +205,12 @@ label {
     display: flex;
     align-items: center;
     gap: 0.45rem;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
 }
 
 input,
@@ -200,19 +232,72 @@ input[type="checkbox"] {
 }
 
 textarea {
-    min-height: 3.8rem;
+    min-height: 3.2rem;
     resize: vertical;
 }
 
-.row {
+details,
+.verification {
+    border: 1px solid #444;
+    border-radius: 0.2rem;
+    padding: 0.4rem;
+}
+
+summary {
+    cursor: pointer;
+    color: #e2c64e;
+    font-family: var(--fBase);
+}
+
+pre {
+    max-height: 15rem;
+    overflow: auto;
+    margin: 0.45rem 0 0;
+    color: #ccc;
+    font-family: var(--fFixed);
+    font-size: 0.72rem;
+    white-space: pre-wrap;
+}
+
+.verification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.verification-title {
+    color: #e2c64e;
+}
+
+.hint,
+.capability-id {
+    color: #aaa;
+    font-size: 0.72rem;
+}
+
+.evidence-list {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    gap: 0.2rem;
+    max-height: 9rem;
+    overflow: auto;
+    margin: 0.25rem 0 0.5rem;
+}
+
+.evidence-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
     gap: 0.45rem;
+    align-items: start;
+}
+
+.warning {
+    color: #e2c64e;
+    font-size: 0.74rem;
 }
 
 .error {
     color: #ff7777;
-    font-family: var(--fBase);
     font-size: 0.76rem;
 }
 </style>
@@ -225,23 +310,13 @@ textarea {
         </label>
 
         <label>
-            id
+            ID
             <input spellcheck="false" bind:value={settings.id} />
-        </label>
-
-        <label>
-            title
-            <input spellcheck="false" bind:value={settings.title} />
-        </label>
-
-        <label>
-            description
-            <textarea spellcheck="false" bind:value={settings.description}></textarea>
         </label>
 
         <div class="row">
             <label>
-                risk
+                Risk
                 <select bind:value={settings.risk}>
                     <option value="low">low</option>
                     <option value="medium">medium</option>
@@ -250,40 +325,78 @@ textarea {
             </label>
 
             <label>
-                approval
+                Approval
                 <select bind:value={settings.approval}>
                     <option value="never">never</option>
-                    <option value="on-request">on-request</option>
                     <option value="always">always</option>
                 </select>
             </label>
         </div>
 
-        <label>
-            timeoutMs
-            <input spellcheck="false" bind:value={settings.timeoutMs} />
-        </label>
+        <details open>
+            <summary>Input schema</summary>
+            <pre>{JSON.stringify(inputSchema, null, 2)}</pre>
+        </details>
 
-        <label>
-            schema JSON
-            <textarea spellcheck="false" bind:value={schemaText}></textarea>
-        </label>
+        {#if outputSchema}
+            <details>
+                <summary>Output schema</summary>
+                <pre>{JSON.stringify(outputSchema, null, 2)}</pre>
+            </details>
+        {/if}
 
-        <label>
-            effects JSON
-            <textarea spellcheck="false" bind:value={effectsText}></textarea>
-        </label>
+        <div class="verification">
+            <div class="verification-header">
+                <div>
+                    <div class="verification-title">Verification</div>
+                    <div class="hint">{verificationSummary}</div>
+                </div>
+                <Button label={verificationOpen ? 'Hide details' : 'Set verification'} click={() => verificationOpen = !verificationOpen} />
+            </div>
 
-        <label>
-            examples JSON
-            <textarea spellcheck="false" bind:value={examplesText}></textarea>
-        </label>
+            {#if verificationOpen}
+                <label>
+                    Expected effect
+                    <textarea spellcheck="false" bind:value={settings.verification.description}></textarea>
+                </label>
 
-        <label>
-            usageGuidance JSON
-            <textarea spellcheck="false" bind:value={usageGuidanceText}></textarea>
-        </label>
+                <div class="row">
+                    <div>
+                        <div class="verification-title">Events</div>
+                        <div class="evidence-list">
+                            {#each available.events as item}
+                                <label class="evidence-item">
+                                    <input type="checkbox" checked={hasEvidence('events', item.id)} on:change={(event) => toggleEvidence('events', item.id, event.currentTarget.checked)} />
+                                    <span>{item.title || item.id}<span class="capability-id"> {item.id}</span></span>
+                                </label>
+                            {/each}
+                            {#if !available.events.length}<div class="hint">No exposed events</div>{/if}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="verification-title">Probes</div>
+                        <div class="evidence-list">
+                            {#each available.probes as item}
+                                <label class="evidence-item">
+                                    <input type="checkbox" checked={hasEvidence('probes', item.id)} on:change={(event) => toggleEvidence('probes', item.id, event.currentTarget.checked)} />
+                                    <span>{item.title || item.id}<span class="capability-id"> {item.id}</span></span>
+                                </label>
+                            {/each}
+                            {#if !available.probes.length}<div class="hint">No exposed probes</div>{/if}
+                        </div>
+                    </div>
+                </div>
 
+                <label>
+                    Verification timeout (ms)
+                    <input spellcheck="false" bind:value={settings.verification.timeoutMs} />
+                </label>
+            {/if}
+        </div>
+
+        {#if migrationWarning}
+            <div class="warning">{migrationWarning}</div>
+        {/if}
         {#if error}
             <div class="error">{error}</div>
         {/if}

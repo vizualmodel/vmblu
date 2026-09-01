@@ -16,10 +16,13 @@ export class AgentPolicy {
 
     canUse(kind, id) {
         const set = this.permissions?.[kind]
-        if (!set || !id) return {allowed: true, reason: 'no_policy'}
+        if (!this.enabled) return {allowed: false, reason: 'agent_disabled'}
+        if (!this.agentId) return {allowed: false, reason: 'missing_identity'}
+        if (!id) return {allowed: false, reason: 'missing_capability_id'}
+        if (!set?.hasAllowList) return {allowed: false, reason: `${kind}_permissions_missing`, rule: 'allow'}
         if (matches(set.deny, id)) return {allowed: false, reason: `${kind}_denied`, rule: 'deny'}
-        if (set.hasAllowList && !matches(set.allow, id)) return {allowed: false, reason: `${kind}_not_allowed`, rule: 'allow'}
-        return {allowed: true, reason: set.hasAllowList ? 'allowed_list' : 'default_allow', rule: set.hasAllowList ? 'allow' : 'default'}
+        if (!matches(set.allow, id)) return {allowed: false, reason: `${kind}_not_allowed`, rule: 'allow'}
+        return {allowed: true, reason: 'allowed_list', rule: 'allow'}
     }
 
     approvalDecision(tool = {}) {

@@ -6,12 +6,14 @@ import {SysbluManager} from '../nodes/sysblu-manager/sysblu-manager.js'
 import {validateSystemDocument} from '../nodes/sysblu-manager/system-document.js'
 import {transmitter} from './fixtures.js'
 import {validateProtocolReferences} from '../../cli/lib/protocol-validation.js'
+import {SCHEMA_VERSION} from '../../core/types/model/schema-version.js'
 
 const chatSystemUrl = new URL('../../../vmblu-examples/chat-application/system/active.sys.blu', import.meta.url)
 
 test('real Chat system completes endpoint and connection editing without changing its fixture', async () => {
     const originalText = await readFile(chatSystemUrl, 'utf8')
     const document = JSON.parse(originalText)
+    document.header.version = SCHEMA_VERSION
     const protocolUrl = new URL(document.nodes[0].endpoints[0].protocol, chatSystemUrl)
     const protocol = JSON.parse(await readFile(protocolUrl, 'utf8'))
     assert.equal(protocol.header.name, 'Chat')

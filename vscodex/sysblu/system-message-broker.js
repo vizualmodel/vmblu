@@ -1,4 +1,5 @@
 import {ARL, Path} from '../../core/types/arl/index.js'
+import {SCHEMA_VERSION} from '../../core/types/model/schema-version.js'
 import {adaptARL, vscode} from '../webview/arl-adapter.js'
 import {adaptConsole} from '../webview/console-adapter.js'
 
@@ -8,7 +9,7 @@ function emptySystem(name = 'System') {
     const now = new Date().toISOString()
     return {
         header: {
-            version: '1.11.0',
+            version: SCHEMA_VERSION,
             name,
             created: now,
             saved: now,

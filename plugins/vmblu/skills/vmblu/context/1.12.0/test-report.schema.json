@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/context/1.12.0/test-report.schema.json",
+  "title": "vmblu Test Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "kind", "version", "schemaVersion", "test", "artifactHash", "target", "startedAt", "durationMs", "status", "summary", "scenarios"],
+  "properties": {
+    "$schema": { "const": "https://vmblu.dev/context/1.12.0/test-report.schema.json" },
+    "kind": { "const": "vmblu.test-report" },
+    "version": { "const": 1 },
+    "schemaVersion": { "const": "1.12.0" },
+    "test": { "type": "string", "minLength": 1 },
+    "artifactHash": { "$ref": "#/$defs/Hash" },
+    "target": { "$ref": "#/$defs/Target" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "status": { "$ref": "#/$defs/Status" },
+    "summary": { "$ref": "#/$defs/Summary" },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ScenarioResult" }
+    }
+  },
+  "$defs": {
+    "Hash": {
+      "type": "string",
+      "pattern": "^fnv1a64:[0-9a-f]{16}$"
+    },
+    "Status": {
+      "enum": ["passed", "failed", "skipped", "error"]
+    },
+    "Target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "name", "path"],
+      "properties": {
+        "scope": { "enum": ["node", "group", "model"] },
+        "name": { "type": "string", "minLength": 1 },
+        "path": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "Summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "skipped", "error"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "error": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "pin", "message", "atMs"],
+      "properties": {
+        "kind": { "enum": ["send", "reply"] },
+        "pin": { "type": "string", "minLength": 1 },
+        "message": {},
+        "atMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Action": {},
+    "Expectation": {},
+    "Failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message"],
+      "properties": {
+        "message": { "type": "string", "minLength": 1 },
+        "pin": { "type": "string" },
+        "expected": {},
+        "observed": {}
+      }
+    },
+    "ScenarioResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "purpose", "actions", "expect", "status", "durationMs", "observations", "failures"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Action" }
+        },
+        "expect": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Expectation" }
+        },
+        "status": { "$ref": "#/$defs/Status" },
+        "durationMs": { "type": "number", "minimum": 0 },
+        "observations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Observation" }
+        },
+        "failures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Failure" }
+        }
+      }
+    }
+  }
+}

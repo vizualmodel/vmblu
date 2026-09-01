@@ -1,6 +1,7 @@
 import {getRuntimeSettings} from '@vizualmodel/vmblu-runtime/runtime-settings'
 
-import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
+import {collapseEndpointOnlyCables, redoCableCollapses, TestRepo, undoCableCollapses} from '../../types/node/index.js'
+import {Path} from '../../types/arl/index.js'
 import {applyNodePromptDocument, getNodePromptDocument} from '../../types/node/node-prompt-document.js'
 
 export const redoxNode = {
@@ -302,10 +303,19 @@ nodeDrag: {
 },
 
 changeNodeSettings: {
-    doit({node, sx, team}) {
+    doit({node, sx, team, testRepo}) {
 
         if (JSON.stringify(sx) !== JSON.stringify(node.sx)) node.sx = sx
         node.team = team?.length ? team : null
+        if (!node.link && !node.testRepo?.readOnly) {
+            const value = String(testRepo ?? '').trim()
+            const current = node.testRepo?.getPath?.(node.model?.getArl?.()) ?? ''
+            if (value !== current) {
+                node.testRepo = value
+                    ? new TestRepo().resolve({arl: value, pathKind: Path.getKind(value)}, node.model?.getArl?.())
+                    : null
+            }
+        }
     },
     undo({}) {
     },

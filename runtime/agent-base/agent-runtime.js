@@ -76,7 +76,7 @@ export class AgentRuntime {
         this.overlay = new AgentOverlay({
             agent: this,
             broker: this.broker,
-            traceRecorder: this.broker?.trace,
+            traceRecorder: this.broker?.agentTraceView?.(this.id),
             config: this.config,
         })
         this.overlay.mount()
@@ -176,6 +176,7 @@ export class AgentRuntime {
             type: BrokerRequestTypes.APPROVAL_RESOLVE,
             approvalId,
             approved,
+            authority: options.authority ?? {kind: 'local-ui', id: 'embedded-agent-ui', trusted: true},
             ...options,
         })
     }
@@ -345,10 +346,13 @@ export class AgentRuntime {
         }
 
         const result = await this.callTool(mapped.capability.id, args)
+        const completed = result?.status === 'completed' || result?.status === 'verified'
         return {
-            ok: !result?.error,
+            ok: completed,
+            accepted: result?.status === 'accepted',
             toolId: mapped.capability.id,
             status: result?.status,
+            outcome: toolOutcomeText(result?.status),
             result,
         }
     }
@@ -358,6 +362,19 @@ export class AgentRuntime {
             agentId: this.id,
             ...entry,
         })
+    }
+}
+
+function toolOutcomeText(status) {
+    switch (status) {
+        case 'accepted': return 'The call was dispatched; application completion is not known.'
+        case 'completed': return 'The application returned a successful reply.'
+        case 'verified': return 'Configured application evidence verified the effect.'
+        case 'unverified': return 'The call was dispatched but configured evidence did not verify the effect.'
+        case 'pending': return 'The call is waiting for trusted approval.'
+        case 'denied': return 'The call was denied.'
+        case 'failed': return 'The call failed before a verified application result.'
+        default: return 'The tool outcome is unknown.'
     }
 }
 

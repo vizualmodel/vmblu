@@ -1,13 +1,19 @@
 import {Path} from '../arl/index.js'
 import {makeArtifactProvenance} from './artifact-provenance.js'
-
-const PRIMITIVE_SCHEMA_TYPES = new Set(['string', 'number', 'boolean', 'integer', 'object', 'array', 'null'])
-const ANY_SCHEMA = {type: 'object'}
+import {
+    ANY_PAYLOAD_SCHEMA,
+    capabilityTitle,
+    hasReplyContract,
+    makeCapabilityId,
+    schemaFromPinContract,
+    schemaFromVmbluType,
+} from './capability-contract.js'
 
 export const CapabilityHandling = {
 
 makeCapabilityObject(root = null) {
     const appName = root?.name || this.raw?.root?.name || Path.getSplit(this.getArl()?.getPath?.() ?? '').name || ''
+    const appId = makeCapabilityId([], appName || 'application')
 
     const capability = {
         schema: 'https://vmblu.dev/schemas/capabilities.v1.json',
@@ -19,7 +25,7 @@ makeCapabilityObject(root = null) {
             schemaVersion: this.raw?.header?.version,
         }),
         application: {
-            id: appName || 'application',
+            id: appId,
             title: appName || 'Application',
             description: this.raw?.header?.description || `${appName || 'vmblu'} application.`
         },
@@ -88,7 +94,7 @@ collectNodeProbes(rawNode, capability, nodePath) {
             title: probeMeta.title || this.titleFromId(id),
             description: probeMeta.description || '',
             kind: probeMeta.kind || 'state',
-            schema: probeMeta.schema || ANY_SCHEMA,
+            schema: probeMeta.schema || ANY_PAYLOAD_SCHEMA,
             binding: probeMeta.binding || {
                 kind: 'stub',
                 node: rawNode.name
@@ -120,23 +126,29 @@ makeToolCapability(rawNode, pin, nodePath) {
     const id = meta.id || this.defaultCapabilityId(nodePath, pin.name)
     const tool = {
         id,
-        title: meta.title || this.titleFromId(id),
-        description: meta.description || pin.prompt || `Send ${pin.name} to ${rawNode.name}.`,
+        title: this.titleFromId(pin.name),
+        description: pin.prompt || `Send ${pin.name} to ${rawNode.name}.`,
         input: {
             node: rawNode.name,
             pin: pin.name,
             ref: `${pin.name}@${rawNode.name}`,
             payload: this.pinPayloadName(pin),
-            schema: meta.schema || this.schemaFromPinContract(pin, 'request')
+            schema: this.schemaFromPinContract(pin, 'request')
         },
         effects: Array.isArray(meta.effects) ? meta.effects : [],
         risk: meta.risk || 'low',
         approval: meta.approval || 'never'
     }
 
-    if (meta.timeoutMs) tool.timeoutMs = meta.timeoutMs
-    if (meta.examples) tool.examples = meta.examples
-    if (meta.usageGuidance) tool.usageGuidance = meta.usageGuidance
+    if (hasReplyContract(pin)) {
+        tool.output = {
+            payload: pin.contract.payload.reply,
+            schema: this.schemaFromPinContract(pin, 'reply')
+        }
+    }
+
+    const verification = this.verificationFromEffects(tool.effects)
+    if (verification) tool.verifyWith = verification
 
     return tool
 },
@@ -154,95 +166,55 @@ makeEventCapability(rawNode, pin, nodePath) {
     const id = meta.id || this.defaultCapabilityId(nodePath, pin.name)
     const event = {
         id,
-        title: meta.title || this.titleFromId(id),
-        description: meta.description || pin.prompt || `Observed when ${rawNode.name} emits ${pin.name}.`,
+        title: this.titleFromId(pin.name),
+        description: pin.prompt || `Observed when ${rawNode.name} emits ${pin.name}.`,
         source: {
             node: rawNode.name,
             pin: pin.name,
             ref: `${pin.name}@${rawNode.name}`
         },
-        schema: meta.schema || this.schemaFromPinContract(pin, 'event')
+        schema: this.schemaFromPinContract(pin, 'event')
     }
 
     return event
 },
 
 schemaFromPinContract(pin, direction = 'request') {
-    const payload = pin?.contract?.payload
-    if (!payload) return ANY_SCHEMA
-
-    if (typeof payload === 'object' && payload !== null) {
-        const selected = direction === 'reply' ? payload.reply : payload.request
-        return this.schemaFromVmbluType(selected)
-    }
-
-    return this.schemaFromVmbluType(payload)
+    return schemaFromPinContract(pin, this.vmbluTypes, direction)
 },
 
-schemaFromVmbluType(typeName, seen = new Set()) {
-    if (!typeName || typeName === 'any') return ANY_SCHEMA
-
-    if (typeof typeName !== 'string') return ANY_SCHEMA
-
-    const lower = typeName.toLowerCase()
-    if (PRIMITIVE_SCHEMA_TYPES.has(lower)) return {type: lower}
-    if (lower === 'int') return {type: 'integer'}
-    if (lower === 'float') return {type: 'number'}
-
-    const typeMap = typeof this.vmbluTypes === 'string'
-        ? JSON.parse(this.vmbluTypes)
-        : (this.vmbluTypes ?? null)
-
-    const def = typeMap?.[typeName]
-    if (!def || seen.has(typeName)) return {type: 'object', title: typeName}
-
-    seen.add(typeName)
-
-    const kind = def.kind ?? (def.fields ? 'object' : def.items ? 'array' : def.external ? 'external' : 'primitive')
-
-    if (kind === 'object') {
-        const properties = {}
-        for (const [fieldName, field] of Object.entries(def.fields ?? {})) {
-            properties[fieldName] = this.schemaFromVmbluType(field.vmbluType, seen)
-            if (field.summary) properties[fieldName].description = field.summary
-        }
-
-        const schema = {type: 'object', properties}
-        if (Array.isArray(def.required) && def.required.length > 0) schema.required = def.required
-        if (def.summary) schema.description = def.summary
-        return schema
-    }
-
-    if (kind === 'array') {
-        const schema = {
-            type: 'array',
-            items: this.schemaFromVmbluType(def.items?.vmbluType, seen)
-        }
-        if (def.summary) schema.description = def.summary
-        return schema
-    }
-
-    if (kind === 'primitive') {
-        return this.schemaFromVmbluType(def.vmbluType || 'string', seen)
-    }
-
-    return {type: 'object', title: typeName, description: def.summary || `External type ${typeName}.`}
+schemaFromVmbluType(typeName) {
+    return schemaFromVmbluType(typeName, this.vmbluTypes)
 },
 
 defaultCapabilityId(nodePath, name) {
-    const pinName = String(name ?? '').trim()
-    const nodeName = String(nodePath?.at?.(-1) ?? '').trim()
-
-    if (pinName && nodeName) return `${pinName} @ ${nodeName}`
-    return pinName || nodeName
+    return makeCapabilityId(nodePath, name)
 },
 
 titleFromId(id) {
-    const first = String(id || '').split('@').at(0)?.trim() || id || ''
-    return String(first)
-        .replace(/[-_]+/g, ' ')
-        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-        .replace(/\b\w/g, char => char.toUpperCase())
+    return capabilityTitle(id)
+},
+
+verificationFromEffects(effects = []) {
+    const events = new Set()
+    const probes = new Set()
+    let timeoutMs = null
+
+    for (const effect of effects) {
+        for (const id of effect?.verifyWith?.events ?? []) events.add(id)
+        for (const value of effect?.verifyWith?.probes ?? []) {
+            const id = typeof value === 'string' ? value : value?.id
+            if (id) probes.add(id)
+        }
+        if (Number.isInteger(effect?.timeoutMs)) {
+            timeoutMs = timeoutMs == null ? effect.timeoutMs : Math.max(timeoutMs, effect.timeoutMs)
+        }
+    }
+
+    if (!events.size && !probes.size) return null
+    const verification = {events: [...events], probes: [...probes].map(id => ({id}))}
+    if (timeoutMs != null) verification.timeoutMs = timeoutMs
+    return verification
 }
 
 }

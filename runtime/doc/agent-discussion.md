@@ -1,3 +1,7 @@
+# Historical agent integration discussion
+
+> **Historical design record.** This conversation predates the current agent integration. See [the agent integration guide](agent-user-guide.md) for supported behavior and [the deferred backlog](../../agent-integration-improvements.md) for future work.
+
 # User prompt
 
 Currently vmblu allows llms to interact with an application as follows:

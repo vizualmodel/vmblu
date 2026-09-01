@@ -31,6 +31,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var index_exports = {};
 __export(index_exports, {
   Runtime: () => Runtime2,
+  SecurityPolicyError: () => SecurityPolicyError,
   SecurityReporterFactory: () => SecurityReporterFactory,
   VERSION: () => VERSION,
   safety: () => safety
@@ -398,7 +399,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.11.0";
+var RUNTIME_VERSION = "1.12.0";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
@@ -649,9 +650,7 @@ function isCapabilitySuppressed(cap) {
 }
 __name(isCapabilitySuppressed, "isCapabilitySuppressed");
 
-// rt-als/runtime-settings.js
-var PERMISSIONS = ["allow", "warn", "deny"];
-var PERMISSION_ORDER = { deny: 0, warn: 1, allow: 2 };
+// rt-base/runtime-settings.js
 var defaultWorker = /* @__PURE__ */ __name(() => ({
   on: false,
   path: ""
@@ -663,40 +662,10 @@ var defaultMonitor = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultFsOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  roots: []
-}), "defaultFsOperation");
-var defaultNetOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  hosts: []
-}), "defaultNetOperation");
-var defaultProcessOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  commands: []
-}), "defaultProcessOperation");
-var defaultSecurityPolicy = /* @__PURE__ */ __name(() => ({
-  fs: {
-    read: defaultFsOperation(),
-    write: defaultFsOperation(),
-    delete: defaultFsOperation()
-  },
-  net: {
-    egress: defaultNetOperation()
-  },
-  process: {
-    exec: defaultProcessOperation()
-  }
-}), "defaultSecurityPolicy");
-var defaultSecurity = /* @__PURE__ */ __name(() => ({
-  enabled: false,
-  ...defaultSecurityPolicy()
-}), "defaultSecurity");
 function make() {
   return {
     run: defaultRun(),
-    monitor: defaultMonitor(),
-    security: defaultSecurity()
+    monitor: defaultMonitor()
   };
 }
 __name(make, "make");
@@ -704,8 +673,6 @@ function normalize(dx = null) {
   var _a, _b;
   const defaults = make();
   if (!dx || typeof dx !== "object") return defaults;
-  const legacySafety = dx.safety ?? {};
-  const security = normalizeNodeSecurity(dx.security, legacySafety);
   const normalized = {
     run: {
       ...defaults.run,
@@ -719,8 +686,7 @@ function normalize(dx = null) {
       ...defaults.monitor,
       ...dx.monitor ?? {},
       logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
-    },
-    security
+    }
   };
   normalized.run.worker.on = !!normalized.run.worker.on;
   normalized.run.worker.path = normalized.run.worker.path ?? "";
@@ -743,27 +709,21 @@ function assign(target, dx = null) {
   const normalized = normalize(dx);
   target.run = structuredClone(normalized.run);
   target.monitor = structuredClone(normalized.monitor);
-  target.security = structuredClone(normalized.security);
   delete target.logMessages;
   delete target.worker;
-  delete target.safety;
+  delete target.security;
   return target;
 }
 __name(assign, "assign");
 function isDefault(dx = null) {
   const normalized = normalize(dx);
-  const defaults = make();
-  if (!normalized.security.enabled || isDefaultSecurityPolicy(normalized.security)) {
-    normalized.security = structuredClone(defaults.security);
-  }
-  return JSON.stringify(normalized) === JSON.stringify(defaults);
+  return JSON.stringify(normalized) === JSON.stringify(make());
 }
 __name(isDefault, "isDefault");
 function makeModel() {
   return {
     run: {},
-    monitor: {},
-    security: defaultSecurityPolicy()
+    monitor: {}
   };
 }
 __name(makeModel, "makeModel");
@@ -778,188 +738,17 @@ function normalizeModel(settings = null) {
     monitor: {
       ...defaults.monitor,
       ...settings.monitor ?? {}
-    },
-    security: normalizeModelSecurity(settings.security)
+    }
   };
 }
 __name(normalizeModel, "normalizeModel");
 function effectivePolicy(modelSettings = null, nodeDx = null) {
-  var _a;
-  const hasModelSecurity = !!(modelSettings && typeof modelSettings === "object" && modelSettings.security);
-  const model = normalizeModel(modelSettings);
-  const node = normalize(nodeDx);
-  const nodeSecurity = ((_a = node.security) == null ? void 0 : _a.enabled) ? node.security : defaultSecurity();
   return {
-    active: hasModelSecurity,
-    security: intersectSecurity(model.security, nodeSecurity),
-    model,
-    node
+    model: normalizeModel(modelSettings),
+    node: normalize(nodeDx)
   };
 }
 __name(effectivePolicy, "effectivePolicy");
-function normalizeNodeSecurity(security = null, legacySafety = {}) {
-  const source = security ?? {};
-  const legacy = legacyNodeSecurity(source);
-  const enabled = source.enabled ?? legacySafety.on ?? false;
-  return {
-    enabled: !!enabled,
-    ...normalizeSecurityPolicy(source, legacy)
-  };
-}
-__name(normalizeNodeSecurity, "normalizeNodeSecurity");
-function normalizeModelSecurity(security = null) {
-  return normalizeSecurityPolicy(security, legacyModelSecurity(security));
-}
-__name(normalizeModelSecurity, "normalizeModelSecurity");
-function normalizeSecurityPolicy(source = null, legacy = {}) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
-  const defaults = defaultSecurityPolicy();
-  const value = source ?? {};
-  return {
-    fs: {
-      read: normalizeFsOperation(((_a = value.fs) == null ? void 0 : _a.read) ?? ((_b = legacy.fs) == null ? void 0 : _b.read) ?? defaults.fs.read),
-      write: normalizeFsOperation(((_c = value.fs) == null ? void 0 : _c.write) ?? ((_d = legacy.fs) == null ? void 0 : _d.write) ?? defaults.fs.write),
-      delete: normalizeFsOperation(((_e = value.fs) == null ? void 0 : _e.delete) ?? ((_f = legacy.fs) == null ? void 0 : _f.delete) ?? defaults.fs.delete)
-    },
-    net: {
-      egress: normalizeNetOperation(((_g = value.net) == null ? void 0 : _g.egress) ?? ((_h = legacy.net) == null ? void 0 : _h.egress) ?? defaults.net.egress)
-    },
-    process: {
-      exec: normalizeProcessOperation(((_i = value.process) == null ? void 0 : _i.exec) ?? ((_j = legacy.process) == null ? void 0 : _j.exec) ?? defaults.process.exec)
-    }
-  };
-}
-__name(normalizeSecurityPolicy, "normalizeSecurityPolicy");
-function normalizeFsOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    roots: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.roots)
-  };
-}
-__name(normalizeFsOperation, "normalizeFsOperation");
-function normalizeNetOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    hosts: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.hosts)
-  };
-}
-__name(normalizeNetOperation, "normalizeNetOperation");
-function normalizeProcessOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    commands: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.commands)
-  };
-}
-__name(normalizeProcessOperation, "normalizeProcessOperation");
-function normalizeMode(value) {
-  return PERMISSIONS.includes(value) ? value : "deny";
-}
-__name(normalizeMode, "normalizeMode");
-function normalizeList(value) {
-  return Array.isArray(value) ? value.filter(Boolean).map((item) => String(item)) : [];
-}
-__name(normalizeList, "normalizeList");
-function legacyModelSecurity(security = null) {
-  if (!(security == null ? void 0 : security.defaults) && !(security == null ? void 0 : security.allow)) return {};
-  const defaults = security.defaults ?? {};
-  const allow = security.allow ?? {};
-  return {
-    fs: {
-      read: defaultFsOperation("deny"),
-      write: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) },
-      delete: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) }
-    },
-    net: {
-      egress: { mode: normalizeLegacyMode(defaults.net), hosts: normalizeList(allow.netHosts) }
-    },
-    process: {
-      exec: { mode: normalizeLegacyMode(defaults.process), commands: [] }
-    }
-  };
-}
-__name(legacyModelSecurity, "legacyModelSecurity");
-function legacyNodeSecurity(security = null) {
-  if (!(security == null ? void 0 : security.request)) return {};
-  const request = security.request ?? {};
-  const allow = request.allow ?? {};
-  return {
-    fs: {
-      read: defaultFsOperation("deny"),
-      write: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) },
-      delete: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) }
-    },
-    net: {
-      egress: { mode: normalizeLegacyMode(request.net), hosts: normalizeList(allow.netHosts) }
-    },
-    process: {
-      exec: { mode: normalizeLegacyMode(request.process), commands: [] }
-    }
-  };
-}
-__name(legacyNodeSecurity, "legacyNodeSecurity");
-function normalizeLegacyMode(value) {
-  return value === "inherit" ? "deny" : normalizeMode(value);
-}
-__name(normalizeLegacyMode, "normalizeLegacyMode");
-function intersectSecurity(model, node) {
-  return {
-    fs: {
-      read: intersectFsOperation(model.fs.read, node.fs.read),
-      write: intersectFsOperation(model.fs.write, node.fs.write),
-      delete: intersectFsOperation(model.fs.delete, node.fs.delete)
-    },
-    net: {
-      egress: intersectNetOperation(model.net.egress, node.net.egress)
-    },
-    process: {
-      exec: intersectProcessOperation(model.process.exec, node.process.exec)
-    }
-  };
-}
-__name(intersectSecurity, "intersectSecurity");
-function intersectFsOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    roots: mode === "deny" ? [] : intersectScope(model.roots, node.roots)
-  };
-}
-__name(intersectFsOperation, "intersectFsOperation");
-function intersectNetOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    hosts: mode === "deny" ? [] : intersectScope(model.hosts, node.hosts)
-  };
-}
-__name(intersectNetOperation, "intersectNetOperation");
-function intersectProcessOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    commands: mode === "deny" ? [] : intersectScope(model.commands, node.commands)
-  };
-}
-__name(intersectProcessOperation, "intersectProcessOperation");
-function stricterMode(modelMode, nodeMode) {
-  return PERMISSION_ORDER[nodeMode] <= PERMISSION_ORDER[modelMode] ? nodeMode : modelMode;
-}
-__name(stricterMode, "stricterMode");
-function intersectScope(modelValues = [], nodeValues = []) {
-  if (!Array.isArray(modelValues) || !modelValues.length) return Array.isArray(nodeValues) ? nodeValues.slice() : [];
-  if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice();
-  const allowed = new Set(modelValues);
-  return nodeValues.filter((value) => allowed.has(value));
-}
-__name(intersectScope, "intersectScope");
-function isDefaultSecurityPolicy(security = {}) {
-  const { enabled, ...policy } = security;
-  return JSON.stringify(policy) === JSON.stringify(defaultSecurityPolicy());
-}
-__name(isDefaultSecurityPolicy, "isDefaultSecurityPolicy");
 var runtimeSettings = {
   make,
   normalize,
@@ -972,192 +761,379 @@ var runtimeSettings = {
   effectivePolicy
 };
 
+// rt-als/runtime-settings.js
+var MODES = /* @__PURE__ */ new Set(["allow", "warn", "deny"]);
+var denyOperation = /* @__PURE__ */ __name(() => ({ mode: "deny" }), "denyOperation");
+var defaultSecurityPolicy = /* @__PURE__ */ __name(() => ({
+  enabled: true,
+  fs: {
+    read: denyOperation(),
+    write: denyOperation(),
+    delete: denyOperation()
+  },
+  net: {
+    egress: denyOperation()
+  },
+  process: {
+    exec: denyOperation()
+  }
+}), "defaultSecurityPolicy");
+function make2() {
+  return runtimeSettings.make();
+}
+__name(make2, "make");
+function normalize2(dx = null) {
+  return runtimeSettings.normalize(dx);
+}
+__name(normalize2, "normalize");
+function clone2(dx = null) {
+  return runtimeSettings.clone(dx);
+}
+__name(clone2, "clone");
+function reset2(target) {
+  return runtimeSettings.reset(target);
+}
+__name(reset2, "reset");
+function assign2(target, dx = null) {
+  return runtimeSettings.assign(target, dx);
+}
+__name(assign2, "assign");
+function isDefault2(dx = null) {
+  return runtimeSettings.isDefault(dx);
+}
+__name(isDefault2, "isDefault");
+function makeModel2() {
+  return {
+    ...runtimeSettings.makeModel(),
+    security: defaultSecurityPolicy()
+  };
+}
+__name(makeModel2, "makeModel");
+function normalizeModel2(settings = null) {
+  const base = runtimeSettings.normalizeModel(settings);
+  if (!settings || typeof settings !== "object" || !settings.security) return base;
+  return {
+    ...base,
+    security: normalizeModelSecurity(settings.security)
+  };
+}
+__name(normalizeModel2, "normalizeModel");
+function effectivePolicy2(modelSettings = null) {
+  const model = normalizeModel2(modelSettings);
+  return {
+    active: !!model.security && model.security.enabled !== false,
+    security: model.security ?? null,
+    model
+  };
+}
+__name(effectivePolicy2, "effectivePolicy");
+function normalizeModelSecurity(security = null) {
+  var _a, _b, _c, _d, _e;
+  const legacy = legacyModelSecurity(security);
+  const source = legacy ?? security ?? {};
+  return {
+    enabled: source.enabled !== false,
+    fs: {
+      read: normalizeOperation((_a = source.fs) == null ? void 0 : _a.read, "roots"),
+      write: normalizeOperation((_b = source.fs) == null ? void 0 : _b.write, "roots"),
+      delete: normalizeOperation((_c = source.fs) == null ? void 0 : _c.delete, "roots")
+    },
+    net: {
+      egress: normalizeOperation((_d = source.net) == null ? void 0 : _d.egress, "hosts")
+    },
+    process: {
+      exec: normalizeOperation((_e = source.process) == null ? void 0 : _e.exec, "commands")
+    }
+  };
+}
+__name(normalizeModelSecurity, "normalizeModelSecurity");
+function normalizeOperation(value = null, scopeKey) {
+  const mode = MODES.has(value == null ? void 0 : value.mode) ? value.mode : "deny";
+  if (mode === "deny") return denyOperation();
+  if ((value == null ? void 0 : value.all) === true) return { mode, all: true };
+  const scope = normalizeList(value == null ? void 0 : value[scopeKey]);
+  return scope.length ? { mode, [scopeKey]: scope } : denyOperation();
+}
+__name(normalizeOperation, "normalizeOperation");
+function normalizeList(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean))];
+}
+__name(normalizeList, "normalizeList");
+function legacyModelSecurity(security = null) {
+  if (!security || !security.defaults && !security.allow && !security.mode && security.forwardEvents == null) return null;
+  const defaults = security.defaults ?? {};
+  const allow = security.allow ?? {};
+  const fsRoots = normalizeList(allow.fsRoots);
+  const hosts = normalizeList(allow.netHosts);
+  return {
+    enabled: security.mode !== "off",
+    fs: {
+      read: denyOperation(),
+      write: legacyOperation(defaults.fs, "roots", fsRoots),
+      delete: legacyOperation(defaults.fs, "roots", fsRoots)
+    },
+    net: {
+      egress: legacyOperation(defaults.net, "hosts", hosts)
+    },
+    process: {
+      exec: legacyOperation(defaults.process, "commands", [])
+    }
+  };
+}
+__name(legacyModelSecurity, "legacyModelSecurity");
+function legacyOperation(value, scopeKey, scope) {
+  const mode = MODES.has(value) ? value : "deny";
+  if (mode === "deny") return denyOperation();
+  return scope.length ? { mode, [scopeKey]: scope } : { mode, all: true };
+}
+__name(legacyOperation, "legacyOperation");
+function validateModel(settings = null) {
+  var _a, _b, _c, _d, _e;
+  const errors = [];
+  if (!settings || typeof settings !== "object" || !settings.security) return errors;
+  const security = settings.security;
+  if (legacyModelSecurity(security)) {
+    errors.push({ code: "legacy_security", path: "security", message: "legacy application security settings are deprecated" });
+    return errors;
+  }
+  validateKeys(errors, security, ["enabled", "fs", "net", "process"], "security");
+  if (security.enabled != null && typeof security.enabled !== "boolean") {
+    errors.push({ code: "malformed_security", path: "security.enabled", message: "security.enabled must be a boolean" });
+  }
+  validateKeys(errors, security.fs, ["read", "write", "delete"], "security.fs");
+  validateKeys(errors, security.net, ["egress"], "security.net");
+  validateKeys(errors, security.process, ["exec"], "security.process");
+  validateOperation(errors, (_a = security.fs) == null ? void 0 : _a.read, "roots", "security.fs.read");
+  validateOperation(errors, (_b = security.fs) == null ? void 0 : _b.write, "roots", "security.fs.write");
+  validateOperation(errors, (_c = security.fs) == null ? void 0 : _c.delete, "roots", "security.fs.delete");
+  validateOperation(errors, (_d = security.net) == null ? void 0 : _d.egress, "hosts", "security.net.egress");
+  validateOperation(errors, (_e = security.process) == null ? void 0 : _e.exec, "commands", "security.process.exec");
+  return errors;
+}
+__name(validateModel, "validateModel");
+function validateKeys(errors, value, allowed, location) {
+  if (value == null) return;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    errors.push({ code: "malformed_security", path: location, message: `${location} must be an object` });
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) errors.push({ code: "unknown_security_field", path: `${location}.${key}`, message: `unknown security field ${location}.${key}` });
+  }
+}
+__name(validateKeys, "validateKeys");
+function validateOperation(errors, value, scopeKey, location) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push({ code: "malformed_security", path: location, message: `${location} must be an object` });
+    return;
+  }
+  validateKeys(errors, value, ["mode", "all", scopeKey], location);
+  if (!MODES.has(value.mode)) errors.push({ code: "invalid_security_mode", path: `${location}.mode`, message: `${location}.mode must be allow, warn, or deny` });
+  const hasAll = value.all === true;
+  const hasScope = Array.isArray(value[scopeKey]) && value[scopeKey].length > 0;
+  if (value.mode === "deny" && (value.all != null || value[scopeKey] != null)) {
+    errors.push({ code: "invalid_security_scope", path: location, message: `${location} deny mode cannot define a scope` });
+  } else if (value.mode !== "deny" && hasAll === hasScope) {
+    errors.push({ code: "invalid_security_scope", path: location, message: `${location} must define either all: true or a non-empty ${scopeKey} array` });
+  }
+  if (value[scopeKey] != null && (!Array.isArray(value[scopeKey]) || value[scopeKey].some((item) => typeof item !== "string" || !item.trim()))) {
+    errors.push({ code: "invalid_security_scope", path: `${location}.${scopeKey}`, message: `${location}.${scopeKey} must contain non-empty strings` });
+  } else if (Array.isArray(value[scopeKey])) {
+    for (const item of value[scopeKey]) {
+      if (!validScopeValue(item, scopeKey)) {
+        errors.push({ code: "invalid_security_target", path: `${location}.${scopeKey}`, message: `${location}.${scopeKey} contains an invalid ${scopeKey} value: ${item}` });
+      }
+    }
+  }
+}
+__name(validateOperation, "validateOperation");
+function validScopeValue(value, scopeKey) {
+  if (typeof value !== "string" || !value.trim() || value.includes("\0")) return false;
+  if (scopeKey !== "hosts") return true;
+  const text = value.trim();
+  if (text.includes("/") || text.includes(":")) return false;
+  try {
+    const parsed = new URL(`http://${text}`);
+    return !!parsed.hostname && parsed.pathname === "/";
+  } catch {
+    return false;
+  }
+}
+__name(validScopeValue, "validScopeValue");
+var runtimeSettings2 = {
+  make: make2,
+  normalize: normalize2,
+  clone: clone2,
+  reset: reset2,
+  assign: assign2,
+  isDefault: isDefault2,
+  makeModel: makeModel2,
+  normalizeModel: normalizeModel2,
+  effectivePolicy: effectivePolicy2,
+  validateModel
+};
+
 // security/safety.js
 var import_node_child_process = __toESM(require("child_process"), 1);
 var import_node_fs = __toESM(require("fs"), 1);
 var import_node_http = __toESM(require("http"), 1);
 var import_node_https = __toESM(require("https"), 1);
 var import_node_path = __toESM(require("path"), 1);
-var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.rt-als.safetyHooks");
-var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.rt-als.wrapped");
+var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.runtime.security");
+var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.runtime.security.wrapped");
 var _Safety = class _Safety {
-  constructor() {
-    this.emitter = null;
-    this.policyClassifier = null;
-  }
-  setEmitter(fn = null) {
-    this.emitter = typeof fn === "function" ? fn : null;
-  }
-  setPolicyClassifier(fn = null) {
-    this.policyClassifier = typeof fn === "function" ? fn : null;
-  }
-  emit(event) {
-    if (!this.emitter) return;
-    try {
-      this.emitter(event);
-    } catch (error) {
-      console.warn("vmblu safety emitter failed:", error);
-    }
-  }
-  makePolicyClassifier({ runtime, runtimeSettings: modelRuntimeSettings } = {}) {
-    return (event) => {
-      var _a, _b, _c, _d;
-      const actor = (_b = (_a = runtime == null ? void 0 : runtime.actors) == null ? void 0 : _a.find) == null ? void 0 : _b.call(_a, (candidate) => candidate.name === (event == null ? void 0 : event.node));
-      const effectivePolicy2 = (_d = (_c = runtime == null ? void 0 : runtime.settings) == null ? void 0 : _c.effectivePolicy) == null ? void 0 : _d.call(_c, modelRuntimeSettings, actor == null ? void 0 : actor.dx);
-      if (!(effectivePolicy2 == null ? void 0 : effectivePolicy2.active) || !(effectivePolicy2 == null ? void 0 : effectivePolicy2.security)) return null;
-      const operation = parseOperation(event.operation ?? event.cap ?? event.capability);
-      const policy = operationPolicy(effectivePolicy2.security, operation);
-      if (!policy) return null;
-      const scopeDecision = classifyScope(operation, event.detail, policy);
-      const decision = (scopeDecision == null ? void 0 : scopeDecision.decision) ?? (policy.mode === "deny" ? "denied" : policy.mode === "warn" ? "warning" : "allowed");
-      return {
-        decision,
-        area: operation.area,
-        action: operation.action,
-        mode: (scopeDecision == null ? void 0 : scopeDecision.mode) ?? policy.mode,
-        ...(scopeDecision == null ? void 0 : scopeDecision.reason) ? { reason: scopeDecision.reason } : {}
-      };
-    };
-  }
-  report(operation, detail = {}) {
-    const event = {
-      ts: Date.now(),
-      node: getCurrentNode(),
-      operation: normalizeOperationName(operation),
-      cap: legacyCapabilityName(operation),
-      detail
-    };
-    const policy = this.classify(event);
-    if (policy) event.policy = policy;
-    this.emit(event);
-    return event;
-  }
-  classify(event) {
-    if (!this.policyClassifier) return null;
-    try {
-      return this.policyClassifier(event) ?? null;
-    } catch (error) {
-      return {
-        decision: "error",
-        reason: "policy_classifier_failed",
-        message: (error == null ? void 0 : error.message) || String(error)
-      };
-    }
-  }
-  emitCapability(operation, detail) {
-    var _a;
-    if (isCapabilitySuppressed(operation)) return null;
-    const event = this.report(operation, detail);
-    if (((_a = event == null ? void 0 : event.policy) == null ? void 0 : _a.decision) === "denied") {
-      throw new SecurityPolicyError(event);
-    }
-    return event;
-  }
-  installHooks({ mode = "off" } = {}) {
-    if (mode === "off") return () => {
-    };
+  claim(owner, { security, baseDir } = {}) {
+    if (!owner) throw new Error("vmblu security instrumentation requires a runtime owner");
+    if (!security) return false;
     const state = getState();
-    state.count += 1;
-    if (state.count === 1) {
-      state.restores = [];
+    if (state.owner && state.owner !== owner) {
+      throw new Error("vmblu security instrumentation is already owned by another runtime in this process");
+    }
+    if (state.owner === owner) return true;
+    state.owner = owner;
+    state.security = security;
+    state.baseDir = import_node_path.default.resolve(baseDir || process.cwd());
+    state.subscribers = /* @__PURE__ */ new Set();
+    state.restores = [];
+    try {
       this.installProcessHooks(state.restores);
       this.installFetchHook(state.restores);
       this.installHttpHooks(state.restores);
       this.installFsHooks(state.restores);
+      return true;
+    } catch (error) {
+      this.release(owner);
+      throw error;
     }
-    return () => {
-      state.count = Math.max(0, state.count - 1);
-      if (state.count > 0) return;
-      for (const restore of state.restores.splice(0).reverse()) restore();
+  }
+  release(owner) {
+    const state = getState();
+    if (!state.owner || state.owner !== owner) return false;
+    for (const restore of state.restores.splice(0).reverse()) restore();
+    state.subscribers.clear();
+    state.owner = null;
+    state.security = null;
+    state.baseDir = null;
+    return true;
+  }
+  subscribe(listener) {
+    if (typeof listener !== "function") return () => {
     };
+    const state = getState();
+    state.subscribers.add(listener);
+    return () => state.subscribers.delete(listener);
+  }
+  isOwner(owner) {
+    return getState().owner === owner;
+  }
+  get owner() {
+    return getState().owner;
+  }
+  emit(event) {
+    for (const listener of [...getState().subscribers]) {
+      try {
+        listener(event);
+      } catch (error) {
+        console.warn("vmblu security subscriber failed:", error);
+      }
+    }
+  }
+  report(operation, detail = {}) {
+    if (isCapabilitySuppressed(operation)) return null;
+    const state = getState();
+    if (!state.owner || !state.security) return null;
+    const parsed = parseOperation(operation);
+    const configured = operationPolicy(state.security, parsed);
+    const policy = classifyPolicy(parsed, detail, configured, state.baseDir);
+    const event = {
+      schemaVersion: 1,
+      ts: Date.now(),
+      node: getCurrentNode(),
+      operation: parsed.name,
+      cap: legacyCapabilityName(parsed.name),
+      detail,
+      policy
+    };
+    if (policy.decision !== "allowed") this.emit(event);
+    if (policy.decision === "denied") throw new SecurityPolicyError(event);
+    return event;
   }
   installProcessHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
-    wrapMethod(import_node_child_process.default, "exec", (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
-      report("process.exec", { command: safeString(command) });
-      return original.call(this, command, ...args);
-    }, "wrappedExec"), restores);
-    wrapMethod(import_node_child_process.default, "execFile", (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, args, options, callback) {
-      const argv = Array.isArray(args) ? args : [];
-      report("process.exec", { command: safeString(file), args: argv.slice() });
-      return original.call(this, file, args, options, callback);
-    }, "wrappedExecFile"), restores);
-    wrapMethod(import_node_child_process.default, "spawn", (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, args, options) {
-      report("process.exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, command, args, options);
-    }, "wrappedSpawn"), restores);
-    wrapMethod(import_node_child_process.default, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, args, options) {
-      report("process.exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, modulePath, args, options);
+    const report = /* @__PURE__ */ __name((detail) => this.report("process.exec", detail), "report");
+    for (const key of ["exec", "execSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
+        report({ command: safeString(command), shell: true });
+        return original.call(this, command, ...args);
+      }, "wrappedExec"), restores);
+    }
+    for (const key of ["execFile", "execFileSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const actualOptions = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(file), args: argv.slice(), shell: !!(actualOptions == null ? void 0 : actualOptions.shell) });
+        return original.call(this, file, ...rest);
+      }, "wrappedExecFile"), restores);
+    }
+    for (const key of ["spawn", "spawnSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const options = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(command), args: argv.slice(), shell: !!(options == null ? void 0 : options.shell) });
+        return original.call(this, command, ...rest);
+      }, "wrappedSpawn"), restores);
+    }
+    wrapMethod(import_node_child_process.default, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, ...rest) {
+      const argv = Array.isArray(rest[0]) ? rest[0] : [];
+      report({ command: safeString(process.execPath), args: [safeString(modulePath), ...argv], shell: false });
+      return original.call(this, modulePath, ...rest);
     }, "wrappedFork"), restores);
   }
   installFsHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     for (const key of ["readFile", "readFileSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(path2, ...args) {
-        report("fs.read", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(target, ...args) {
+        safety.report("fs.read", { path: safeString(target) });
+        return original.call(this, target, ...args);
       }, "wrappedFsRead"), restores);
     }
     for (const key of ["writeFile", "writeFileSync", "appendFile", "appendFileSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path2, ...args) {
-        report("fs.write", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedFs"), restores);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsWrite(target, ...args) {
+        safety.report("fs.write", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsWrite"), restores);
     }
     for (const key of ["rm", "rmSync", "unlink", "unlinkSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path2, ...args) {
-        report("fs.delete", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedDelete"), restores);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsDelete(target, ...args) {
+        safety.report("fs.delete", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsDelete"), restores);
     }
   }
   installFetchHook(restores) {
     if (typeof globalThis.fetch !== "function") return;
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(globalThis, "fetch", (original) => /* @__PURE__ */ __name(function wrappedFetch(input, init) {
-      const detail = {
+      safety.report("net.egress", {
         url: describeRequestUrl(input),
         method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
-      };
-      report("net.egress", detail);
+      });
       return suppressCapability("net.egress", () => original.call(this, input, init));
     }, "wrappedFetch"), restores);
   }
   installHttpHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(import_node_http.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "http:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpRequest"), restores);
     wrapMethod(import_node_https.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpsRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "https:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpsRequest"), restores);
-  }
-  enable({ mode = "off" } = {}, tx = null) {
-    if (mode === "off") {
-      this.setEmitter(null);
-      return { uninstall() {
-      } };
-    }
-    this.setEmitter((event) => {
-      var _a;
-      (_a = tx == null ? void 0 : tx.send) == null ? void 0 : _a.call(tx, "security.event", event);
-    });
-    const uninstallHooks = this.installHooks({ mode });
-    return {
-      uninstall: /* @__PURE__ */ __name(() => {
-        uninstallHooks();
-        this.setEmitter(null);
-      }, "uninstall")
-    };
   }
 };
 __name(_Safety, "Safety");
@@ -1174,8 +1150,11 @@ var SecurityPolicyError = _SecurityPolicyError;
 function getState() {
   if (!globalThis[STATE_KEY]) {
     globalThis[STATE_KEY] = {
-      count: 0,
-      restores: []
+      owner: null,
+      security: null,
+      baseDir: null,
+      restores: [],
+      subscribers: /* @__PURE__ */ new Set()
     };
   }
   return globalThis[STATE_KEY];
@@ -1184,15 +1163,115 @@ __name(getState, "getState");
 function wrapMethod(target, key, wrapFactory, restores) {
   const original = target[key];
   if (typeof original !== "function") return;
-  if (original[WRAPPED]) return;
+  if (original[WRAPPED]) throw new Error(`Node.js API ${key} is already wrapped by vmblu security`);
   const wrapped = wrapFactory(original);
-  wrapped[WRAPPED] = true;
+  Object.defineProperty(wrapped, WRAPPED, { value: true });
   target[key] = wrapped;
   restores.push(() => {
     if (target[key] === wrapped) target[key] = original;
   });
 }
 __name(wrapMethod, "wrapMethod");
+function classifyPolicy(operation, detail, policy, baseDir) {
+  if (!policy || policy.mode === "deny") return denied(operation, "operation_denied");
+  if (!policy.all) {
+    if (operation.area === "fs" && !isPathAllowed(detail.path, policy.roots, baseDir)) return denied(operation, "fs_root_not_allowed");
+    if (operation.area === "net" && !isHostAllowed(detail.url, policy.hosts)) return denied(operation, "net_host_not_allowed");
+    if (operation.area === "process") {
+      if (detail.shell) return denied(operation, "process_shell_not_allowed");
+      if (!isCommandAllowed(detail.command, policy.commands, baseDir)) return denied(operation, "process_command_not_allowed");
+    }
+  }
+  return {
+    decision: policy.mode === "warn" ? "warning" : "allowed",
+    area: operation.area,
+    action: operation.action,
+    mode: policy.mode
+  };
+}
+__name(classifyPolicy, "classifyPolicy");
+function denied(operation, reason) {
+  return {
+    decision: "denied",
+    area: operation.area,
+    action: operation.action,
+    mode: "deny",
+    reason
+  };
+}
+__name(denied, "denied");
+function operationPolicy(security, operation) {
+  var _a;
+  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+}
+__name(operationPolicy, "operationPolicy");
+function isPathAllowed(value, roots = [], baseDir) {
+  if (!value || !Array.isArray(roots) || !roots.length) return false;
+  const target = canonicalPath(value, process.cwd());
+  return roots.some((root) => {
+    const allowed = canonicalPath(root, baseDir);
+    return target === allowed || target.startsWith(`${allowed}/`);
+  });
+}
+__name(isPathAllowed, "isPathAllowed");
+function canonicalPath(value, baseDir) {
+  const absolute = import_node_path.default.resolve(baseDir, String(value ?? ""));
+  let existing = absolute;
+  const suffix = [];
+  while (!import_node_fs.default.existsSync(existing)) {
+    const parent = import_node_path.default.dirname(existing);
+    if (parent === existing) break;
+    suffix.unshift(import_node_path.default.basename(existing));
+    existing = parent;
+  }
+  let resolved = existing;
+  try {
+    resolved = import_node_fs.default.realpathSync.native(existing);
+  } catch {
+    resolved = existing;
+  }
+  resolved = import_node_path.default.join(resolved, ...suffix).replaceAll("\\", "/").replace(/\/+$/, "");
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+__name(canonicalPath, "canonicalPath");
+function isHostAllowed(value, hosts = []) {
+  try {
+    const observed = new URL(String(value)).hostname.toLowerCase();
+    return hosts.some((host) => normalizeConfiguredHost(host) === observed);
+  } catch {
+    return false;
+  }
+}
+__name(isHostAllowed, "isHostAllowed");
+function normalizeConfiguredHost(value) {
+  try {
+    const text = String(value ?? "").trim();
+    if (!text || text.includes("/") || text.includes(":")) return "";
+    return new URL(`http://${text}`).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+__name(normalizeConfiguredHost, "normalizeConfiguredHost");
+function isCommandAllowed(value, commands = [], baseDir) {
+  const observed = executableIdentity(value, baseDir);
+  return !!observed && commands.some((command) => executableIdentity(command, baseDir) === observed);
+}
+__name(isCommandAllowed, "isCommandAllowed");
+function executableIdentity(value, baseDir) {
+  const command = String(value ?? "").trim();
+  if (!command) return "";
+  if (import_node_path.default.isAbsolute(command) || command.includes("/") || command.includes("\\")) return canonicalPath(command, baseDir);
+  const extensions = process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""];
+  for (const folder of (process.env.PATH ?? "").split(import_node_path.default.delimiter)) {
+    for (const extension of extensions) {
+      const candidate = import_node_path.default.join(folder, process.platform === "win32" && !import_node_path.default.extname(command) ? `${command}${extension}` : command);
+      if (import_node_fs.default.existsSync(candidate)) return canonicalPath(candidate, baseDir);
+    }
+  }
+  return process.platform === "win32" ? command.toLowerCase() : command;
+}
+__name(executableIdentity, "executableIdentity");
 function safeString(value) {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -1207,23 +1286,13 @@ function describeRequestUrl(input, options = null, protocol = "") {
     const actualProtocol = input.protocol ?? (options == null ? void 0 : options.protocol) ?? protocol;
     const host = input.hostname ?? input.host ?? (options == null ? void 0 : options.hostname) ?? (options == null ? void 0 : options.host) ?? "";
     const port = input.port ?? (options == null ? void 0 : options.port);
-    const path2 = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
+    const requestPath = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
     const authority = port ? `${host}:${port}` : host;
-    return authority ? `${actualProtocol}//${authority}${path2}` : path2;
+    return authority ? `${actualProtocol}//${authority}${requestPath}` : requestPath;
   }
   return safeString(input);
 }
 __name(describeRequestUrl, "describeRequestUrl");
-function normalizeOperationName(value) {
-  return parseOperation(value).name;
-}
-__name(normalizeOperationName, "normalizeOperationName");
-function legacyCapabilityName(value) {
-  const operation = parseOperation(value);
-  if (operation.name === "process.exec") return "proc:exec";
-  return operation.name.replace(".", ":");
-}
-__name(legacyCapabilityName, "legacyCapabilityName");
 function parseOperation(value) {
   const normalized = String(value ?? "").replace(":", ".");
   if (normalized === "proc.exec") return { name: "process.exec", area: "process", action: "exec" };
@@ -1231,59 +1300,49 @@ function parseOperation(value) {
   return { name: `${area}.${action}`, area, action };
 }
 __name(parseOperation, "parseOperation");
-function operationPolicy(security = {}, operation) {
-  var _a;
-  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+function legacyCapabilityName(value) {
+  const operation = parseOperation(value);
+  if (operation.name === "process.exec") return "proc:exec";
+  return operation.name.replace(".", ":");
 }
-__name(operationPolicy, "operationPolicy");
-function classifyScope(operation, detail = {}, policy = {}) {
-  var _a, _b, _c;
-  if (operation.area === "fs" && ((_a = policy.roots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
-    return isPathAllowed(detail.path, policy.roots) ? null : { decision: "denied", mode: "deny", reason: "fs_root_not_allowed" };
-  }
-  if (operation.area === "net" && ((_b = policy.hosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
-    return isHostAllowed(detail.url, policy.hosts) ? null : { decision: "denied", mode: "deny", reason: "net_host_not_allowed" };
-  }
-  if (operation.area === "process" && ((_c = policy.commands) == null ? void 0 : _c.length) && (detail == null ? void 0 : detail.command)) {
-    return isCommandAllowed(detail.command, policy.commands) ? null : { decision: "denied", mode: "deny", reason: "process_command_not_allowed" };
-  }
-  return null;
-}
-__name(classifyScope, "classifyScope");
-function isPathAllowed(value, roots = []) {
-  const target = normalizePath(value);
-  return roots.some((root) => {
-    const normalizedRoot = normalizePath(root);
-    return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`);
-  });
-}
-__name(isPathAllowed, "isPathAllowed");
-function normalizePath(value) {
-  return import_node_path.default.resolve(String(value ?? "")).replaceAll("\\", "/").replace(/\/+$/, "");
-}
-__name(normalizePath, "normalizePath");
-function isHostAllowed(value, hosts = []) {
-  try {
-    const host = new URL(String(value)).hostname;
-    return hosts.includes(host);
-  } catch {
-    return false;
-  }
-}
-__name(isHostAllowed, "isHostAllowed");
-function isCommandAllowed(value, commands = []) {
-  return commands.includes(String(value ?? ""));
-}
-__name(isCommandAllowed, "isCommandAllowed");
+__name(legacyCapabilityName, "legacyCapabilityName");
 var safety = new Safety();
 
 // rt-als/runtime.js
 var _Runtime2 = class _Runtime2 extends Runtime {
   configure(options = {}) {
-    safety.setPolicyClassifier(safety.makePolicyClassifier({
-      runtime: this,
-      runtimeSettings: options.runtimeSettings
-    }));
+    this.securitySettings = options.runtimeSettings ?? null;
+    this.securityBaseDir = options.securityBaseDir ?? null;
+  }
+  start() {
+    if (safety.isOwner(this)) safety.release(this);
+    const validationErrors = this.settings.validateModel(this.securitySettings).filter((error) => error.code !== "legacy_security");
+    if (validationErrors.length) {
+      throw new Error(`Invalid vmblu security settings: ${validationErrors.map((error) => error.message).join("; ")}`);
+    }
+    const policy = this.settings.effectivePolicy(this.securitySettings);
+    if (policy.active && hasRelativeRoots(policy.security) && !this.securityBaseDir) {
+      throw new Error("vmblu security requires securityBaseDir when file roots are relative");
+    }
+    try {
+      if (policy.active) {
+        safety.claim(this, {
+          security: policy.security,
+          baseDir: this.securityBaseDir
+        });
+      }
+      return super.start();
+    } catch (error) {
+      safety.release(this);
+      throw error;
+    }
+  }
+  stop() {
+    try {
+      return super.stop();
+    } finally {
+      safety.release(this);
+    }
   }
   handleReceiveQueue() {
     var _a, _b;
@@ -1309,31 +1368,31 @@ var _Runtime2 = class _Runtime2 extends Runtime {
 };
 __name(_Runtime2, "Runtime");
 var Runtime2 = _Runtime2;
-Runtime2.prototype.settings = runtimeSettings;
+function hasRelativeRoots(security) {
+  return ["read", "write", "delete"].some((action) => {
+    var _a, _b;
+    const operation = (_a = security == null ? void 0 : security.fs) == null ? void 0 : _a[action];
+    return (_b = operation == null ? void 0 : operation.roots) == null ? void 0 : _b.some((root) => !/^(?:[A-Za-z]:[\\/]|[\\/]{1,2})/.test(root));
+  });
+}
+__name(hasRelativeRoots, "hasRelativeRoots");
+Runtime2.prototype.settings = runtimeSettings2;
 
 // security/security-reporter.js
-function SecurityReporterFactory(tx, sx = null) {
-  const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
+function SecurityReporterFactory(tx) {
   let currentTx = tx;
-  let safetyControl = safety.enable({ mode }, {
-    send(name, payload) {
-      if (name !== "security.event") return 0;
-      return currentTx.send("security.event", payload);
-    }
+  let unsubscribe = safety.subscribe((event) => {
+    var _a;
+    (_a = currentTx == null ? void 0 : currentTx.send) == null ? void 0 : _a.call(currentTx, "security.event", event);
   });
   return {
-    configure(nextSettings = null) {
-      const nextMode = (nextSettings == null ? void 0 : nextSettings.mode) ?? mode;
-      safetyControl.uninstall();
-      safetyControl = safety.enable({ mode: nextMode }, {
-        send(name, payload) {
-          if (name !== "security.event") return 0;
-          return currentTx.send("security.event", payload);
-        }
-      });
-    },
     setTx(nextTx) {
       currentTx = nextTx ?? currentTx;
+    },
+    stop() {
+      unsubscribe();
+      unsubscribe = /* @__PURE__ */ __name(() => {
+      }, "unsubscribe");
     }
   };
 }
@@ -1344,6 +1403,7 @@ var VERSION = "0.1.1";
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Runtime,
+  SecurityPolicyError,
   SecurityReporterFactory,
   VERSION,
   safety

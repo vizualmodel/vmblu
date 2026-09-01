@@ -203,7 +203,7 @@ The base runtime provides message routing. The browser-agent runtime adds the ag
 
 ## Versioning, evolution, and contributing
 
-This repository currently contains vmblu version **1.11.0**. The CLI, core, runtime, extension, and model schema are released as a coordinated compatibility family. Components sharing the `1.11` family are designed to work together, while patch releases can evolve independently within that family. See the [compatibility version policy](./compatibility-version-policy.md) for details.
+This repository currently contains vmblu version **1.12.0**. The CLI, core, runtime, extension, and model schema are released as a coordinated compatibility family. Components sharing the `1.12` family are designed to work together, while patch releases can evolve independently within that family.
 
 vmblu is a framework made to assist developers in building software in the AI era. As coding agents become more capable and take on more implementation work, vmblu will continue to add formats, runtimes, controls, integrations, and tools that help developers keep architecture explicit and systems understandable, reliable, and governable.
 

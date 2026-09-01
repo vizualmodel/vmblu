@@ -362,7 +362,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.11.0";
+var RUNTIME_VERSION = "1.12.0";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
@@ -613,9 +613,7 @@ function isCapabilitySuppressed(cap) {
 }
 __name(isCapabilitySuppressed, "isCapabilitySuppressed");
 
-// rt-als/runtime-settings.js
-var PERMISSIONS = ["allow", "warn", "deny"];
-var PERMISSION_ORDER = { deny: 0, warn: 1, allow: 2 };
+// rt-base/runtime-settings.js
 var defaultWorker = /* @__PURE__ */ __name(() => ({
   on: false,
   path: ""
@@ -627,40 +625,10 @@ var defaultMonitor = /* @__PURE__ */ __name(() => ({
   logMessages: false,
   logTimings: false
 }), "defaultMonitor");
-var defaultFsOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  roots: []
-}), "defaultFsOperation");
-var defaultNetOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  hosts: []
-}), "defaultNetOperation");
-var defaultProcessOperation = /* @__PURE__ */ __name((mode = "deny") => ({
-  mode,
-  commands: []
-}), "defaultProcessOperation");
-var defaultSecurityPolicy = /* @__PURE__ */ __name(() => ({
-  fs: {
-    read: defaultFsOperation(),
-    write: defaultFsOperation(),
-    delete: defaultFsOperation()
-  },
-  net: {
-    egress: defaultNetOperation()
-  },
-  process: {
-    exec: defaultProcessOperation()
-  }
-}), "defaultSecurityPolicy");
-var defaultSecurity = /* @__PURE__ */ __name(() => ({
-  enabled: false,
-  ...defaultSecurityPolicy()
-}), "defaultSecurity");
 function make() {
   return {
     run: defaultRun(),
-    monitor: defaultMonitor(),
-    security: defaultSecurity()
+    monitor: defaultMonitor()
   };
 }
 __name(make, "make");
@@ -668,8 +636,6 @@ function normalize(dx = null) {
   var _a, _b;
   const defaults = make();
   if (!dx || typeof dx !== "object") return defaults;
-  const legacySafety = dx.safety ?? {};
-  const security = normalizeNodeSecurity(dx.security, legacySafety);
   const normalized = {
     run: {
       ...defaults.run,
@@ -683,8 +649,7 @@ function normalize(dx = null) {
       ...defaults.monitor,
       ...dx.monitor ?? {},
       logMessages: ((_b = dx.monitor) == null ? void 0 : _b.logMessages) ?? dx.logMessages ?? defaults.monitor.logMessages
-    },
-    security
+    }
   };
   normalized.run.worker.on = !!normalized.run.worker.on;
   normalized.run.worker.path = normalized.run.worker.path ?? "";
@@ -707,27 +672,21 @@ function assign(target, dx = null) {
   const normalized = normalize(dx);
   target.run = structuredClone(normalized.run);
   target.monitor = structuredClone(normalized.monitor);
-  target.security = structuredClone(normalized.security);
   delete target.logMessages;
   delete target.worker;
-  delete target.safety;
+  delete target.security;
   return target;
 }
 __name(assign, "assign");
 function isDefault(dx = null) {
   const normalized = normalize(dx);
-  const defaults = make();
-  if (!normalized.security.enabled || isDefaultSecurityPolicy(normalized.security)) {
-    normalized.security = structuredClone(defaults.security);
-  }
-  return JSON.stringify(normalized) === JSON.stringify(defaults);
+  return JSON.stringify(normalized) === JSON.stringify(make());
 }
 __name(isDefault, "isDefault");
 function makeModel() {
   return {
     run: {},
-    monitor: {},
-    security: defaultSecurityPolicy()
+    monitor: {}
   };
 }
 __name(makeModel, "makeModel");
@@ -742,188 +701,17 @@ function normalizeModel(settings = null) {
     monitor: {
       ...defaults.monitor,
       ...settings.monitor ?? {}
-    },
-    security: normalizeModelSecurity(settings.security)
+    }
   };
 }
 __name(normalizeModel, "normalizeModel");
 function effectivePolicy(modelSettings = null, nodeDx = null) {
-  var _a;
-  const hasModelSecurity = !!(modelSettings && typeof modelSettings === "object" && modelSettings.security);
-  const model = normalizeModel(modelSettings);
-  const node = normalize(nodeDx);
-  const nodeSecurity = ((_a = node.security) == null ? void 0 : _a.enabled) ? node.security : defaultSecurity();
   return {
-    active: hasModelSecurity,
-    security: intersectSecurity(model.security, nodeSecurity),
-    model,
-    node
+    model: normalizeModel(modelSettings),
+    node: normalize(nodeDx)
   };
 }
 __name(effectivePolicy, "effectivePolicy");
-function normalizeNodeSecurity(security = null, legacySafety = {}) {
-  const source = security ?? {};
-  const legacy = legacyNodeSecurity(source);
-  const enabled = source.enabled ?? legacySafety.on ?? false;
-  return {
-    enabled: !!enabled,
-    ...normalizeSecurityPolicy(source, legacy)
-  };
-}
-__name(normalizeNodeSecurity, "normalizeNodeSecurity");
-function normalizeModelSecurity(security = null) {
-  return normalizeSecurityPolicy(security, legacyModelSecurity(security));
-}
-__name(normalizeModelSecurity, "normalizeModelSecurity");
-function normalizeSecurityPolicy(source = null, legacy = {}) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
-  const defaults = defaultSecurityPolicy();
-  const value = source ?? {};
-  return {
-    fs: {
-      read: normalizeFsOperation(((_a = value.fs) == null ? void 0 : _a.read) ?? ((_b = legacy.fs) == null ? void 0 : _b.read) ?? defaults.fs.read),
-      write: normalizeFsOperation(((_c = value.fs) == null ? void 0 : _c.write) ?? ((_d = legacy.fs) == null ? void 0 : _d.write) ?? defaults.fs.write),
-      delete: normalizeFsOperation(((_e = value.fs) == null ? void 0 : _e.delete) ?? ((_f = legacy.fs) == null ? void 0 : _f.delete) ?? defaults.fs.delete)
-    },
-    net: {
-      egress: normalizeNetOperation(((_g = value.net) == null ? void 0 : _g.egress) ?? ((_h = legacy.net) == null ? void 0 : _h.egress) ?? defaults.net.egress)
-    },
-    process: {
-      exec: normalizeProcessOperation(((_i = value.process) == null ? void 0 : _i.exec) ?? ((_j = legacy.process) == null ? void 0 : _j.exec) ?? defaults.process.exec)
-    }
-  };
-}
-__name(normalizeSecurityPolicy, "normalizeSecurityPolicy");
-function normalizeFsOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    roots: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.roots)
-  };
-}
-__name(normalizeFsOperation, "normalizeFsOperation");
-function normalizeNetOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    hosts: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.hosts)
-  };
-}
-__name(normalizeNetOperation, "normalizeNetOperation");
-function normalizeProcessOperation(value = null) {
-  const mode = normalizeMode(value == null ? void 0 : value.mode);
-  return {
-    mode,
-    commands: mode === "deny" ? [] : normalizeList(value == null ? void 0 : value.commands)
-  };
-}
-__name(normalizeProcessOperation, "normalizeProcessOperation");
-function normalizeMode(value) {
-  return PERMISSIONS.includes(value) ? value : "deny";
-}
-__name(normalizeMode, "normalizeMode");
-function normalizeList(value) {
-  return Array.isArray(value) ? value.filter(Boolean).map((item) => String(item)) : [];
-}
-__name(normalizeList, "normalizeList");
-function legacyModelSecurity(security = null) {
-  if (!(security == null ? void 0 : security.defaults) && !(security == null ? void 0 : security.allow)) return {};
-  const defaults = security.defaults ?? {};
-  const allow = security.allow ?? {};
-  return {
-    fs: {
-      read: defaultFsOperation("deny"),
-      write: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) },
-      delete: { mode: normalizeLegacyMode(defaults.fs), roots: normalizeList(allow.fsRoots) }
-    },
-    net: {
-      egress: { mode: normalizeLegacyMode(defaults.net), hosts: normalizeList(allow.netHosts) }
-    },
-    process: {
-      exec: { mode: normalizeLegacyMode(defaults.process), commands: [] }
-    }
-  };
-}
-__name(legacyModelSecurity, "legacyModelSecurity");
-function legacyNodeSecurity(security = null) {
-  if (!(security == null ? void 0 : security.request)) return {};
-  const request = security.request ?? {};
-  const allow = request.allow ?? {};
-  return {
-    fs: {
-      read: defaultFsOperation("deny"),
-      write: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) },
-      delete: { mode: normalizeLegacyMode(request.fs), roots: normalizeList(allow.fsRoots) }
-    },
-    net: {
-      egress: { mode: normalizeLegacyMode(request.net), hosts: normalizeList(allow.netHosts) }
-    },
-    process: {
-      exec: { mode: normalizeLegacyMode(request.process), commands: [] }
-    }
-  };
-}
-__name(legacyNodeSecurity, "legacyNodeSecurity");
-function normalizeLegacyMode(value) {
-  return value === "inherit" ? "deny" : normalizeMode(value);
-}
-__name(normalizeLegacyMode, "normalizeLegacyMode");
-function intersectSecurity(model, node) {
-  return {
-    fs: {
-      read: intersectFsOperation(model.fs.read, node.fs.read),
-      write: intersectFsOperation(model.fs.write, node.fs.write),
-      delete: intersectFsOperation(model.fs.delete, node.fs.delete)
-    },
-    net: {
-      egress: intersectNetOperation(model.net.egress, node.net.egress)
-    },
-    process: {
-      exec: intersectProcessOperation(model.process.exec, node.process.exec)
-    }
-  };
-}
-__name(intersectSecurity, "intersectSecurity");
-function intersectFsOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    roots: mode === "deny" ? [] : intersectScope(model.roots, node.roots)
-  };
-}
-__name(intersectFsOperation, "intersectFsOperation");
-function intersectNetOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    hosts: mode === "deny" ? [] : intersectScope(model.hosts, node.hosts)
-  };
-}
-__name(intersectNetOperation, "intersectNetOperation");
-function intersectProcessOperation(model, node) {
-  const mode = stricterMode(model.mode, node.mode);
-  return {
-    mode,
-    commands: mode === "deny" ? [] : intersectScope(model.commands, node.commands)
-  };
-}
-__name(intersectProcessOperation, "intersectProcessOperation");
-function stricterMode(modelMode, nodeMode) {
-  return PERMISSION_ORDER[nodeMode] <= PERMISSION_ORDER[modelMode] ? nodeMode : modelMode;
-}
-__name(stricterMode, "stricterMode");
-function intersectScope(modelValues = [], nodeValues = []) {
-  if (!Array.isArray(modelValues) || !modelValues.length) return Array.isArray(nodeValues) ? nodeValues.slice() : [];
-  if (!Array.isArray(nodeValues) || !nodeValues.length) return modelValues.slice();
-  const allowed = new Set(modelValues);
-  return nodeValues.filter((value) => allowed.has(value));
-}
-__name(intersectScope, "intersectScope");
-function isDefaultSecurityPolicy(security = {}) {
-  const { enabled, ...policy } = security;
-  return JSON.stringify(policy) === JSON.stringify(defaultSecurityPolicy());
-}
-__name(isDefaultSecurityPolicy, "isDefaultSecurityPolicy");
 var runtimeSettings = {
   make,
   normalize,
@@ -936,192 +724,379 @@ var runtimeSettings = {
   effectivePolicy
 };
 
+// rt-als/runtime-settings.js
+var MODES = /* @__PURE__ */ new Set(["allow", "warn", "deny"]);
+var denyOperation = /* @__PURE__ */ __name(() => ({ mode: "deny" }), "denyOperation");
+var defaultSecurityPolicy = /* @__PURE__ */ __name(() => ({
+  enabled: true,
+  fs: {
+    read: denyOperation(),
+    write: denyOperation(),
+    delete: denyOperation()
+  },
+  net: {
+    egress: denyOperation()
+  },
+  process: {
+    exec: denyOperation()
+  }
+}), "defaultSecurityPolicy");
+function make2() {
+  return runtimeSettings.make();
+}
+__name(make2, "make");
+function normalize2(dx = null) {
+  return runtimeSettings.normalize(dx);
+}
+__name(normalize2, "normalize");
+function clone2(dx = null) {
+  return runtimeSettings.clone(dx);
+}
+__name(clone2, "clone");
+function reset2(target) {
+  return runtimeSettings.reset(target);
+}
+__name(reset2, "reset");
+function assign2(target, dx = null) {
+  return runtimeSettings.assign(target, dx);
+}
+__name(assign2, "assign");
+function isDefault2(dx = null) {
+  return runtimeSettings.isDefault(dx);
+}
+__name(isDefault2, "isDefault");
+function makeModel2() {
+  return {
+    ...runtimeSettings.makeModel(),
+    security: defaultSecurityPolicy()
+  };
+}
+__name(makeModel2, "makeModel");
+function normalizeModel2(settings = null) {
+  const base = runtimeSettings.normalizeModel(settings);
+  if (!settings || typeof settings !== "object" || !settings.security) return base;
+  return {
+    ...base,
+    security: normalizeModelSecurity(settings.security)
+  };
+}
+__name(normalizeModel2, "normalizeModel");
+function effectivePolicy2(modelSettings = null) {
+  const model = normalizeModel2(modelSettings);
+  return {
+    active: !!model.security && model.security.enabled !== false,
+    security: model.security ?? null,
+    model
+  };
+}
+__name(effectivePolicy2, "effectivePolicy");
+function normalizeModelSecurity(security = null) {
+  var _a, _b, _c, _d, _e;
+  const legacy = legacyModelSecurity(security);
+  const source = legacy ?? security ?? {};
+  return {
+    enabled: source.enabled !== false,
+    fs: {
+      read: normalizeOperation((_a = source.fs) == null ? void 0 : _a.read, "roots"),
+      write: normalizeOperation((_b = source.fs) == null ? void 0 : _b.write, "roots"),
+      delete: normalizeOperation((_c = source.fs) == null ? void 0 : _c.delete, "roots")
+    },
+    net: {
+      egress: normalizeOperation((_d = source.net) == null ? void 0 : _d.egress, "hosts")
+    },
+    process: {
+      exec: normalizeOperation((_e = source.process) == null ? void 0 : _e.exec, "commands")
+    }
+  };
+}
+__name(normalizeModelSecurity, "normalizeModelSecurity");
+function normalizeOperation(value = null, scopeKey) {
+  const mode = MODES.has(value == null ? void 0 : value.mode) ? value.mode : "deny";
+  if (mode === "deny") return denyOperation();
+  if ((value == null ? void 0 : value.all) === true) return { mode, all: true };
+  const scope = normalizeList(value == null ? void 0 : value[scopeKey]);
+  return scope.length ? { mode, [scopeKey]: scope } : denyOperation();
+}
+__name(normalizeOperation, "normalizeOperation");
+function normalizeList(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean))];
+}
+__name(normalizeList, "normalizeList");
+function legacyModelSecurity(security = null) {
+  if (!security || !security.defaults && !security.allow && !security.mode && security.forwardEvents == null) return null;
+  const defaults = security.defaults ?? {};
+  const allow = security.allow ?? {};
+  const fsRoots = normalizeList(allow.fsRoots);
+  const hosts = normalizeList(allow.netHosts);
+  return {
+    enabled: security.mode !== "off",
+    fs: {
+      read: denyOperation(),
+      write: legacyOperation(defaults.fs, "roots", fsRoots),
+      delete: legacyOperation(defaults.fs, "roots", fsRoots)
+    },
+    net: {
+      egress: legacyOperation(defaults.net, "hosts", hosts)
+    },
+    process: {
+      exec: legacyOperation(defaults.process, "commands", [])
+    }
+  };
+}
+__name(legacyModelSecurity, "legacyModelSecurity");
+function legacyOperation(value, scopeKey, scope) {
+  const mode = MODES.has(value) ? value : "deny";
+  if (mode === "deny") return denyOperation();
+  return scope.length ? { mode, [scopeKey]: scope } : { mode, all: true };
+}
+__name(legacyOperation, "legacyOperation");
+function validateModel(settings = null) {
+  var _a, _b, _c, _d, _e;
+  const errors = [];
+  if (!settings || typeof settings !== "object" || !settings.security) return errors;
+  const security = settings.security;
+  if (legacyModelSecurity(security)) {
+    errors.push({ code: "legacy_security", path: "security", message: "legacy application security settings are deprecated" });
+    return errors;
+  }
+  validateKeys(errors, security, ["enabled", "fs", "net", "process"], "security");
+  if (security.enabled != null && typeof security.enabled !== "boolean") {
+    errors.push({ code: "malformed_security", path: "security.enabled", message: "security.enabled must be a boolean" });
+  }
+  validateKeys(errors, security.fs, ["read", "write", "delete"], "security.fs");
+  validateKeys(errors, security.net, ["egress"], "security.net");
+  validateKeys(errors, security.process, ["exec"], "security.process");
+  validateOperation(errors, (_a = security.fs) == null ? void 0 : _a.read, "roots", "security.fs.read");
+  validateOperation(errors, (_b = security.fs) == null ? void 0 : _b.write, "roots", "security.fs.write");
+  validateOperation(errors, (_c = security.fs) == null ? void 0 : _c.delete, "roots", "security.fs.delete");
+  validateOperation(errors, (_d = security.net) == null ? void 0 : _d.egress, "hosts", "security.net.egress");
+  validateOperation(errors, (_e = security.process) == null ? void 0 : _e.exec, "commands", "security.process.exec");
+  return errors;
+}
+__name(validateModel, "validateModel");
+function validateKeys(errors, value, allowed, location) {
+  if (value == null) return;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    errors.push({ code: "malformed_security", path: location, message: `${location} must be an object` });
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) errors.push({ code: "unknown_security_field", path: `${location}.${key}`, message: `unknown security field ${location}.${key}` });
+  }
+}
+__name(validateKeys, "validateKeys");
+function validateOperation(errors, value, scopeKey, location) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push({ code: "malformed_security", path: location, message: `${location} must be an object` });
+    return;
+  }
+  validateKeys(errors, value, ["mode", "all", scopeKey], location);
+  if (!MODES.has(value.mode)) errors.push({ code: "invalid_security_mode", path: `${location}.mode`, message: `${location}.mode must be allow, warn, or deny` });
+  const hasAll = value.all === true;
+  const hasScope = Array.isArray(value[scopeKey]) && value[scopeKey].length > 0;
+  if (value.mode === "deny" && (value.all != null || value[scopeKey] != null)) {
+    errors.push({ code: "invalid_security_scope", path: location, message: `${location} deny mode cannot define a scope` });
+  } else if (value.mode !== "deny" && hasAll === hasScope) {
+    errors.push({ code: "invalid_security_scope", path: location, message: `${location} must define either all: true or a non-empty ${scopeKey} array` });
+  }
+  if (value[scopeKey] != null && (!Array.isArray(value[scopeKey]) || value[scopeKey].some((item) => typeof item !== "string" || !item.trim()))) {
+    errors.push({ code: "invalid_security_scope", path: `${location}.${scopeKey}`, message: `${location}.${scopeKey} must contain non-empty strings` });
+  } else if (Array.isArray(value[scopeKey])) {
+    for (const item of value[scopeKey]) {
+      if (!validScopeValue(item, scopeKey)) {
+        errors.push({ code: "invalid_security_target", path: `${location}.${scopeKey}`, message: `${location}.${scopeKey} contains an invalid ${scopeKey} value: ${item}` });
+      }
+    }
+  }
+}
+__name(validateOperation, "validateOperation");
+function validScopeValue(value, scopeKey) {
+  if (typeof value !== "string" || !value.trim() || value.includes("\0")) return false;
+  if (scopeKey !== "hosts") return true;
+  const text = value.trim();
+  if (text.includes("/") || text.includes(":")) return false;
+  try {
+    const parsed = new URL(`http://${text}`);
+    return !!parsed.hostname && parsed.pathname === "/";
+  } catch {
+    return false;
+  }
+}
+__name(validScopeValue, "validScopeValue");
+var runtimeSettings2 = {
+  make: make2,
+  normalize: normalize2,
+  clone: clone2,
+  reset: reset2,
+  assign: assign2,
+  isDefault: isDefault2,
+  makeModel: makeModel2,
+  normalizeModel: normalizeModel2,
+  effectivePolicy: effectivePolicy2,
+  validateModel
+};
+
 // security/safety.js
 import childProcess from "child_process";
 import fs from "fs";
 import http from "http";
 import https from "https";
 import path from "path";
-var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.rt-als.safetyHooks");
-var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.rt-als.wrapped");
+var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.runtime.security");
+var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.runtime.security.wrapped");
 var _Safety = class _Safety {
-  constructor() {
-    this.emitter = null;
-    this.policyClassifier = null;
-  }
-  setEmitter(fn = null) {
-    this.emitter = typeof fn === "function" ? fn : null;
-  }
-  setPolicyClassifier(fn = null) {
-    this.policyClassifier = typeof fn === "function" ? fn : null;
-  }
-  emit(event) {
-    if (!this.emitter) return;
-    try {
-      this.emitter(event);
-    } catch (error2) {
-      console.warn("vmblu safety emitter failed:", error2);
-    }
-  }
-  makePolicyClassifier({ runtime, runtimeSettings: modelRuntimeSettings } = {}) {
-    return (event) => {
-      var _a, _b, _c, _d;
-      const actor = (_b = (_a = runtime == null ? void 0 : runtime.actors) == null ? void 0 : _a.find) == null ? void 0 : _b.call(_a, (candidate) => candidate.name === (event == null ? void 0 : event.node));
-      const effectivePolicy2 = (_d = (_c = runtime == null ? void 0 : runtime.settings) == null ? void 0 : _c.effectivePolicy) == null ? void 0 : _d.call(_c, modelRuntimeSettings, actor == null ? void 0 : actor.dx);
-      if (!(effectivePolicy2 == null ? void 0 : effectivePolicy2.active) || !(effectivePolicy2 == null ? void 0 : effectivePolicy2.security)) return null;
-      const operation = parseOperation(event.operation ?? event.cap ?? event.capability);
-      const policy = operationPolicy(effectivePolicy2.security, operation);
-      if (!policy) return null;
-      const scopeDecision = classifyScope(operation, event.detail, policy);
-      const decision = (scopeDecision == null ? void 0 : scopeDecision.decision) ?? (policy.mode === "deny" ? "denied" : policy.mode === "warn" ? "warning" : "allowed");
-      return {
-        decision,
-        area: operation.area,
-        action: operation.action,
-        mode: (scopeDecision == null ? void 0 : scopeDecision.mode) ?? policy.mode,
-        ...(scopeDecision == null ? void 0 : scopeDecision.reason) ? { reason: scopeDecision.reason } : {}
-      };
-    };
-  }
-  report(operation, detail = {}) {
-    const event = {
-      ts: Date.now(),
-      node: getCurrentNode(),
-      operation: normalizeOperationName(operation),
-      cap: legacyCapabilityName(operation),
-      detail
-    };
-    const policy = this.classify(event);
-    if (policy) event.policy = policy;
-    this.emit(event);
-    return event;
-  }
-  classify(event) {
-    if (!this.policyClassifier) return null;
-    try {
-      return this.policyClassifier(event) ?? null;
-    } catch (error2) {
-      return {
-        decision: "error",
-        reason: "policy_classifier_failed",
-        message: (error2 == null ? void 0 : error2.message) || String(error2)
-      };
-    }
-  }
-  emitCapability(operation, detail) {
-    var _a;
-    if (isCapabilitySuppressed(operation)) return null;
-    const event = this.report(operation, detail);
-    if (((_a = event == null ? void 0 : event.policy) == null ? void 0 : _a.decision) === "denied") {
-      throw new SecurityPolicyError(event);
-    }
-    return event;
-  }
-  installHooks({ mode = "off" } = {}) {
-    if (mode === "off") return () => {
-    };
+  claim(owner, { security, baseDir } = {}) {
+    if (!owner) throw new Error("vmblu security instrumentation requires a runtime owner");
+    if (!security) return false;
     const state = getState();
-    state.count += 1;
-    if (state.count === 1) {
-      state.restores = [];
+    if (state.owner && state.owner !== owner) {
+      throw new Error("vmblu security instrumentation is already owned by another runtime in this process");
+    }
+    if (state.owner === owner) return true;
+    state.owner = owner;
+    state.security = security;
+    state.baseDir = path.resolve(baseDir || process.cwd());
+    state.subscribers = /* @__PURE__ */ new Set();
+    state.restores = [];
+    try {
       this.installProcessHooks(state.restores);
       this.installFetchHook(state.restores);
       this.installHttpHooks(state.restores);
       this.installFsHooks(state.restores);
+      return true;
+    } catch (error2) {
+      this.release(owner);
+      throw error2;
     }
-    return () => {
-      state.count = Math.max(0, state.count - 1);
-      if (state.count > 0) return;
-      for (const restore of state.restores.splice(0).reverse()) restore();
+  }
+  release(owner) {
+    const state = getState();
+    if (!state.owner || state.owner !== owner) return false;
+    for (const restore of state.restores.splice(0).reverse()) restore();
+    state.subscribers.clear();
+    state.owner = null;
+    state.security = null;
+    state.baseDir = null;
+    return true;
+  }
+  subscribe(listener) {
+    if (typeof listener !== "function") return () => {
     };
+    const state = getState();
+    state.subscribers.add(listener);
+    return () => state.subscribers.delete(listener);
+  }
+  isOwner(owner) {
+    return getState().owner === owner;
+  }
+  get owner() {
+    return getState().owner;
+  }
+  emit(event) {
+    for (const listener of [...getState().subscribers]) {
+      try {
+        listener(event);
+      } catch (error2) {
+        console.warn("vmblu security subscriber failed:", error2);
+      }
+    }
+  }
+  report(operation, detail = {}) {
+    if (isCapabilitySuppressed(operation)) return null;
+    const state = getState();
+    if (!state.owner || !state.security) return null;
+    const parsed = parseOperation(operation);
+    const configured = operationPolicy(state.security, parsed);
+    const policy = classifyPolicy(parsed, detail, configured, state.baseDir);
+    const event = {
+      schemaVersion: 1,
+      ts: Date.now(),
+      node: getCurrentNode(),
+      operation: parsed.name,
+      cap: legacyCapabilityName(parsed.name),
+      detail,
+      policy
+    };
+    if (policy.decision !== "allowed") this.emit(event);
+    if (policy.decision === "denied") throw new SecurityPolicyError(event);
+    return event;
   }
   installProcessHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
-    wrapMethod(childProcess, "exec", (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
-      report("process.exec", { command: safeString(command) });
-      return original.call(this, command, ...args);
-    }, "wrappedExec"), restores);
-    wrapMethod(childProcess, "execFile", (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, args, options, callback) {
-      const argv = Array.isArray(args) ? args : [];
-      report("process.exec", { command: safeString(file), args: argv.slice() });
-      return original.call(this, file, args, options, callback);
-    }, "wrappedExecFile"), restores);
-    wrapMethod(childProcess, "spawn", (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, args, options) {
-      report("process.exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, command, args, options);
-    }, "wrappedSpawn"), restores);
-    wrapMethod(childProcess, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, args, options) {
-      report("process.exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, modulePath, args, options);
+    const report = /* @__PURE__ */ __name((detail) => this.report("process.exec", detail), "report");
+    for (const key of ["exec", "execSync"]) {
+      wrapMethod(childProcess, key, (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
+        report({ command: safeString(command), shell: true });
+        return original.call(this, command, ...args);
+      }, "wrappedExec"), restores);
+    }
+    for (const key of ["execFile", "execFileSync"]) {
+      wrapMethod(childProcess, key, (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const actualOptions = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(file), args: argv.slice(), shell: !!(actualOptions == null ? void 0 : actualOptions.shell) });
+        return original.call(this, file, ...rest);
+      }, "wrappedExecFile"), restores);
+    }
+    for (const key of ["spawn", "spawnSync"]) {
+      wrapMethod(childProcess, key, (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const options = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(command), args: argv.slice(), shell: !!(options == null ? void 0 : options.shell) });
+        return original.call(this, command, ...rest);
+      }, "wrappedSpawn"), restores);
+    }
+    wrapMethod(childProcess, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, ...rest) {
+      const argv = Array.isArray(rest[0]) ? rest[0] : [];
+      report({ command: safeString(process.execPath), args: [safeString(modulePath), ...argv], shell: false });
+      return original.call(this, modulePath, ...rest);
     }, "wrappedFork"), restores);
   }
   installFsHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     for (const key of ["readFile", "readFileSync"]) {
-      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(path2, ...args) {
-        report("fs.read", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(target, ...args) {
+        safety.report("fs.read", { path: safeString(target) });
+        return original.call(this, target, ...args);
       }, "wrappedFsRead"), restores);
     }
     for (const key of ["writeFile", "writeFileSync", "appendFile", "appendFileSync"]) {
-      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path2, ...args) {
-        report("fs.write", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedFs"), restores);
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFsWrite(target, ...args) {
+        safety.report("fs.write", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsWrite"), restores);
     }
     for (const key of ["rm", "rmSync", "unlink", "unlinkSync"]) {
-      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path2, ...args) {
-        report("fs.delete", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedDelete"), restores);
+      wrapMethod(fs, key, (original) => /* @__PURE__ */ __name(function wrappedFsDelete(target, ...args) {
+        safety.report("fs.delete", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsDelete"), restores);
     }
   }
   installFetchHook(restores) {
     if (typeof globalThis.fetch !== "function") return;
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(globalThis, "fetch", (original) => /* @__PURE__ */ __name(function wrappedFetch(input, init) {
-      const detail = {
+      safety.report("net.egress", {
         url: describeRequestUrl(input),
         method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
-      };
-      report("net.egress", detail);
+      });
       return suppressCapability("net.egress", () => original.call(this, input, init));
     }, "wrappedFetch"), restores);
   }
   installHttpHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(http, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "http:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpRequest"), restores);
     wrapMethod(https, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpsRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "https:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpsRequest"), restores);
-  }
-  enable({ mode = "off" } = {}, tx = null) {
-    if (mode === "off") {
-      this.setEmitter(null);
-      return { uninstall() {
-      } };
-    }
-    this.setEmitter((event) => {
-      var _a;
-      (_a = tx == null ? void 0 : tx.send) == null ? void 0 : _a.call(tx, "security.event", event);
-    });
-    const uninstallHooks = this.installHooks({ mode });
-    return {
-      uninstall: /* @__PURE__ */ __name(() => {
-        uninstallHooks();
-        this.setEmitter(null);
-      }, "uninstall")
-    };
   }
 };
 __name(_Safety, "Safety");
@@ -1138,8 +1113,11 @@ var SecurityPolicyError = _SecurityPolicyError;
 function getState() {
   if (!globalThis[STATE_KEY]) {
     globalThis[STATE_KEY] = {
-      count: 0,
-      restores: []
+      owner: null,
+      security: null,
+      baseDir: null,
+      restores: [],
+      subscribers: /* @__PURE__ */ new Set()
     };
   }
   return globalThis[STATE_KEY];
@@ -1148,15 +1126,115 @@ __name(getState, "getState");
 function wrapMethod(target, key, wrapFactory, restores) {
   const original = target[key];
   if (typeof original !== "function") return;
-  if (original[WRAPPED]) return;
+  if (original[WRAPPED]) throw new Error(`Node.js API ${key} is already wrapped by vmblu security`);
   const wrapped = wrapFactory(original);
-  wrapped[WRAPPED] = true;
+  Object.defineProperty(wrapped, WRAPPED, { value: true });
   target[key] = wrapped;
   restores.push(() => {
     if (target[key] === wrapped) target[key] = original;
   });
 }
 __name(wrapMethod, "wrapMethod");
+function classifyPolicy(operation, detail, policy, baseDir) {
+  if (!policy || policy.mode === "deny") return denied(operation, "operation_denied");
+  if (!policy.all) {
+    if (operation.area === "fs" && !isPathAllowed(detail.path, policy.roots, baseDir)) return denied(operation, "fs_root_not_allowed");
+    if (operation.area === "net" && !isHostAllowed(detail.url, policy.hosts)) return denied(operation, "net_host_not_allowed");
+    if (operation.area === "process") {
+      if (detail.shell) return denied(operation, "process_shell_not_allowed");
+      if (!isCommandAllowed(detail.command, policy.commands, baseDir)) return denied(operation, "process_command_not_allowed");
+    }
+  }
+  return {
+    decision: policy.mode === "warn" ? "warning" : "allowed",
+    area: operation.area,
+    action: operation.action,
+    mode: policy.mode
+  };
+}
+__name(classifyPolicy, "classifyPolicy");
+function denied(operation, reason) {
+  return {
+    decision: "denied",
+    area: operation.area,
+    action: operation.action,
+    mode: "deny",
+    reason
+  };
+}
+__name(denied, "denied");
+function operationPolicy(security, operation) {
+  var _a;
+  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+}
+__name(operationPolicy, "operationPolicy");
+function isPathAllowed(value, roots = [], baseDir) {
+  if (!value || !Array.isArray(roots) || !roots.length) return false;
+  const target = canonicalPath(value, process.cwd());
+  return roots.some((root) => {
+    const allowed = canonicalPath(root, baseDir);
+    return target === allowed || target.startsWith(`${allowed}/`);
+  });
+}
+__name(isPathAllowed, "isPathAllowed");
+function canonicalPath(value, baseDir) {
+  const absolute = path.resolve(baseDir, String(value ?? ""));
+  let existing = absolute;
+  const suffix = [];
+  while (!fs.existsSync(existing)) {
+    const parent = path.dirname(existing);
+    if (parent === existing) break;
+    suffix.unshift(path.basename(existing));
+    existing = parent;
+  }
+  let resolved = existing;
+  try {
+    resolved = fs.realpathSync.native(existing);
+  } catch {
+    resolved = existing;
+  }
+  resolved = path.join(resolved, ...suffix).replaceAll("\\", "/").replace(/\/+$/, "");
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+__name(canonicalPath, "canonicalPath");
+function isHostAllowed(value, hosts = []) {
+  try {
+    const observed = new URL(String(value)).hostname.toLowerCase();
+    return hosts.some((host) => normalizeConfiguredHost(host) === observed);
+  } catch {
+    return false;
+  }
+}
+__name(isHostAllowed, "isHostAllowed");
+function normalizeConfiguredHost(value) {
+  try {
+    const text = String(value ?? "").trim();
+    if (!text || text.includes("/") || text.includes(":")) return "";
+    return new URL(`http://${text}`).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+__name(normalizeConfiguredHost, "normalizeConfiguredHost");
+function isCommandAllowed(value, commands = [], baseDir) {
+  const observed = executableIdentity(value, baseDir);
+  return !!observed && commands.some((command) => executableIdentity(command, baseDir) === observed);
+}
+__name(isCommandAllowed, "isCommandAllowed");
+function executableIdentity(value, baseDir) {
+  const command = String(value ?? "").trim();
+  if (!command) return "";
+  if (path.isAbsolute(command) || command.includes("/") || command.includes("\\")) return canonicalPath(command, baseDir);
+  const extensions = process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""];
+  for (const folder of (process.env.PATH ?? "").split(path.delimiter)) {
+    for (const extension of extensions) {
+      const candidate = path.join(folder, process.platform === "win32" && !path.extname(command) ? `${command}${extension}` : command);
+      if (fs.existsSync(candidate)) return canonicalPath(candidate, baseDir);
+    }
+  }
+  return process.platform === "win32" ? command.toLowerCase() : command;
+}
+__name(executableIdentity, "executableIdentity");
 function safeString(value) {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -1171,23 +1249,13 @@ function describeRequestUrl(input, options = null, protocol = "") {
     const actualProtocol = input.protocol ?? (options == null ? void 0 : options.protocol) ?? protocol;
     const host = input.hostname ?? input.host ?? (options == null ? void 0 : options.hostname) ?? (options == null ? void 0 : options.host) ?? "";
     const port = input.port ?? (options == null ? void 0 : options.port);
-    const path2 = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
+    const requestPath = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
     const authority = port ? `${host}:${port}` : host;
-    return authority ? `${actualProtocol}//${authority}${path2}` : path2;
+    return authority ? `${actualProtocol}//${authority}${requestPath}` : requestPath;
   }
   return safeString(input);
 }
 __name(describeRequestUrl, "describeRequestUrl");
-function normalizeOperationName(value) {
-  return parseOperation(value).name;
-}
-__name(normalizeOperationName, "normalizeOperationName");
-function legacyCapabilityName(value) {
-  const operation = parseOperation(value);
-  if (operation.name === "process.exec") return "proc:exec";
-  return operation.name.replace(".", ":");
-}
-__name(legacyCapabilityName, "legacyCapabilityName");
 function parseOperation(value) {
   const normalized = String(value ?? "").replace(":", ".");
   if (normalized === "proc.exec") return { name: "process.exec", area: "process", action: "exec" };
@@ -1195,59 +1263,49 @@ function parseOperation(value) {
   return { name: `${area}.${action}`, area, action };
 }
 __name(parseOperation, "parseOperation");
-function operationPolicy(security = {}, operation) {
-  var _a;
-  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+function legacyCapabilityName(value) {
+  const operation = parseOperation(value);
+  if (operation.name === "process.exec") return "proc:exec";
+  return operation.name.replace(".", ":");
 }
-__name(operationPolicy, "operationPolicy");
-function classifyScope(operation, detail = {}, policy = {}) {
-  var _a, _b, _c;
-  if (operation.area === "fs" && ((_a = policy.roots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
-    return isPathAllowed(detail.path, policy.roots) ? null : { decision: "denied", mode: "deny", reason: "fs_root_not_allowed" };
-  }
-  if (operation.area === "net" && ((_b = policy.hosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
-    return isHostAllowed(detail.url, policy.hosts) ? null : { decision: "denied", mode: "deny", reason: "net_host_not_allowed" };
-  }
-  if (operation.area === "process" && ((_c = policy.commands) == null ? void 0 : _c.length) && (detail == null ? void 0 : detail.command)) {
-    return isCommandAllowed(detail.command, policy.commands) ? null : { decision: "denied", mode: "deny", reason: "process_command_not_allowed" };
-  }
-  return null;
-}
-__name(classifyScope, "classifyScope");
-function isPathAllowed(value, roots = []) {
-  const target = normalizePath(value);
-  return roots.some((root) => {
-    const normalizedRoot = normalizePath(root);
-    return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`);
-  });
-}
-__name(isPathAllowed, "isPathAllowed");
-function normalizePath(value) {
-  return path.resolve(String(value ?? "")).replaceAll("\\", "/").replace(/\/+$/, "");
-}
-__name(normalizePath, "normalizePath");
-function isHostAllowed(value, hosts = []) {
-  try {
-    const host = new URL(String(value)).hostname;
-    return hosts.includes(host);
-  } catch {
-    return false;
-  }
-}
-__name(isHostAllowed, "isHostAllowed");
-function isCommandAllowed(value, commands = []) {
-  return commands.includes(String(value ?? ""));
-}
-__name(isCommandAllowed, "isCommandAllowed");
+__name(legacyCapabilityName, "legacyCapabilityName");
 var safety = new Safety();
 
 // rt-als/runtime.js
 var _Runtime2 = class _Runtime2 extends Runtime {
   configure(options = {}) {
-    safety.setPolicyClassifier(safety.makePolicyClassifier({
-      runtime: this,
-      runtimeSettings: options.runtimeSettings
-    }));
+    this.securitySettings = options.runtimeSettings ?? null;
+    this.securityBaseDir = options.securityBaseDir ?? null;
+  }
+  start() {
+    if (safety.isOwner(this)) safety.release(this);
+    const validationErrors = this.settings.validateModel(this.securitySettings).filter((error2) => error2.code !== "legacy_security");
+    if (validationErrors.length) {
+      throw new Error(`Invalid vmblu security settings: ${validationErrors.map((error2) => error2.message).join("; ")}`);
+    }
+    const policy = this.settings.effectivePolicy(this.securitySettings);
+    if (policy.active && hasRelativeRoots(policy.security) && !this.securityBaseDir) {
+      throw new Error("vmblu security requires securityBaseDir when file roots are relative");
+    }
+    try {
+      if (policy.active) {
+        safety.claim(this, {
+          security: policy.security,
+          baseDir: this.securityBaseDir
+        });
+      }
+      return super.start();
+    } catch (error2) {
+      safety.release(this);
+      throw error2;
+    }
+  }
+  stop() {
+    try {
+      return super.stop();
+    } finally {
+      safety.release(this);
+    }
   }
   handleReceiveQueue() {
     var _a, _b;
@@ -1273,7 +1331,15 @@ var _Runtime2 = class _Runtime2 extends Runtime {
 };
 __name(_Runtime2, "Runtime");
 var Runtime2 = _Runtime2;
-Runtime2.prototype.settings = runtimeSettings;
+function hasRelativeRoots(security) {
+  return ["read", "write", "delete"].some((action) => {
+    var _a, _b;
+    const operation = (_a = security == null ? void 0 : security.fs) == null ? void 0 : _a[action];
+    return (_b = operation == null ? void 0 : operation.roots) == null ? void 0 : _b.some((root) => !/^(?:[A-Za-z]:[\\/]|[\\/]{1,2})/.test(root));
+  });
+}
+__name(hasRelativeRoots, "hasRelativeRoots");
+Runtime2.prototype.settings = runtimeSettings2;
 
 // agent-base/broker-protocol.js
 var BrokerRequestTypes = Object.freeze({
@@ -1983,13 +2049,13 @@ var _AgentRuntime = class _AgentRuntime {
     return this;
   }
   mountConfiguredOverlay() {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (this.overlay || ((_b = (_a = this.config) == null ? void 0 : _a.ui) == null ? void 0 : _b.mode) !== "overlay") return this.overlay;
     if (typeof document === "undefined") return null;
     this.overlay = new AgentOverlay({
       agent: this,
       broker: this.broker,
-      traceRecorder: (_c = this.broker) == null ? void 0 : _c.trace,
+      traceRecorder: (_d = (_c = this.broker) == null ? void 0 : _c.agentTraceView) == null ? void 0 : _d.call(_c, this.id),
       config: this.config
     });
     this.overlay.mount();
@@ -2077,6 +2143,7 @@ var _AgentRuntime = class _AgentRuntime {
       type: BrokerRequestTypes.APPROVAL_RESOLVE,
       approvalId,
       approved,
+      authority: options.authority ?? { kind: "local-ui", id: "embedded-agent-ui", trusted: true },
       ...options
     });
   }
@@ -2225,10 +2292,13 @@ ${lines.join("\n")}`;
       };
     }
     const result = await this.callTool(mapped.capability.id, args);
+    const completed = (result == null ? void 0 : result.status) === "completed" || (result == null ? void 0 : result.status) === "verified";
     return {
-      ok: !(result == null ? void 0 : result.error),
+      ok: completed,
+      accepted: (result == null ? void 0 : result.status) === "accepted",
       toolId: mapped.capability.id,
       status: result == null ? void 0 : result.status,
+      outcome: toolOutcomeText(result == null ? void 0 : result.status),
       result
     };
   }
@@ -2242,6 +2312,27 @@ ${lines.join("\n")}`;
 };
 __name(_AgentRuntime, "AgentRuntime");
 var AgentRuntime = _AgentRuntime;
+function toolOutcomeText(status) {
+  switch (status) {
+    case "accepted":
+      return "The call was dispatched; application completion is not known.";
+    case "completed":
+      return "The application returned a successful reply.";
+    case "verified":
+      return "Configured application evidence verified the effect.";
+    case "unverified":
+      return "The call was dispatched but configured evidence did not verify the effect.";
+    case "pending":
+      return "The call is waiting for trusted approval.";
+    case "denied":
+      return "The call was denied.";
+    case "failed":
+      return "The call failed before a verified application result.";
+    default:
+      return "The tool outcome is unknown.";
+  }
+}
+__name(toolOutcomeText, "toolOutcomeText");
 function parseToolArguments(value) {
   if (!value) return {};
   if (typeof value === "object") return value;
@@ -2343,10 +2434,13 @@ var _AgentPolicy = class _AgentPolicy {
   canUse(kind, id) {
     var _a;
     const set = (_a = this.permissions) == null ? void 0 : _a[kind];
-    if (!set || !id) return { allowed: true, reason: "no_policy" };
+    if (!this.enabled) return { allowed: false, reason: "agent_disabled" };
+    if (!this.agentId) return { allowed: false, reason: "missing_identity" };
+    if (!id) return { allowed: false, reason: "missing_capability_id" };
+    if (!(set == null ? void 0 : set.hasAllowList)) return { allowed: false, reason: `${kind}_permissions_missing`, rule: "allow" };
     if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
-    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
-    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
+    if (!matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
+    return { allowed: true, reason: "allowed_list", rule: "allow" };
   }
   approvalDecision(tool = {}) {
     if ((tool == null ? void 0 : tool.approval) === "always") {
@@ -2559,7 +2653,7 @@ var TraceRecorder = _TraceRecorder;
 
 // agent-base/tool-broker.js
 var _ToolBroker = class _ToolBroker {
-  constructor({ runtime, capabilities, registry, traceRecorder } = {}) {
+  constructor({ runtime, capabilities, registry, traceRecorder, approvalTtlMs = 3e5 } = {}) {
     this.runtime = null;
     this.registry = registry ?? new CapabilityRegistry(capabilities);
     this.trace = traceRecorder ?? new TraceRecorder();
@@ -2570,6 +2664,7 @@ var _ToolBroker = class _ToolBroker {
     this.listeners = /* @__PURE__ */ new Map();
     this.nextCallId = 1;
     this.nextApprovalId = 1;
+    this.approvalTtlMs = approvalTtlMs;
     this.source = null;
     this.actor = null;
     if (runtime) this.attachRuntime(runtime);
@@ -2622,29 +2717,49 @@ var _ToolBroker = class _ToolBroker {
     if (removed) this.trace.record({ type: "agent.unregistered", agentId, status: "ok" });
     return removed;
   }
+  cancelPendingApprovals(reason = "runtime_stopped") {
+    const resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+    for (const approval of this.approvalRequests.values()) {
+      if (approval.status !== "requested") continue;
+      approval.status = "cancelled";
+      approval.resolvedAt = resolvedAt;
+      approval.resolvedBy = reason;
+    }
+  }
   subscribe(agentId, listener) {
     if (typeof listener !== "function") throw new Error("Broker listener must be a function");
-    const key = agentId || "*";
-    if (!this.listeners.has(key)) this.listeners.set(key, /* @__PURE__ */ new Set());
-    this.listeners.get(key).add(listener);
+    const identity = this.identityDecision(agentId);
+    if (!identity.allowed) throw new Error(`Broker subscription denied: ${identity.reason}`);
+    if (!this.listeners.has(agentId)) this.listeners.set(agentId, /* @__PURE__ */ new Set());
+    this.listeners.get(agentId).add(listener);
     return () => {
       var _a;
-      return (_a = this.listeners.get(key)) == null ? void 0 : _a.delete(listener);
+      return (_a = this.listeners.get(agentId)) == null ? void 0 : _a.delete(listener);
     };
   }
   publish(message) {
     if (!message) return message;
-    const targets = new Set(this.listeners.get("*") ?? []);
-    if (message.agentId) {
-      for (const listener of this.listeners.get(message.agentId) ?? []) targets.add(listener);
-    } else {
-      for (const [key, listeners] of this.listeners.entries()) {
-        if (key === "*") continue;
-        for (const listener of listeners) targets.add(listener);
-      }
-    }
-    for (const listener of targets) listener(message);
+    if (!message.agentId) return message;
+    for (const listener of this.listeners.get(message.agentId) ?? []) listener(message);
     return message;
+  }
+  agentTraceView(agentId) {
+    const visible = /* @__PURE__ */ __name((record) => this.canViewTrace(agentId, record), "visible");
+    return {
+      all: /* @__PURE__ */ __name(() => this.trace.all().filter(visible), "all"),
+      subscribe: /* @__PURE__ */ __name((listener) => this.trace.subscribe((record) => {
+        if (visible(record)) listener(record);
+      }), "subscribe")
+    };
+  }
+  canViewTrace(agentId, record) {
+    if (!this.identityDecision(agentId).allowed) return false;
+    if ((record == null ? void 0 : record.agentId) && record.agentId !== agentId) return false;
+    const policy = this.getAgentPolicy(agentId);
+    if (record == null ? void 0 : record.toolId) return policy.canUse("tools", record.toolId).allowed;
+    if (record == null ? void 0 : record.probeId) return policy.canUse("probes", record.probeId).allowed;
+    if (record == null ? void 0 : record.eventId) return policy.canUse("events", record.eventId).allowed;
+    return (record == null ? void 0 : record.agentId) === agentId;
   }
   emitResult(request, result) {
     if (request == null ? void 0 : request.agentId) {
@@ -2673,13 +2788,18 @@ var _ToolBroker = class _ToolBroker {
     };
     this.events.push(event);
     this.trace.record({ type: "event.observed", eventId, callId, details: { payload } });
-    this.publish({
-      kind: "event.observed",
-      eventId,
-      callId,
-      payload,
-      timestamp: event.timestamp
-    });
+    for (const [agentId, agent] of this.agents) {
+      const policy = agent.policy = AgentPolicy.fromAgent(agent);
+      if (!policy.canUse("events", eventId).allowed) continue;
+      this.publish({
+        kind: "event.observed",
+        agentId,
+        eventId,
+        callId,
+        payload,
+        timestamp: event.timestamp
+      });
+    }
     return event;
   }
   recordRuntimeEvent(msg, payload) {
@@ -2719,11 +2839,12 @@ var _ToolBroker = class _ToolBroker {
   listCapabilities(request = {}) {
     const policy = this.getAgentPolicy(request.agentId);
     const capabilities = policy.filterCapabilities(this.registry.list());
+    const identity = this.identityDecision(request.agentId);
     this.trace.record({
       type: "capabilities.list",
       agentId: request.agentId,
       requestId: request.requestId,
-      status: "ok",
+      status: identity.allowed ? "ok" : "denied",
       details: {
         policy: policy.traceDetails(),
         counts: {
@@ -2736,7 +2857,9 @@ var _ToolBroker = class _ToolBroker {
     return {
       type: BrokerResultTypes.CAPABILITIES_RESULT,
       requestId: request.requestId,
-      capabilities
+      status: identity.allowed ? "ok" : "denied",
+      capabilities,
+      ...identity.allowed ? {} : { error: { code: "denied", message: identity.reason } }
     };
   }
   capabilityView(agentId) {
@@ -2755,7 +2878,20 @@ var _ToolBroker = class _ToolBroker {
       status: "requested",
       details: { args: request == null ? void 0 : request.args }
     });
-    if (!tool) return this.toolError(request, callId, "unknown_tool", `Unknown tool: ${request == null ? void 0 : request.toolId}`);
+    if (!tool) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        callId,
+        toolId: request == null ? void 0 : request.toolId,
+        status: "denied",
+        details: { reason: "unknown_tool" }
+      });
+      return this.toolResult(request, callId, request == null ? void 0 : request.toolId, ToolResultStatus.DENIED, {
+        error: { code: "denied", message: "Capability unavailable" }
+      });
+    }
     if (!this.runtime) return this.toolError(request, callId, "runtime_not_attached", "ToolBroker is not attached to a runtime", tool.id);
     const policy = this.checkToolPolicy(request, tool);
     this.trace.record({
@@ -2769,7 +2905,7 @@ var _ToolBroker = class _ToolBroker {
     });
     if (!policy.allowed) {
       return this.toolResult(request, callId, tool.id, ToolResultStatus.DENIED, {
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const validation = this.validateArgs("tool", tool.id, (_a = tool.input) == null ? void 0 : _a.schema, request == null ? void 0 : request.args);
@@ -2810,8 +2946,8 @@ var _ToolBroker = class _ToolBroker {
     const target = this.resolveInputTarget(tool.input);
     if (!target) return this.toolError(request, callId, "target_not_found", `No runtime target for ${(_a = tool.input) == null ? void 0 : _a.ref}`);
     try {
-      const wait = request.wait ?? "accepted";
-      const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0;
+      const wait = this.effectiveWaitMode(request.wait, tool, target);
+      const timeout = request.timeoutMs ?? normalizeVerifyWith(tool).timeoutMs ?? tool.timeoutMs ?? 1e3;
       const payload = this.makeRuntimePayload(tool, request, callId);
       this.trace.record({
         type: "message.dispatch",
@@ -2827,9 +2963,10 @@ var _ToolBroker = class _ToolBroker {
         return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED);
       }
       if (wait === "verified") {
-        if (target.channel) await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
+        let result;
+        if (target.channel) result = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
         else this.runtime.sendTo(this.source, tool.input.pin, [target], payload);
-        return this.verifyToolResult(request, tool, callId, timeout);
+        return this.verifyToolResult(request, tool, callId, timeout, result);
       }
       const reply = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
       return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, { result: reply });
@@ -2837,7 +2974,7 @@ var _ToolBroker = class _ToolBroker {
       return this.toolError(request, callId, "dispatch_failed", (error2 == null ? void 0 : error2.message) || String(error2), tool.id);
     }
   }
-  async verifyToolResult(request, tool, callId, timeoutMs = 1e3) {
+  async verifyToolResult(request, tool, callId, timeoutMs = 1e3, result) {
     const verifyWith = normalizeVerifyWith(tool);
     const evidence = {
       events: [],
@@ -2855,7 +2992,7 @@ var _ToolBroker = class _ToolBroker {
     for (const probeSpec of verifyWith.probes) {
       const probeId = typeof probeSpec === "string" ? probeSpec : probeSpec == null ? void 0 : probeSpec.id;
       if (!probeId) continue;
-      const result = await this.readProbe({
+      const result2 = await this.readProbe({
         agentId: request == null ? void 0 : request.agentId,
         requestId: request == null ? void 0 : request.requestId,
         probeId,
@@ -2863,9 +3000,9 @@ var _ToolBroker = class _ToolBroker {
       });
       evidence.probes.push({
         probeId,
-        status: result == null ? void 0 : result.status,
-        value: result == null ? void 0 : result.value,
-        error: result == null ? void 0 : result.error
+        status: result2 == null ? void 0 : result2.status,
+        value: result2 == null ? void 0 : result2.value,
+        error: result2 == null ? void 0 : result2.error
       });
     }
     const verified = evidence.events.every((item) => item.status === "observed") && evidence.probes.every((item) => item.status === "ok");
@@ -2879,6 +3016,7 @@ var _ToolBroker = class _ToolBroker {
       details: evidence
     });
     return this.toolResult(request, callId, tool.id, verified ? ToolResultStatus.VERIFIED : ToolResultStatus.UNVERIFIED, {
+      ...result === void 0 ? {} : { result },
       verification: {
         status: verified ? "verified" : "unverified",
         evidence
@@ -2902,6 +3040,7 @@ var _ToolBroker = class _ToolBroker {
     return { eventId, status: "timeout", callId };
   }
   async resolveApproval(request = {}) {
+    var _a;
     const approval = this.approvalRequests.get(request.approvalId);
     if (!approval) {
       return this.emitResult(request, brokerError(request, "unknown_approval", `Unknown approval request: ${request.approvalId}`));
@@ -2909,9 +3048,35 @@ var _ToolBroker = class _ToolBroker {
     if (approval.status !== "requested") {
       return this.emitResult(request, brokerError(request, "approval_already_resolved", `Approval request is already ${approval.status}`));
     }
+    if (Date.now() >= Date.parse(approval.expiresAt)) {
+      approval.status = "expired";
+      approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+      return this.emitResult(request, brokerError(request, "approval_expired", "Approval request has expired"));
+    }
+    if (((_a = request == null ? void 0 : request.authority) == null ? void 0 : _a.trusted) !== true) {
+      return this.emitResult(request, brokerError(request, "untrusted_approval_authority", "Approval requires a trusted human or external authority"));
+    }
+    if ((request == null ? void 0 : request.agentId) && request.agentId !== approval.agentId) {
+      return this.emitResult(request, brokerError(request, "approval_identity_mismatch", "Approval request belongs to another agent"));
+    }
+    const tool = this.registry.getTool(approval.toolId);
+    if (!tool) return this.toolError(request, approval.callId, "unknown_tool", `Unknown tool: ${approval.toolId}`, approval.toolId);
+    const currentPolicy = this.checkToolPolicy(approval.request, tool);
+    if (!currentPolicy.allowed) {
+      approval.status = "denied";
+      return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
+        approval,
+        error: { code: "denied", message: currentPolicy.reason }
+      });
+    }
+    if ((tool.risk ?? "low") !== approval.risk || JSON.stringify(tool.effects ?? []) !== JSON.stringify(approval.effects)) {
+      approval.status = "invalidated";
+      approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+      return this.emitResult(request, brokerError(request, "approval_changed", "Tool risk or effects changed; request a new approval"));
+    }
     approval.status = request.approved === true ? "approved" : "denied";
     approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
-    approval.resolvedBy = request.agentId ?? approval.agentId;
+    approval.resolvedBy = request.authority.id ?? request.authority.kind ?? "trusted-authority";
     this.trace.record({
       type: "approval.resolved",
       agentId: approval.agentId,
@@ -2927,26 +3092,32 @@ var _ToolBroker = class _ToolBroker {
       approval,
       timestamp: approval.resolvedAt
     });
-    const tool = this.registry.getTool(approval.toolId);
     if (approval.status !== "approved") {
       return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
         approval,
         error: { code: "approval_denied", message: "Approval was denied" }
       });
     }
-    if (!tool) return this.toolError(request, approval.callId, "unknown_tool", `Unknown tool: ${approval.toolId}`, approval.toolId);
     return this.executeTool(approval.request, tool, approval.callId);
   }
   async readProbe(request) {
     var _a, _b;
     const probe = this.registry.getProbe(request == null ? void 0 : request.probeId);
     if (!probe) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: request == null ? void 0 : request.probeId,
+        status: "denied",
+        details: { reason: "unknown_probe" }
+      });
       return this.emitResult(request, {
         type: BrokerResultTypes.PROBE_RESULT,
         requestId: request == null ? void 0 : request.requestId,
         probeId: request == null ? void 0 : request.probeId,
-        status: "failed",
-        error: { code: "unknown_probe", message: `Unknown probe: ${request == null ? void 0 : request.probeId}` }
+        status: "denied",
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const policy = this.checkCapabilityPolicy(request, "probes", probe.id);
@@ -2964,7 +3135,7 @@ var _ToolBroker = class _ToolBroker {
         requestId: request == null ? void 0 : request.requestId,
         probeId: probe.id,
         status: "denied",
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const validation = this.validateArgs("probe", probe.id, probe.argsSchema ?? ((_a = probe.arguments) == null ? void 0 : _a.schema) ?? ((_b = probe.input) == null ? void 0 : _b.schema), request == null ? void 0 : request.args);
@@ -3035,12 +3206,20 @@ var _ToolBroker = class _ToolBroker {
   async waitForEvent(request) {
     const event = this.registry.getEvent(request == null ? void 0 : request.eventId);
     if (!event) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        eventId: request == null ? void 0 : request.eventId,
+        status: "denied",
+        details: { reason: "unknown_event" }
+      });
       return this.emitResult(request, {
         type: BrokerResultTypes.EVENT_RESULT,
         requestId: request == null ? void 0 : request.requestId,
         eventId: request == null ? void 0 : request.eventId,
-        status: "failed",
-        error: { code: "unknown_event", message: `Unknown event: ${request == null ? void 0 : request.eventId}` }
+        status: "denied",
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const policy = this.checkCapabilityPolicy(request, "events", event.id);
@@ -3058,7 +3237,7 @@ var _ToolBroker = class _ToolBroker {
         requestId: request == null ? void 0 : request.requestId,
         eventId: event.id,
         status: "denied",
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const timeoutMs = (request == null ? void 0 : request.timeoutMs) ?? 1e3;
@@ -3085,6 +3264,16 @@ var _ToolBroker = class _ToolBroker {
     });
   }
   queryEvents(request = {}) {
+    const identity = this.identityDecision(request.agentId);
+    if (!identity.allowed) {
+      return {
+        type: BrokerResultTypes.EVENTS_RESULT,
+        requestId: request.requestId,
+        status: "denied",
+        events: [],
+        error: { code: "denied", message: "Capability unavailable" }
+      };
+    }
     const policy = this.getAgentPolicy(request.agentId);
     const events = this.events.filter((event) => {
       if (request.eventId && event.eventId !== request.eventId) return false;
@@ -3095,6 +3284,7 @@ var _ToolBroker = class _ToolBroker {
     return {
       type: BrokerResultTypes.EVENTS_RESULT,
       requestId: request.requestId,
+      status: "ok",
       events
     };
   }
@@ -3120,6 +3310,7 @@ var _ToolBroker = class _ToolBroker {
     };
   }
   createApprovalRequest(request, callId, tool, decision) {
+    const createdAt = /* @__PURE__ */ new Date();
     const approval = {
       approvalId: this.newApprovalId(),
       agentId: (request == null ? void 0 : request.agentId) ?? null,
@@ -3130,16 +3321,17 @@ var _ToolBroker = class _ToolBroker {
       reason: decision.reason,
       rule: decision.rule,
       risk: tool.risk ?? "low",
-      effects: Array.isArray(tool.effects) ? tool.effects : [],
-      request: {
+      effects: deepFreeze(makeJsonSafe2(Array.isArray(tool.effects) ? tool.effects : [])),
+      request: deepFreeze({
         agentId: request == null ? void 0 : request.agentId,
         requestId: request == null ? void 0 : request.requestId,
         toolId: tool.id,
-        args: request == null ? void 0 : request.args,
+        args: makeJsonSafe2(request == null ? void 0 : request.args),
         wait: request == null ? void 0 : request.wait,
         timeoutMs: request == null ? void 0 : request.timeoutMs
-      },
-      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      }),
+      createdAt: createdAt.toISOString(),
+      expiresAt: new Date(createdAt.getTime() + this.approvalTtlMs).toISOString()
     };
     this.approvalRequests.set(approval.approvalId, approval);
     this.trace.record({
@@ -3169,11 +3361,25 @@ var _ToolBroker = class _ToolBroker {
     };
   }
   getAgentPolicy(agentId) {
-    if (!agentId) return new AgentPolicy({ id: null });
+    if (!agentId) return new AgentPolicy({ id: null, enabled: false });
     const agent = this.agents.get(agentId);
-    if (!agent) return new AgentPolicy({ id: agentId });
+    if (!agent) return new AgentPolicy({ id: agentId, enabled: false });
     agent.policy = AgentPolicy.fromAgent(agent);
     return agent.policy;
+  }
+  identityDecision(agentId) {
+    var _a;
+    if (!agentId) return { allowed: false, reason: "missing_identity" };
+    const agent = this.agents.get(agentId);
+    if (!agent) return { allowed: false, reason: "unknown_identity" };
+    if (agent.enabled === false || ((_a = agent.config) == null ? void 0 : _a.enabled) === false) return { allowed: false, reason: "agent_disabled" };
+    return { allowed: true, reason: "known_identity" };
+  }
+  effectiveWaitMode(requested, tool, target) {
+    const verification = normalizeVerifyWith(tool);
+    if (verification.events.length || verification.probes.length) return "verified";
+    if (target == null ? void 0 : target.channel) return requested === "verified" ? "verified" : "completed";
+    return requested === "verified" ? "verified" : "accepted";
   }
   validateArgs(kind, capabilityId, schema, args) {
     if (!schema) return { valid: true, kind, capabilityId, reason: "no_schema" };
@@ -3255,6 +3461,12 @@ function makeJsonSafe2(value) {
   }
 }
 __name(makeJsonSafe2, "makeJsonSafe");
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+__name(deepFreeze, "deepFreeze");
 function stringifyProbeValue(value) {
   if (typeof value === "string") return value;
   try {
@@ -3272,13 +3484,19 @@ function normalizeVerifyWith(tool = {}) {
   }
   const events = [];
   const probes = [];
+  let timeoutMs = null;
   for (const spec of specs) {
     if (Array.isArray(spec == null ? void 0 : spec.events)) events.push(...spec.events);
     if (Array.isArray(spec == null ? void 0 : spec.probes)) probes.push(...spec.probes);
+    if (Number.isInteger(spec == null ? void 0 : spec.timeoutMs)) timeoutMs = timeoutMs == null ? spec.timeoutMs : Math.max(timeoutMs, spec.timeoutMs);
+  }
+  for (const effect of tool.effects ?? []) {
+    if (Number.isInteger(effect == null ? void 0 : effect.timeoutMs)) timeoutMs = timeoutMs == null ? effect.timeoutMs : Math.max(timeoutMs, effect.timeoutMs);
   }
   return {
     events: events.map((item) => typeof item === "string" ? item : item == null ? void 0 : item.id).filter(Boolean),
-    probes
+    probes,
+    timeoutMs
   };
 }
 __name(normalizeVerifyWith, "normalizeVerifyWith");
@@ -3297,19 +3515,36 @@ var _AgentRuntimeSupport = class _AgentRuntimeSupport {
     this.wireToolBrokerEvents();
     this.registerNodeProbes();
     runtime.agent = null;
-    const selectedAgent = selectAgentConfig(agent);
-    if (selectedAgent && selectedAgent.enabled !== false) {
+    runtime.agentProfiles = [];
+    runtime.agentInterfaces = [];
+    const configuration = normalizeAgentConfiguration(agent);
+    if (configuration) {
+      runtime.agentProfiles = configuration.profiles;
+      runtime.agentInterfaces = configuration.interfaces;
+      for (const profile of configuration.profiles) {
+        runtime.toolBroker.registerAgent({ id: profile.id, config: profile });
+      }
+    }
+    const selectedAgent = selectEmbeddedAgent(configuration);
+    if (selectedAgent) {
       runtime.agent = new AgentRuntime({
-        id: selectedAgent == null ? void 0 : selectedAgent.id,
+        id: selectedAgent.profile.id,
         broker: runtime.toolBroker,
-        config: selectedAgent ?? {}
+        config: {
+          ...selectedAgent.profile,
+          instructions: selectedAgent.interface.instructions,
+          llm: selectedAgent.interface.llm,
+          ui: selectedAgent.interface.ui,
+          interfaceId: selectedAgent.interface.id
+        }
       });
     }
     return runtime;
   }
   stop() {
-    var _a, _b;
-    (_b = (_a = this.runtime.agent) == null ? void 0 : _a.unmountOverlay) == null ? void 0 : _b.call(_a);
+    var _a, _b, _c, _d;
+    (_b = (_a = this.runtime.toolBroker) == null ? void 0 : _a.cancelPendingApprovals) == null ? void 0 : _b.call(_a);
+    (_d = (_c = this.runtime.agent) == null ? void 0 : _c.unmountOverlay) == null ? void 0 : _d.call(_c);
   }
   registerNodeProbes() {
     var _a;
@@ -3369,19 +3604,84 @@ var _AgentRuntimeSupport = class _AgentRuntimeSupport {
 };
 __name(_AgentRuntimeSupport, "AgentRuntimeSupport");
 var AgentRuntimeSupport = _AgentRuntimeSupport;
-function selectAgentConfig(agent) {
-  if (!agent) return null;
-  if (Array.isArray(agent == null ? void 0 : agent.agents)) {
-    return agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.id) === agent.defaultAgent) ?? agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.enabled) !== false) ?? agent.agents[0] ?? null;
+function normalizeAgentConfiguration(agent) {
+  var _a;
+  if (!agent || agent.enabled === false) return null;
+  if (Array.isArray(agent == null ? void 0 : agent.profiles)) {
+    return {
+      defaultInterface: agent.defaultInterface ?? "",
+      profiles: agent.profiles.map(normalizeProfile),
+      interfaces: Array.isArray(agent.interfaces) ? agent.interfaces.map(normalizeInterface) : []
+    };
   }
-  return agent;
+  const legacyAgents = Array.isArray(agent == null ? void 0 : agent.agents) ? agent.agents : [agent];
+  const profiles = legacyAgents.map(normalizeProfile);
+  const defaultProfile = profiles.find((profile) => profile.id === agent.defaultAgent) ?? profiles[0];
+  const interfaces = legacyAgents.map((item) => ({
+    id: `${item.id ?? "agent"}-embedded`,
+    kind: "embedded",
+    profile: item.id,
+    enabled: item.enabled !== false,
+    instructions: item.instructions,
+    llm: item.llm,
+    ui: item.ui
+  }));
+  return {
+    defaultInterface: ((_a = interfaces.find((item) => item.profile === (defaultProfile == null ? void 0 : defaultProfile.id))) == null ? void 0 : _a.id) ?? "",
+    profiles,
+    interfaces
+  };
 }
-__name(selectAgentConfig, "selectAgentConfig");
+__name(normalizeAgentConfiguration, "normalizeAgentConfiguration");
+function normalizeProfile(profile = {}) {
+  return {
+    ...profile,
+    id: String(profile.id ?? "").trim(),
+    enabled: profile.enabled !== false,
+    permissions: profile.permissions ?? {}
+  };
+}
+__name(normalizeProfile, "normalizeProfile");
+function normalizeInterface(value = {}) {
+  return {
+    ...value,
+    id: String(value.id ?? "").trim(),
+    profile: String(value.profile ?? "").trim(),
+    enabled: value.enabled !== false
+  };
+}
+__name(normalizeInterface, "normalizeInterface");
+function selectEmbeddedAgent(configuration) {
+  if (!configuration) return null;
+  const ids = /* @__PURE__ */ new Set();
+  for (const profile2 of configuration.profiles) {
+    if (!profile2.id) throw new Error("Agent profile id is required");
+    if (ids.has(profile2.id)) throw new Error(`Duplicate agent profile id: ${profile2.id}`);
+    ids.add(profile2.id);
+  }
+  const embedded = configuration.interfaces.filter((item) => item.kind === "embedded" && item.enabled !== false);
+  if (!embedded.length) return null;
+  if (!configuration.defaultInterface) {
+    if (embedded.length) {
+      throw new Error("defaultInterface is required when an embedded agent interface is enabled");
+    }
+    return null;
+  }
+  const selected = configuration.interfaces.find((item) => item.id === configuration.defaultInterface);
+  if (!selected) throw new Error(`Unknown default agent interface: ${configuration.defaultInterface}`);
+  if (selected.kind !== "embedded") throw new Error(`Default agent interface must be embedded: ${selected.id}`);
+  if (selected.enabled === false) throw new Error(`Default agent interface is disabled: ${selected.id}`);
+  const profile = configuration.profiles.find((item) => item.id === selected.profile);
+  if (!profile) throw new Error(`Agent interface ${selected.id} references unknown profile: ${selected.profile}`);
+  if (profile.enabled === false) throw new Error(`Agent interface ${selected.id} references disabled profile: ${selected.profile}`);
+  return { interface: selected, profile };
+}
+__name(selectEmbeddedAgent, "selectEmbeddedAgent");
 
 // rt-nodejs-agent/runtime.js
 var _Runtime3 = class _Runtime3 extends Runtime2 {
   get settings() {
-    return runtimeSettings;
+    return runtimeSettings2;
   }
   get agentSupport() {
     return this._agentSupport ??= new AgentRuntimeSupport(this);
@@ -3411,28 +3711,20 @@ __name(_Runtime3, "Runtime");
 var Runtime3 = _Runtime3;
 
 // security/security-reporter.js
-function SecurityReporterFactory(tx, sx = null) {
-  const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
+function SecurityReporterFactory(tx) {
   let currentTx = tx;
-  let safetyControl = safety.enable({ mode }, {
-    send(name, payload) {
-      if (name !== "security.event") return 0;
-      return currentTx.send("security.event", payload);
-    }
+  let unsubscribe = safety.subscribe((event) => {
+    var _a;
+    (_a = currentTx == null ? void 0 : currentTx.send) == null ? void 0 : _a.call(currentTx, "security.event", event);
   });
   return {
-    configure(nextSettings = null) {
-      const nextMode = (nextSettings == null ? void 0 : nextSettings.mode) ?? mode;
-      safetyControl.uninstall();
-      safetyControl = safety.enable({ mode: nextMode }, {
-        send(name, payload) {
-          if (name !== "security.event") return 0;
-          return currentTx.send("security.event", payload);
-        }
-      });
-    },
     setTx(nextTx) {
       currentTx = nextTx ?? currentTx;
+    },
+    stop() {
+      unsubscribe();
+      unsubscribe = /* @__PURE__ */ __name(() => {
+      }, "unsubscribe");
     }
   };
 }
@@ -3452,6 +3744,8 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
     const basePath = this.server.basePath ?? "/agent";
     return {
       target: "http",
+      kind: "projection",
+      label: "HTTP projection",
       agentId: ((_a = this.agent) == null ? void 0 : _a.id) ?? null,
       application: view.application,
       server: {
@@ -3459,7 +3753,7 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
         port: this.server.port ?? 8787,
         basePath
       },
-      endpoints: {
+      endpointTemplates: {
         capabilities: `${basePath}/capabilities`,
         callTool: `${basePath}/tools/{toolId}/call`,
         readProbe: `${basePath}/probes/{probeId}/read`,
@@ -3541,6 +3835,7 @@ export {
   OpenAIAgentAdapter,
   OpenAIChatProvider,
   Runtime3 as Runtime,
+  SecurityPolicyError,
   SecurityReporterFactory,
   ToolBroker,
   ToolResultStatus,

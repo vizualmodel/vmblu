@@ -1,17 +1,17 @@
 {
-  "version": "1.11.0",
+  "version": "1.12.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "1.11",
-    "schemaVersion": "1.11.0",
+    "compatibilityFamily": "1.12",
+    "schemaVersion": "1.12.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.11.0"
+      "version": "1.12.0"
     },
     "source": {
       "model": "sysblu.mod.blu",
-      "hash": "fnv1a64:2da472c875bd4286"
+      "hash": "fnv1a64:66610bf499e7af55"
     }
   },
   "entries": [
@@ -22,7 +22,7 @@
           "pin": "system.updated",
           "handler": "onSystemUpdated",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 77,
+          "line": 80,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +38,7 @@
           "pin": "sysmod.done",
           "handler": "onSysmodDone",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 91,
+          "line": 94,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -57,7 +57,7 @@
           "pin": "size.change",
           "handler": "onSizeChange",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 97,
+          "line": 100,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -73,7 +73,7 @@
           "pin": "add.application",
           "handler": "onAddApplication",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 329,
+          "line": 332,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -89,7 +89,7 @@
           "pin": "application.prompt",
           "handler": "onApplicationPrompt",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 546,
+          "line": 595,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -100,102 +100,102 @@
         {
           "pin": "canvas",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 88
+          "line": 91
         },
         {
           "pin": "application settings",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 160
+          "line": 163
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 165
+          "line": 168
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 173
+          "line": 176
         },
         {
           "pin": "endpoint settings",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 186
+          "line": 189
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 193
+          "line": 196
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 204
+          "line": 207
         },
         {
           "pin": "connection settings",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 241
+          "line": 244
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 249
+          "line": 252
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 257
+          "line": 260
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 267
+          "line": 270
         },
         {
           "pin": "application settings",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 337
+          "line": 340
         },
         {
           "pin": "sysmod.doit",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 344
+          "line": 347
         },
         {
           "pin": "sysmod.doit",
-          "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 508
-        },
-        {
-          "pin": "execute command",
-          "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 531
-        },
-        {
-          "pin": "open reference",
           "file": "../nodes/sysblu-view/sysblu-view.js",
           "line": 539
         },
         {
+          "pin": "execute command",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 580
+        },
+        {
           "pin": "open reference",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 543
+          "line": 588
+        },
+        {
+          "pin": "open reference",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 592
         },
         {
           "pin": "sysmod.redo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 569
+          "line": 625
         },
         {
           "pin": "sysmod.undo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 570
+          "line": 626
         },
         {
           "pin": "sysmod.redo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 571
+          "line": 627
         }
       ]
     },

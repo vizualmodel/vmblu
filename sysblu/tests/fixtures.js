@@ -1,7 +1,9 @@
+import {SCHEMA_VERSION} from '../../core/types/model/schema-version.js'
+
 export function chatSystem() {
     return {
         header: {
-            version: '1.11.0',
+            version: SCHEMA_VERSION,
             name: 'Chat system',
         },
         nodes: [

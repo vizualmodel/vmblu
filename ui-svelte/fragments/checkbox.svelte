@@ -2,6 +2,7 @@
 export let style
 export let on
 export let onToggle
+export let disabled = false
 
 // call the on color function if requested
 function onInput() { 
@@ -48,5 +49,9 @@ input:checked::after {
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
+input:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
 </style>
-<input style={style ? style : ''} type="checkbox" bind:checked={on} on:change={onInput}>
+<input style={style ? style : ''} type="checkbox" bind:checked={on} {disabled} on:change={onInput}>

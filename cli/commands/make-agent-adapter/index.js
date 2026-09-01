@@ -14,7 +14,7 @@ export const describe = 'Generate a target-specific agent adapter projection fro
 
 export const builder = [
     {flag: '--target <target>', desc: 'adapter target: vmblu, openai, or http'},
-    {flag: '--agent <id>', desc: 'agent/interface id to project'},
+    {flag: '--agent <id>', desc: 'agent profile id to project'},
     {flag: '--capabilities <file>', desc: 'capability manifest to read instead of generating from the model'},
     {flag: '--out <file>', desc: 'output file path'},
 ]
@@ -87,19 +87,43 @@ function loadAgentConfig(agentHeader, modelPath) {
 
 function selectAgent(agentRoot, requestedId = null) {
     if (!agentRoot) return null
+    if (Array.isArray(agentRoot?.profiles)) return selectCanonicalProfile(agentRoot, requestedId)
     if (!Array.isArray(agentRoot?.agents)) return normalizeAgent(agentRoot)
 
     const selected = requestedId
         ? agentRoot.agents.find(agent => agent?.id === requestedId)
         : agentRoot.agents.find(agent => agent?.id === agentRoot.defaultAgent)
-            ?? agentRoot.agents.find(agent => agent?.enabled !== false)
-            ?? agentRoot.agents[0]
 
-    if (requestedId && !selected) {
-        throw new Error(`Agent interface not found: ${requestedId}`)
-    }
+    if (!selected) throw new Error(requestedId
+        ? `Agent profile not found: ${requestedId}`
+        : `Default agent profile not found: ${agentRoot.defaultAgent ?? '<missing>'}`)
 
     return normalizeAgent(selected)
+}
+
+function selectCanonicalProfile(config, requestedId) {
+    let profile = null
+    let selectedInterface = null
+
+    if (requestedId) {
+        profile = config.profiles.find(candidate => candidate?.id === requestedId)
+        if (!profile) throw new Error(`Agent profile not found: ${requestedId}`)
+        selectedInterface = config.interfaces?.find(candidate => candidate?.profile === profile.id && candidate?.enabled !== false) ?? null
+    }
+    else {
+        if (!config.defaultInterface) throw new Error('defaultInterface is required when --agent is omitted')
+        selectedInterface = config.interfaces?.find(candidate => candidate?.id === config.defaultInterface)
+        if (!selectedInterface) throw new Error(`Default agent interface not found: ${config.defaultInterface}`)
+        profile = config.profiles.find(candidate => candidate?.id === selectedInterface.profile)
+        if (!profile) throw new Error(`Interface ${selectedInterface.id} references unknown profile: ${selectedInterface.profile}`)
+    }
+
+    if (profile.enabled === false) throw new Error(`Agent profile is disabled: ${profile.id}`)
+    return {
+        ...profile,
+        interface: selectedInterface,
+        server: selectedInterface?.server,
+    }
 }
 
 function normalizeAgent(agent) {

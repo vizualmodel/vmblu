@@ -15,9 +15,9 @@ vmblu model editor.
 - The sysblu vmblu project lives in `vmblu/sysblu`; `sysblu.blu` resolves its
   canonical architecture in `model/sysblu.mod.blu`.
 - The authored system format is defined by
-  `cli/context/1.11.0/sys.schema.json`.
+  `cli/context/1.12.0/sys.schema.json`.
 - Framework-neutral protocol documents use `*.protocol.json` and are defined by
-  `cli/context/1.11.0/protocol.schema.json`.
+  `cli/context/1.12.0/protocol.schema.json`.
 - Playground recognizes `*.sys.blu`, gives sysblu its own pane and canvas, and
   routes loading, saving, navigation, and shared inspectors through the host.
 - The real reference configuration is
@@ -225,7 +225,7 @@ Validated on 2026-08-28 after unifying vmblu and non-vmblu applications:
 - existing Svelte accessibility, circular-dependency, and bundle-size warnings
   remain non-blocking.
 - both the canonical sysblu application and the VS Code sysblu shell verify
-  against the 1.11 schemas with current generated artifacts;
+  against the 1.12 schemas with current generated artifacts;
 - the VS Code TypeScript host and both extension bundles build;
 - a disposable combined VSIX packaging and isolated CLI installation check
   succeeds at about 3.06 MiB,

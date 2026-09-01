@@ -8,10 +8,46 @@ import {safety} from '../security/safety.js'
 
 class Runtime extends SharedRuntime {
     configure(options = {}) {
-        safety.setPolicyClassifier(safety.makePolicyClassifier({
-            runtime: this,
-            runtimeSettings: options.runtimeSettings,
-        }))
+        this.securitySettings = options.runtimeSettings ?? null
+        this.securityBaseDir = options.securityBaseDir ?? null
+    }
+
+    start() {
+        if (safety.isOwner(this)) safety.release(this)
+
+        const validationErrors = this.settings.validateModel(this.securitySettings)
+            .filter(error => error.code !== 'legacy_security')
+        if (validationErrors.length) {
+            throw new Error(`Invalid vmblu security settings: ${validationErrors.map(error => error.message).join('; ')}`)
+        }
+
+        const policy = this.settings.effectivePolicy(this.securitySettings)
+        if (policy.active && hasRelativeRoots(policy.security) && !this.securityBaseDir) {
+            throw new Error('vmblu security requires securityBaseDir when file roots are relative')
+        }
+
+        try {
+            if (policy.active) {
+                safety.claim(this, {
+                    security: policy.security,
+                    baseDir: this.securityBaseDir,
+                })
+            }
+            return super.start()
+        }
+        catch (error) {
+            safety.release(this)
+            throw error
+        }
+    }
+
+    stop() {
+        try {
+            return super.stop()
+        }
+        finally {
+            safety.release(this)
+        }
     }
 
     handleReceiveQueue() {
@@ -42,6 +78,13 @@ class Runtime extends SharedRuntime {
             }
         }
     }
+}
+
+function hasRelativeRoots(security) {
+    return ['read', 'write', 'delete'].some(action => {
+        const operation = security?.fs?.[action]
+        return operation?.roots?.some(root => !/^(?:[A-Za-z]:[\\/]|[\\/]{1,2})/.test(root))
+    })
 }
 
 Runtime.prototype.settings = runtimeSettings

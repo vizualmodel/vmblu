@@ -3,14 +3,16 @@ node_modules/
 vscodex/node_modules/
 server/node_modules/
 
-# secret
-core/ai/.vault.txt
+# Local credentials
+**/.vault.txt
 
 # Runtime data
 *.log
 *.map
 **/.vmblu/cache/
 **/.vmblu/logs/
+**/.vmblu/test-results/
+**/tests/**/*.result.json
 
 # Build output
 browser/out/

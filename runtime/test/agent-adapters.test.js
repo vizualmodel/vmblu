@@ -58,7 +58,7 @@ test('OpenAI adapter projects allowed tools and probes', () => {
     assert.equal([...projection.map.values()].some(entry => entry.capability.id === 'blocked_tool'), false)
 })
 
-test('HTTP adapter includes filtered capabilities and gateway endpoints', () => {
+test('HTTP adapter is labelled as a static projection', () => {
     const projection = new HttpAgentAdapter({
         capabilities,
         agent: {
@@ -68,9 +68,11 @@ test('HTTP adapter includes filtered capabilities and gateway endpoints', () => 
     }).project()
 
     assert.equal(projection.target, 'http')
+    assert.equal(projection.kind, 'projection')
+    assert.equal(projection.label, 'HTTP projection')
     assert.equal(projection.server.host, '0.0.0.0')
     assert.equal(projection.server.port, 9000)
-    assert.equal(projection.endpoints.callTool, '/vmblu-agent/tools/{toolId}/call')
+    assert.equal(projection.endpointTemplates.callTool, '/vmblu-agent/tools/{toolId}/call')
     assert.deepEqual(projection.capabilities.tools.map(tool => tool.id), ['allowed_tool'])
     assert.deepEqual(projection.capabilities.probes.map(probe => probe.id), ['allowed_probe'])
     assert.deepEqual(projection.capabilities.events.map(event => event.id), ['allowed_event'])

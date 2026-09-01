@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.11.0",
+    "version": "1.12.0",
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "12/16/2025, 1:00:24 PM",
-    "utc": "2026-08-20T08:48:55.572Z",
+    "utc": "2026-09-01T07:07:03.398Z",
     "style": "#00aaff"
   },
   "root": {
@@ -398,7 +398,7 @@
           {
             "kind": "dock",
             "name": "doc settings(0)",
-            "rect": "x 202 y 1381 w 150 h 86",
+            "rect": "x 202 y 1381 w 150 h 101",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -406,7 +406,22 @@
                   "(1 L)show",
                   "(2 R)modal div",
                   "(4 R)agent settings",
-                  "(3 R)model runtime settings"
+                  "(3 R)model runtime settings",
+                  "(5 R)team settings"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "team settings",
+            "rect": "x 380 y 1515 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
                 ]
               }
             ]
@@ -560,6 +575,16 @@
             "from": "(pin 3) model runtime settings @ doc settings(0)",
             "to": "(pin 1) show @ model runtime settings",
             "wire": "x 39.1 y 89.0 x -83.1"
+          },
+          {
+            "from": "(pin 5) team settings @ doc settings(0)",
+            "to": "(pin 1) show @ team settings",
+            "wire": "x 28.0 y 89.0"
+          },
+          {
+            "from": "(pin 2) modal div @ team settings",
+            "to": "(cable 0 nonselective)",
+            "wire": "x 16.7"
           },
           {
             "from": "(pin 2) modal div @ model runtime settings",
