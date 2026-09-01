@@ -143,10 +143,13 @@ var _AgentPolicy = class _AgentPolicy {
   canUse(kind, id) {
     var _a;
     const set = (_a = this.permissions) == null ? void 0 : _a[kind];
-    if (!set || !id) return { allowed: true, reason: "no_policy" };
+    if (!this.enabled) return { allowed: false, reason: "agent_disabled" };
+    if (!this.agentId) return { allowed: false, reason: "missing_identity" };
+    if (!id) return { allowed: false, reason: "missing_capability_id" };
+    if (!(set == null ? void 0 : set.hasAllowList)) return { allowed: false, reason: `${kind}_permissions_missing`, rule: "allow" };
     if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
-    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
-    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
+    if (!matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
+    return { allowed: true, reason: "allowed_list", rule: "allow" };
   }
   approvalDecision(tool = {}) {
     if ((tool == null ? void 0 : tool.approval) === "always") {
@@ -234,6 +237,8 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
     const basePath = this.server.basePath ?? "/agent";
     return {
       target: "http",
+      kind: "projection",
+      label: "HTTP projection",
       agentId: ((_a = this.agent) == null ? void 0 : _a.id) ?? null,
       application: view.application,
       server: {
@@ -241,7 +246,7 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
         port: this.server.port ?? 8787,
         basePath
       },
-      endpoints: {
+      endpointTemplates: {
         capabilities: `${basePath}/capabilities`,
         callTool: `${basePath}/tools/{toolId}/call`,
         readProbe: `${basePath}/probes/{probeId}/read`,

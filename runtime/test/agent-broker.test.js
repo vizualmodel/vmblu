@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {Runtime} from '../rt-nodejs-agent/runtime.js'
 import {Runtime as BrowserAgentRuntime} from '../rt-browser-agent/runtime.js'
+import {BrokerRequestTypes} from '../agent-base/broker-protocol.js'
 
 function waitFor(predicate, timeoutMs = 1000) {
     const start = Date.now()
@@ -17,6 +18,42 @@ function waitFor(predicate, timeoutMs = 1000) {
         tick()
     })
 }
+
+function allowAllAgent(id) {
+    return {
+        id,
+        enabled: true,
+        permissions: {
+            tools: {allow: ['*']},
+            probes: {allow: ['*']},
+            events: {allow: ['*']},
+        },
+    }
+}
+
+test('application-wide agent disable preserves configuration without activating it', () => {
+    const runtime = new Runtime([], {
+        capabilities: {tools: [], probes: [], events: []},
+        agent: {
+            schema: 'https://vmblu.dev/schemas/agents.v1.json',
+            version: 1,
+            enabled: false,
+            defaultInterface: 'embedded',
+            profiles: [allowAllAgent('assistant')],
+            interfaces: [{id: 'embedded', kind: 'embedded', profile: 'assistant', enabled: true}],
+        },
+    })
+
+    runtime.start()
+    try {
+        assert.equal(runtime.agent, null)
+        assert.deepEqual(runtime.agentProfiles, [])
+        assert.deepEqual(runtime.agentInterfaces, [])
+    }
+    finally {
+        runtime.stop()
+    }
+})
 
 test('rt-nodejs-agent wires broker, agent shell, tool dispatch, and event capture', async () => {
     let received = null
@@ -76,7 +113,7 @@ test('rt-nodejs-agent wires broker, agent shell, tool dispatch, and event captur
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -154,7 +191,7 @@ test('recent app events are included in the next provider turn', async () => {
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -252,7 +289,7 @@ test('agent chat turn calls provider and routes tool calls through broker', asyn
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -313,7 +350,7 @@ test('broker wraps calls for ToolInvocation target pins', async () => {
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -371,7 +408,7 @@ test('rt-nodejs-agent auto-registers published node probes', async () => {
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -470,7 +507,7 @@ test('agent chat can route provider probe calls through broker', async () => {
         },
     ], {
         capabilities,
-        agent: {id: 'mainAssistant', enabled: true},
+        agent: allowAllAgent('mainAssistant'),
     })
 
     runtime.start()
@@ -522,7 +559,7 @@ test('rt-browser-agent wires broker and dispatches tools without ALS runtime', a
             probes: [],
             events: [],
         },
-        agent: {id: 'browserAssistant', enabled: true},
+        agent: allowAllAgent('browserAssistant'),
     })
 
     runtime.start()
@@ -738,7 +775,7 @@ test('broker validates tool and probe arguments before dispatch', async () => {
             ],
             events: [],
         },
-        agent: {id: 'operator', enabled: true},
+        agent: allowAllAgent('operator'),
     })
 
     runtime.start()
@@ -805,7 +842,7 @@ test('broker can approve and execute a tool that requires approval', async () =>
             probes: [],
             events: [],
         },
-        agent: {id: 'operator', enabled: true},
+        agent: allowAllAgent('operator'),
     })
 
     runtime.start()
@@ -904,7 +941,7 @@ test('broker verifies a tool call with event and probe evidence', async () => {
                 },
             ],
         },
-        agent: {id: 'operator', enabled: true},
+        agent: allowAllAgent('operator'),
     })
 
     runtime.start()
@@ -920,6 +957,184 @@ test('broker verifies a tool call with event and probe evidence', async () => {
         const trace = runtime.traceRecorder.all().find(record => record.type === 'verification.decision')
         assert.equal(trace.status, 'verified')
     } finally {
+        runtime.stop()
+    }
+})
+
+test('broker denies missing, unknown, disabled, and permissionless identities', async () => {
+    const runtime = new Runtime([], {
+        capabilities: {
+            tools: [{id: 'demo.tool', input: {node: 'None', pin: 'none', schema: {type: 'object'}}, approval: 'never'}],
+            probes: [],
+            events: [],
+        },
+        agent: {
+            schema: 'https://vmblu.dev/schemas/agents.v1.json',
+            version: 1,
+            defaultInterface: 'embedded',
+            profiles: [
+                {...allowAllAgent('assistant')},
+                {...allowAllAgent('disabled'), enabled: false},
+                {id: 'permissionless', enabled: true, permissions: {}},
+            ],
+            interfaces: [{id: 'embedded', kind: 'embedded', profile: 'assistant', enabled: true}],
+        },
+    })
+    runtime.start()
+
+    try {
+        for (const agentId of [undefined, 'unknown', 'disabled', 'permissionless']) {
+            const result = await runtime.toolBroker.handle({
+                type: BrokerRequestTypes.TOOL_CALL,
+                agentId,
+                toolId: 'demo.tool',
+                args: {},
+            })
+            assert.equal(result.status, 'denied')
+        }
+
+        const hiddenView = runtime.toolBroker.listCapabilities({agentId: 'unknown'})
+        assert.equal(hiddenView.status, 'denied')
+        assert.deepEqual(hiddenView.capabilities.tools, [])
+        assert.throws(() => runtime.toolBroker.subscribe(undefined, () => {}), /missing_identity/)
+        assert.throws(() => runtime.toolBroker.subscribe('unknown', () => {}), /unknown_identity/)
+    }
+    finally {
+        runtime.stop()
+    }
+})
+
+test('passive events are isolated for canonical agent profiles', async () => {
+    const runtime = new Runtime([], {
+        capabilities: {
+            tools: [],
+            probes: [],
+            events: [
+                {id: 'visible.event', schema: {type: 'object'}},
+                {id: 'hidden.event', schema: {type: 'object'}},
+            ],
+        },
+        agent: {
+            schema: 'https://vmblu.dev/schemas/agents.v1.json',
+            version: 1,
+            defaultInterface: 'embedded',
+            profiles: [
+                {
+                    id: 'assistant',
+                    enabled: true,
+                    permissions: {
+                        tools: {allow: []},
+                        probes: {allow: []},
+                        events: {allow: ['visible.event']},
+                    },
+                },
+                {
+                    id: 'observer',
+                    enabled: true,
+                    permissions: {
+                        tools: {allow: []},
+                        probes: {allow: []},
+                        events: {allow: ['hidden.event']},
+                    },
+                },
+            ],
+            interfaces: [{id: 'embedded', kind: 'embedded', profile: 'assistant', enabled: true}],
+        },
+    })
+    runtime.start()
+
+    const observerMessages = []
+    const unsubscribe = runtime.toolBroker.subscribe('observer', message => observerMessages.push(message))
+    try {
+        runtime.toolBroker.recordEvent('visible.event', {visible: true})
+        runtime.toolBroker.recordEvent('hidden.event', {secret: true})
+
+        assert.deepEqual(runtime.agent.recentEvents.map(event => event.eventId), ['visible.event'])
+        assert.deepEqual(observerMessages.filter(message => message.kind === 'event.observed').map(message => message.eventId), ['hidden.event'])
+        assert.deepEqual(runtime.toolBroker.queryEvents({agentId: 'assistant'}).events.map(event => event.eventId), ['visible.event'])
+        assert.deepEqual(runtime.toolBroker.queryEvents({agentId: 'observer'}).events.map(event => event.eventId), ['hidden.event'])
+        assert.deepEqual(
+            runtime.toolBroker.agentTraceView('assistant').all().filter(record => record.type === 'event.observed').map(record => record.eventId),
+            ['visible.event'],
+        )
+    }
+    finally {
+        unsubscribe()
+        runtime.stop()
+    }
+})
+
+test('approval requests expire and reject another agent identity', async () => {
+    let dispatched = false
+    function SinkFactory() {
+        return {onDelete() { dispatched = true }}
+    }
+
+    const runtime = new Runtime([
+        {name: 'Sink', uid: 'sink', factory: SinkFactory, inputs: ['-> delete'], outputs: []},
+    ], {
+        capabilities: {
+            tools: [{id: 'delete', input: {node: 'Sink', pin: 'delete', schema: {type: 'object'}}, approval: 'always'}],
+            probes: [],
+            events: [],
+        },
+        agent: allowAllAgent('assistant'),
+    })
+    runtime.start()
+
+    try {
+        const first = await runtime.agent.tools.call('delete', {})
+        const mismatch = await runtime.toolBroker.handle({
+            type: BrokerRequestTypes.APPROVAL_RESOLVE,
+            approvalId: first.approval.approvalId,
+            agentId: 'another-agent',
+            approved: true,
+            authority: {id: 'reviewer', trusted: true},
+        })
+        assert.equal(mismatch.error.code, 'approval_identity_mismatch')
+        assert.equal(dispatched, false)
+
+        runtime.toolBroker.approvalTtlMs = 1
+        const second = await runtime.agent.tools.call('delete', {})
+        await new Promise(resolve => setTimeout(resolve, 5))
+        const expired = await runtime.agent.approvals.approve(second.approval.approvalId)
+        assert.equal(expired.error.code, 'approval_expired')
+        assert.equal(dispatched, false)
+    }
+    finally {
+        runtime.stop()
+    }
+})
+
+test('approval is invalidated when the tool risk or effects change', async () => {
+    function SinkFactory() {
+        return {onRun() {}}
+    }
+    const runtime = new Runtime([
+        {name: 'Sink', uid: 'sink', factory: SinkFactory, inputs: ['-> run'], outputs: []},
+    ], {
+        capabilities: {
+            tools: [{
+                id: 'run',
+                input: {node: 'Sink', pin: 'run', schema: {type: 'object'}},
+                risk: 'medium',
+                approval: 'always',
+                effects: [{kind: 'event', id: 'run.done'}],
+            }],
+            probes: [],
+            events: [],
+        },
+        agent: allowAllAgent('assistant'),
+    })
+    runtime.start()
+
+    try {
+        const pending = await runtime.agent.tools.call('run', {})
+        runtime.toolBroker.registry.getTool('run').risk = 'high'
+        const resolved = await runtime.agent.approvals.approve(pending.approval.approvalId)
+        assert.equal(resolved.error.code, 'approval_changed')
+    }
+    finally {
         runtime.stop()
     }
 })

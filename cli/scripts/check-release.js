@@ -52,8 +52,12 @@ for (const [name, range] of Object.entries({
   }
 }
 
-if (!cli.files.includes('commands/verify')) {
-  throw new Error('CLI package files must include commands/verify')
+for (const command of ['commands/verify', 'commands/make-test', 'commands/run-test']) {
+  if (!cli.files.includes(command)) throw new Error(`CLI package files must include ${command}`)
+}
+
+for (const runtimeExport of ['./rt-model-test']) {
+  if (!runtime.exports?.[runtimeExport]) throw new Error(`Runtime package exports must include ${runtimeExport}`)
 }
 
 const expectedRepositoryUrl = 'https://github.com/vizualmodel/vmblu.git'
@@ -68,7 +72,7 @@ for (const [name, manifest] of Object.entries({cli, core, runtime})) {
 }
 
 const contextDir = path.join(root, 'cli', 'context', cli.schemaVersion)
-for (const file of ['blu.schema.json', 'blu.annex.md', 'viz.schema.json', 'sys.schema.json', 'protocol.schema.json', 'prf.schema.json', 'capabilities.schema.json']) {
+for (const file of ['blu.schema.json', 'blu.annex.md', 'viz.schema.json', 'sys.schema.json', 'protocol.schema.json', 'prf.schema.json', 'capabilities.schema.json', 'agents.v1.json', 'model-test.schema.json', 'test-report.schema.json']) {
   if (!fs.existsSync(path.join(contextDir, file))) throw new Error(`Missing release context file: ${file}`)
 }
 
@@ -77,6 +81,8 @@ for (const [file, title] of [
   ['viz.schema.json', `vmblu Visual Model (v${cli.schemaVersion})`],
   ['sys.schema.json', `vmblu System Configuration (v${cli.schemaVersion})`],
   ['protocol.schema.json', `vmblu Protocol Definition (v${cli.schemaVersion})`],
+  ['model-test.schema.json', 'vmblu Model Test'],
+  ['test-report.schema.json', 'vmblu Test Report'],
 ]) {
   const schema = JSON.parse(fs.readFileSync(path.join(contextDir, file), 'utf8'))
   const expectedId = `https://vmblu.dev/context/${cli.schemaVersion}/${file}`

@@ -146,7 +146,16 @@ runtime.start()
         const agent = this.header.agent
         if (agent && typeof agent === 'object' && !Array.isArray(agent) && !agent.path) {
             const agentArl = srcArl.resolve(this.agentRuntimeArtifactPath(srcArl, 'agent'))
-            agentArl.save(JSON.stringify(agent, null, 2)).catch(error => console.error(`Failed to save ${agentArl.getPath()}:`, error))
+            const generatedAgent = {
+                ...JSON.parse(JSON.stringify(agent)),
+                provenance: makeArtifactProvenance({
+                    artifact: 'agent-configuration',
+                    model: this.getArl().getName(),
+                    source: this.raw,
+                    schemaVersion: this.raw?.header?.version,
+                }),
+            }
+            agentArl.save(JSON.stringify(generatedAgent, null, 2)).catch(error => console.error(`Failed to save ${agentArl.getPath()}:`, error))
         }
 
         return capArl
@@ -171,6 +180,12 @@ runtime.start()
         }
         else if (runtimeSettings && typeof runtimeSettings === 'object' && !Array.isArray(runtimeSettings)) {
             optionLines.push(`    runtimeSettings: ${JSON.stringify(runtimeSettings, null, 4).replaceAll('\n', '\n    ')}`)
+        }
+
+        if (this.isSafetyRuntime(runtime) && runtimeSettings) {
+            const modelPath = Path.normalizeSeparators(this.getArl().getFullPath())
+            const modelBaseDir = modelPath.slice(0, Math.max(modelPath.lastIndexOf('/'), 0)) || '.'
+            optionLines.push(`    securityBaseDir: ${JSON.stringify(modelBaseDir)}`)
         }
 
         if (this.isAgentRuntime(runtime)) {
@@ -202,6 +217,15 @@ runtime.start()
             || runtime.endsWith('/rt-agent')
             || runtime === '@vizualmodel/vmblu-runtime/rt-browser-agent'
             || runtime.endsWith('/rt-browser-agent')
+    },
+
+    isSafetyRuntime(runtime) {
+        return runtime === '@vizualmodel/vmblu-runtime/rt-als'
+            || runtime.endsWith('/rt-als')
+            || runtime === '@vizualmodel/vmblu-runtime/rt-nodejs-agent'
+            || runtime.endsWith('/rt-nodejs-agent')
+            || runtime === '@vizualmodel/vmblu-runtime/rt-agent'
+            || runtime.endsWith('/rt-agent')
     },
 
     agentRuntimeAgentImportPath(srcArl) {

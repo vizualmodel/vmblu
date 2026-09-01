@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -102,7 +102,7 @@
         "sysblu": "node ../cli/bin/vmblu.js profile ./sysblu/sysblu.blu && node ../cli/bin/vmblu.js make-app ./sysblu/sysblu.blu && node ../cli/bin/vmblu.js make-capabilities ./sysblu/sysblu.blu && cd ./sysblu && rollup -c",
         "ext": "tsc -p tsconfig.json",
         "bundle": "rollup -c ./extension/rollup.config.mjs",
-        "lint": "eslint \"extension/**/*.ts\"",
+        "lint": "eslint --config eslint.config.mjs \"extension/**/*.ts\"",
         "watch": "tsc -w -p ./",
         "help": "tsc -h",
         "vsix:publish": "vsce package"

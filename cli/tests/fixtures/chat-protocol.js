@@ -1,7 +1,7 @@
-export function chatProtocolFixture() {
+export function chatProtocolFixture(version = '1.11.0') {
   return {
     header: {
-      version: '1.11.0',
+      version,
       name: 'Chat',
       description: 'Login, history delivery, and live chat messages between the browser client and chat server.',
     },

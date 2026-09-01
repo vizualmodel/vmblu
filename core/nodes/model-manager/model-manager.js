@@ -180,7 +180,7 @@ ModelManager.prototype = {
     },
 
    
-   onShowSettings() {
+    onShowSettings() {
 
         // check
         if (!this.model) return 

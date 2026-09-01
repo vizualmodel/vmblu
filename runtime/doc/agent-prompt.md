@@ -1,4 +1,6 @@
-﻿# vmblu Agent Capability Layer â€” Implementation Specification
+﻿# vmblu agent capability layer — historical implementation specification
+
+> **Historical design record.** This document captures the original implementation proposal and is not the current specification. See [the agent integration guide](agent-user-guide.md) for supported behavior and [the deferred backlog](../../agent-integration-improvements.md) for future work.
 
 ## Context
 

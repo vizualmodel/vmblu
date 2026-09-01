@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.11.0",
+    "version": "1.12.0",
     "created": "4/2/2024, 1:40:46 PM",
-    "saved": "2026-08-20T08:48:55.570Z",
-    "utc": "2026-08-20T08:48:55.570Z",
+    "saved": "2026-09-01T07:07:03.394Z",
+    "utc": "2026-09-01T07:07:03.394Z",
     "runtime": "../../../runtime/rt-base/runtime.js",
     "teams": {
       "default": {
@@ -1275,6 +1275,45 @@
                       "role": "follower",
                       "payload": "any"
                     }
+                  },
+                  {
+                    "name": "team settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "team settings",
+            "link": {
+              "path": "../../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "team settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
                   }
                 ]
               }
@@ -1561,6 +1600,25 @@
             "dst": {
               "pin": "show",
               "node": "model runtime settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "team settings",
+              "node": "doc settings(0)"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "team settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "team settings"
+            },
+            "dst": {
+              "pin": "modal div"
             }
           },
           {

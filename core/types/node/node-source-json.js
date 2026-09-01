@@ -1,5 +1,6 @@
 import {normalizeFactoryPath} from './factory.js'
 import {Path} from '../arl/index.js'
+import {runtimeSettingsForSave} from './runtime-settings-json.js'
 
 export const jsonHandling = {
 
@@ -15,9 +16,11 @@ export const jsonHandling = {
         if (label) raw.label = label
         if (this.team) raw.team = this.team
         this.prompts.writeRaw(raw, refArl)
+        if (!this.link && this.testRepo) raw.testRepo = this.testRepo.makeRaw(refArl)
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx
-        if (this.dx) raw.dx = this.dx
+        const dx = runtimeSettingsForSave(this.dx)
+        if (dx) raw.dx = dx
 
         // done
         return raw
@@ -31,6 +34,7 @@ export const jsonHandling = {
 
         // copy the factory
         this.factory.copy(linkedNode.factory)
+        this.testRepo = linkedNode.testRepo?.clone?.({readOnly: true}) ?? null
 
         // fuse the settings
         this.sxUpdate(linkedNode)

@@ -1,310 +1,229 @@
-# vmblu Agent Capability User Guide
+# vmblu agent integration
 
-This guide explains the current vmblu agent capability layer.
+This guide describes the agent integration available in vmblu 1.12.
 
-The feature is usable, but still evolving. The current reference application is
-`examples/solar-system`.
+## Architecture
 
-## Overview
+Agent integration has three separate layers:
 
-A vmblu application can expose a controlled surface to an agent.
+1. **Capabilities** describe application tools, probes, and events.
+2. **Profiles** determine which capabilities an agent may use.
+3. **Interfaces** connect an embedded or external agent to one fixed profile.
 
-That surface is a capability manifest:
-
-```text
-<model-name>.cap.json
-```
-
-It contains:
-
-- `tools`: actions the agent may request,
-- `probes`: read-only state checks,
-- `events`: app observations,
-- `policies`: approval/risk metadata,
-- `usageGuidance`: general instructions for agent use.
-
-Agents do not call arbitrary nodes directly. Calls go through the runtime
-broker:
+MCP and provider-specific tool formats are adapters over this model. They are
+not the source of truth.
 
 ```text
-agent
-  -> AgentRuntime
-  -> ToolBroker
-  -> vmblu runtime queue
-  -> application node
+embedded agent or external client
+  -> interface with fixed profile
+  -> ToolBroker policy and validation
+  -> vmblu runtime queue, probes, and events
+  -> application graph
 ```
 
-## Choose A Runtime
+## Runtime support
 
-Agent support is available in two runtime variants:
-
-| Runtime | Browser | Node.js | Safety/ALS | Agent |
+| Runtime | Browser | Node.js | Security | Agents |
 |---|---:|---:|---:|---:|
 | `@vizualmodel/vmblu-runtime/rt-base` | yes | yes | no | no |
 | `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
 | `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
 | `@vizualmodel/vmblu-runtime/rt-nodejs-agent` | no | yes | yes | yes |
 
-Use `rt-browser-agent` for browser applications that need agent tools, probes,
-events and the overlay UI. Use `rt-nodejs-agent` for Node.js applications that need the
-same agent layer plus ALS-based safety attribution and Node API instrumentation.
+Agent settings are application model data. They remain saved when agents are
+disabled or when the selected runtime does not support them.
 
-## Configure An Agent
+## Capabilities
 
-Use an agent runtime and point `header.agent` at an agent sidecar:
+Capabilities are explicitly exposed from the model. Existing handlers and
+pins are not available to agents merely because they exist.
 
-```json
-{
-  "header": {
-    "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
-    "agent": {
-      "path": "./solar-system.agent.json"
-    }
-  }
-}
-```
+### Tools
 
-The agent sidecar contains the enabled flag, identity, instructions, provider
-settings, UI settings and runtime limits. The generated capability manifest
-remains model-derived and is written separately as `<model-name>.cap.json`.
+An input pin may be exposed as a tool. Open its Tool settings and configure:
 
-Do not store provider secrets or API keys in `.mod.blu`. In the browser demo,
-the app talks to a local OpenAI-compatible bridge via `endpoint`.
+- Exposed;
+- a stable ID;
+- risk: low, medium, or high;
+- approval: never or always;
+- optional verification using exposed events and probes.
 
-## Add A Tool
+The input schema is derived from the pin request contract. A request/reply
+pin also gets an output schema derived from its reply contract. Title and
+description come from the pin name and prompt.
 
-Expose an input pin by adding a `tool` block:
+The saved metadata is intentionally small:
 
 ```json
 {
-  "name": "cmd.tool",
-  "kind": "input",
-  "contract": {
-    "role": "owner",
-    "payload": "ToolInvocation"
-  },
   "tool": {
     "enabled": true,
-    "id": "camera_control",
-    "title": "Camera control",
-    "description": "Reset, select, look at, follow, or set the camera.",
-    "risk": "low",
-    "approval": "never",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string",
-          "enum": ["home", "reset", "select", "look-at-body", "follow-body", "set"]
-        },
-        "bodyId": {
-          "type": "string"
-        }
-      },
-      "required": ["action"]
-    }
+    "id": "orders.submit",
+    "risk": "medium",
+    "approval": "never"
   }
 }
 ```
 
-If the target pin payload is `ToolInvocation`, `ToolBroker` wraps model args as:
+Tools targeting a `ToolInvocation` pin receive
+`{callId, tool, arguments}`. Other tool pins receive the validated arguments
+directly.
+
+### Events
+
+An output pin may be exposed as an event. Its payload schema is derived from
+the pin contract. Use semantic events rather than high-frequency state or
+render streams.
 
 ```json
 {
-  "callId": "tool-call-id",
-  "tool": "camera_control",
-  "arguments": {
-    "action": "follow-body",
-    "bodyId": "saturn"
-  }
-}
-```
-
-Other target pins receive the model arguments directly.
-
-## Add A Probe
-
-Expose read-only state by adding a `probes` array to a source node:
-
-```json
-{
-  "kind": "source",
-  "name": "CameraManager",
-  "probes": [
-    {
-      "enabled": true,
-      "id": "camera.active",
-      "name": "camera.active",
-      "title": "Active camera",
-      "description": "Returns active camera id, mode, state, and available cameras.",
-      "kind": "state",
-      "schema": {
-        "type": "object"
-      }
-    }
-  ]
-}
-```
-
-The source node implements:
-
-```js
-probe(name, args) {
-  if (name === "camera.active") {
-    return {
-      cameraId: this.activeCamera?.cameraId ?? null,
-      mode: this.activeCamera?.mode ?? null,
-      state: this.activeCamera?.state ?? null
-    }
-  }
-  return null
-}
-```
-
-Agent runtimes auto-register declared probes against matching source nodes. The
-broker returns both JSON-safe `value` and a text representation for LLM context.
-
-## Add An Event
-
-Expose an output pin by adding an `event` block:
-
-```json
-{
-  "name": "camera.event",
-  "kind": "output",
-  "contract": {
-    "role": "owner",
-    "payload": "CameraEvent"
-  },
   "event": {
     "enabled": true,
-    "id": "camera.changed",
-    "title": "Camera changed",
-    "description": "Observed when the active camera selection or mode changes.",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "reason": { "type": "string" },
-        "cameraId": { "type": ["string", "null"] },
-        "mode": { "type": ["string", "null"] }
-      },
-      "required": ["reason"]
-    }
+    "id": "orders.changed"
   }
 }
 ```
 
-Events should represent meaningful occurrences. Avoid exposing high-frequency
-state streams as agent events. If an output fires every frame or tick, keep it
-as app state and add a separate semantic event pin.
+### Probes
 
-The solar-system app follows this rule:
+A source node may declare read-only probes. The node implements
+`probe(name, args)` and returns JSON-safe data matching the declared schema.
+Agent runtimes register probes only when they are explicitly declared by the
+model.
 
-- `camera.active` is continuous camera state for rendering and probes.
-- `camera.event` is the semantic event output.
-- `camera.changed` is the agent-facing event id.
+## Application settings
 
-## Generate Files
+Open Application Settings and use the Agents row.
 
-Generate the capability manifest:
+- **supported/unsupported** describes the selected runtime.
+- **Enabled** activates configured interfaces when the runtime supports them.
+- The Agents button always opens the editor, including when agents are
+  disabled or unsupported.
 
-```text
-vmblu make-capabilities solar-system.mod.blu
-```
+The editor has two sections.
 
-Generate the app:
+### Profiles
 
-```text
-vmblu make-app solar-system.mod.blu
-```
+A profile contains:
 
-For agent runtime models, the generated app should contain:
+- ID, title, and enabled state;
+- maximum tool calls per turn;
+- allow lists for tools, events, and probes.
+
+Permissions are fail-closed: an unchecked or missing capability is denied.
+Select All selects only the capabilities currently exposed; capabilities
+added later are not granted automatically.
+
+### Interfaces
+
+Every interface selects one fixed profile. A caller cannot choose or override
+that profile.
+
+Supported interface kinds are:
+
+- **Embedded**: an in-application agent using the configured provider, model,
+  instructions, and overlay mode;
+- **MCP stdio**: a Node-hosted MCP server whose launching process is the trust
+  boundary;
+- **MCP HTTP**: a Node-hosted MCP Streamable HTTP server using OAuth, or an
+  explicitly configured loopback-only development mode;
+- **HTTP projection**: a static provider projection, not a running or
+  authenticated server.
+
+Only one embedded interface starts automatically. MCP interfaces are started
+explicitly by the Node host.
+
+## Broker behavior
+
+The broker applies the selected profile to capability discovery, tool calls,
+probe reads, event waits and queries, passive event delivery, approvals, and
+adapter projections.
+
+Requests are denied when identity is missing or unknown, a profile is
+disabled, a capability is unknown, or the relevant allow list does not grant
+it. Events are filtered separately for each profile and do not enter another
+profile's history, overlay context, query results, or trace.
+
+Tool outcomes have distinct meanings:
+
+- `pending`: waiting for trusted approval;
+- `denied`: rejected by policy or approval;
+- `accepted`: dispatched without evidence of application completion;
+- `completed`: a request/reply tool returned successfully;
+- `verified`: configured evidence confirmed the effect;
+- `unverified`: dispatch occurred but required evidence was not observed;
+- `failed`: validation, routing, runtime, or provider execution failed.
+
+## MCP hosting
+
+The optional `@vizualmodel/vmblu-runtime/mcp` export provides MCP stdio and
+Streamable HTTP hosting on Node.js 20 or newer.
 
 ```js
-import {Runtime} from '@vizualmodel/vmblu-runtime/rt-browser-agent'
-import capabilities from './solar-system.cap.json' with { type: 'json' }
-import agent from './solar-system.agent.json' with { type: 'json' }
+import {startConfiguredVmbluMcpInterfaces} from '@vizualmodel/vmblu-runtime/mcp'
 
-const runtimeOptions = {
-  capabilities,
-  agent
-}
+const mcp = await startConfiguredVmbluMcpInterfaces({
+  runtime,
+  hostOptions: {
+    remote: {
+      authentication: {
+        verifier,
+        oauthMetadata
+      }
+    }
+  }
+})
 
-const runtime = new Runtime(nodeList, runtimeOptions)
-runtime.start()
+await mcp.close()
 ```
 
-If `runtimeOptions` does not include `agent`, the generated app will not create
-the agent runtime. If it does not include `capabilities`, the broker will have no
-tools, probes or events to expose.
+For OAuth HTTP, the model stores public issuer, resource-server URL, and scope
+configuration. The host supplies token verification, authorization-server
+metadata, and secrets. Bearer authentication is enforced before MCP requests
+reach the fixed profile. Unauthenticated HTTP is restricted to an explicit
+loopback listener.
 
-When regenerating from the VS Code extension after updating generator code,
-reload the VS Code window or reopen the vmblu editor so the webview uses the
-new bundle.
+MCP exposes:
 
-## Runtime UI
+- allowed application tools under their stable IDs;
+- allowed probes as `probe.<id>`;
+- allowed events as `event.wait.<id>`.
 
-The current browser UI mode is `overlay`.
+## Generation and verification
 
-It provides:
+`vmblu make-app <entrypoint>.blu` is the normal generation command. For an
+agent runtime it produces the application and capability manifest. Inline
+agent settings produce a generated agent artifact; authored sidecars remain
+referenced rather than being replaced.
 
-- a floating launcher button,
-- a draggable/resizable chat window,
-- light/dark mode,
-- a chat tab,
-- a trace tab,
-- current tools/probes exposed to the LLM.
+Useful inspection and CI commands are:
 
-The overlay is owned by `AgentRuntime`. The `ToolBroker` does not own UI.
+```text
+vmblu make-capabilities <entrypoint>.blu
+vmblu make-agent-adapter <model-file> --target <target>
+vmblu verify <entrypoint>.blu
+```
 
-## Current Solar-System Capabilities
+Generated artifacts include provenance with the source-model hash, schema
+version, and generator version. `vmblu verify` validates schemas, references,
+interfaces, sidecars, and artifact freshness.
 
-Tools:
+Secrets, tokens, client secrets, and provider keys must never be stored in a
+`.blu` model, agent sidecar, generated browser code, or client storage.
 
-- `camera_control`
-- `chart_control`
-- `simulation_control`
-- `simulation_start`
-- `solar_presentation`
+## Deferred work
 
-Probes:
+The current integration is workable, but these areas remain intentionally
+deferred:
 
-- `camera.active`
-- `camera.follow`
-- `chart.state`
-- `simulation.state`
+- a human Approve/Deny UI for tools using `approval: "always"`;
+- safe editor loading and round-tripping of authored agent sidecars;
+- explicit presentation of every tool outcome in the overlay;
+- end-to-end agent-settings tests in the playground and VS Code webview;
+- an explicitly configured privileged administrative principal;
+- provider streaming and cancellation;
+- durable agent event subscriptions;
+- a UI bridge for Node/headless applications.
 
-Events:
-
-- `camera.changed`
-- `chart.overlay`
-
-The existing MCPClient/MCPServer nodes remain in the solar-system model and can
-coexist with the new agent path.
-
-## Current Limitations
-
-- Tool input schema validation is not implemented yet.
-- Automatic effect verification is not implemented yet.
-- Human approval UI is not implemented yet.
-- Provider streaming and cancellation are not implemented yet.
-- Durable event subscriptions such as "if this event happens, then do this" are
-  not implemented yet.
-- In-app agent windows are not implemented yet.
-- Node/headless runtime UI is not implemented yet.
-- Multi-agent configuration is not implemented yet.
-
-## Future Direction
-
-The intended next layer is to make the capability surface self-improving:
-
-- record user requests the agent could not fulfill,
-- classify whether the missing piece was a tool, probe, event, policy, or app
-  behavior,
-- store a structured "missing capability" record,
-- use those records as input for a coding agent to improve the model, nodes,
-  tests, and docs.
-
-For multi-agent support, the likely direction is one application-level
-`ToolBroker`, multiple registered `AgentRuntime` instances, and a scoped
-capability view per agent.
+See [the deferred backlog](../../agent-integration-improvements.md) for the
+implementation details and completion criteria.

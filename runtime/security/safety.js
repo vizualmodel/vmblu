@@ -1,170 +1,160 @@
-import {getCurrentNode, isCapabilitySuppressed, suppressCapability} from './node-context.js'
 import childProcess from 'node:child_process'
 import fs from 'node:fs'
 import http from 'node:http'
 import https from 'node:https'
 import path from 'node:path'
 
-const STATE_KEY = Symbol.for('vmblu.rt-als.safetyHooks')
-const WRAPPED = Symbol.for('vmblu.rt-als.wrapped')
+import {getCurrentNode, isCapabilitySuppressed, suppressCapability} from './node-context.js'
+
+const STATE_KEY = Symbol.for('vmblu.runtime.security')
+const WRAPPED = Symbol.for('vmblu.runtime.security.wrapped')
 
 class Safety {
-    constructor() {
-        this.emitter = null
-        this.policyClassifier = null
-    }
+    claim(owner, {security, baseDir} = {}) {
+        if (!owner) throw new Error('vmblu security instrumentation requires a runtime owner')
+        if (!security) return false
 
-    setEmitter(fn = null) {
-        this.emitter = (typeof fn === 'function') ? fn : null
-    }
+        const state = getState()
+        if (state.owner && state.owner !== owner) {
+            throw new Error('vmblu security instrumentation is already owned by another runtime in this process')
+        }
+        if (state.owner === owner) return true
 
-    setPolicyClassifier(fn = null) {
-        this.policyClassifier = (typeof fn === 'function') ? fn : null
-    }
-
-    emit(event) {
-        if (!this.emitter) return
+        state.owner = owner
+        state.security = security
+        state.baseDir = path.resolve(baseDir || process.cwd())
+        state.subscribers = new Set()
+        state.restores = []
 
         try {
-            this.emitter(event)
-        } catch (error) {
-            console.warn('vmblu safety emitter failed:', error)
+            this.installProcessHooks(state.restores)
+            this.installFetchHook(state.restores)
+            this.installHttpHooks(state.restores)
+            this.installFsHooks(state.restores)
+            return true
+        }
+        catch (error) {
+            this.release(owner)
+            throw error
         }
     }
 
-    makePolicyClassifier({runtime, runtimeSettings: modelRuntimeSettings} = {}) {
-        return (event) => {
-            const actor = runtime?.actors?.find?.(candidate => candidate.name === event?.node)
-            const effectivePolicy = runtime?.settings?.effectivePolicy?.(modelRuntimeSettings, actor?.dx)
-            if (!effectivePolicy?.active || !effectivePolicy?.security) return null
+    release(owner) {
+        const state = getState()
+        if (!state.owner || state.owner !== owner) return false
 
-            const operation = parseOperation(event.operation ?? event.cap ?? event.capability)
-            const policy = operationPolicy(effectivePolicy.security, operation)
-            if (!policy) return null
+        for (const restore of state.restores.splice(0).reverse()) restore()
+        state.subscribers.clear()
+        state.owner = null
+        state.security = null
+        state.baseDir = null
+        return true
+    }
 
-            const scopeDecision = classifyScope(operation, event.detail, policy)
-            const decision = scopeDecision?.decision
-                ?? (policy.mode === 'deny' ? 'denied' : policy.mode === 'warn' ? 'warning' : 'allowed')
+    subscribe(listener) {
+        if (typeof listener !== 'function') return () => {}
+        const state = getState()
+        state.subscribers.add(listener)
+        return () => state.subscribers.delete(listener)
+    }
 
-            return {
-                decision,
-                area: operation.area,
-                action: operation.action,
-                mode: scopeDecision?.mode ?? policy.mode,
-                ...(scopeDecision?.reason ? {reason: scopeDecision.reason} : {}),
+    isOwner(owner) {
+        return getState().owner === owner
+    }
+
+    get owner() {
+        return getState().owner
+    }
+
+    emit(event) {
+        for (const listener of [...getState().subscribers]) {
+            try {
+                listener(event)
+            }
+            catch (error) {
+                console.warn('vmblu security subscriber failed:', error)
             }
         }
     }
 
     report(operation, detail = {}) {
-        const event = {
-            ts: Date.now(),
-            node: getCurrentNode(),
-            operation: normalizeOperationName(operation),
-            cap: legacyCapabilityName(operation),
-            detail,
-        }
-
-        const policy = this.classify(event)
-        if (policy) event.policy = policy
-
-        this.emit(event)
-        return event
-    }
-
-    classify(event) {
-        if (!this.policyClassifier) return null
-
-        try {
-            return this.policyClassifier(event) ?? null
-        }
-        catch (error) {
-            return {
-                decision: 'error',
-                reason: 'policy_classifier_failed',
-                message: error?.message || String(error),
-            }
-        }
-    }
-
-    emitCapability(operation, detail) {
         if (isCapabilitySuppressed(operation)) return null
-        const event = this.report(operation, detail)
-        if (event?.policy?.decision === 'denied') {
-            throw new SecurityPolicyError(event)
-        }
-        return event
-    }
-
-    installHooks({mode = 'off'} = {}) {
-        if (mode === 'off') return () => {}
 
         const state = getState()
-        state.count += 1
+        if (!state.owner || !state.security) return null
 
-        if (state.count === 1) {
-            state.restores = []
-            this.installProcessHooks(state.restores)
-            this.installFetchHook(state.restores)
-            this.installHttpHooks(state.restores)
-            this.installFsHooks(state.restores)
+        const parsed = parseOperation(operation)
+        const configured = operationPolicy(state.security, parsed)
+        const policy = classifyPolicy(parsed, detail, configured, state.baseDir)
+        const event = {
+            schemaVersion: 1,
+            ts: Date.now(),
+            node: getCurrentNode(),
+            operation: parsed.name,
+            cap: legacyCapabilityName(parsed.name),
+            detail,
+            policy,
         }
 
-        return () => {
-            state.count = Math.max(0, state.count - 1)
-
-            if (state.count > 0) return
-
-            for (const restore of state.restores.splice(0).reverse()) restore()
-        }
+        if (policy.decision !== 'allowed') this.emit(event)
+        if (policy.decision === 'denied') throw new SecurityPolicyError(event)
+        return event
     }
 
     installProcessHooks(restores) {
-        const report = (cap, detail) => this.emitCapability(cap, detail)
+        const report = (detail) => this.report('process.exec', detail)
 
-        wrapMethod(childProcess, 'exec', (original) => function wrappedExec(command, ...args) {
-            report('process.exec', {command: safeString(command)})
-            return original.call(this, command, ...args)
-        }, restores)
+        for (const key of ['exec', 'execSync']) {
+            wrapMethod(childProcess, key, (original) => function wrappedExec(command, ...args) {
+                report({command: safeString(command), shell: true})
+                return original.call(this, command, ...args)
+            }, restores)
+        }
 
-        wrapMethod(childProcess, 'execFile', (original) => function wrappedExecFile(file, args, options, callback) {
-            const argv = Array.isArray(args) ? args : []
-            report('process.exec', {command: safeString(file), args: argv.slice()})
-            return original.call(this, file, args, options, callback)
-        }, restores)
+        for (const key of ['execFile', 'execFileSync']) {
+            wrapMethod(childProcess, key, (original) => function wrappedExecFile(file, ...rest) {
+                const argv = Array.isArray(rest[0]) ? rest[0] : []
+                const actualOptions = Array.isArray(rest[0]) ? rest[1] : rest[0]
+                report({command: safeString(file), args: argv.slice(), shell: !!actualOptions?.shell})
+                return original.call(this, file, ...rest)
+            }, restores)
+        }
 
-        wrapMethod(childProcess, 'spawn', (original) => function wrappedSpawn(command, args, options) {
-            report('process.exec', {command: safeString(command), args: Array.isArray(args) ? args.slice() : []})
-            return original.call(this, command, args, options)
-        }, restores)
+        for (const key of ['spawn', 'spawnSync']) {
+            wrapMethod(childProcess, key, (original) => function wrappedSpawn(command, ...rest) {
+                const argv = Array.isArray(rest[0]) ? rest[0] : []
+                const options = Array.isArray(rest[0]) ? rest[1] : rest[0]
+                report({command: safeString(command), args: argv.slice(), shell: !!options?.shell})
+                return original.call(this, command, ...rest)
+            }, restores)
+        }
 
-        wrapMethod(childProcess, 'fork', (original) => function wrappedFork(modulePath, args, options) {
-            report('process.exec', {command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : []})
-            return original.call(this, modulePath, args, options)
+        wrapMethod(childProcess, 'fork', (original) => function wrappedFork(modulePath, ...rest) {
+            const argv = Array.isArray(rest[0]) ? rest[0] : []
+            report({command: safeString(process.execPath), args: [safeString(modulePath), ...argv], shell: false})
+            return original.call(this, modulePath, ...rest)
         }, restores)
     }
 
     installFsHooks(restores) {
-        const report = (cap, detail) => this.emitCapability(cap, detail)
-
         for (const key of ['readFile', 'readFileSync']) {
-            wrapMethod(fs, key, (original) => function wrappedFsRead(path, ...args) {
-                report('fs.read', {path: safeString(path)})
-                return original.call(this, path, ...args)
+            wrapMethod(fs, key, (original) => function wrappedFsRead(target, ...args) {
+                safety.report('fs.read', {path: safeString(target)})
+                return original.call(this, target, ...args)
             }, restores)
         }
 
         for (const key of ['writeFile', 'writeFileSync', 'appendFile', 'appendFileSync']) {
-            wrapMethod(fs, key, (original) => function wrappedFs(path, ...args) {
-                report('fs.write', {path: safeString(path)})
-                return original.call(this, path, ...args)
+            wrapMethod(fs, key, (original) => function wrappedFsWrite(target, ...args) {
+                safety.report('fs.write', {path: safeString(target)})
+                return original.call(this, target, ...args)
             }, restores)
         }
 
         for (const key of ['rm', 'rmSync', 'unlink', 'unlinkSync']) {
-            wrapMethod(fs, key, (original) => function wrappedDelete(path, ...args) {
-                report('fs.delete', {path: safeString(path)})
-                return original.call(this, path, ...args)
+            wrapMethod(fs, key, (original) => function wrappedFsDelete(target, ...args) {
+                safety.report('fs.delete', {path: safeString(target)})
+                return original.call(this, target, ...args)
             }, restores)
         }
     }
@@ -172,24 +162,18 @@ class Safety {
     installFetchHook(restores) {
         if (typeof globalThis.fetch !== 'function') return
 
-        const report = (cap, detail) => this.emitCapability(cap, detail)
-
         wrapMethod(globalThis, 'fetch', (original) => function wrappedFetch(input, init) {
-            const detail = {
+            safety.report('net.egress', {
                 url: describeRequestUrl(input),
                 method: init?.method ?? input?.method ?? 'GET',
-            }
-
-            report('net.egress', detail)
+            })
             return suppressCapability('net.egress', () => original.call(this, input, init))
         }, restores)
     }
 
     installHttpHooks(restores) {
-        const report = (cap, detail) => this.emitCapability(cap, detail)
-
         wrapMethod(http, 'request', (original) => function wrappedHttpRequest(input, options, callback) {
-            report('net.egress', {
+            safety.report('net.egress', {
                 url: describeRequestUrl(input, options, 'http:'),
                 method: options?.method ?? input?.method ?? 'GET',
             })
@@ -197,36 +181,16 @@ class Safety {
         }, restores)
 
         wrapMethod(https, 'request', (original) => function wrappedHttpsRequest(input, options, callback) {
-            report('net.egress', {
+            safety.report('net.egress', {
                 url: describeRequestUrl(input, options, 'https:'),
                 method: options?.method ?? input?.method ?? 'GET',
             })
             return original.call(this, input, options, callback)
         }, restores)
     }
-
-    enable({mode = 'off'} = {}, tx = null) {
-        if (mode === 'off') {
-            this.setEmitter(null)
-            return {uninstall() {}}
-        }
-
-        this.setEmitter((event) => {
-            tx?.send?.('security.event', event)
-        })
-
-        const uninstallHooks = this.installHooks({mode})
-
-        return {
-            uninstall: () => {
-                uninstallHooks()
-                this.setEmitter(null)
-            }
-        }
-    }
 }
 
-class SecurityPolicyError extends Error {
+export class SecurityPolicyError extends Error {
     constructor(event) {
         super(`vmblu security policy denied ${event?.operation ?? 'operation'}`)
         this.name = 'SecurityPolicyError'
@@ -237,26 +201,135 @@ class SecurityPolicyError extends Error {
 function getState() {
     if (!globalThis[STATE_KEY]) {
         globalThis[STATE_KEY] = {
-            count: 0,
+            owner: null,
+            security: null,
+            baseDir: null,
             restores: [],
+            subscribers: new Set(),
         }
     }
-
     return globalThis[STATE_KEY]
 }
 
 function wrapMethod(target, key, wrapFactory, restores) {
     const original = target[key]
-
     if (typeof original !== 'function') return
-    if (original[WRAPPED]) return
+    if (original[WRAPPED]) throw new Error(`Node.js API ${key} is already wrapped by vmblu security`)
 
     const wrapped = wrapFactory(original)
-    wrapped[WRAPPED] = true
+    Object.defineProperty(wrapped, WRAPPED, {value: true})
     target[key] = wrapped
     restores.push(() => {
         if (target[key] === wrapped) target[key] = original
     })
+}
+
+function classifyPolicy(operation, detail, policy, baseDir) {
+    if (!policy || policy.mode === 'deny') return denied(operation, 'operation_denied')
+    if (!policy.all) {
+        if (operation.area === 'fs' && !isPathAllowed(detail.path, policy.roots, baseDir)) return denied(operation, 'fs_root_not_allowed')
+        if (operation.area === 'net' && !isHostAllowed(detail.url, policy.hosts)) return denied(operation, 'net_host_not_allowed')
+        if (operation.area === 'process') {
+            if (detail.shell) return denied(operation, 'process_shell_not_allowed')
+            if (!isCommandAllowed(detail.command, policy.commands, baseDir)) return denied(operation, 'process_command_not_allowed')
+        }
+    }
+
+    return {
+        decision: policy.mode === 'warn' ? 'warning' : 'allowed',
+        area: operation.area,
+        action: operation.action,
+        mode: policy.mode,
+    }
+}
+
+function denied(operation, reason) {
+    return {
+        decision: 'denied',
+        area: operation.area,
+        action: operation.action,
+        mode: 'deny',
+        reason,
+    }
+}
+
+function operationPolicy(security, operation) {
+    return security?.[operation.area]?.[operation.action] ?? null
+}
+
+function isPathAllowed(value, roots = [], baseDir) {
+    if (!value || !Array.isArray(roots) || !roots.length) return false
+    const target = canonicalPath(value, process.cwd())
+    return roots.some(root => {
+        const allowed = canonicalPath(root, baseDir)
+        return target === allowed || target.startsWith(`${allowed}/`)
+    })
+}
+
+function canonicalPath(value, baseDir) {
+    const absolute = path.resolve(baseDir, String(value ?? ''))
+    let existing = absolute
+    const suffix = []
+
+    while (!fs.existsSync(existing)) {
+        const parent = path.dirname(existing)
+        if (parent === existing) break
+        suffix.unshift(path.basename(existing))
+        existing = parent
+    }
+
+    let resolved = existing
+    try {
+        resolved = fs.realpathSync.native(existing)
+    }
+    catch {
+        resolved = existing
+    }
+    resolved = path.join(resolved, ...suffix).replaceAll('\\', '/').replace(/\/+$/, '')
+    return process.platform === 'win32' ? resolved.toLowerCase() : resolved
+}
+
+function isHostAllowed(value, hosts = []) {
+    try {
+        const observed = new URL(String(value)).hostname.toLowerCase()
+        return hosts.some(host => normalizeConfiguredHost(host) === observed)
+    }
+    catch {
+        return false
+    }
+}
+
+function normalizeConfiguredHost(value) {
+    try {
+        const text = String(value ?? '').trim()
+        if (!text || text.includes('/') || text.includes(':')) return ''
+        return new URL(`http://${text}`).hostname.toLowerCase()
+    }
+    catch {
+        return ''
+    }
+}
+
+function isCommandAllowed(value, commands = [], baseDir) {
+    const observed = executableIdentity(value, baseDir)
+    return !!observed && commands.some(command => executableIdentity(command, baseDir) === observed)
+}
+
+function executableIdentity(value, baseDir) {
+    const command = String(value ?? '').trim()
+    if (!command) return ''
+    if (path.isAbsolute(command) || command.includes('/') || command.includes('\\')) return canonicalPath(command, baseDir)
+
+    const extensions = process.platform === 'win32'
+        ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';')
+        : ['']
+    for (const folder of (process.env.PATH ?? '').split(path.delimiter)) {
+        for (const extension of extensions) {
+            const candidate = path.join(folder, process.platform === 'win32' && !path.extname(command) ? `${command}${extension}` : command)
+            if (fs.existsSync(candidate)) return canonicalPath(candidate, baseDir)
+        }
+    }
+    return process.platform === 'win32' ? command.toLowerCase() : command
 }
 
 function safeString(value) {
@@ -273,21 +346,11 @@ function describeRequestUrl(input, options = null, protocol = '') {
         const actualProtocol = input.protocol ?? options?.protocol ?? protocol
         const host = input.hostname ?? input.host ?? options?.hostname ?? options?.host ?? ''
         const port = input.port ?? options?.port
-        const path = input.path ?? input.pathname ?? options?.path ?? options?.pathname ?? ''
+        const requestPath = input.path ?? input.pathname ?? options?.path ?? options?.pathname ?? ''
         const authority = port ? `${host}:${port}` : host
-        return authority ? `${actualProtocol}//${authority}${path}` : path
+        return authority ? `${actualProtocol}//${authority}${requestPath}` : requestPath
     }
     return safeString(input)
-}
-
-function normalizeOperationName(value) {
-    return parseOperation(value).name
-}
-
-function legacyCapabilityName(value) {
-    const operation = parseOperation(value)
-    if (operation.name === 'process.exec') return 'proc:exec'
-    return operation.name.replace('.', ':')
 }
 
 function parseOperation(value) {
@@ -297,56 +360,10 @@ function parseOperation(value) {
     return {name: `${area}.${action}`, area, action}
 }
 
-function operationPolicy(security = {}, operation) {
-    return security?.[operation.area]?.[operation.action] ?? null
-}
-
-function classifyScope(operation, detail = {}, policy = {}) {
-    if (operation.area === 'fs' && policy.roots?.length && detail?.path) {
-        return isPathAllowed(detail.path, policy.roots)
-            ? null
-            : {decision: 'denied', mode: 'deny', reason: 'fs_root_not_allowed'}
-    }
-
-    if (operation.area === 'net' && policy.hosts?.length && detail?.url) {
-        return isHostAllowed(detail.url, policy.hosts)
-            ? null
-            : {decision: 'denied', mode: 'deny', reason: 'net_host_not_allowed'}
-    }
-
-    if (operation.area === 'process' && policy.commands?.length && detail?.command) {
-        return isCommandAllowed(detail.command, policy.commands)
-            ? null
-            : {decision: 'denied', mode: 'deny', reason: 'process_command_not_allowed'}
-    }
-
-    return null
-}
-
-function isPathAllowed(value, roots = []) {
-    const target = normalizePath(value)
-    return roots.some(root => {
-        const normalizedRoot = normalizePath(root)
-        return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`)
-    })
-}
-
-function normalizePath(value) {
-    return path.resolve(String(value ?? '')).replaceAll('\\', '/').replace(/\/+$/, '')
-}
-
-function isHostAllowed(value, hosts = []) {
-    try {
-        const host = new URL(String(value)).hostname
-        return hosts.includes(host)
-    }
-    catch {
-        return false
-    }
-}
-
-function isCommandAllowed(value, commands = []) {
-    return commands.includes(String(value ?? ''))
+function legacyCapabilityName(value) {
+    const operation = parseOperation(value)
+    if (operation.name === 'process.exec') return 'proc:exec'
+    return operation.name.replace('.', ':')
 }
 
 export const safety = new Safety()

@@ -1,17 +1,17 @@
 {
-  "version": "1.11.0",
+  "version": "1.12.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "1.11",
-    "schemaVersion": "1.11.0",
+    "compatibilityFamily": "1.12",
+    "schemaVersion": "1.12.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.11.0"
+      "version": "1.12.0"
     },
     "source": {
       "model": "core.mod.blu",
-      "hash": "fnv1a64:3be5ad0daea27a50"
+      "hash": "fnv1a64:0030e79f74ba17db"
     }
   },
   "entries": [
@@ -22,7 +22,7 @@
           "pin": "file selected",
           "handler": "onFileSelected",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 128,
+          "line": 129,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +38,7 @@
           "pin": "file new",
           "handler": "onFileNew",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 173,
+          "line": 180,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -54,7 +54,7 @@
           "pin": "file renamed",
           "handler": "onFileRenamed",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 197,
+          "line": 204,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -75,7 +75,7 @@
           "pin": "save as",
           "handler": "onFileSaveAs",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 211,
+          "line": 218,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -91,7 +91,7 @@
           "pin": "save all",
           "handler": "onFileSaveAll",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 248,
+          "line": 255,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -101,7 +101,7 @@
           "pin": "get open models",
           "handler": "onGetOpenModels",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 254,
+          "line": 261,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -111,7 +111,7 @@
           "pin": "tab request to close",
           "handler": "onTabRequestToClose",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 272,
+          "line": 279,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -128,37 +128,37 @@
         {
           "pin": "tab.new",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 185
+          "line": 192
         },
         {
           "pin": "file.save as filename",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 230
+          "line": 237
         },
         {
           "pin": "model.save",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 236
+          "line": 243
         },
         {
           "pin": "tab.rename",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 239
+          "line": 246
         },
         {
           "pin": "open models",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 264
+          "line": 271
         },
         {
           "pin": "tab.remove",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 277
+          "line": 284
         },
         {
           "pin": "tab.select",
           "file": "../nodes/document-manager/document-manager.js",
-          "line": 282
+          "line": 289
         }
       ]
     },
@@ -727,22 +727,27 @@
         {
           "pin": "node settings (sx)",
           "file": "../types/node/node-icon-click.js",
-          "line": 164
-        },
-        {
-          "pin": "runtime settings (dx)",
-          "file": "../types/node/node-icon-click.js",
-          "line": 178
-        },
-        {
-          "pin": "open model",
-          "file": "../types/node/node-icon-click.js",
-          "line": 206
+          "line": 167
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 219
+          "line": 175
+        },
+        {
+          "pin": "runtime settings (dx)",
+          "file": "../types/node/node-icon-click.js",
+          "line": 187
+        },
+        {
+          "pin": "open model",
+          "file": "../types/node/node-icon-click.js",
+          "line": 214
+        },
+        {
+          "pin": "open source file",
+          "file": "../types/node/node-icon-click.js",
+          "line": 227
         }
       ]
     }

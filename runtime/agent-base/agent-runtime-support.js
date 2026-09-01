@@ -17,18 +17,37 @@ export class AgentRuntimeSupport {
         this.wireToolBrokerEvents()
         this.registerNodeProbes()
         runtime.agent = null
-        const selectedAgent = selectAgentConfig(agent)
-        if (selectedAgent && selectedAgent.enabled !== false) {
+        runtime.agentProfiles = []
+        runtime.agentInterfaces = []
+
+        const configuration = normalizeAgentConfiguration(agent)
+        if (configuration) {
+            runtime.agentProfiles = configuration.profiles
+            runtime.agentInterfaces = configuration.interfaces
+            for (const profile of configuration.profiles) {
+                runtime.toolBroker.registerAgent({id: profile.id, config: profile})
+            }
+        }
+
+        const selectedAgent = selectEmbeddedAgent(configuration)
+        if (selectedAgent) {
             runtime.agent = new AgentRuntime({
-                id: selectedAgent?.id,
+                id: selectedAgent.profile.id,
                 broker: runtime.toolBroker,
-                config: selectedAgent ?? {},
+                config: {
+                    ...selectedAgent.profile,
+                    instructions: selectedAgent.interface.instructions,
+                    llm: selectedAgent.interface.llm,
+                    ui: selectedAgent.interface.ui,
+                    interfaceId: selectedAgent.interface.id,
+                },
             })
         }
         return runtime
     }
 
     stop() {
+        this.runtime.toolBroker?.cancelPendingApprovals?.()
         this.runtime.agent?.unmountOverlay?.()
     }
 
@@ -96,13 +115,81 @@ export class AgentRuntimeSupport {
     }
 }
 
-function selectAgentConfig(agent) {
-    if (!agent) return null
-    if (Array.isArray(agent?.agents)) {
-        return agent.agents.find(candidate => candidate?.id === agent.defaultAgent)
-            ?? agent.agents.find(candidate => candidate?.enabled !== false)
-            ?? agent.agents[0]
-            ?? null
+function normalizeAgentConfiguration(agent) {
+    if (!agent || agent.enabled === false) return null
+
+    if (Array.isArray(agent?.profiles)) {
+        return {
+            defaultInterface: agent.defaultInterface ?? '',
+            profiles: agent.profiles.map(normalizeProfile),
+            interfaces: Array.isArray(agent.interfaces) ? agent.interfaces.map(normalizeInterface) : [],
+        }
     }
-    return agent
+
+    const legacyAgents = Array.isArray(agent?.agents) ? agent.agents : [agent]
+    const profiles = legacyAgents.map(normalizeProfile)
+    const defaultProfile = profiles.find(profile => profile.id === agent.defaultAgent) ?? profiles[0]
+    const interfaces = legacyAgents.map(item => ({
+        id: `${item.id ?? 'agent'}-embedded`,
+        kind: 'embedded',
+        profile: item.id,
+        enabled: item.enabled !== false,
+        instructions: item.instructions,
+        llm: item.llm,
+        ui: item.ui,
+    }))
+    return {
+        defaultInterface: interfaces.find(item => item.profile === defaultProfile?.id)?.id ?? '',
+        profiles,
+        interfaces,
+    }
+}
+
+function normalizeProfile(profile = {}) {
+    return {
+        ...profile,
+        id: String(profile.id ?? '').trim(),
+        enabled: profile.enabled !== false,
+        permissions: profile.permissions ?? {},
+    }
+}
+
+function normalizeInterface(value = {}) {
+    return {
+        ...value,
+        id: String(value.id ?? '').trim(),
+        profile: String(value.profile ?? '').trim(),
+        enabled: value.enabled !== false,
+    }
+}
+
+function selectEmbeddedAgent(configuration) {
+    if (!configuration) return null
+    const ids = new Set()
+    for (const profile of configuration.profiles) {
+        if (!profile.id) throw new Error('Agent profile id is required')
+        if (ids.has(profile.id)) throw new Error(`Duplicate agent profile id: ${profile.id}`)
+        ids.add(profile.id)
+    }
+
+    const embedded = configuration.interfaces.filter(item => item.kind === 'embedded' && item.enabled !== false)
+    if (!embedded.length) return null
+
+    if (!configuration.defaultInterface) {
+        if (embedded.length) {
+            throw new Error('defaultInterface is required when an embedded agent interface is enabled')
+        }
+        return null
+    }
+
+    const selected = configuration.interfaces.find(item => item.id === configuration.defaultInterface)
+    if (!selected) throw new Error(`Unknown default agent interface: ${configuration.defaultInterface}`)
+    if (selected.kind !== 'embedded') throw new Error(`Default agent interface must be embedded: ${selected.id}`)
+    if (selected.enabled === false) throw new Error(`Default agent interface is disabled: ${selected.id}`)
+
+    const profile = configuration.profiles.find(item => item.id === selected.profile)
+    if (!profile) throw new Error(`Agent interface ${selected.id} references unknown profile: ${selected.profile}`)
+    if (profile.enabled === false) throw new Error(`Agent interface ${selected.id} references disabled profile: ${selected.profile}`)
+
+    return {interface: selected, profile}
 }

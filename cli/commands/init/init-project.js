@@ -104,6 +104,12 @@ This is a vmblu project.
 `;
 }
 
+function defaultGitignore() {
+  return `# Generated vmblu test execution reports
+**/tests/**/*.result.json
+`;
+}
+
 /**
  * Initialize a vmblu project directory.
  *
@@ -134,6 +140,7 @@ async function initProject(opts) {
   const absTarget = path.resolve(targetDir);
   const entrypointName = `${projectName}.blu`;
   const entrypointFile = path.join(absTarget, entrypointName);
+  const gitignoreFile = path.join(absTarget, '.gitignore');
   const modelDir = path.join(absTarget, 'model');
   const modelFile = path.join(modelDir, `${projectName}.mod.blu`);
   const vizualFile = path.join(modelDir, `${projectName}.mod.viz`);
@@ -163,6 +170,9 @@ async function initProject(opts) {
   ui.info(`create ${promptPrjDst}${force ? ' (force)' : ''}`);
   await writeFileSafe(promptPrjDst, defaultProjectPrompt(entrypointName), { force, dry: dryRun });
 
+  ui.info(`create ${gitignoreFile}`);
+  await writeFileSafe(gitignoreFile, defaultGitignore(), { dry: dryRun });
+
   // 4) Build manifest with hashes DELETED
 
   // 5) Make the package file
@@ -189,6 +199,7 @@ async function initProject(opts) {
     schemaVersion,
     files: {
       entrypoint: entrypointFile,
+      gitignore: gitignoreFile,
       model: modelFile,
       vizual: vizualFile,
       projectPrompt: promptPrjDst,

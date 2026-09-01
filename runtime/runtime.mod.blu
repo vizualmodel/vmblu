@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.11.0",
+    "version": "1.12.0",
     "created": "4/16/2026, 5:00:00 PM",
     "saved": "4/16/2026, 5:00:00 PM",
     "utc": "2026-04-16T15:00:00.000Z",
@@ -14,6 +14,9 @@
       "kind": "object",
       "summary": "Runtime safety event emitted by the ALS runtime.",
       "fields": {
+        "schemaVersion": {
+          "vmbluType": "number"
+        },
         "ts": {
           "vmbluType": "number"
         },
@@ -21,17 +24,53 @@
           "vmbluType": "string"
         },
         "cap": {
+          "vmbluType": "string",
+          "summary": "Deprecated compatibility name; consumers use operation."
+        },
+        "operation": {
           "vmbluType": "string"
         },
         "detail": {
           "vmbluType": "object"
+        },
+        "policy": {
+          "vmbluType": "SecurityEventPolicy"
         }
       },
       "required": [
+        "schemaVersion",
         "ts",
         "node",
-        "cap",
-        "detail"
+        "operation",
+        "detail",
+        "policy"
+      ]
+    },
+    "SecurityEventPolicy": {
+      "kind": "object",
+      "summary": "Decision applied to an observed runtime operation.",
+      "fields": {
+        "decision": {
+          "vmbluType": "string"
+        },
+        "area": {
+          "vmbluType": "string"
+        },
+        "action": {
+          "vmbluType": "string"
+        },
+        "mode": {
+          "vmbluType": "string"
+        },
+        "reason": {
+          "vmbluType": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "area",
+        "action",
+        "mode"
       ]
     }
   },
@@ -56,9 +95,6 @@
           }
         ]
       }
-    ],
-    "sx": {
-      "mode": "warn"
-    }
+    ]
   }
 }

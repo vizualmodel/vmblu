@@ -215,6 +215,9 @@ splitNode(rNode) {
     if (rNode.promptRepo && rNode.kind !== 'dock') {
         blu.promptRepo = rNode.promptRepo.makeRaw ? rNode.promptRepo.makeRaw(this.blu.arl) : rNode.promptRepo;
     }
+    if (rNode.testRepo && rNode.kind !== 'dock') {
+        blu.testRepo = rNode.testRepo.makeRaw ? rNode.testRepo.makeRaw(this.blu.arl) : rNode.testRepo;
+    }
     if (rNode.probes) blu.probes = rNode.probes;
 
     const viz = {

@@ -6,7 +6,6 @@ import {RawHandling} from './blueprint-raw.js'
 import {ProfileHandling} from './blueprint-prf.js'
 import {CapabilityHandling} from './blueprint-cap.js'
 import {AppHandling} from './blueprint-app.js'
-import {TestHandling} from './blueprint-tst.js'
 import {LibHandling} from './blueprint-lib.js'
 import {PromptHandling} from './blueprint-prompt.js'
 
@@ -282,4 +281,4 @@ ModelBlueprint.prototype = {
 
 }
 
-Object.assign(ModelBlueprint.prototype, RawHandling, PromptHandling, ProfileHandling, CapabilityHandling, AppHandling, TestHandling, LibHandling)
+Object.assign(ModelBlueprint.prototype, RawHandling, PromptHandling, ProfileHandling, CapabilityHandling, AppHandling, LibHandling)

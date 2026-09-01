@@ -191,6 +191,7 @@ goodLink(raw, lName, model, linkedNode, pathKind) {
 
     // and now fuse the two nodes to highlight the differences 
     dock.fuse(linkedNode)
+    dock.setTestRepoReadOnlyRecursive(true)
     dock.setModelRecursive(this.getCurrentModel())
 
     // done

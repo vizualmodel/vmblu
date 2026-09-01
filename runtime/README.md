@@ -58,27 +58,66 @@ Returns a runtime object:
 | `@vizualmodel/vmblu-runtime/rt-browser-agent` | yes | yes | no | yes |
 | `@vizualmodel/vmblu-runtime/rt-als` | no | yes | yes | no |
 | `@vizualmodel/vmblu-runtime/rt-nodejs-agent` | no | yes | yes | yes |
+| `@vizualmodel/vmblu-runtime/rt-model-test` | yes | yes | test host | no |
 
 Use `rt-browser-agent` for browser apps that need the agent/tool broker without
 Node.js safety instrumentation. Use `rt-nodejs-agent` for Node.js apps that need both
 agent features and ALS-based safety attribution.
 
-### `safety.enable({ mode }, tx)`
+`rt-model-test` executes one source node directly, a complete group subtree,
+or the complete model. Group and model scopes use real runtime routing while
+exposing only the selected perimeter's natural pins. Its optional browser host
+mounts returned DOM views and performs framework-neutral CSS or accessible-role
+interactions.
 
-Available from `@vizualmodel/vmblu-runtime/rt-als`.
+### Application security
 
-* `mode`: `off`, `warn`, or `enforce`
-* forwards structured events as `security.event`
-* event shape:
+`rt-als` and `rt-nodejs-agent` activate security instrumentation when `options.runtimeSettings.security` is configured and its `enabled` field is not `false`. A disabled policy remains stored for later editing. Generated applications also pass `options.securityBaseDir`, which anchors relative filesystem roots to the root model folder.
+
+Only one security-enabled runtime may run in a JavaScript process. A second runtime fails at startup without replacing the active policy. `SecurityReporterFactory` is optional and only forwards observed warning and denial events as `security.event`.
+
+Allowed operations are silent. Use `warn` when an operation should proceed and emit a security event. Events use this shape:
 
 ```js
 {
+  schemaVersion: 1,
   ts: 1710000000000,
   node: "My Node",
-  cap: "proc:exec" | "net:egress" | "fs:write" | "fs:delete",
-  detail: {}
+  operation: "process.exec" | "net.egress" | "fs.read" | "fs.write" | "fs.delete",
+  detail: {},
+  policy: {decision: "warning" | "denied", mode: "warn" | "deny"}
 }
 ```
+
+The deprecated `cap` field remains present for compatibility.
+
+Security is implemented through JavaScript API instrumentation, not an operating-system sandbox. Current coverage includes selected callback and synchronous `node:fs` reads, writes, appends, and deletes; global `fetch`; `node:http` and `node:https` requests; and common `node:child_process` execution methods. It does not cover `fs.promises`, direct `net` or `tls` sockets, native add-ons, worker threads, retained original API references, or all symbolic-link and redirect cases. Code in the same process may be able to tamper with the hooks.
+
+### Agent interfaces and MCP
+
+Agent profiles are fail-closed allow lists for application tools, events, and probes. Connection interfaces reference one fixed profile; callers cannot select or override it.
+
+The optional `@vizualmodel/vmblu-runtime/mcp` export provides MCP stdio and Streamable HTTP hosting. It requires Node.js 20 or newer. A host explicitly starts the enabled MCP interfaces described by an `rt-nodejs-agent` runtime:
+
+```js
+import {startConfiguredVmbluMcpInterfaces} from '@vizualmodel/vmblu-runtime/mcp'
+
+const mcp = await startConfiguredVmbluMcpInterfaces({
+  runtime,
+  hostOptions: {
+    remote: {
+      authentication: {
+        verifier,
+        oauthMetadata
+      }
+    }
+  }
+})
+
+await mcp.close()
+```
+
+The model stores only public server and OAuth configuration. The host must provide token verification and other secrets at startup. Stdio uses the launching process as its trust boundary. Unauthenticated HTTP is available only in explicit loopback development mode.
 
 ## Why no single-file bundle?
 

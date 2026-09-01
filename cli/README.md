@@ -18,6 +18,8 @@ vmblu/
         protocol.schema.json
         prf.schema.json
         capabilities.schema.json
+        model-test.schema.json
+        test-report.schema.json
     bin/
       vmblu.js              # discovers and adds commands
     lib/
@@ -101,6 +103,25 @@ vmblu make-app my-app.blu
 vmblu make-capabilities my-app.blu
 vmblu verify my-app.blu
 ```
+
+Model tests are generated from dedicated Markdown files referenced by each
+node's optional `testRepo`. The specification, generated `.test.json` artifact,
+and ignored `.result.json` report are colocated below `tests/nodes/` or
+`tests/app/`. A test can use a source node, a complete group, or the complete
+application as its perimeter:
+
+```bash
+vmblu make-test node my-app.blu --node "Orders/Validator"
+vmblu run-test node my-app.blu --node "Orders/Validator"
+vmblu make-test group my-app.blu --group "Orders"
+vmblu run-test group my-app.blu --group "Orders"
+vmblu make-test app my-app.blu
+vmblu run-test app my-app.blu
+```
+
+Browser-hosted tests use Playwright with the project's Vite configuration.
+Install Chromium with `npx playwright install chromium` when no supported
+system Chrome or Edge browser is available.
 
 `vmblu verify` checks the model and visualization compatibility family,
 canonical factory indexes, and the provenance/source hashes of generated

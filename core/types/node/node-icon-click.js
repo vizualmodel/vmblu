@@ -161,13 +161,22 @@ export const nodeClickHandling = {
 
             case 'cog':
 
-                tx.send("node settings (sx)",{    title:'Settings for ' + node.name, 
+                {
+                const testOwnerArl = node.link?.model?.getArl?.() ?? node.model?.getArl?.()
+                const testRepoPath = node.testRepo?.getPath?.(testOwnerArl) ?? ''
+                tx.send("node settings (sx)",{    title:node.name + ' props',
                                         pos: newPos,
                                         json: node.sx,
                                         team: node.team,
                                         teams: view?.getManager?.()?.getModel?.()?.header?.teams,
-                                        ok: ({sx, team}) => doEdit(tx,"changeNodeSettings",{node, sx, team})
+                                        testRepo: testRepoPath,
+                                        testRepoReadOnly: !!node.testRepo?.readOnly || !!node.link,
+                                        openTestRepo: node.testRepo?.arl
+                                            ? () => tx.send('open source file', {arl: node.testRepo.arl})
+                                            : null,
+                                        ok: ({sx, team, testRepo}) => doEdit(tx,"changeNodeSettings",{node, sx, team, testRepo})
                                     })                  
+                }
                 break     
 
             case 'pulse': {
@@ -178,7 +187,6 @@ export const nodeClickHandling = {
                 tx.send("runtime settings (dx)",{    title:'Runtime settings for ' + node.name, 
                                                 pos: newPos,
                                                 runtime,
-                                                modelRuntimeSettings: header?.runtimeSettings ?? null,
                                                 dx: node.dx,
                                                 ok: (dx) => doEdit(tx,"changeNodeDynamics",{node, dx})
                                             })

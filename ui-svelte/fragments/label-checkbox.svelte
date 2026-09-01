@@ -5,6 +5,7 @@ export let label
 export let on
 export let style = 'width: 9rem;'
 export let onToggle
+export let disabled = false
 </script>
 
 <style>
@@ -39,7 +40,7 @@ label {
     <!-- svelte-ignore a11y-label-has-associated-control -->
     <label style={style}>{label}</label>
     <div class="checkbox-field">
-        <CheckBox bind:on onToggle={onToggle} />
+        <CheckBox bind:on onToggle={onToggle} {disabled} />
         <slot/>
     </div>
 </div>

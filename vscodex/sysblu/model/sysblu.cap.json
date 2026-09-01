@@ -4,19 +4,19 @@
   "provenance": {
     "generated": true,
     "artifact": "capabilities",
-    "compatibilityFamily": "1.11",
-    "schemaVersion": "1.11.0",
+    "compatibilityFamily": "1.12",
+    "schemaVersion": "1.12.0",
     "generator": {
       "name": "@vizualmodel/vmblu-core",
-      "version": "1.11.0"
+      "version": "1.12.0"
     },
     "source": {
       "model": "sysblu.mod.blu",
-      "hash": "fnv1a64:e4184a8318f3ba53"
+      "hash": "fnv1a64:7859b9eb1b95ba7c"
     }
   },
   "application": {
-    "id": "sysblu vscode editor",
+    "id": "sysblu-vscode-editor",
     "title": "sysblu vscode editor",
     "description": "sysblu vscode editor application."
   },

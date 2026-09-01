@@ -1,17 +1,17 @@
 {
-  "version": "1.11.0",
+  "version": "1.12.0",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
-    "compatibilityFamily": "1.11",
-    "schemaVersion": "1.11.0",
+    "compatibilityFamily": "1.12",
+    "schemaVersion": "1.12.0",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.11.0"
+      "version": "1.12.0"
     },
     "source": {
       "model": "sysblu.mod.blu",
-      "hash": "fnv1a64:e4184a8318f3ba53"
+      "hash": "fnv1a64:7859b9eb1b95ba7c"
     }
   },
   "entries": [
@@ -22,7 +22,7 @@
           "pin": "message",
           "handler": "onMessage",
           "file": "../system-message-broker.js",
-          "line": 92,
+          "line": 93,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +38,7 @@
           "pin": "canvas",
           "handler": "onCanvas",
           "file": "../system-message-broker.js",
-          "line": 171,
+          "line": 172,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -57,7 +57,7 @@
           "pin": "floating.menu",
           "handler": "onFloatingMenu",
           "file": "../system-message-broker.js",
-          "line": 194,
+          "line": 195,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -73,7 +73,7 @@
           "pin": "save",
           "handler": "onSave",
           "file": "../system-message-broker.js",
-          "line": 198,
+          "line": 199,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -83,7 +83,7 @@
           "pin": "modal.div",
           "handler": "onModalDiv",
           "file": "../system-message-broker.js",
-          "line": 202,
+          "line": 203,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -99,7 +99,7 @@
           "pin": "system.updated",
           "handler": "onSystemUpdated",
           "file": "../system-message-broker.js",
-          "line": 206,
+          "line": 207,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -118,7 +118,7 @@
           "pin": "sysblu.loaded",
           "handler": "onSysbluLoaded",
           "file": "../system-message-broker.js",
-          "line": 221,
+          "line": 222,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -128,7 +128,7 @@
           "pin": "sysblu.diagnostics",
           "handler": "onSysbluDiagnostics",
           "file": "../system-message-broker.js",
-          "line": 223,
+          "line": 224,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -147,7 +147,7 @@
           "pin": "sysblu.failed",
           "handler": "onSysbluFailed",
           "file": "../system-message-broker.js",
-          "line": 227,
+          "line": 228,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -157,7 +157,7 @@
           "pin": "open.reference",
           "handler": "onOpenReference",
           "file": "../system-message-broker.js",
-          "line": 234,
+          "line": 235,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -173,7 +173,7 @@
           "pin": "execute.command",
           "handler": "onExecuteCommand",
           "file": "../system-message-broker.js",
-          "line": 238,
+          "line": 239,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -190,27 +190,27 @@
         {
           "pin": "sysblu.set",
           "file": "../system-message-broker.js",
-          "line": 89
+          "line": 90
         },
         {
           "pin": "sysblu.save",
           "file": "../system-message-broker.js",
-          "line": 131
+          "line": 132
         },
         {
           "pin": "sysblu.undo",
           "file": "../system-message-broker.js",
-          "line": 144
+          "line": 145
         },
         {
           "pin": "sysblu.redo",
           "file": "../system-message-broker.js",
-          "line": 149
+          "line": 150
         },
         {
           "pin": "size change",
           "file": "../system-message-broker.js",
-          "line": 182
+          "line": 183
         }
       ]
     },

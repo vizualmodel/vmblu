@@ -3,10 +3,9 @@ import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
 import LabelInfoField from '../../fragments/label-info-field.svelte'
 import LabelInputField from '../../fragments/label-input-field.svelte'
-import ButtonRow from '../../fragments/button-row.svelte'
-import Button from '../../fragments/button.svelte'
-import TeamField from '../../fragments/team-field.svelte'
-import {getRuntimeDescriptor} from '../../../runtime/runtime-settings-registry.js'
+import CheckBox from '../../fragments/checkbox.svelte'
+import {getRuntimeDescriptor, getRuntimeSettings, RT_ALS} from '../../../runtime/runtime-settings-registry.js'
+import {makeDefaultAgentSettings} from '../agent-settings/agent-settings-model.js'
 
 export let tx //, sx
 
@@ -19,14 +18,15 @@ let box = {
     cancel: null,
 }
 
-const DEFAULT_TEAM = 'default'
-const DEFAULT_COLOR = '#0066ff'
-
 // The local data
-let _path, _created, _version, _saved, _runtime, _runtimeSettings, _agent, _capabilities, _teams
+let _path, _created, _version, _saved, _runtime, _runtimeSettings, _agent, _capabilities, _teams, _fallbackTeamColor
+let _securityEnabled = false
+let _agentEnabled = false
 
 $: _supportsAgents = getRuntimeDescriptor(_runtime).supportsAgents
-$: _teamNames = teamNames(_teams)
+$: _supportsSecurity = getRuntimeDescriptor(_runtime).supportsSecurity
+$: _securitySidecar = isRuntimeSidecar(_runtimeSettings)
+$: if (_securitySidecar && _securityEnabled) _securityEnabled = false
 
 onMount( () => {
     // send the box div
@@ -44,9 +44,9 @@ export const handlers = {
         box.ok = ok ? () => {
             ok({
                 runtime: _runtime,
-                runtimeSettings: _runtimeSettings,
+                runtimeSettings: securitySettingsForSave(),
                 agent: _agent,
-                teams: cleanTeams(_teams),
+                teams: cloneSettings(_teams),
             })
         } : null
         box.cancel = cancel ? () => cancel() : null
@@ -58,9 +58,15 @@ export const handlers = {
         _saved = settings.saved
         _runtime = settings.runtime
         _runtimeSettings = cloneSettings(settings.runtimeSettings)
+        normalizeInlineSecurity()
+        _securityEnabled = !isRuntimeSidecar(_runtimeSettings)
+            && !!_runtimeSettings?.security
+            && _runtimeSettings.security.enabled !== false
         _agent = cloneSettings(settings.agent)
+        _agentEnabled = !!_agent && _agent.enabled !== false
         _capabilities = cloneSettings(capabilities)
-        _teams = teamsToRows(settings.teams, settings.style?.rgb)
+        _teams = cloneSettings(settings.teams)
+        _fallbackTeamColor = settings.style?.rgb
 
         // and show
         box.show(pos)
@@ -72,97 +78,75 @@ function cloneSettings(settings) {
     return JSON.parse(JSON.stringify(settings))
 }
 
-function teamsToRows(teams, fallbackColor) {
-    const rows = []
-    const source = teams ?? {default: {color: fallbackColor ?? DEFAULT_COLOR}}
-
-    rows.push({
-        name: DEFAULT_TEAM,
-        color: source.default?.color ?? fallbackColor ?? DEFAULT_COLOR,
-        locked: true,
-    })
-
-    for (const [name, team] of Object.entries(source)) {
-        if (name === DEFAULT_TEAM) continue
-        rows.push({
-            name,
-            color: team?.color ?? DEFAULT_COLOR,
-            locked: false,
-        })
-    }
-
-    return rows
+function isRuntimeSidecar(settings) {
+    return typeof settings === 'string' || !!settings?.path
 }
 
-function cleanTeams(rows) {
-    const teams = {}
-    const names = new Set()
-
-    for (const row of rows ?? []) {
-        const name = row.locked ? DEFAULT_TEAM : row.name.trim()
-        if (!name || names.has(name)) continue
-        names.add(name)
-        teams[name] = {color: validColor(row.color) ? row.color : DEFAULT_COLOR}
-    }
-
-    if (!teams.default) teams.default = {color: DEFAULT_COLOR}
-
-    return teams
+function normalizeInlineSecurity() {
+    if (isRuntimeSidecar(_runtimeSettings) || !_runtimeSettings?.security) return
+    const security = getRuntimeSettings(RT_ALS).normalizeModel({security: _runtimeSettings.security}).security
+    _runtimeSettings = {..._runtimeSettings, security}
 }
 
-function addTeam() {
-    const names = new Set((_teams ?? []).map(row => row.name.trim()).filter(Boolean))
-    let index = 1
-    let name = `team${index}`
-    while (names.has(name)) name = `team${++index}`
-
-    _teams = [...(_teams ?? []), {name, color: DEFAULT_COLOR, locked: false}]
+function securitySettingsForSave() {
+    return cloneSettings(_runtimeSettings)
 }
 
-function removeTeam(index) {
-    _teams = _teams.filter((row, i) => i !== index || row.locked)
+function onSecurityToggle(enabled) {
+    if (!_supportsSecurity || _securitySidecar) return
+
+    const settings = _runtimeSettings && typeof _runtimeSettings === 'object' ? _runtimeSettings : {}
+    const securitySettings = getRuntimeSettings(RT_ALS)
+    const security = securitySettings.normalizeModel({security: settings.security}).security
+        ?? securitySettings.makeModel().security
+    _runtimeSettings = {...settings, security: {...cloneSettings(security), enabled}}
 }
 
-function updateTeam(index, patch) {
-    _teams = _teams.map((row, i) => i === index ? {...row, ...patch} : row)
+function onAgentToggle(enabled) {
+    if (!_supportsAgents) return
+    const settings = _agent && typeof _agent === 'object' && !_agent.path
+        ? _agent
+        : makeDefaultAgentSettings(enabled)
+    _agent = {...settings, enabled}
+    _agentEnabled = enabled
 }
 
-function teamNames(rows) {
-    const counts = new Map()
-    for (const row of rows ?? []) {
-        const name = row.name.trim()
-        if (!name) continue
-        counts.set(name, (counts.get(name) ?? 0) + 1)
-    }
-    return counts
-}
+function showSecurityCategory(category) {
+    if (_securitySidecar) return
+    const offsets = {fs: 35, net: 55, process: 75}
+    const offset = offsets[category] ?? 35
+    const security = _runtimeSettings?.security
+        ?? {...getRuntimeSettings(RT_ALS).makeModel().security, enabled: _securityEnabled}
 
-function isDuplicate(row) {
-    const name = row.name.trim()
-    return !!name && (_teamNames.get(name) ?? 0) > 1
-}
-
-function validColor(color) {
-    return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(color ?? '')
-}
-
-function showRuntimeSettings() {
     tx.send('model runtime settings', {
-        runtime: _runtime,
-        settings: _runtimeSettings,
+        category,
+        security: cloneSettings(security),
         pos: {
-            x: (box.pos?.x ?? 25) + 40,
-            y: (box.pos?.y ?? 25) + 40,
+            x: (box.pos?.x ?? 25) + offset,
+            y: (box.pos?.y ?? 25) + offset,
         },
-        ok(settings) {
-            _runtimeSettings = settings
+        ok(security) {
+            const settings = _runtimeSettings && typeof _runtimeSettings === 'object' ? _runtimeSettings : {}
+            _runtimeSettings = {...settings, security}
+        },
+    })
+}
+
+function showTeamSettings() {
+    tx.send('team settings', {
+        teams: cloneSettings(_teams),
+        fallbackColor: _fallbackTeamColor,
+        pos: {
+            x: (box.pos?.x ?? 25) + 55,
+            y: (box.pos?.y ?? 25) + 55,
+        },
+        ok(teams) {
+            _teams = teams
         },
     })
 }
 
 function showAgentSettings() {
-    if (!_supportsAgents) return
-
     tx.send('agent settings', {
         settings: _agent,
         capabilities: _capabilities,
@@ -172,34 +156,108 @@ function showAgentSettings() {
         },
         ok(settings) {
             _agent = settings
+            _agentEnabled = settings.enabled !== false
         },
     })
 }
 
 </script>
 <style>
-.teams {
-    margin-top: 0.5rem;
-}
-
-.teams-heading {
+.security-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0.45rem 0 0.25rem;
+    gap: 0.55rem;
+    margin: 0 0 0.45rem;
 }
 
-.teams-heading label {
-    width: 6.5rem;
+.security-label {
+    width: 6rem;
     color: #ccc;
     font-family: var(--fBase);
     font-size: var(--fSmall);
 }
 
-.team-list {
-    display: grid;
-    gap: 0.35rem;
-    margin-left: 6rem;
+.security-status {
+    width: 6.5rem;
+    border: 0;
+    outline: 0;
+    background: #000;
+    color: #cebf6d;
+    font-family: var(--fFixed);
+    font-size: var(--fSmall);
+    padding: 0.2rem 0.35rem;
+}
+
+.enabled-control {
+    display: flex;
+    align-items: center;
+    color: #ccc;
+    font-family: var(--fBase);
+    font-size: var(--fSmall);
+}
+
+.security-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.7rem;
+    border: 1px solid yellow;
+    border-radius: 0.2rem;
+    background: #222;
+    color: yellow;
+    cursor: pointer;
+}
+
+.security-icon:hover:not(:disabled) {
+    background: #333;
+    color: yellow;
+}
+
+.security-icon.first {
+    margin-left: 0.7rem;
+}
+
+.security-icon:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.security-icon .material-icons-outlined {
+    font-size: 1.1rem;
+}
+
+.settings-popup-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.25rem 0;
+}
+
+.settings-popup-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.7rem;
+    border: 1px solid yellow;
+    border-radius: 0.2rem;
+    background: #222;
+    color: yellow;
+    cursor: pointer;
+}
+
+.settings-popup-icon:hover {
+    background: #333;
+    color: yellow;
+}
+
+.settings-popup-icon .material-icons-outlined {
+    font-size: 1.1rem;
+}
+
+.agent-settings-icon {
+    margin-left: 0.7rem;
 }
 </style>
 <PopupBox box={box}>
@@ -208,21 +266,38 @@ function showAgentSettings() {
     <LabelInfoField label="Creation Date:" style="width: 6rem;" info={_created} />
     <LabelInfoField label="Last Saved:" style="width: 6rem;" info={_saved}  />
     <LabelInputField label="Runtime" style="width: 6rem;" bind:input={_runtime} check={null}/>
-    <ButtonRow label="Settings" style="width: 6rem;">
-        <Button label="Runtime" click={showRuntimeSettings} />
-        {#if _supportsAgents}
-            <Button label="Agents" click={showAgentSettings} />
-        {/if}
-    </ButtonRow>
-    <div class="teams">
-        <div class="teams-heading">
-            <label>Teams</label>
-            <Button label="+" click={addTeam} />
-        </div>
-        <div class="team-list">
-            {#each _teams ?? [] as team, index}
-                <TeamField {team} duplicate={isDuplicate(team)} update={(patch) => updateTeam(index, patch)} remove={() => removeTeam(index)} />
-            {/each}
-        </div>
+    <div class="security-row">
+        <label class="security-label" for="security-support">Security</label>
+        <input id="security-support" class="security-status" value={_supportsSecurity ? 'supported' : 'unsupported'} readonly />
+        <label class="enabled-control" title={_securitySidecar ? 'Security is configured in the runtime sidecar.' : !_supportsSecurity ? 'The selected runtime cannot enforce security.' : ''}>
+            <CheckBox bind:on={_securityEnabled} disabled={!_supportsSecurity || _securitySidecar} onToggle={onSecurityToggle} />
+            Enabled
+        </label>
+        <button class="security-icon first" type="button" title="File System" aria-label="File System" disabled={_securitySidecar} on:click={() => showSecurityCategory('fs')}>
+            <span class="material-icons-outlined">folder</span>
+        </button>
+        <button class="security-icon" type="button" title="Network" aria-label="Network" disabled={_securitySidecar} on:click={() => showSecurityCategory('net')}>
+            <span class="material-icons-outlined">language</span>
+        </button>
+        <button class="security-icon" type="button" title="Process" aria-label="Process" disabled={_securitySidecar} on:click={() => showSecurityCategory('process')}>
+            <span class="material-icons-outlined">terminal</span>
+        </button>
+    </div>
+    <div class="security-row">
+        <label class="security-label" for="agent-support">Agents</label>
+        <input id="agent-support" class="security-status" value={_supportsAgents ? 'supported' : 'unsupported'} readonly />
+        <label class="enabled-control" title={!_supportsAgents ? 'The selected runtime cannot provide agent interfaces.' : ''}>
+            <CheckBox bind:on={_agentEnabled} disabled={!_supportsAgents} onToggle={onAgentToggle} />
+            Enabled
+        </label>
+        <button class="settings-popup-icon agent-settings-icon" type="button" title="Agents" aria-label="Agents" on:click={showAgentSettings}>
+            <span class="material-icons-outlined">smart_toy</span>
+        </button>
+    </div>
+    <div class="settings-popup-row">
+        <span class="security-label">Teams</span>
+        <button class="settings-popup-icon" type="button" title="Teams" aria-label="Teams" on:click={showTeamSettings}>
+            <span class="material-icons-outlined">groups</span>
+        </button>
     </div>
 </PopupBox>
