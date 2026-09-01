@@ -1,413 +1,238 @@
 import test, {afterEach} from 'node:test'
 import assert from 'node:assert/strict'
+import childProcess from 'node:child_process'
 import fs from 'node:fs'
-import fsp from 'node:fs/promises'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import {exec as execCallback} from 'node:child_process'
-import {promisify} from 'node:util'
+
 import {Runtime} from '../rt-als/runtime.js'
+import {Runtime as AgentRuntime} from '../rt-nodejs-agent/runtime.js'
+import {Runtime as BaseRuntime} from '../rt-base/runtime.js'
+import {Runtime as BrowserAgentRuntime} from '../rt-browser-agent/runtime.js'
 import {runAsNode} from '../security/node-context.js'
-import {safety} from '../security/safety.js'
+import {SecurityReporterFactory} from '../security/security-reporter.js'
+import {safety, SecurityPolicyError} from '../security/safety.js'
 
-const exec = promisify(execCallback)
-const uninstallers = []
+const runtimes = []
 
-afterEach(async () => {
-    while (uninstallers.length) {
-        uninstallers.pop()()
-    }
-
-    safety.setEmitter(null)
-    safety.setPolicyClassifier(null)
+afterEach(() => {
+    for (const runtime of runtimes.splice(0).reverse()) runtime.stop()
 })
 
-function install(mode = 'warn') {
-    const uninstall = safety.installHooks({mode})
-    uninstallers.push(uninstall)
-    return uninstall
+function security(overrides = {}) {
+    return {
+        fs: {
+            read: {mode: 'allow', all: true},
+            write: {mode: 'allow', all: true},
+            delete: {mode: 'allow', all: true},
+            ...overrides.fs,
+        },
+        net: {
+            egress: {mode: 'deny'},
+            ...overrides.net,
+        },
+        process: {
+            exec: {mode: 'deny'},
+            ...overrides.process,
+        },
+    }
 }
 
-function createCollector() {
+function start(RuntimeClass = Runtime, policy = security(), options = {}) {
+    const runtime = new RuntimeClass([], {
+        runtimeSettings: {security: policy},
+        securityBaseDir: options.baseDir ?? process.cwd(),
+    })
+    runtime.start()
+    runtimes.push(runtime)
+    return runtime
+}
+
+function collect() {
     const events = []
-    safety.setEmitter((event) => {
-        events.push(event)
-    })
-    return events
+    const unsubscribe = safety.subscribe(event => events.push(event))
+    return {events, unsubscribe}
 }
 
-function waitFor(predicate, timeoutMs = 2000) {
-    const start = Date.now()
+test('rt-als enforces application policy without a reporter node', () => {
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'denied.txt')
+    start(Runtime, security({fs: {write: {mode: 'deny'}}}))
+    const {events} = collect()
 
-    return new Promise((resolve, reject) => {
-        const tick = () => {
-            const value = predicate()
-            if (value) return resolve(value)
-            if ((Date.now() - start) > timeoutMs) return reject(new Error('Timed out waiting for condition'))
-            setTimeout(tick, 10)
-        }
+    assert.throws(() => runAsNode('Writer', () => fs.writeFileSync(target, 'blocked')), SecurityPolicyError)
+    assert.equal(fs.existsSync(target), false)
+    assert.equal(events.length, 1)
+    assert.equal(events[0].schemaVersion, 1)
+    assert.equal(events[0].node, 'Writer')
+    assert.equal(events[0].operation, 'fs.write')
+    assert.equal(events[0].policy.decision, 'denied')
+})
 
-        tick()
-    })
-}
+test('rt-nodejs-agent uses the same enforcement lifecycle', () => {
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'agent-denied.txt')
+    start(AgentRuntime, security({fs: {write: {mode: 'deny'}}}))
+    assert.throws(() => fs.writeFileSync(target, 'blocked'), SecurityPolicyError)
+})
 
-async function withServer(handler, fn) {
-    const server = http.createServer(handler)
-    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+test('allow is silent', () => {
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-'))
+    const first = path.join(folder, 'silent.txt')
+    start()
+    const collector = collect()
+
+    fs.writeFileSync(first, 'ok')
+    assert.equal(collector.events.length, 0)
+})
+
+test('warn proceeds and emits one event', () => {
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'warned.txt')
+    start(Runtime, security({fs: {write: {mode: 'warn', all: true}}}))
+    const {events} = collect()
+
+    fs.writeFileSync(target, 'ok')
+    assert.equal(fs.readFileSync(target, 'utf8'), 'ok')
+    assert.equal(events.filter(event => event.operation === 'fs.write').length, 1)
+    assert.equal(events[0].policy.decision, 'warning')
+})
+
+test('model-relative roots use the supplied base and enforce path boundaries', () => {
+    const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-model-'))
+    const allowedDir = path.join(baseDir, 'out', 'images')
+    const siblingDir = path.join(baseDir, 'out-old')
+    fs.mkdirSync(allowedDir, {recursive: true})
+    fs.mkdirSync(siblingDir, {recursive: true})
+
+    start(Runtime, security({fs: {write: {mode: 'allow', roots: ['./out/../out']}}}), {baseDir})
+    const {events} = collect()
+    fs.writeFileSync(path.join(allowedDir, 'ok.txt'), 'ok')
+    assert.throws(() => fs.writeFileSync(path.join(siblingDir, 'blocked.txt'), 'blocked'), SecurityPolicyError)
+    assert.equal(events.at(-1).policy.reason, 'fs_root_not_allowed')
+})
+
+test('existing symbolic-link escapes are denied', (context) => {
+    const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-model-'))
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-outside-'))
+    const allowedDir = path.join(baseDir, 'out')
+    fs.mkdirSync(allowedDir)
+    try {
+        fs.symlinkSync(outsideDir, path.join(allowedDir, 'escape'), process.platform === 'win32' ? 'junction' : 'dir')
+    }
+    catch (error) {
+        if (error?.code === 'EPERM') return context.skip('symbolic links are not available')
+        throw error
+    }
+
+    start(Runtime, security({fs: {write: {mode: 'allow', roots: ['./out']}}}), {baseDir})
+    assert.throws(() => fs.writeFileSync(path.join(allowedDir, 'escape', 'blocked.txt'), 'blocked'), SecurityPolicyError)
+})
+
+test('relative observed paths follow the working directory, not the model base', () => {
+    const originalCwd = process.cwd()
+    const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-model-'))
+    const otherDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-cwd-'))
+    fs.mkdirSync(path.join(baseDir, 'out'))
+    fs.mkdirSync(path.join(otherDir, 'out'))
+    start(Runtime, security({fs: {write: {mode: 'allow', roots: ['./out']}}}), {baseDir})
 
     try {
-        const {port} = server.address()
-        return await fn(`http://127.0.0.1:${port}`)
-    } finally {
-        await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+        process.chdir(otherDir)
+        assert.throws(() => fs.writeFileSync('./out/blocked.txt', 'blocked'), SecurityPolicyError)
     }
-}
-
-test('attributes fs writes to the active node across await in runtime dispatch', async () => {
-    install('warn')
-    const events = createCollector()
-    const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'event.txt')
-
-    function TriggerFactory(tx) {
-        return {tx}
+    finally {
+        process.chdir(originalCwd)
     }
+})
 
-    class SinkFactory {
-        async onWrite() {
-            await Promise.resolve()
-            await new Promise((resolve, reject) => {
-                fs.writeFile(targetFile, 'ok', (error) => error ? reject(error) : resolve())
-            })
-        }
-    }
+test('shell execution is denied for a command list and allowed only by explicit all', () => {
+    const listed = security({process: {exec: {mode: 'allow', commands: [process.execPath]}}})
+    const runtime = start(Runtime, listed)
+    assert.throws(() => childProcess.exec(`"${process.execPath}" -e "process.exit(0)"`), SecurityPolicyError)
+    assert.doesNotThrow(() => childProcess.spawnSync(process.execPath, ['-e', 'process.exit(0)']))
+    assert.doesNotThrow(() => childProcess.execFileSync(process.execPath, ['-e', 'process.exit(0)']))
 
-    const runtime = new Runtime([
-        {
-            name: 'Trigger',
-            uid: 'trigger',
-            factory: TriggerFactory,
-            inputs: [],
-            outputs: ['write -> write @ Sink (sink)'],
-        },
-        {
-            name: 'Sink',
-            uid: 'sink',
-            factory: SinkFactory,
-            inputs: ['-> write'],
-            outputs: [],
-        }
-    ])
+    runtime.stop()
+    runtimes.pop()
+    start(Runtime, security({process: {exec: {mode: 'allow', all: true}}}))
+    assert.doesNotThrow(() => childProcess.execSync(`"${process.execPath}" -e "process.exit(0)"`))
+})
 
-    runtime.start()
+test('network host matching is exact and case-insensitive', async () => {
+    const server = http.createServer((request, response) => response.end('ok'))
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+    const port = server.address().port
+    start(Runtime, security({net: {egress: {mode: 'warn', hosts: ['LOCALHOST']}}}))
+    const {events} = collect()
 
     try {
-        runtime.actors[0].cell.tx.send('write')
-
-        const event = await waitFor(() => events.find((item) => item.cap === 'fs:write'))
-        assert.equal(event.node, 'Sink')
-        assert.equal(event.detail.path, targetFile)
-        const content = await waitFor(() => {
-            try {
-                const value = fs.readFileSync(targetFile, 'utf8')
-                return value === 'ok' ? value : null
-            } catch (error) {
-                if (error?.code === 'ENOENT') return null
-                throw error
-            }
-        })
-        assert.equal(content, 'ok')
-    } finally {
-        runtime.stop()
+        const response = await fetch(`http://localhost:${port}/allowed`)
+        assert.equal(await response.text(), 'ok')
+        assert.equal(events.filter(event => event.operation === 'net.egress').length, 1)
+        assert.throws(() => http.request(`http://127.0.0.1:${port}/blocked`), SecurityPolicyError)
+    }
+    finally {
+        await new Promise(resolve => server.close(resolve))
     }
 })
 
-test('reports child_process.exec usage', async () => {
-    install('warn')
-    const events = createCollector()
-
-    await runAsNode('ExecNode', async () => {
-        await exec(`"${process.execPath}" -e "process.exit(0)"`)
-    })
-
-    const event = events.find((item) => item.cap === 'proc:exec')
-    assert.ok(event)
-    assert.equal(event.node, 'ExecNode')
-    assert.match(event.detail.command, /node|node\.exe/i)
+test('a second security-enabled runtime is rejected without replacing the owner', () => {
+    const first = start()
+    const second = new Runtime([], {runtimeSettings: {security: security()}, securityBaseDir: process.cwd()})
+    assert.throws(() => second.start(), /already owned by another runtime/)
+    assert.equal(safety.isOwner(first), true)
+    assert.equal(safety.isOwner(second), false)
 })
 
-test('reports fetch network egress', async () => {
-    install('warn')
-    const events = createCollector()
+test('ownership transfers after stop and repeated start does not duplicate hooks', () => {
+    const first = start(Runtime, security({fs: {write: {mode: 'warn', all: true}}}))
+    first.start()
+    const {events} = collect()
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'once.txt')
+    fs.writeFileSync(target, 'once')
+    assert.equal(events.filter(event => event.operation === 'fs.write').length, 1)
 
-    await withServer((req, res) => {
-        res.writeHead(200, {'content-type': 'text/plain'})
-        res.end('ok')
-    }, async (url) => {
-        await runAsNode('FetchNode', async () => {
-            const response = await fetch(`${url}/fetch`)
-            await response.text()
-        })
-    })
-
-    const event = events.find((item) => item.cap === 'net:egress')
-    assert.ok(event)
-    assert.equal(event.node, 'FetchNode')
-    assert.match(event.detail.url, /\/fetch$/)
+    first.stop()
+    runtimes.pop()
+    const second = start()
+    assert.equal(safety.isOwner(second), true)
 })
 
-test('reports http.request network egress', async () => {
-    install('warn')
-    const events = createCollector()
-
-    await withServer((req, res) => {
-        res.writeHead(200)
-        res.end('ok')
-    }, async (url) => {
-        await runAsNode('HttpNode', async () => {
-            await new Promise((resolve, reject) => {
-                const req = http.request(`${url}/request`, {method: 'POST'}, (res) => {
-                    res.resume()
-                    res.on('end', resolve)
-                })
-                req.on('error', reject)
-                req.end('payload')
-            })
-        })
+test('startup failure releases instrumentation ownership', () => {
+    const failing = new Runtime([{name: 'Broken', uid: 'broken', factory: () => { throw new Error('factory failed') }, inputs: [], outputs: []}], {
+        runtimeSettings: {security: security()},
+        securityBaseDir: process.cwd(),
     })
-
-    const event = events.find((item) => item.cap === 'net:egress')
-    assert.ok(event)
-    assert.equal(event.node, 'HttpNode')
-    assert.equal(event.detail.method, 'POST')
-    assert.match(event.detail.url, /\/request$/)
+    assert.throws(() => failing.start(), /factory failed/)
+    assert.equal(safety.owner, null)
+    assert.doesNotThrow(() => start())
 })
 
-test('reports fs writes outside runtime dispatch too', async () => {
-    install('warn')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'direct.txt')
+test('reporter subscribes to events but does not own enforcement', () => {
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'reported.txt')
+    const runtime = start(Runtime, security({fs: {write: {mode: 'warn', all: true}}}))
+    const events = []
+    const reporter = SecurityReporterFactory({send(name, payload) { events.push({name, payload}) }})
 
-    await runAsNode('FsNode', async () => {
-        fs.writeFileSync(targetFile, 'direct')
-    })
-
-    const event = events.find((item) => item.cap === 'fs:write')
-    assert.ok(event)
-    assert.equal(event.node, 'FsNode')
-    assert.equal(event.detail.path, targetFile)
+    fs.writeFileSync(target, 'reported')
+    assert.equal(events.length, 1)
+    reporter.stop()
+    assert.equal(safety.isOwner(runtime), true)
 })
 
-test('off mode emits nothing', async () => {
-    install('off')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'off.txt')
-
-    await runAsNode('OffNode', async () => {
-        fs.writeFileSync(targetFile, 'off')
-    })
-
-    assert.equal(events.length, 0)
-})
-
-test('installing hooks twice does not double report', async () => {
-    install('warn')
-    install('warn')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'single.txt')
-
-    await runAsNode('SingleNode', async () => {
-        fs.writeFileSync(targetFile, 'single')
-    })
-
-    const writeEvents = events.filter((item) => item.cap === 'fs:write')
-    assert.equal(writeEvents.length, 1)
-})
-
-test('classifies safety events against model runtime security settings', async () => {
-    install('warn')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'classified.txt')
-
-    class SinkFactory {
-        onWrite() {
-            fs.writeFileSync(targetFile, 'classified')
-        }
+test('base and browser-agent runtimes do not claim Node.js security hooks', () => {
+    for (const RuntimeClass of [BaseRuntime, BrowserAgentRuntime]) {
+        const runtime = new RuntimeClass([])
+        runtime.start()
+        runtimes.push(runtime)
     }
-
-    const runtime = new Runtime([
-        {
-            name: 'Sink',
-            uid: 'sink',
-            factory: SinkFactory,
-            inputs: [],
-            outputs: [],
-        }
-    ], {
-        runtimeSettings: {
-            security: {
-                fs: {
-                    write: {mode: 'deny'},
-                },
-                net: {
-                    egress: {mode: 'warn'},
-                },
-                process: {
-                    exec: {mode: 'deny'},
-                },
-            }
-        }
-    })
-
-    runtime.start()
-
-    try {
-        assert.throws(() => runAsNode('Sink', () => {
-            fs.writeFileSync(targetFile, 'classified')
-        }), /security policy denied fs\.write/)
-
-        const event = events.find((item) => item.cap === 'fs:write')
-        assert.ok(event)
-        assert.equal(event.node, 'Sink')
-        assert.equal(event.operation, 'fs.write')
-        assert.equal(event.policy.decision, 'denied')
-        assert.equal(event.policy.area, 'fs')
-        assert.equal(event.policy.action, 'write')
-        assert.equal(event.policy.mode, 'deny')
-    } finally {
-        runtime.stop()
-    }
+    assert.equal(safety.owner, null)
 })
 
-test('does not let node security settings broaden the model security envelope', async () => {
-    install('warn')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'clipped.txt')
+test('a disabled policy is retained without claiming security hooks', () => {
+    const policy = {...security({fs: {write: {mode: 'deny'}}}), enabled: false}
+    const runtime = start(Runtime, policy)
+    const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-security-')), 'allowed.txt')
 
-    class SinkFactory {
-        onWrite() {
-            fs.writeFileSync(targetFile, 'clipped')
-        }
-    }
-
-    const runtime = new Runtime([
-        {
-            name: 'Sink',
-            uid: 'sink',
-            factory: SinkFactory,
-            inputs: [],
-            outputs: [],
-            dx: {
-                security: {
-                    enabled: true,
-                    fs: {
-                        write: {
-                            mode: 'allow',
-                        },
-                    }
-                }
-            }
-        }
-    ], {
-        runtimeSettings: {
-            security: {
-                fs: {
-                    write: {mode: 'warn'},
-                },
-                net: {
-                    egress: {mode: 'warn'},
-                },
-                process: {
-                    exec: {mode: 'deny'},
-                },
-            }
-        }
-    })
-
-    runtime.start()
-
-    try {
-        await runAsNode('Sink', async () => {
-            fs.writeFileSync(targetFile, 'clipped')
-        })
-
-        const event = events.find((item) => item.cap === 'fs:write')
-        assert.ok(event)
-        assert.equal(event.node, 'Sink')
-        assert.equal(event.policy.decision, 'warning')
-        assert.equal(event.policy.area, 'fs')
-        assert.equal(event.policy.action, 'write')
-        assert.equal(event.policy.mode, 'warn')
-    } finally {
-        runtime.stop()
-    }
-})
-
-test('classifies safety events outside fs allow-list as denied', async () => {
-    install('warn')
-    const events = createCollector()
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vmblu-als-'))
-    const targetFile = path.join(tmpDir, 'outside.txt')
-
-    const runtime = new Runtime([
-        {
-            name: 'Sink',
-            uid: 'sink',
-            factory: class SinkFactory {},
-            inputs: [],
-            outputs: [],
-            dx: {
-                security: {
-                    enabled: true,
-                    fs: {
-                        write: {
-                            mode: 'allow',
-                        },
-                    },
-                },
-            },
-        }
-    ], {
-        runtimeSettings: {
-            security: {
-                fs: {
-                    write: {
-                        mode: 'allow',
-                        roots: ['./approved'],
-                    },
-                },
-                net: {
-                    egress: {
-                        mode: 'warn',
-                    },
-                },
-                process: {
-                    exec: {
-                        mode: 'deny',
-                    },
-                },
-            },
-        },
-    })
-
-    runtime.start()
-
-    try {
-        assert.throws(() => runAsNode('Sink', () => {
-            fs.writeFileSync(targetFile, 'outside')
-        }), /security policy denied fs\.write/)
-
-        const event = events.find((item) => item.cap === 'fs:write')
-        assert.ok(event)
-        assert.equal(event.policy.decision, 'denied')
-        assert.equal(event.policy.reason, 'fs_root_not_allowed')
-    } finally {
-        runtime.stop()
-    }
+    assert.equal(safety.isOwner(runtime), false)
+    assert.doesNotThrow(() => fs.writeFileSync(target, 'allowed'))
 })

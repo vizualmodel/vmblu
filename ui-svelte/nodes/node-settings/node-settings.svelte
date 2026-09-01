@@ -2,6 +2,7 @@
 import {onMount} from 'svelte'
 import PopupBox from '../../fragments/popup-box.svelte'
 import LabelSelect from '../../fragments/label-select.svelte'
+import LabelTextInput from '../../fragments/label-text-input.svelte'
 import TextAreaInput from '../../fragments/text-area-input.svelte'
 
 export let tx
@@ -17,13 +18,16 @@ let box = {
 let team = ''
 let teams = []
 let text = ''
+let testRepo = ''
+let testRepoReadOnly = false
+let openTestRepo = null
 
 onMount(() => {
     tx.send('modal div', box.div)
 })
 
 export const handlers = {
-    "-> show"({title, pos, team: nodeTeam, teams: modelTeams, json, ok}) {
+    "-> show"({title, pos, team: nodeTeam, teams: modelTeams, json, testRepo: nodeTestRepo, testRepoReadOnly: readOnly, openTestRepo: open, ok}) {
 
         box.title = title
         box.pos = {...pos}
@@ -33,12 +37,15 @@ export const handlers = {
                 box.show(pos)
                 return
             }
-            ok?.({team: team || null, sx: result.value})
+            ok?.({team: team || null, sx: result.value, testRepo: testRepo.trim() || null})
         }
 
         team = nodeTeam ?? ''
         teams = makeTeamOptions(modelTeams)
         text = json ? JSON.stringify(json, null, '  ') : ''
+        testRepo = nodeTestRepo ?? ''
+        testRepoReadOnly = !!readOnly
+        openTestRepo = open ?? null
 
         box.show(pos)
     }
@@ -86,6 +93,7 @@ function checkJSON(){
 
 <PopupBox box={box}>
     <LabelSelect label="Team" style="width: 6rem;" bind:value={team} options={teams}/>
-    <div class="sx-label">Settings</div>
+    <LabelTextInput label="Test specification" style="width: 6rem;" bind:text={testRepo} openFile={openTestRepo} disabled={testRepoReadOnly}/>
+    <div class="sx-label">Startup settings</div>
     <TextAreaInput bind:text={text} cols=50 rows=20/>
 </PopupBox>

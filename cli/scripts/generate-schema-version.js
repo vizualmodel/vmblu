@@ -26,12 +26,25 @@ const requiredContextFiles = [
   'sys.schema.json',
   'protocol.schema.json',
   'prf.schema.json',
-  'capabilities.schema.json'
+  'capabilities.schema.json',
+  'agents.v1.json',
+  'model-test.schema.json',
+  'test-report.schema.json'
 ];
 
 await Promise.all(requiredContextFiles.map((file) => access(new URL(file, contextUrl))));
 
 const schemaMetadata = [
+  {
+    file: 'agents.v1.json',
+    id: 'https://vmblu.dev/schemas/agents.v1.json',
+    title: 'vmblu agent configuration'
+  },
+  {
+    file: 'model-test.schema.json',
+    id: `https://vmblu.dev/context/${schemaVersion}/model-test.schema.json`,
+    title: 'vmblu Model Test'
+  },
   {
     file: 'blu.schema.json',
     id: `https://vmblu.dev/context/${schemaVersion}/blu.schema.json`,
@@ -55,6 +68,11 @@ const schemaMetadata = [
     file: 'protocol.schema.json',
     id: `https://vmblu.dev/context/${schemaVersion}/protocol.schema.json`,
     title: `vmblu Protocol Definition (v${schemaVersion})`
+  },
+  {
+    file: 'test-report.schema.json',
+    id: `https://vmblu.dev/context/${schemaVersion}/test-report.schema.json`,
+    title: 'vmblu Test Report'
   }
 ];
 

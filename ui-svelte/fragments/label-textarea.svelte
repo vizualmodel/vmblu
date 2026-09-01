@@ -2,6 +2,7 @@
 export let label
 export let text
 export let style = 'width: 9rem;'
+export let disabled = false
 
 let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
 </script>
@@ -41,9 +42,12 @@ textarea {
 textarea:focus {
     border-color: #888;
 }
+textarea:disabled {
+    opacity: 0.45;
+}
 </style>
 
 <div class="textarea-field">
     <label for={fid} style={style}>{label}</label>
-    <textarea id={fid} bind:value={text} spellcheck="false" on:keydown|stopPropagation></textarea>
+    <textarea id={fid} bind:value={text} {disabled} spellcheck="false" on:keydown|stopPropagation></textarea>
 </div>

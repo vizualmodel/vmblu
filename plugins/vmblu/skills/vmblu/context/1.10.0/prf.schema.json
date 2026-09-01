@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/context/1.10.0/prf.schema.json",
+  "title": "vmblu Source Documentation (grouped by node)",
+  "type": "object",
+  "required": ["version", "provenance", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "provenance": { "$ref": "#/$defs/Provenance" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated", "artifact", "compatibilityFamily", "generator", "source"],
+      "properties": {
+        "generated": { "const": true },
+        "artifact": { "type": "string" },
+        "compatibilityFamily": { "type": "string" },
+        "schemaVersion": { "type": "string" },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model", "hash"],
+          "properties": {
+            "model": { "type": "string" },
+            "hash": { "type": "string" }
+          }
+        }
+      }
+    },
+    "Param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "Handle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pin", "handler", "file", "line", "summary", "returns", "examples", "params"],
+      "properties": {
+        "pin": { "type": "string" },
+        "handler": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "summary": { "type": "string" },
+        "returns": { "type": "string" },
+        "examples": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "params": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Param" }
+        },
+        "typeErrors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "Transmit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pin", "file", "line"],
+      "properties": {
+        "pin": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "handles", "transmits"],
+      "properties": {
+        "node": { "type": "string" },
+        "handles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Handle" }
+        },
+        "transmits": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Transmit" }
+        }
+      }
+    }
+  }
+}

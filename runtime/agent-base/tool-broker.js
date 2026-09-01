@@ -6,7 +6,7 @@ import {validateJsonSchema} from './json-schema.js'
 import {TraceRecorder} from './trace-recorder.js'
 
 export class ToolBroker {
-    constructor({runtime, capabilities, registry, traceRecorder} = {}) {
+    constructor({runtime, capabilities, registry, traceRecorder, approvalTtlMs = 300000} = {}) {
         this.runtime = null
         this.registry = registry ?? new CapabilityRegistry(capabilities)
         this.trace = traceRecorder ?? new TraceRecorder()
@@ -17,6 +17,7 @@ export class ToolBroker {
         this.listeners = new Map()
         this.nextCallId = 1
         this.nextApprovalId = 1
+        this.approvalTtlMs = approvalTtlMs
         this.source = null
         this.actor = null
 
@@ -74,28 +75,50 @@ export class ToolBroker {
         return removed
     }
 
+    cancelPendingApprovals(reason = 'runtime_stopped') {
+        const resolvedAt = new Date().toISOString()
+        for (const approval of this.approvalRequests.values()) {
+            if (approval.status !== 'requested') continue
+            approval.status = 'cancelled'
+            approval.resolvedAt = resolvedAt
+            approval.resolvedBy = reason
+        }
+    }
+
     subscribe(agentId, listener) {
         if (typeof listener !== 'function') throw new Error('Broker listener must be a function')
-        const key = agentId || '*'
-        if (!this.listeners.has(key)) this.listeners.set(key, new Set())
-        this.listeners.get(key).add(listener)
-        return () => this.listeners.get(key)?.delete(listener)
+        const identity = this.identityDecision(agentId)
+        if (!identity.allowed) throw new Error(`Broker subscription denied: ${identity.reason}`)
+        if (!this.listeners.has(agentId)) this.listeners.set(agentId, new Set())
+        this.listeners.get(agentId).add(listener)
+        return () => this.listeners.get(agentId)?.delete(listener)
     }
 
     publish(message) {
         if (!message) return message
-        const targets = new Set(this.listeners.get('*') ?? [])
-        if (message.agentId) {
-            for (const listener of this.listeners.get(message.agentId) ?? []) targets.add(listener)
-        }
-        else {
-            for (const [key, listeners] of this.listeners.entries()) {
-                if (key === '*') continue
-                for (const listener of listeners) targets.add(listener)
-            }
-        }
-        for (const listener of targets) listener(message)
+        if (!message.agentId) return message
+        for (const listener of this.listeners.get(message.agentId) ?? []) listener(message)
         return message
+    }
+
+    agentTraceView(agentId) {
+        const visible = record => this.canViewTrace(agentId, record)
+        return {
+            all: () => this.trace.all().filter(visible),
+            subscribe: listener => this.trace.subscribe(record => {
+                if (visible(record)) listener(record)
+            }),
+        }
+    }
+
+    canViewTrace(agentId, record) {
+        if (!this.identityDecision(agentId).allowed) return false
+        if (record?.agentId && record.agentId !== agentId) return false
+        const policy = this.getAgentPolicy(agentId)
+        if (record?.toolId) return policy.canUse('tools', record.toolId).allowed
+        if (record?.probeId) return policy.canUse('probes', record.probeId).allowed
+        if (record?.eventId) return policy.canUse('events', record.eventId).allowed
+        return record?.agentId === agentId
     }
 
     emitResult(request, result) {
@@ -127,13 +150,18 @@ export class ToolBroker {
         }
         this.events.push(event)
         this.trace.record({type: 'event.observed', eventId, callId, details: {payload}})
-        this.publish({
-            kind: 'event.observed',
-            eventId,
-            callId,
-            payload,
-            timestamp: event.timestamp,
-        })
+        for (const [agentId, agent] of this.agents) {
+            const policy = agent.policy = AgentPolicy.fromAgent(agent)
+            if (!policy.canUse('events', eventId).allowed) continue
+            this.publish({
+                kind: 'event.observed',
+                agentId,
+                eventId,
+                callId,
+                payload,
+                timestamp: event.timestamp,
+            })
+        }
         return event
     }
 
@@ -176,12 +204,13 @@ export class ToolBroker {
     listCapabilities(request = {}) {
         const policy = this.getAgentPolicy(request.agentId)
         const capabilities = policy.filterCapabilities(this.registry.list())
+        const identity = this.identityDecision(request.agentId)
 
         this.trace.record({
             type: 'capabilities.list',
             agentId: request.agentId,
             requestId: request.requestId,
-            status: 'ok',
+            status: identity.allowed ? 'ok' : 'denied',
             details: {
                 policy: policy.traceDetails(),
                 counts: {
@@ -195,7 +224,9 @@ export class ToolBroker {
         return {
             type: BrokerResultTypes.CAPABILITIES_RESULT,
             requestId: request.requestId,
+            status: identity.allowed ? 'ok' : 'denied',
             capabilities,
+            ...(identity.allowed ? {} : {error: {code: 'denied', message: identity.reason}}),
         }
     }
 
@@ -217,7 +248,20 @@ export class ToolBroker {
             details: {args: request?.args},
         })
 
-        if (!tool) return this.toolError(request, callId, 'unknown_tool', `Unknown tool: ${request?.toolId}`)
+        if (!tool) {
+            this.trace.record({
+                type: 'policy.decision',
+                agentId: request?.agentId,
+                requestId: request?.requestId,
+                callId,
+                toolId: request?.toolId,
+                status: 'denied',
+                details: {reason: 'unknown_tool'},
+            })
+            return this.toolResult(request, callId, request?.toolId, ToolResultStatus.DENIED, {
+                error: {code: 'denied', message: 'Capability unavailable'},
+            })
+        }
         if (!this.runtime) return this.toolError(request, callId, 'runtime_not_attached', 'ToolBroker is not attached to a runtime', tool.id)
 
         const policy = this.checkToolPolicy(request, tool)
@@ -232,7 +276,7 @@ export class ToolBroker {
         })
         if (!policy.allowed) {
             return this.toolResult(request, callId, tool.id, ToolResultStatus.DENIED, {
-                error: {code: 'denied', message: policy.reason},
+                error: {code: 'denied', message: 'Capability unavailable'},
             })
         }
 
@@ -277,8 +321,8 @@ export class ToolBroker {
         if (!target) return this.toolError(request, callId, 'target_not_found', `No runtime target for ${tool.input?.ref}`)
 
         try {
-            const wait = request.wait ?? 'accepted'
-            const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0
+            const wait = this.effectiveWaitMode(request.wait, tool, target)
+            const timeout = request.timeoutMs ?? normalizeVerifyWith(tool).timeoutMs ?? tool.timeoutMs ?? 1000
             const payload = this.makeRuntimePayload(tool, request, callId)
 
             this.trace.record({
@@ -297,9 +341,10 @@ export class ToolBroker {
             }
 
             if (wait === 'verified') {
-                if (target.channel) await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout)
+                let result
+                if (target.channel) result = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout)
                 else this.runtime.sendTo(this.source, tool.input.pin, [target], payload)
-                return this.verifyToolResult(request, tool, callId, timeout)
+                return this.verifyToolResult(request, tool, callId, timeout, result)
             }
 
             const reply = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout)
@@ -310,7 +355,7 @@ export class ToolBroker {
         }
     }
 
-    async verifyToolResult(request, tool, callId, timeoutMs = 1000) {
+    async verifyToolResult(request, tool, callId, timeoutMs = 1000, result) {
         const verifyWith = normalizeVerifyWith(tool)
         const evidence = {
             events: [],
@@ -359,6 +404,7 @@ export class ToolBroker {
         })
 
         return this.toolResult(request, callId, tool.id, verified ? ToolResultStatus.VERIFIED : ToolResultStatus.UNVERIFIED, {
+            ...(result === undefined ? {} : {result}),
             verification: {
                 status: verified ? 'verified' : 'unverified',
                 evidence,
@@ -392,9 +438,42 @@ export class ToolBroker {
             return this.emitResult(request, brokerError(request, 'approval_already_resolved', `Approval request is already ${approval.status}`))
         }
 
+        if (Date.now() >= Date.parse(approval.expiresAt)) {
+            approval.status = 'expired'
+            approval.resolvedAt = new Date().toISOString()
+            return this.emitResult(request, brokerError(request, 'approval_expired', 'Approval request has expired'))
+        }
+
+        if (request?.authority?.trusted !== true) {
+            return this.emitResult(request, brokerError(request, 'untrusted_approval_authority', 'Approval requires a trusted human or external authority'))
+        }
+
+        if (request?.agentId && request.agentId !== approval.agentId) {
+            return this.emitResult(request, brokerError(request, 'approval_identity_mismatch', 'Approval request belongs to another agent'))
+        }
+
+        const tool = this.registry.getTool(approval.toolId)
+        if (!tool) return this.toolError(request, approval.callId, 'unknown_tool', `Unknown tool: ${approval.toolId}`, approval.toolId)
+
+        const currentPolicy = this.checkToolPolicy(approval.request, tool)
+        if (!currentPolicy.allowed) {
+            approval.status = 'denied'
+            return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
+                approval,
+                error: {code: 'denied', message: currentPolicy.reason},
+            })
+        }
+
+        if ((tool.risk ?? 'low') !== approval.risk
+            || JSON.stringify(tool.effects ?? []) !== JSON.stringify(approval.effects)) {
+            approval.status = 'invalidated'
+            approval.resolvedAt = new Date().toISOString()
+            return this.emitResult(request, brokerError(request, 'approval_changed', 'Tool risk or effects changed; request a new approval'))
+        }
+
         approval.status = request.approved === true ? 'approved' : 'denied'
         approval.resolvedAt = new Date().toISOString()
-        approval.resolvedBy = request.agentId ?? approval.agentId
+        approval.resolvedBy = request.authority.id ?? request.authority.kind ?? 'trusted-authority'
 
         this.trace.record({
             type: 'approval.resolved',
@@ -412,27 +491,32 @@ export class ToolBroker {
             timestamp: approval.resolvedAt,
         })
 
-        const tool = this.registry.getTool(approval.toolId)
         if (approval.status !== 'approved') {
             return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
                 approval,
                 error: {code: 'approval_denied', message: 'Approval was denied'},
             })
         }
-        if (!tool) return this.toolError(request, approval.callId, 'unknown_tool', `Unknown tool: ${approval.toolId}`, approval.toolId)
-
         return this.executeTool(approval.request, tool, approval.callId)
     }
 
     async readProbe(request) {
         const probe = this.registry.getProbe(request?.probeId)
         if (!probe) {
+            this.trace.record({
+                type: 'policy.decision',
+                agentId: request?.agentId,
+                requestId: request?.requestId,
+                probeId: request?.probeId,
+                status: 'denied',
+                details: {reason: 'unknown_probe'},
+            })
             return this.emitResult(request, {
                 type: BrokerResultTypes.PROBE_RESULT,
                 requestId: request?.requestId,
                 probeId: request?.probeId,
-                status: 'failed',
-                error: {code: 'unknown_probe', message: `Unknown probe: ${request?.probeId}`},
+                status: 'denied',
+                error: {code: 'denied', message: 'Capability unavailable'},
             })
         }
 
@@ -451,7 +535,7 @@ export class ToolBroker {
                 requestId: request?.requestId,
                 probeId: probe.id,
                 status: 'denied',
-                error: {code: 'denied', message: policy.reason},
+                error: {code: 'denied', message: 'Capability unavailable'},
             })
         }
 
@@ -527,12 +611,20 @@ export class ToolBroker {
     async waitForEvent(request) {
         const event = this.registry.getEvent(request?.eventId)
         if (!event) {
+            this.trace.record({
+                type: 'policy.decision',
+                agentId: request?.agentId,
+                requestId: request?.requestId,
+                eventId: request?.eventId,
+                status: 'denied',
+                details: {reason: 'unknown_event'},
+            })
             return this.emitResult(request, {
                 type: BrokerResultTypes.EVENT_RESULT,
                 requestId: request?.requestId,
                 eventId: request?.eventId,
-                status: 'failed',
-                error: {code: 'unknown_event', message: `Unknown event: ${request?.eventId}`},
+                status: 'denied',
+                error: {code: 'denied', message: 'Capability unavailable'},
             })
         }
 
@@ -551,7 +643,7 @@ export class ToolBroker {
                 requestId: request?.requestId,
                 eventId: event.id,
                 status: 'denied',
-                error: {code: 'denied', message: policy.reason},
+                error: {code: 'denied', message: 'Capability unavailable'},
             })
         }
 
@@ -582,6 +674,16 @@ export class ToolBroker {
     }
 
     queryEvents(request = {}) {
+        const identity = this.identityDecision(request.agentId)
+        if (!identity.allowed) {
+            return {
+                type: BrokerResultTypes.EVENTS_RESULT,
+                requestId: request.requestId,
+                status: 'denied',
+                events: [],
+                error: {code: 'denied', message: 'Capability unavailable'},
+            }
+        }
         const policy = this.getAgentPolicy(request.agentId)
         const events = this.events.filter(event => {
             if (request.eventId && event.eventId !== request.eventId) return false
@@ -593,6 +695,7 @@ export class ToolBroker {
         return {
             type: BrokerResultTypes.EVENTS_RESULT,
             requestId: request.requestId,
+            status: 'ok',
             events,
         }
     }
@@ -622,6 +725,7 @@ export class ToolBroker {
     }
 
     createApprovalRequest(request, callId, tool, decision) {
+        const createdAt = new Date()
         const approval = {
             approvalId: this.newApprovalId(),
             agentId: request?.agentId ?? null,
@@ -632,16 +736,17 @@ export class ToolBroker {
             reason: decision.reason,
             rule: decision.rule,
             risk: tool.risk ?? 'low',
-            effects: Array.isArray(tool.effects) ? tool.effects : [],
-            request: {
+            effects: deepFreeze(makeJsonSafe(Array.isArray(tool.effects) ? tool.effects : [])),
+            request: deepFreeze({
                 agentId: request?.agentId,
                 requestId: request?.requestId,
                 toolId: tool.id,
-                args: request?.args,
+                args: makeJsonSafe(request?.args),
                 wait: request?.wait,
                 timeoutMs: request?.timeoutMs,
-            },
-            createdAt: new Date().toISOString(),
+            }),
+            createdAt: createdAt.toISOString(),
+            expiresAt: new Date(createdAt.getTime() + this.approvalTtlMs).toISOString(),
         }
         this.approvalRequests.set(approval.approvalId, approval)
         this.trace.record({
@@ -673,11 +778,26 @@ export class ToolBroker {
     }
 
     getAgentPolicy(agentId) {
-        if (!agentId) return new AgentPolicy({id: null})
+        if (!agentId) return new AgentPolicy({id: null, enabled: false})
         const agent = this.agents.get(agentId)
-        if (!agent) return new AgentPolicy({id: agentId})
+        if (!agent) return new AgentPolicy({id: agentId, enabled: false})
         agent.policy = AgentPolicy.fromAgent(agent)
         return agent.policy
+    }
+
+    identityDecision(agentId) {
+        if (!agentId) return {allowed: false, reason: 'missing_identity'}
+        const agent = this.agents.get(agentId)
+        if (!agent) return {allowed: false, reason: 'unknown_identity'}
+        if (agent.enabled === false || agent.config?.enabled === false) return {allowed: false, reason: 'agent_disabled'}
+        return {allowed: true, reason: 'known_identity'}
+    }
+
+    effectiveWaitMode(requested, tool, target) {
+        const verification = normalizeVerifyWith(tool)
+        if (verification.events.length || verification.probes.length) return 'verified'
+        if (target?.channel) return requested === 'verified' ? 'verified' : 'completed'
+        return requested === 'verified' ? 'verified' : 'accepted'
     }
 
     validateArgs(kind, capabilityId, schema, args) {
@@ -769,6 +889,12 @@ function makeJsonSafe(value) {
     }
 }
 
+function deepFreeze(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value
+    for (const child of Object.values(value)) deepFreeze(child)
+    return Object.freeze(value)
+}
+
 function stringifyProbeValue(value) {
     if (typeof value === 'string') return value
     try {
@@ -788,13 +914,20 @@ function normalizeVerifyWith(tool = {}) {
 
     const events = []
     const probes = []
+    let timeoutMs = null
     for (const spec of specs) {
         if (Array.isArray(spec?.events)) events.push(...spec.events)
         if (Array.isArray(spec?.probes)) probes.push(...spec.probes)
+        if (Number.isInteger(spec?.timeoutMs)) timeoutMs = timeoutMs == null ? spec.timeoutMs : Math.max(timeoutMs, spec.timeoutMs)
+    }
+
+    for (const effect of tool.effects ?? []) {
+        if (Number.isInteger(effect?.timeoutMs)) timeoutMs = timeoutMs == null ? effect.timeoutMs : Math.max(timeoutMs, effect.timeoutMs)
     }
 
     return {
         events: events.map(item => typeof item === 'string' ? item : item?.id).filter(Boolean),
         probes,
+        timeoutMs,
     }
 }

@@ -2,6 +2,7 @@ import {Route} from './route.js'
 import {Cable} from './cable.js'
 import {Pad} from './pad.js'
 import {convert} from '../util/index.js'
+import {runtimeSettingsForSave} from './runtime-settings-json.js'
 
 export const jsonHandling = {
 
@@ -18,10 +19,12 @@ export const jsonHandling = {
         if (label) raw.label = label
         if (this.team) raw.team = this.team
         this.prompts.writeRaw(raw, refArl)
+        if (this.testRepo) raw.testRepo = this.testRepo.makeRaw(refArl)
         if (this.savedView) raw.view = this.savedView.raw ? this.savedView : this.savedView.makeRaw();
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx    
-        if (this.dx) raw.dx = this.dx
+        const dx = runtimeSettingsForSave(this.dx)
+        if (dx) raw.dx = dx
 
         // The nodes
         if (this.nodes) raw.nodes = this.nodes.map( node => node.makeRaw(refArl))
@@ -63,7 +66,8 @@ export const jsonHandling = {
         if (this.team) raw.team = this.team
         if (interfaces.length) raw.interfaces = interfaces
         if (this.sx) raw.sx = this.sx    
-        if (this.dx) raw.dx = this.dx
+        const dx = runtimeSettingsForSave(this.dx)
+        if (dx) raw.dx = dx
 
         // done
         return raw
@@ -348,6 +352,9 @@ export const jsonHandling = {
 
         // fuse the settings
         this.sxUpdate(otherNode)
+
+        // Linked test specifications remain owned by and writable only in the source model.
+        this.testRepo = otherNode.testRepo?.clone?.({readOnly: true}) ?? null
 
         // take the nodes from the linked node
         this.nodes = otherNode.nodes

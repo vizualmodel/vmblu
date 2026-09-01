@@ -13,30 +13,34 @@ export const RUNTIME_DESCRIPTORS = [
         name: 'rt-base',
         settings: baseRuntimeSettings,
         supportsAgents: false,
+        supportsSecurity: false,
     },
     {
         id: RT_ALS,
         name: 'rt-als',
         settings: alsRuntimeSettings,
         supportsAgents: false,
+        supportsSecurity: true,
     },
     {
         id: RT_BROWSER_AGENT,
         name: 'rt-browser-agent',
         settings: baseRuntimeSettings,
         supportsAgents: true,
+        supportsSecurity: false,
     },
     {
         id: RT_NODEJS_AGENT,
         name: 'rt-nodejs-agent',
         settings: alsRuntimeSettings,
         supportsAgents: true,
+        supportsSecurity: true,
         aliases: [RT_AGENT, 'rt-agent'],
     },
 ]
 
 export function listRuntimeDescriptors() {
-    return RUNTIME_DESCRIPTORS.map(({id, name, supportsAgents}) => ({id, name, supportsAgents}))
+    return RUNTIME_DESCRIPTORS.map(({id, name, supportsAgents, supportsSecurity}) => ({id, name, supportsAgents, supportsSecurity}))
 }
 
 export function getRuntimeDescriptor(runtime) {

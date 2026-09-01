@@ -170,6 +170,7 @@ const groupFunctions = {
 
         // copy the prompt content and repository runtime state
         newNode.prompts = this.prompts.clone()
+        newNode.testRepo = this.testRepo?.clone?.() ?? null
 
         // copy the settings
         newNode.sx = this.sx ? jsonDeepCopy(this.sx) : null;
@@ -240,6 +241,8 @@ const groupFunctions = {
         let source = new SourceNode(null,newName ?? this.name,this.uid)
         source.team = this.team
         source.model = this.model
+        source.prompts = this.prompts.clone()
+        source.testRepo = this.testRepo?.clone?.() ?? null
 
         source.look = new Look(this.look.rect)
 

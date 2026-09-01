@@ -48,6 +48,7 @@ const sourceFunctions = {
 
         // copy the prompt content and repository runtime state
         newNode.prompts = this.prompts.clone()
+        newNode.testRepo = this.testRepo?.clone?.() ?? null
 
         // copy agent probe metadata
         newNode.probes = this.probes ? jsonDeepCopy(this.probes) : null
@@ -95,6 +96,8 @@ const sourceFunctions = {
         const newNode = new GroupNode(null, newName ?? this.name, this.uid)
         newNode.team = this.team
         newNode.model = this.model
+        newNode.prompts = this.prompts.clone()
+        newNode.testRepo = this.testRepo?.clone?.() ?? null
 
         // create the new look
         newNode.look = new Look(this.look.rect)

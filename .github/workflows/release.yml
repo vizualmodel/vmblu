@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
         inputs:
             version:
-                description: Exact version already present in all release manifests (for example 1.11.0)
+                description: Exact version already present in all release manifests (for example 1.12.0)
                 required: true
                 type: string
             allow_existing:

@@ -307,9 +307,16 @@ export const redoxWidget = {
             if (!this.manager.model) return;
             const manager = this.manager;
             const redox = this;
+            const capability = {
+                suggestedId: manager.model.defaultCapabilityId([pin.node?.name], pin.name),
+                inputSchema: manager.model.schemaFromPinContract(pin, 'request'),
+                outputSchema: manager.model.schemaFromPinContract(pin, 'reply'),
+                hasOutput: !!pin?.contract?.payload?.reply,
+            };
+            const capabilities = manager.model.makeCapabilityObject?.(manager.model.root) ?? null;
 
             if (pin.is.input) {
-                manager.tx.send('tool settings', {pos,pin,
+                manager.tx.send('tool settings', {pos, pin, capability, capabilities,
 
                     // The function that is called when clicking ok
                     ok: (settings) => {
@@ -318,7 +325,13 @@ export const redoxWidget = {
                     },})
             }
             else  {
-                manager.tx.send('event settings', {pos,pin,
+                manager.tx.send('event settings', {
+                    pos,
+                    pin,
+                    capability: {
+                        suggestedId: capability.suggestedId,
+                        payloadSchema: capability.inputSchema,
+                    },
 
                     // The function that is called when clicking ok
                     ok: (settings) => {

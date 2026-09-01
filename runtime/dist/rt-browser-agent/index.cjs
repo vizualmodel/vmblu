@@ -403,7 +403,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.11.0";
+var RUNTIME_VERSION = "1.12.0";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
@@ -1449,13 +1449,13 @@ var _AgentRuntime = class _AgentRuntime {
     return this;
   }
   mountConfiguredOverlay() {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (this.overlay || ((_b = (_a = this.config) == null ? void 0 : _a.ui) == null ? void 0 : _b.mode) !== "overlay") return this.overlay;
     if (typeof document === "undefined") return null;
     this.overlay = new AgentOverlay({
       agent: this,
       broker: this.broker,
-      traceRecorder: (_c = this.broker) == null ? void 0 : _c.trace,
+      traceRecorder: (_d = (_c = this.broker) == null ? void 0 : _c.agentTraceView) == null ? void 0 : _d.call(_c, this.id),
       config: this.config
     });
     this.overlay.mount();
@@ -1543,6 +1543,7 @@ var _AgentRuntime = class _AgentRuntime {
       type: BrokerRequestTypes.APPROVAL_RESOLVE,
       approvalId,
       approved,
+      authority: options.authority ?? { kind: "local-ui", id: "embedded-agent-ui", trusted: true },
       ...options
     });
   }
@@ -1691,10 +1692,13 @@ ${lines.join("\n")}`;
       };
     }
     const result = await this.callTool(mapped.capability.id, args);
+    const completed = (result == null ? void 0 : result.status) === "completed" || (result == null ? void 0 : result.status) === "verified";
     return {
-      ok: !(result == null ? void 0 : result.error),
+      ok: completed,
+      accepted: (result == null ? void 0 : result.status) === "accepted",
       toolId: mapped.capability.id,
       status: result == null ? void 0 : result.status,
+      outcome: toolOutcomeText(result == null ? void 0 : result.status),
       result
     };
   }
@@ -1708,6 +1712,27 @@ ${lines.join("\n")}`;
 };
 __name(_AgentRuntime, "AgentRuntime");
 var AgentRuntime = _AgentRuntime;
+function toolOutcomeText(status) {
+  switch (status) {
+    case "accepted":
+      return "The call was dispatched; application completion is not known.";
+    case "completed":
+      return "The application returned a successful reply.";
+    case "verified":
+      return "Configured application evidence verified the effect.";
+    case "unverified":
+      return "The call was dispatched but configured evidence did not verify the effect.";
+    case "pending":
+      return "The call is waiting for trusted approval.";
+    case "denied":
+      return "The call was denied.";
+    case "failed":
+      return "The call failed before a verified application result.";
+    default:
+      return "The tool outcome is unknown.";
+  }
+}
+__name(toolOutcomeText, "toolOutcomeText");
 function parseToolArguments(value) {
   if (!value) return {};
   if (typeof value === "object") return value;
@@ -1809,10 +1834,13 @@ var _AgentPolicy = class _AgentPolicy {
   canUse(kind, id) {
     var _a;
     const set = (_a = this.permissions) == null ? void 0 : _a[kind];
-    if (!set || !id) return { allowed: true, reason: "no_policy" };
+    if (!this.enabled) return { allowed: false, reason: "agent_disabled" };
+    if (!this.agentId) return { allowed: false, reason: "missing_identity" };
+    if (!id) return { allowed: false, reason: "missing_capability_id" };
+    if (!(set == null ? void 0 : set.hasAllowList)) return { allowed: false, reason: `${kind}_permissions_missing`, rule: "allow" };
     if (matches(set.deny, id)) return { allowed: false, reason: `${kind}_denied`, rule: "deny" };
-    if (set.hasAllowList && !matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
-    return { allowed: true, reason: set.hasAllowList ? "allowed_list" : "default_allow", rule: set.hasAllowList ? "allow" : "default" };
+    if (!matches(set.allow, id)) return { allowed: false, reason: `${kind}_not_allowed`, rule: "allow" };
+    return { allowed: true, reason: "allowed_list", rule: "allow" };
   }
   approvalDecision(tool = {}) {
     if ((tool == null ? void 0 : tool.approval) === "always") {
@@ -2025,7 +2053,7 @@ var TraceRecorder = _TraceRecorder;
 
 // agent-base/tool-broker.js
 var _ToolBroker = class _ToolBroker {
-  constructor({ runtime, capabilities, registry, traceRecorder } = {}) {
+  constructor({ runtime, capabilities, registry, traceRecorder, approvalTtlMs = 3e5 } = {}) {
     this.runtime = null;
     this.registry = registry ?? new CapabilityRegistry(capabilities);
     this.trace = traceRecorder ?? new TraceRecorder();
@@ -2036,6 +2064,7 @@ var _ToolBroker = class _ToolBroker {
     this.listeners = /* @__PURE__ */ new Map();
     this.nextCallId = 1;
     this.nextApprovalId = 1;
+    this.approvalTtlMs = approvalTtlMs;
     this.source = null;
     this.actor = null;
     if (runtime) this.attachRuntime(runtime);
@@ -2088,29 +2117,49 @@ var _ToolBroker = class _ToolBroker {
     if (removed) this.trace.record({ type: "agent.unregistered", agentId, status: "ok" });
     return removed;
   }
+  cancelPendingApprovals(reason = "runtime_stopped") {
+    const resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+    for (const approval of this.approvalRequests.values()) {
+      if (approval.status !== "requested") continue;
+      approval.status = "cancelled";
+      approval.resolvedAt = resolvedAt;
+      approval.resolvedBy = reason;
+    }
+  }
   subscribe(agentId, listener) {
     if (typeof listener !== "function") throw new Error("Broker listener must be a function");
-    const key = agentId || "*";
-    if (!this.listeners.has(key)) this.listeners.set(key, /* @__PURE__ */ new Set());
-    this.listeners.get(key).add(listener);
+    const identity = this.identityDecision(agentId);
+    if (!identity.allowed) throw new Error(`Broker subscription denied: ${identity.reason}`);
+    if (!this.listeners.has(agentId)) this.listeners.set(agentId, /* @__PURE__ */ new Set());
+    this.listeners.get(agentId).add(listener);
     return () => {
       var _a;
-      return (_a = this.listeners.get(key)) == null ? void 0 : _a.delete(listener);
+      return (_a = this.listeners.get(agentId)) == null ? void 0 : _a.delete(listener);
     };
   }
   publish(message) {
     if (!message) return message;
-    const targets = new Set(this.listeners.get("*") ?? []);
-    if (message.agentId) {
-      for (const listener of this.listeners.get(message.agentId) ?? []) targets.add(listener);
-    } else {
-      for (const [key, listeners] of this.listeners.entries()) {
-        if (key === "*") continue;
-        for (const listener of listeners) targets.add(listener);
-      }
-    }
-    for (const listener of targets) listener(message);
+    if (!message.agentId) return message;
+    for (const listener of this.listeners.get(message.agentId) ?? []) listener(message);
     return message;
+  }
+  agentTraceView(agentId) {
+    const visible = /* @__PURE__ */ __name((record) => this.canViewTrace(agentId, record), "visible");
+    return {
+      all: /* @__PURE__ */ __name(() => this.trace.all().filter(visible), "all"),
+      subscribe: /* @__PURE__ */ __name((listener) => this.trace.subscribe((record) => {
+        if (visible(record)) listener(record);
+      }), "subscribe")
+    };
+  }
+  canViewTrace(agentId, record) {
+    if (!this.identityDecision(agentId).allowed) return false;
+    if ((record == null ? void 0 : record.agentId) && record.agentId !== agentId) return false;
+    const policy = this.getAgentPolicy(agentId);
+    if (record == null ? void 0 : record.toolId) return policy.canUse("tools", record.toolId).allowed;
+    if (record == null ? void 0 : record.probeId) return policy.canUse("probes", record.probeId).allowed;
+    if (record == null ? void 0 : record.eventId) return policy.canUse("events", record.eventId).allowed;
+    return (record == null ? void 0 : record.agentId) === agentId;
   }
   emitResult(request, result) {
     if (request == null ? void 0 : request.agentId) {
@@ -2139,13 +2188,18 @@ var _ToolBroker = class _ToolBroker {
     };
     this.events.push(event);
     this.trace.record({ type: "event.observed", eventId, callId, details: { payload } });
-    this.publish({
-      kind: "event.observed",
-      eventId,
-      callId,
-      payload,
-      timestamp: event.timestamp
-    });
+    for (const [agentId, agent] of this.agents) {
+      const policy = agent.policy = AgentPolicy.fromAgent(agent);
+      if (!policy.canUse("events", eventId).allowed) continue;
+      this.publish({
+        kind: "event.observed",
+        agentId,
+        eventId,
+        callId,
+        payload,
+        timestamp: event.timestamp
+      });
+    }
     return event;
   }
   recordRuntimeEvent(msg, payload) {
@@ -2185,11 +2239,12 @@ var _ToolBroker = class _ToolBroker {
   listCapabilities(request = {}) {
     const policy = this.getAgentPolicy(request.agentId);
     const capabilities = policy.filterCapabilities(this.registry.list());
+    const identity = this.identityDecision(request.agentId);
     this.trace.record({
       type: "capabilities.list",
       agentId: request.agentId,
       requestId: request.requestId,
-      status: "ok",
+      status: identity.allowed ? "ok" : "denied",
       details: {
         policy: policy.traceDetails(),
         counts: {
@@ -2202,7 +2257,9 @@ var _ToolBroker = class _ToolBroker {
     return {
       type: BrokerResultTypes.CAPABILITIES_RESULT,
       requestId: request.requestId,
-      capabilities
+      status: identity.allowed ? "ok" : "denied",
+      capabilities,
+      ...identity.allowed ? {} : { error: { code: "denied", message: identity.reason } }
     };
   }
   capabilityView(agentId) {
@@ -2221,7 +2278,20 @@ var _ToolBroker = class _ToolBroker {
       status: "requested",
       details: { args: request == null ? void 0 : request.args }
     });
-    if (!tool) return this.toolError(request, callId, "unknown_tool", `Unknown tool: ${request == null ? void 0 : request.toolId}`);
+    if (!tool) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        callId,
+        toolId: request == null ? void 0 : request.toolId,
+        status: "denied",
+        details: { reason: "unknown_tool" }
+      });
+      return this.toolResult(request, callId, request == null ? void 0 : request.toolId, ToolResultStatus.DENIED, {
+        error: { code: "denied", message: "Capability unavailable" }
+      });
+    }
     if (!this.runtime) return this.toolError(request, callId, "runtime_not_attached", "ToolBroker is not attached to a runtime", tool.id);
     const policy = this.checkToolPolicy(request, tool);
     this.trace.record({
@@ -2235,7 +2305,7 @@ var _ToolBroker = class _ToolBroker {
     });
     if (!policy.allowed) {
       return this.toolResult(request, callId, tool.id, ToolResultStatus.DENIED, {
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const validation = this.validateArgs("tool", tool.id, (_a = tool.input) == null ? void 0 : _a.schema, request == null ? void 0 : request.args);
@@ -2276,8 +2346,8 @@ var _ToolBroker = class _ToolBroker {
     const target = this.resolveInputTarget(tool.input);
     if (!target) return this.toolError(request, callId, "target_not_found", `No runtime target for ${(_a = tool.input) == null ? void 0 : _a.ref}`);
     try {
-      const wait = request.wait ?? "accepted";
-      const timeout = request.timeoutMs ?? tool.timeoutMs ?? 0;
+      const wait = this.effectiveWaitMode(request.wait, tool, target);
+      const timeout = request.timeoutMs ?? normalizeVerifyWith(tool).timeoutMs ?? tool.timeoutMs ?? 1e3;
       const payload = this.makeRuntimePayload(tool, request, callId);
       this.trace.record({
         type: "message.dispatch",
@@ -2293,9 +2363,10 @@ var _ToolBroker = class _ToolBroker {
         return this.toolResult(request, callId, tool.id, ToolResultStatus.ACCEPTED);
       }
       if (wait === "verified") {
-        if (target.channel) await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
+        let result;
+        if (target.channel) result = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
         else this.runtime.sendTo(this.source, tool.input.pin, [target], payload);
-        return this.verifyToolResult(request, tool, callId, timeout);
+        return this.verifyToolResult(request, tool, callId, timeout, result);
       }
       const reply = await this.runtime.requestFrom(this.source, tool.input.pin, [target], payload, timeout);
       return this.toolResult(request, callId, tool.id, ToolResultStatus.COMPLETED, { result: reply });
@@ -2303,7 +2374,7 @@ var _ToolBroker = class _ToolBroker {
       return this.toolError(request, callId, "dispatch_failed", (error2 == null ? void 0 : error2.message) || String(error2), tool.id);
     }
   }
-  async verifyToolResult(request, tool, callId, timeoutMs = 1e3) {
+  async verifyToolResult(request, tool, callId, timeoutMs = 1e3, result) {
     const verifyWith = normalizeVerifyWith(tool);
     const evidence = {
       events: [],
@@ -2321,7 +2392,7 @@ var _ToolBroker = class _ToolBroker {
     for (const probeSpec of verifyWith.probes) {
       const probeId = typeof probeSpec === "string" ? probeSpec : probeSpec == null ? void 0 : probeSpec.id;
       if (!probeId) continue;
-      const result = await this.readProbe({
+      const result2 = await this.readProbe({
         agentId: request == null ? void 0 : request.agentId,
         requestId: request == null ? void 0 : request.requestId,
         probeId,
@@ -2329,9 +2400,9 @@ var _ToolBroker = class _ToolBroker {
       });
       evidence.probes.push({
         probeId,
-        status: result == null ? void 0 : result.status,
-        value: result == null ? void 0 : result.value,
-        error: result == null ? void 0 : result.error
+        status: result2 == null ? void 0 : result2.status,
+        value: result2 == null ? void 0 : result2.value,
+        error: result2 == null ? void 0 : result2.error
       });
     }
     const verified = evidence.events.every((item) => item.status === "observed") && evidence.probes.every((item) => item.status === "ok");
@@ -2345,6 +2416,7 @@ var _ToolBroker = class _ToolBroker {
       details: evidence
     });
     return this.toolResult(request, callId, tool.id, verified ? ToolResultStatus.VERIFIED : ToolResultStatus.UNVERIFIED, {
+      ...result === void 0 ? {} : { result },
       verification: {
         status: verified ? "verified" : "unverified",
         evidence
@@ -2368,6 +2440,7 @@ var _ToolBroker = class _ToolBroker {
     return { eventId, status: "timeout", callId };
   }
   async resolveApproval(request = {}) {
+    var _a;
     const approval = this.approvalRequests.get(request.approvalId);
     if (!approval) {
       return this.emitResult(request, brokerError(request, "unknown_approval", `Unknown approval request: ${request.approvalId}`));
@@ -2375,9 +2448,35 @@ var _ToolBroker = class _ToolBroker {
     if (approval.status !== "requested") {
       return this.emitResult(request, brokerError(request, "approval_already_resolved", `Approval request is already ${approval.status}`));
     }
+    if (Date.now() >= Date.parse(approval.expiresAt)) {
+      approval.status = "expired";
+      approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+      return this.emitResult(request, brokerError(request, "approval_expired", "Approval request has expired"));
+    }
+    if (((_a = request == null ? void 0 : request.authority) == null ? void 0 : _a.trusted) !== true) {
+      return this.emitResult(request, brokerError(request, "untrusted_approval_authority", "Approval requires a trusted human or external authority"));
+    }
+    if ((request == null ? void 0 : request.agentId) && request.agentId !== approval.agentId) {
+      return this.emitResult(request, brokerError(request, "approval_identity_mismatch", "Approval request belongs to another agent"));
+    }
+    const tool = this.registry.getTool(approval.toolId);
+    if (!tool) return this.toolError(request, approval.callId, "unknown_tool", `Unknown tool: ${approval.toolId}`, approval.toolId);
+    const currentPolicy = this.checkToolPolicy(approval.request, tool);
+    if (!currentPolicy.allowed) {
+      approval.status = "denied";
+      return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
+        approval,
+        error: { code: "denied", message: currentPolicy.reason }
+      });
+    }
+    if ((tool.risk ?? "low") !== approval.risk || JSON.stringify(tool.effects ?? []) !== JSON.stringify(approval.effects)) {
+      approval.status = "invalidated";
+      approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
+      return this.emitResult(request, brokerError(request, "approval_changed", "Tool risk or effects changed; request a new approval"));
+    }
     approval.status = request.approved === true ? "approved" : "denied";
     approval.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
-    approval.resolvedBy = request.agentId ?? approval.agentId;
+    approval.resolvedBy = request.authority.id ?? request.authority.kind ?? "trusted-authority";
     this.trace.record({
       type: "approval.resolved",
       agentId: approval.agentId,
@@ -2393,26 +2492,32 @@ var _ToolBroker = class _ToolBroker {
       approval,
       timestamp: approval.resolvedAt
     });
-    const tool = this.registry.getTool(approval.toolId);
     if (approval.status !== "approved") {
       return this.toolResult(request, approval.callId, approval.toolId, ToolResultStatus.DENIED, {
         approval,
         error: { code: "approval_denied", message: "Approval was denied" }
       });
     }
-    if (!tool) return this.toolError(request, approval.callId, "unknown_tool", `Unknown tool: ${approval.toolId}`, approval.toolId);
     return this.executeTool(approval.request, tool, approval.callId);
   }
   async readProbe(request) {
     var _a, _b;
     const probe = this.registry.getProbe(request == null ? void 0 : request.probeId);
     if (!probe) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        probeId: request == null ? void 0 : request.probeId,
+        status: "denied",
+        details: { reason: "unknown_probe" }
+      });
       return this.emitResult(request, {
         type: BrokerResultTypes.PROBE_RESULT,
         requestId: request == null ? void 0 : request.requestId,
         probeId: request == null ? void 0 : request.probeId,
-        status: "failed",
-        error: { code: "unknown_probe", message: `Unknown probe: ${request == null ? void 0 : request.probeId}` }
+        status: "denied",
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const policy = this.checkCapabilityPolicy(request, "probes", probe.id);
@@ -2430,7 +2535,7 @@ var _ToolBroker = class _ToolBroker {
         requestId: request == null ? void 0 : request.requestId,
         probeId: probe.id,
         status: "denied",
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const validation = this.validateArgs("probe", probe.id, probe.argsSchema ?? ((_a = probe.arguments) == null ? void 0 : _a.schema) ?? ((_b = probe.input) == null ? void 0 : _b.schema), request == null ? void 0 : request.args);
@@ -2501,12 +2606,20 @@ var _ToolBroker = class _ToolBroker {
   async waitForEvent(request) {
     const event = this.registry.getEvent(request == null ? void 0 : request.eventId);
     if (!event) {
+      this.trace.record({
+        type: "policy.decision",
+        agentId: request == null ? void 0 : request.agentId,
+        requestId: request == null ? void 0 : request.requestId,
+        eventId: request == null ? void 0 : request.eventId,
+        status: "denied",
+        details: { reason: "unknown_event" }
+      });
       return this.emitResult(request, {
         type: BrokerResultTypes.EVENT_RESULT,
         requestId: request == null ? void 0 : request.requestId,
         eventId: request == null ? void 0 : request.eventId,
-        status: "failed",
-        error: { code: "unknown_event", message: `Unknown event: ${request == null ? void 0 : request.eventId}` }
+        status: "denied",
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const policy = this.checkCapabilityPolicy(request, "events", event.id);
@@ -2524,7 +2637,7 @@ var _ToolBroker = class _ToolBroker {
         requestId: request == null ? void 0 : request.requestId,
         eventId: event.id,
         status: "denied",
-        error: { code: "denied", message: policy.reason }
+        error: { code: "denied", message: "Capability unavailable" }
       });
     }
     const timeoutMs = (request == null ? void 0 : request.timeoutMs) ?? 1e3;
@@ -2551,6 +2664,16 @@ var _ToolBroker = class _ToolBroker {
     });
   }
   queryEvents(request = {}) {
+    const identity = this.identityDecision(request.agentId);
+    if (!identity.allowed) {
+      return {
+        type: BrokerResultTypes.EVENTS_RESULT,
+        requestId: request.requestId,
+        status: "denied",
+        events: [],
+        error: { code: "denied", message: "Capability unavailable" }
+      };
+    }
     const policy = this.getAgentPolicy(request.agentId);
     const events = this.events.filter((event) => {
       if (request.eventId && event.eventId !== request.eventId) return false;
@@ -2561,6 +2684,7 @@ var _ToolBroker = class _ToolBroker {
     return {
       type: BrokerResultTypes.EVENTS_RESULT,
       requestId: request.requestId,
+      status: "ok",
       events
     };
   }
@@ -2586,6 +2710,7 @@ var _ToolBroker = class _ToolBroker {
     };
   }
   createApprovalRequest(request, callId, tool, decision) {
+    const createdAt = /* @__PURE__ */ new Date();
     const approval = {
       approvalId: this.newApprovalId(),
       agentId: (request == null ? void 0 : request.agentId) ?? null,
@@ -2596,16 +2721,17 @@ var _ToolBroker = class _ToolBroker {
       reason: decision.reason,
       rule: decision.rule,
       risk: tool.risk ?? "low",
-      effects: Array.isArray(tool.effects) ? tool.effects : [],
-      request: {
+      effects: deepFreeze(makeJsonSafe2(Array.isArray(tool.effects) ? tool.effects : [])),
+      request: deepFreeze({
         agentId: request == null ? void 0 : request.agentId,
         requestId: request == null ? void 0 : request.requestId,
         toolId: tool.id,
-        args: request == null ? void 0 : request.args,
+        args: makeJsonSafe2(request == null ? void 0 : request.args),
         wait: request == null ? void 0 : request.wait,
         timeoutMs: request == null ? void 0 : request.timeoutMs
-      },
-      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      }),
+      createdAt: createdAt.toISOString(),
+      expiresAt: new Date(createdAt.getTime() + this.approvalTtlMs).toISOString()
     };
     this.approvalRequests.set(approval.approvalId, approval);
     this.trace.record({
@@ -2635,11 +2761,25 @@ var _ToolBroker = class _ToolBroker {
     };
   }
   getAgentPolicy(agentId) {
-    if (!agentId) return new AgentPolicy({ id: null });
+    if (!agentId) return new AgentPolicy({ id: null, enabled: false });
     const agent = this.agents.get(agentId);
-    if (!agent) return new AgentPolicy({ id: agentId });
+    if (!agent) return new AgentPolicy({ id: agentId, enabled: false });
     agent.policy = AgentPolicy.fromAgent(agent);
     return agent.policy;
+  }
+  identityDecision(agentId) {
+    var _a;
+    if (!agentId) return { allowed: false, reason: "missing_identity" };
+    const agent = this.agents.get(agentId);
+    if (!agent) return { allowed: false, reason: "unknown_identity" };
+    if (agent.enabled === false || ((_a = agent.config) == null ? void 0 : _a.enabled) === false) return { allowed: false, reason: "agent_disabled" };
+    return { allowed: true, reason: "known_identity" };
+  }
+  effectiveWaitMode(requested, tool, target) {
+    const verification = normalizeVerifyWith(tool);
+    if (verification.events.length || verification.probes.length) return "verified";
+    if (target == null ? void 0 : target.channel) return requested === "verified" ? "verified" : "completed";
+    return requested === "verified" ? "verified" : "accepted";
   }
   validateArgs(kind, capabilityId, schema, args) {
     if (!schema) return { valid: true, kind, capabilityId, reason: "no_schema" };
@@ -2721,6 +2861,12 @@ function makeJsonSafe2(value) {
   }
 }
 __name(makeJsonSafe2, "makeJsonSafe");
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+__name(deepFreeze, "deepFreeze");
 function stringifyProbeValue(value) {
   if (typeof value === "string") return value;
   try {
@@ -2738,13 +2884,19 @@ function normalizeVerifyWith(tool = {}) {
   }
   const events = [];
   const probes = [];
+  let timeoutMs = null;
   for (const spec of specs) {
     if (Array.isArray(spec == null ? void 0 : spec.events)) events.push(...spec.events);
     if (Array.isArray(spec == null ? void 0 : spec.probes)) probes.push(...spec.probes);
+    if (Number.isInteger(spec == null ? void 0 : spec.timeoutMs)) timeoutMs = timeoutMs == null ? spec.timeoutMs : Math.max(timeoutMs, spec.timeoutMs);
+  }
+  for (const effect of tool.effects ?? []) {
+    if (Number.isInteger(effect == null ? void 0 : effect.timeoutMs)) timeoutMs = timeoutMs == null ? effect.timeoutMs : Math.max(timeoutMs, effect.timeoutMs);
   }
   return {
     events: events.map((item) => typeof item === "string" ? item : item == null ? void 0 : item.id).filter(Boolean),
-    probes
+    probes,
+    timeoutMs
   };
 }
 __name(normalizeVerifyWith, "normalizeVerifyWith");
@@ -2763,19 +2915,36 @@ var _AgentRuntimeSupport = class _AgentRuntimeSupport {
     this.wireToolBrokerEvents();
     this.registerNodeProbes();
     runtime.agent = null;
-    const selectedAgent = selectAgentConfig(agent);
-    if (selectedAgent && selectedAgent.enabled !== false) {
+    runtime.agentProfiles = [];
+    runtime.agentInterfaces = [];
+    const configuration = normalizeAgentConfiguration(agent);
+    if (configuration) {
+      runtime.agentProfiles = configuration.profiles;
+      runtime.agentInterfaces = configuration.interfaces;
+      for (const profile of configuration.profiles) {
+        runtime.toolBroker.registerAgent({ id: profile.id, config: profile });
+      }
+    }
+    const selectedAgent = selectEmbeddedAgent(configuration);
+    if (selectedAgent) {
       runtime.agent = new AgentRuntime({
-        id: selectedAgent == null ? void 0 : selectedAgent.id,
+        id: selectedAgent.profile.id,
         broker: runtime.toolBroker,
-        config: selectedAgent ?? {}
+        config: {
+          ...selectedAgent.profile,
+          instructions: selectedAgent.interface.instructions,
+          llm: selectedAgent.interface.llm,
+          ui: selectedAgent.interface.ui,
+          interfaceId: selectedAgent.interface.id
+        }
       });
     }
     return runtime;
   }
   stop() {
-    var _a, _b;
-    (_b = (_a = this.runtime.agent) == null ? void 0 : _a.unmountOverlay) == null ? void 0 : _b.call(_a);
+    var _a, _b, _c, _d;
+    (_b = (_a = this.runtime.toolBroker) == null ? void 0 : _a.cancelPendingApprovals) == null ? void 0 : _b.call(_a);
+    (_d = (_c = this.runtime.agent) == null ? void 0 : _c.unmountOverlay) == null ? void 0 : _d.call(_c);
   }
   registerNodeProbes() {
     var _a;
@@ -2835,14 +3004,79 @@ var _AgentRuntimeSupport = class _AgentRuntimeSupport {
 };
 __name(_AgentRuntimeSupport, "AgentRuntimeSupport");
 var AgentRuntimeSupport = _AgentRuntimeSupport;
-function selectAgentConfig(agent) {
-  if (!agent) return null;
-  if (Array.isArray(agent == null ? void 0 : agent.agents)) {
-    return agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.id) === agent.defaultAgent) ?? agent.agents.find((candidate) => (candidate == null ? void 0 : candidate.enabled) !== false) ?? agent.agents[0] ?? null;
+function normalizeAgentConfiguration(agent) {
+  var _a;
+  if (!agent || agent.enabled === false) return null;
+  if (Array.isArray(agent == null ? void 0 : agent.profiles)) {
+    return {
+      defaultInterface: agent.defaultInterface ?? "",
+      profiles: agent.profiles.map(normalizeProfile),
+      interfaces: Array.isArray(agent.interfaces) ? agent.interfaces.map(normalizeInterface) : []
+    };
   }
-  return agent;
+  const legacyAgents = Array.isArray(agent == null ? void 0 : agent.agents) ? agent.agents : [agent];
+  const profiles = legacyAgents.map(normalizeProfile);
+  const defaultProfile = profiles.find((profile) => profile.id === agent.defaultAgent) ?? profiles[0];
+  const interfaces = legacyAgents.map((item) => ({
+    id: `${item.id ?? "agent"}-embedded`,
+    kind: "embedded",
+    profile: item.id,
+    enabled: item.enabled !== false,
+    instructions: item.instructions,
+    llm: item.llm,
+    ui: item.ui
+  }));
+  return {
+    defaultInterface: ((_a = interfaces.find((item) => item.profile === (defaultProfile == null ? void 0 : defaultProfile.id))) == null ? void 0 : _a.id) ?? "",
+    profiles,
+    interfaces
+  };
 }
-__name(selectAgentConfig, "selectAgentConfig");
+__name(normalizeAgentConfiguration, "normalizeAgentConfiguration");
+function normalizeProfile(profile = {}) {
+  return {
+    ...profile,
+    id: String(profile.id ?? "").trim(),
+    enabled: profile.enabled !== false,
+    permissions: profile.permissions ?? {}
+  };
+}
+__name(normalizeProfile, "normalizeProfile");
+function normalizeInterface(value = {}) {
+  return {
+    ...value,
+    id: String(value.id ?? "").trim(),
+    profile: String(value.profile ?? "").trim(),
+    enabled: value.enabled !== false
+  };
+}
+__name(normalizeInterface, "normalizeInterface");
+function selectEmbeddedAgent(configuration) {
+  if (!configuration) return null;
+  const ids = /* @__PURE__ */ new Set();
+  for (const profile2 of configuration.profiles) {
+    if (!profile2.id) throw new Error("Agent profile id is required");
+    if (ids.has(profile2.id)) throw new Error(`Duplicate agent profile id: ${profile2.id}`);
+    ids.add(profile2.id);
+  }
+  const embedded = configuration.interfaces.filter((item) => item.kind === "embedded" && item.enabled !== false);
+  if (!embedded.length) return null;
+  if (!configuration.defaultInterface) {
+    if (embedded.length) {
+      throw new Error("defaultInterface is required when an embedded agent interface is enabled");
+    }
+    return null;
+  }
+  const selected = configuration.interfaces.find((item) => item.id === configuration.defaultInterface);
+  if (!selected) throw new Error(`Unknown default agent interface: ${configuration.defaultInterface}`);
+  if (selected.kind !== "embedded") throw new Error(`Default agent interface must be embedded: ${selected.id}`);
+  if (selected.enabled === false) throw new Error(`Default agent interface is disabled: ${selected.id}`);
+  const profile = configuration.profiles.find((item) => item.id === selected.profile);
+  if (!profile) throw new Error(`Agent interface ${selected.id} references unknown profile: ${selected.profile}`);
+  if (profile.enabled === false) throw new Error(`Agent interface ${selected.id} references disabled profile: ${selected.profile}`);
+  return { interface: selected, profile };
+}
+__name(selectEmbeddedAgent, "selectEmbeddedAgent");
 
 // rt-browser-agent/runtime.js
 var _Runtime3 = class _Runtime3 extends Runtime2 {
@@ -2890,6 +3124,8 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
     const basePath = this.server.basePath ?? "/agent";
     return {
       target: "http",
+      kind: "projection",
+      label: "HTTP projection",
       agentId: ((_a = this.agent) == null ? void 0 : _a.id) ?? null,
       application: view.application,
       server: {
@@ -2897,7 +3133,7 @@ var _HttpAgentAdapter = class _HttpAgentAdapter {
         port: this.server.port ?? 8787,
         basePath
       },
-      endpoints: {
+      endpointTemplates: {
         capabilities: `${basePath}/capabilities`,
         callTool: `${basePath}/tools/{toolId}/call`,
         readProbe: `${basePath}/probes/{probeId}/read`,

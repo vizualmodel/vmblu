@@ -30,6 +30,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // security/index.js
 var index_exports = {};
 __export(index_exports, {
+  SecurityPolicyError: () => SecurityPolicyError,
   SecurityReporterFactory: () => SecurityReporterFactory,
   getCurrentNode: () => getCurrentNode,
   isCapabilitySuppressed: () => isCapabilitySuppressed,
@@ -76,186 +77,160 @@ var import_node_fs = __toESM(require("fs"), 1);
 var import_node_http = __toESM(require("http"), 1);
 var import_node_https = __toESM(require("https"), 1);
 var import_node_path = __toESM(require("path"), 1);
-var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.rt-als.safetyHooks");
-var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.rt-als.wrapped");
+var STATE_KEY = /* @__PURE__ */ Symbol.for("vmblu.runtime.security");
+var WRAPPED = /* @__PURE__ */ Symbol.for("vmblu.runtime.security.wrapped");
 var _Safety = class _Safety {
-  constructor() {
-    this.emitter = null;
-    this.policyClassifier = null;
-  }
-  setEmitter(fn = null) {
-    this.emitter = typeof fn === "function" ? fn : null;
-  }
-  setPolicyClassifier(fn = null) {
-    this.policyClassifier = typeof fn === "function" ? fn : null;
-  }
-  emit(event) {
-    if (!this.emitter) return;
-    try {
-      this.emitter(event);
-    } catch (error) {
-      console.warn("vmblu safety emitter failed:", error);
-    }
-  }
-  makePolicyClassifier({ runtime, runtimeSettings: modelRuntimeSettings } = {}) {
-    return (event) => {
-      var _a, _b, _c, _d;
-      const actor = (_b = (_a = runtime == null ? void 0 : runtime.actors) == null ? void 0 : _a.find) == null ? void 0 : _b.call(_a, (candidate) => candidate.name === (event == null ? void 0 : event.node));
-      const effectivePolicy = (_d = (_c = runtime == null ? void 0 : runtime.settings) == null ? void 0 : _c.effectivePolicy) == null ? void 0 : _d.call(_c, modelRuntimeSettings, actor == null ? void 0 : actor.dx);
-      if (!(effectivePolicy == null ? void 0 : effectivePolicy.active) || !(effectivePolicy == null ? void 0 : effectivePolicy.security)) return null;
-      const operation = parseOperation(event.operation ?? event.cap ?? event.capability);
-      const policy = operationPolicy(effectivePolicy.security, operation);
-      if (!policy) return null;
-      const scopeDecision = classifyScope(operation, event.detail, policy);
-      const decision = (scopeDecision == null ? void 0 : scopeDecision.decision) ?? (policy.mode === "deny" ? "denied" : policy.mode === "warn" ? "warning" : "allowed");
-      return {
-        decision,
-        area: operation.area,
-        action: operation.action,
-        mode: (scopeDecision == null ? void 0 : scopeDecision.mode) ?? policy.mode,
-        ...(scopeDecision == null ? void 0 : scopeDecision.reason) ? { reason: scopeDecision.reason } : {}
-      };
-    };
-  }
-  report(operation, detail = {}) {
-    const event = {
-      ts: Date.now(),
-      node: getCurrentNode(),
-      operation: normalizeOperationName(operation),
-      cap: legacyCapabilityName(operation),
-      detail
-    };
-    const policy = this.classify(event);
-    if (policy) event.policy = policy;
-    this.emit(event);
-    return event;
-  }
-  classify(event) {
-    if (!this.policyClassifier) return null;
-    try {
-      return this.policyClassifier(event) ?? null;
-    } catch (error) {
-      return {
-        decision: "error",
-        reason: "policy_classifier_failed",
-        message: (error == null ? void 0 : error.message) || String(error)
-      };
-    }
-  }
-  emitCapability(operation, detail) {
-    var _a;
-    if (isCapabilitySuppressed(operation)) return null;
-    const event = this.report(operation, detail);
-    if (((_a = event == null ? void 0 : event.policy) == null ? void 0 : _a.decision) === "denied") {
-      throw new SecurityPolicyError(event);
-    }
-    return event;
-  }
-  installHooks({ mode = "off" } = {}) {
-    if (mode === "off") return () => {
-    };
+  claim(owner, { security, baseDir } = {}) {
+    if (!owner) throw new Error("vmblu security instrumentation requires a runtime owner");
+    if (!security) return false;
     const state = getState();
-    state.count += 1;
-    if (state.count === 1) {
-      state.restores = [];
+    if (state.owner && state.owner !== owner) {
+      throw new Error("vmblu security instrumentation is already owned by another runtime in this process");
+    }
+    if (state.owner === owner) return true;
+    state.owner = owner;
+    state.security = security;
+    state.baseDir = import_node_path.default.resolve(baseDir || process.cwd());
+    state.subscribers = /* @__PURE__ */ new Set();
+    state.restores = [];
+    try {
       this.installProcessHooks(state.restores);
       this.installFetchHook(state.restores);
       this.installHttpHooks(state.restores);
       this.installFsHooks(state.restores);
+      return true;
+    } catch (error) {
+      this.release(owner);
+      throw error;
     }
-    return () => {
-      state.count = Math.max(0, state.count - 1);
-      if (state.count > 0) return;
-      for (const restore of state.restores.splice(0).reverse()) restore();
+  }
+  release(owner) {
+    const state = getState();
+    if (!state.owner || state.owner !== owner) return false;
+    for (const restore of state.restores.splice(0).reverse()) restore();
+    state.subscribers.clear();
+    state.owner = null;
+    state.security = null;
+    state.baseDir = null;
+    return true;
+  }
+  subscribe(listener) {
+    if (typeof listener !== "function") return () => {
     };
+    const state = getState();
+    state.subscribers.add(listener);
+    return () => state.subscribers.delete(listener);
+  }
+  isOwner(owner) {
+    return getState().owner === owner;
+  }
+  get owner() {
+    return getState().owner;
+  }
+  emit(event) {
+    for (const listener of [...getState().subscribers]) {
+      try {
+        listener(event);
+      } catch (error) {
+        console.warn("vmblu security subscriber failed:", error);
+      }
+    }
+  }
+  report(operation, detail = {}) {
+    if (isCapabilitySuppressed(operation)) return null;
+    const state = getState();
+    if (!state.owner || !state.security) return null;
+    const parsed = parseOperation(operation);
+    const configured = operationPolicy(state.security, parsed);
+    const policy = classifyPolicy(parsed, detail, configured, state.baseDir);
+    const event = {
+      schemaVersion: 1,
+      ts: Date.now(),
+      node: getCurrentNode(),
+      operation: parsed.name,
+      cap: legacyCapabilityName(parsed.name),
+      detail,
+      policy
+    };
+    if (policy.decision !== "allowed") this.emit(event);
+    if (policy.decision === "denied") throw new SecurityPolicyError(event);
+    return event;
   }
   installProcessHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
-    wrapMethod(import_node_child_process.default, "exec", (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
-      report("process.exec", { command: safeString(command) });
-      return original.call(this, command, ...args);
-    }, "wrappedExec"), restores);
-    wrapMethod(import_node_child_process.default, "execFile", (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, args, options, callback) {
-      const argv = Array.isArray(args) ? args : [];
-      report("process.exec", { command: safeString(file), args: argv.slice() });
-      return original.call(this, file, args, options, callback);
-    }, "wrappedExecFile"), restores);
-    wrapMethod(import_node_child_process.default, "spawn", (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, args, options) {
-      report("process.exec", { command: safeString(command), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, command, args, options);
-    }, "wrappedSpawn"), restores);
-    wrapMethod(import_node_child_process.default, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, args, options) {
-      report("process.exec", { command: safeString(modulePath), args: Array.isArray(args) ? args.slice() : [] });
-      return original.call(this, modulePath, args, options);
+    const report = /* @__PURE__ */ __name((detail) => this.report("process.exec", detail), "report");
+    for (const key of ["exec", "execSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedExec(command, ...args) {
+        report({ command: safeString(command), shell: true });
+        return original.call(this, command, ...args);
+      }, "wrappedExec"), restores);
+    }
+    for (const key of ["execFile", "execFileSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedExecFile(file, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const actualOptions = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(file), args: argv.slice(), shell: !!(actualOptions == null ? void 0 : actualOptions.shell) });
+        return original.call(this, file, ...rest);
+      }, "wrappedExecFile"), restores);
+    }
+    for (const key of ["spawn", "spawnSync"]) {
+      wrapMethod(import_node_child_process.default, key, (original) => /* @__PURE__ */ __name(function wrappedSpawn(command, ...rest) {
+        const argv = Array.isArray(rest[0]) ? rest[0] : [];
+        const options = Array.isArray(rest[0]) ? rest[1] : rest[0];
+        report({ command: safeString(command), args: argv.slice(), shell: !!(options == null ? void 0 : options.shell) });
+        return original.call(this, command, ...rest);
+      }, "wrappedSpawn"), restores);
+    }
+    wrapMethod(import_node_child_process.default, "fork", (original) => /* @__PURE__ */ __name(function wrappedFork(modulePath, ...rest) {
+      const argv = Array.isArray(rest[0]) ? rest[0] : [];
+      report({ command: safeString(process.execPath), args: [safeString(modulePath), ...argv], shell: false });
+      return original.call(this, modulePath, ...rest);
     }, "wrappedFork"), restores);
   }
   installFsHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     for (const key of ["readFile", "readFileSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(path2, ...args) {
-        report("fs.read", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsRead(target, ...args) {
+        safety.report("fs.read", { path: safeString(target) });
+        return original.call(this, target, ...args);
       }, "wrappedFsRead"), restores);
     }
     for (const key of ["writeFile", "writeFileSync", "appendFile", "appendFileSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFs(path2, ...args) {
-        report("fs.write", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedFs"), restores);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsWrite(target, ...args) {
+        safety.report("fs.write", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsWrite"), restores);
     }
     for (const key of ["rm", "rmSync", "unlink", "unlinkSync"]) {
-      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedDelete(path2, ...args) {
-        report("fs.delete", { path: safeString(path2) });
-        return original.call(this, path2, ...args);
-      }, "wrappedDelete"), restores);
+      wrapMethod(import_node_fs.default, key, (original) => /* @__PURE__ */ __name(function wrappedFsDelete(target, ...args) {
+        safety.report("fs.delete", { path: safeString(target) });
+        return original.call(this, target, ...args);
+      }, "wrappedFsDelete"), restores);
     }
   }
   installFetchHook(restores) {
     if (typeof globalThis.fetch !== "function") return;
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(globalThis, "fetch", (original) => /* @__PURE__ */ __name(function wrappedFetch(input, init) {
-      const detail = {
+      safety.report("net.egress", {
         url: describeRequestUrl(input),
         method: (init == null ? void 0 : init.method) ?? (input == null ? void 0 : input.method) ?? "GET"
-      };
-      report("net.egress", detail);
+      });
       return suppressCapability("net.egress", () => original.call(this, input, init));
     }, "wrappedFetch"), restores);
   }
   installHttpHooks(restores) {
-    const report = /* @__PURE__ */ __name((cap, detail) => this.emitCapability(cap, detail), "report");
     wrapMethod(import_node_http.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "http:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpRequest"), restores);
     wrapMethod(import_node_https.default, "request", (original) => /* @__PURE__ */ __name(function wrappedHttpsRequest(input, options, callback) {
-      report("net.egress", {
+      safety.report("net.egress", {
         url: describeRequestUrl(input, options, "https:"),
         method: (options == null ? void 0 : options.method) ?? (input == null ? void 0 : input.method) ?? "GET"
       });
       return original.call(this, input, options, callback);
     }, "wrappedHttpsRequest"), restores);
-  }
-  enable({ mode = "off" } = {}, tx = null) {
-    if (mode === "off") {
-      this.setEmitter(null);
-      return { uninstall() {
-      } };
-    }
-    this.setEmitter((event) => {
-      var _a;
-      (_a = tx == null ? void 0 : tx.send) == null ? void 0 : _a.call(tx, "security.event", event);
-    });
-    const uninstallHooks = this.installHooks({ mode });
-    return {
-      uninstall: /* @__PURE__ */ __name(() => {
-        uninstallHooks();
-        this.setEmitter(null);
-      }, "uninstall")
-    };
   }
 };
 __name(_Safety, "Safety");
@@ -272,8 +247,11 @@ var SecurityPolicyError = _SecurityPolicyError;
 function getState() {
   if (!globalThis[STATE_KEY]) {
     globalThis[STATE_KEY] = {
-      count: 0,
-      restores: []
+      owner: null,
+      security: null,
+      baseDir: null,
+      restores: [],
+      subscribers: /* @__PURE__ */ new Set()
     };
   }
   return globalThis[STATE_KEY];
@@ -282,15 +260,115 @@ __name(getState, "getState");
 function wrapMethod(target, key, wrapFactory, restores) {
   const original = target[key];
   if (typeof original !== "function") return;
-  if (original[WRAPPED]) return;
+  if (original[WRAPPED]) throw new Error(`Node.js API ${key} is already wrapped by vmblu security`);
   const wrapped = wrapFactory(original);
-  wrapped[WRAPPED] = true;
+  Object.defineProperty(wrapped, WRAPPED, { value: true });
   target[key] = wrapped;
   restores.push(() => {
     if (target[key] === wrapped) target[key] = original;
   });
 }
 __name(wrapMethod, "wrapMethod");
+function classifyPolicy(operation, detail, policy, baseDir) {
+  if (!policy || policy.mode === "deny") return denied(operation, "operation_denied");
+  if (!policy.all) {
+    if (operation.area === "fs" && !isPathAllowed(detail.path, policy.roots, baseDir)) return denied(operation, "fs_root_not_allowed");
+    if (operation.area === "net" && !isHostAllowed(detail.url, policy.hosts)) return denied(operation, "net_host_not_allowed");
+    if (operation.area === "process") {
+      if (detail.shell) return denied(operation, "process_shell_not_allowed");
+      if (!isCommandAllowed(detail.command, policy.commands, baseDir)) return denied(operation, "process_command_not_allowed");
+    }
+  }
+  return {
+    decision: policy.mode === "warn" ? "warning" : "allowed",
+    area: operation.area,
+    action: operation.action,
+    mode: policy.mode
+  };
+}
+__name(classifyPolicy, "classifyPolicy");
+function denied(operation, reason) {
+  return {
+    decision: "denied",
+    area: operation.area,
+    action: operation.action,
+    mode: "deny",
+    reason
+  };
+}
+__name(denied, "denied");
+function operationPolicy(security, operation) {
+  var _a;
+  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+}
+__name(operationPolicy, "operationPolicy");
+function isPathAllowed(value, roots = [], baseDir) {
+  if (!value || !Array.isArray(roots) || !roots.length) return false;
+  const target = canonicalPath(value, process.cwd());
+  return roots.some((root) => {
+    const allowed = canonicalPath(root, baseDir);
+    return target === allowed || target.startsWith(`${allowed}/`);
+  });
+}
+__name(isPathAllowed, "isPathAllowed");
+function canonicalPath(value, baseDir) {
+  const absolute = import_node_path.default.resolve(baseDir, String(value ?? ""));
+  let existing = absolute;
+  const suffix = [];
+  while (!import_node_fs.default.existsSync(existing)) {
+    const parent = import_node_path.default.dirname(existing);
+    if (parent === existing) break;
+    suffix.unshift(import_node_path.default.basename(existing));
+    existing = parent;
+  }
+  let resolved = existing;
+  try {
+    resolved = import_node_fs.default.realpathSync.native(existing);
+  } catch {
+    resolved = existing;
+  }
+  resolved = import_node_path.default.join(resolved, ...suffix).replaceAll("\\", "/").replace(/\/+$/, "");
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+__name(canonicalPath, "canonicalPath");
+function isHostAllowed(value, hosts = []) {
+  try {
+    const observed = new URL(String(value)).hostname.toLowerCase();
+    return hosts.some((host) => normalizeConfiguredHost(host) === observed);
+  } catch {
+    return false;
+  }
+}
+__name(isHostAllowed, "isHostAllowed");
+function normalizeConfiguredHost(value) {
+  try {
+    const text = String(value ?? "").trim();
+    if (!text || text.includes("/") || text.includes(":")) return "";
+    return new URL(`http://${text}`).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+__name(normalizeConfiguredHost, "normalizeConfiguredHost");
+function isCommandAllowed(value, commands = [], baseDir) {
+  const observed = executableIdentity(value, baseDir);
+  return !!observed && commands.some((command) => executableIdentity(command, baseDir) === observed);
+}
+__name(isCommandAllowed, "isCommandAllowed");
+function executableIdentity(value, baseDir) {
+  const command = String(value ?? "").trim();
+  if (!command) return "";
+  if (import_node_path.default.isAbsolute(command) || command.includes("/") || command.includes("\\")) return canonicalPath(command, baseDir);
+  const extensions = process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""];
+  for (const folder of (process.env.PATH ?? "").split(import_node_path.default.delimiter)) {
+    for (const extension of extensions) {
+      const candidate = import_node_path.default.join(folder, process.platform === "win32" && !import_node_path.default.extname(command) ? `${command}${extension}` : command);
+      if (import_node_fs.default.existsSync(candidate)) return canonicalPath(candidate, baseDir);
+    }
+  }
+  return process.platform === "win32" ? command.toLowerCase() : command;
+}
+__name(executableIdentity, "executableIdentity");
 function safeString(value) {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -305,23 +383,13 @@ function describeRequestUrl(input, options = null, protocol = "") {
     const actualProtocol = input.protocol ?? (options == null ? void 0 : options.protocol) ?? protocol;
     const host = input.hostname ?? input.host ?? (options == null ? void 0 : options.hostname) ?? (options == null ? void 0 : options.host) ?? "";
     const port = input.port ?? (options == null ? void 0 : options.port);
-    const path2 = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
+    const requestPath = input.path ?? input.pathname ?? (options == null ? void 0 : options.path) ?? (options == null ? void 0 : options.pathname) ?? "";
     const authority = port ? `${host}:${port}` : host;
-    return authority ? `${actualProtocol}//${authority}${path2}` : path2;
+    return authority ? `${actualProtocol}//${authority}${requestPath}` : requestPath;
   }
   return safeString(input);
 }
 __name(describeRequestUrl, "describeRequestUrl");
-function normalizeOperationName(value) {
-  return parseOperation(value).name;
-}
-__name(normalizeOperationName, "normalizeOperationName");
-function legacyCapabilityName(value) {
-  const operation = parseOperation(value);
-  if (operation.name === "process.exec") return "proc:exec";
-  return operation.name.replace(".", ":");
-}
-__name(legacyCapabilityName, "legacyCapabilityName");
 function parseOperation(value) {
   const normalized = String(value ?? "").replace(":", ".");
   if (normalized === "proc.exec") return { name: "process.exec", area: "process", action: "exec" };
@@ -329,81 +397,36 @@ function parseOperation(value) {
   return { name: `${area}.${action}`, area, action };
 }
 __name(parseOperation, "parseOperation");
-function operationPolicy(security = {}, operation) {
-  var _a;
-  return ((_a = security == null ? void 0 : security[operation.area]) == null ? void 0 : _a[operation.action]) ?? null;
+function legacyCapabilityName(value) {
+  const operation = parseOperation(value);
+  if (operation.name === "process.exec") return "proc:exec";
+  return operation.name.replace(".", ":");
 }
-__name(operationPolicy, "operationPolicy");
-function classifyScope(operation, detail = {}, policy = {}) {
-  var _a, _b, _c;
-  if (operation.area === "fs" && ((_a = policy.roots) == null ? void 0 : _a.length) && (detail == null ? void 0 : detail.path)) {
-    return isPathAllowed(detail.path, policy.roots) ? null : { decision: "denied", mode: "deny", reason: "fs_root_not_allowed" };
-  }
-  if (operation.area === "net" && ((_b = policy.hosts) == null ? void 0 : _b.length) && (detail == null ? void 0 : detail.url)) {
-    return isHostAllowed(detail.url, policy.hosts) ? null : { decision: "denied", mode: "deny", reason: "net_host_not_allowed" };
-  }
-  if (operation.area === "process" && ((_c = policy.commands) == null ? void 0 : _c.length) && (detail == null ? void 0 : detail.command)) {
-    return isCommandAllowed(detail.command, policy.commands) ? null : { decision: "denied", mode: "deny", reason: "process_command_not_allowed" };
-  }
-  return null;
-}
-__name(classifyScope, "classifyScope");
-function isPathAllowed(value, roots = []) {
-  const target = normalizePath(value);
-  return roots.some((root) => {
-    const normalizedRoot = normalizePath(root);
-    return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`);
-  });
-}
-__name(isPathAllowed, "isPathAllowed");
-function normalizePath(value) {
-  return import_node_path.default.resolve(String(value ?? "")).replaceAll("\\", "/").replace(/\/+$/, "");
-}
-__name(normalizePath, "normalizePath");
-function isHostAllowed(value, hosts = []) {
-  try {
-    const host = new URL(String(value)).hostname;
-    return hosts.includes(host);
-  } catch {
-    return false;
-  }
-}
-__name(isHostAllowed, "isHostAllowed");
-function isCommandAllowed(value, commands = []) {
-  return commands.includes(String(value ?? ""));
-}
-__name(isCommandAllowed, "isCommandAllowed");
+__name(legacyCapabilityName, "legacyCapabilityName");
 var safety = new Safety();
 
 // security/security-reporter.js
-function SecurityReporterFactory(tx, sx = null) {
-  const mode = (sx == null ? void 0 : sx.mode) ?? "warn";
+function SecurityReporterFactory(tx) {
   let currentTx = tx;
-  let safetyControl = safety.enable({ mode }, {
-    send(name, payload) {
-      if (name !== "security.event") return 0;
-      return currentTx.send("security.event", payload);
-    }
+  let unsubscribe = safety.subscribe((event) => {
+    var _a;
+    (_a = currentTx == null ? void 0 : currentTx.send) == null ? void 0 : _a.call(currentTx, "security.event", event);
   });
   return {
-    configure(nextSettings = null) {
-      const nextMode = (nextSettings == null ? void 0 : nextSettings.mode) ?? mode;
-      safetyControl.uninstall();
-      safetyControl = safety.enable({ mode: nextMode }, {
-        send(name, payload) {
-          if (name !== "security.event") return 0;
-          return currentTx.send("security.event", payload);
-        }
-      });
-    },
     setTx(nextTx) {
       currentTx = nextTx ?? currentTx;
+    },
+    stop() {
+      unsubscribe();
+      unsubscribe = /* @__PURE__ */ __name(() => {
+      }, "unsubscribe");
     }
   };
 }
 __name(SecurityReporterFactory, "SecurityReporterFactory");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  SecurityPolicyError,
   SecurityReporterFactory,
   getCurrentNode,
   isCapabilitySuppressed,

@@ -8,6 +8,7 @@ import {compareHandling} from './node-compare.js'
 import {Look} from './look.js'
 import {zap} from '../view/index.js'
 import {NodePrompts} from './node-prompts.js'
+import {resolveTestRepo} from './test-repo.js'
 
 // The node in a nodegraph
 export function Node (look=null, name=null, uid=null) {
@@ -41,6 +42,9 @@ export function Node (look=null, name=null, uid=null) {
 
     // Model-owned prompt content, repository identity, and runtime save state.
     this.prompts = new NodePrompts()
+
+    // Optional authored model-test specification owned by this node's model.
+    this.testRepo = null
 
     // Agent probe metadata authored on source nodes.
     this.probes = null
@@ -247,6 +251,11 @@ Node.prototype = {
         // Cook the flat persisted prompt fields into the live prompt structure.
         this.prompts.cook(raw, modcom.getCurrentModel()?.getArl?.())
 
+        // Dock nodes inherit this reference from their linked definition during fuse.
+        if (raw.testRepo && raw.kind !== 'dock') {
+            this.testRepo = resolveTestRepo(raw.testRepo, modcom.getCurrentModel()?.getArl?.())
+        }
+
         // check if the node has agent probe metadata
         if (raw.probes) this.probes = raw.probes
 
@@ -306,6 +315,12 @@ Node.prototype = {
         for(const pad of this.pads) UID.generate(pad)
         for(const bus of this.buses) UID.generate(bus)
         for(const cable of this.cables) UID.generate(cable)
+    },
+
+    setTestRepoReadOnlyRecursive(readOnly=true) {
+
+        if (this.testRepo) this.testRepo.readOnly = readOnly
+        if (this.nodes) for (const node of this.nodes) node.setTestRepoReadOnlyRecursive(readOnly)
     },
 
 

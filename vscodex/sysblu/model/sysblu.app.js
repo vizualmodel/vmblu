@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: sysblu vscode editor
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.11","schemaVersion":"1.11.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.11.0"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:e4184a8318f3ba53"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.0"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:7859b9eb1b95ba7c"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -23,7 +23,7 @@ const nodeList = [
 	//_______________________________________SYSTEM MESSAGE BROKER
 	{
 	name: "system message broker",
-	uid: "HCPC",
+	uid: "KkUJ",
 	factory: SystemMessageBroker,
 	inputs: [
 		"-> sysblu.loaded",
@@ -38,17 +38,17 @@ const nodeList = [
 		"-> execute command"
 		],
 	outputs: [
-		"sysblu.set -> sysblu.set @ sysblu manager (YXRg)",
-		"sysblu.save -> sysblu.save @ sysblu manager (YXRg)",
-		"sysblu.undo -> sysmod.undo @ sysblu manager (YXRg)",
-		"sysblu.redo -> sysmod.redo @ sysblu manager (YXRg)",
-		"size change -> size change @ sysblu view (DOlu)"
+		"sysblu.set -> sysblu.set @ sysblu manager (UAmj)",
+		"sysblu.save -> sysblu.save @ sysblu manager (UAmj)",
+		"sysblu.undo -> sysmod.undo @ sysblu manager (UAmj)",
+		"sysblu.redo -> sysmod.redo @ sysblu manager (UAmj)",
+		"size change -> size change @ sysblu view (cfdd)"
 		]
 	},
 	//_________________________________________________SYSBLU VIEW
 	{
 	name: "sysblu view",
-	uid: "DOlu",
+	uid: "cfdd",
 	factory: SysbluView,
 	inputs: [
 		"-> size change",
@@ -58,21 +58,21 @@ const nodeList = [
 		"-> sysmod.done"
 		],
 	outputs: [
-		"canvas -> canvas @ system message broker (HCPC)",
-		"application settings -> application settings @ application inspector (saQk)",
-		"endpoint settings -> endpoint settings @ endpoint inspector (tvaO)",
-		"connection settings -> connection settings @ connection inspector (juhS)",
-		"sysmod.doit -> sysmod.doit @ sysblu manager (YXRg)",
-		"sysmod.undo -> sysmod.undo @ sysblu manager (YXRg)",
-		"sysmod.redo -> sysmod.redo @ sysblu manager (YXRg)",
-		"open reference -> open reference @ system message broker (HCPC)",
-		"execute command -> execute command @ system message broker (HCPC)"
+		"canvas -> canvas @ system message broker (KkUJ)",
+		"application settings -> application settings @ application inspector (nFIn)",
+		"endpoint settings -> endpoint settings @ endpoint inspector (CyxS)",
+		"connection settings -> connection settings @ connection inspector (ytsa)",
+		"sysmod.doit -> sysmod.doit @ sysblu manager (UAmj)",
+		"sysmod.undo -> sysmod.undo @ sysblu manager (UAmj)",
+		"sysmod.redo -> sysmod.redo @ sysblu manager (UAmj)",
+		"open reference -> open reference @ system message broker (KkUJ)",
+		"execute command -> execute command @ system message broker (KkUJ)"
 		]
 	},
 	//______________________________________________SYSBLU MANAGER
 	{
 	name: "sysblu manager",
-	uid: "YXRg",
+	uid: "UAmj",
 	factory: SysbluManager,
 	inputs: [
 		"-> sysblu.set",
@@ -82,26 +82,26 @@ const nodeList = [
 		"-> sysmod.redo"
 		],
 	outputs: [
-		"sysblu.loaded -> sysblu.loaded @ system message broker (HCPC)",
-		"sysblu.failed -> sysblu.failed @ system message broker (HCPC)",
-		"sysblu.diagnostics -> sysblu.diagnostics @ system message broker (HCPC)",
+		"sysblu.loaded -> sysblu.loaded @ system message broker (KkUJ)",
+		"sysblu.failed -> sysblu.failed @ system message broker (KkUJ)",
+		"sysblu.diagnostics -> sysblu.diagnostics @ system message broker (KkUJ)",
 		`system.updated -> [ 
-			"system.updated @ sysblu view (DOlu)",
-			"system.updated @ system message broker (HCPC)" ]`,
-		"sysmod.done -> sysmod.done @ sysblu view (DOlu)"
+			"system.updated @ sysblu view (cfdd)",
+			"system.updated @ system message broker (KkUJ)" ]`,
+		"sysmod.done -> sysmod.done @ sysblu view (cfdd)"
 		]
 	},
 	//_________________________________________________SYSTEM MENU
 	{
 	name: "system menu",
-	uid: "seGM",
+	uid: "dDcl",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ system message broker (HCPC)",
-		"save -> save @ system message broker (HCPC)",
-		"application prompt -> application prompt @ sysblu view (DOlu)",
-		"add application -> add application @ sysblu view (DOlu)"
+		"div -> floating menu @ system message broker (KkUJ)",
+		"save -> save @ system message broker (KkUJ)",
+		"application prompt -> application prompt @ sysblu view (cfdd)",
+		"add application -> add application @ sysblu view (cfdd)"
 		],
 	sx:	[
 		    {
@@ -127,44 +127,44 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "saQk",
+	uid: "nFIn",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (HCPC)"
+		"modal div -> modal div @ system message broker (KkUJ)"
 		]
 	},
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "tvaO",
+	uid: "CyxS",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (HCPC)"
+		"modal div -> modal div @ system message broker (KkUJ)"
 		]
 	},
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "juhS",
+	uid: "ytsa",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (HCPC)"
+		"modal div -> modal div @ system message broker (KkUJ)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.11","generatorVersion":"1.11.0","schemaVersion":"1.11.0"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.0","schemaVersion":"1.12.0"}
 }
 
 // prepare the runtime

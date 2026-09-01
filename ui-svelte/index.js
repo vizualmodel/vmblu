@@ -83,6 +83,9 @@ export const RuntimeSettingsFactory = getFactory(RuntimeSettingsSvelte)
 import ModelRuntimeSettingsSvelte from './nodes/model-runtime-settings/model-runtime-settings.svelte'
 export const ModelRuntimeSettingsFactory = getFactory(ModelRuntimeSettingsSvelte)
 
+import TeamSettingsSvelte from './nodes/team-settings/team-settings.svelte'
+export const TeamSettingsFactory = getFactory(TeamSettingsSvelte)
+
 import ConfirmBoxSvelte from './nodes/confirm-box/confirm-box.svelte'
 export const ConfirmBox = getFactory(ConfirmBoxSvelte)
 

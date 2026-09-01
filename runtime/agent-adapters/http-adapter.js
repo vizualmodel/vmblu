@@ -13,6 +13,8 @@ export class HttpAgentAdapter {
         const basePath = this.server.basePath ?? '/agent'
         return {
             target: 'http',
+            kind: 'projection',
+            label: 'HTTP projection',
             agentId: this.agent?.id ?? null,
             application: view.application,
             server: {
@@ -20,7 +22,7 @@ export class HttpAgentAdapter {
                 port: this.server.port ?? 8787,
                 basePath,
             },
-            endpoints: {
+            endpointTemplates: {
                 capabilities: `${basePath}/capabilities`,
                 callTool: `${basePath}/tools/{toolId}/call`,
                 readProbe: `${basePath}/probes/{probeId}/read`,

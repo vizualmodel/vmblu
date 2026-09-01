@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.11.0",
+    "version": "1.12.0",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
@@ -1568,14 +1568,6 @@
                 }
               },
               {
-                "name": "auto layout",
-                "kind": "input",
-                "contract": {
-                  "role": "follower",
-                  "payload": "any"
-                }
-              },
-              {
                 "name": "show settings",
                 "kind": "input",
                 "contract": {
@@ -1593,6 +1585,14 @@
               },
               {
                 "name": "make lib",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "auto layout",
                 "kind": "input",
                 "contract": {
                   "role": "follower",
@@ -1903,6 +1903,38 @@
                 "contract": {
                   "role": "follower",
                   "payload": "ArlRef"
+                }
+              },
+              {
+                "name": "sysblu.undo",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "system.updated",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "sysblu.redo",
+                "kind": "input",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
+                }
+              },
+              {
+                "name": "sysblu.diagnostics",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "any"
                 }
               }
             ]
@@ -2533,6 +2565,14 @@
                     }
                   },
                   {
+                    "name": "team settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
                     "name": "agent settings",
                     "kind": "output",
                     "contract": {
@@ -2542,6 +2582,38 @@
                   },
                   {
                     "name": "model runtime settings",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "dock",
+            "name": "team settings",
+            "team": "ui",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "team settings"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "show",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "any"
+                    }
+                  },
+                  {
+                    "name": "modal div",
                     "kind": "output",
                     "contract": {
                       "role": "follower",
@@ -2903,6 +2975,16 @@
           },
           {
             "src": {
+              "pin": "team settings",
+              "node": "doc settings"
+            },
+            "dst": {
+              "pin": "show",
+              "node": "team settings"
+            }
+          },
+          {
+            "src": {
               "pin": "agent settings",
               "node": "doc settings"
             },
@@ -2919,6 +3001,15 @@
             "dst": {
               "pin": "show",
               "node": "model runtime settings"
+            }
+          },
+          {
+            "src": {
+              "pin": "modal div",
+              "node": "team settings"
+            },
+            "dst": {
+              "pin": "modal div"
             }
           },
           {

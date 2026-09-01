@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.11.0",
+    "version": "1.12.0",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "12/16/2025, 1:00:06 PM",
-    "utc": "2026-08-20T08:48:55.524Z",
+    "utc": "2026-09-01T07:07:03.334Z",
     "style": "#00aaff"
   },
   "root": {
@@ -177,7 +177,7 @@
           {
             "kind": "source",
             "name": "document settings",
-            "rect": "x 69 y 449 w 200 h 86",
+            "rect": "x 69 y 449 w 200 h 101",
             "interfaces": [
               {
                 "interface": "(0)",
@@ -185,7 +185,22 @@
                   "(1 L)show",
                   "(2 L)modal div",
                   "(3 R)model runtime settings",
-                  "(4 R)agent settings"
+                  "(4 R)agent settings",
+                  "(5 R)team settings"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "source",
+            "name": "team settings",
+            "rect": "x 594 y 460 w 150 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(1 L)show",
+                  "(2 R)modal div"
                 ]
               }
             ]

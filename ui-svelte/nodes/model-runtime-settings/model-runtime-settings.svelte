@@ -1,282 +1,60 @@
 <script>
-import {onMount} from 'svelte'
-import PopupBox from '../../fragments/popup-box.svelte'
-import Button from '../../fragments/button.svelte'
-import LabelCheckbox from '../../fragments/label-checkbox.svelte'
-import LabelSelect from '../../fragments/label-select.svelte'
-import LabelTextarea from '../../fragments/label-textarea.svelte'
-import {getRuntimeSettings} from '../../../runtime/runtime-settings-registry.js'
+import SecurityDetailPopup from './security-detail-popup.svelte'
 
 export let tx
 
-const box = {
-    div: null,
-    pos: null,
-    title: 'Runtime Settings',
-    ok: null,
-    cancel: null,
-}
+let fsPopup
+let netPopup
+let processPopup
 
-let settingsText = ''
-let settingsError = ''
-let currentSettings = null
-let currentRuntime = null
-let view = 'form'
-let scopeText = makeScopeText()
+export const handlers = {"-> show": show}
 
-const permissionOptions = ['allow', 'warn', 'deny']
-
-onMount(() => {
-    tx.send('modal div', box.div)
-})
-
-export function show({runtime, settings, pos, ok, cancel}) {
-    currentRuntime = runtime
-    currentSettings = normalizeModelSettings(runtime, cloneSettings(settings))
-    syncTextFromSettings()
-    syncAllowTextFromSettings()
-    settingsError = ''
-    view = 'form'
-    box.title = `Runtime Settings: ${runtimeName(runtime)}`
-    box.pos = {...pos}
-    box.ok = () => {
-        const parsed = view === 'json' ? parseSettings() : collectFormSettings()
-        if (parsed === undefined) {
-            box.show(box.pos)
-            return
-        }
-        currentSettings = normalizeModelSettings(currentRuntime, parsed)
-        ok?.(parsed)
+function show({category, security, pos, ok, cancel}) {
+    const common = {
+        pos: {...(pos ?? {x: 40, y: 40})},
+        cancel,
     }
-    box.cancel = () => {
-        settingsError = ''
-        cancel?.()
-    }
-    box.show(box.pos)
-}
 
-export const handlers = {
-    "-> show": show,
-}
-
-function cloneSettings(settings) {
-    if (!settings) return null
-    return JSON.parse(JSON.stringify(settings))
-}
-
-function settingsToText(settings) {
-    if (!settings) return ''
-    if (typeof settings === 'string') return JSON.stringify({path: settings}, null, 2)
-    return JSON.stringify(settings, null, 2)
-}
-
-function normalizeModelSettings(runtime, settings = null) {
-    const runtimeSettings = getRuntimeSettings(runtime)
-    const base = settings ?? runtimeSettings.makeModel()
-    return runtimeSettings.normalizeModel?.(base) ?? base
-}
-
-function collectFormSettings() {
-    syncScopeListsFromText()
-    settingsError = ''
-    return normalizeModelSettings(currentRuntime, currentSettings)
-}
-
-function syncTextFromSettings() {
-    settingsText = settingsToText(currentSettings)
-}
-
-function syncSettingsFromText() {
-    const parsed = parseSettings()
-    if (parsed === undefined) return false
-    currentSettings = normalizeModelSettings(currentRuntime, parsed)
-    syncAllowTextFromSettings()
-    return true
-}
-
-function setView(nextView) {
-    if (nextView === view) return
-    if (nextView === 'json') {
-        syncScopeListsFromText()
-        syncTextFromSettings()
-        settingsError = ''
-    }
-    else if (!syncSettingsFromText()) {
+    if (category === 'fs') {
+        fsPopup.show({
+            ...common,
+            title: 'File System Security',
+            operations: security.fs,
+            labels: {read: 'Read', write: 'Write', delete: 'Delete'},
+            targetKey: 'roots',
+            targetLabel: 'locations',
+            ok: operations => ok?.({...security, fs: operations}),
+        })
         return
     }
-    view = nextView
-}
 
-function syncAllowTextFromSettings() {
-    scopeText = {
-        fsReadRoots: listToText(currentSettings?.security?.fs?.read?.roots),
-        fsWriteRoots: listToText(currentSettings?.security?.fs?.write?.roots),
-        fsDeleteRoots: listToText(currentSettings?.security?.fs?.delete?.roots),
-        netEgressHosts: listToText(currentSettings?.security?.net?.egress?.hosts),
-        processExecCommands: listToText(currentSettings?.security?.process?.exec?.commands),
-    }
-}
-
-function syncScopeListsFromText() {
-    const security = currentSettings?.security
-    if (!security) return
-    security.fs.read.roots = textToList(scopeText.fsReadRoots)
-    security.fs.write.roots = textToList(scopeText.fsWriteRoots)
-    security.fs.delete.roots = textToList(scopeText.fsDeleteRoots)
-    security.net.egress.hosts = textToList(scopeText.netEgressHosts)
-    security.process.exec.commands = textToList(scopeText.processExecCommands)
-}
-
-function makeScopeText() {
-    return {
-        fsReadRoots: '',
-        fsWriteRoots: '',
-        fsDeleteRoots: '',
-        netEgressHosts: '',
-        processExecCommands: '',
-    }
-}
-
-function listToText(values) {
-    return Array.isArray(values) ? values.join('\n') : ''
-}
-
-function textToList(text) {
-    return (text ?? '')
-        .split(/\r?\n/)
-        .map(value => value.trim())
-        .filter(Boolean)
-}
-
-function parseSettings() {
-    const text = settingsText?.trim() ?? ''
-    if (!text) {
-        settingsError = ''
-        return null
+    if (category === 'net') {
+        netPopup.show({
+            ...common,
+            title: 'Network Security',
+            operations: security.net,
+            labels: {egress: 'Egress'},
+            targetKey: 'hosts',
+            targetLabel: 'hosts',
+            ok: operations => ok?.({...security, net: operations}),
+        })
+        return
     }
 
-    try {
-        settingsError = ''
-        return JSON.parse(text)
+    if (category === 'process') {
+        processPopup.show({
+            ...common,
+            title: 'Process Security',
+            operations: security.process,
+            labels: {exec: 'Execute'},
+            targetKey: 'commands',
+            targetLabel: 'commands',
+            ok: operations => ok?.({...security, process: operations}),
+        })
     }
-    catch (error) {
-        settingsError = error?.message ?? String(error)
-        return undefined
-    }
-}
-
-function runtimeName(runtime) {
-    return runtime?.split?.('/')?.at?.(-1) ?? runtime ?? 'runtime'
-}
-
-function hasPolicySettings(settings) {
-    return !!(settings?.security?.fs && settings?.security?.net && settings?.security?.process)
 }
 </script>
 
-<style>
-.runtime-settings {
-    width: 34rem;
-    max-width: 80vw;
-    color: #ccc;
-    font-family: var(--fBase);
-    font-size: var(--fSmall);
-}
-
-.tabs {
-    display: flex;
-    gap: 0.35rem;
-    margin-bottom: 0.75rem;
-}
-
-.section {
-    border-top: 1px solid #444;
-    padding-top: 0.6rem;
-    margin-top: 0.7rem;
-}
-
-.section:first-of-type {
-    border-top: 0;
-    margin-top: 0;
-    padding-top: 0;
-}
-
-.section h4 {
-    margin: 0 0 0.45rem 0;
-    color: #eee;
-    font-size: var(--fBase);
-    font-weight: normal;
-}
-
-.runtime-settings .json-editor {
-    width: 34rem;
-    max-width: 80vw;
-    height: 18rem;
-    background: #111;
-    color: #ccc;
-    border: 1px solid #555;
-    font-family: var(--fFixed);
-    font-size: var(--fSmall);
-    outline: none;
-    resize: vertical;
-}
-
-.runtime-settings .json-editor:focus {
-    border-color: #888;
-}
-
-.runtime-error {
-    max-width: 34rem;
-    color: #ff8080;
-    font-family: var(--fBase);
-    font-size: var(--fSmall);
-    margin-top: 0.25rem;
-}
-</style>
-
-<PopupBox box={box}>
-    <div class="runtime-settings">
-        <div class="tabs">
-            <Button label="Form" click={() => setView('form')} active={view === 'form'} />
-            <Button label="JSON" click={() => setView('json')} active={view === 'json'} />
-        </div>
-
-        {#if view === 'form' && currentSettings}
-            <div class="section">
-                <h4>Monitor</h4>
-                <LabelCheckbox label="log messages" bind:on={currentSettings.monitor.logMessages} />
-                <LabelCheckbox label="log timings" bind:on={currentSettings.monitor.logTimings} />
-            </div>
-
-            {#if hasPolicySettings(currentSettings)}
-                <div class="section">
-                    <h4>File System</h4>
-                    <LabelSelect label="read" bind:value={currentSettings.security.fs.read.mode} options={permissionOptions} />
-                    <LabelTextarea label="read roots" bind:text={scopeText.fsReadRoots} />
-                    <LabelSelect label="write" bind:value={currentSettings.security.fs.write.mode} options={permissionOptions} />
-                    <LabelTextarea label="write roots" bind:text={scopeText.fsWriteRoots} />
-                    <LabelSelect label="delete" bind:value={currentSettings.security.fs.delete.mode} options={permissionOptions} />
-                    <LabelTextarea label="delete roots" bind:text={scopeText.fsDeleteRoots} />
-                </div>
-
-                <div class="section">
-                    <h4>Network</h4>
-                    <LabelSelect label="egress" bind:value={currentSettings.security.net.egress.mode} options={permissionOptions} />
-                    <LabelTextarea label="hosts" bind:text={scopeText.netEgressHosts} />
-                </div>
-
-                <div class="section">
-                    <h4>Process</h4>
-                    <LabelSelect label="exec" bind:value={currentSettings.security.process.exec.mode} options={permissionOptions} />
-                    <LabelTextarea label="commands" bind:text={scopeText.processExecCommands} />
-                </div>
-            {/if}
-        {:else}
-            <textarea class="json-editor" spellcheck="false" bind:value={settingsText} on:keydown|stopPropagation></textarea>
-        {/if}
-
-        {#if settingsError}
-            <div class="runtime-error">{settingsError}</div>
-        {/if}
-    </div>
-</PopupBox>
+<SecurityDetailPopup bind:this={fsPopup} {tx} />
+<SecurityDetailPopup bind:this={netPopup} {tx} />
+<SecurityDetailPopup bind:this={processPopup} {tx} />

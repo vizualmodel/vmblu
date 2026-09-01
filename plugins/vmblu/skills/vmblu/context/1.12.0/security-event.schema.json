@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/context/1.12.0/security-event.schema.json",
+  "title": "vmblu Security Event",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "ts": { "type": "integer", "minimum": 0 },
+    "node": { "type": "string", "minLength": 1 },
+    "operation": { "type": "string", "enum": ["fs.read", "fs.write", "fs.delete", "net.egress", "process.exec"] },
+    "cap": { "type": "string", "description": "Deprecated compatibility field." },
+    "detail": { "type": "object" },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "decision": { "type": "string", "enum": ["warning", "denied"] },
+        "area": { "type": "string", "enum": ["fs", "net", "process"] },
+        "action": { "type": "string", "enum": ["read", "write", "delete", "egress", "exec"] },
+        "mode": { "type": "string", "enum": ["allow", "warn", "deny"] },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "required": ["decision", "area", "action", "mode"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["schemaVersion", "ts", "node", "operation", "detail", "policy"],
+  "additionalProperties": false
+}

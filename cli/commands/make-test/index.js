@@ -1,110 +1,128 @@
-// vmblu make-test <model-file> [--outDir <dir>]
-import fs from 'fs';
-import path from 'path';
+import path from 'node:path'
 
-import { ModelBlueprint, ModelCompiler, UIDGenerator } from '@vizualmodel/vmblu-core/types/model';
-import { ARL } from '@vizualmodel/vmblu-core/types/arl/arl-node';
-import { normalizeSeparators } from '@vizualmodel/vmblu-core/types/arl/path';
-import { resolveEntrypoint } from '../../lib/resolve-entrypoint.js';
-import { assertCompatibleVersion } from '../../lib/version-policy.js';
+import {
+    createAppTestArtifact,
+    createGroupTestArtifact,
+    createNodeTestArtifact,
+    loadAppTestContext,
+    loadGroupTestContext,
+    loadNodeTestContext,
+    testArtifactPath,
+    writeJson,
+} from '../../lib/model-test-artifact.js'
+import {SCHEMA_VERSION} from '../../lib/release-version.js'
+import {validateWithSchema} from '../../lib/schema-validation.js'
 
-export const command = 'make-test <model-file>';
-export const describe = 'Generate test app files from a model';
+export const command = 'make-test <node|group|app> <model-file>'
+export const describe = 'Generate formal model-test artifacts from Markdown test specifications'
 
 export const builder = [
-  { flag: '--out-dir <dir>', desc: 'output directory for test files (default: ./test)' },
-  { flag: '--out <dir>', desc: 'alias for --out-dir' },
-  { flag: '-o <dir>', desc: 'alias for --out-dir' }
-];
+    {flag: '--node <name-path>', desc: 'node name path; repeat to generate tests for several nodes'},
+    {flag: '--group <name-path>', desc: 'group name path'},
+]
 
-export const handler = async (argv) => {
-  const args = parseCliArgs(argv);
+export async function makeNodeTests(modelFile, nodePaths) {
+    const schemaFile = modelTestSchema()
+    const results = []
 
-  // Require a model file path to proceed.
-  if (!args.modelFile) {
-    console.error('Usage: vmblu make-test <model-file> [--outDir <dir>]');
-    process.exit(1);
-  }
+    for (const nodePath of nodePaths) {
+        const context = await loadNodeTestContext(modelFile, nodePath)
+        assertWritableTestRepo(context)
+        const artifact = createNodeTestArtifact(context)
+        if (!artifact) {
+            results.push({node: context.parts.join('/'), status: 'skipped', reason: 'no tests specified'})
+            continue
+        }
 
-  let resolved;
-  try {
-    resolved = resolveEntrypoint(args.modelFile);
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
-  }
-
-  // Resolve and validate the model file path.
-  const absoluteModelPath = resolved.modelPath;
-
-  // Resolve the output directory (default: <model-dir>/test).
-  const outDir = args.outDir
-    ? path.resolve(args.outDir)
-    : path.join(path.dirname(absoluteModelPath), 'test');
-
-  // Ensure the output directory exists.
-  if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir, { recursive: true });
-    const mirrorsDir = path.join(outDir, 'mirrors');
-    fs.mkdirSync(mirrorsDir, { recursive: true });
-  }
-
-  // Normalize to forward slashes so ARL resolution is consistent.
-  const modelPath = normalizeSeparators(absoluteModelPath);
-
-  // Build the model root via the compiler.
-  const arl = new ARL(modelPath);
-  const model = new ModelBlueprint(arl);
-  const compiler = new ModelCompiler(new UIDGenerator());
-  await compiler.refreshRaw(model);
-  assertCompatibleVersion(model.raw?.header?.version, 'model schema');
-
-  // Compile the model into a root node using the current compiler API.
-  const root = model.raw?.root ? compiler.compileRawNode(model, model.raw.root) : null;
-  if (!root) {
-    console.error('Failed to compile model root.');
-    process.exit(1);
-  }
-
-  // Build runtime connection tables from the compiled routes.
-  root.rxtxBuildTxTable();
-
-  // Generate and save the test app files from the compiled model.
-  model.makeTestApp(normalizeSeparators(outDir), root);
-  console.log(`Test app written to ${outDir}`);
-};
-
-function parseCliArgs(argvInput) {
-  const argv = Array.isArray(argvInput) ? argvInput : [];
-  const result = {
-    outDir: null,
-    modelFile: null,
-  };
-
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (token === '--out-dir' || token === '--out' || token === '-o') {
-      const next = argv[i + 1];
-      if (next && !next.startsWith('--')) {
-        result.outDir = next;
-        i += 1;
-      } else {
-        console.warn('Warning: --out-dir requires a path argument; ignoring.');
-      }
-      continue;
+        validateWithSchema(artifact, schemaFile, `node test for '${context.parts.join('/')}'`)
+        const file = testArtifactPath(context)
+        writeJson(file, artifact)
+        results.push({node: context.parts.join('/'), status: 'written', file})
     }
 
-    if (token?.startsWith('--')) {
-      console.warn(`Warning: unknown option "${token}" ignored.`);
-      continue;
-    }
+    return results
+}
 
-    if (!result.modelFile) {
-      result.modelFile = token;
-    } else {
-      console.warn(`Warning: extra positional argument "${token}" ignored.`);
-    }
-  }
+export async function makeGroupTest(modelFile, groupPath) {
+    const context = await loadGroupTestContext(modelFile, groupPath)
+    assertWritableTestRepo(context)
+    const artifact = createGroupTestArtifact(context)
+    if (!artifact) return {target: context.parts.join('/'), status: 'skipped', reason: 'no tests specified'}
+    validateWithSchema(artifact, modelTestSchema(), `group test for '${context.parts.join('/')}'`)
+    const file = testArtifactPath(context)
+    writeJson(file, artifact)
+    return {target: context.parts.join('/'), status: 'written', file}
+}
 
-  return result;
+export async function makeAppTest(modelFile) {
+    const context = await loadAppTestContext(modelFile)
+    assertWritableTestRepo(context)
+    const artifact = createAppTestArtifact(context)
+    if (!artifact) return {target: context.root.name, status: 'skipped', reason: 'no tests specified'}
+    validateWithSchema(artifact, modelTestSchema(), `application test for '${context.root.name}'`)
+    const file = testArtifactPath(context)
+    writeJson(file, artifact)
+    return {target: context.root.name, status: 'written', file}
+}
+
+export const handler = async argv => {
+    const args = parseArgs(argv)
+    if (!args.modelFile) throw usageError()
+    let results
+    if (args.kind === 'node' && args.nodePaths.length && !args.groupPath) {
+        results = await makeNodeTests(args.modelFile, args.nodePaths)
+    }
+    else if (args.kind === 'group' && args.groupPath && !args.nodePaths.length) {
+        results = [await makeGroupTest(args.modelFile, args.groupPath)]
+    }
+    else if (args.kind === 'app' && !args.groupPath && !args.nodePaths.length) {
+        results = [await makeAppTest(args.modelFile)]
+    }
+    else throw usageError()
+
+    for (const result of results) {
+        if (result.status === 'written') console.log(`Model test written to ${path.relative(process.cwd(), result.file)}`)
+        else console.log(`No tests defined for ${result.node ?? result.target}; nothing written.`)
+    }
+    return results
+}
+
+function parseArgs(argv=[]) {
+    const result = {kind: null, modelFile: null, nodePaths: [], groupPath: null}
+    for (let index = 0; index < argv.length; index++) {
+        const token = argv[index]
+        if (token === '--node') {
+            const value = argv[++index]
+            if (!value || value.startsWith('-')) throw new Error('--node requires a node name path')
+            result.nodePaths.push(value)
+        }
+        else if (token === '--group') {
+            const value = argv[++index]
+            if (!value || value.startsWith('-')) throw new Error('--group requires a group name path')
+            result.groupPath = value
+        }
+        else if (String(token).startsWith('-')) throw new Error(`Unknown make-test option: ${token}`)
+        else if (!result.kind) result.kind = token
+        else if (!result.modelFile) result.modelFile = token
+        else throw new Error(`Unexpected make-test argument: ${token}`)
+    }
+    return result
+}
+
+function modelTestSchema() {
+    return new URL(`../../context/${SCHEMA_VERSION}/model-test.schema.json`, import.meta.url)
+}
+
+function assertWritableTestRepo(context) {
+    if (context.testRepoReadOnly) {
+        throw new Error(`Test specification for '${context.parts.join('/') || context.root.name}' is owned by a linked model and is read-only`)
+    }
+}
+
+function usageError() {
+    return new Error(
+        'Usage: vmblu make-test node <model-file> --node <name-path> [--node <name-path> ...]\n' +
+        '       vmblu make-test group <model-file> --group <name-path>\n' +
+        '       vmblu make-test app <model-file>',
+    )
 }

@@ -4,6 +4,8 @@ import PopupBox from '../../fragments/popup-box.svelte'
 
 export let tx
 
+const ID_PATTERN = /^[A-Za-z0-9_.-]+$/
+
 let box = {
     div: null,
     pos: null,
@@ -14,30 +16,33 @@ let box = {
 
 let pin = null
 let ok = null
-let settings = makeSettings(null)
-let schemaText = '{}'
+let settings = {enabled: false, id: ''}
+let payloadSchema = {type: 'object'}
 let error = ''
+let migrationWarning = ''
 
 onMount(() => {
     tx.send('modal div', box.div)
 })
 
-// small helper
 const closeBox = () => {
     pin = null
-    box.hide()        
+    box.hide()
 }
 
 export const handlers = {
-    onShow({pos, pin: shownPin, ok: okFn, cancel}) {
-
-        // toggle behaviour for repeat key press
-        if (pin && pin == shownPin) return closeBox();
+    onShow({pos, pin: shownPin, capability = {}, ok: okFn, cancel}) {
+        if (pin && pin === shownPin) return closeBox()
 
         pin = shownPin
         ok = okFn
-        settings = makeSettings(pin)
-        schemaText = jsonText(settings.schema, '{}')
+        const current = pin?.event ?? {}
+        settings = {
+            enabled: current.enabled ?? false,
+            id: current.id ?? capability.suggestedId ?? makeFallbackId(pin),
+        }
+        payloadSchema = capability.payloadSchema ?? {type: 'object'}
+        migrationWarning = legacyWarning(current)
         error = ''
 
         box.title = `Event settings: ${pin?.name ?? ''} @ ${pin?.node?.name ?? ''}`
@@ -49,92 +54,49 @@ export const handlers = {
 }
 
 function submit() {
-    const next = collectSettings()
-    if (!next) {
+    error = ''
+    const id = String(settings.id ?? '').trim()
+
+    if (settings.enabled && !id) {
+        error = 'id is required'
+        box.show(box.pos)
+        return
+    }
+    if (id && !ID_PATTERN.test(id)) {
+        error = 'id may contain only letters, digits, dot, dash, and underscore'
         box.show(box.pos)
         return
     }
 
-    ok?.(next)
+    ok?.({enabled: !!settings.enabled, ...(id ? {id} : {})})
 }
 
-function makeSettings(pin) {
-    const current = pin?.event ?? {}
-    return {
-        enabled: current.enabled ?? false,
-        id: current.id ?? defaultId(pin),
-        title: current.title ?? titleFromName(pin?.name),
-        description: current.description ?? pin?.prompt ?? '',
-        schema: current.schema,
-    }
+function makeFallbackId(value) {
+    return [value?.node?.name, value?.name]
+        .map(part => String(part ?? '').trim().replace(/[^A-Za-z0-9_.-]+/g, '-').replace(/^[._-]+|[._-]+$/g, ''))
+        .filter(Boolean)
+        .join('.') || 'event'
 }
 
-function collectSettings() {
-    error = ''
-
-    const next = {
-        enabled: settings.enabled,
-        id: settings.id.trim(),
-        title: settings.title.trim(),
-        description: settings.description.trim(),
-    }
-
-    if (!next.enabled) return {enabled: false}
-
-    if (!next.id) {
-        error = 'id is required'
-        return null
-    }
-
-    const schema = parseOptionalJson(schemaText, 'schema')
-    if (schema === undefined) return null
-    if (schema !== null) next.schema = schema
-
-    return next
-}
-
-function parseOptionalJson(text, label) {
-    if (!text?.trim()) return null
-
-    try {
-        return JSON.parse(text)
-    }
-    catch (err) {
-        error = `${label} is not valid JSON`
-        return undefined
-    }
-}
-
-function jsonText(value, fallback) {
-    return value == null ? fallback : JSON.stringify(value, null, 2)
-}
-
-function defaultId(pin) {
-    const pinName = String(pin?.name ?? '').trim()
-    const nodeName = String(pin?.node?.name ?? '').trim()
-
-    if (pinName && nodeName) return `${pinName} @ ${nodeName}`
-    return pinName || nodeName
-}
-
-function titleFromName(name) {
-    return String(name ?? '')
-        .replace(/[-_.]+/g, ' ')
-        .replace(/\b\w/g, char => char.toUpperCase())
+function legacyWarning(current) {
+    const legacy = ['title', 'description', 'schema'].filter(key => current?.[key] != null)
+    return legacy.length
+        ? `Legacy ${legacy.join(', ')} metadata will be replaced by values derived from the pin contract when you save.`
+        : ''
 }
 </script>
 
 <style>
 .form {
     display: grid;
-    gap: 0.45rem;
-    min-width: 24rem;
-    max-width: 34rem;
+    gap: 0.55rem;
+    min-width: 28rem;
+    max-width: 42rem;
 }
 
 label {
     display: grid;
-    gap: 0.15rem;
+    gap: 0.2rem;
     color: #ddd;
     font-family: var(--fBase);
     font-size: 0.78rem;
@@ -146,8 +108,7 @@ label {
     gap: 0.45rem;
 }
 
-input,
-textarea {
+input {
     box-sizing: border-box;
     width: 100%;
     background: #1f1f1f;
@@ -163,14 +124,35 @@ input[type="checkbox"] {
     width: auto;
 }
 
-textarea {
-    min-height: 3.8rem;
-    resize: vertical;
+details {
+    border: 1px solid #444;
+    border-radius: 0.2rem;
+    padding: 0.4rem;
+}
+
+summary {
+    cursor: pointer;
+    color: #e2c64e;
+    font-family: var(--fBase);
+}
+
+pre {
+    max-height: 17rem;
+    overflow: auto;
+    margin: 0.45rem 0 0;
+    color: #ccc;
+    font-family: var(--fFixed);
+    font-size: 0.72rem;
+    white-space: pre-wrap;
+}
+
+.warning {
+    color: #e2c64e;
+    font-size: 0.74rem;
 }
 
 .error {
     color: #ff7777;
-    font-family: var(--fBase);
     font-size: 0.76rem;
 }
 </style>
@@ -183,25 +165,18 @@ textarea {
         </label>
 
         <label>
-            id
+            ID
             <input spellcheck="false" bind:value={settings.id} />
         </label>
 
-        <label>
-            title
-            <input spellcheck="false" bind:value={settings.title} />
-        </label>
+        <details open>
+            <summary>Payload schema</summary>
+            <pre>{JSON.stringify(payloadSchema, null, 2)}</pre>
+        </details>
 
-        <label>
-            description
-            <textarea spellcheck="false" bind:value={settings.description}></textarea>
-        </label>
-
-        <label>
-            schema JSON
-            <textarea spellcheck="false" bind:value={schemaText}></textarea>
-        </label>
-
+        {#if migrationWarning}
+            <div class="warning">{migrationWarning}</div>
+        {/if}
         {#if error}
             <div class="error">{error}</div>
         {/if}

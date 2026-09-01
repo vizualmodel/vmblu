@@ -1,5 +1,5 @@
 export {Runtime} from './runtime.js'
-export {safety} from '../security/safety.js'
+export {safety, SecurityPolicyError} from '../security/safety.js'
 export {SecurityReporterFactory} from '../security/security-reporter.js'
 export {BrokerRequestTypes, BrokerResultTypes, ToolResultStatus, brokerError, CapabilityRegistry, AgentPolicy, validateJsonSchema, TraceRecorder, ToolBroker, AgentRuntime} from '../agent-base/index.js'
 export {AgentOverlay} from '../llm-overlay/agent-overlay.js'

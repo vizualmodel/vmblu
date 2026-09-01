@@ -4,6 +4,7 @@ import Ajv2020 from 'ajv/dist/2020.js'
 
 import {ARL} from '@vizualmodel/vmblu-core/types/arl/arl-node'
 import {ModelBlueprint, sourceHash} from '@vizualmodel/vmblu-core/types/model'
+import {getRuntimeDescriptor, getRuntimeSettings, RT_ALS} from '@vizualmodel/vmblu-runtime/runtime-settings'
 import {validateProtocolReferences} from '../../lib/protocol-validation.js'
 import {resolveEntrypoint} from '../../lib/resolve-entrypoint.js'
 import {assertCompatibleVersion, compatibilityFamily, CLI_VERSION, SCHEMA_VERSION} from '../../lib/version-policy.js'
@@ -22,6 +23,7 @@ export async function verifyProject(inputPath, {requireGenerated = false} = {}) 
   const model = new ModelBlueprint(new ARL(resolved.modelPath))
   const raw = await model.getRaw()
   if (!raw) throw new Error(`Could not load model ${resolved.modelPath}`)
+  model.preCook()
   const modelDocument = JSON.parse(fs.readFileSync(resolved.modelPath, 'utf8'))
 
   const checks = []
@@ -44,6 +46,15 @@ export async function verifyProject(inputPath, {requireGenerated = false} = {}) 
     return SCHEMA_VERSION
   })
 
+  runCheck(checks, failures, 'runtime security', () => {
+    return verifyRuntimeSecurity(modelDocument, resolved.modelPath)
+  })
+
+  const capabilities = model.makeCapabilityObject()
+  runCheck(checks, failures, 'agent integration', () => {
+    return verifyAgentIntegration(modelDocument.header?.agent, resolved.modelPath, capabilities)
+  })
+
   runCheck(checks, failures, 'visual schema', () => {
     const visualPath = model.viz.arl?.getFullPath?.()
     if (!visualPath || !fs.existsSync(visualPath)) throw new Error('visual model is missing')
@@ -63,6 +74,9 @@ export async function verifyProject(inputPath, {requireGenerated = false} = {}) 
     {kind: 'application', file: `${base}.app.js`, read: readJavascriptProvenance},
     {kind: 'capabilities', file: `${base}.cap.json`, read: readJsonArtifact, schema: 'capabilities.schema.json'},
   ]
+  if (raw.header?.agent && typeof raw.header.agent === 'object' && !raw.header.agent.path) {
+    artifacts.push({kind: 'agent-configuration', file: `${base}.agent.json`, read: readJsonArtifact, schema: 'agents.v1.json'})
+  }
 
   for (const artifact of artifacts) {
     if (!fs.existsSync(artifact.file)) {
@@ -95,6 +109,128 @@ export async function verifyProject(inputPath, {requireGenerated = false} = {}) 
     skipped,
     failures,
   }
+}
+
+function verifyRuntimeSecurity(document, modelPath) {
+  const header = document.header ?? {}
+  const settings = resolveRuntimeSettings(header.runtimeSettings, modelPath)
+  const legacyNodes = collectLegacyNodeSecurity(document.root)
+  if (legacyNodes.length) {
+    throw new Error(`ignored legacy node security on ${legacyNodes.join(', ')}`)
+  }
+  if (!settings?.security) return 'not configured'
+
+  const descriptor = getRuntimeDescriptor(header.runtime)
+  const policySettings = descriptor.supportsSecurity ? getRuntimeSettings(header.runtime) : getRuntimeSettings(RT_ALS)
+  const errors = policySettings.validateModel?.(settings) ?? []
+  if (errors.length) throw new Error(errors.map(error => `${error.path}: ${error.message}`).join('; '))
+  if (!descriptor.supportsSecurity) return `configured, unsupported by ${descriptor.name}`
+  return `${descriptor.name}, model base ${path.dirname(modelPath)}`
+}
+
+function verifyAgentIntegration(agentHeader, modelPath, capabilities) {
+  validateCapabilityReferences(capabilities)
+  if (!agentHeader) return 'not configured'
+
+  const config = resolveAgentConfiguration(agentHeader, modelPath)
+  validateDocument(config, 'agents.v1.json')
+
+  const profileIds = uniqueIds(config.profiles, 'agent profile')
+  const interfaceIds = uniqueIds(config.interfaces, 'agent interface')
+  if (config.defaultInterface && !interfaceIds.has(config.defaultInterface)) {
+    throw new Error(`defaultInterface references unknown interface: ${config.defaultInterface}`)
+  }
+
+  const known = {
+    tools: new Set(capabilities.tools.map(item => item.id)),
+    probes: new Set(capabilities.probes.map(item => item.id)),
+    events: new Set(capabilities.events.map(item => item.id)),
+  }
+  for (const profile of config.profiles) {
+    for (const kind of ['tools', 'probes', 'events']) {
+      for (const id of [...(profile.permissions?.[kind]?.allow ?? []), ...(profile.permissions?.[kind]?.deny ?? [])]) {
+        if (id !== '*' && !known[kind].has(id)) throw new Error(`profile ${profile.id} references unknown ${kind} capability: ${id}`)
+      }
+    }
+  }
+  for (const item of config.interfaces) {
+    if (!profileIds.has(item.profile)) throw new Error(`interface ${item.id} references unknown profile: ${item.profile}`)
+  }
+
+  const enabledEmbedded = config.interfaces.filter(item => item.kind === 'embedded' && item.enabled !== false)
+  if (enabledEmbedded.length) {
+    if (!config.defaultInterface) throw new Error('defaultInterface is required when an embedded interface is enabled')
+    const selected = config.interfaces.find(item => item.id === config.defaultInterface)
+    if (selected?.kind !== 'embedded') throw new Error(`defaultInterface must select an embedded interface: ${config.defaultInterface}`)
+    if (selected.enabled === false) throw new Error(`default embedded interface is disabled: ${selected.id}`)
+    const profile = config.profiles.find(item => item.id === selected.profile)
+    if (profile?.enabled === false) throw new Error(`default embedded interface references disabled profile: ${selected.profile}`)
+  }
+
+  return `${config.profiles.length} profiles, ${config.interfaces.length} interfaces`
+}
+
+function resolveAgentConfiguration(agentHeader, modelPath) {
+  const reference = typeof agentHeader === 'string' ? agentHeader : agentHeader?.path
+  if (!reference) return agentHeader
+  const sidecarPath = path.resolve(path.dirname(modelPath), reference)
+  if (!fs.existsSync(sidecarPath)) throw new Error(`agent sidecar is unresolved: ${sidecarPath}`)
+  try {
+    return JSON.parse(fs.readFileSync(sidecarPath, 'utf8'))
+  }
+  catch (error) {
+    throw new Error(`agent sidecar is malformed: ${sidecarPath}: ${error?.message ?? String(error)}`)
+  }
+}
+
+function validateCapabilityReferences(capabilities) {
+  const ids = new Set()
+  for (const item of [...capabilities.tools, ...capabilities.probes, ...capabilities.events]) {
+    if (ids.has(item.id)) throw new Error(`duplicate capability id: ${item.id}`)
+    ids.add(item.id)
+  }
+  const probes = new Set(capabilities.probes.map(item => item.id))
+  const events = new Set(capabilities.events.map(item => item.id))
+  for (const tool of capabilities.tools) {
+    for (const effect of tool.effects ?? []) {
+      for (const id of effect.verifyWith?.probes ?? []) {
+        const probeId = typeof id === 'string' ? id : id?.id
+        if (probeId && !probes.has(probeId)) throw new Error(`tool ${tool.id} verifies with unknown probe: ${probeId}`)
+      }
+      for (const eventId of effect.verifyWith?.events ?? []) {
+        if (!events.has(eventId)) throw new Error(`tool ${tool.id} verifies with unknown event: ${eventId}`)
+      }
+    }
+  }
+}
+
+function uniqueIds(items, label) {
+  const ids = new Set()
+  for (const item of items ?? []) {
+    if (ids.has(item.id)) throw new Error(`duplicate ${label} id: ${item.id}`)
+    ids.add(item.id)
+  }
+  return ids
+}
+
+function resolveRuntimeSettings(settings, modelPath) {
+  const reference = typeof settings === 'string' ? settings : settings?.path
+  if (!reference) return settings
+  const sidecarPath = path.resolve(path.dirname(modelPath), reference)
+  if (!fs.existsSync(sidecarPath)) throw new Error(`runtime sidecar is unresolved: ${sidecarPath}`)
+  try {
+    return JSON.parse(fs.readFileSync(sidecarPath, 'utf8'))
+  }
+  catch (error) {
+    throw new Error(`runtime sidecar is malformed: ${sidecarPath}: ${error?.message ?? String(error)}`)
+  }
+}
+
+function collectLegacyNodeSecurity(node, result = []) {
+  if (!node || typeof node !== 'object') return result
+  if (node.dx?.security || node.dx?.safety) result.push(node.name ?? '<unnamed node>')
+  for (const child of node.nodes ?? []) collectLegacyNodeSecurity(child, result)
+  return result
 }
 
 function verifyProtocol(inputPath) {

@@ -1,6 +1,6 @@
 {
   "name": "@vizualmodel/vmblu-runtime",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "vmblu runtime javascript library for running node-based apps",
   "license": "Apache-2.0",
   "author": "Vizual Model",
@@ -37,6 +37,11 @@
       "require": "./dist/rt-nodejs-agent/index.cjs",
       "default": "./dist/rt-nodejs-agent/index.js"
     },
+    "./rt-model-test": {
+      "import": "./dist/rt-model-test/index.js",
+      "require": "./dist/rt-model-test/index.cjs",
+      "default": "./dist/rt-model-test/index.js"
+    },
     "./agent-adapters": {
       "import": "./dist/agent-adapters/index.js",
       "require": "./dist/agent-adapters/index.cjs",
@@ -61,6 +66,11 @@
       "import": "./dist/runtime-settings/runtime-settings-registry.js",
       "require": "./dist/runtime-settings/runtime-settings-registry.cjs",
       "default": "./dist/runtime-settings/runtime-settings-registry.js"
+    },
+    "./mcp": {
+      "import": "./dist/mcp/index.js",
+      "require": "./dist/mcp/index.cjs",
+      "default": "./dist/mcp/index.js"
     }
   },
   "main": "./dist/rt-base/index.cjs",
@@ -78,12 +88,14 @@
     "build:als": "tsup rt-als/index.js --format esm,cjs --out-dir dist/rt-als --sourcemap --splitting false --keep-names",
     "build:browser-agent": "tsup rt-browser-agent/index.js --format esm,cjs --out-dir dist/rt-browser-agent --sourcemap --splitting false --keep-names",
     "build:nodejs-agent": "tsup rt-nodejs-agent/index.js --format esm,cjs --out-dir dist/rt-nodejs-agent --sourcemap --splitting false --keep-names",
+    "build:model-test": "tsup rt-model-test/index.js --format esm,cjs --out-dir dist/rt-model-test --sourcemap --splitting false --keep-names",
     "build:agent-adapters": "tsup agent-adapters/index.js --format esm,cjs --out-dir dist/agent-adapters --sourcemap --splitting false --keep-names",
     "build:agent-base": "tsup agent-base/index.js --format esm,cjs --out-dir dist/agent-base --sourcemap --splitting false --keep-names",
     "build:llm-overlay": "tsup llm-overlay/index.js --format esm,cjs --out-dir dist/llm-overlay --sourcemap --splitting false --keep-names",
     "build:security": "tsup security/index.js --format esm,cjs --out-dir dist/security --sourcemap --splitting false --keep-names",
     "build:runtime-settings": "tsup runtime-settings-registry.js --format esm,cjs --out-dir dist/runtime-settings --sourcemap --splitting false --keep-names",
-    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:nodejs-agent && npm run build:agent-adapters && npm run build:agent-base && npm run build:llm-overlay && npm run build:security && npm run build:runtime-settings",
+    "build:mcp": "tsup mcp/index.js --format esm,cjs --out-dir dist/mcp --sourcemap --splitting false --keep-names --external @modelcontextprotocol/server --external @modelcontextprotocol/server/stdio --external @modelcontextprotocol/node",
+    "build": "npm run build:base && npm run build:als && npm run build:browser-agent && npm run build:nodejs-agent && npm run build:model-test && npm run build:agent-adapters && npm run build:agent-base && npm run build:llm-overlay && npm run build:security && npm run build:runtime-settings && npm run build:mcp",
     "test": "node --test ./test/*.test.js",
     "prepublishOnly": "npm run build"
   },
@@ -98,5 +110,9 @@
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "typescript": "^5.x"
+  },
+  "optionalDependencies": {
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0"
   }
 }

@@ -1,6 +1,7 @@
 import {ModelMap} from './model-map.js'
 import {style} from '../util/index.js'
 import {SCHEMA_VERSION} from './schema-version.js'
+import {getRuntimeDescriptor, getRuntimeSettings, RT_ALS} from '@vizualmodel/vmblu-runtime/runtime-settings'
 
 const DEFAULT_TEAM = 'default'
 const DEFAULT_TEAM_COLOR = '#0066ff'
@@ -43,7 +44,7 @@ ModelHeader.prototype = {
         this.runtime = raw.runtime?.slice() ?? '@vizualmodel/vmblu-runtime/rt-base'
 
         // get runtime configuration
-        this.runtimeSettings = raw.runtimeSettings ? JSON.parse(JSON.stringify(raw.runtimeSettings)) : null
+        this.runtimeSettings = canonicalRuntimeSettings(this.runtime, raw.runtimeSettings)
 
         // get the agent configuration
         this.agent = raw.agent ? JSON.parse(JSON.stringify(raw.agent)) : null
@@ -63,7 +64,7 @@ ModelHeader.prototype = {
             runtime: this.runtime
         }
 
-        if (this.runtimeSettings) raw.runtimeSettings = JSON.parse(JSON.stringify(this.runtimeSettings))
+        if (this.runtimeSettings) raw.runtimeSettings = canonicalRuntimeSettings(this.runtime, this.runtimeSettings)
         if (this.agent) raw.agent = JSON.parse(JSON.stringify(this.agent))
 
         return raw
@@ -85,6 +86,20 @@ ModelHeader.prototype = {
         this.teamStyles = makeTeamStyles(this.teams)
         this.style.adapt(this.teams[DEFAULT_TEAM].color)
     }
+}
+
+function canonicalRuntimeSettings(runtime, settings) {
+    if (!settings) return null
+    if (typeof settings !== 'object' || Array.isArray(settings) || settings.path) return JSON.parse(JSON.stringify(settings))
+
+    const result = JSON.parse(JSON.stringify(settings))
+    if (getRuntimeDescriptor(runtime).supportsSecurity) {
+        Object.assign(result, getRuntimeSettings(runtime).normalizeModel(settings))
+    }
+    if (settings.security) {
+        result.security = getRuntimeSettings(RT_ALS).normalizeModel({security: settings.security}).security
+    }
+    return result
 }
 
 function makeTeams(rawTeams, fallbackColor = DEFAULT_TEAM_COLOR) {
