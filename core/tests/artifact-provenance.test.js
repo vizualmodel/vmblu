@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import path from 'node:path'
 import test from 'node:test'
 
 import {ARL} from '../types/arl/arl-node.js'
@@ -17,7 +18,9 @@ test('artifact provenance is deterministic and insensitive to object key order',
 })
 
 test('safe runtime generation embeds the root model base directory', () => {
-    const model = new ModelBlueprint(new ARL('C:/project/model/app.mod.blu'))
+    const projectRoot = path.resolve('project').replaceAll('\\', '/')
+    const modelBaseDir = `${projectRoot}/model`
+    const model = new ModelBlueprint(new ARL(`${modelBaseDir}/app.mod.blu`))
     model.raw = {header: {version: '1.12.0'}, root: {kind: 'group', name: 'App', nodes: []}}
     model.header.runtime = '@vizualmodel/vmblu-runtime/rt-als'
     model.header.runtimeSettings = {security: {
@@ -27,8 +30,8 @@ test('safe runtime generation embeds the root model base directory', () => {
     }}
     const root = {name: 'App', collectImports() {}, makeSourceLists() {}}
 
-    const source = model.makeJSApp(root, new ARL('C:/project/build/app.app.js'), new ARL('C:/project/model/index.js'), model.header.runtime)
-    assert.match(source, /securityBaseDir: "C:\/project\/model"/)
+    const source = model.makeJSApp(root, new ARL(`${projectRoot}/build/app.app.js`), new ARL(`${modelBaseDir}/index.js`), model.header.runtime)
+    assert.ok(source.includes(`securityBaseDir: ${JSON.stringify(modelBaseDir)}`))
 })
 
 test('model header canonicalizes legacy application security on load', () => {
