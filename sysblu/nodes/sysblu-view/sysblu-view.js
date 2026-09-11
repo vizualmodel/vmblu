@@ -592,9 +592,25 @@ SysbluView.prototype = {
         this.tx.send('open reference', target)
     },
 
-    onApplicationPrompt() {
-        const reference = this.document?.references?.find(candidate => candidate.kind === 'prompt')
-        this.activateReference(reference)
+    onApplicationPrompt(event = {}) {
+        if (!this.document) return
+        const arl = this.arl
+        this.tx.send('project references', {
+            pos: {x: event.clientX ?? 48, y: event.clientY ?? 48},
+            references: structuredClone(this.document.references ?? []),
+            open: reference => {
+                if (!reference?.target?.trim()) return
+                const target = reference.target.trim()
+                this.tx.send('open reference', /^https?:\/\//i.test(target)
+                    ? {externalUrl: target} : arl?.resolve?.(target) ?? target)
+            },
+            ok: references => {
+                if (this.arl !== arl) return
+                this.tx.send('sysmod.doit', {verb: 'editReferences', param: {references}})
+                this.focusCanvasAfterInspector()
+            },
+            cancel: () => this.focusCanvasAfterInspector(),
+        })
     },
 
     wheel(event) {

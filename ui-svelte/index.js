@@ -1,4 +1,6 @@
 import { mount } from 'svelte'
+import ProjectReferences from './nodes/project-references/project-references.svelte'
+export const ProjectReferencesFactory = getFactory(ProjectReferences)
 import './nodes/global.css'
 
 // // Returns a factory function for the svelte component

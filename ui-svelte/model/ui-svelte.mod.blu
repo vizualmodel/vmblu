@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "2026-09-01T07:07:03.332Z",
     "utc": "2026-09-01T07:07:03.332Z",
@@ -939,6 +939,38 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "source",
+            "name": "project references",
+            "factory": {
+              "path": "../index.js",
+              "function": "ProjectReferencesFactory"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "project references",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ],
+            "prompt": "Edit top-level project references in a popup with open, add, remove, Save and Cancel actions. Keep edits local until Save and preserve all reference metadata."
           }
         ]
       },

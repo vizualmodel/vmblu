@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: sysblu vscode editor
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.0"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:7859b9eb1b95ba7c"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.1"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:56058ce534c52b6c"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -14,7 +14,8 @@ import { SysbluManager } from '../../../sysblu/nodes/sysblu-manager/sysblu-manag
 import { VscodeSideMenuFactory,
 		 ApplicationInspectorFactory,
 		 EndpointInspectorFactory,
-		 ConnectionInspectorFactory } from '../../../ui-svelte/index.js'
+		 ConnectionInspectorFactory,
+		 ProjectReferencesFactory } from '../../../ui-svelte/index.js'
 
 
 
@@ -23,7 +24,7 @@ const nodeList = [
 	//_______________________________________SYSTEM MESSAGE BROKER
 	{
 	name: "system message broker",
-	uid: "KkUJ",
+	uid: "ePal",
 	factory: SystemMessageBroker,
 	inputs: [
 		"-> sysblu.loaded",
@@ -38,17 +39,17 @@ const nodeList = [
 		"-> execute command"
 		],
 	outputs: [
-		"sysblu.set -> sysblu.set @ sysblu manager (UAmj)",
-		"sysblu.save -> sysblu.save @ sysblu manager (UAmj)",
-		"sysblu.undo -> sysmod.undo @ sysblu manager (UAmj)",
-		"sysblu.redo -> sysmod.redo @ sysblu manager (UAmj)",
-		"size change -> size change @ sysblu view (cfdd)"
+		"sysblu.set -> sysblu.set @ sysblu manager (mdWY)",
+		"sysblu.save -> sysblu.save @ sysblu manager (mdWY)",
+		"sysblu.undo -> sysmod.undo @ sysblu manager (mdWY)",
+		"sysblu.redo -> sysmod.redo @ sysblu manager (mdWY)",
+		"size change -> size change @ sysblu view (HzUr)"
 		]
 	},
 	//_________________________________________________SYSBLU VIEW
 	{
 	name: "sysblu view",
-	uid: "cfdd",
+	uid: "HzUr",
 	factory: SysbluView,
 	inputs: [
 		"-> size change",
@@ -58,21 +59,22 @@ const nodeList = [
 		"-> sysmod.done"
 		],
 	outputs: [
-		"canvas -> canvas @ system message broker (KkUJ)",
-		"application settings -> application settings @ application inspector (nFIn)",
-		"endpoint settings -> endpoint settings @ endpoint inspector (CyxS)",
-		"connection settings -> connection settings @ connection inspector (ytsa)",
-		"sysmod.doit -> sysmod.doit @ sysblu manager (UAmj)",
-		"sysmod.undo -> sysmod.undo @ sysblu manager (UAmj)",
-		"sysmod.redo -> sysmod.redo @ sysblu manager (UAmj)",
-		"open reference -> open reference @ system message broker (KkUJ)",
-		"execute command -> execute command @ system message broker (KkUJ)"
+		"canvas -> canvas @ system message broker (ePal)",
+		"application settings -> application settings @ application inspector (qkWl)",
+		"endpoint settings -> endpoint settings @ endpoint inspector (CHyJ)",
+		"connection settings -> connection settings @ connection inspector (Ubxx)",
+		"project references -> project references @ project references (Qdgu)",
+		"sysmod.doit -> sysmod.doit @ sysblu manager (mdWY)",
+		"sysmod.undo -> sysmod.undo @ sysblu manager (mdWY)",
+		"sysmod.redo -> sysmod.redo @ sysblu manager (mdWY)",
+		"open reference -> open reference @ system message broker (ePal)",
+		"execute command -> execute command @ system message broker (ePal)"
 		]
 	},
 	//______________________________________________SYSBLU MANAGER
 	{
 	name: "sysblu manager",
-	uid: "UAmj",
+	uid: "mdWY",
 	factory: SysbluManager,
 	inputs: [
 		"-> sysblu.set",
@@ -82,26 +84,26 @@ const nodeList = [
 		"-> sysmod.redo"
 		],
 	outputs: [
-		"sysblu.loaded -> sysblu.loaded @ system message broker (KkUJ)",
-		"sysblu.failed -> sysblu.failed @ system message broker (KkUJ)",
-		"sysblu.diagnostics -> sysblu.diagnostics @ system message broker (KkUJ)",
+		"sysblu.loaded -> sysblu.loaded @ system message broker (ePal)",
+		"sysblu.failed -> sysblu.failed @ system message broker (ePal)",
+		"sysblu.diagnostics -> sysblu.diagnostics @ system message broker (ePal)",
 		`system.updated -> [ 
-			"system.updated @ sysblu view (cfdd)",
-			"system.updated @ system message broker (KkUJ)" ]`,
-		"sysmod.done -> sysmod.done @ sysblu view (cfdd)"
+			"system.updated @ sysblu view (HzUr)",
+			"system.updated @ system message broker (ePal)" ]`,
+		"sysmod.done -> sysmod.done @ sysblu view (HzUr)"
 		]
 	},
 	//_________________________________________________SYSTEM MENU
 	{
 	name: "system menu",
-	uid: "dDcl",
+	uid: "tGRX",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ system message broker (KkUJ)",
-		"save -> save @ system message broker (KkUJ)",
-		"application prompt -> application prompt @ sysblu view (cfdd)",
-		"add application -> add application @ sysblu view (cfdd)"
+		"div -> floating menu @ system message broker (ePal)",
+		"save -> save @ system message broker (ePal)",
+		"application prompt -> application prompt @ sysblu view (HzUr)",
+		"add application -> add application @ sysblu view (HzUr)"
 		],
 	sx:	[
 		    {
@@ -111,10 +113,10 @@ const nodeList = [
 		        "help": "Add application"
 		    },
 		    {
-		        "icon": "comment",
+		        "icon": "folder_open",
 		        "color": "#0fb2e4",
 		        "message": "application prompt",
-		        "help": "Application prompt"
+		        "help": "Project references"
 		    },
 		    {
 		        "icon": "save",
@@ -127,44 +129,56 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "nFIn",
+	uid: "qkWl",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (KkUJ)"
+		"modal div -> modal div @ system message broker (ePal)"
 		]
 	},
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "CyxS",
+	uid: "CHyJ",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (KkUJ)"
+		"modal div -> modal div @ system message broker (ePal)"
 		]
 	},
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "ytsa",
+	uid: "Ubxx",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
 		],
 	outputs: [
-		"modal div -> modal div @ system message broker (KkUJ)"
+		"modal div -> modal div @ system message broker (ePal)"
+		]
+	},
+	//__________________________________________PROJECT REFERENCES
+	{
+	name: "project references",
+	uid: "Qdgu",
+	factory: ProjectReferencesFactory,
+	inputs: [
+		"-> project references"
+		],
+	outputs: [
+		"modal div -> modal div @ system message broker (ePal)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.0","schemaVersion":"1.12.0"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.1","schemaVersion":"1.12.1"}
 }
 
 // prepare the runtime

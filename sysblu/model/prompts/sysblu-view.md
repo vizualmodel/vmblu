@@ -14,7 +14,11 @@ independent authoritative copy of the system document.
 Expose the drawable canvas and respond to host size changes. Emit
 `open reference` when the user follows an application, system prompt,
 documentation, build, deployment, test, or operations reference. Resolve an
-`application prompt` request to the explicit project-level `prompt` reference.
+`application prompt` request to the Project references inspector, including when
+the top-level reference list is empty. Supply an isolated editable snapshot and
+open targets relative to the system document that opened the inspector. Apply
+Save as one `editReferences` sysmod action; Cancel leaves the document untouched.
+Do not apply a stale inspector result after switching system documents.
 References with both a command and working directory show a command marker.
 Ctrl/Cmd-click emits `execute command` with the working directory resolved
 relative to the active system document; ordinary clicks continue to open the

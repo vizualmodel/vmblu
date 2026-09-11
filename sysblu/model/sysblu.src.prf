@@ -1,17 +1,17 @@
 {
-  "version": "1.12.0",
+  "version": "1.12.1",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.0",
+    "schemaVersion": "1.12.1",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.0"
+      "version": "1.12.1"
     },
     "source": {
       "model": "sysblu.mod.blu",
-      "hash": "fnv1a64:66610bf499e7af55"
+      "hash": "fnv1a64:088a1927f6148dd4"
     }
   },
   "entries": [
@@ -93,7 +93,13 @@
           "summary": "",
           "returns": "",
           "examples": [],
-          "params": []
+          "params": [
+            {
+              "name": "event",
+              "type": "{}",
+              "description": ""
+            }
+          ]
         }
       ],
       "transmits": [
@@ -183,19 +189,34 @@
           "line": 592
         },
         {
+          "pin": "project references",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 598
+        },
+        {
+          "pin": "open reference",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 604
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../nodes/sysblu-view/sysblu-view.js",
+          "line": 609
+        },
+        {
           "pin": "sysmod.redo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 625
+          "line": 641
         },
         {
           "pin": "sysmod.undo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 626
+          "line": 642
         },
         {
           "pin": "sysmod.redo",
           "file": "../nodes/sysblu-view/sysblu-view.js",
-          "line": 627
+          "line": 643
         }
       ]
     },

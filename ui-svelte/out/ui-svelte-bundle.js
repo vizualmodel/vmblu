@@ -362,7 +362,7 @@ function createTx(runtime, source) {
 __name(createTx, "createTx");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.12.0";
+var RUNTIME_VERSION = "1.12.1";
 function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
   if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
@@ -5620,7 +5620,452 @@ if (typeof window !== 'undefined')
 	// @ts-ignore
 	(window.__svelte ||= { v: new Set() }).v.add(PUBLIC_VERSION);
 
-var root$t = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
+/** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
+/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
+
+/**
+ * @type {Array<SubscribeInvalidateTuple<any> | any>}
+ */
+const subscriber_queue = [];
+
+/**
+ * Create a `Writable` store that allows both updating and reading by subscription.
+ *
+ * @template T
+ * @param {T} [value] initial value
+ * @param {StartStopNotifier<T>} [start]
+ * @returns {Writable<T>}
+ */
+function writable(value, start = noop) {
+	/** @type {Unsubscriber | null} */
+	let stop = null;
+
+	/** @type {Set<SubscribeInvalidateTuple<T>>} */
+	const subscribers = new Set();
+
+	/**
+	 * @param {T} new_value
+	 * @returns {void}
+	 */
+	function set(new_value) {
+		if (safe_not_equal(value, new_value)) {
+			value = new_value;
+			if (stop) {
+				// store is ready
+				const run_queue = !subscriber_queue.length;
+				for (const subscriber of subscribers) {
+					subscriber[1]();
+					subscriber_queue.push(subscriber, value);
+				}
+				if (run_queue) {
+					for (let i = 0; i < subscriber_queue.length; i += 2) {
+						subscriber_queue[i][0](subscriber_queue[i + 1]);
+					}
+					subscriber_queue.length = 0;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param {Updater<T>} fn
+	 * @returns {void}
+	 */
+	function update(fn) {
+		set(fn(/** @type {T} */ (value)));
+	}
+
+	/**
+	 * @param {Subscriber<T>} run
+	 * @param {() => void} [invalidate]
+	 * @returns {Unsubscriber}
+	 */
+	function subscribe(run, invalidate = noop) {
+		/** @type {SubscribeInvalidateTuple<T>} */
+		const subscriber = [run, invalidate];
+		subscribers.add(subscriber);
+		if (subscribers.size === 1) {
+			stop = start(set, update) || noop;
+		}
+		run(/** @type {T} */ (value));
+		return () => {
+			subscribers.delete(subscriber);
+			if (subscribers.size === 0 && stop) {
+				stop();
+				stop = null;
+			}
+		};
+	}
+	return { set, update, subscribe };
+}
+
+// The themes supported are 'dark' and 'light'
+
+// Initialize the theme based on user's previous choices stored in localStorage
+function getInitialTheme() {
+    return localStorage.getItem('vmblu-theme') || 'dark'; // Default to 'light' if nothing in localStorage
+}
+
+// the global theme variable
+const theme = writable(getInitialTheme());
+
+// save it when it changes
+theme.subscribe(value => {
+    localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
+});
+
+var root_1$r = template(`<i class="material-icons-outlined open svelte-p9u4d2">description</i>`);
+var root_2$e = template(`<button class="add-reference svelte-p9u4d2" type="button" title="Add" aria-label="Add"><i class="material-icons-outlined open svelte-p9u4d2" aria-hidden="true">add_circle</i></button>`);
+var root_3$a = template(`<div class="right-icons svelte-p9u4d2"><i class="material-icons-outlined trash svelte-p9u4d2">delete</i></div>`);
+var root$t = template(`<div><div class="hdr svelte-p9u4d2"><div class="left-icons svelte-p9u4d2"><i class="material-icons-outlined cancel svelte-p9u4d2">cancel</i> <i class="material-icons-outlined check svelte-p9u4d2">check_circle</i> <!> <!></div> <h1 class="svelte-p9u4d2"> </h1> <!></div> <!></div>`);
+
+function Popup_box($$anchor, $$props) {
+	push($$props, false);
+
+	const $$stores = setup_stores();
+	const $theme = () => store_get(theme, "$theme", $$stores);
+	let box = prop($$props, "box", 12);
+	// dragging behaviour
+	let startX, startY, initialLeft, initialTop;
+	let dragging = false;
+	let pendingShowPos = null;
+
+	// Handlers can receive a request as soon as the runtime starts. Install the
+	// popup API synchronously so an early request can use show() and let it queue
+	// the position until the DOM node is mounted.
+	box(box().show = show, true);
+	box(box().hide = hide, true);
+	box(box().update = () => box(box()), true);
+
+	onMount(() => {
+		if (pendingShowPos !== null) {
+			const pos = pendingShowPos;
+
+			pendingShowPos = null;
+			queueMicrotask(() => show(pos));
+		}
+	});
+
+	function onMouseDown(e) {
+		startX = e.clientX;
+		startY = e.clientY;
+		initialLeft = box().div.offsetLeft;
+		initialTop = box().div.offsetTop;
+		dragging = true;
+		document.addEventListener('mousemove', onMouseMove);
+		document.addEventListener('mouseup', onMouseUp);
+	}
+
+	function onMouseMove(e) {
+		if (dragging) {
+			const dx = e.clientX - startX;
+			const dy = e.clientY - startY;
+
+			box(box().div.style.left = `${initialLeft + dx}px`, true);
+			box(box().div.style.top = `${initialTop + dy}px`, true);
+		}
+	}
+
+	function onMouseUp(e) {
+		dragging = false;
+		document.removeEventListener('mousemove', onMouseMove);
+		document.removeEventListener('mouseup', onMouseUp);
+	}
+
+	function show(pos) {
+		if (!box().div) {
+			pendingShowPos = pos ?? box().pos ?? {};
+			return;
+		}
+
+		if (!pos) pos = box().pos;
+
+		if (pos) {
+			box(box().div.style.left = `${pos.x}px`, true);
+			box(box().div.style.top = `${pos.y}px`, true);
+		}
+
+		box(box().div.style.display = 'block', true);
+		box(box());
+	}
+
+	function hide() {
+		if (!box().div) return;
+		box(box().div.style.display = 'none', true);
+	}
+
+	function onCancel(e) {
+		hide();
+		box().cancel?.(e);
+	}
+
+	function onOk(e) {
+		if (box().ok?.(e) !== false) hide();
+	}
+
+	function onOpen(e) {
+		box().open?.(e);
+	}
+
+	function onAdd(e) {
+		box().add?.(e);
+	}
+
+	function onTrash(e) {
+		hide();
+		box().trash?.(e);
+	}
+
+	function onKeydown(e) {
+		// prevent the keydown from having effects on the editor !
+		e.stopPropagation();
+		if (e.key === 'Enter' && e.target?.closest?.('button, select')) return;
+		// check the key
+		return e.key == "Enter" ? onOk(e) : e.key == "Escape" || e.key == "Esc" ? onCancel(e) : null;
+	}
+
+	init();
+
+	var div = root$t();
+
+	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
+
+	var div_1 = child(div);
+	var div_2 = child(div_1);
+	var i = child(div_2);
+	var i_1 = sibling(i, 2);
+	var node = sibling(i_1, 2);
+
+	if_block(node, () => box().open, ($$anchor) => {
+		var i_2 = root_1$r();
+
+		event("click", i_2, onOpen);
+		event("keydown", i_2, onKeydown);
+		append($$anchor, i_2);
+	});
+
+	var node_1 = sibling(node, 2);
+
+	if_block(node_1, () => box().add, ($$anchor) => {
+		var button = root_2$e();
+
+		event("mousedown", button, stopPropagation(function ($$arg) {
+			bubble_event.call(this, $$props, $$arg);
+		}));
+
+		event("click", button, onAdd);
+		append($$anchor, button);
+	});
+
+	var h1 = sibling(div_2, 2);
+	var text = child(h1);
+
+	var node_2 = sibling(h1, 2);
+
+	if_block(node_2, () => box().trash, ($$anchor) => {
+		var div_3 = root_3$a();
+		var i_3 = child(div_3);
+		event("click", i_3, onTrash);
+		event("keydown", i_3, onKeydown);
+		append($$anchor, div_3);
+	});
+
+	var node_3 = sibling(div_1, 2);
+
+	slot(node_3, $$props, "default", {});
+
+	template_effect(() => {
+		set_class(div, `main ${$theme() ?? ""} svelte-p9u4d2`);
+		toggle_class(h1, "largeTitle", box().largeTitle);
+		set_text(text, box().title);
+	});
+
+	event("click", i, onCancel);
+	event("keydown", i, onKeydown);
+	event("click", i_1, onOk);
+	event("keydown", i_1, onKeydown);
+	event("mousedown", div_1, onMouseDown);
+	event("keydown", div, onKeydown);
+	append($$anchor, div);
+	pop();
+}
+
+var root_2$d = template(`<p class="svelte-996tbb">No project references yet. Use + to add a reference.</p>`);
+var root_4$6 = template(`<option> </option>`);
+var root_3$9 = template(`<div class="row svelte-996tbb"><button type="button" title="Open reference" aria-label="Open reference" class="svelte-996tbb"><span class="material-icons-outlined svelte-996tbb" aria-hidden="true">file_open</span></button> <input aria-label="Reference label" placeholder="Label" class="svelte-996tbb"> <select aria-label="Reference kind" class="svelte-996tbb"></select> <input class="path svelte-996tbb" aria-label="Relative path or URL" placeholder="../docs/document.md" spellcheck="false"> <button class="remove svelte-996tbb" type="button" title="Remove reference (keeps the file)" aria-label="Remove reference"><span class="material-icons-outlined svelte-996tbb" aria-hidden="true">delete</span></button></div>`);
+var root_5$5 = template(`<p class="error svelte-996tbb" role="alert"> </p>`);
+var root_1$q = template(`<div class="references svelte-996tbb"><p class="svelte-996tbb">Paths are relative to the active .sys.blu file. Web URLs are also supported.</p> <div class="rows svelte-996tbb"><!> <!></div> <!> <div class="actions svelte-996tbb"><button type="button" class="svelte-996tbb">Cancel</button><button type="button" class="svelte-996tbb">Save</button></div></div>`);
+
+function Project_references($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8);
+
+	const kinds = [
+		'prompt',
+		'documentation',
+		'model',
+		'source',
+		'build',
+		'deployment',
+		'test',
+		'operations',
+		'other'
+	];
+
+	let box = mutable_state({ div: null, title: 'Project references' });
+	let references = mutable_state([]);
+	let error = mutable_state('');
+	let request = mutable_state(null);
+
+	onMount(() => tx().send('modal div', get(box).div));
+
+	function add() {
+		set(references, [
+			...get(references),
+			{ label: '', kind: 'documentation', target: '' }
+		]);
+	}
+
+	function save() {
+		const clean = get(references).map((reference) => ({
+			...reference,
+			label: (reference.label ?? '').trim(),
+			target: (reference.target ?? '').trim()
+		}));
+
+		if (clean.some((reference) => !reference.target || !kinds.includes(reference.kind))) {
+			set(error, 'Every reference needs a kind and path.');
+			return false;
+		}
+
+		get(request).ok?.(clean);
+		return true;
+	}
+
+	function accept() {
+		if (save()) get(box).hide();
+	}
+
+	function cancel() {
+		get(box).hide();
+		get(request).cancel?.();
+	}
+
+	const handlers = {
+		onProjectReferences(payload) {
+			set(request, payload);
+			set(references, structuredClone(payload.references ?? []));
+			set(error, '');
+			mutate(box, get(box).title = 'Project references');
+			mutate(box, get(box).largeTitle = true);
+			mutate(box, get(box).ok = save);
+			mutate(box, get(box).cancel = payload.cancel);
+			mutate(box, get(box).add = add);
+			get(box).show(payload.pos);
+		}
+	};
+
+	init();
+
+	Popup_box($$anchor, {
+		get box() {
+			return get(box);
+		},
+		children: ($$anchor, $$slotProps) => {
+			var div = root_1$q();
+			var div_1 = sibling(child(div), 2);
+			var node = child(div_1);
+
+			if_block(node, () => get(references).length === 0, ($$anchor) => {
+				var p = root_2$d();
+
+				append($$anchor, p);
+			});
+
+			var node_1 = sibling(node, 2);
+
+			each(node_1, 1, () => get(references), index, ($$anchor, reference, index$1) => {
+				var div_2 = root_3$9();
+				var button = child(div_2);
+
+				template_effect(() => button.disabled = !get(reference).target?.trim());
+
+				var input = sibling(button, 2);
+
+				var select = sibling(input, 2);
+
+				template_effect(() => {
+					get(reference).kind;
+
+					invalidate_inner_signals(() => {
+					});
+				});
+
+				each(select, 5, () => kinds, index, ($$anchor, kind) => {
+					var option = root_4$6();
+					var option_value = {};
+					var text = child(option);
+
+					template_effect(() => {
+						if (option_value !== (option_value = get(kind))) {
+							option.value = null == (option.__value = get(kind)) ? "" : get(kind);
+						}
+
+						set_text(text, get(kind));
+					});
+
+					append($$anchor, option);
+				});
+
+				var input_1 = sibling(select, 2);
+
+				var button_1 = sibling(input_1, 2);
+				event("click", button, () => get(request).open?.(get(reference)));
+
+				bind_value(input, () => get(reference).label, ($$value) => (
+					get(reference).label = $$value,
+					invalidate_inner_signals(() => (get(references)))
+				));
+
+				bind_select_value(select, () => get(reference).kind, ($$value) => (
+					get(reference).kind = $$value,
+					invalidate_inner_signals(() => (get(references)))
+				));
+
+				bind_value(input_1, () => get(reference).target, ($$value) => (
+					get(reference).target = $$value,
+					invalidate_inner_signals(() => (get(references)))
+				));
+
+				event("click", button_1, () => set(references, get(references).filter((_, i) => i !== index$1)));
+				append($$anchor, div_2);
+			});
+
+			var node_2 = sibling(div_1, 2);
+
+			if_block(node_2, () => get(error), ($$anchor) => {
+				var p_1 = root_5$5();
+				var text_1 = child(p_1);
+				template_effect(() => set_text(text_1, get(error)));
+				append($$anchor, p_1);
+			});
+
+			var div_3 = sibling(node_2, 2);
+			var button_2 = child(div_3);
+			var button_3 = sibling(button_2);
+			event("click", button_2, cancel);
+			event("click", button_3, accept);
+			append($$anchor, div);
+		},
+		$$slots: { default: true }
+	});
+
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root$s = template(`<div class="main svelte-1xg9j2"><div class="menu svelte-1xg9j2"></div> <div class="tabs svelte-1xg9j2"></div> <div class="content svelte-1xg9j2"></div></div>`);
 
 function Menu_tabs_window($$anchor, $$props) {
 	push($$props, false);
@@ -5662,7 +6107,7 @@ function Menu_tabs_window($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$t();
+	var div_1 = root$s();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5682,9 +6127,9 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$q = template(`<div class="content-status svelte-1hth0k3" role="status" aria-live="polite"><span class="spinner svelte-1hth0k3" aria-hidden="true"></span> <span class="svelte-1hth0k3"> </span></div>`);
-var root_3$9 = template(`<div class="content-status error svelte-1hth0k3" role="alert"><span class="svelte-1hth0k3"> </span> <button type="button" aria-label="Dismiss error" title="Dismiss" class="svelte-1hth0k3">×</button></div>`);
-var root$s = template(`<div class="main svelte-1hth0k3"><div class="tabs svelte-1hth0k3"></div> <div class="content-shell svelte-1hth0k3"><div class="content svelte-1hth0k3"></div> <!></div></div>`);
+var root_1$p = template(`<div class="content-status svelte-1hth0k3" role="status" aria-live="polite"><span class="spinner svelte-1hth0k3" aria-hidden="true"></span> <span class="svelte-1hth0k3"> </span></div>`);
+var root_3$8 = template(`<div class="content-status error svelte-1hth0k3" role="alert"><span class="svelte-1hth0k3"> </span> <button type="button" aria-label="Dismiss error" title="Dismiss" class="svelte-1hth0k3">×</button></div>`);
+var root$r = template(`<div class="main svelte-1hth0k3"><div class="tabs svelte-1hth0k3"></div> <div class="content-shell svelte-1hth0k3"><div class="content svelte-1hth0k3"></div> <!></div></div>`);
 
 function Vertical_menu_tabs_content($$anchor, $$props) {
 	push($$props, false);
@@ -5739,7 +6184,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$s();
+	var div_1 = root$r();
 
 	bind_this(div_1, ($$value) => set(mainDiv, $$value), () => get(mainDiv));
 
@@ -5758,7 +6203,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 		node,
 		() => get(loadingName),
 		($$anchor) => {
-			var div_5 = root_1$q();
+			var div_5 = root_1$p();
 			var span = sibling(child(div_5), 2);
 			var text = child(span);
 			template_effect(() => set_text(text, `Loading ${get(loadingName) ?? ""}...`));
@@ -5772,7 +6217,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 				node_1,
 				() => get(loadingError),
 				($$anchor) => {
-					var div_6 = root_3$9();
+					var div_6 = root_3$8();
 					var span_1 = child(div_6);
 					var text_1 = child(span_1);
 
@@ -5793,7 +6238,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$r = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
+var root$q = template(`<div id="page-content" class="svelte-jgeogz"><div id="main-grid" class="svelte-jgeogz"><div id="menu-box" class="svelte-jgeogz"></div> <div id="tab-box" class="svelte-jgeogz"></div> <div id="left-box" class="svelte-jgeogz"></div> <div id="center-box" class="svelte-jgeogz"></div></div></div>`);
 
 function Canvas_layout($$anchor, $$props) {
 	push($$props, false);
@@ -5854,7 +6299,7 @@ function Canvas_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$r();
+	var div_1 = root$q();
 
 	bind_this(div_1, ($$value) => set(pageContent, $$value), () => get(pageContent));
 	append($$anchor, div_1);
@@ -5862,7 +6307,7 @@ function Canvas_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$q = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
+var root$p = template(`<div id="page-content" class="svelte-1ew5eoh"><div id="main-grid" class="svelte-1ew5eoh"><div id="left-menu" class="svelte-1ew5eoh"></div> <div id="left-column" class="svelte-1ew5eoh"></div> <div id="sep-col" class="svelte-1ew5eoh"></div> <div id="area-one" class="svelte-1ew5eoh"></div> <div id="sep-area" class="svelte-1ew5eoh"></div> <div id="area-two" class="svelte-1ew5eoh"></div></div></div>`);
 
 function Left_menu_layout($$anchor, $$props) {
 	push($$props, false);
@@ -6114,7 +6559,7 @@ function Left_menu_layout($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$q();
+	var div_1 = root$p();
 	var div_2 = child(div_1);
 
 	bind_this(div_2, ($$value) => set(mainGrid, $$value), () => get(mainGrid));
@@ -6151,7 +6596,7 @@ function Left_menu_layout($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root$p = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
+var root$o = template(`<div class="column-main-layout svelte-r7atyp"><div class="left-column svelte-r7atyp"></div> <div class="separator svelte-r7atyp"></div> <div class="main-area svelte-r7atyp"></div></div>`);
 
 function Column_main($$anchor, $$props) {
 	push($$props, false);
@@ -6321,7 +6766,7 @@ function Column_main($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$p();
+	var div_1 = root$o();
 
 	bind_this(div_1, ($$value) => set(container, $$value), () => get(container));
 
@@ -6343,74 +6788,10 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$p = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
-var root$o = template(`<div class="menu svelte-15nacvn"></div>`);
+var root_1$o = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root$n = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
-	push($$props, false);
-
-	let tx = prop($$props, "tx", 8),
-		sx = prop($$props, "sx", 8);
-
-	onMount(() => {
-		// send the div
-		tx().send("div", get(menuDiv));
-	});
-
-	let menuDiv = mutable_state(null);
-	let symbols = mutable_state(sx() ?? []);
-
-	const handlers = {
-		"-> set menu"(newSymbols) {
-			set(symbols, newSymbols);
-		}
-	};
-
-	function menuClick(e) {
-		// get the clicked symbol
-		const index = e.target.getAttribute("data-index");
-
-		// send the corresponding message
-		tx().send(get(symbols)[index].message, e);
-	}
-
-	function keydown() {}
-	init();
-
-	var div = root$o();
-
-	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
-
-	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$p();
-		var i = child(div_1);
-
-		set_attribute(i, "data-index", index);
-
-		var text = child(i);
-
-		var div_2 = sibling(i, 2);
-		var text_1 = child(div_2);
-
-		template_effect(() => {
-			set_text(text, get(symbol).name);
-			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
-			set_text(text_1, get(symbol).help);
-		});
-
-		event("click", i, menuClick);
-		event("keydown", i, keydown);
-		append($$anchor, div_1);
-	});
-	append($$anchor, div);
-	bind_prop($$props, "handlers", handlers);
-	return pop({ handlers });
-}
-
-var root_1$o = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
-var root$n = template(`<div class="menu svelte-1st5yi2"></div>`);
-
-function Side_menu($$anchor, $$props) {
 	push($$props, false);
 
 	let tx = prop($$props, "tx", 8),
@@ -6471,11 +6852,75 @@ function Side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_3$8 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
-var root_2$d = template(`<div class="tab selected svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
+var root_1$n = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root$m = template(`<div class="menu svelte-1st5yi2"></div>`);
+
+function Side_menu($$anchor, $$props) {
+	push($$props, false);
+
+	let tx = prop($$props, "tx", 8),
+		sx = prop($$props, "sx", 8);
+
+	onMount(() => {
+		// send the div
+		tx().send("div", get(menuDiv));
+	});
+
+	let menuDiv = mutable_state(null);
+	let symbols = mutable_state(sx() ?? []);
+
+	const handlers = {
+		"-> set menu"(newSymbols) {
+			set(symbols, newSymbols);
+		}
+	};
+
+	function menuClick(e) {
+		// get the clicked symbol
+		const index = e.target.getAttribute("data-index");
+
+		// send the corresponding message
+		tx().send(get(symbols)[index].message, e);
+	}
+
+	function keydown() {}
+	init();
+
+	var div = root$m();
+
+	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
+
+	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
+		var div_1 = root_1$n();
+		var i = child(div_1);
+
+		set_attribute(i, "data-index", index);
+
+		var text = child(i);
+
+		var div_2 = sibling(i, 2);
+		var text_1 = child(div_2);
+
+		template_effect(() => {
+			set_text(text, get(symbol).name);
+			set_attribute(div_2, "style", `width: ${get(symbol).help.length * 0.5 ?? ""}rem;`);
+			set_text(text_1, get(symbol).help);
+		});
+
+		event("click", i, menuClick);
+		event("keydown", i, keydown);
+		append($$anchor, div_1);
+	});
+	append($$anchor, div);
+	bind_prop($$props, "handlers", handlers);
+	return pop({ handlers });
+}
+
+var root_3$7 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
+var root_2$c = template(`<div class="tab selected svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
 var root_5$4 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
 var root_4$5 = template(`<div class="tab svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
-var root$m = template(`<div class="tab-ribbon svelte-1ue9whs"></div>`);
+var root$l = template(`<div class="tab-ribbon svelte-1ue9whs"></div>`);
 
 function Tab_ribbon($$anchor, $$props) {
 	push($$props, false);
@@ -6581,7 +7026,7 @@ function Tab_ribbon($$anchor, $$props) {
 	function onKeydown(e) {}
 	init();
 
-	var div = root$m();
+	var div = root$l();
 
 	bind_this(div, ($$value) => mutate(ribbon, get(ribbon).div = $$value), () => get(ribbon)?.div);
 
@@ -6593,7 +7038,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$d();
+				var div_1 = root_2$c();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -6601,7 +7046,7 @@ function Tab_ribbon($$anchor, $$props) {
 				var node_1 = sibling(text);
 
 				if_block(node_1, () => get(tab).readOnly, ($$anchor) => {
-					var span = root_3$8();
+					var span = root_3$7();
 
 					append($$anchor, span);
 				});
@@ -6659,8 +7104,8 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$n = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
-var root$l = template(`<div class="menu svelte-oi2iq"></div>`);
+var root_1$m = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
+var root$k = template(`<div class="menu svelte-oi2iq"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
 	push($$props, false);
@@ -6692,12 +7137,12 @@ function Vscode_side_menu($$anchor, $$props) {
 	function keydown(e) {}
 	init();
 
-	var div = root$l();
+	var div = root$k();
 
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$n();
+		var div_1 = root_1$m();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6723,8 +7168,8 @@ function Vscode_side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$m = template(`<span class="team svelte-v6tgws"><span class="bullet svelte-v6tgws"></span> <span class="name svelte-v6tgws"> </span></span>`);
-var root$k = template(`<div class="team-legend svelte-v6tgws"></div>`);
+var root_1$l = template(`<span class="team svelte-v6tgws"><span class="bullet svelte-v6tgws"></span> <span class="name svelte-v6tgws"> </span></span>`);
+var root$j = template(`<div class="team-legend svelte-v6tgws"></div>`);
 
 function Team_legend($$anchor, $$props) {
 	push($$props, false);
@@ -6745,12 +7190,12 @@ function Team_legend($$anchor, $$props) {
 
 	init();
 
-	var div_1 = root$k();
+	var div_1 = root$j();
 
 	bind_this(div_1, ($$value) => set(div, $$value), () => get(div));
 
 	each(div_1, 5, () => get(teams), index, ($$anchor, team) => {
-		var span = root_1$m();
+		var span = root_1$l();
 		var span_1 = child(span);
 		var span_2 = sibling(span_1, 2);
 		var text = child(span_2);
@@ -6766,272 +7211,6 @@ function Team_legend($$anchor, $$props) {
 	append($$anchor, div_1);
 	bind_prop($$props, "handlers", handlers);
 	return pop({ handlers });
-}
-
-/** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
-/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
-
-/**
- * @type {Array<SubscribeInvalidateTuple<any> | any>}
- */
-const subscriber_queue = [];
-
-/**
- * Create a `Writable` store that allows both updating and reading by subscription.
- *
- * @template T
- * @param {T} [value] initial value
- * @param {StartStopNotifier<T>} [start]
- * @returns {Writable<T>}
- */
-function writable(value, start = noop) {
-	/** @type {Unsubscriber | null} */
-	let stop = null;
-
-	/** @type {Set<SubscribeInvalidateTuple<T>>} */
-	const subscribers = new Set();
-
-	/**
-	 * @param {T} new_value
-	 * @returns {void}
-	 */
-	function set(new_value) {
-		if (safe_not_equal(value, new_value)) {
-			value = new_value;
-			if (stop) {
-				// store is ready
-				const run_queue = !subscriber_queue.length;
-				for (const subscriber of subscribers) {
-					subscriber[1]();
-					subscriber_queue.push(subscriber, value);
-				}
-				if (run_queue) {
-					for (let i = 0; i < subscriber_queue.length; i += 2) {
-						subscriber_queue[i][0](subscriber_queue[i + 1]);
-					}
-					subscriber_queue.length = 0;
-				}
-			}
-		}
-	}
-
-	/**
-	 * @param {Updater<T>} fn
-	 * @returns {void}
-	 */
-	function update(fn) {
-		set(fn(/** @type {T} */ (value)));
-	}
-
-	/**
-	 * @param {Subscriber<T>} run
-	 * @param {() => void} [invalidate]
-	 * @returns {Unsubscriber}
-	 */
-	function subscribe(run, invalidate = noop) {
-		/** @type {SubscribeInvalidateTuple<T>} */
-		const subscriber = [run, invalidate];
-		subscribers.add(subscriber);
-		if (subscribers.size === 1) {
-			stop = start(set, update) || noop;
-		}
-		run(/** @type {T} */ (value));
-		return () => {
-			subscribers.delete(subscriber);
-			if (subscribers.size === 0 && stop) {
-				stop();
-				stop = null;
-			}
-		};
-	}
-	return { set, update, subscribe };
-}
-
-// The themes supported are 'dark' and 'light'
-
-// Initialize the theme based on user's previous choices stored in localStorage
-function getInitialTheme() {
-    return localStorage.getItem('vmblu-theme') || 'dark'; // Default to 'light' if nothing in localStorage
-}
-
-// the global theme variable
-const theme = writable(getInitialTheme());
-
-// save it when it changes
-theme.subscribe(value => {
-    localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
-});
-
-var root_1$l = template(`<i class="material-icons-outlined open svelte-16x2rr3">description</i>`);
-var root_2$c = template(`<i class="material-icons-outlined open svelte-16x2rr3">add_circle</i>`);
-var root_3$7 = template(`<div class="right-icons svelte-16x2rr3"><i class="material-icons-outlined trash svelte-16x2rr3">delete</i></div>`);
-var root$j = template(`<div><div class="hdr svelte-16x2rr3"><div class="left-icons svelte-16x2rr3"><i class="material-icons-outlined cancel svelte-16x2rr3">cancel</i> <i class="material-icons-outlined check svelte-16x2rr3">check_circle</i> <!> <!></div> <h1 class="svelte-16x2rr3"> </h1> <!></div> <!></div>`);
-
-function Popup_box($$anchor, $$props) {
-	push($$props, false);
-
-	const $$stores = setup_stores();
-	const $theme = () => store_get(theme, "$theme", $$stores);
-	let box = prop($$props, "box", 12);
-	// dragging behaviour
-	let startX, startY, initialLeft, initialTop;
-	let dragging = false;
-	let pendingShowPos = null;
-
-	// Handlers can receive a request as soon as the runtime starts. Install the
-	// popup API synchronously so an early request can use show() and let it queue
-	// the position until the DOM node is mounted.
-	box(box().show = show, true);
-	box(box().hide = hide, true);
-	box(box().update = () => box(box()), true);
-
-	onMount(() => {
-		if (pendingShowPos !== null) {
-			const pos = pendingShowPos;
-
-			pendingShowPos = null;
-			queueMicrotask(() => show(pos));
-		}
-	});
-
-	function onMouseDown(e) {
-		startX = e.clientX;
-		startY = e.clientY;
-		initialLeft = box().div.offsetLeft;
-		initialTop = box().div.offsetTop;
-		dragging = true;
-		document.addEventListener('mousemove', onMouseMove);
-		document.addEventListener('mouseup', onMouseUp);
-	}
-
-	function onMouseMove(e) {
-		if (dragging) {
-			const dx = e.clientX - startX;
-			const dy = e.clientY - startY;
-
-			box(box().div.style.left = `${initialLeft + dx}px`, true);
-			box(box().div.style.top = `${initialTop + dy}px`, true);
-		}
-	}
-
-	function onMouseUp(e) {
-		dragging = false;
-		document.removeEventListener('mousemove', onMouseMove);
-		document.removeEventListener('mouseup', onMouseUp);
-	}
-
-	function show(pos) {
-		if (!box().div) {
-			pendingShowPos = pos ?? box().pos ?? {};
-			return;
-		}
-
-		if (!pos) pos = box().pos;
-
-		if (pos) {
-			box(box().div.style.left = `${pos.x}px`, true);
-			box(box().div.style.top = `${pos.y}px`, true);
-		}
-
-		box(box().div.style.display = 'block', true);
-		box(box());
-	}
-
-	function hide() {
-		if (!box().div) return;
-		box(box().div.style.display = 'none', true);
-	}
-
-	function onCancel(e) {
-		hide();
-		box().cancel?.(e);
-	}
-
-	function onOk(e) {
-		if (box().ok?.(e) !== false) hide();
-	}
-
-	function onOpen(e) {
-		box().open?.(e);
-	}
-
-	function onAdd(e) {
-		box().add?.(e);
-	}
-
-	function onTrash(e) {
-		hide();
-		box().trash?.(e);
-	}
-
-	function onKeydown(e) {
-		// prevent the keydown from having effects on the editor !
-		e.stopPropagation();
-		// check the key
-		return e.key == "Enter" ? onOk(e) : e.key == "Escape" || e.key == "Esc" ? onCancel(e) : null;
-	}
-
-	init();
-
-	var div = root$j();
-
-	bind_this(div, ($$value) => box(box().div = $$value, true), () => box()?.div);
-
-	var div_1 = child(div);
-	var div_2 = child(div_1);
-	var i = child(div_2);
-	var i_1 = sibling(i, 2);
-	var node = sibling(i_1, 2);
-
-	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$l();
-
-		event("click", i_2, onOpen);
-		event("keydown", i_2, onKeydown);
-		append($$anchor, i_2);
-	});
-
-	var node_1 = sibling(node, 2);
-
-	if_block(node_1, () => box().add, ($$anchor) => {
-		var i_3 = root_2$c();
-
-		event("click", i_3, onAdd);
-		event("keydown", i_3, onKeydown);
-		append($$anchor, i_3);
-	});
-
-	var h1 = sibling(div_2, 2);
-	var text = child(h1);
-
-	var node_2 = sibling(h1, 2);
-
-	if_block(node_2, () => box().trash, ($$anchor) => {
-		var div_3 = root_3$7();
-		var i_4 = child(div_3);
-		event("click", i_4, onTrash);
-		event("keydown", i_4, onKeydown);
-		append($$anchor, div_3);
-	});
-
-	var node_3 = sibling(div_1, 2);
-
-	slot(node_3, $$props, "default", {});
-
-	template_effect(() => {
-		set_class(div, `main ${$theme() ?? ""} svelte-16x2rr3`);
-		toggle_class(h1, "largeTitle", box().largeTitle);
-		set_text(text, box().title);
-	});
-
-	event("click", i, onCancel);
-	event("keydown", i, onKeydown);
-	event("click", i_1, onOk);
-	event("keydown", i_1, onKeydown);
-	event("mousedown", div_1, onMouseDown);
-	event("keydown", div, onKeydown);
-	append($$anchor, div);
-	pop();
 }
 
 var root$i = template(`<input class="grow svelte-w2c0k9" type="text" spellcheck="false">`);
@@ -22679,6 +22858,8 @@ function Node_selector($$anchor, $$props) {
 	return pop({ handlers });
 }
 
+const ProjectReferencesFactory = getFactory(Project_references);
+
 // // Returns a factory function for the svelte component
 // function xxgetFactory( svelteDef, htmlTarget=null) {
 // 	return function (tx, sx) {
@@ -22742,7 +22923,7 @@ const NodeSelectorFactory = getFactory(Node_selector);
 
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.0"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:0b8f5cdea7b127d5"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.1"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:1254d2856246c3d3"}}
 // ------------------------------------------------------------------
 
 
@@ -22753,7 +22934,7 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "IGot",
+	uid: "KcRx",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
@@ -22765,7 +22946,7 @@ const nodeList = [
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "kBqV",
+	uid: "qKrf",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
@@ -22777,7 +22958,7 @@ const nodeList = [
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "iQGy",
+	uid: "exTg",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
@@ -22789,7 +22970,7 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "beTl",
+	uid: "pvEd",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -22802,7 +22983,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "HoUM",
+	uid: "tajI",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -22815,7 +22996,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "HHmN",
+	uid: "PTCU",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -22827,7 +23008,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "CQTf",
+	uid: "Ghpc",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -22839,7 +23020,7 @@ const nodeList = [
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "ThIM",
+	uid: "LJpH",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -22851,7 +23032,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input",
-	uid: "WgCA",
+	uid: "sATD",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -22863,7 +23044,7 @@ const nodeList = [
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "PvCh",
+	uid: "OPwM",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22875,7 +23056,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block",
-	uid: "gdAM",
+	uid: "MEvG",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -22887,7 +23068,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "FxUt",
+	uid: "MbxZ",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -22904,7 +23085,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "MEhv",
+	uid: "XnJp",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -22917,7 +23098,7 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings",
-	uid: "iaAN",
+	uid: "xnYt",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22932,7 +23113,7 @@ const nodeList = [
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "cbzU",
+	uid: "dIpS",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22944,7 +23125,7 @@ const nodeList = [
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "EvXr",
+	uid: "Tgxt",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22956,7 +23137,7 @@ const nodeList = [
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "bLgh",
+	uid: "qWlj",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22968,7 +23149,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "chhc",
+	uid: "zqQP",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -22980,7 +23161,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "XpuT",
+	uid: "NOPL",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22992,7 +23173,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "hyXR",
+	uid: "pYnP",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -23005,7 +23186,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "gWTH",
+	uid: "ZEAz",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -23017,7 +23198,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "OGVR",
+	uid: "ChCg",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -23029,7 +23210,7 @@ const nodeList = [
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "IYMX",
+	uid: "YaOd",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -23038,10 +23219,22 @@ const nodeList = [
 		"modal div -> ()"
 		]
 	},
+	//__________________________________________PROJECT REFERENCES
+	{
+	name: "project references",
+	uid: "nJMy",
+	factory: ProjectReferencesFactory,
+	inputs: [
+		"-> project references"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout",
-	uid: "WDKy",
+	uid: "THLH",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -23057,7 +23250,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window",
-	uid: "EEGG",
+	uid: "iVle",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -23076,7 +23269,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout",
-	uid: "BtrJ",
+	uid: "WlJu",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -23093,7 +23286,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "RTEo",
+	uid: "hEGl",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -23106,7 +23299,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content",
-	uid: "yhnA",
+	uid: "MfcH",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> content.div",
@@ -23126,7 +23319,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "ECbu",
+	uid: "GGMb",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -23143,7 +23336,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu",
-	uid: "njci",
+	uid: "wcOM",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23167,7 +23360,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu",
-	uid: "Zqpc",
+	uid: "EBGY",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23191,7 +23384,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "awtC",
+	uid: "HvRr",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23205,7 +23398,7 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "gLUG",
+	uid: "ItvC",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23226,7 +23419,7 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "OdUp",
+	uid: "CIMV",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -23239,7 +23432,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.0","schemaVersion":"1.12.0"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.1","schemaVersion":"1.12.1"}
 };
 
 // prepare the runtime

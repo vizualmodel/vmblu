@@ -22,16 +22,7 @@ close(ctx,x,y,w,h,cLine) {
 
     ctx.stroke()
 },
-// bigView(ctx,x,y,w,h,cLine) {
 
-//     // a square
-//     ctx.beginPath()
-//     ctx.fillStyle = cLine
-//     //ctx.strokeStyle = cLine
-//     //ctx.lineWidth = 1
-//     //ctx.strokeRect(x,y,w,w)
-//     ctx.fillRect(x,y,w,w)
-// },
 // group icon 
 bigView(ctx,x,y,w,h,cIcon) {
 
@@ -56,32 +47,6 @@ smallView(ctx,x,y,w,h,cIcon) {
     ctx.fill()
 },
 
-// group icon 
-xbigView(ctx,x,y,w,h,cIcon) {
-
-    ctx.beginPath()
-
-    const h1 = h/2
-    const w1 = w/2
-
-    ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
-
-    ctx.rect(x, y, w1-1, h1)
-    ctx.rect(x+w1+1, y+h1, w1-1, h1)
-
-    ctx.stroke()
-},
-// restore(ctx,x,y,w,h,cLine) {
-
-//     ctx.beginPath()
-//     const w2 = w/2
-//     ctx.fillStyle = cLine
-//     //ctx.strokeStyle = cLine
-//     //ctx.lineWidth = 1
-//     //ctx.strokeRect(x,y+w2,w,w2)
-//     ctx.fillRect(x,y+w2,w,w2)
-// },
 calibrate(ctx,x,y,w,h,cLine) {
 
     ctx.beginPath()
@@ -128,7 +93,7 @@ link(ctx,x,y,w,h,cIcon) {
     ctx.beginPath()
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
     const pi = Math.PI
 
     const r = w/3
@@ -151,7 +116,7 @@ lock(ctx,x,y,w,h,cIcon) {
     ctx.beginPath()
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
     const pi = Math.PI
 
     const r = w/3
@@ -178,7 +143,7 @@ cog(ctx,x,y,w,h,cIcon,cFill) {
     const d2 = 2
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
 
     // vertical
     ctx.moveTo(x+w1,    y+d1)
@@ -215,7 +180,7 @@ factory(ctx,x,y,w,h,cIcon) {
     const w1 = w/2
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
 
     ctx.moveTo(x+w,y)
     ctx.lineTo(x+w,y+h)
@@ -236,7 +201,7 @@ group(ctx,x,y,w,h,cIcon) {
     const w1 = w/2
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
 
     ctx.rect(x, y+2, w1-1, h1)
     ctx.rect(x+w1+1, y+h1, w1-1, h1)
@@ -253,7 +218,7 @@ pulse(ctx,x,y,w,h,cIcon) {
     const b = 2
 
     ctx.strokeStyle = cIcon
-    ctx.lineWidth = 2
+    ctx.lineWidth = 1
 
     const m = y + h/2 + 1
     ctx.moveTo(x,m)

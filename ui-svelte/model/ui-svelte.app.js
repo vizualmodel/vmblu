@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.0"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:0b8f5cdea7b127d5"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.1"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:1254d2856246c3d3"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -31,6 +31,7 @@ import { ApplicationInspectorFactory,
 		 PinToolFactory,
 		 PinEventFactory,
 		 MarkdownInputFactory,
+		 ProjectReferencesFactory,
 		 CanvasLayoutFactory,
 		 MenuTabsWindow,
 		 LeftMenuLayoutFactory,
@@ -49,7 +50,7 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "IGot",
+	uid: "KcRx",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
@@ -61,7 +62,7 @@ const nodeList = [
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "kBqV",
+	uid: "qKrf",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
@@ -73,7 +74,7 @@ const nodeList = [
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "iQGy",
+	uid: "exTg",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
@@ -85,7 +86,7 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "beTl",
+	uid: "pvEd",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -98,7 +99,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "HoUM",
+	uid: "tajI",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -111,7 +112,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "HHmN",
+	uid: "PTCU",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -123,7 +124,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "CQTf",
+	uid: "Ghpc",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -135,7 +136,7 @@ const nodeList = [
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "ThIM",
+	uid: "LJpH",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -147,7 +148,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input",
-	uid: "WgCA",
+	uid: "sATD",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -159,7 +160,7 @@ const nodeList = [
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "PvCh",
+	uid: "OPwM",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -171,7 +172,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block",
-	uid: "gdAM",
+	uid: "MEvG",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -183,7 +184,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "FxUt",
+	uid: "MbxZ",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -200,7 +201,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "MEhv",
+	uid: "XnJp",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -213,7 +214,7 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings",
-	uid: "iaAN",
+	uid: "xnYt",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -228,7 +229,7 @@ const nodeList = [
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "cbzU",
+	uid: "dIpS",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
@@ -240,7 +241,7 @@ const nodeList = [
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "EvXr",
+	uid: "Tgxt",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -252,7 +253,7 @@ const nodeList = [
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "bLgh",
+	uid: "qWlj",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -264,7 +265,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "chhc",
+	uid: "zqQP",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -276,7 +277,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "XpuT",
+	uid: "NOPL",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -288,7 +289,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "hyXR",
+	uid: "pYnP",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -301,7 +302,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "gWTH",
+	uid: "ZEAz",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -313,7 +314,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "OGVR",
+	uid: "ChCg",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -325,7 +326,7 @@ const nodeList = [
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "IYMX",
+	uid: "YaOd",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -334,10 +335,22 @@ const nodeList = [
 		"modal div -> ()"
 		]
 	},
+	//__________________________________________PROJECT REFERENCES
+	{
+	name: "project references",
+	uid: "nJMy",
+	factory: ProjectReferencesFactory,
+	inputs: [
+		"-> project references"
+		],
+	outputs: [
+		"modal div -> ()"
+		]
+	},
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout",
-	uid: "WDKy",
+	uid: "THLH",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -353,7 +366,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window",
-	uid: "EEGG",
+	uid: "iVle",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -372,7 +385,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout",
-	uid: "BtrJ",
+	uid: "WlJu",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -389,7 +402,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "RTEo",
+	uid: "hEGl",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -402,7 +415,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content",
-	uid: "yhnA",
+	uid: "MfcH",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> content.div",
@@ -422,7 +435,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "ECbu",
+	uid: "GGMb",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -439,7 +452,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu",
-	uid: "njci",
+	uid: "wcOM",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -463,7 +476,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu",
-	uid: "Zqpc",
+	uid: "EBGY",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -487,7 +500,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "awtC",
+	uid: "HvRr",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -501,7 +514,7 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "gLUG",
+	uid: "ItvC",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -522,7 +535,7 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "OdUp",
+	uid: "CIMV",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -535,7 +548,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.0","schemaVersion":"1.12.0"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.1","schemaVersion":"1.12.1"}
 }
 
 // prepare the runtime

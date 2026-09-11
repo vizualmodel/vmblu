@@ -1,7 +1,7 @@
 {
   "name": "playground",
   "private": true,
-  "version": "1.12.0",
+  "version": "1.12.1",
   "type": "module",
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
@@ -13,7 +13,8 @@
     "@codemirror/view": "^6.43.9",
     "@vizualmodel/vmblu-runtime": "file:../runtime",
     "codemirror": "^6.0.2",
-    "svelte": "^5.0.0"
+    "svelte": "^5.0.0",
+    "markdown-it": "^14.1.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",

@@ -97,6 +97,7 @@
 	function onKeydown(e) {
 		// prevent the keydown from having effects on the editor !
 		e.stopPropagation();
+		if (e.key === 'Enter' && e.target?.closest?.('button, select')) return;
 
 		// check the key
 		return e.key == "Enter" ? onOk(e)
@@ -186,6 +187,15 @@ i.open {
 i.open:hover {
     color: var(--cOpenHover);
 }
+.add-reference {
+    display: inline-flex;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--cOpen);
+    cursor: pointer;
+}
+.add-reference:focus-visible { outline: 2px solid var(--cOpenHover); }
 i.trash {
     color: var(--cCancel);
 }
@@ -224,7 +234,9 @@ h1.largeTitle {
 				<i class="material-icons-outlined open" on:click={onOpen} on:keydown={onKeydown}>description</i>
 			{/if}
 			{#if box.add}
-				<i class="material-icons-outlined open" on:click={onAdd} on:keydown={onKeydown}>add_circle</i>
+				<button class="add-reference" type="button" title="Add" aria-label="Add" on:mousedown|stopPropagation on:click={onAdd}>
+					<i class="material-icons-outlined open" aria-hidden="true">add_circle</i>
+				</button>
 			{/if}
 		</div>
 

@@ -18,6 +18,41 @@ function fixture() {
     return {tx, saved, arl, manager: new SysbluManager(tx)}
 }
 
+test('project references save as one undoable edit and preserve metadata', async () => {
+    const {manager, tx, arl, saved} = fixture()
+    await manager.onSysbluSet({model: chatSystem(), arl})
+    const before = structuredClone(manager.document)
+    const references = [{kind: 'build', label: ' Build ', target: ' ../package.json ',
+        command: 'npm run build', workingDirectory: '..', description: 'Build project',
+        extensions: {custom: true}}]
+    manager.onSysmodDoit({verb: 'editReferences', param: {references}})
+    assert.equal(tx.last('sysmod.done').payload.dirty, true)
+    assert.deepEqual(manager.document.references, [{...references[0], label: 'Build', target: '../package.json'}])
+    assert.deepEqual(manager.document.nodes, before.nodes)
+    manager.onSysmodUndo()
+    assert.deepEqual(manager.document, before)
+    manager.onSysmodRedo()
+    assert.equal(manager.document.references[0].command, 'npm run build')
+    await manager.onSysbluSave()
+    assert.deepEqual(JSON.parse(saved[0]).references, manager.document.references)
+    manager.onSysmodDoit({verb: 'editReferences', param: {references: []}})
+    assert.deepEqual(manager.document.references, [])
+    manager.onSysmodUndo()
+    assert.equal(manager.document.references.length, 1)
+})
+
+test('invalid project references leave the document and history intact', async () => {
+    const {manager, tx, arl} = fixture()
+    await manager.onSysbluSet({model: chatSystem(), arl})
+    const before = structuredClone(manager.document)
+    for (const references of [[{kind: 'documentation', target: ''}], [{kind: 'unknown', target: '../doc.md'}], null]) {
+        manager.onSysmodDoit({verb: 'editReferences', param: {references}})
+        assert.ok(tx.last('sysmod.done').payload.error)
+        assert.deepEqual(manager.document, before)
+        assert.equal(tx.last('sysmod.done').payload.undo, false)
+    }
+})
+
 test('manager loads a cloned document and publishes a snapshot', async () => {
     const {manager, tx, arl} = fixture()
     const input = chatSystem()

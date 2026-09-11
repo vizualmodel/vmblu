@@ -43,6 +43,7 @@ export function SystemMessageBroker(tx) {
 
 SystemMessageBroker.prototype = {
     interceptKeys(event) {
+        if (event.target?.closest?.('input, textarea, select, button, [contenteditable="true"]')) return
         const modifier = event.ctrlKey || event.metaKey
         if (modifier && !event.altKey && event.key.toLowerCase() === 'z') {
             event.preventDefault()
