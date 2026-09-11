@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "4/2/2024, 1:40:46 PM",
     "saved": "2026-09-01T07:07:03.394Z",
     "utc": "2026-09-01T07:07:03.394Z",
@@ -2229,22 +2229,22 @@
       },
       {
         "src": {
-          "pin": "model.header",
-          "node": "model manager"
-        },
-        "dst": {
-          "pin": "header",
-          "node": "popups"
-        }
-      },
-      {
-        "src": {
           "pin": "model.loaded",
           "node": "model manager"
         },
         "dst": {
           "pin": "model.loaded",
           "node": "message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "model.header",
+          "node": "model manager"
+        },
+        "dst": {
+          "pin": "header",
+          "node": "popups"
         }
       },
       {

@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "4/2/2024, 1:40:46 PM",
-    "saved": "12/16/2025, 1:00:24 PM",
-    "utc": "2026-09-01T07:07:03.398Z",
+    "saved": "2026-09-01T07:07:03.394Z",
+    "utc": "2026-09-01T07:07:03.394Z",
     "style": "#00aaff"
   },
   "root": {
@@ -22,7 +22,7 @@
         "rect": "x 247 y 776 w 200 h 386",
         "interfaces": [
           {
-            "interface": "(55) document",
+            "interface": "(58) document",
             "pins": [
               "(21 R)set document",
               "(20 R)open document",
@@ -31,7 +31,7 @@
             ]
           },
           {
-            "interface": "(56) edit",
+            "interface": "(59) edit",
             "pins": [
               "(37 R)reload model",
               "(47 R)model.save",
@@ -43,7 +43,7 @@
             ]
           },
           {
-            "interface": "(58) divs",
+            "interface": "(60) divs",
             "pins": [
               "(29 L)canvas resize",
               "(28 L)canvas",
@@ -53,7 +53,7 @@
             ]
           },
           {
-            "interface": "(59) clipboard",
+            "interface": "(61) clipboard",
             "pins": [
               "(31 R)clipboard.local",
               "(32 R)clipboard.remote",
@@ -127,7 +127,7 @@
         "rect": "x 941 y 131 w 180 h 536",
         "interfaces": [
           {
-            "interface": "(111) actions",
+            "interface": "(115) actions",
             "pins": [
               "(96 L)sync model",
               "(73 L)accept changes",
@@ -140,7 +140,7 @@
             ]
           },
           {
-            "interface": "(115) save point",
+            "interface": "(117) save point",
             "pins": [
               "(81 L)save point.set",
               "(82 L)save point.back",
@@ -148,25 +148,25 @@
             ]
           },
           {
-            "interface": "(118) files",
+            "interface": "(120) files",
             "pins": [
               "(88 L)open source file",
               "(62 L)open model"
             ]
           },
           {
-            "interface": "(112) model",
+            "interface": "(116) model",
             "pins": [
               "(64 L)model.save",
               "(78 L)model.set",
               "(60 L)model.root",
               "(113 L)model.loaded",
-              "(118 L)model.failed",
+              "(114 L)model.failed",
               "(79 R)model.header"
             ]
           },
           {
-            "interface": "(117) redox",
+            "interface": "(119) redox",
             "pins": [
               "(56 L)redox.doit",
               "(57 L)redox.undo",
@@ -175,7 +175,7 @@
             ]
           },
           {
-            "interface": "(116) info",
+            "interface": "(118) info",
             "pins": [
               "(84 R)pin profile",
               "(59 R)get path",
@@ -579,7 +579,7 @@
           {
             "from": "(pin 5) team settings @ doc settings(0)",
             "to": "(pin 1) show @ team settings",
-            "wire": "x 28.0 y 89.0"
+            "wire": "x 14.0 y 74.0 x 14.0"
           },
           {
             "from": "(pin 2) modal div @ team settings",
@@ -848,19 +848,19 @@
         "wire": "x -64.6 y 150.0 x -65.4"
       },
       {
-        "from": "(pin 79) model.header @ model manager",
-        "to": "(pin 9) header @ popups",
-        "wire": "x 68.4 y 0.0 x 98.6"
-      },
-      {
         "from": "(pin 113) model.loaded @ model manager",
         "to": "(pin 57) model.loaded @ message broker",
         "wire": "x -29.0 y 495.0 x -465.0"
       },
       {
+        "from": "(pin 79) model.header @ model manager",
+        "to": "(pin 9) header @ popups",
+        "wire": "x 68.4 y 0.0 x 98.6"
+      },
+      {
         "from": "(pin 86) redox.done @ model manager",
         "to": "(cable 1 endpoint nonselective)",
-        "wire": "y 0.0"
+        "wire": "x 75.0 y 0.0 x -75.0"
       },
       {
         "from": "(pin 84) pin profile @ model manager",
@@ -985,7 +985,7 @@
       {
         "from": "(cable 1 endpoint nonselective)",
         "to": "(pin 21) redox.done @ view manager",
-        "wire": "y 0.0"
+        "wire": "x 25.0 y 0.0 x -25.0"
       },
       {
         "from": "(cable 1 nonselective)",

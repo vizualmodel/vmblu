@@ -34,6 +34,16 @@ function cleanReferences(references) {
 }
 
 const actions = {
+    editReferences(document, {references} = {}) {
+        if (!Array.isArray(references)) throw new Error('Project references must be a list.')
+        const next = cleanReferences(references)
+        const kinds = ['prompt', 'documentation', 'model', 'source', 'build', 'deployment', 'test', 'operations', 'other']
+        if (next.some(reference => !kinds.includes(reference.kind))) throw new Error('Unknown project reference kind.')
+        if (JSON.stringify(document.references ?? []) === JSON.stringify(next)) return false
+        document.references = cloneSystemDocument(next)
+        return true
+    },
+
     addApplication(document, {application} = {}) {
         if (!application || typeof application !== 'object' || Array.isArray(application)) {
             throw new Error('Adding an application needs an application object.')

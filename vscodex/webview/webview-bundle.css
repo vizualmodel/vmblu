@@ -1,3 +1,134 @@
+
+.main.svelte-16f3fxd {
+    /* settings */
+    --fontBase: arial, helvetica, sans-serif;
+    --sFontHeader: 0.8rem;
+    --rBox: 0.1rem;
+    --sIcon: 1rem;
+
+    /* Icon colors */
+    --cOk: #3c913c;
+    --cOkHover: #00ff00;
+    --cCancel: #a52b2b;
+    --cCancelHover: #ff0000;
+    --cOpen: #c0c022;
+    --cOpenHover: #ffff00;
+
+    display: none;
+    position: absolute;
+    font-family: var(--fontBase);
+    z-index: 1;
+    overflow: auto;
+    background-color: var(--bgBox);
+    border: 1px solid var(--cBoxBorder);
+    border-radius: var(--rBox);
+    padding: 0.5rem;
+}
+
+.light.svelte-16f3fxd {
+    --bgBoxHeader: #ccc;
+    --cBoxBorder: #000;
+    --cBoxHeader: #000;
+    --bgBox: #ccc;
+}
+
+.dark.svelte-16f3fxd {
+    --bgBoxHeader: #000;
+    --cBoxBorder: #ccc;
+    --cBoxHeader: yellow;
+    --bgBox: #000;
+}
+
+/* Updated header style */
+.hdr.svelte-16f3fxd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bgBoxHeader);
+    margin-bottom: 0.8rem;
+}
+
+/* Containers for left/right icons */
+.left-icons.svelte-16f3fxd,
+.right-icons.svelte-16f3fxd {
+    display: flex;
+    align-items: center;
+}
+
+/* Remove floats and control spacing via flex */
+i.svelte-16f3fxd {
+    font-size: var(--sIcon);
+    cursor: pointer;
+    margin-right: 0.3rem;
+}
+i.check.svelte-16f3fxd {
+color:var(--cOk);
+}
+i.check.svelte-16f3fxd:hover {
+    color:var(--cOkHover);
+}
+i.cancel.svelte-16f3fxd {
+    color:var(--cCancel);
+}
+i.cancel.svelte-16f3fxd:hover {
+    color:var(--cCancelHover);
+}
+i.open.svelte-16f3fxd {
+    color: var(--cOpen);
+}
+i.open.svelte-16f3fxd:hover {
+    color: var(--cOpenHover);
+}
+.add-reference.svelte-16f3fxd {
+    display: inline-flex;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--cOpen);
+    cursor: pointer;
+}
+.add-reference.svelte-16f3fxd:focus-visible { outline: 2px solid var(--cOpenHover); }
+i.trash.svelte-16f3fxd {
+    color: var(--cCancel);
+}
+i.trash.svelte-16f3fxd:hover {
+    color: var(--cCancelHover);
+}
+
+/* Optional: Adjust the trash icon margins if desired */
+.right-icons.svelte-16f3fxd i:where(.svelte-16f3fxd) {
+    margin-right: 0; /* override margin if needed */
+}
+
+h1.svelte-16f3fxd {
+    flex-grow: 1;       /* take up the remaining space */
+    text-align: center; /* center the title text */
+    font-family: inherit;
+    font-size: var(--sFontHeader);
+    font-weight: normal;
+    color: var(--cBoxHeader);
+    margin: 0;          /* reset default margins */
+}
+
+h1.largeTitle.svelte-16f3fxd {
+    font-size: 1.15rem;
+}
+
+
+.references.svelte-1tx7ah8 { width: min(64rem, calc(100vw - 8rem)); color: #ccc; }
+p.svelte-1tx7ah8 { font-size: 0.8rem; }
+.rows.svelte-1tx7ah8 { max-height: 60vh; overflow: auto; }
+.row.svelte-1tx7ah8 { display: grid; grid-template-columns: 2rem minmax(7rem, 1fr) 9rem minmax(12rem, 2fr) 2rem; gap: 0.5rem; align-items: center; margin: 0.5rem 0; }
+input.svelte-1tx7ah8, select.svelte-1tx7ah8 { box-sizing: border-box; min-width: 0; width: 100%; background: #171717; color: #ddd; border: 1px solid #555; padding: 0.4rem; }
+.path.svelte-1tx7ah8 { font-family: monospace; }
+button.svelte-1tx7ah8 { background: transparent; color: #e2c64e; border: 1px solid #555; border-radius: 0.2rem; padding: 0.25rem; cursor: pointer; }
+button.svelte-1tx7ah8:disabled { opacity: 0.4; cursor: default; }
+button.svelte-1tx7ah8:focus-visible, input.svelte-1tx7ah8:focus-visible, select.svelte-1tx7ah8:focus-visible { outline: 2px solid #0fb2e4; }
+.material-icons-outlined.svelte-1tx7ah8 { font-size: 1.2rem; }
+.remove.svelte-1tx7ah8, .error.svelte-1tx7ah8 { color: #ff6868; }
+.actions.svelte-1tx7ah8 { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.8rem; }
+.actions.svelte-1tx7ah8 button:where(.svelte-1tx7ah8) { padding: 0.4rem 1rem; }
+
 :root {
   --ui-font-family: "Verdana", "Geneva", sans-serif;
   --ui-text-color: black;
@@ -690,113 +821,6 @@ i.icon.svelte-1gqilec:active {
 .name.svelte-1dvh83i {
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-
-.main.svelte-16f3fxd {
-    /* settings */
-    --fontBase: arial, helvetica, sans-serif;
-    --sFontHeader: 0.8rem;
-    --rBox: 0.1rem;
-    --sIcon: 1rem;
-
-    /* Icon colors */
-    --cOk: #3c913c;
-    --cOkHover: #00ff00;
-    --cCancel: #a52b2b;
-    --cCancelHover: #ff0000;
-    --cOpen: #c0c022;
-    --cOpenHover: #ffff00;
-
-    display: none;
-    position: absolute;
-    font-family: var(--fontBase);
-    z-index: 1;
-    overflow: auto;
-    background-color: var(--bgBox);
-    border: 1px solid var(--cBoxBorder);
-    border-radius: var(--rBox);
-    padding: 0.5rem;
-}
-
-.light.svelte-16f3fxd {
-    --bgBoxHeader: #ccc;
-    --cBoxBorder: #000;
-    --cBoxHeader: #000;
-    --bgBox: #ccc;
-}
-
-.dark.svelte-16f3fxd {
-    --bgBoxHeader: #000;
-    --cBoxBorder: #ccc;
-    --cBoxHeader: yellow;
-    --bgBox: #000;
-}
-
-/* Updated header style */
-.hdr.svelte-16f3fxd {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--bgBoxHeader);
-    margin-bottom: 0.8rem;
-}
-
-/* Containers for left/right icons */
-.left-icons.svelte-16f3fxd,
-.right-icons.svelte-16f3fxd {
-    display: flex;
-    align-items: center;
-}
-
-/* Remove floats and control spacing via flex */
-i.svelte-16f3fxd {
-    font-size: var(--sIcon);
-    cursor: pointer;
-    margin-right: 0.3rem;
-}
-i.check.svelte-16f3fxd {
-color:var(--cOk);
-}
-i.check.svelte-16f3fxd:hover {
-    color:var(--cOkHover);
-}
-i.cancel.svelte-16f3fxd {
-    color:var(--cCancel);
-}
-i.cancel.svelte-16f3fxd:hover {
-    color:var(--cCancelHover);
-}
-i.open.svelte-16f3fxd {
-    color: var(--cOpen);
-}
-i.open.svelte-16f3fxd:hover {
-    color: var(--cOpenHover);
-}
-i.trash.svelte-16f3fxd {
-    color: var(--cCancel);
-}
-i.trash.svelte-16f3fxd:hover {
-    color: var(--cCancelHover);
-}
-
-/* Optional: Adjust the trash icon margins if desired */
-.right-icons.svelte-16f3fxd i:where(.svelte-16f3fxd) {
-    margin-right: 0; /* override margin if needed */
-}
-
-h1.svelte-16f3fxd {
-    flex-grow: 1;       /* take up the remaining space */
-    text-align: center; /* center the title text */
-    font-family: inherit;
-    font-size: var(--sFontHeader);
-    font-weight: normal;
-    color: var(--cBoxHeader);
-    margin: 0;          /* reset default margins */
-}
-
-h1.largeTitle.svelte-16f3fxd {
-    font-size: 1.15rem;
 }
 
 

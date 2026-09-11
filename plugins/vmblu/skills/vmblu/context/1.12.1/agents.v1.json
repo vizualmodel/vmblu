@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vmblu.dev/schemas/agents.v1.json",
+  "title": "vmblu agent configuration",
+  "type": "object",
+  "required": ["schema", "version", "profiles", "interfaces"],
+  "properties": {
+    "schema": { "const": "https://vmblu.dev/schemas/agents.v1.json" },
+    "version": { "const": 1 },
+    "enabled": {
+      "description": "Whether a supporting runtime activates agent interfaces. Profiles and interfaces remain stored when disabled.",
+      "type": "boolean",
+      "default": true
+    },
+    "defaultInterface": { "type": "string" },
+    "provenance": { "type": "object" },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Profile" }
+    },
+    "interfaces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Interface" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "PermissionSet": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "deny": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "Profile": {
+      "type": "object",
+      "required": ["id", "permissions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "title": { "type": "string" },
+        "enabled": { "type": "boolean", "default": true },
+        "permissions": {
+          "type": "object",
+          "required": ["tools", "events", "probes"],
+          "properties": {
+            "tools": { "$ref": "#/$defs/PermissionSet" },
+            "events": { "$ref": "#/$defs/PermissionSet" },
+            "probes": { "$ref": "#/$defs/PermissionSet" }
+          },
+          "additionalProperties": false
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "maxToolCallsPerTurn": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Interface": {
+      "oneOf": [
+        { "$ref": "#/$defs/EmbeddedInterface" },
+        { "$ref": "#/$defs/HttpProjectionInterface" },
+        { "$ref": "#/$defs/McpStdioInterface" },
+        { "$ref": "#/$defs/McpHttpInterface" }
+      ]
+    },
+    "InterfaceBase": {
+      "type": "object",
+      "required": ["id", "kind", "profile"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "title": { "type": "string" },
+        "enabled": { "type": "boolean", "default": true },
+        "kind": { "type": "string" },
+        "profile": { "$ref": "#/$defs/Id" }
+      }
+    },
+    "EmbeddedInterface": {
+      "allOf": [
+        { "$ref": "#/$defs/InterfaceBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "embedded" },
+            "instructions": { "type": "string" },
+            "llm": {
+              "type": "object",
+              "properties": {
+                "provider": { "type": "string" },
+                "model": { "type": "string" },
+                "endpoint": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "ui": {
+              "type": "object",
+              "properties": {
+                "mode": { "type": "string", "enum": ["overlay", "none"] }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "HttpProjectionInterface": {
+      "allOf": [
+        { "$ref": "#/$defs/InterfaceBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "http-projection" },
+            "server": {
+              "type": "object",
+              "properties": {
+                "host": { "type": "string" },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "basePath": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "McpStdioInterface": {
+      "allOf": [
+        { "$ref": "#/$defs/InterfaceBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "mcp-stdio" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "McpHttpInterface": {
+      "allOf": [
+        { "$ref": "#/$defs/InterfaceBase" },
+        {
+          "type": "object",
+          "required": ["server", "authentication"],
+          "properties": {
+            "kind": { "const": "mcp-http" },
+            "server": {
+              "type": "object",
+              "required": ["host", "port", "path"],
+              "properties": {
+                "host": { "type": "string", "minLength": 1 },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "path": { "type": "string", "pattern": "^/" }
+              },
+              "additionalProperties": false
+            },
+            "authentication": { "$ref": "#/$defs/McpHttpAuthentication" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "McpHttpAuthentication": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["mode", "issuer", "resourceServerUrl", "requiredScopes"],
+          "properties": {
+            "mode": { "const": "oauth" },
+            "issuer": { "type": "string", "format": "uri" },
+            "resourceServerUrl": { "type": "string", "format": "uri" },
+            "requiredScopes": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["mode"],
+          "properties": {
+            "mode": { "const": "loopback" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

@@ -307,6 +307,9 @@ ifName(ctx, text,color,rc) {
     ctx.lineTo(left - guard, cy);
     ctx.moveTo(left + tm.width + guard, cy);
     ctx.lineTo(x+w,cy);
+
+    //ctx.strokeRect(left-guard,y,tm.width+10,h)
+
     ctx.stroke();
 
     ctx.fillStyle = color.text;
@@ -735,16 +738,7 @@ close(ctx,x,y,w,h,cLine) {
 
     ctx.stroke();
 },
-// bigView(ctx,x,y,w,h,cLine) {
 
-//     // a square
-//     ctx.beginPath()
-//     ctx.fillStyle = cLine
-//     //ctx.strokeStyle = cLine
-//     //ctx.lineWidth = 1
-//     //ctx.strokeRect(x,y,w,w)
-//     ctx.fillRect(x,y,w,w)
-// },
 // group icon 
 bigView(ctx,x,y,w,h,cIcon) {
 
@@ -769,32 +763,6 @@ smallView(ctx,x,y,w,h,cIcon) {
     ctx.fill();
 },
 
-// group icon 
-xbigView(ctx,x,y,w,h,cIcon) {
-
-    ctx.beginPath();
-
-    const h1 = h/2;
-    const w1 = w/2;
-
-    ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
-
-    ctx.rect(x, y, w1-1, h1);
-    ctx.rect(x+w1+1, y+h1, w1-1, h1);
-
-    ctx.stroke();
-},
-// restore(ctx,x,y,w,h,cLine) {
-
-//     ctx.beginPath()
-//     const w2 = w/2
-//     ctx.fillStyle = cLine
-//     //ctx.strokeStyle = cLine
-//     //ctx.lineWidth = 1
-//     //ctx.strokeRect(x,y+w2,w,w2)
-//     ctx.fillRect(x,y+w2,w,w2)
-// },
 calibrate(ctx,x,y,w,h,cLine) {
 
     ctx.beginPath();
@@ -841,7 +809,7 @@ link(ctx,x,y,w,h,cIcon) {
     ctx.beginPath();
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     const pi = Math.PI;
 
     const r = w/3;
@@ -864,7 +832,7 @@ lock(ctx,x,y,w,h,cIcon) {
     ctx.beginPath();
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     const pi = Math.PI;
 
     const r = w/3;
@@ -891,7 +859,7 @@ cog(ctx,x,y,w,h,cIcon,cFill) {
     const d2 = 2;
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     // vertical
     ctx.moveTo(x+w1,    y+d1);
@@ -928,7 +896,7 @@ factory(ctx,x,y,w,h,cIcon) {
     const w1 = w/2;
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     ctx.moveTo(x+w,y);
     ctx.lineTo(x+w,y+h);
@@ -949,7 +917,7 @@ group(ctx,x,y,w,h,cIcon) {
     const w1 = w/2;
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     ctx.rect(x, y+2, w1-1, h1);
     ctx.rect(x+w1+1, y+h1, w1-1, h1);
@@ -963,7 +931,7 @@ pulse(ctx,x,y,w,h,cIcon) {
     ctx.beginPath();
 
     ctx.strokeStyle = cIcon;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     const m = y + h/2 + 1;
     ctx.moveTo(x,m);
@@ -1673,12 +1641,23 @@ function isValidHexColor(hex) {
 // fixed colors
 const color = {
 
-    // The base colors for the nodes etc
+    // variable shades
     shade1: '#fff',
     shade2: '#fff',
-    shade3: '#fff',
+    //shade3: '#fff',
     shade4: '#fff',
     shade5: '#fff',
+
+    // color names 
+    grey3: '#333',
+    grey6: '#666',
+    greyC: '#ccc',
+    black:  '#000',
+    white:  '#fff',
+    red:    '#FE2712', 
+    redT:   '#FE271222', 
+    blue:   '#0000ff',
+    yellow: '#fff000',
 
     // view colors
     view1:  '#222',
@@ -1687,30 +1666,15 @@ const color = {
     vIcon2: '#3399ff',
     vIcon3: '#33cc33',
     vIcon4: '#e9bb16',
+    vTitle: '#fff',
 
-    // absolute node colors
+    // fixed node colors
     select:      '#ff8000',
     selectT:     '#ff800022',
     add:         '#7fff00',
     highLight:   '#ff80ff',
-
-    icon1: '#00ffff',
-    icon2: '#00ffff',
-    icon3: '#00ffff',
-    icon4: '#00ffff',
-
-    // grey 
-    grey3: '#333',
-    grey6: '#666',
-    greyC: '#ccc',
-
-    // absolute colors
-    black:  '#000',
-    white:  '#fff',
-    red:    '#FE2712', 
-    redT:   '#FE271222', 
-    blue:   '#0000ff',
-    yellow:   '#fff000',
+    route:       "#303e7a",
+    unconnected: "#777",
 
     // set the shades for this color object
     setShades(rgb) {
@@ -1725,12 +1689,10 @@ const color = {
         const sat = hsl.substring(comma1+1, comma2);
 
         // change the shades
-        this.shade1 = convert.hslToHex(`hsl(${hue},${sat}, 40%, 1)`);        // box, seperator line, pin unconnected, title background
-        this.shade2 = convert.hslToHex(`hsl(${hue},${sat}, 30%, 0.5)`);      // box bg, pad bg - 0.5 transparency
-        this.shade3 = convert.hslToHex(`hsl(${hue},${sat}, 90%, 1)`);        // title
+        this.shade1 = convert.hslToHex(`hsl(${hue},${sat}, 50%, 1)`);        // box, seperator line, title background
+        this.shade2 = convert.hslToHex(`hsl(${hue},${sat}, 15%, 0.5)`);      // box bg, pad bg - 0.5 transparency
         this.shade4 = convert.hslToHex(`hsl(${hue},${sat}, 60%, 1)`);        // pin connected
         this.shade5 = convert.hslToHex(`hsl(${hue},${sat}, 75%, 1)`);        // ifPins
-
 
         // change the shades - dark theme...
         // this.shade1 = convert.hslToHex(`hsl(${hue},0%,40%,1)`)          // box, seperator line, pin unconnected, title background
@@ -1761,12 +1723,13 @@ function StyleFactory() {
     };
     this.header = {
         font: "normal 13px tahoma", hHeader:15, hTitle:15, wLine:1, wChar:6, rCorner:7.5,
-        cTitle: color.shade3, cBackground: color.shade1, cBad: color.red, cHighLighted: color.highLight
+        cTitle: color.black, cBackground: color.shade1, cBad: color.red, cHighLighted: color.highLight
     };
 
     this.icon = {
         wIcon:8, hIcon:10, blinkRate: 500, nBlinks: 2,
-        cSrc:color.shade5, cLink: color.shade5, cGroup: color.shade5, cCog: color.shade5, cPulse: color.shade5, cComment: color.shade5,
+        cSrc:color.black, cLink: color.black, cGroup: color.black, cCog: color.black, cPulse: color.black, cComment: color.black,
+        //cSrc:color.shade5, cLink: color.shade5, cGroup: color.shade5, cCog: color.shade5, cPulse: color.shade5, cComment: color.shade5,
         cBadLink: color.red, cAlarm: color.red, cHighLighted: color.highLight,
         xPadding:6, yPadding:2, xSpacing:4,
     };
@@ -1781,22 +1744,22 @@ function StyleFactory() {
     this.pin = {
         hPin: 15,  wOutside:10, wMargin:21, hArrow:10, wArrow:10, wChar:7, wIcon: 16,
         cNormal: color.shade1, cSelected: color.select, cHighLighted: color.highLight, 
-        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.shade1,  cCursor: color.black, cIcon: color.yellow
+        cConnected: color.shade4, cAdded: color.add,  cBad: color.red, cText: color.unconnected,  cCursor: color.black, cIcon: color.yellow
     }; 
     this.pad = {
         hPad: 15,hSpace: 15, rBullet: 7.5, wArrow:10, hArrow:10, wExtra: 30, wMargin:4,  wViewLeft: 10,  wViewRight: 100, 
         cBackground: color.shade2, cSelected: color.select, cHighLighted: color.highLight, cConnected: color.shade4, 
-        cBad: color.red, cText: color.shade1, cArrow:color.shade1, 
+        cBad: color.red, cText: color.unconnected, cArrow:color.shade1, 
     }; 
     this.route = {
         wSelected: 2, wNormal: 2, split: 30, tooClose: 15, 
-        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight , cNotUsed: color.grey3, 
+        cNormal: color.route, cSelected: color.highLight, cHighLighted: color.highLight , cNotUsed: color.grey3, 
         cAdded: color.add, cDeleted: color.red
     }; 
     this.cable = {
         wNormal: 6, split: 30, tooClose: 15, wArrow : 8, hArrow : 8, sChar: 5, hLabel: 15, radius: 6.5, gap: 4,
-        cNormal: color.shade4, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
-        wCable: 6, cTack: color.shade4, rTack: 5, extraLength: 15,
+        cNormal: color.route, cSelected: color.highLight, cHighLighted: color.highLight, cBad: color.red, cText: color.black, hAlias:15, fAlias: "italic 11px tahoma",
+        wCable: 6, cTack: color.route, rTack: 5, extraLength: 15,
         wBridge: 6, hBridge: 6
     }; 
     this.selection = {
@@ -1808,7 +1771,7 @@ function StyleFactory() {
         cBackground: color.black, cLine:color.view1, cHighLight: color.view2,
 
         // The header
-        fHeader: "normal 15px arial", hHeader: 20, cTitle: color.grey6, cTitleHighLight: color.shade3,
+        fHeader: "normal 15px arial", hHeader: 20, cTitle: color.grey6, cTitleHighLight: color.white,
 
         // The grid
         grid: {dx: 30, dy: 30, cLine: color.grey3, cAxis: color.grey6},
@@ -1850,32 +1813,35 @@ StyleFactory.prototype = {
         this.box.cLine = 
         this.header.cBackground = 
         this.ifName.cBackground = 
-        this.pin.cNormal = 
-        this.pin.cText = color.shade1;
+        this.pin.cNormal = color.shade1;
+        //this.pin.cText = color.shade1;
 
         // shade2
         this.box.cBackground = 
         this.pad.cBackground = color.shade2;
 
         // shade 3
-        this.header.cTitle =
-        this.view.cTitleHighLight = color.shade3;
+        // this.header.cTitle =
+        //this.view.cTitleHighLight = color.shade3;
 
         // shade4
-        this.route.cNormal =
-        this.cable.cNormal = 
-        this.cable.cTack = 
+        // this.route.cNormal =
+        // this.cable.cNormal = 
+        // this.cable.cTack = 
         this.pin.cConnected = 
         this.pad.cConnected = color.shade4;
 
         // shade5
-        this.icon.cSrc = 
-        this.icon.cCog = 
-        this.icon.cPulse = 
-        this.icon.cComment = 
-        this.icon.cLink = 
-        this.icon.cGroup =
+        // this.icon.cSrc = 
+        // this.icon.cCog = 
+        // this.icon.cPulse = 
+        // this.icon.cComment = 
+        // this.icon.cLink = 
+        // this.icon.cGroup =
         this.ifName.cNormal = color.shade5;
+
+        // shade6
+        // this.pin.cText = color.shade6;
 
         // return this for chaining
         return this
@@ -2326,7 +2292,7 @@ function updateDerivedSettings(original, derived) {
 }
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const SCHEMA_VERSION$1 = "1.12.0";
+const SCHEMA_VERSION$1 = "1.12.1";
 
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
@@ -4414,8 +4380,8 @@ getContract(pin) {
 };
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const CORE_VERSION = "1.12.0";
-const SCHEMA_VERSION = "1.12.0";
+const CORE_VERSION = "1.12.1";
+const SCHEMA_VERSION = "1.12.1";
 
 function compatibilityFamily$1(version) {
     const match = String(version ?? '').match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
@@ -13856,7 +13822,7 @@ const cm$4 = {
 		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard$1},
         {text:"group",icon:"developer_board",state:"enabled", action:group},
         {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect$2},
-        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
+        // {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
         {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
     ],
 
@@ -13904,9 +13870,9 @@ function selectionToClipboard$1() {
 function group() {
     cm$4.doEdit('selectionToGroup',{view: cm$4.view});
 }
-function autoRoute() {
-    cm$4.doEdit('autoRouteSelection',{view: cm$4.view});
-}
+// function autoRoute() {
+//     cm.doEdit('autoRouteSelection',{view: cm.view})
+// }
 
 const cm$3 = {
 
@@ -24622,7 +24588,7 @@ function validateEntrypoint(entrypoint, file) {
 }
 
 // Auto-generated by cli/scripts/generate-schema-version.js
-const CLI_VERSION = "1.12.0";
+const CLI_VERSION = "1.12.1";
 
 function parseVmbluVersion(version, label = 'version') {
   const match = String(version ?? '').match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);

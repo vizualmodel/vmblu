@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import Ajv2020 from 'ajv/dist/2020.js'
 
-const context = new URL('../context/1.12.0/', import.meta.url)
+const context = new URL('../context/1.12.1/', import.meta.url)
 
 function exampleConfig() {
     return {

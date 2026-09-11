@@ -299,6 +299,9 @@ ifName(ctx, text,color,rc) {
     ctx.lineTo(left - guard, cy)
     ctx.moveTo(left + tm.width + guard, cy)
     ctx.lineTo(x+w,cy)
+
+    //ctx.strokeRect(left-guard,y,tm.width+10,h)
+
     ctx.stroke()
 
     ctx.fillStyle = color.text

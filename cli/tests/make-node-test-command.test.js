@@ -26,7 +26,7 @@ test('make-test node translates a dedicated node test specification to a colocat
 - Then: the node sends \`5\` on \`total\`.
 `)
         await fs.writeFile(path.join(project, 'model', 'sample.mod.blu'), JSON.stringify({
-            header: {version: '1.12.0', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
+            header: {version: '1.12.1', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
             factories: ['../nodes.js'],
             root: {
                 kind: 'group', name: 'Sample', nodes: [{
@@ -41,7 +41,7 @@ test('make-test node translates a dedicated node test specification to a colocat
             },
         }))
         await fs.writeFile(path.join(project, 'model', 'sample.mod.viz'), JSON.stringify({
-            header: {version: '1.12.0', style: '#202020'},
+            header: {version: '1.12.1', style: '#202020'},
             root: {
                 kind: 'group', name: 'Sample', rect: 'x 0 y 0 w 400 h 300', nodes: [{
                     kind: 'source', name: 'Adder', rect: 'x 20 y 20 w 140 h 100',

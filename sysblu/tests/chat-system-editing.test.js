@@ -51,10 +51,17 @@ test('real Chat system completes endpoint and connection editing without changin
     assert.equal(edited.transport, 'websocket')
     assert.deepEqual(edited.references, originalConnection.references)
 
+    const connectionsBeforeDelete = structuredClone(manager.document.connections)
+    const unrelatedConnections = connectionsBeforeDelete.filter(connection => !(
+        connection.from?.node === 'chat-client' && connection.from?.endpoint === 'chat-websocket'
+    ) && !(
+        connection.to?.node === 'chat-client' && connection.to?.endpoint === 'chat-websocket'
+    ))
+    assert.equal(connectionsBeforeDelete.length - unrelatedConnections.length, 2)
     manager.onSysmodDoit({verb: 'deleteEndpoint', param: {nodeId: 'chat-client', id: 'chat-websocket'}})
-    assert.equal(manager.document.connections.length, 0)
+    assert.deepEqual(manager.document.connections, unrelatedConnections)
     manager.onSysmodUndo()
-    assert.equal(manager.document.connections.length, 2)
+    assert.deepEqual(manager.document.connections, connectionsBeforeDelete)
     manager.onSysmodRedo()
     manager.onSysmodUndo()
 

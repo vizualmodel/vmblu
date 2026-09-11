@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
@@ -420,7 +420,7 @@
       {
         "kind": "dock",
         "name": "sysblu",
-        "rect": "x 1177 y 1383 w 180 h 326",
+        "rect": "x 1177 y 1383 w 180 h 341",
         "interfaces": [
           {
             "interface": "(30) sysblu",
@@ -444,11 +444,12 @@
               "(24 L)add application",
               "(25 L)application settings",
               "(26 L)endpoint settings",
-              "(27 L)connection settings"
+              "(27 L)connection settings",
+              "(36 L)project references"
             ]
           },
           {
-            "interface": "(36) files",
+            "interface": "(37) files",
             "pins": [
               "(20 R)open reference",
               "(29 R)execute command"
@@ -459,7 +460,7 @@
       {
         "kind": "group",
         "name": "sysblu popups",
-        "rect": "x 475 y 1578 w 165 h 86",
+        "rect": "x 475 y 1578 w 165 h 101",
         "interfaces": [
           {
             "interface": "(0)",
@@ -467,7 +468,8 @@
               "(4 R)modal div",
               "(3 R)application settings",
               "(5 R)endpoint settings",
-              "(6 R)connection settings"
+              "(6 R)connection settings",
+              "(7 R)project references"
             ]
           }
         ],
@@ -475,7 +477,8 @@
           "(4 R)x 1050 y 53 w 81 h 15|modal div",
           "(3 R)x 1050 y 23 w 132 h 15|application settings",
           "(5 R)x 1050 y 83 w 121 h 15|endpoint settings",
-          "(6 R)x 1050 y 113 w 132 h 15|connection settings"
+          "(6 R)x 1050 y 113 w 132 h 15|connection settings",
+          "(7 R)x 1050 y 143 w 125 h 15|project references"
         ],
         "nodes": [
           {
@@ -519,6 +522,20 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "dock",
+            "name": "project references",
+            "rect": "x 210 y 342 w 180 h 56",
+            "interfaces": [
+              {
+                "interface": "(0)",
+                "pins": [
+                  "(3 R)project references",
+                  "(4 R)modal div"
+                ]
+              }
+            ]
           }
         ],
         "routes": [
@@ -538,6 +555,11 @@
             "wire": "x 55.0 y -168.0 x 590.0"
           },
           {
+            "from": "(pin 4) modal div @ project references",
+            "to": "(pad 4) modal div",
+            "wire": "x 15.0 y -324.0 x 645.0"
+          },
+          {
             "from": "(pad 3) application settings",
             "to": "(pin 3) application settings @ application inspector",
             "wire": "x -25.0 y 27.0 x -620.0"
@@ -551,6 +573,11 @@
             "from": "(pad 6) connection settings",
             "to": "(pin 3) connection settings @ connection inspector",
             "wire": "x -25.0 y 35.5 x -595.0 y 57.5 x -25.0"
+          },
+          {
+            "from": "(pad 7) project references",
+            "to": "(pin 3) project references @ project references",
+            "wire": "x -15.0 y 219.5 x -645.0"
           }
         ]
       },
@@ -1472,9 +1499,14 @@
         "wire": "x -107.8 y 0.0 x -429.2"
       },
       {
+        "from": "(pin 36) project references @ sysblu",
+        "to": "(pin 7) project references @ sysblu popups",
+        "wire": "x -288.5 y 0.0 x -248.5"
+      },
+      {
         "from": "(pin 20) open reference @ sysblu",
         "to": "(cable 1 endpoint nonselective)",
-        "wire": "x -1.1 x 31.8 y -944.3"
+        "wire": "x -1.1 x 31.8 y -959.3"
       },
       {
         "from": "(pin 4) modal div @ sysblu popups",
@@ -1529,7 +1561,7 @@
       {
         "from": "(cable 0 endpoint nonselective)",
         "to": "(pin 78) model.set @ model manager",
-        "wire": "x 365.6"
+        "wire": "x 25.0 y 0.0 x 340.6"
       },
       {
         "from": "(cable 1 nonselective)",

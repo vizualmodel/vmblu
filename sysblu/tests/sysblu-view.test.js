@@ -386,15 +386,38 @@ test('command references show a marker and modifier-click emits a resolved host 
     })
 })
 
-test('application prompt opens the explicit system-level prompt reference', () => {
+test('project references opens a detached list and resolves file and URL targets', () => {
     const {view, tx} = fixture()
 
     view.onApplicationPrompt()
 
+    const request = tx.last('project references').payload
+    assert.deepEqual(request.references, view.document.references)
+    assert.notEqual(request.references, view.document.references)
+    request.open(request.references[0])
     assert.deepEqual(tx.last('open reference').payload, {
         kind: 'resolved',
         target: '../prompt.md',
     })
+    request.open({target: 'https://example.com/docs'})
+    assert.deepEqual(tx.last('open reference').payload, {externalUrl: 'https://example.com/docs'})
+    request.references[0].label = 'Changed'
+    assert.notEqual(view.document.references[0].label, 'Changed')
+    request.ok(request.references)
+    assert.deepEqual(tx.last('sysmod.doit').payload, {verb: 'editReferences', param: {references: request.references}})
+})
+
+test('empty project references supports cancel and ignores saves after switching documents', () => {
+    const {view, tx} = fixture()
+    delete view.document.references
+    view.onApplicationPrompt()
+    const request = tx.last('project references').payload
+    assert.deepEqual(request.references, [])
+    request.cancel()
+    assert.equal(tx.last('sysmod.doit'), undefined)
+    view.arl = {}
+    request.ok([{kind: 'documentation', target: '../README.md'}])
+    assert.equal(tx.last('sysmod.doit'), undefined)
 })
 
 test('system canvas uses the fixed black system style', () => {

@@ -9,7 +9,7 @@ const cm = {
 		{text:"copy",icon:"content_copy",state:"enabled", action:selectionToClipboard},
         {text:"group",icon:"developer_board",state:"enabled", action:group},
         {text:"disconnect",icon:"power_off",state:"enabled", action:disconnect},
-        {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
+        // {text:"autoroute",icon:"timeline",state:"enabled", action:autoRoute},
         {text:"delete",icon:"delete",state:"enabled", action:deleteSelection},
     ],
 
@@ -57,6 +57,6 @@ function selectionToClipboard() {
 function group() {
     cm.doEdit('selectionToGroup',{view: cm.view})
 }
-function autoRoute() {
-    cm.doEdit('autoRouteSelection',{view: cm.view})
-}
+// function autoRoute() {
+//     cm.doEdit('autoRouteSelection',{view: cm.view})
+// }

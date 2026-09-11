@@ -1,17 +1,17 @@
 {
-  "version": "1.12.0",
+  "version": "1.12.1",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.0",
+    "schemaVersion": "1.12.1",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.0"
+      "version": "1.12.1"
     },
     "source": {
       "model": "playground.mod.blu",
-      "hash": "fnv1a64:aa214ece39514593"
+      "hash": "fnv1a64:701f9978b3040a26"
     }
   },
   "entries": [
@@ -22,7 +22,7 @@
           "pin": "text.set-active",
           "handler": "onTextSetActive",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 219,
+          "line": 318,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +38,7 @@
           "pin": "text.save",
           "handler": "onTextSave",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 220,
+          "line": 319,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -48,7 +48,7 @@
           "pin": "text.set-active",
           "handler": "onTextSetActive",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 151,
+          "line": 247,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -65,32 +65,32 @@
         {
           "pin": "content div",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 161
+          "line": 259
         },
         {
           "pin": "text.failed",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 162
+          "line": 260
         },
         {
           "pin": "content div",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 181
+          "line": 280
         },
         {
           "pin": "text.loaded",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 183
+          "line": 282
         },
         {
           "pin": "content div",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 189
+          "line": 288
         },
         {
           "pin": "text.failed",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 190
+          "line": 289
         }
       ]
     },
@@ -890,7 +890,13 @@
           "summary": "",
           "returns": "",
           "examples": [],
-          "params": []
+          "params": [
+            {
+              "name": "event",
+              "type": "{}",
+              "description": ""
+            }
+          ]
         }
       ],
       "transmits": [
@@ -980,19 +986,34 @@
           "line": 592
         },
         {
+          "pin": "project references",
+          "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
+          "line": 598
+        },
+        {
+          "pin": "open reference",
+          "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
+          "line": 604
+        },
+        {
+          "pin": "sysmod.doit",
+          "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
+          "line": 609
+        },
+        {
           "pin": "sysmod.redo",
           "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
-          "line": 625
+          "line": 641
         },
         {
           "pin": "sysmod.undo",
           "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
-          "line": 626
+          "line": 642
         },
         {
           "pin": "sysmod.redo",
           "file": "../../sysblu/nodes/sysblu-view/sysblu-view.js",
-          "line": 627
+          "line": 643
         }
       ]
     },

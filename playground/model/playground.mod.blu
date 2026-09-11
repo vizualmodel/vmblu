@@ -1,13 +1,13 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
     "runtime": "@vizualmodel/vmblu-runtime/rt-browser-agent",
     "teams": {
       "default": {
-        "color": "#a1a1a1"
+        "color": "#313c72"
       },
       "ui": {
         "color": "#c0d13d"
@@ -22,21 +22,12 @@
     "agent": {
       "schema": "https://vmblu.dev/schemas/agents.v1.json",
       "version": 1,
-      "defaultAgent": "operator",
-      "agents": [
+      "defaultInterface": "operator",
+      "profiles": [
         {
           "id": "operator",
           "title": "Operator",
           "enabled": true,
-          "instructions": "Operate the application through published tools.",
-          "llm": {
-            "provider": "openai",
-            "model": "gpt-4.1-mini",
-            "endpoint": "http://127.0.0.1:8080/v1"
-          },
-          "ui": {
-            "mode": "overlay"
-          },
           "permissions": {
             "tools": {
               "allow": [],
@@ -50,6 +41,24 @@
               "allow": [],
               "deny": []
             }
+          }
+        }
+      ],
+      "interfaces": [
+        {
+          "id": "operator",
+          "title": "Operator",
+          "enabled": true,
+          "kind": "embedded",
+          "profile": "operator",
+          "instructions": "Operate the application through published tools.",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-4.1-mini",
+            "endpoint": "http://127.0.0.1:8080/v1"
+          },
+          "ui": {
+            "mode": "overlay"
           }
         }
       ]
@@ -1997,6 +2006,14 @@
                   "role": "follower",
                   "payload": "AnyPayload"
                 }
+              },
+              {
+                "name": "project references",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
               }
             ]
           },
@@ -2057,6 +2074,14 @@
               },
               {
                 "name": "connection settings",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "project references",
                 "kind": "input",
                 "contract": {
                   "role": "owner",
@@ -2162,6 +2187,38 @@
                 ]
               }
             ]
+          },
+          {
+            "kind": "dock",
+            "name": "project references",
+            "team": "ui",
+            "link": {
+              "path": "../../ui-svelte/model/ui-svelte.mod.blu",
+              "node": "project references"
+            },
+            "interfaces": [
+              {
+                "interface": "",
+                "pins": [
+                  {
+                    "name": "project references",
+                    "kind": "input",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "AnyPayload"
+                    }
+                  },
+                  {
+                    "name": "modal div",
+                    "kind": "output",
+                    "contract": {
+                      "role": "follower",
+                      "payload": "DomElement"
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ],
         "connections": [
@@ -2194,6 +2251,15 @@
           },
           {
             "src": {
+              "pin": "modal div",
+              "node": "project references"
+            },
+            "dst": {
+              "pin": "modal div"
+            }
+          },
+          {
+            "src": {
               "pin": "application settings"
             },
             "dst": {
@@ -2217,6 +2283,15 @@
             "dst": {
               "pin": "connection settings",
               "node": "connection inspector"
+            }
+          },
+          {
+            "src": {
+              "pin": "project references"
+            },
+            "dst": {
+              "pin": "project references",
+              "node": "project references"
             }
           }
         ]
@@ -3346,10 +3421,10 @@
             "help": "Add application"
           },
           {
-            "icon": "comment",
+            "icon": "folder_open",
             "color": "#0fb2e4",
             "message": "application prompt",
-            "help": "Application prompt"
+            "help": "Project references"
           },
           {
             "icon": "save",
@@ -4156,6 +4231,16 @@
         },
         "dst": {
           "pin": "connection settings",
+          "node": "sysblu popups"
+        }
+      },
+      {
+        "src": {
+          "pin": "project references",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "project references",
           "node": "sysblu popups"
         }
       },

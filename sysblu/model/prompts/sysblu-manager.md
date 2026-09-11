@@ -11,6 +11,8 @@ undo and redo history, reply with `sysmod.done`, and publish a complete
 only system state consumed by the view.
 
 Endpoint deletion removes incident connections in the same reversible change.
+Project reference edits replace the top-level list in one reversible change,
+validate it before acceptance, and preserve unedited reference metadata.
 Connection metadata edits preserve message and extension details that the
 current inspector does not expose.
 

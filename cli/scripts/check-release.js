@@ -1,115 +1,181 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import {fileURLToPath, pathToFileURL} from 'node:url'
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import {compatibilityFamily, familyRange} from '../lib/version-policy.js'
+import {
+    compatibilityFamily,
+    parseVmbluVersion,
+} from '../lib/version-policy.js';
 
-const here = path.dirname(fileURLToPath(import.meta.url))
-const root = path.resolve(here, '..', '..')
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(here, '..', '..');
 
-const rootPackage = readJson('package.json')
-const cli = readJson('cli/package.json')
-const core = readJson('core/package.json')
-const runtime = readJson('runtime/package.json')
-const playground = readJson('playground/package.json')
-const uiSvelte = readJson('ui-svelte/package.json')
-const vscode = readJson('vscodex/package.json')
+const rootPackage = readJson('package.json');
+const cli = readJson('cli/package.json');
+const core = readJson('core/package.json');
+const runtime = readJson('runtime/package.json');
+const playground = readJson('playground/package.json');
+const uiSvelte = readJson('ui-svelte/package.json');
+const vscode = readJson('vscodex/package.json');
 const versions = {
-  cli: cli.version,
-  core: core.version,
-  runtime: runtime.version,
-  schema: cli.schemaVersion,
-}
+    cli: cli.version,
+    core: core.version,
+    runtime: runtime.version,
+    schema: cli.schemaVersion,
+};
 const coordinatedVersions = {
-  root: rootPackage.version,
-  ...versions,
-  playground: playground.version,
-  'ui-svelte': uiSvelte.version,
-  vscode: vscode.version,
-}
+    root: rootPackage.version,
+    ...versions,
+    playground: playground.version,
+    'ui-svelte': uiSvelte.version,
+    vscode: vscode.version,
+};
 
-const expectedVersion = process.argv[2]
+const expectedVersion = process.argv[2];
 if (expectedVersion) {
-  for (const [name, version] of Object.entries(coordinatedVersions)) {
-    if (version !== expectedVersion) {
-      throw new Error(`Release ${name} version must be '${expectedVersion}', found '${version}'`)
+    for (const [name, version] of Object.entries(coordinatedVersions)) {
+        if (version !== expectedVersion) {
+            throw new Error(
+                `Release ${name} version must be '${expectedVersion}', found '${version}'`
+            );
+        }
     }
-  }
 }
 
-const families = new Set(Object.values(versions).map(compatibilityFamily))
+const families = new Set(Object.values(versions).map(compatibilityFamily));
 if (families.size !== 1) {
-  throw new Error(`Release components do not share one compatibility family: ${JSON.stringify(versions)}`)
+    throw new Error(
+        `Release components do not share one compatibility family: ${JSON.stringify(versions)}`
+    );
 }
 
-const expectedRange = familyRange(cli.version)
+const { major, minor } = parseVmbluVersion(cli.version);
+const expectedRange = `>=${cli.version} <${major}.${minor + 1}.0`;
 for (const [name, range] of Object.entries({
-  core: cli.dependencies['@vizualmodel/vmblu-core'],
-  runtime: cli.dependencies['@vizualmodel/vmblu-runtime'],
+    core: cli.dependencies['@vizualmodel/vmblu-core'],
+    runtime: cli.dependencies['@vizualmodel/vmblu-runtime'],
 })) {
-  if (range !== expectedRange) {
-    throw new Error(`CLI ${name} dependency must be '${expectedRange}', found '${range}'`)
-  }
+    if (range !== expectedRange) {
+        throw new Error(
+            `CLI ${name} dependency must be '${expectedRange}', found '${range}'`
+        );
+    }
 }
 
-for (const command of ['commands/verify', 'commands/make-test', 'commands/run-test']) {
-  if (!cli.files.includes(command)) throw new Error(`CLI package files must include ${command}`)
+for (const command of [
+    'commands/verify',
+    'commands/make-test',
+    'commands/run-test',
+]) {
+    if (!cli.files.includes(command))
+        throw new Error(`CLI package files must include ${command}`);
 }
 
 for (const runtimeExport of ['./rt-model-test']) {
-  if (!runtime.exports?.[runtimeExport]) throw new Error(`Runtime package exports must include ${runtimeExport}`)
+    if (!runtime.exports?.[runtimeExport])
+        throw new Error(
+            `Runtime package exports must include ${runtimeExport}`
+        );
 }
 
-const expectedRepositoryUrl = 'https://github.com/vizualmodel/vmblu.git'
-for (const [name, manifest] of Object.entries({cli, core, runtime})) {
-  const repositoryUrl =
-    typeof manifest.repository === 'string' ? manifest.repository : manifest.repository?.url
-  if (repositoryUrl !== expectedRepositoryUrl) {
-    throw new Error(
-      `${name} repository.url must be '${expectedRepositoryUrl}' for npm trusted publishing, found '${repositoryUrl}'`,
-    )
-  }
+const expectedRepositoryUrl = 'https://github.com/vizualmodel/vmblu.git';
+for (const [name, manifest] of Object.entries({ cli, core, runtime })) {
+    const repositoryUrl =
+        typeof manifest.repository === 'string'
+            ? manifest.repository
+            : manifest.repository?.url;
+    if (repositoryUrl !== expectedRepositoryUrl) {
+        throw new Error(
+            `${name} repository.url must be '${expectedRepositoryUrl}' for npm trusted publishing, found '${repositoryUrl}'`
+        );
+    }
 }
 
-const contextDir = path.join(root, 'cli', 'context', cli.schemaVersion)
-for (const file of ['blu.schema.json', 'blu.annex.md', 'viz.schema.json', 'sys.schema.json', 'protocol.schema.json', 'prf.schema.json', 'capabilities.schema.json', 'agents.v1.json', 'model-test.schema.json', 'test-report.schema.json']) {
-  if (!fs.existsSync(path.join(contextDir, file))) throw new Error(`Missing release context file: ${file}`)
+const contextDir = path.join(root, 'cli', 'context', cli.schemaVersion);
+for (const file of [
+    'blu.schema.json',
+    'blu.annex.md',
+    'viz.schema.json',
+    'sys.schema.json',
+    'protocol.schema.json',
+    'prf.schema.json',
+    'capabilities.schema.json',
+    'agents.v1.json',
+    'model-test.schema.json',
+    'test-report.schema.json',
+]) {
+    if (!fs.existsSync(path.join(contextDir, file)))
+        throw new Error(`Missing release context file: ${file}`);
 }
 
 for (const [file, title] of [
-  ['blu.schema.json', `vmblu Blueprint Model (v${cli.schemaVersion})`],
-  ['viz.schema.json', `vmblu Visual Model (v${cli.schemaVersion})`],
-  ['sys.schema.json', `vmblu System Configuration (v${cli.schemaVersion})`],
-  ['protocol.schema.json', `vmblu Protocol Definition (v${cli.schemaVersion})`],
-  ['model-test.schema.json', 'vmblu Model Test'],
-  ['test-report.schema.json', 'vmblu Test Report'],
+    ['blu.schema.json', `vmblu Blueprint Model (v${cli.schemaVersion})`],
+    ['viz.schema.json', `vmblu Visual Model (v${cli.schemaVersion})`],
+    ['sys.schema.json', `vmblu System Configuration (v${cli.schemaVersion})`],
+    [
+        'protocol.schema.json',
+        `vmblu Protocol Definition (v${cli.schemaVersion})`,
+    ],
+    ['model-test.schema.json', 'vmblu Model Test'],
+    ['test-report.schema.json', 'vmblu Test Report'],
 ]) {
-  const schema = JSON.parse(fs.readFileSync(path.join(contextDir, file), 'utf8'))
-  const expectedId = `https://vmblu.dev/context/${cli.schemaVersion}/${file}`
-  if (schema.$id !== expectedId || schema.title !== title) {
-    throw new Error(`${file} metadata does not match schema version ${cli.schemaVersion}`)
-  }
+    const schema = JSON.parse(
+        fs.readFileSync(path.join(contextDir, file), 'utf8')
+    );
+    const expectedId = `https://vmblu.dev/context/${cli.schemaVersion}/${file}`;
+    if (schema.$id !== expectedId || schema.title !== title) {
+        throw new Error(
+            `${file} metadata does not match schema version ${cli.schemaVersion}`
+        );
+    }
 }
 
-const releaseModule = await import(pathToFileURL(path.join(root, 'core', 'types', 'model', 'release-version.js')))
-if (releaseModule.CORE_VERSION !== core.version || releaseModule.SCHEMA_VERSION !== cli.schemaVersion) {
-  throw new Error('Generated core release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli')
+const releaseModule = await import(
+    pathToFileURL(
+        path.join(root, 'core', 'types', 'model', 'release-version.js')
+    )
+);
+if (
+    releaseModule.CORE_VERSION !== core.version ||
+    releaseModule.SCHEMA_VERSION !== cli.schemaVersion
+) {
+    throw new Error(
+        'Generated core release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli'
+    );
 }
 
-const cliReleaseModule = await import(pathToFileURL(path.join(root, 'cli', 'lib', 'release-version.js')))
-if (cliReleaseModule.CLI_VERSION !== cli.version || cliReleaseModule.SCHEMA_VERSION !== cli.schemaVersion) {
-  throw new Error('Generated cli release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli')
+const cliReleaseModule = await import(
+    pathToFileURL(path.join(root, 'cli', 'lib', 'release-version.js'))
+);
+if (
+    cliReleaseModule.CLI_VERSION !== cli.version ||
+    cliReleaseModule.SCHEMA_VERSION !== cli.schemaVersion
+) {
+    throw new Error(
+        'Generated cli release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli'
+    );
 }
 
-const runtimeReleaseModule = await import(pathToFileURL(path.join(root, 'runtime', 'shared', 'release-version.js')))
+const runtimeReleaseModule = await import(
+    pathToFileURL(path.join(root, 'runtime', 'shared', 'release-version.js'))
+);
 if (runtimeReleaseModule.RUNTIME_VERSION !== runtime.version) {
-  throw new Error('Generated runtime release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli')
+    throw new Error(
+        'Generated runtime release-version.js is stale; run npm run build --workspace=@vizualmodel/vmblu-cli'
+    );
 }
 
-console.log(`Release compatibility check passed for family ${Array.from(families)[0]}.`)
-console.log(`CLI ${cli.version}; core ${core.version}; runtime ${runtime.version}; schema ${cli.schemaVersion}.`)
-if (expectedVersion) console.log(`Coordinated release version ${expectedVersion} is consistent.`)
+console.log(
+    `Release compatibility check passed for family ${Array.from(families)[0]}.`
+);
+console.log(
+    `CLI ${cli.version}; core ${core.version}; runtime ${runtime.version}; schema ${cli.schemaVersion}.`
+);
+if (expectedVersion)
+    console.log(
+        `Coordinated release version ${expectedVersion} is consistent.`
+    );
 
 function readJson(relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'))
+    return JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'));
 }

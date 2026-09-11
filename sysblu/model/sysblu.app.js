@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: sysblu
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.0","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.0"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:66610bf499e7af55"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.1"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:088a1927f6148dd4"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -18,7 +18,7 @@ const nodeList = [
 	//_________________________________________________SYSBLU VIEW
 	{
 	name: "sysblu view",
-	uid: "tLhG",
+	uid: "FaJt",
 	factory: SysbluView,
 	inputs: [
 		"-> size change",
@@ -32,9 +32,10 @@ const nodeList = [
 		"application settings -> ()",
 		"endpoint settings -> ()",
 		"connection settings -> ()",
-		"sysmod.doit -> sysmod.doit @ sysblu manager (tBvs)",
-		"sysmod.undo -> sysmod.undo @ sysblu manager (tBvs)",
-		"sysmod.redo -> sysmod.redo @ sysblu manager (tBvs)",
+		"project references -> ()",
+		"sysmod.doit -> sysmod.doit @ sysblu manager (xSzc)",
+		"sysmod.undo -> sysmod.undo @ sysblu manager (xSzc)",
+		"sysmod.redo -> sysmod.redo @ sysblu manager (xSzc)",
 		"open reference -> ()",
 		"execute command -> ()"
 		]
@@ -42,7 +43,7 @@ const nodeList = [
 	//______________________________________________SYSBLU MANAGER
 	{
 	name: "sysblu manager",
-	uid: "tBvs",
+	uid: "xSzc",
 	factory: SysbluManager,
 	inputs: [
 		"-> sysblu.set",
@@ -55,15 +56,15 @@ const nodeList = [
 		"sysblu.loaded -> ()",
 		"sysblu.failed -> ()",
 		"sysblu.diagnostics -> ()",
-		"system.updated -> system.updated @ sysblu view (tLhG)",
-		"sysmod.done -> sysmod.done @ sysblu view (tLhG)"
+		"system.updated -> system.updated @ sysblu view (FaJt)",
+		"sysmod.done -> sysmod.done @ sysblu view (FaJt)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.0","schemaVersion":"1.12.0"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.1","schemaVersion":"1.12.1"}
 }
 
 // prepare the runtime

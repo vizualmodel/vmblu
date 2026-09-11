@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "2026-08-24T14:00:22.255Z",
     "saved": "2026-09-01T15:22:57.692Z",
     "utc": "2026-09-01T15:22:57.692Z",
@@ -185,6 +185,10 @@
     "ConnectionInspectorRequest": {
       "kind": "primitive",
       "summary": "UI request containing a system connection snapshot, popup placement, and completion callback."
+    },
+    "ProjectReferencesRequest": {
+      "kind": "primitive",
+      "summary": "Project reference list snapshot, popup position, and open, save, and cancel callbacks."
     }
   },
   "root": {
@@ -322,6 +326,14 @@
               "role": "follower",
               "payload": "ConnectionInspectorRequest"
             }
+          },
+          {
+            "name": "project references",
+            "kind": "output",
+            "contract": {
+              "role": "follower",
+              "payload": "ProjectReferencesRequest"
+            }
           }
         ]
       },
@@ -418,6 +430,14 @@
                 "contract": {
                   "role": "owner",
                   "payload": "ConnectionInspectorRequest"
+                }
+              },
+              {
+                "name": "project references",
+                "kind": "output",
+                "contract": {
+                  "role": "owner",
+                  "payload": "ProjectReferencesRequest"
                 }
               }
             ]
@@ -804,6 +824,15 @@
         "dst": {
           "pin": "add application",
           "node": "sysblu view"
+        }
+      },
+      {
+        "src": {
+          "pin": "project references",
+          "node": "sysblu view"
+        },
+        "dst": {
+          "pin": "project references"
         }
       }
     ]

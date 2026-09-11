@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.0",
+    "version": "1.12.1",
     "created": "2026-08-28T09:56:57.923Z",
     "saved": "2026-09-01T15:21:25.546Z",
     "utc": "2026-09-01T15:21:25.546Z",
@@ -445,6 +445,14 @@
                   "role": "follower",
                   "payload": "AnyPayload"
                 }
+              },
+              {
+                "name": "project references",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "AnyPayload"
+                }
               }
             ]
           },
@@ -527,10 +535,10 @@
             "help": "Add application"
           },
           {
-            "icon": "comment",
+            "icon": "folder_open",
             "color": "#0fb2e4",
             "message": "application prompt",
-            "help": "Application prompt"
+            "help": "Project references"
           },
           {
             "icon": "save",
@@ -635,6 +643,39 @@
             ]
           }
         ]
+      },
+      {
+        "kind": "source",
+        "name": "project references",
+        "team": "ui",
+        "factory": {
+          "path": "../../../ui-svelte/index.js",
+          "function": "ProjectReferencesFactory"
+        },
+        "interfaces": [
+          {
+            "interface": "",
+            "pins": [
+              {
+                "name": "project references",
+                "kind": "input",
+                "contract": {
+                  "role": "owner",
+                  "payload": "AnyPayload"
+                }
+              },
+              {
+                "name": "modal div",
+                "kind": "output",
+                "contract": {
+                  "role": "follower",
+                  "payload": "DomElement"
+                }
+              }
+            ]
+          }
+        ],
+        "prompt": "Edit top-level project references in a popup with open, add, remove, Save and Cancel actions. Keep edits local until Save and preserve all reference metadata."
       }
     ],
     "connections": [
@@ -852,6 +893,26 @@
         "src": {
           "pin": "modal div",
           "node": "connection inspector"
+        },
+        "dst": {
+          "pin": "modal div",
+          "node": "system message broker"
+        }
+      },
+      {
+        "src": {
+          "pin": "project references",
+          "node": "sysblu"
+        },
+        "dst": {
+          "pin": "project references",
+          "node": "project references"
+        }
+      },
+      {
+        "src": {
+          "pin": "modal div",
+          "node": "project references"
         },
         "dst": {
           "pin": "modal div",

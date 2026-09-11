@@ -6,6 +6,17 @@ import {json} from '@codemirror/lang-json'
 import {markdown} from '@codemirror/lang-markdown'
 import {css} from '@codemirror/lang-css'
 import {html} from '@codemirror/lang-html'
+import MarkdownIt from 'markdown-it'
+
+const markdownRenderer = new MarkdownIt({html: false, linkify: true})
+
+export function renderMarkdown(text) {
+    return markdownRenderer.render(text)
+}
+
+export function isMarkdownFile(name = '') {
+    return ['md', 'markdown'].includes(extensionOf(name))
+}
 
 const BINARY_EXTENSIONS = new Set([
     'avif', 'bmp', 'gif', 'ico', 'jpeg', 'jpg', 'pdf', 'png', 'webp',
@@ -13,10 +24,10 @@ const BINARY_EXTENSIONS = new Set([
 ])
 
 const editorTheme = EditorView.theme({
-    '&': {height: '100%', backgroundColor: '#1e1e1e', color: '#ddd'},
+    '&': {height: '100%', backgroundColor: '#121212', color: '#ddd'},
     '.cm-scroller': {fontFamily: 'Consolas, "Courier New", monospace'},
     '.cm-content': {caretColor: '#fff'},
-    '.cm-gutters': {backgroundColor: '#252526', color: '#858585', border: 'none'},
+    '.cm-gutters': {backgroundColor: '#181818', color: '#858585', border: 'none'},
     '&.cm-focused .cm-cursor': {borderLeftColor: '#fff'},
     '&.cm-focused .cm-selectionBackground, ::selection': {backgroundColor: '#264f78'}
 }, {dark: true})
@@ -61,9 +72,41 @@ class TextEditorController {
         this.root = document.createElement('section')
         this.root.className = 'vmblu-text-editor'
 
+        this.toolbar = document.createElement('div')
+        this.toolbar.className = 'vmblu-text-editor-toolbar'
+        this.toolbar.hidden = true
+        this.toggle = document.createElement('button')
+        this.toggle.type = 'button'
+        this.toggle.textContent = 'Preview'
+        this.toggle.title = 'Toggle Markdown preview (Ctrl+Shift+V / Cmd+Shift+V)'
+        this.toggle.setAttribute('aria-pressed', 'false')
+        this.toggle.addEventListener('click', () => this.togglePreview())
+        this.toolbar.append(this.toggle)
+        this.root.append(this.toolbar)
+
         this.host = document.createElement('div')
         this.host.className = 'vmblu-text-editor-host'
         this.root.append(this.host)
+
+        this.preview = document.createElement('article')
+        this.preview.className = 'vmblu-markdown-preview'
+        this.preview.tabIndex = 0
+        this.preview.setAttribute('aria-label', 'Markdown preview')
+        this.preview.hidden = true
+        this.root.append(this.preview)
+        this.previewing = false
+        this.root.addEventListener('keydown', (event) => {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+            if (event.shiftKey && event.key.toLowerCase() === 'v' && this.active && isMarkdownFile(this.active.name)) {
+                event.preventDefault()
+                event.stopPropagation()
+                this.togglePreview()
+            } else if (this.previewing && !event.shiftKey && event.key.toLowerCase() === 's') {
+                event.preventDefault()
+                event.stopPropagation()
+                this.saveActive()
+            }
+        }, true)
 
         this.installStyles()
         this.view = new EditorView({
@@ -78,10 +121,28 @@ class TextEditorController {
         const style = document.createElement('style')
         style.id = 'vmblu-text-editor-style'
         style.textContent = `
-            .vmblu-text-editor { display:flex; flex-direction:column; width:100%; height:100%; background:#1e1e1e; }
+            .vmblu-text-editor { display:flex; flex-direction:column; width:100%; height:100%; background:#121212; }
             .vmblu-text-editor-host { flex:1; min-height:0; overflow:hidden; }
             .vmblu-text-editor-host .cm-editor { height:100%; }
             .vmblu-text-editor-message { margin:1rem; color:#bbb; font:0.9rem Arial, sans-serif; }
+            .vmblu-text-editor [hidden] { display:none !important; }
+            .vmblu-text-editor-toolbar { display:flex; justify-content:flex-end; padding:6px 12px; border-bottom:1px solid #303030; }
+            .vmblu-text-editor-toolbar button { color:#ddd; background:#252526; border:1px solid #555; border-radius:4px; padding:4px 12px; cursor:pointer; }
+            .vmblu-text-editor-toolbar button:focus-visible, .vmblu-markdown-preview:focus-visible { outline:2px solid #75baff; outline-offset:-2px; }
+            .vmblu-markdown-preview { flex:1; min-height:0; overflow:auto; padding:24px 32px; color:#ddd; font:16px/1.6 system-ui, sans-serif; overflow-wrap:anywhere; }
+            .vmblu-markdown-preview > :first-child { margin-top:0; }
+            .vmblu-markdown-preview h1, .vmblu-markdown-preview h2 { border-bottom:1px solid #333; padding-bottom:0.3em; }
+            .vmblu-markdown-preview h1, .vmblu-markdown-preview h2, .vmblu-markdown-preview h3, .vmblu-markdown-preview h4, .vmblu-markdown-preview h5, .vmblu-markdown-preview h6 { color:#eee; font-weight:600; line-height:1.3; }
+            .vmblu-markdown-preview h4 { font-size:1em; }
+            .vmblu-markdown-preview a { color:#80bfff; }
+            .vmblu-markdown-preview pre { overflow:auto; padding:16px; background:#1e1e1e; border-radius:5px; }
+            .vmblu-markdown-preview code { font-family:Consolas, "Courier New", monospace; background:#252526; padding:0.15em 0.3em; border-radius:3px; }
+            .vmblu-markdown-preview pre code { padding:0; background:none; }
+            .vmblu-markdown-preview blockquote { margin-left:0; padding-left:16px; border-left:4px solid #555; color:#aaa; }
+            .vmblu-markdown-preview table { border-collapse:collapse; display:block; overflow:auto; }
+            .vmblu-markdown-preview th, .vmblu-markdown-preview td { border:1px solid #444; padding:6px 12px; }
+            .vmblu-markdown-preview img { max-width:100%; }
+            .vmblu-markdown-preview hr { border:0; border-top:1px solid #444; }
         `
         document.head.append(style)
     }
@@ -127,6 +188,8 @@ class TextEditorController {
     }
 
     showMessage(message) {
+        this.closePreview()
+        this.toolbar.hidden = true
         this.host.replaceChildren()
         const element = document.createElement('p')
         element.className = 'vmblu-text-editor-message'
@@ -136,6 +199,39 @@ class TextEditorController {
 
     restoreEditor() {
         if (!this.host.contains(this.view.dom)) this.host.replaceChildren(this.view.dom)
+    }
+
+    closePreview() {
+        this.previewing = false
+        this.preview.hidden = true
+        this.host.hidden = false
+        this.toggle.textContent = 'Preview'
+        this.toggle.setAttribute('aria-pressed', 'false')
+    }
+
+    togglePreview() {
+        if (!this.active || !isMarkdownFile(this.active.name)) return
+        if (this.previewing) {
+            this.closePreview()
+            this.view.requestMeasure()
+            this.view.focus()
+            this.view.scrollDOM.scrollTop = this.editorScroll.top
+            this.view.scrollDOM.scrollLeft = this.editorScroll.left
+            return
+        }
+        this.editorScroll = {top: this.view.scrollDOM.scrollTop, left: this.view.scrollDOM.scrollLeft}
+        this.preview.innerHTML = renderMarkdown(this.view.state.doc.toString())
+        for (const link of this.preview.querySelectorAll('a')) {
+            link.target = '_blank'
+            link.rel = 'noopener noreferrer'
+        }
+        this.previewing = true
+        this.host.hidden = true
+        this.preview.hidden = false
+        this.preview.scrollTop = 0
+        this.toggle.textContent = 'Edit source'
+        this.toggle.setAttribute('aria-pressed', 'true')
+        this.preview.focus()
     }
 
     revealLine(line) {
@@ -150,6 +246,8 @@ class TextEditorController {
 
     async onTextSetActive(doc) {
         const sequence = ++this.loadSequence
+        this.closePreview()
+        this.toolbar.hidden = true
         this.active = null
         if (!doc) return
 
@@ -176,6 +274,7 @@ class TextEditorController {
             if (sequence !== this.loadSequence) return
 
             this.active = session
+            this.toolbar.hidden = !isMarkdownFile(session.name)
             this.restoreEditor()
             this.view.setState(session.state)
             this.tx.send('content div', this.root)

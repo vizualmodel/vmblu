@@ -5,14 +5,14 @@
     "generated": true,
     "artifact": "capabilities",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.0",
+    "schemaVersion": "1.12.1",
     "generator": {
       "name": "@vizualmodel/vmblu-core",
-      "version": "1.12.0"
+      "version": "1.12.1"
     },
     "source": {
       "model": "ui-svelte.mod.blu",
-      "hash": "fnv1a64:0b8f5cdea7b127d5"
+      "hash": "fnv1a64:1254d2856246c3d3"
     }
   },
   "application": {
