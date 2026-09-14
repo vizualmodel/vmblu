@@ -185,7 +185,7 @@ The base runtime provides message routing. The browser-agent runtime adds the ag
 ## Examples and documentation
 
 - Read the guides and explore the gallery at [vmblu.dev](https://vmblu.dev).
-- Browse complete applications in the [vmblu examples repository](https://github.com/vizualmodel/vmblu-examples).
+- Browse complete applications in the [vmblu examples repository](https://github.com/vizualmodel/vmblu-tutorials).
 - Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=vizualmodel.vmblu).
 
 ## Repository structure
@@ -203,7 +203,7 @@ The base runtime provides message routing. The browser-agent runtime adds the ag
 
 ## Versioning, evolution, and contributing
 
-This repository currently contains vmblu version **1.12.1**. The CLI, core, runtime, extension, and model schema are released as a coordinated compatibility family. Components sharing the `1.12` family are designed to work together, while patch releases can evolve independently within that family.
+This repository currently contains vmblu version **1.12.2**. The CLI, core, runtime, extension, and model schema are released as a coordinated compatibility family. Components sharing the `1.12` family are designed to work together, while patch releases can evolve independently within that family.
 
 vmblu is a framework made to assist developers in building software in the AI era. As coding agents become more capable and take on more implementation work, vmblu will continue to add formats, runtimes, controls, integrations, and tools that help developers keep architecture explicit and systems understandable, reliable, and governable.
 
@@ -212,7 +212,7 @@ Contributions and feedback are welcome:
 - Ask questions and discuss ideas in [GitHub Discussions](https://github.com/vizualmodel/vmblu/discussions).
 - Report bugs or request features in [GitHub Issues](https://github.com/vizualmodel/vmblu/issues).
 - Read the [contribution guide](./CONTRIBUTING.md) before preparing a code contribution.
-- Explore or contribute applications through [vmblu examples](https://github.com/vizualmodel/vmblu-examples).
+- Explore or contribute applications through [vmblu examples](https://github.com/vizualmodel/vmblu-tutorials).
 - For private inquiries or collaboration proposals, contact [vmblu.project@gmail.com](mailto:vmblu.project@gmail.com).
 
 ## Open source

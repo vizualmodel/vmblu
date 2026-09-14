@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.1",
+    "version": "1.12.2",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
@@ -577,7 +577,7 @@
           {
             "from": "(pad 7) project references",
             "to": "(pin 3) project references @ project references",
-            "wire": "x -15.0 y 219.5 x -645.0"
+            "wire": "x -15.0 y 219.0 x -645.0"
           }
         ]
       },

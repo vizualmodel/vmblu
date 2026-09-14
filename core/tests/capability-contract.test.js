@@ -61,7 +61,7 @@ test('generated capability ids are stable protocol-safe slugs', () => {
 test('capability generation includes a derived channel output schema', () => {
     const model = new ModelBlueprint(new ARL('C:/project/model/app.mod.blu'))
     model.raw = {
-        header: {version: '1.12.1'},
+        header: {version: '1.12.2'},
         root: {
             kind: 'group',
             name: 'App',
@@ -90,7 +90,7 @@ test('capability generation includes a derived channel output schema', () => {
 test('capability generation makes the application id protocol-safe', () => {
     const model = new ModelBlueprint(new ARL('C:/project/model/app.mod.blu'))
     model.raw = {
-        header: {version: '1.12.1'},
+        header: {version: '1.12.2'},
         root: {kind: 'group', name: 'Customer portal', nodes: []},
     }
 

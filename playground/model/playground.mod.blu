@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.1",
+    "version": "1.12.2",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
@@ -491,9 +491,9 @@
           "remote": {
             "kind": "github",
             "owner": "vizualmodel",
-            "repository": "vmblu-examples",
+            "repository": "vmblu-tutorials",
             "ref": "main",
-            "label": "Examples",
+            "label": "Tutorials",
             "readOnly": true
           }
         }

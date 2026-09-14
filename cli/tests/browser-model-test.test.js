@@ -49,7 +49,7 @@ async function writeBrowserFixture(project) {
 - Expect send: \`auth.logout-request\` = \`{}\`
 `)
     const blu = {
-        header: {version: '1.12.1', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
+        header: {version: '1.12.2', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
         factories: ['../view.js'],
         root: {kind: 'group', name: 'App', nodes: [{
             kind: 'source', name: 'Logout view', testRepo: {arl: '../tests/nodes/Logout-view.md', pathKind: 2},
@@ -67,7 +67,7 @@ async function writeBrowserFixture(project) {
         }]},
     }
     const viz = {
-        header: {version: '1.12.1', style: '#202020'},
+        header: {version: '1.12.2', style: '#202020'},
         root: {kind: 'group', name: 'App', rect: 'x 0 y 0 w 600 h 400', nodes: [{
             kind: 'source', name: 'Logout view', rect: 'x 100 y 100 w 180 h 120',
             interfaces: [

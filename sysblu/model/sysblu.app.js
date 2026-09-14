@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: sysblu
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.1","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.1"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:088a1927f6148dd4"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.2","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.2"},"source":{"model":"sysblu.mod.blu","hash":"fnv1a64:7f0fd61ff4ff5ce5"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -18,7 +18,7 @@ const nodeList = [
 	//_________________________________________________SYSBLU VIEW
 	{
 	name: "sysblu view",
-	uid: "FaJt",
+	uid: "ifte",
 	factory: SysbluView,
 	inputs: [
 		"-> size change",
@@ -33,9 +33,9 @@ const nodeList = [
 		"endpoint settings -> ()",
 		"connection settings -> ()",
 		"project references -> ()",
-		"sysmod.doit -> sysmod.doit @ sysblu manager (xSzc)",
-		"sysmod.undo -> sysmod.undo @ sysblu manager (xSzc)",
-		"sysmod.redo -> sysmod.redo @ sysblu manager (xSzc)",
+		"sysmod.doit -> sysmod.doit @ sysblu manager (pmVf)",
+		"sysmod.undo -> sysmod.undo @ sysblu manager (pmVf)",
+		"sysmod.redo -> sysmod.redo @ sysblu manager (pmVf)",
 		"open reference -> ()",
 		"execute command -> ()"
 		]
@@ -43,7 +43,7 @@ const nodeList = [
 	//______________________________________________SYSBLU MANAGER
 	{
 	name: "sysblu manager",
-	uid: "xSzc",
+	uid: "pmVf",
 	factory: SysbluManager,
 	inputs: [
 		"-> sysblu.set",
@@ -56,15 +56,15 @@ const nodeList = [
 		"sysblu.loaded -> ()",
 		"sysblu.failed -> ()",
 		"sysblu.diagnostics -> ()",
-		"system.updated -> system.updated @ sysblu view (FaJt)",
-		"sysmod.done -> sysmod.done @ sysblu view (FaJt)"
+		"system.updated -> system.updated @ sysblu view (ifte)",
+		"sysmod.done -> sysmod.done @ sysblu view (ifte)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.1","schemaVersion":"1.12.1"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.2","schemaVersion":"1.12.2"}
 }
 
 // prepare the runtime

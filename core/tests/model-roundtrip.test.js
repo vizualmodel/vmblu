@@ -10,7 +10,7 @@ import {ModelBlueprint, ModelCompiler, ModelHeader, UIDGenerator} from '../types
 test('new model headers use the current schema version', () => {
     const header = new ModelHeader()
 
-    assert.equal(header.version, '1.12.1')
+    assert.equal(header.version, '1.12.2')
 })
 
 test('model blueprint loads blu/viz and can be split and loaded again', async () => {

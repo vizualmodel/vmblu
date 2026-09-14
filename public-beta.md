@@ -42,7 +42,7 @@ state:
 - The CLI package now depends on a separate `@vizualmodel/vmblu-core` package
   for model loading and compilation. `vmblu-core` does not depend on the
   runtime; runtime-specific `dx` normalization happens in the runtime.
-- Examples have been moved out of the main repository into `vmblu-examples` and
+- Examples have been moved out of the main repository into `vmblu-tutorials` and
   should use published `@vizualmodel/*` packages rather than local `file:`
   dependencies.
 
@@ -52,7 +52,7 @@ The public beta work touches three repositories:
 
 - `vmblu`: framework, runtime, CLI, editor UI and playground.
 - `vmblu.dev`: user guide and website documentation.
-- `vmblu-examples`: public examples that demonstrate vmblu applications,
+- `vmblu-tutorials`: public examples that demonstrate vmblu applications,
   including the planned agent integration and security behavior example.
 
 ## Step 1: Commit And Push Current vmblu Branch
@@ -197,7 +197,7 @@ Goal: create a working example that a new user can run and inspect.
 Implementation requirements:
 
 - Keep it small enough to understand in one sitting.
-- Work in the `vmblu-examples` repository.
+- Work in the `vmblu-tutorials` repository.
 - Depend on published `@vizualmodel/*` packages, not local packages from
   `../vmblu`.
 - Use a Node.js runtime for the security part, because browser runtimes do not
@@ -258,7 +258,7 @@ Current install-doc direction:
 - `vmblu-core` is mentioned as a CLI dependency, not as a separate application
   install step
 - runtime is selected in the editor/model, not by editing generated app files
-- examples link points to `https://github.com/vizualmodel/vmblu-examples`
+- examples link points to `https://github.com/vizualmodel/vmblu-tutorials`
 
 ## Step 5: Commit And Push Examples And vmblu.dev
 
@@ -269,7 +269,7 @@ Tasks:
 1. Commit the examples repository after the example is implemented and
    verified.
 2. Commit `vmblu.dev` after the docs are reviewed and updated.
-3. Push `vmblu-examples` and `vmblu.dev` to GitHub.
+3. Push `vmblu-tutorials` and `vmblu.dev` to GitHub.
 4. Confirm links between docs and examples resolve correctly.
 5. Do a final public-beta smoke test from fresh instructions.
 

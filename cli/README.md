@@ -156,3 +156,7 @@ vmblu agent install claude
 * If you later prefer a richer UX, you can swap the router to commander/yargs without changing your command folders.
 * If your main repo houses both runtime and CLI, publish the CLI from vmblu/cli (separate package.json). This keeps runtime installs lean.
 * This gives you one tidy package for all current and future commands, with zero drift and easy discoverability.
+
+## Blueprint validation
+
+Run `vmblu blueprint validate [directory] [--json]` to check the provisional Blueprint convention. Checks cover metadata schema, README, referenced model/media files, repository containment and version declarations. Passing validation does not approve or publish the project. See https://github.com/vizualmodel/vmblu-blueprints for the convention.

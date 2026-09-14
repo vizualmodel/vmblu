@@ -21,7 +21,7 @@ vmblu model editor.
 - Playground recognizes `*.sys.blu`, gives sysblu its own pane and canvas, and
   routes loading, saving, navigation, and shared inspectors through the host.
 - The real reference configuration is
-  `vmblu-examples/chat-application/system/active.sys.blu` with
+  `vmblu-tutorials/chat-application/system/active.sys.blu` with
   `system/chat.protocol.json`.
 - Application, endpoint, and connection editing are complete
   for the current scope. All mutations are validated, atomic, undoable, and

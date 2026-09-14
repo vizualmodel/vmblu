@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-EXAMPLES_DIR="$ROOT_DIR/../vmblu-examples"
+EXAMPLES_DIR="$ROOT_DIR/../vmblu-tutorials"
 NPM=${NPM:-npm}
 
 # Framework projects are explicit because not every vmblu package is an

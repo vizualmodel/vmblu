@@ -4,8 +4,8 @@ import assert from 'node:assert/strict'
 import {ARL, ReadOnlyResourceError} from '../types/arl/arl.js'
 
 test('browser ARL preserves read-only access through resolve and copy', async () => {
-    const entrypoint = new ARL('/vmblu-examples/solar-system/solar-system.blu')
-        .absolute('https://raw.githubusercontent.com/vizualmodel/vmblu-examples/main/solar-system/solar-system.blu')
+    const entrypoint = new ARL('/vmblu-tutorials/solar-system/solar-system.blu')
+        .absolute('https://raw.githubusercontent.com/vizualmodel/vmblu-tutorials/main/solar-system/solar-system.blu')
         .setReadOnly()
 
     const model = entrypoint.resolve('model/solar-system.mod.blu')
@@ -14,7 +14,7 @@ test('browser ARL preserves read-only access through resolve and copy', async ()
     assert.equal(entrypoint.canWrite(), false)
     assert.equal(model.canWrite(), false)
     assert.equal(copy.canWrite(), false)
-    assert.equal(model.url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu-examples/main/solar-system/model/solar-system.mod.blu')
+    assert.equal(model.url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu-tutorials/main/solar-system/model/solar-system.mod.blu')
 
     await assert.rejects(
         model.save('{}'),

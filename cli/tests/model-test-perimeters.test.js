@@ -61,7 +61,7 @@ async function writeFixture(project) {
 
     const pin = (name, kind) => ({name, kind, contract: {role: kind === 'input' ? 'follower' : 'owner', payload: 'number'}})
     const blu = {
-        header: {version: '1.12.1', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
+        header: {version: '1.12.2', runtime: '@vizualmodel/vmblu-runtime/rt-base'},
         factories: ['../nodes.js'],
         root: {
             kind: 'group', name: 'App', testRepo: {arl: '../tests/app/application.md', pathKind: 2},
@@ -85,7 +85,7 @@ async function writeFixture(project) {
         },
     }
     const viz = {
-        header: {version: '1.12.1', style: '#202020'},
+        header: {version: '1.12.2', style: '#202020'},
         root: {
             kind: 'group', name: 'App', rect: 'x 0 y 0 w 800 h 600',
             interfaces: [{interface: '(1) app', pins: ['(2 L)app.in', '(3 R)app.out']}],

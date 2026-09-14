@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "@vizualmodel/vmblu-runtime": ">=1.12.1 <1.13.0"
+    "@vizualmodel/vmblu-runtime": ">=1.12.2 <1.13.0"
   },
   "devDependencies": {
-    "@vizualmodel/vmblu-cli": "^1.12.1",
+    "@vizualmodel/vmblu-cli": "^1.12.2",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
   },

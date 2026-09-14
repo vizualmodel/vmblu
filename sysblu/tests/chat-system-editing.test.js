@@ -8,7 +8,7 @@ import {transmitter} from './fixtures.js'
 import {validateProtocolReferences} from '../../cli/lib/protocol-validation.js'
 import {SCHEMA_VERSION} from '../../core/types/model/schema-version.js'
 
-const chatSystemUrl = new URL('../../../vmblu-examples/chat-application/system/active.sys.blu', import.meta.url)
+const chatSystemUrl = new URL('../../../vmblu-tutorials/chat-application/system/active.sys.blu', import.meta.url)
 
 test('real Chat system completes endpoint and connection editing without changing its fixture', async () => {
     const originalText = await readFile(chatSystemUrl, 'utf8')

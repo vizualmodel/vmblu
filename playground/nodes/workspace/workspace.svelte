@@ -4,7 +4,7 @@ import {onMount} from 'svelte'
 import {WSFolder, WSFileSystem} from './ws-folder'
 import {WSFile} from './ws-file'
 import {LARL, Path} from '../../../core/types/arl/index.js'
-import {GitHubRepositoryProvider, defaultGitHubRepository} from './github-repository.js'
+import {GitHubRepositoryProvider, defaultGitHubRepository, playgroundGitHubRepository} from './github-repository.js'
 
 // The props for the workspace
 // tx is an object that allows the workspace to send messages to other components
@@ -16,16 +16,13 @@ export let sx = null
 let mainDiv
 
 // The div with the file systems
-let remoteDiv
 let localDiv
 
-let remoteFS = null
 let localFS = null
-let remoteLoading = false
-let remoteError = ''
-
-const remoteConfig = {...defaultGitHubRepository, ...(sx?.remote ?? {})}
-const remoteLabel = remoteConfig.label ?? 'Examples'
+let remoteMounts = [
+    {...defaultGitHubRepository, label: 'Tutorials', ...(sx?.remote ?? {})},
+    playgroundGitHubRepository
+].map(config => ({config, fs: null, loading: true, error: ''}))
 
 // allow or forbid a local file system
 const allowLocalFS = true
@@ -39,7 +36,7 @@ onMount(async () => {
     setVisibilityHandler()
 
     // get the remote file system
-    await getRemoteFS()
+    await Promise.all(remoteMounts.map(getRemoteFS))
 
 })
 
@@ -114,30 +111,31 @@ async function newLocalFS(e) {
 }
 
 // Mount a public GitHub repository as a read-only workspace file system.
-async function getRemoteFS() {
+async function getRemoteFS(remote) {
 
-    remoteLoading = true
-    remoteError = ''
+    remote.loading = true
+    remote.error = ''
 
     try {
-        const provider = new GitHubRepositoryProvider(remoteConfig)
+        const provider = new GitHubRepositoryProvider(remote.config)
         const rawFolder = await provider.getTree()
 
-        remoteFS = new WSFileSystem('github', {readOnly: true, provider})
-        remoteFS.root = new WSFolder(provider.createArl(), remoteFS)
+        const remoteFS = new WSFileSystem('github', {readOnly: true, provider})
+        remoteFS.root = new WSFolder(provider.createArl(rawFolder.path), remoteFS)
         remoteFS.root.is.expanded = true
         remoteFS.root.is.stale = false
 
         expandRemoteFS(rawFolder, remoteFS.root, provider)
-        remoteFS = remoteFS
+        remote.fs = remoteFS
     }
     catch (error) {
-        console.error('GitHub examples repository could not be mounted:', error)
-        remoteFS = null
-        remoteError = error?.message ?? 'Examples could not be mounted.'
+        console.error(`GitHub ${remote.config.label} folder could not be mounted:`, error)
+        remote.fs = null
+        remote.error = error?.message ?? 'Folder could not be mounted.'
     }
     finally {
-        remoteLoading = false
+        remote.loading = false
+        remoteMounts = [...remoteMounts]
     }
 }
 
@@ -173,18 +171,19 @@ function expandRemoteFS(rawFolder, owner, provider) {
     }
 }
 
-function toggleRemoteFS() {
+function toggleRemoteFS(remote) {
+    const remoteFS = remote.fs
 
     if (!remoteFS) return;
     remoteFS.root.is.expanded ? remoteFS.collapse() : remoteFS.expand();
 
-    remoteFS = remoteFS
+    remoteMounts = [...remoteMounts]
 }
 function toggleLocalFS() {
     if (!localFS) return;
     localFS.root.is.expanded ? localFS.collapse() : localFS.expand();
 
-    remoteFS = remoteFS
+    localFS = localFS
 }
 
 function getFolderPath(folder) {
@@ -244,7 +243,7 @@ function resolveRequestPath(startFolder, relativePath = '') {
 }
 
 function getWorkspaceRoots() {
-    return [remoteFS?.root, localFS?.root].filter(Boolean)
+    return [...remoteMounts.map(remote => remote.fs?.root), localFS?.root].filter(Boolean)
 }
 
 function pickRoot(targetPath) {
@@ -323,6 +322,7 @@ async function getFolderContent(startFolder, relativePath) {
 	padding: 0.1rem 0.0rem 0.0rem 0rem;
     user-select:none;
 }
+.remote-toggle { background: transparent; border: 0; padding: 0; cursor: pointer; }
 .heading {
     display: flex;
     padding-top: 0.3rem;
@@ -419,27 +419,28 @@ p.no-selection {
 <!-- svelte-ignore a11y-no-static-element-interactions a11y-click-events-have-key-events-->
 <div class="workspace" bind:this={mainDiv}>
 
-    <div class="heading">
-        <h1>{remoteLabel}</h1>
-
-        <div class="menu-item">
-            <i class="material-icons-outlined" on:click={toggleRemoteFS} >{remoteFS?.root?.is.expanded ? "unfold_less" : "unfold_more"}</i>
-            <div class="tooltip">{remoteFS?.root?.is.expanded ? "collapse all" : "expand all"}</div>
-        </div>
-    </div>
-
-    <div class="file-system" bind:this={remoteDiv}>
-        {#if remoteLoading}
-            <div class="loading-status" role="status" aria-live="polite">
-                <span class="spinner" aria-hidden="true"></span>
-                <span>Loading examples from GitHub...</span>
+    {#each remoteMounts as remote}
+        <div class="heading">
+            <h1>{remote.config.label}</h1>
+            <div class="menu-item">
+                <button class="remote-toggle" aria-label={remote.fs?.root?.is.expanded ? 'Collapse ' + remote.config.label : 'Expand ' + remote.config.label} on:click={() => toggleRemoteFS(remote)} disabled={!remote.fs}>
+                    <i class="material-icons-outlined" aria-hidden="true">{remote.fs?.root?.is.expanded ? 'unfold_less' : 'unfold_more'}</i>
+                </button>
             </div>
-        {:else if remoteFS?.root}
-            <FolderFileDiv folder={remoteFS.root} tx={tx}/>
-        {:else}
-            <p class="no-selection">{remoteError || 'Examples could not be mounted.'}</p>
-        {/if}
-    </div>
+        </div>
+        <div class="file-system">
+            {#if remote.loading}
+                <div class="loading-status" role="status" aria-live="polite">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span>Loading {remote.config.label} from GitHub...</span>
+                </div>
+            {:else if remote.fs?.root}
+                <FolderFileDiv folder={remote.fs.root} tx={tx}/>
+            {:else}
+                <p class="no-selection">{remote.error || 'Folder could not be mounted.'}</p>
+            {/if}
+        </div>
+    {/each}
 
     {#if allowLocalFS}
         <div class="heading">

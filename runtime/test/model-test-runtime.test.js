@@ -5,7 +5,7 @@ import {BrowserTestHost, runModelTests} from '../rt-model-test/index.js'
 
 function modelArtifact(scope, scenarios) {
     return {
-        schemaVersion: '1.12.1',
+        schemaVersion: '1.12.2',
         target: {scope, name: scope === 'model' ? 'App' : 'Pipeline', path: scope === 'model' ? [] : ['Pipeline']},
         scenarios,
     }

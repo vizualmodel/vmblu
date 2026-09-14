@@ -21,7 +21,7 @@ test('safe runtime generation embeds the root model base directory', () => {
     const projectRoot = path.resolve('project').replaceAll('\\', '/')
     const modelBaseDir = `${projectRoot}/model`
     const model = new ModelBlueprint(new ARL(`${modelBaseDir}/app.mod.blu`))
-    model.raw = {header: {version: '1.12.1'}, root: {kind: 'group', name: 'App', nodes: []}}
+    model.raw = {header: {version: '1.12.2'}, root: {kind: 'group', name: 'App', nodes: []}}
     model.header.runtime = '@vizualmodel/vmblu-runtime/rt-als'
     model.header.runtimeSettings = {security: {
         fs: {read: {mode: 'deny'}, write: {mode: 'allow', roots: ['./out']}, delete: {mode: 'deny'}},
@@ -37,7 +37,7 @@ test('safe runtime generation embeds the root model base directory', () => {
 test('model header canonicalizes legacy application security on load', () => {
     const header = new ModelHeader()
     header.cook(null, {
-        version: '1.12.1',
+        version: '1.12.2',
         runtime: '@vizualmodel/vmblu-runtime/rt-als',
         runtimeSettings: {security: {
             defaults: {fs: 'warn', net: 'allow', process: 'deny'},
@@ -52,7 +52,7 @@ test('model header canonicalizes legacy application security on load', () => {
 test('model header preserves and canonicalizes security for an unsupported runtime', () => {
     const header = new ModelHeader()
     header.cook(null, {
-        version: '1.12.1',
+        version: '1.12.2',
         runtime: '@vizualmodel/vmblu-runtime/rt-base',
         runtimeSettings: {security: {
             mode: 'off',
