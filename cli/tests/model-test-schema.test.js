@@ -4,16 +4,16 @@ import assert from 'node:assert/strict'
 
 import {validateWithSchema} from '../lib/schema-validation.js'
 
-const modelSchema = new URL('../context/1.12.1/model-test.schema.json', import.meta.url)
-const reportSchema = new URL('../context/1.12.1/test-report.schema.json', import.meta.url)
-const blueprintSchema = new URL('../context/1.12.1/blu.schema.json', import.meta.url)
-const securityEventSchema = new URL('../context/1.12.1/security-event.schema.json', import.meta.url)
+const modelSchema = new URL('../context/1.12.2/model-test.schema.json', import.meta.url)
+const reportSchema = new URL('../context/1.12.2/test-report.schema.json', import.meta.url)
+const blueprintSchema = new URL('../context/1.12.2/blu.schema.json', import.meta.url)
+const securityEventSchema = new URL('../context/1.12.2/security-event.schema.json', import.meta.url)
 
 test('unified model test schema accepts node, group, model, and browser operations', () => {
     for (const [scope, path] of [['node', ['Adder']], ['group', ['Math']], ['model', []]]) {
         validateWithSchema({
-            $schema: 'https://vmblu.dev/context/1.12.1/model-test.schema.json',
-            kind: 'vmblu.model-test', version: 1, schemaVersion: '1.12.1', host: 'browser',
+            $schema: 'https://vmblu.dev/context/1.12.2/model-test.schema.json',
+            kind: 'vmblu.model-test', version: 1, schemaVersion: '1.12.2', host: 'browser',
             source: {
                 model: 'model/app.mod.blu', spec: 'tests/nodes/test.md',
                 specHash: 'fnv1a64:0000000000000000', contractHash: 'fnv1a64:0000000000000000',
@@ -33,8 +33,8 @@ test('unified model test schema accepts node, group, model, and browser operatio
 
 test('model test report schema accepts a node result', () => {
     validateWithSchema({
-        $schema: 'https://vmblu.dev/context/1.12.1/test-report.schema.json',
-        kind: 'vmblu.test-report', version: 1, schemaVersion: '1.12.1',
+        $schema: 'https://vmblu.dev/context/1.12.2/test-report.schema.json',
+        kind: 'vmblu.test-report', version: 1, schemaVersion: '1.12.2',
         test: 'tests/nodes/Adder.test.json', artifactHash: 'fnv1a64:0000000000000000',
         target: {scope: 'node', name: 'Adder', path: ['Adder']},
         startedAt: new Date().toISOString(), durationMs: 0, status: 'passed',
@@ -51,13 +51,13 @@ test('model test report schema accepts a node result', () => {
 test('schema files advertise their 1.12 identifiers', () => {
     const model = JSON.parse(fs.readFileSync(modelSchema, 'utf8'))
     const report = JSON.parse(fs.readFileSync(reportSchema, 'utf8'))
-    assert.equal(model.$id, 'https://vmblu.dev/context/1.12.1/model-test.schema.json')
-    assert.equal(report.$id, 'https://vmblu.dev/context/1.12.1/test-report.schema.json')
+    assert.equal(model.$id, 'https://vmblu.dev/context/1.12.2/model-test.schema.json')
+    assert.equal(report.$id, 'https://vmblu.dev/context/1.12.2/test-report.schema.json')
 })
 
 test('blueprint schema permits testRepo on definitions and rejects it on docks', () => {
     const base = {
-        header: {version: '1.12.1'},
+        header: {version: '1.12.2'},
         root: {kind: 'group', name: 'App', nodes: []},
     }
     base.root.testRepo = {arl: '../tests/app/application.md', pathKind: 2}
@@ -74,7 +74,7 @@ test('blueprint schema permits testRepo on definitions and rejects it on docks',
 test('blueprint schema accepts canonical application security and rejects ambiguous scopes', () => {
     const model = {
         header: {
-            version: '1.12.1',
+            version: '1.12.2',
             runtime: '@vizualmodel/vmblu-runtime/rt-als',
             runtimeSettings: {security: {
                 enabled: false,

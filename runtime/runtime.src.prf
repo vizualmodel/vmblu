@@ -1,17 +1,17 @@
 {
-  "version": "1.12.1",
+  "version": "1.12.2",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.1",
+    "schemaVersion": "1.12.2",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.1"
+      "version": "1.12.2"
     },
     "source": {
       "model": "runtime.mod.blu",
-      "hash": "fnv1a64:c94b3b55af2bff3e"
+      "hash": "fnv1a64:b1bb2b5028a057cf"
     }
   },
   "entries": []

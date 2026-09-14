@@ -2,8 +2,17 @@ import {ARL} from '../../../core/types/arl/index.js'
 
 export const defaultGitHubRepository = Object.freeze({
     owner: 'vizualmodel',
-    repository: 'vmblu-examples',
+    repository: 'vmblu-tutorials',
     ref: 'main',
+    readOnly: true
+})
+
+export const playgroundGitHubRepository = Object.freeze({
+    owner: 'vizualmodel',
+    repository: 'vmblu',
+    ref: 'main',
+    path: 'playground',
+    label: 'Playground',
     readOnly: true
 })
 
@@ -120,7 +129,12 @@ export class GitHubRepositoryProvider {
             this.writeCache(rawTree)
         }
 
-        return repositoryTree(rawTree.tree, this.config.repository)
+        let folder = repositoryTree(rawTree.tree, this.config.repository)
+        for (const segment of (this.config.path ?? '').split('/').filter(Boolean)) {
+            folder = folder.folders.find(child => child.name === segment)
+            if (!folder) throw new Error(`GitHub repository folder not found: ${this.config.path}`)
+        }
+        return folder
     }
 
     createArl(path = '') {

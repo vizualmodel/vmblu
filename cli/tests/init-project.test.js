@@ -6,7 +6,7 @@ import test from 'node:test';
 
 import { initProject } from '../commands/init/init-project.js';
 
-test('init creates schema 1.12.1 model and visualization headers', async () => {
+test('init creates schema 1.12.2 model and visualization headers', async () => {
   const parent = await mkdtemp(path.join(tmpdir(), 'vmblu-cli-init-'));
   const targetDir = path.join(parent, 'sample');
 
@@ -25,9 +25,9 @@ test('init creates schema 1.12.1 model and visualization headers', async () => {
     const visual = JSON.parse(await readFile(result.files.vizual, 'utf8'));
     const gitignore = await readFile(result.files.gitignore, 'utf8');
 
-    assert.equal(model.header.version, '1.12.1');
+    assert.equal(model.header.version, '1.12.2');
     assert.equal(model.header.description, undefined);
-    assert.equal(visual.header.version, '1.12.1');
+    assert.equal(visual.header.version, '1.12.2');
     assert.match(visual.header.created, /^\d{4}-\d{2}-\d{2}T/);
     assert.match(visual.header.saved, /^\d{4}-\d{2}-\d{2}T/);
     assert.equal(visual.root.connections, undefined);

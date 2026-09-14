@@ -15,7 +15,7 @@ There are many ways to get involved:
 - **Extend standard nodes/libraries** by adding reusable building blocks.  
 - **Test** the runtime and editor and share feedback on usability and edge cases.
 
-The best way to get started however is to build something with vmblu. The vmblu repo has a companion repo [Vmblu Examples](https://github.com/vizualmodel/vmblu-examples) that features software built with vmblu. The best examples there will be featured on the vmblu.dev site. Working with **vmblu** is also the best way to find issues and come up with ideas for improvements and features.
+The best way to get started however is to build something with vmblu. The vmblu repo has a companion repo [Vmblu Examples](https://github.com/vizualmodel/vmblu-tutorials) that features software built with vmblu. The best examples there will be featured on the vmblu.dev site. Working with **vmblu** is also the best way to find issues and come up with ideas for improvements and features.
 
 ## ■  Development Setup
 

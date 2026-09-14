@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import {GitHubRepositoryProvider} from '../nodes/workspace/github-repository.js'
+import {GitHubRepositoryProvider, playgroundGitHubRepository} from '../nodes/workspace/github-repository.js'
 
 function memoryStorage() {
     const items = new Map()
@@ -39,6 +39,31 @@ test('GitHub provider creates a cached folder tree and read-only raw ARLs', asyn
     assert.equal(first.folders[0].name, 'solar-system')
     assert.equal(first.folders[0].files[0].name, 'solar-system.blu')
     assert.equal(entrypoint.canWrite(), false)
-    assert.equal(entrypoint.getPath(), '/vmblu-examples/solar-system/solar-system.blu')
-    assert.equal(entrypoint.url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu-examples/main/solar-system/solar-system.blu')
+    assert.equal(entrypoint.getPath(), '/vmblu-tutorials/solar-system/solar-system.blu')
+    assert.equal(entrypoint.url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu-tutorials/main/solar-system/solar-system.blu')
+})
+
+test('Playground mounts only its folder while retaining repository-relative URLs', async () => {
+    const storage = memoryStorage()
+    const fetch = async () => ({ok: true, json: async () => ({tree: [
+        {path: 'playground/playground.blu', type: 'blob'},
+        {path: 'playground/model/playground.mod.blu', type: 'blob'},
+        {path: 'core/core.blu', type: 'blob'},
+        {path: 'playground-other/unrelated.blu', type: 'blob'}
+    ]})})
+    const provider = new GitHubRepositoryProvider(playgroundGitHubRepository, {fetch, storage})
+    const folder = await provider.getTree()
+    assert.equal(folder.name, 'playground')
+    assert.equal(folder.path, 'playground')
+    assert.deepEqual(folder.folders.map(child => child.name), ['model'])
+    assert.deepEqual(folder.files.map(file => file.name), ['playground.blu'])
+    const entrypoint = provider.createArl(folder.files[0].path)
+    assert.equal(entrypoint.getPath(), '/vmblu/playground/playground.blu')
+    assert.equal(entrypoint.url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu/main/playground/playground.blu')
+    assert.equal(entrypoint.resolve('../core/core.blu').url.href, 'https://raw.githubusercontent.com/vizualmodel/vmblu/main/core/core.blu')
+    assert.equal(entrypoint.resolve('../core/core.blu').canWrite(), false)
+    const missing = new GitHubRepositoryProvider({...playgroundGitHubRepository, path: 'missing'}, {fetch, storage})
+    await assert.rejects(missing.getTree(), /folder not found/)
+    const tutorials = new GitHubRepositoryProvider({}, {fetch, storage})
+    assert.notEqual(provider.cacheKey, tutorials.cacheKey)
 })
