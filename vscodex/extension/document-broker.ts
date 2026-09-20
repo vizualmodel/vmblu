@@ -345,6 +345,50 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 		}
 
 		// request from the webview (arl) to save data to a file
+		case 'prompt file': {
+			try {
+				const uri = this.makeUri(message.arl);
+				if (!uri) throw new Error('Invalid prompt file target');
+				const isDirty = () => vscode.workspace.textDocuments.some(doc => doc.uri.toString() === uri.toString() && doc.isDirty);
+				const read = async () => {
+					try { return {exists: true, text: new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)), dirty: isDirty()}; }
+					catch (error: any) {
+						if (error.code === 'FileNotFound' || error.code === 'ENOENT') return {exists: false, text: '', dirty: isDirty()};
+						throw error;
+					}
+				};
+				const current = await read();
+				let content: any = current;
+				if (message.action === 'create') {
+					if (current.exists) content = {...current, created: false};
+					else {
+						if (current.dirty) throw new Error('Save the open prompt editor before recreating its file.');
+						await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+						// Native files support exclusive creation, including concurrent requests.
+						if (uri.scheme === 'file') {
+							try { await fs.writeFile(uri.fsPath, message.text, {flag: 'wx'}); }
+							catch (error: any) {
+								if (error.code !== 'EEXIST') throw error;
+								broker.postMessage({verb: '200', rqKey: message.rqKey, content: {...await read(), created: false}});
+								return;
+							}
+						} else await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(message.text));
+						content = {created: true, text: message.text};
+					}
+				} else if (message.action === 'remove') {
+					content = false;
+					if (!current.dirty && (!current.exists || current.text === message.expected)) {
+						if (current.exists) await vscode.workspace.fs.delete(uri, {useTrash: true});
+						content = true;
+					}
+				} else if (message.action !== 'read') throw new Error('Unknown prompt file action');
+				broker.postMessage({verb: '200', rqKey: message.rqKey, content});
+			} catch (error) {
+				broker.postMessage({verb: 'write failed', rqKey: message.rqKey, error: error instanceof Error ? error.message : String(error)});
+			}
+			return;
+		}
+
 		case 'HTTP-POST': {
 
 			// notation
@@ -356,15 +400,18 @@ VmbluDocument.prototype.onMessage = async function (message: any) {
 			// check
 			if (!uri) {
 				console.error('INVALID ARL', arl);
-				broker.postMessage({verb:'404',rqKey:message.rqKey, arl: message.arl});
+				broker.postMessage({verb:'write failed',rqKey:message.rqKey, error: 'Invalid file write target'});
 				return;					
 			}
 
 			// save the file - the content is an array of bytes Uint8Array
-			await VmbluDocument.writeFile(uri, message.bytes);
-
-			// return success message
-			broker.postMessage({verb:'200', rqKey: message.rqKey, content: null});
+			try {
+				await VmbluDocument.writeFile(uri, message.bytes);
+				broker.postMessage({verb:'200', rqKey: message.rqKey, content: true});
+			}
+			catch (error) {
+				broker.postMessage({verb:'write failed', rqKey: message.rqKey, error: error instanceof Error ? error.message : String(error)});
+			}
 
 			// done
 			return;

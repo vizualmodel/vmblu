@@ -128,6 +128,7 @@ export class VmbluDocument implements vscode.CustomDocument {
 
 	static async writeFile(uri: vscode.Uri, bytes:Uint8Array): Promise<void> {
 
+		await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
 		return vscode.workspace.fs.writeFile(uri, bytes);
 	}
 

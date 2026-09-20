@@ -77,7 +77,7 @@ test('direct save of a read-only model is blocked before encoding', async () => 
         }
     }
 
-    await fixture.manager.onModelSave({})
+    await assert.rejects(fixture.manager.onModelSave({}), /Read-only model/)
 
     assert.equal(fixture.observations.raw, undefined)
     assert.equal(fixture.observations.savedBlu, undefined)

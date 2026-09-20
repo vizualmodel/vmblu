@@ -1,5 +1,6 @@
 import * as Path from './path.js'
 import {parseJsonWithDuplicateKeyWarning} from '../util/json-parse.js'
+import {hasFileDraft} from './file-drafts.js'
 
 // domain path resource uses a canonical path plus optional local file handle
 export function LARL(path, handle=null) {
@@ -183,6 +184,41 @@ async get(as = 'text') {
     
     // Return the content as JSON if requested, otherwise as raw text.
     return as === 'json' ? parseJsonWithDuplicateKeyWarning(content, this.getFullPath() ?? this.getPath()) : content;        
+},
+
+async readPromptFile() {
+    try {
+        const handle = await this.ensureHandle()
+        if (!handle) throw new Error('The workspace folder is unavailable.')
+        return {exists: true, text: await (await handle.getFile()).text(), dirty: hasFileDraft(this)}
+    }
+    catch (error) {
+        if (error.name === 'NotFoundError') return {exists: false, text: '', dirty: hasFileDraft(this)}
+        throw error
+    }
+},
+
+async createPromptFile(text) {
+    const current = await this.readPromptFile()
+    if (current.exists) return {...current, created: false}
+    if (current.dirty) throw new Error('Save the open prompt editor before recreating its file.')
+    const saved = await this.save(text)
+    if (saved === false || saved === null) throw new Error('The prompt file could not be created.')
+    return {created: true, text}
+},
+
+async removePromptFile(expected) {
+    const current = await this.readPromptFile()
+    if (current.dirty || (current.exists && current.text !== expected)) return false
+    if (!current.exists) return true
+    const parts = this.fullPath.split('/').filter(Boolean)
+    let dir = this.fileTree.arl.handle
+    for (const part of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(part)
+    // Check again after resolving the directory, including live editor drafts.
+    if (hasFileDraft(this) || await (await this.handle.getFile()).text() !== expected) return false
+    await dir.removeEntry(parts.at(-1))
+    this.handle = null
+    return true
 },
 
 async save(body) {

@@ -183,6 +183,12 @@ Pad.prototype = {
             // set the name of the proxy
             proxy.name = this.text
 
+            // Pads show full message names outside the interface. Keep plain
+            // pad edits literal; explicit prefix/suffix shorthand still works.
+            if (!"'+.-_/₊".includes(proxy.name[0]) && !'+.-_/₊'.includes(proxy.name.at(-1))) {
+                proxy.name = "'" + proxy.name
+            }
+
             // check the name and reset if not ok
             if ( ! proxy.checkNewName()) {
                 proxy.name = this.text = saved
@@ -191,6 +197,8 @@ Pad.prototype = {
 
             // the name might have been normalized
             this.text = proxy.name
+            proxy.ifNamePrefixCheck()
+            proxy.node.look.adjustPinWidth(proxy)
 
             // check for route usage
             this.checkRouteUsage()

@@ -30,6 +30,8 @@ deletePinArea: {
 
     doit({view,node, widgets}) {
 
+        widgets = widgets.slice().sort((a, b) => a.rect.y - b.rect.y)
+
         // save an array of pins and routes
         const allRoutes = node.getAllRoutes(widgets)
 
@@ -39,8 +41,9 @@ deletePinArea: {
         // disconnect
         node.disconnectPinArea(widgets)
 
-        // remove the widgets
-        node.look.deletePinArea(widgets)
+        // Remove bottom-up so shifting the remaining rows cannot overwrite
+        // the original positions of widgets still waiting to be removed.
+        node.look.deletePinArea(widgets.slice().reverse())
     },
     undo({view, node, widgets, allRoutes}) {
 
@@ -60,7 +63,7 @@ deletePinArea: {
     redo({view, node, widgets, allRoutes}) {
 
         node.disconnectPinArea(widgets)
-        node.look.deletePinArea(widgets)
+        node.look.deletePinArea(widgets.slice().reverse())
     }
 },
 
@@ -96,18 +99,18 @@ swapPinArea: {
 
 pasteWidgetsFromClipboard: {
 
-    doit({view, raw}){
+    doit({view, raw, target}){
 
         // check that the clipboard contains a pin area selection
-        if ( raw.what != selex.pinArea && raw.what != selex.ifArea) return
-        if (! raw.widgets?.length > 0) return
+        if (!raw || (raw.what != selex.pinArea && raw.what != selex.ifArea)) return
+        if (!raw.widgets?.length) return
 
         // get the single node and widget where we will add the copy
-        const where = view.selection.whereToAdd()
+        const where = view.selection.whereToAdd(raw, target)
 
         // check
         if (!where.node) return
-        if (where.node.cannotBeModified()) return view.blinkToWarn(node)
+        if (where.node.cannotBeModified()) return view.blinkToWarn(where.node)
 
         // we will rebuild the clipboard model
         const content = {raw, root:null, imports:null}
@@ -116,26 +119,38 @@ pasteWidgetsFromClipboard: {
         view.clipboardToSelection(null, where, content)
 
         // save the edit
-        this.saveEdit('pasteWidgetsFromClipboard', {view, node: where.node, widgets: view.selection.widgets.slice(), pos: where.pos})
+        const widgets = view.selection.widgets.slice()
+        if (widgets.some(widget => widget.prompt)) where.node.prompts.markDirty()
+        this.saveEdit('pasteWidgetsFromClipboard', {view, node: where.node, widgets, pos: where.pos,
+            wids: widgets.map(widget => widget.wid), pads: widgets.filter(widget => widget.is.proxy).map(widget => widget.pad),
+            what: view.selection.what})
     },
     undo({view,node, widgets, pos}) {
 
         // delete the transferred widgets again...
-        if (widgets) node.look.deletePinArea(widgets)
+        if (widgets) node.look.deletePinArea(widgets.slice().reverse())
+        node.look.checkDuplicatePins()
+        if (widgets.some(widget => widget.prompt)) node.prompts.markDirty()
 
         // reset the selection
         view.selection.reset()
     },
-    redo({view, node, widgets, pos}) {
+    redo({view, node, widgets, pos, wids, pads, what}) {
 
         // bring the widgets back
         node.look.restoreWidgetsToPinArea(widgets, pos)
+        widgets.forEach((widget, index) => { widget.wid = wids[index] })
 
         // add the pads or the adjust the rx/tx tables
-        node.is.source ? node.rxtxAddPinArea(widgets) : node.addPads(widgets)
+        if (node.is.source) node.rxtxAddPinArea(widgets)
+        else for (const pad of pads) node.restorePad(pad)
 
         // set as selected
+        view.selection.reset()
         view.selection.pinAreaSelect(widgets)
+        view.selection.what = what
+        node.look.checkDuplicatePins()
+        if (widgets.some(widget => widget.prompt)) node.prompts.markDirty()
     }
 },
 

@@ -97,7 +97,7 @@ Look.prototype = {
     adjustPinWidth(widget) {
 
         // Get the new width
-        const newWidth = style.pin.wMargin + this.getTextWidth(widget.withoutPrefix())
+        const newWidth = style.pin.wMargin + this.getTextWidth(widget.displayName(false))
 
         // move the x of the widgets if at the right
         if ( ! widget.is.left) widget.rect.x += (widget.rect.w - newWidth)

@@ -1,4 +1,34 @@
+import {convert} from '../util/index.js'
+
 export const interfaceHandling = {
+
+    capturePinMove() {
+        return this.widgets.filter(widget => widget.is.pin || widget.is.ifName).map(widget => ({
+            widget, y: widget.rect.y, left: widget.is.left,
+            name: widget.name, pxlen: widget.pxlen,
+        }))
+    },
+
+    restorePinMove(snapshot) {
+        // Restore all positions and names before refreshing dependent state.
+        for (const state of snapshot) {
+            const {widget, y, left, name, pxlen} = state
+            widget.rect.y = y
+            if (!widget.is.pin) continue
+            if (widget.is.left !== left) widget.leftRightSwap()
+            const previousName = widget.name
+            widget.name = name
+            widget.pxlen = pxlen
+            if (name !== previousName) widget.nameChanged(previousName)
+        }
+        for (const {widget} of snapshot) {
+            if (!widget.is.pin) continue
+            widget.checkRouteUsage()
+            this.adjustPinWidth(widget)
+            this.setDuplicatePin(widget)
+            widget.adjustRoutes()
+        }
+    },
 
     // find the array of pins that are part of the ifName 
     // The first element of the array is the ifName itself
@@ -129,7 +159,7 @@ export const interfaceHandling = {
 
         // check
         for (const pin of group) {
-            if (pin.is.pin && pin.pxlen != 0) {
+            if (pin.is.pin) {
                 pxlenArray.push(pin.pxlen)
                 pin.pxlen = 0
             }
@@ -144,7 +174,8 @@ export const interfaceHandling = {
         const group = ifName.node.look.getInterface(ifName)
 
         // the pins start at 1
-        for (let i=1; i<pxlenArray.length; i++) group[i].pxlen = pxlenArray[i]
+        const pins = group.filter(widget => widget.is.pin)
+        for (let i=0; i<pxlenArray.length; i++) pins[i].pxlen = pxlenArray[i]
     },
 
     highLightInterface(ifName) {
@@ -197,12 +228,11 @@ export const interfaceHandling = {
         if (!ifName) return 0
 
         // check if the name of the ifName is a postfix or prefix to the pin
-        const prefix = fullName.indexOf('.')
-        if ((prefix > 0) && (fullName.slice(0,prefix) === ifName.text)) return ifName.text.length
+        if (!ifName.text) return 0
+        if (convert.prefixMatch(ifName.text.toLowerCase(), fullName.toLowerCase())) return ifName.text.length
 
         // check if the name of the ifName is a postfix or prefix to the pin
-        const postfix = fullName.lastIndexOf('.')
-        if ((postfix > 0) && (fullName.slice(postfix+1) === ifName.text)) return  - ifName.text.length
+        if (convert.postfixMatch(ifName.text.toLowerCase(), fullName.toLowerCase())) return -ifName.text.length
 
         return 0
     },
@@ -212,7 +242,15 @@ export const interfaceHandling = {
 
         const pxlen = this.getPrefixLength(fullName, y)
 
-        return (pxlen > 0) ? '+ ' + fullName.slice(this.pxlen+1) : fullName.slice(0, this.pxlen-1) + ' +'
+        if (pxlen > 0) {
+            const local = fullName.slice(pxlen)
+            return local.startsWith('.') ? local.slice(1) : local.startsWith(' ') ? '₊' + local.trimStart() : local
+        }
+        if (pxlen < 0) {
+            const local = fullName.slice(0, pxlen)
+            return local.endsWith(' ') ? local.trimEnd() + '₊' : local
+        }
+        return fullName && this.findIfNameAbove(y)?.text ? "'" + fullName : fullName
     },
 
     // area is the rectangle of the pin area
@@ -234,7 +272,7 @@ export const interfaceHandling = {
                 this.groupMove(widgets, above.rect.y - first.rect.y);
 
                  // do a interface check
-                 this.interfaceCheck()
+                 for (const pin of this.widgets) if (pin.is.pin) pin.moveToInterface()
             }
             return;
         }
@@ -255,7 +293,7 @@ export const interfaceHandling = {
                 this.groupMove(widgets, below.rect.y - last.rect.y);
 
                 // interfaceCheck
-                this.interfaceCheck()
+                for (const pin of this.widgets) if (pin.is.pin) pin.moveToInterface()
             }
 
             return;
@@ -287,8 +325,8 @@ export const interfaceHandling = {
                 const lowerCase = pin.lowerCase()
 
                 // check if the name of the ifName is a prefix to the pin
-                if (lowerCase.startsWith(text)) pin.pxlen = text.length
-                else if (lowerCase.endsWith(text)) pin.pxlen = -text.length
+                if (text && convert.prefixMatch(text, lowerCase)) pin.pxlen = text.length
+                else if (text && convert.postfixMatch(text, lowerCase)) pin.pxlen = -text.length
             }
         }
     },

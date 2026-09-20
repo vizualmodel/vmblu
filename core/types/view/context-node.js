@@ -126,9 +126,12 @@ function unGroup() {
 }
 
 function pasteWidgetsFromClipboard() {
+    const view = cm.view
+    const tx = cm.tx
+    const target = {node: cm.node, widget: null}
     // request the clipboard - also set the target, the clipboard can come from another file
     cm.tx.request('clipboard.get', cm.doc).then(({raw}) => {
-        cm.doEdit('pasteWidgetsFromClipboard', {view: cm.view, raw});
+        view.doEdit(tx, 'pasteWidgetsFromClipboard', {view, raw, target});
     });
     //.catch( error => console.log('paste: clipboard get error -> ' + error))
 }

@@ -55,13 +55,16 @@ export const PromptHandling = {
             if (node.promptRepo?.arl) {
                 const state = getPromptRepoRuntimeState(node.promptRepo)
                 const repoArl = resolvePromptRepoArl(node.promptRepo, refArl)
-                if (repoArl && state.dirty) {
-                    const text = state.pendingText ?? serializePromptMarkdown(node)
-                    state.pendingText = text
+                if (repoArl) {
+                    const text = state.pendingText ?? (!state.dirty && state.hydratedText !== null
+                        ? state.hydratedText : serializePromptMarkdown(node))
+                    if (state.dirty) state.pendingText = text
                     promptFiles.push({
                         arl: repoArl,
                         text,
                         state,
+                        node,
+                        write: state.dirty,
                     })
                 }
                 deleteInlinePrompts(node)
@@ -77,11 +80,54 @@ export const PromptHandling = {
         return promptFiles
     },
 
-    async savePromptRepos(promptFiles = this.preparePromptReposForSave()) {
+    async savePromptRepos(promptFiles = this.preparePromptReposForSave(), {cleanupPrompts = true} = {}) {
+        const counts = new Map()
+        for (const file of promptFiles) {
+            file.key = file.arl.getFullPath?.() ?? file.arl.getPath()
+            counts.set(file.key, (counts.get(file.key) ?? 0) + 1)
+        }
         const saves = promptFiles.map(async file => {
             try {
+                const liveNodes = []
+                const visit = node => {
+                    if (!node) return
+                    if (getPromptRepoRuntimeState(node.prompts?.repository) === file.state) liveNodes.push(node)
+                    for (const child of node.nodes ?? []) visit(child)
+                }
+                visit(this.root)
+                const hasDraft = () => liveNodes.some(node => {
+                    const draft = node.prompts.readDraft?.()
+                    return draft != null && !isEmptyPromptDocument(draft, file.node)
+                })
+                const current = file.arl.readPromptFile ? await file.arl.readPromptFile() : null
+                if (file.write && current?.dirty) throw new PromptRepositoryConflictError(file.key)
+                if (cleanupPrompts && current && !current.dirty && !hasDraft() &&
+                    file.arl.removePromptFile && counts.get(file.key) === 1 &&
+                    file.arl.canWrite?.() !== false &&
+                    isEmptyPromptDocument(file.text, file.node) &&
+                    isEmptyPromptDocument(file.write ? file.text : current.text, file.node)) {
+                    if (file.write && file.state.hydrated && current.text !== file.state.hydratedText) {
+                        throw new PromptRepositoryConflictError(file.key)
+                    }
+                    if (await file.arl.removePromptFile(current.text)) {
+                        delete file.node.promptRepo
+                        for (const node of liveNodes) {
+                            node.prompts.repository = null
+                            node.prompts.prompt = null
+                            for (const iface of node.interfaces ?? []) for (const pin of iface.pins ?? []) pin.prompt = null
+                        }
+                        file.state.dirty = false
+                        file.state.pendingText = null
+                        file.state.hydrated = false
+                        file.state.hydratedText = null
+                        return
+                    }
+                    // A full editor changed while cleanup was pending.
+                    if (file.write) throw new PromptRepositoryConflictError(file.key)
+                }
+                if (file.write === false) return
                 if (file.state.hydrated) {
-                    const currentText = await file.arl.get('text').catch(() => null)
+                    const currentText = current ? current.text : await file.arl.get('text').catch(() => null)
                     if (currentText !== file.state.hydratedText) {
                         throw new PromptRepositoryConflictError(file.arl?.getPath?.() ?? '<unknown>')
                     }
@@ -107,6 +153,20 @@ export const PromptHandling = {
     },
 }
 
+// Only whitespace or the exact generated scaffold is disposable. Arbitrary
+// headings, comments, and text outside the reserved sections remain content.
+export function isEmptyPromptDocument(text, node) {
+    if (typeof text !== 'string') return false
+    const normalize = value => value.replace(/\r\n/g, '\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n')
+    if (!text.trim()) return true
+    const scaffold = serializePromptMarkdown({
+        name: node.name,
+        prompt: '',
+        interfaces: (node.interfaces ?? []).map(iface => ({pins: (iface.pins ?? []).map(pin => ({name: pin.name}))})),
+    })
+    return normalize(text) === normalize(scaffold)
+}
+
 export class PromptRepositoryConflictError extends Error {
     constructor(path) {
         super(`Prompt repository changed outside vmblu: ${path}`)
@@ -124,7 +184,7 @@ function resolvePromptRepoArl(promptRepo, refArl) {
         : refArl.resolve(arl)
 }
 
-function makeDefaultPromptRepo(node, path) {
+export function makeDefaultPromptRepo(node, path = []) {
     const parts = [...path, node.name].filter(Boolean).map(safeName)
     const promptRepo = {
         arl: `./prompts/${parts.join('/')}.md`,

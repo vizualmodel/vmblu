@@ -73,11 +73,14 @@ export const messageBrokerVscode = {
 
 				const path = message.uri ? this.makeArl(message.uri).getPath() : null
 
-				// delegate saving to the kernel model manager
-				this.tx.send('model.save', {path, preserveTarget: message.preserveTarget === true})
-
-				// vscode could be waiting for the save !
-				vscode.postMessage({verb:'file saved'})
+				// Completion callbacks stay inside this webview's runtime. The host
+				// must keep the document dirty/open until every write has finished.
+				this.tx.send('model.save', {
+					path,
+					preserveTarget: message.preserveTarget === true,
+					onSaved: () => vscode.postMessage({verb: 'file saved'}),
+					onError: error => vscode.postMessage({verb: 'file save failed', error: error?.message ?? String(error)}),
+				})
 
 				// done
 				return
@@ -170,6 +173,13 @@ export const messageBrokerVscode = {
 				promiseMap.delete(message.rqKey)
 
 				// done
+				return
+			}
+
+			case 'write failed': {
+				const resolve = promiseMap.get(message.rqKey)
+				promiseMap.delete(message.rqKey)
+				resolve?.reject(new Error(message.error ?? 'File write failed'))
 				return
 			}
 

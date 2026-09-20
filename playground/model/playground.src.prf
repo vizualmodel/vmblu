@@ -1,17 +1,17 @@
 {
-  "version": "1.12.2",
+  "version": "1.12.3",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.2",
+    "schemaVersion": "1.12.3",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.2"
+      "version": "1.12.3"
     },
     "source": {
       "model": "playground.mod.blu",
-      "hash": "fnv1a64:7241b78702f73dca"
+      "hash": "fnv1a64:a8afe52d622666d3"
     }
   },
   "entries": [
@@ -22,7 +22,7 @@
           "pin": "text.set-active",
           "handler": "onTextSetActive",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 318,
+          "line": 320,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -38,7 +38,7 @@
           "pin": "text.save",
           "handler": "onTextSave",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 319,
+          "line": 321,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -48,7 +48,7 @@
           "pin": "text.set-active",
           "handler": "onTextSetActive",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 247,
+          "line": 249,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -65,32 +65,32 @@
         {
           "pin": "content div",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 259
+          "line": 261
         },
         {
           "pin": "text.failed",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 260
+          "line": 262
         },
         {
           "pin": "content div",
-          "file": "../nodes/text-editor/text-editor.js",
-          "line": 280
-        },
-        {
-          "pin": "text.loaded",
           "file": "../nodes/text-editor/text-editor.js",
           "line": 282
         },
         {
+          "pin": "text.loaded",
+          "file": "../nodes/text-editor/text-editor.js",
+          "line": 284
+        },
+        {
           "pin": "content div",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 288
+          "line": 290
         },
         {
           "pin": "text.failed",
           "file": "../nodes/text-editor/text-editor.js",
-          "line": 289
+          "line": 291
         }
       ]
     },
@@ -335,7 +335,7 @@
           "pin": "get",
           "handler": "onGet",
           "file": "../../core/nodes/clipboard/clipboard.js",
-          "line": 68,
+          "line": 74,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -345,7 +345,7 @@
           "pin": "local",
           "handler": "onLocal",
           "file": "../../core/nodes/clipboard/clipboard.js",
-          "line": 101,
+          "line": 107,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -355,7 +355,7 @@
           "pin": "switched",
           "handler": "onSwitched",
           "file": "../../core/nodes/clipboard/clipboard.js",
-          "line": 116,
+          "line": 122,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -366,12 +366,12 @@
         {
           "pin": "switch",
           "file": "../../core/nodes/clipboard/clipboard.js",
-          "line": 65
+          "line": 71
         },
         {
           "pin": "remote",
           "file": "../../core/nodes/clipboard/clipboard.js",
-          "line": 86
+          "line": 92
         }
       ]
     },
@@ -667,13 +667,18 @@
           "examples": [],
           "params": [
             {
-              "name": "path",
+              "name": "onSaved",
               "type": "any",
               "description": ""
             },
             {
-              "name": "preserveTarget",
-              "type": "boolean",
+              "name": "onError",
+              "type": "any",
+              "description": ""
+            },
+            {
+              "name": "options",
+              "type": "any",
               "description": ""
             }
           ],
@@ -685,7 +690,7 @@
           "pin": "save.point-set",
           "handler": "onSavePointSet",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 479,
+          "line": 490,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -695,7 +700,7 @@
           "pin": "save.point-back",
           "handler": "onSavePointBack",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 506,
+          "line": 517,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -796,22 +801,22 @@
         {
           "pin": "info popup",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 431
+          "line": 442
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 484
+          "line": 495
         },
         {
           "pin": "save point.confirm",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 512
+          "line": 523
         },
         {
           "pin": "redox.done",
           "file": "../../core/nodes/model-manager/model-manager.js",
-          "line": 524
+          "line": 535
         }
       ]
     },
@@ -1138,7 +1143,7 @@
         {
           "pin": "redox.doit",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 6
+          "line": 7
         },
         {
           "pin": "node prompt",
@@ -1148,57 +1153,62 @@
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 24
-        },
-        {
-          "pin": "name and path",
-          "file": "../../core/types/node/node-icon-click.js",
-          "line": 34
-        },
-        {
-          "pin": "name and path",
-          "file": "../../core/types/node/node-icon-click.js",
-          "line": 57
-        },
-        {
-          "pin": "open model",
-          "file": "../../core/types/node/node-icon-click.js",
-          "line": 76
-        },
-        {
-          "pin": "name and path",
-          "file": "../../core/types/node/node-icon-click.js",
-          "line": 107
+          "line": 32
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 127
+          "line": 40
+        },
+        {
+          "pin": "name and path",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 51
+        },
+        {
+          "pin": "name and path",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 74
+        },
+        {
+          "pin": "open model",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 93
+        },
+        {
+          "pin": "name and path",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 124
+        },
+        {
+          "pin": "open source file",
+          "file": "../../core/types/node/node-icon-click.js",
+          "line": 144
         },
         {
           "pin": "node settings (sx)",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 167
+          "line": 184
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 175
+          "line": 192
         },
         {
           "pin": "runtime settings (dx)",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 187
+          "line": 204
         },
         {
           "pin": "open model",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 214
+          "line": 231
         },
         {
           "pin": "open source file",
           "file": "../../core/types/node/node-icon-click.js",
-          "line": 227
+          "line": 244
         }
       ]
     }

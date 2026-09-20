@@ -155,6 +155,14 @@ SystemMessageBroker.prototype = {
                 this.documentFlags = message.flags
                 return
 
+            case 'write failed': {
+                const {promiseMap} = await import('../webview/arl-adapter.js')
+                const resolve = promiseMap.get(message.rqKey)
+                promiseMap.delete(message.rqKey)
+                resolve?.reject(new Error(message.error ?? 'File write failed'))
+                return
+            }
+
             case '200':
             case '404': {
                 const {promiseMap} = await import('../webview/arl-adapter.js')

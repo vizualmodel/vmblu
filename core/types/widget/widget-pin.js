@@ -61,8 +61,7 @@ Pin.prototype = {
         const rc = this.rect;
 
         // the name to display
-        //const displayName = this.displayName();
-        const displayName = this.pxlen == 0 ? this.name : this.withoutPrefix()
+        const displayName = this.displayName(false)
 
         // select the color for the widget
         const { cArrow, cText } = this.setColor();
@@ -234,7 +233,7 @@ Pin.prototype = {
         [this.rect.y, next.rect.y] = [next.rect.y, this.rect.y];
 
         // if we move in or out a prefix, check if we can reset the pxlen
-        if (next.is.ifName) this.ifNamePrefixCheck();
+        if (next.is.ifName) this.moveToInterface();
 
         // reconnect the routes to the widgets that changed place
         this.adjustRoutes();

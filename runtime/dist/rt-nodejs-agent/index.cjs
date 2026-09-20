@@ -415,23 +415,39 @@ function createTx(runtime, source) {
 }
 __name(createTx, "createTx");
 
-// shared/release-version.js
-var RUNTIME_VERSION = "1.12.2";
-function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+// ../core/types/model/version-policy.js
+function parseVmbluVersion(version, label = "version") {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
-  if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
-  return `${match[1]}.${match[2]}`;
+  if (!match) throw new Error(`Invalid vmblu ${label}: ${version}`);
+  return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]), family: `${match[1]}.${match[2]}` };
+}
+__name(parseVmbluVersion, "parseVmbluVersion");
+function compatibilityFamily(version) {
+  return parseVmbluVersion(version).family;
+}
+__name(compatibilityFamily, "compatibilityFamily");
+function versionsAreCompatible(left, right) {
+  return compatibilityFamily(left) === compatibilityFamily(right);
+}
+__name(versionsAreCompatible, "versionsAreCompatible");
+
+// shared/version-policy.js
+function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+  return compatibilityFamily(version);
 }
 __name(runtimeCompatibilityFamily, "runtimeCompatibilityFamily");
 function assertRuntimeCompatibility(expectedFamily) {
-  if (!expectedFamily) return runtimeCompatibilityFamily();
   const actualFamily = runtimeCompatibilityFamily();
-  if (expectedFamily !== actualFamily) {
+  if (!expectedFamily) return actualFamily;
+  if (!versionsAreCompatible(RUNTIME_VERSION, expectedFamily + ".0")) {
     throw new Error(`Incompatible vmblu runtime ${RUNTIME_VERSION}; generated application requires compatibility family ${expectedFamily}`);
   }
   return actualFamily;
 }
 __name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
+
+// shared/release-version.js
+var RUNTIME_VERSION = "1.12.3";
 
 // shared/runtime.js
 var _Runtime = class _Runtime {

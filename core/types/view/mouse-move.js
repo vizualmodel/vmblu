@@ -158,8 +158,7 @@ export const mouseMoveHandling = {
                     // set state to drag the pin/proxy up and down
                     this.stateSwitch(doing.pinDrag) 
 
-                    // save the edit
-                    this.doEdit(tx,'pinDrag',{pin})
+                    // The complete move is recorded on mouse-up.
 
                     // done
                     return true

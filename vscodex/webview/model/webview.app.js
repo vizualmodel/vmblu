@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.2","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.2"},"source":{"model":"webview.mod.blu","hash":"fnv1a64:1d14ad02e13f02b0"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.3","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.3"},"source":{"model":"webview.mod.blu","hash":"fnv1a64:f8d7f558bea5ae8f"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -38,7 +38,7 @@ const nodeList = [
 	//______________________________________________MESSAGE BROKER
 	{
 	name: "message broker",
-	uid: "Arto",
+	uid: "Owym",
 	factory: MessageBroker,
 	inputs: [
 		"-> open document",
@@ -56,21 +56,21 @@ const nodeList = [
 		],
 	outputs: [
 		`set document -> [ 
-			"top level view @ view manager (SRHG)",
-			"model.set @ model manager (niRp)" ]`,
+			"top level view @ view manager (QgJs)",
+			"model.set @ model manager (GEce)" ]`,
 		"get document -> ()",
-		"reload model -> sync model @ model manager (niRp)",
-		"model.save -> model.save @ model manager (niRp)",
-		"sync links -> sync links @ model manager (niRp)",
-		"canvas resize -> size change @ view manager (SRHG)",
-		"clipboard.local => local @ clipboard (BxYf)",
-		"clipboard.switched -> switched @ clipboard (BxYf)"
+		"reload model -> sync model @ model manager (GEce)",
+		"model.save -> model.save @ model manager (GEce)",
+		"sync links -> sync links @ model manager (GEce)",
+		"canvas resize -> size change @ view manager (QgJs)",
+		"clipboard.local => local @ clipboard (zpbk)",
+		"clipboard.switched -> switched @ clipboard (zpbk)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager",
-	uid: "SRHG",
+	uid: "QgJs",
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -82,26 +82,26 @@ const nodeList = [
 		"-> application prompt"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (niRp)",
-		"redox.undo -> redox.undo @ model manager (niRp)",
-		"redox.redo -> redox.redo @ model manager (niRp)",
-		"team legend -> teams @ team legend (HAKe)",
-		"canvas -> canvas @ message broker (Arto)",
-		"node settings (sx) -> show @ node settings (qXXF)",
-		"runtime settings (dx) -> show @ runtime settings (uWDI)",
-		"node prompt -> markdown @ markdown prompt (vTQV)",
-		"context menu -> context menu @ context menu (mHEF)",
-		"name and path -> name and path @ name and path (tLhi)",
-		"open model -> open document @ message broker (Arto)",
-		"open source file -> open js file @ message broker (Arto)",
-		"clipboard.get => get @ clipboard (BxYf)",
-		"clipboard.set -> set @ clipboard (BxYf)"
+		"redox.doit -> redox.doit @ model manager (GEce)",
+		"redox.undo -> redox.undo @ model manager (GEce)",
+		"redox.redo -> redox.redo @ model manager (GEce)",
+		"team legend -> teams @ team legend (eeAg)",
+		"canvas -> canvas @ message broker (Owym)",
+		"node settings (sx) -> show @ node settings (KnnE)",
+		"runtime settings (dx) -> show @ runtime settings (eZEy)",
+		"node prompt -> markdown @ markdown prompt (pRaE)",
+		"context menu -> context menu @ context menu (SjEc)",
+		"name and path -> name and path @ name and path (woBd)",
+		"open model -> open document @ message broker (Owym)",
+		"open source file -> open js file @ message broker (Owym)",
+		"clipboard.get => get @ clipboard (zpbk)",
+		"clipboard.set -> set @ clipboard (zpbk)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager",
-	uid: "niRp",
+	uid: "GEce",
 	factory: ModelManager,
 	inputs: [
 		"-> sync model",
@@ -121,27 +121,27 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (vQjL)",
-		"open source file -> open js file @ message broker (Arto)",
+		"save point.confirm -> show @ confirm box (JXVF)",
+		"open source file -> open js file @ message broker (Owym)",
 		"open model -> ()",
-		"model.root -> root @ view manager (SRHG)",
-		"model.loaded -> model.loaded @ message broker (Arto)",
+		"model.root -> root @ view manager (QgJs)",
+		"model.loaded -> model.loaded @ message broker (Owym)",
 		"model.failed -> ()",
-		"model.header -> show @ doc settings(0) (wdCt)",
+		"model.header -> show @ doc settings(0) (Fihe)",
 		`redox.done -> [ 
-			"redox.done @ view manager (SRHG)",
-			"new edit @ message broker (Arto)" ]`,
-		"pin profile -> show @ pin profile (ULDO)",
-		"get path -> path @ path request (mjyq)",
-		"tool settings -> show @ tool settings (EQHG)",
-		"event settings -> show @ event settings (qFkw)",
-		"info popup -> show @ toast box (yVnk)"
+			"redox.done @ view manager (QgJs)",
+			"new edit @ message broker (Owym)" ]`,
+		"pin profile -> show @ pin profile (BnZH)",
+		"get path -> path @ path request (qIUh)",
+		"tool settings -> show @ tool settings (AvOM)",
+		"event settings -> show @ event settings (nBML)",
+		"info popup -> show @ toast box (UVrL)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard",
-	uid: "BxYf",
+	uid: "zpbk",
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -150,71 +150,71 @@ const nodeList = [
 		"-> switched"
 		],
 	outputs: [
-		"remote => clipboard.remote @ message broker (Arto)",
-		"switch -> clipboard.switch @ message broker (Arto)"
+		"remote => clipboard.remote @ message broker (Owym)",
+		"switch -> clipboard.switch @ message broker (Owym)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "mjyq",
+	uid: "qIUh",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"folder.get => folder.get @ message broker (Arto)",
-		"modal div -> modal div @ message broker (Arto)"
+		"folder.get => folder.get @ message broker (Owym)",
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "qXXF",
+	uid: "KnnE",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "tLhi",
+	uid: "woBd",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)",
-		"folder.get => folder.get @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)",
+		"folder.get => folder.get @ message broker (Owym)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "ULDO",
+	uid: "BnZH",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"pin prompt -> markdown @ markdown prompt (vTQV)",
-		"modal div -> modal div @ message broker (Arto)"
+		"pin prompt -> markdown @ markdown prompt (pRaE)",
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_____________________________________________MARKDOWN PROMPT
 	{
 	name: "markdown prompt",
-	uid: "vTQV",
+	uid: "pRaE",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		],
 	sx:	{
 		    "openPromptFile": true
@@ -223,158 +223,158 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "mHEF",
+	uid: "SjEc",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"confirm -> show @ confirm box (vQjL)",
-		"modal div -> modal div @ message broker (Arto)"
+		"confirm -> show @ confirm box (JXVF)",
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "uWDI",
+	uid: "eZEy",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "EQHG",
+	uid: "AvOM",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "qFkw",
+	uid: "nBML",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "vQjL",
+	uid: "JXVF",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_____________________________________________DOC SETTINGS(0)
 	{
 	name: "doc settings(0)",
-	uid: "wdCt",
+	uid: "Fihe",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)",
-		"agent settings -> show @ agent settings (BMeU)",
-		"model runtime settings -> show @ model runtime settings (CJXq)",
-		"team settings -> show @ team settings (MpQJ)"
+		"modal div -> modal div @ message broker (Owym)",
+		"agent settings -> show @ agent settings (DLdQ)",
+		"model runtime settings -> show @ model runtime settings (EZrN)",
+		"team settings -> show @ team settings (FuOw)"
 		]
 	},
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "MpQJ",
+	uid: "FuOw",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "CJXq",
+	uid: "EZrN",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "BMeU",
+	uid: "DLdQ",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "wZXZ",
+	uid: "UDnT",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "yVnk",
+	uid: "UVrL",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ message broker (Arto)"
+		"modal div -> modal div @ message broker (Owym)"
 		]
 	},
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "wEhz",
+	uid: "UKPN",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> floating menu @ message broker (Arto)",
-		"sync model -> sync model @ model manager (niRp)",
-		"accept changes -> accept changes @ model manager (niRp)",
-		"wire check -> wire check @ model manager (niRp)",
-		"show settings -> show settings @ model manager (niRp)",
-		"make app -> make app @ model manager (niRp)",
-		"make lib -> make lib @ model manager (niRp)",
-		"set save point -> save point.set @ model manager (niRp)",
-		"back to save point -> save point.back @ model manager (niRp)",
-		"recalibrate -> recalibrate @ view manager (SRHG)",
-		"grid on-off -> grid on-off @ view manager (SRHG)",
-		"application prompt -> application prompt @ view manager (SRHG)"
+		"div -> floating menu @ message broker (Owym)",
+		"sync model -> sync model @ model manager (GEce)",
+		"accept changes -> accept changes @ model manager (GEce)",
+		"wire check -> wire check @ model manager (GEce)",
+		"show settings -> show settings @ model manager (GEce)",
+		"make app -> make app @ model manager (GEce)",
+		"make lib -> make lib @ model manager (GEce)",
+		"set save point -> save point.set @ model manager (GEce)",
+		"back to save point -> save point.back @ model manager (GEce)",
+		"recalibrate -> recalibrate @ view manager (QgJs)",
+		"grid on-off -> grid on-off @ view manager (QgJs)",
+		"application prompt -> application prompt @ view manager (QgJs)"
 		],
 	sx:	[
 		    {
@@ -448,20 +448,20 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "HAKe",
+	uid: "eeAg",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
 		],
 	outputs: [
-		"div -> legend div @ message broker (Arto)"
+		"div -> legend div @ message broker (Owym)"
 		]
 	},
 ]
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.2","schemaVersion":"1.12.2"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.3","schemaVersion":"1.12.3"}
 }
 
 // prepare the runtime

@@ -111,9 +111,12 @@ async getRaw() {
     return bRaw
 },
 
-async saveRaw() {
+async saveRaw(options = {}) {
 
     const promptFiles = this.preparePromptReposForSave?.(this.raw) ?? []
+
+    // Cleanup can remove references, so serialize the model afterwards.
+    await this.savePromptRepos?.(promptFiles, options)
 
     // now split the result in two parts
     const split = this.splitRaw(this.raw)
@@ -127,8 +130,9 @@ async saveRaw() {
     if (blu) saves.push(saveFile(this.blu.arl, blu))
     if (viz) saves.push(saveFile(this.viz.arl, viz))
 
-    await Promise.all(saves)
-    await this.savePromptRepos?.(promptFiles)
+    const results = await Promise.allSettled(saves)
+    const failures = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (failures.length) throw new AggregateError(failures, failures.map(error => error.message).join('; '))
 },
 
 // Splits raw into a part for the blu file and the viz file

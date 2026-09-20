@@ -268,6 +268,9 @@ test('failed prompt writes retain dirty state and can be retried', async () => {
     }
     assert.equal(getPromptRepoRuntimeState(node.prompts.repository).dirty, true)
 
+    // A failed prompt must not publish a model pointing to missing text.
+    assert.equal(fixture.modelWrites.blu.length, 0)
+    assert.equal(fixture.modelWrites.viz.length, 0)
     fixture.files.get('./prompts/Node.md').fail = false
     await fixture.model.saveRaw()
     assert.match(fixture.files.get('./prompts/Node.md').writes[0], /## Node\n\nAfter/)

@@ -45,14 +45,14 @@
     "generated": true,
     "artifact": "agent-configuration",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.2",
+    "schemaVersion": "1.12.3",
     "generator": {
       "name": "@vizualmodel/vmblu-core",
-      "version": "1.12.2"
+      "version": "1.12.3"
     },
     "source": {
       "model": "playground.mod.blu",
-      "hash": "fnv1a64:7241b78702f73dca"
+      "hash": "fnv1a64:a8afe52d622666d3"
     }
   }
 }

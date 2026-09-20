@@ -262,9 +262,6 @@ rawWidgetsToPinArea(rawWidgets, pos) {
 
         if (raw.name) {
 
-            // if the pin exists already, we do not copy
-            if (this.findPin(raw.name, raw.kind )) continue;
-
             // set the state bits
             is.input = ((raw.kind == "input") || (raw.kind == "reply")) ? true : false;
             is.left = raw.left ?? false;
@@ -274,16 +271,32 @@ rawWidgetsToPinArea(rawWidgets, pos) {
             // add the pin at the requested position
             const pin = this.addPin(raw.name,where, is)
 
+            // pxlen is clipboard-only metadata, never a new model property.
+            if (typeof raw.pxlen === 'number') pin.pxlen = raw.pxlen
+            else pin.ifNamePrefixCheck()
+            const heading = this.findIfNameAbove(pin.rect.y)
+            if (pin.pxlen && heading?.text && pin.getPrefix() !== heading.text) {
+                const local = pin.pxlen > 0 ? pin.name.slice(pin.pxlen + 1).trim() : pin.name.slice(0, pin.pxlen - 1).trim()
+                pin.name = heading.text + '.' + local
+                pin.pxlen = heading.text.length
+            } else if (!heading?.text) pin.pxlen = 0
+            if (raw.contract) {
+                pin.contract.owner = raw.contract.role === 'owner'
+                pin.contract.payload = structuredClone(raw.contract.payload ?? 'any')
+            }
+            pin.prompt = raw.prompt ?? ''
+            pin.tool = raw.tool ? structuredClone(raw.tool) : null
+            pin.event = raw.event ? structuredClone(raw.event) : null
+            pin.is.capability = pin.tool?.enabled === true || pin.event?.enabled === true
+            this.adjustPinWidth(pin)
+
             // the next position
             where.y = pin.rect.y + pin.rect.h
 
             // save
             widgets.push(pin)
         }
-        else if (raw.interface) {
-
-            // check if it exists
-            if (this.findInterfaceName(raw.interface)) continue;
+        else if (Object.hasOwn(raw, 'interface')) {
 
             // add the ifName
             const ifName = this.addIfName(raw.interface, where)

@@ -38,6 +38,18 @@ export const widgetHandling = {
     },
 
     // names for input output pins/proxies cannot be duplicates
+    checkDuplicatePins() {
+        const pins = this.widgets.filter(widget => widget.is.pin)
+        for (const pin of pins) pin.is.duplicate = false
+        for (let i = 0; i < pins.length; i++) {
+            for (let j = i + 1; j < pins.length; j++) {
+                if (pins[i].nameClash(pins[j]) || pins[i].hasFullNameMatch(pins[j])) {
+                    pins[i].is.duplicate = pins[j].is.duplicate = true
+                }
+            }
+        }
+    },
+
     setDuplicatePin(pin) {
 
         // reset

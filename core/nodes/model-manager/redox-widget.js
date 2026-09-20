@@ -234,18 +234,22 @@ export const redoxWidget = {
     },
 
     pinDrag: {
-        doit({ pin, oldY, oldLeft}) {
+        doit({ pin, oldY, oldLeft, oldState}) {
             // just save the current position
             this.saveEdit('pinDrag', {
                 pin,
                 newPos: { left: pin.is.left, y: pin.rect.y },
                 oldPos: { left: oldLeft, y: oldY },
+                oldState,
+                newState: pin.node.look.capturePinMove(),
             });
         },
-        undo({ pin, oldPos, newPos }) {
+        undo({ pin, oldPos, newPos, oldState }) {
+            if (oldState) return pin.node.look.restorePinMove(oldState)
             pin.moveTo(oldPos.left, oldPos.y);
         },
-        redo({ pin, oldPos, newPos }) {
+        redo({ pin, oldPos, newPos, newState }) {
+            if (newState) return pin.node.look.restorePinMove(newState)
             pin.moveTo(newPos.left, newPos.y);
         },
     },
@@ -416,9 +420,15 @@ export const redoxWidget = {
             view.beginTextEdit(widget, click, clear ?? false);
 
             // save the old value
-            this.saveEdit('widgetTextEdit', {widget, prop: view.textField.prop, oldText: view.textField.saved ,newText: ''});
+            this.saveEdit('widgetTextEdit', {widget, prop: view.textField.prop, oldText: view.textField.saved ,newText: '', oldPin: widget.is.pin ? {...widget.editOriginal} : null});
         },
-        undo({ widget, prop, oldText, newText }) {
+        undo({ widget, prop, oldText, newText, oldPin }) {
+
+            if (oldPin) {
+                this.saveEdit().newPin = {name: widget.name, pxlen: widget.pxlen}
+                restorePinName(widget, oldPin)
+                return
+            }
 
             // save the new text now also !
             newText = widget[prop];
@@ -428,13 +438,28 @@ export const redoxWidget = {
             // signal the widget that the value has changed
             widget.endEdit(newText);
         },
-        redo({ widget, prop, oldText, newText }) {
+        redo({ widget, prop, oldText, newText, newPin }) {
+            if (newPin) {
+                restorePinName(widget, newPin)
+                return
+            }
             widget[prop] = newText;
 
             widget.endEdit(oldText);
         },
     },
 };
+
+function restorePinName(pin, state) {
+    const previous = pin.name
+    Object.assign(pin, state)
+    pin.is.editingName = false
+    delete pin.editOriginal
+    pin.nameChanged(previous)
+    pin.checkRouteUsage()
+    pin.node.look.adjustPinWidth(pin)
+    pin.node.look.setDuplicatePin(pin)
+}
 
 function setTackSelectivity(tack, selective) {
     if (!tack?.route?.from || !tack.route?.to) {

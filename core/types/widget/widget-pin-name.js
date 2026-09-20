@@ -6,11 +6,10 @@ export const pinNameHandling = {
 
     startEdit(ctx, click=null) {
 
-        // before editing we remove the post or prefix from the name
-        if (this.pxlen) {
-            this.name = this.withoutPrefix()
-            this.pxlen = 0
-        }
+        this.editOriginal = {name: this.name, pxlen: this.pxlen}
+        this.name = this.displayName(false)
+        this.pxlen = 0
+        this.is.editingName = true
 
         if (!click) return {prop: 'name', index: this.name.length};
 
@@ -34,14 +33,21 @@ export const pinNameHandling = {
 
     endEdit(saved) {
         this.checkNewName() ? this.nameChanged(saved) : this.restoreSavedName(saved)      
+        this.is.editingName = false
+        delete this.editOriginal
+        this.node.look?.adjustPinWidth(this)
     },
 
     // a function to get the displayname
-    displayName() {
+    displayName(withCapability = true) {
 
         let dName = this.pxlen == 0 ? this.name : this.withoutPrefix()
+        if (!this.is.editingName && this.name) {
+            if (this.pxlen > 0 && dName.startsWith('.')) dName = dName.slice(1)
+            if (this.pxlen == 0 && this.node.look?.findIfNameAbove(this.rect.y)?.text) dName = "'" + dName
+        }
 
-        if (!this.is.capability) return dName
+        if (!withCapability || !this.is.capability) return dName
 
         const mark = this.is.input ? '\u24E3' : '\u24D4'
 
@@ -76,11 +82,17 @@ export const pinNameHandling = {
         // the new name is empty - allowed only if no routes
         if (this.name.length == 0) return (this.routes?.length == 0)
 
-        // if the newName starts or ends with a special character
-        if (convert.needsPrefix(this.name) || convert.needsPostfix(this.name)) {
+        if (this.name.startsWith("'")) {
+            this.name = this.name.slice(1)
+            if (this.name.endsWith("'")) this.name = this.name.slice(0, -1)
+            this.name = this.name.trim()
+            this.pxlen = 0
+            if (!this.name) return false
+        }
+        else if (convert.needsPrefix(this.name) || convert.needsPostfix(this.name)) {
 
             // the name should be longer than just the one character
-            if (this.name.length == 1) return false
+            if (this.name.length == 1 && '+.-_/₊'.includes(this.name)) return false
 
             // add the prefix/postfix to the name
             this.addIfName()
@@ -125,11 +137,12 @@ export const pinNameHandling = {
     // restore the saved name 
     restoreSavedName(savedName) {
 
-        // restore the name
-        this.name = savedName
-
-        // if the saved name has a +, handle it
-        if (convert.needsPrefix(savedName) || convert.needsPostfix(savedName)) this.addIfName()
+        if (this.editOriginal) {
+            Object.assign(this, this.editOriginal)
+        } else {
+            this.name = savedName
+            this.ifNamePrefixCheck()
+        }
     },
 
     // there is a prefix or a postfix that is not displayed
@@ -182,6 +195,31 @@ export const pinNameHandling = {
             this.pxlen = -text.length
     },
 
+    // Called after an interactive move, never while loading stored names.
+    moveToInterface() {
+        const look = this.node.look
+        const target = look.findIfNameAbove(this.rect.y)?.text
+        const previousName = this.name
+        if (this.node.cannotBeModified?.()) {
+            this.ifNamePrefixCheck()
+        } else if (this.pxlen && target) {
+            if (this.getPrefix() !== target) {
+                const local = this.pxlen > 0
+                    ? this.name.slice(this.pxlen + 1).trim()
+                    : this.name.slice(0, this.pxlen - 1).trim()
+                this.name = target + '.' + local
+                this.pxlen = target.length
+            }
+        } else if (!target) {
+            // Outside an interface, retain the full name as an absolute name.
+            this.pxlen = 0
+        }
+        if (this.name !== previousName) this.nameChanged(previousName)
+        this.checkRouteUsage()
+        look.adjustPinWidth(this)
+        look.setDuplicatePin(this)
+    },
+
     // after typing the name with a + at the beginning or the end, we have to set the prefixlength
     // the name has a prefix - find the prefix (ifName) and add it to the name - the name has been trimmed
     
@@ -193,19 +231,19 @@ export const pinNameHandling = {
         // check
         if (convert.needsPrefix(this.name)) {
 
-            if (ifName) {
+            if (ifName?.text) {
 
                 this.name = convert.combineWithPrefix(ifName.text, this.name)
                 this.pxlen = ifName.text.length
             }
             else {
-                this.name = this.name.slice(1).trimStart()
+                if ('+.-_/₊'.includes(this.name[0])) this.name = this.name.slice(1).trimStart()
                 this.pxlen = 0
             }
         }
         else if (convert.needsPostfix(this.name)) {
 
-            if (ifName) {
+            if (ifName?.text) {
                 this.name = convert.combineWithPostfix(ifName.text, this.name)
                 this.pxlen = -ifName.text.length
             }
@@ -254,7 +292,9 @@ export const pinNameHandling = {
         const baseName = this.pxlen > 0 ?  this.name.slice(this.pxlen) : this.name.slice(0, this.pxlen)
 
         // recombine with the new prefix
-        this.name = convert.combineWithPrefix(newPrefix, baseName)
+        this.name = this.pxlen > 0
+            ? convert.combineWithPrefix(newPrefix, baseName.startsWith(' ') ? '+' + baseName.trimStart() : baseName)
+            : convert.combineWithPostfix(newPrefix, baseName.endsWith(' ') ? baseName.trimEnd() + '+' : baseName)
 
         // and reset pxlen
         this.pxlen = this.pxlen > 0 ? newPrefix.length : -newPrefix.length

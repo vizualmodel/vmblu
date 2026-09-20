@@ -1,10 +1,7 @@
 import {CORE_VERSION, SCHEMA_VERSION} from './release-version.js'
 
-export function compatibilityFamily(version) {
-    const match = String(version ?? '').match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/)
-    if (!match) throw new Error(`Invalid vmblu version: ${version}`)
-    return `${match[1]}.${match[2]}`
-}
+import {compatibilityFamily} from './version-policy.js'
+export {compatibilityFamily} from './version-policy.js'
 
 export function canonicalJson(value) {
     return JSON.stringify(normalize(value))

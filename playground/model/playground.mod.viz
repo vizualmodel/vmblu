@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.2",
+    "version": "1.12.3",
     "created": "4/2/2024, 12:46:06 PM",
     "saved": "2026-08-25T14:01:46.420Z",
     "utc": "2026-08-25T14:01:46.420Z",
@@ -614,7 +614,7 @@
         "pads": [
           "(11 L)x -107 y 1322 w 70 h 15|confirm",
           "(9 L)x -107 y 853 w 67 h 15|header",
-          "(13 L)x -107 y 1492 w 92 h 15|event settings",
+          "(13 L)x -107 y 1492 w 104 h 15|event settings",
           "(14 L)x -107 y 1402 w 83 h 15|tool settings",
           "(6 L)x -107 y 530 w 83 h 15|pin profile",
           "(15 L)x -149 y 1602 w 107 h 15|temp message",
@@ -977,7 +977,7 @@
           {
             "from": "(pad 13) event settings",
             "to": "(pin 3) show @ event settings",
-            "wire": "x 105.0 y 0.0 x 105.0"
+            "wire": "x 105.0 y 0.0 x 93.0"
           },
           {
             "from": "(pad 14) tool settings",

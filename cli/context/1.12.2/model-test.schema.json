@@ -6,10 +6,10 @@
   "additionalProperties": false,
   "required": ["$schema", "kind", "version", "schemaVersion", "source", "target", "host", "scenarios"],
   "properties": {
-    "$schema": { "const": "https://vmblu.dev/context/1.12.2/model-test.schema.json" },
+    "$schema": {"type":"string","pattern":"^https://vmblu\\.dev/context/1\\.12\\.\\d+(?:[-+].*)?/model-test\\.schema\\.json$"},
     "kind": { "const": "vmblu.model-test" },
     "version": { "const": 1 },
-    "schemaVersion": { "const": "1.12.2" },
+    "schemaVersion": {"type":"string","pattern":"^1\\.12\\.\\d+(?:[-+].*)?$"},
     "source": { "$ref": "#/$defs/Source" },
     "target": { "$ref": "#/$defs/Target" },
     "host": { "enum": ["node", "browser"] },

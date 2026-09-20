@@ -33,7 +33,7 @@
       "additionalProperties": false,
       "required": ["version", "name"],
       "properties": {
-        "version": { "const": "1.12.2" },
+        "version": {"type":"string","pattern":"^1\\.12\\.\\d+(?:[-+].*)?$"},
         "name": { "$ref": "#/$defs/NonEmptyString" },
         "description": { "type": "string" },
         "extensions": { "$ref": "#/$defs/Extensions" }

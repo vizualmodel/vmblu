@@ -6,10 +6,10 @@
   "additionalProperties": false,
   "required": ["$schema", "kind", "version", "schemaVersion", "test", "artifactHash", "target", "startedAt", "durationMs", "status", "summary", "scenarios"],
   "properties": {
-    "$schema": { "const": "https://vmblu.dev/context/1.12.2/test-report.schema.json" },
+    "$schema": {"type":"string","pattern":"^https://vmblu\\.dev/context/1\\.12\\.\\d+(?:[-+].*)?/test-report\\.schema\\.json$"},
     "kind": { "const": "vmblu.test-report" },
     "version": { "const": 1 },
-    "schemaVersion": { "const": "1.12.2" },
+    "schemaVersion": {"type":"string","pattern":"^1\\.12\\.\\d+(?:[-+].*)?$"},
     "test": { "type": "string", "minLength": 1 },
     "artifactHash": { "$ref": "#/$defs/Hash" },
     "target": { "$ref": "#/$defs/Target" },
