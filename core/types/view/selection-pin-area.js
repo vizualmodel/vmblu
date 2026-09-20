@@ -226,7 +226,25 @@ export const pinAreaHandling = {
         return this.nodes[0] ? {x: 0, y: this.nodes[0].look.makePlace(null, 0)} : null;
     },
 
-    whereToAdd() {
+    whereToAdd(clipboard = null, target = null) {
+
+        if (clipboard?.widgets) {
+            const widget = target ? target.widget : this.getSelectedWidget() ?? this.widgets.at(-1)
+            const node = target?.node ?? widget?.node ?? this.getSingleNode()
+            if (!node) return {node: null, pos: null}
+            const look = node.look
+            const wholeInterface = clipboard.widgets.some(raw => Object.hasOwn(raw, 'interface'))
+            const heading = widget?.is.ifName ? widget : widget ? look.findIfNameAbove(widget.rect.y) : null
+            let y
+            if (widget && (wholeInterface || widget.is.ifName)) {
+                const next = look.widgets.filter(w => w.is.ifName && w.rect.y > (heading ?? widget).rect.y)
+                    .sort((a, b) => a.rect.y - b.rect.y)[0]
+                y = next?.rect.y ?? look.rect.y + look.rect.h - style.look.hBottom
+            } else {
+                y = widget ? widget.rect.y + widget.rect.h : look.rect.y + look.rect.h - style.look.hBottom
+            }
+            return {node, pos: {x: look.rect.x, y}}
+        }
 
         switch(this.what) {
 

@@ -1,4 +1,5 @@
 import {SCHEMA_VERSION} from '../../../core/types/model/schema-version.js'
+import {assertCompatibleVersion} from '../../../core/types/model/version-policy.js'
 
 export function cloneSystemDocument(document) {
     if (document == null) return null
@@ -29,8 +30,11 @@ export function validateSystemDocument(document) {
     }
 
     if (!document.header || typeof document.header !== 'object') errors.push('Missing system header.')
-    if (document.header?.version !== SCHEMA_VERSION) {
-        errors.push(`The system document must use schema version ${SCHEMA_VERSION}.`)
+    try {
+        assertCompatibleVersion(document.header?.version, 'system schema', SCHEMA_VERSION)
+    }
+    catch (error) {
+        errors.push(error.message)
     }
     if (typeof document.header?.name !== 'string' || !document.header.name.trim()) errors.push('The system header needs a name.')
     if (!Array.isArray(document.nodes)) errors.push('The system document needs a nodes array.')

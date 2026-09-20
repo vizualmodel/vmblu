@@ -61,6 +61,12 @@ Clipboard.prototype = {
         // set the id
         this.uid = rndAlfa(4)
 
+        // Preserve copy-time namespaces across documents and later source edits.
+        if (selection.widgets.length && [selex.singleNode, selex.pinArea, selex.ifArea].includes(selection.what)) {
+            if (selection.what === selex.singleNode) this.selection.what = selex.pinArea
+            this.json = this.selectionToJson()
+        }
+
         // notify other possible editors
         this.tx.send('switch')
     },
@@ -146,7 +152,8 @@ Clipboard.prototype = {
 
             case selex.ifArea:
             case selex.pinArea:{
-                target.widgets = this.selection.widgets.map( widget => widget.makeRaw())
+                target.widgets = this.selection.widgets.slice().sort((a,b) => a.rect.y - b.rect.y)
+                    .map(widget => widget.is.pin ? {...widget.makeRaw(), pxlen: widget.pxlen} : widget.makeRaw())
             }
             break
 

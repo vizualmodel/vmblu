@@ -134,6 +134,14 @@ three standard outputs.
 CLI, core, runtime and schema versions use `xx.yy.zz`. The `xx.yy` pair is the
 compatibility family and `zz` is an independent patch level. Components in the
 same family are compatible; crossing a family boundary requires migration.
+This applies to system and protocol documents and model-test/report artifacts,
+as well as models and generated code. Opening or saving an older patch document
+does not require changing its version header.
+
+The shared policy lives in `core/types/model/version-policy.js`. CLI checks,
+system-editor validation, provenance and bundled runtime checks reuse it.
+`generate-schema-version.js` derives JSON Schema compatibility constraints from
+the same policy; do not add exact release-version checks to document loaders.
 Package dependency ranges must therefore remain inside one family, for example
 `>=1.10.0 <1.11.0`.
 

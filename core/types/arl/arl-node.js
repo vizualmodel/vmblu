@@ -154,6 +154,34 @@ async get(as='text') {
     })
 },
 
+async readPromptFile() {
+    try { return {exists: true, text: await fs.readFile(this.url, 'utf8'), dirty: false} }
+    catch (error) {
+        if (error.code === 'ENOENT') return {exists: false, text: '', dirty: false}
+        throw error
+    }
+},
+
+async createPromptFile(text) {
+    await fs.mkdir(path.dirname(this.url), {recursive: true})
+    try {
+        await fs.writeFile(this.url, text, {flag: 'wx'})
+        return {created: true, text}
+    }
+    catch (error) {
+        if (error.code === 'EEXIST') return {...await this.readPromptFile(), created: false}
+        throw error
+    }
+},
+
+async removePromptFile(expected) {
+    const current = await this.readPromptFile()
+    if (!current.exists) return true
+    if (current.text !== expected) return false
+    await fs.unlink(this.url)
+    return true
+},
+
 async save(body) {
 
     // check

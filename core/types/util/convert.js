@@ -344,31 +344,32 @@ export const convert = {
             .reverse();                      // reverse: outermost to innermost
     },
 
-    // a pin name that has been edited can start or end with a special character
-    // that indicates that th einterface name will be added as prefix / postfix
-    // + indicates a single space
+    // Typed names default to interface.name. A leading apostrophe is literal;
+    // explicit separators retain prefix/postfix notation (+ means a space).
     needsPrefix: str => {
         const first = str[0]
-        return (first == '+' || first == '.' || first == '-' || first == '_' || first == '/')
+        if (!first || first == "'") return false
+        // Explicit leading separators retain precedence over suffix notation.
+        return '+.-_/₊'.includes(first) || !convert.needsPostfix(str)
     },
 
     needsPostfix: str => {
         const last = str.at(-1)
-        return (last == '+' || last == '.' || last == '-' || last == '_' || last == '/')
+        return str[0] != "'" && !!last && '+.-_/₊'.includes(last)
     },
 
     // add the prefix / postfix to a message
     combineWithPrefix(prefix, name) {
 
-        // Default is just the name
-        let complete = name
+        // Ordinary names use a dot; explicit separators override it.
+        let complete = prefix + '.' + name
 
         const first = name[0]
 
         // Prefix
-        if (first == '+' || first == '.' || first == '-' || first == '_' || first == '/') {
+        if (first == '+' || first == '₊' || first == '.' || first == '-' || first == '_' || first == '/') {
             const clean = name.slice(1).trim()
-            complete = first == '+' ? prefix + ' ' + clean : prefix + first + clean;
+            complete = first == '+' || first == '₊' ? prefix + ' ' + clean : prefix + first + clean;
         }
         
         // done
@@ -382,9 +383,9 @@ export const convert = {
         let complete = name
         const last = name.at(-1)
 
-        if (last == '+' || last == '.' || last == '-' || last == '_' || last == '/') {
+        if (last == '+' || last == '₊' || last == '.' || last == '-' || last == '_' || last == '/') {
             const clean = name.slice(0,-1).trim()
-            complete = last == '+' ? clean + ' ' + postfix : clean + last + postfix;
+            complete = last == '+' || last == '₊' ? clean + ' ' + postfix : clean + last + postfix;
         }
         
         // done

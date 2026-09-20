@@ -8,7 +8,8 @@ const noLink = [
     {text: 'new reply',         char: 'r',  icon: 'switch_right',        state: 'enabled',        action: newReply,    },
     {text: 'in/out switch',                 icon: 'cached',        state: 'disabled',        action: inOutSwitch,    },
     {text: 'add channel',                   icon: 'adjust',        state: 'disabled',        action: channelOnOff,    },    
-    {text: 'paste pins',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
+    {text: 'copy',         char: 'ctrl c',        icon: 'content_copy',        state: 'enabled',        action: selectionToClipboard,    },    
+    {text: 'paste',        char: 'ctrl v',        icon: 'content_copy',        state: 'enabled',        action: pasteWidgetsFromClipboard,    },    
     {text: 'all pins swap left right',      icon: 'swap_horiz',        state: 'enabled',        action: pinsSwap,    },    
     {text: 'all pins left',                 icon: 'arrow_back',        state: 'enabled',        action: pinsLeft,    },    
     {text: 'all pins right',                icon: 'arrow_forward',        state: 'enabled',        action: pinsRight,    },    
@@ -212,9 +213,16 @@ function pinsRight() {
     });
 }
 function pasteWidgetsFromClipboard() {
+    const view = cm.view
+    const tx = cm.tx
+    const target = {node: cm.node, widget: cm.widget}
     // request the clipboard - also set the target, the clipboard can come from another file
     cm.tx.request('clipboard.get', cm.doc).then(({raw}) => {
-        cm.doEdit('pasteWidgetsFromClipboard', {view: cm.view, raw});
+        view.doEdit(tx, 'pasteWidgetsFromClipboard', {view, raw, target});
     });
     //.catch( error => console.log('paste: clipboard get error -> ' + error))
+}
+function selectionToClipboard() {
+	if (cm.widget?.is.pin) cm.view.selection.switchToWidget(cm.widget)
+	cm.view.selectionToClipboard(cm.tx)
 }

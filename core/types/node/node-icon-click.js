@@ -1,6 +1,7 @@
 
 import {convert} from '../util/index.js'
 import {getNodePromptDocument} from './node-prompt-document.js'
+import {ensureNodePromptFile} from './prompt-file.js'
 
 const placePopup = (pos) => ({x: pos.x - 15, y: pos.y + 10})
 const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param})
@@ -14,14 +15,30 @@ export const nodeClickHandling = {
     showPrompt(tx, pos, header=`Node information for ${this.name}`) {
 
         const node = this
-        const promptArl = node.prompts.repository?.arl
 
         tx.send("node prompt", {
             header,
             pos,
             uid: node.uid,
+            promptKey: `${node.model?.getArl?.()?.getFullPath?.() ?? ''}:${node.uid}`,
+            draft: (read) => { node.prompts.readDraft = read },
             text: getNodePromptDocument(node),
-            open: promptArl ? () => tx.send('open source file', {arl: promptArl}) : null,
+            open: async (document = getNodePromptDocument(node)) => {
+                const oldDocument = getNodePromptDocument(node)
+                const oldRepository = node.prompts.repository
+                const existingArl = node.prompts.repository?.arl
+                // Older/read-only adapters can still open an existing reference.
+                if (existingArl && !existingArl.createPromptFile) {
+                    tx.send('open source file', {arl: existingArl})
+                    return
+                }
+                const {arl, changed} = await ensureNodePromptFile(node, document)
+                if (changed) doEdit(tx, 'referencePromptFile', {
+                    node, oldDocument, oldRepository,
+                    newDocument: getNodePromptDocument(node), repository: node.prompts.repository,
+                })
+                tx.send('open source file', {arl})
+            },
             ok: (document) => doEdit(tx,"changeNodePrompt",{node, document})
         })
     },

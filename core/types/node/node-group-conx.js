@@ -476,6 +476,7 @@ export const conxHandling = {
             
             // if ok make a smart connection between the two destinations
             route.autoRoute(this.nodes)
+            return route
         }
         else {
             // could not connect - drop the route in the source as well

@@ -213,17 +213,15 @@ Selection.prototype = {
     },
 
     // switch to the selected widget
-    switchToWidget(pin) {
+    switchToWidget(widget) {
 
-        if (!pin) return;
+        if (!widget) return;
 
-        // unselect the current
-        this.widgets[0]?.unSelect();
-
-        // select the new one
-        pin.doSelect();
-        this.widgets[0] = pin;
-        return;
+        if (widget.is.ifName) {
+            this.interfaceSelect(widget.node, widget);
+        } else if (widget.is.pin) {
+            this.singleNodeAndWidget(widget.node, widget);
+        }
     },
 
     widgetBelow(current) {

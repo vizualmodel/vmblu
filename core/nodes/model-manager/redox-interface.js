@@ -84,14 +84,16 @@ export const redoxInterface = {
     },
 
     interfaceNameDrag: {
-        doit({ ifName,oldY, newY }) {
+        doit({ ifName,oldY, newY, oldState }) {
             // just save the parameters
-            this.saveEdit('interfaceNameDrag', {ifName,oldY,newY});
+            this.saveEdit('interfaceNameDrag', {ifName,oldY,newY,oldState,newState:ifName.node.look.capturePinMove()});
         },
-        undo({ ifName, oldY, newY }) {
+        undo({ ifName, oldY, newY, oldState }) {
+            if (oldState) return ifName.node.look.restorePinMove(oldState)
             ifName.moveTo(oldY);
         },
-        redo({ ifName, oldY, newY }) {
+        redo({ ifName, oldY, newY, newState }) {
+            if (newState) return ifName.node.look.restorePinMove(newState)
             ifName.moveTo(newY);
         },
     },

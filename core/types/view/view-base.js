@@ -147,6 +147,13 @@ View.prototype = {
         // check if we need to do something...
         if (this.state.action == doing.editTextField) this.endTextEdit()
 
+        if ([doing.pinDrag, doing.interfaceNameDrag].includes(newAction)) {
+            const widget = this.state.lookWidget
+            this.state.modo.pinMove = widget?.node.look.capturePinMove()
+            if (widget) this.state.modo.y = widget.rect.y
+            if (widget?.is.pin) this.state.modo.left = widget.is.left
+        }
+
         // switch to the new state
         this.state.action = newAction
     },

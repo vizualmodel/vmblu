@@ -152,7 +152,7 @@ export const mouseUpHandling = {
                 state.lookWidget.unHighLightRoutes()
 
                 // confirm the change
-                this.doEdit(tx,'pinDrag',{pin, oldY: state.modo.y, oldLeft: state.modo.left})
+                this.doEdit(tx,'pinDrag',{pin, oldY: state.modo.y, oldLeft: state.modo.left, oldState: state.modo.pinMove})
                 break
 
             // OBSOLETE
@@ -160,7 +160,7 @@ export const mouseUpHandling = {
                 break
 
             case doing.interfaceNameDrag: {
-                this.doEdit(tx,'interfaceNameDrag',{ifName: state.lookWidget, oldY: state.modo.y, newY: state.lookWidget.rect.y})
+                this.doEdit(tx,'interfaceNameDrag',{ifName: state.lookWidget, oldY: state.modo.y, newY: state.lookWidget.rect.y, oldState: state.modo.pinMove})
             }
             break
 

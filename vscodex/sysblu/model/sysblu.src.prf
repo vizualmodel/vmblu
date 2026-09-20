@@ -1,17 +1,17 @@
 {
-  "version": "1.12.2",
+  "version": "1.12.3",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.2",
+    "schemaVersion": "1.12.3",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.2"
+      "version": "1.12.3"
     },
     "source": {
       "model": "sysblu.mod.blu",
-      "hash": "fnv1a64:cd7ce1608f786ccd"
+      "hash": "fnv1a64:41aaa3cf211d3f55"
     }
   },
   "entries": [
@@ -38,7 +38,7 @@
           "pin": "canvas",
           "handler": "onCanvas",
           "file": "../system-message-broker.js",
-          "line": 173,
+          "line": 181,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -57,7 +57,7 @@
           "pin": "floating.menu",
           "handler": "onFloatingMenu",
           "file": "../system-message-broker.js",
-          "line": 196,
+          "line": 204,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -73,7 +73,7 @@
           "pin": "save",
           "handler": "onSave",
           "file": "../system-message-broker.js",
-          "line": 200,
+          "line": 208,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -83,7 +83,7 @@
           "pin": "modal.div",
           "handler": "onModalDiv",
           "file": "../system-message-broker.js",
-          "line": 204,
+          "line": 212,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -99,7 +99,7 @@
           "pin": "system.updated",
           "handler": "onSystemUpdated",
           "file": "../system-message-broker.js",
-          "line": 208,
+          "line": 216,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -118,7 +118,7 @@
           "pin": "sysblu.loaded",
           "handler": "onSysbluLoaded",
           "file": "../system-message-broker.js",
-          "line": 223,
+          "line": 231,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -128,7 +128,7 @@
           "pin": "sysblu.diagnostics",
           "handler": "onSysbluDiagnostics",
           "file": "../system-message-broker.js",
-          "line": 225,
+          "line": 233,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -147,7 +147,7 @@
           "pin": "sysblu.failed",
           "handler": "onSysbluFailed",
           "file": "../system-message-broker.js",
-          "line": 229,
+          "line": 237,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -157,7 +157,7 @@
           "pin": "open.reference",
           "handler": "onOpenReference",
           "file": "../system-message-broker.js",
-          "line": 236,
+          "line": 244,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -173,7 +173,7 @@
           "pin": "execute.command",
           "handler": "onExecuteCommand",
           "file": "../system-message-broker.js",
-          "line": 240,
+          "line": 248,
           "summary": "",
           "returns": "",
           "examples": [],
@@ -210,7 +210,7 @@
         {
           "pin": "size change",
           "file": "../system-message-broker.js",
-          "line": 184
+          "line": 192
         }
       ]
     },

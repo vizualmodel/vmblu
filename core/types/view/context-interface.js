@@ -1,4 +1,5 @@
 import {selex} from './selection.js'
+import {zap} from './mouse.js'
 
 const withLink = [
 
@@ -22,8 +23,8 @@ const noLink = [
 	{text:"all pins right",			  icon:"arrow_forward",state:"enabled", action:ifPinsRight},
 	{text:"i/o swicth",	  	          icon:"cached",state:"enabled", action:ioSwitch},
 
-	{text:"copy pins",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:widgetsToClipboard},
-	{text:"paste pins",	char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pasteWidgetsFromClipboard},
+	{text:"copy",	char:'ctrl c',icon:"content_copy",state:"enabled", 	action:widgetsToClipboard},
+	{text:"paste",	char:'ctrl v',icon:"content_copy",state:"enabled", 	action:pasteWidgetsFromClipboard},
 	{text:"disconnect",				  icon:"power_off",state:"enabled", action:ifDisconnect},
 	{text:"delete",					  icon:"delete",state:"enabled", action:ifDelete},
 ]
@@ -113,10 +114,10 @@ function ioSwitch() {
 	cm.doEdit('ioSwitchPinArea', {view: cm.view})
 }
 function ifDisconnect() {
-	cm.doEdit('disconnectPinArea', {})
+	cm.doEdit('disconnectPinArea', {view: cm.view, node: cm.node, widgets: cm.node.look.getInterface(cm.ifWidget)})
 }
 function ifDelete() {
-	cm.doEdit('deletePinArea',{view: cm.view})
+	cm.doEdit('deletePinArea', {view: cm.view, node: cm.node, widgets: cm.node.look.getInterface(cm.ifWidget)})
 }
 
 // pin swapping
@@ -139,10 +140,15 @@ function widgetsToClipboard() {
 // paste widgets
 function pasteWidgetsFromClipboard()  {
 
+    const view = cm.view
+    const tx = cm.tx
+    const hitWidget = view.hit.what === zap.selection ? view.selection.widgetHit(view.hit.xyLocal) : view.hit.lookWidget
+    const target = {node: cm.node, widget: hitWidget?.node === cm.node ? hitWidget : cm.ifWidget}
+
 	// request the clipboard - also set the target, the clipboard can come from another file
 	cm.tx.request('clipboard.get').then( ({raw}) => {
 
-		cm.doEdit('pasteWidgetsFromClipboard',{view: cm.view, raw})
+		view.doEdit(tx, 'pasteWidgetsFromClipboard',{view, raw, target})
 	})
 	.catch( error => console.log('paste: clipboard get error -> ' + error))
 }

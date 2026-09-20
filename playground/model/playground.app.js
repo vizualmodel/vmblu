@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: hv-layout
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.2","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.2"},"source":{"model":"playground.mod.blu","hash":"fnv1a64:7241b78702f73dca"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.3","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.3"},"source":{"model":"playground.mod.blu","hash":"fnv1a64:a8afe52d622666d3"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -52,20 +52,20 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "QBOL",
+	uid: "oMof",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> main area",
 		"-> left column"
 		],
 	outputs: [
-		"size change -> size change @ editor page (QceR)"
+		"size change -> size change @ editor page (fEnI)"
 		]
 	},
 	//___________________________________________________WORKSPACE
 	{
 	name: "workspace",
-	uid: "uwus",
+	uid: "OGpW",
 	factory: Workspace,
 	inputs: [
 		"-> dom.add modal div",
@@ -74,12 +74,12 @@ const nodeList = [
 		"=> folder.get"
 		],
 	outputs: [
-		"dom.workspace div -> left column @ column-main layout (QBOL)",
-		"file.selected -> file.selected @ document manager (NRQG)",
-		"file.new -> file.new @ document manager (NRQG)",
-		"file.renamed -> file.renamed @ document manager (NRQG)",
-		"file.deleted -> file.deleted @ document manager (NRQG)",
-		"file.get name -> file.get @ document manager (NRQG)",
+		"dom.workspace div -> left column @ column-main layout (oMof)",
+		"file.selected -> file.selected @ document manager (TCRX)",
+		"file.new -> file.new @ document manager (TCRX)",
+		"file.renamed -> file.renamed @ document manager (TCRX)",
+		"file.deleted -> file.deleted @ document manager (TCRX)",
+		"file.get name -> file.get @ document manager (TCRX)",
 		"file.context menu -> ()",
 		"files.get list => ()",
 		"files.selected -> ()",
@@ -102,34 +102,34 @@ const nodeList = [
 	//_________________________________________________TEXT EDITOR
 	{
 	name: "text editor",
-	uid: "TXiA",
+	uid: "asZe",
 	factory: TextEditor,
 	inputs: [
 		"-> text.set active",
 		"-> text.save"
 		],
 	outputs: [
-		"text.failed -> text.failed @ document manager (NRQG)",
-		"text.loaded -> text.loaded @ document manager (NRQG)",
-		"content div -> content.div @ editor page (QceR)"
+		"text.failed -> text.failed @ document manager (TCRX)",
+		"text.loaded -> text.loaded @ document manager (TCRX)",
+		"content div -> content.div @ editor page (fEnI)"
 		]
 	},
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "yPNi",
+	uid: "unpO",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> dom.add modal div @ workspace (uwus)"
+		"modal div -> dom.add modal div @ workspace (OGpW)"
 		]
 	},
 	//__________________________________________________MODEL PANE
 	{
 	name: "model pane",
-	uid: "DVHJ",
+	uid: "jkWv",
 	factory: ModelPane,
 	inputs: [
 		"-> menu div",
@@ -137,13 +137,13 @@ const nodeList = [
 		"-> canvas"
 		],
 	outputs: [
-		"content div -> content.div @ editor page (QceR)"
+		"content div -> content.div @ editor page (fEnI)"
 		]
 	},
 	//_________________________________________________EDITOR PAGE
 	{
 	name: "editor page",
-	uid: "QceR",
+	uid: "fEnI",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> tabs div",
@@ -156,16 +156,16 @@ const nodeList = [
 		"-> content.loading"
 		],
 	outputs: [
-		"div -> main area @ column-main layout (QBOL)",
+		"div -> main area @ column-main layout (oMof)",
 		`content.size change -> [ 
-			"size change @ view manager (kzin)",
-			"size change @ sysblu view (majG)" ]`
+			"size change @ view manager (XXIl)",
+			"size change @ sysblu view (FjpF)" ]`
 		]
 	},
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "lZDs",
+	uid: "Dyok",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -174,9 +174,9 @@ const nodeList = [
 		"-> tab.remove"
 		],
 	outputs: [
-		"div -> tabs div @ editor page (QceR)",
-		"tab.request to close -> tab.request to close @ document manager (NRQG)",
-		"tab.request to select -> tab.request to select @ document manager (NRQG)"
+		"div -> tabs div @ editor page (fEnI)",
+		"tab.request to close -> tab.request to close @ document manager (TCRX)",
+		"tab.request to select -> tab.request to select @ document manager (TCRX)"
 		],
 	sx:	{
 		    "a": 7,
@@ -191,26 +191,26 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "ZOII",
+	uid: "yGUm",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"sync model -> sync model @ model manager (ZDjq)",
-		"accept changes -> accept changes @ model manager (ZDjq)",
-		"wire check -> wire check @ model manager (ZDjq)",
-		"show settings -> show settings @ model manager (ZDjq)",
-		"make app -> make app @ model manager (ZDjq)",
-		"make lib -> make lib @ model manager (ZDjq)",
-		"set save point -> save point.set @ model manager (ZDjq)",
-		"back to save point -> save point.back @ model manager (ZDjq)",
-		"recalibrate -> recalibrate @ view manager (kzin)",
-		"grid on-off -> grid on-off @ view manager (kzin)",
-		"application prompt -> application prompt @ view manager (kzin)",
+		"sync model -> sync model @ model manager (JPLH)",
+		"accept changes -> accept changes @ model manager (JPLH)",
+		"wire check -> wire check @ model manager (JPLH)",
+		"show settings -> show settings @ model manager (JPLH)",
+		"make app -> make app @ model manager (JPLH)",
+		"make lib -> make lib @ model manager (JPLH)",
+		"set save point -> save point.set @ model manager (JPLH)",
+		"back to save point -> save point.back @ model manager (JPLH)",
+		"recalibrate -> recalibrate @ view manager (XXIl)",
+		"grid on-off -> grid on-off @ view manager (XXIl)",
+		"application prompt -> application prompt @ view manager (XXIl)",
 		`save -> [ 
-			"model.save @ model manager (ZDjq)",
-			"file.save active @ document manager (NRQG)" ]`,
-		"save as -> file.save as @ document manager (NRQG)",
-		"div -> menu div @ model pane (DVHJ)"
+			"model.save @ model manager (JPLH)",
+			"file.save active @ document manager (TCRX)" ]`,
+		"save as -> file.save as @ document manager (TCRX)",
+		"div -> menu div @ model pane (jkWv)"
 		],
 	sx:	[
 		    {
@@ -296,7 +296,7 @@ const nodeList = [
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager",
-	uid: "NRQG",
+	uid: "TCRX",
 	factory: DocumentManager,
 	inputs: [
 		"-> tab.request to close",
@@ -317,29 +317,29 @@ const nodeList = [
 		"-> text.failed"
 		],
 	outputs: [
-		"tab.new -> tab.new @ tab ribbon (lZDs)",
-		"tab.rename -> tab.rename @ tab ribbon (lZDs)",
-		"tab.select -> tab.select @ tab ribbon (lZDs)",
-		"tab.remove -> tab.remove @ tab ribbon (lZDs)",
-		"file.save as filename -> path @ path request (SuLX)",
+		"tab.new -> tab.new @ tab ribbon (Dyok)",
+		"tab.rename -> tab.rename @ tab ribbon (Dyok)",
+		"tab.select -> tab.select @ tab ribbon (Dyok)",
+		"tab.remove -> tab.remove @ tab ribbon (Dyok)",
+		"file.save as filename -> path @ path request (GMiJ)",
 		"file.save all -> ()",
-		"file.loading -> content.loading @ editor page (QceR)",
-		"file.loaded -> content.loaded @ editor page (QceR)",
-		"file.failed -> content.failed @ editor page (QceR)",
+		"file.loading -> content.loading @ editor page (fEnI)",
+		"file.loaded -> content.loaded @ editor page (fEnI)",
+		"file.failed -> content.failed @ editor page (fEnI)",
 		`model.set active -> [ 
-			"top level view @ view manager (kzin)",
-			"model.set @ model manager (ZDjq)" ]`,
-		"model.save -> model.save @ model manager (ZDjq)",
-		"sysblu.save -> sysblu.save @ sysblu manager (wSGc)",
-		"sysblu.set active -> sysblu.set @ sysblu manager (wSGc)",
-		"text.save -> text.save @ text editor (TXiA)",
-		"text.set active -> text.set active @ text editor (TXiA)"
+			"top level view @ view manager (XXIl)",
+			"model.set @ model manager (JPLH)" ]`,
+		"model.save -> model.save @ model manager (JPLH)",
+		"sysblu.save -> sysblu.save @ sysblu manager (TQls)",
+		"sysblu.set active -> sysblu.set @ sysblu manager (TQls)",
+		"text.save -> text.save @ text editor (asZe)",
+		"text.set active -> text.set active @ text editor (asZe)"
 		]
 	},
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager",
-	uid: "kzin",
+	uid: "XXIl",
 	factory: ViewManager,
 	inputs: [
 		"-> redox.done",
@@ -351,26 +351,26 @@ const nodeList = [
 		"-> size change"
 		],
 	outputs: [
-		"redox.doit -> redox.doit @ model manager (ZDjq)",
-		"redox.undo -> redox.undo @ model manager (ZDjq)",
-		"redox.redo -> redox.redo @ model manager (ZDjq)",
-		"team legend -> teams @ team legend (wzzU)",
-		"canvas -> canvas @ model pane (DVHJ)",
-		"node settings (sx) -> show @ node settings (qOns)",
-		"runtime settings (dx) -> show @ runtime settings (hJJK)",
-		"node prompt -> markdown @ markdown input (mTQU)",
-		"context menu -> context menu @ context menu (bcVx)",
-		"name and path -> name and path @ name and path (IMpt)",
-		"open source file -> file.open @ document manager (NRQG)",
-		"open model -> file.open @ document manager (NRQG)",
-		"clipboard.get => get @ clipboard (sbbq)",
-		"clipboard.set -> set @ clipboard (sbbq)"
+		"redox.doit -> redox.doit @ model manager (JPLH)",
+		"redox.undo -> redox.undo @ model manager (JPLH)",
+		"redox.redo -> redox.redo @ model manager (JPLH)",
+		"team legend -> teams @ team legend (dexe)",
+		"canvas -> canvas @ model pane (jkWv)",
+		"node settings (sx) -> show @ node settings (wXmk)",
+		"runtime settings (dx) -> show @ runtime settings (RDJb)",
+		"node prompt -> markdown @ markdown input (sUwq)",
+		"context menu -> context menu @ context menu (mXFd)",
+		"name and path -> name and path @ name and path (vZej)",
+		"open source file -> file.open @ document manager (TCRX)",
+		"open model -> file.open @ document manager (TCRX)",
+		"clipboard.get => get @ clipboard (RCCZ)",
+		"clipboard.set -> set @ clipboard (RCCZ)"
 		]
 	},
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager",
-	uid: "ZDjq",
+	uid: "JPLH",
 	factory: ModelManager,
 	inputs: [
 		"-> sync model",
@@ -390,25 +390,25 @@ const nodeList = [
 		"-> redox.redo"
 		],
 	outputs: [
-		"save point.confirm -> show @ confirm box (fZnQ)",
-		"model.root -> root @ view manager (kzin)",
-		"model.header -> show @ doc settings (EbMk)",
-		"model.loaded -> model.loaded @ document manager (NRQG)",
-		"model.failed -> model.failed @ document manager (NRQG)",
-		"redox.done -> redox.done @ view manager (kzin)",
-		"event settings -> show @ event settings (lceO)",
-		"tool settings -> show @ tool settings (yAwB)",
-		"pin profile -> show @ pin profile (tSdq)",
-		"info popup -> show @ toast box (iHsS)",
-		"get path -> path @ path request (SuLX)",
-		"open source file -> file.open @ document manager (NRQG)",
-		"open model -> file.open @ document manager (NRQG)"
+		"save point.confirm -> show @ confirm box (GNnh)",
+		"model.root -> root @ view manager (XXIl)",
+		"model.header -> show @ doc settings (Zpnj)",
+		"model.loaded -> model.loaded @ document manager (TCRX)",
+		"model.failed -> model.failed @ document manager (TCRX)",
+		"redox.done -> redox.done @ view manager (XXIl)",
+		"event settings -> show @ event settings (JOhg)",
+		"tool settings -> show @ tool settings (NAPU)",
+		"pin profile -> show @ pin profile (nLrz)",
+		"info popup -> show @ toast box (WhYv)",
+		"get path -> path @ path request (GMiJ)",
+		"open source file -> file.open @ document manager (TCRX)",
+		"open model -> file.open @ document manager (TCRX)"
 		]
 	},
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard",
-	uid: "sbbq",
+	uid: "RCCZ",
 	factory: Clipboard,
 	inputs: [
 		"-> set",
@@ -424,7 +424,7 @@ const nodeList = [
 	//_________________________________________________SYSBLU VIEW
 	{
 	name: "sysblu view",
-	uid: "majG",
+	uid: "FjpF",
 	factory: SysbluView,
 	inputs: [
 		"-> size change",
@@ -434,22 +434,22 @@ const nodeList = [
 		"-> sysmod.done"
 		],
 	outputs: [
-		"canvas -> canvas @ sysblu pane (pJyV)",
-		"application settings -> application settings @ application inspector (OgwI)",
-		"endpoint settings -> endpoint settings @ endpoint inspector (Qjvb)",
-		"connection settings -> connection settings @ connection inspector (zyTT)",
-		"project references -> project references @ project references (RdAU)",
-		"sysmod.doit -> sysmod.doit @ sysblu manager (wSGc)",
-		"sysmod.undo -> sysmod.undo @ sysblu manager (wSGc)",
-		"sysmod.redo -> sysmod.redo @ sysblu manager (wSGc)",
-		"open reference -> file.open @ document manager (NRQG)",
+		"canvas -> canvas @ sysblu pane (MIzc)",
+		"application settings -> application settings @ application inspector (mOTM)",
+		"endpoint settings -> endpoint settings @ endpoint inspector (qVFG)",
+		"connection settings -> connection settings @ connection inspector (EfHv)",
+		"project references -> project references @ project references (hiWw)",
+		"sysmod.doit -> sysmod.doit @ sysblu manager (TQls)",
+		"sysmod.undo -> sysmod.undo @ sysblu manager (TQls)",
+		"sysmod.redo -> sysmod.redo @ sysblu manager (TQls)",
+		"open reference -> file.open @ document manager (TCRX)",
 		"execute command -> ()"
 		]
 	},
 	//______________________________________________SYSBLU MANAGER
 	{
 	name: "sysblu manager",
-	uid: "wSGc",
+	uid: "TQls",
 	factory: SysbluManager,
 	inputs: [
 		"-> sysblu.set",
@@ -459,122 +459,122 @@ const nodeList = [
 		"-> sysmod.redo"
 		],
 	outputs: [
-		"sysblu.loaded -> sysblu.loaded @ document manager (NRQG)",
-		"sysblu.failed -> sysblu.failed @ document manager (NRQG)",
+		"sysblu.loaded -> sysblu.loaded @ document manager (TCRX)",
+		"sysblu.failed -> sysblu.failed @ document manager (TCRX)",
 		"sysblu.diagnostics -> ()",
-		"system.updated -> system.updated @ sysblu view (majG)",
-		"sysmod.done -> sysmod.done @ sysblu view (majG)"
+		"system.updated -> system.updated @ sysblu view (FjpF)",
+		"sysmod.done -> sysmod.done @ sysblu view (FjpF)"
 		]
 	},
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "OgwI",
+	uid: "mOTM",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "Qjvb",
+	uid: "qVFG",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "zyTT",
+	uid: "EfHv",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//__________________________________________PROJECT REFERENCES
 	{
 	name: "project references",
-	uid: "RdAU",
+	uid: "hiWw",
 	factory: ProjectReferencesFactory,
 	inputs: [
 		"-> project references"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "SuLX",
+	uid: "GMiJ",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)",
-		"folder.get => folder.get @ workspace (uwus)"
+		"modal div -> modal div @ editor page (fEnI)",
+		"folder.get => folder.get @ workspace (OGpW)"
 		]
 	},
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "qOns",
+	uid: "wXmk",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "IMpt",
+	uid: "vZej",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
 		],
 	outputs: [
-		"folder.get => folder.get @ workspace (uwus)",
-		"modal div -> modal div @ editor page (QceR)"
+		"folder.get => folder.get @ workspace (OGpW)",
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "tSdq",
+	uid: "nLrz",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"pin prompt -> markdown @ markdown input (mTQU)",
-		"modal div -> modal div @ editor page (QceR)"
+		"pin prompt -> markdown @ markdown input (sUwq)",
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "mTQU",
+	uid: "sUwq",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		],
 	sx:	{
 		    "openPromptFile": true
@@ -583,143 +583,143 @@ const nodeList = [
 	//________________________________________________DOC SETTINGS
 	{
 	name: "doc settings",
-	uid: "EbMk",
+	uid: "Zpnj",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)",
-		"team settings -> show @ team settings (HZuy)",
-		"agent settings -> show @ agent settings (KUpi)",
-		"model runtime settings -> show @ model runtime settings (NQji)"
+		"modal div -> modal div @ editor page (fEnI)",
+		"team settings -> show @ team settings (SLBL)",
+		"agent settings -> show @ agent settings (rvxj)",
+		"model runtime settings -> show @ model runtime settings (YGvM)"
 		]
 	},
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "HZuy",
+	uid: "SLBL",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "NQji",
+	uid: "YGvM",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "KUpi",
+	uid: "rvxj",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "bcVx",
+	uid: "mXFd",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
 		],
 	outputs: [
-		"confirm -> show @ confirm box (fZnQ)",
-		"modal div -> modal div @ editor page (QceR)"
+		"confirm -> show @ confirm box (GNnh)",
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "hJJK",
+	uid: "RDJb",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "fZnQ",
+	uid: "GNnh",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "yAwB",
+	uid: "NAPU",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "lceO",
+	uid: "JOhg",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "iHsS",
+	uid: "WhYv",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
 		],
 	outputs: [
-		"modal div -> modal div @ editor page (QceR)"
+		"modal div -> modal div @ editor page (fEnI)"
 		]
 	},
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "wzzU",
+	uid: "dexe",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
 		],
 	outputs: [
-		"div -> legend div @ model pane (DVHJ)"
+		"div -> legend div @ model pane (jkWv)"
 		]
 	},
 	//_________________________________________________SYSBLU PANE
 	{
 	name: "sysblu pane",
-	uid: "pJyV",
+	uid: "MIzc",
 	factory: ModelPane,
 	inputs: [
 		"-> menu div",
@@ -727,20 +727,20 @@ const nodeList = [
 		"-> canvas"
 		],
 	outputs: [
-		"content div -> content.div @ editor page (QceR)"
+		"content div -> content.div @ editor page (fEnI)"
 		]
 	},
 	//_________________________________________________SYSBLU MENU
 	{
 	name: "sysblu menu",
-	uid: "xmRQ",
+	uid: "TAgk",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
-		"div -> menu div @ sysblu pane (pJyV)",
-		"save -> file.save active @ document manager (NRQG)",
-		"application prompt -> application prompt @ sysblu view (majG)",
-		"add application -> add application @ sysblu view (majG)"
+		"div -> menu div @ sysblu pane (MIzc)",
+		"save -> file.save active @ document manager (TCRX)",
+		"application prompt -> application prompt @ sysblu view (FjpF)",
+		"add application -> add application @ sysblu view (FjpF)"
 		],
 	sx:	[
 		    {
@@ -767,7 +767,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.2","schemaVersion":"1.12.2"},
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.3","schemaVersion":"1.12.3"},
     capabilities,
     agent
 }

@@ -10,7 +10,11 @@ export const promiseMap = new Map();
 
 export function requestVsCode(verb, payload = {}) {
 	const currentKey = rqKey++;
-	const promise = new Promise(resolve => promiseMap.set(currentKey, resolve));
+	const promise = new Promise((resolve, reject) => {
+		// Keep the callable resolver for existing read/folder response handlers.
+		resolve.reject = reject;
+		promiseMap.set(currentKey, resolve);
+	});
 	vscode.postMessage({verb, rqKey: currentKey, ...payload});
 	return promise;
 }
@@ -148,5 +152,15 @@ const vscodeARLmethods = {
 		const bodyAsBytes = encoder.encode(body);
 
 		return requestVsCode('HTTP-POST', {arl:this, bytes: bodyAsBytes});
+	},
+
+	readPromptFile() {
+		return requestVsCode('prompt file', {arl: this, action: 'read'});
+	},
+	createPromptFile(text) {
+		return requestVsCode('prompt file', {arl: this, action: 'create', text});
+	},
+	removePromptFile(expected) {
+		return requestVsCode('prompt file', {arl: this, action: 'remove', expected});
 	}
 };

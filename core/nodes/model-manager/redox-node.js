@@ -343,6 +343,20 @@ changeNodeDynamics: {
     }
 },
 
+referencePromptFile: {
+    doit(param) {
+        this.saveEdit('referencePromptFile', param)
+    },
+    undo({node, oldRepository, oldDocument}) {
+        node.prompts.repository = oldRepository
+        applyNodePromptDocument(node, oldDocument)
+    },
+    redo({node, repository, newDocument}) {
+        node.prompts.repository = repository
+        applyNodePromptDocument(node, newDocument)
+    },
+},
+
 changeNodePrompt: {
     doit({node, document}) {
         const oldDocument = getNodePromptDocument(node)

@@ -2,6 +2,7 @@ const cm = {
 
 	choices: [
 		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
+		{text:"paste",                    icon:"content_paste",state:"enabled", action:pasteWidgetsFromClipboard},
 		{text:"disconnect",				  icon:"power_off",state:"enabled", action:disconnectPinArea},
 		{text:"delete",					  icon:"delete",state:"enabled", action:deletePinArea},
 		{text:"all pins swap left right", icon:"swap_horiz",state:"enabled", action:pinsSwap},
@@ -23,7 +24,7 @@ const cm = {
 
 		this.view = view
 		this.tx = tx
-		this.node = view.state.node
+		this.node = view.selection.getPinAreaNode()
 		this.widgets = view.selection.widgets
 		this.xyLocal = view.hit.xyLocal
 		this.xyScreen = view.hit.xyScreen
@@ -38,8 +39,15 @@ export const pinAreaCxMenu = cm;
 
 
 function selectionToClipboard() {
-	
 	cm.view.selectionToClipboard(cm.tx)
+}
+function pasteWidgetsFromClipboard() {
+    const view = cm.view
+    const tx = cm.tx
+    const target = {node: cm.node, widget: view.selection.widgetHit(cm.xyLocal) ?? cm.widgets.at(-1)}
+    tx.request('clipboard.get').then(({raw}) => {
+        view.doEdit(tx, 'pasteWidgetsFromClipboard', {view, raw, target})
+    })
 }
 function disconnectPinArea() {
 	cm.doEdit('disconnectPinArea', {view: cm.view, node: cm.node, widgets: cm.widgets})

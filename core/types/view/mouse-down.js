@@ -28,6 +28,9 @@ export const mouseDownHandling = {
         // get the binary keys mask
         const keys = this.keyMask(e)
 
+        const selectedPin = this.selection.what === selex.singleNode && this.selection.widgets.length === 1
+            ? this.selection.getSelectedWidget() : null
+
         // check what was hit inside the window - with ctrl-alt we just look for the routes !
         keys === (CTRL|ALT) ?  this.mouseHitRoutes(xyLocal) : this.mouseHit(xyLocal)
 
@@ -40,6 +43,8 @@ export const mouseDownHandling = {
             case zap.pin: {
 
                 switch(keys) {
+
+ 
 
                     case NONE:
                     case CTRL|SHIFT: {
@@ -89,6 +94,13 @@ export const mouseDownHandling = {
                         // save the edit
                         this.state.modo.left = pin.is.left
                         this.state.modo.pos.y = pin.rect.y
+                    }
+                    break
+
+                    case ALT: {
+                        if (e.button !== 0 || !selectedPin?.is.pin) break
+                        this.stateSwitch(doing.nothing)
+                        this.doEdit(tx, 'routeAutoConnect', {view: this, from: selectedPin, to: hit.lookWidget})
                     }
                     break
                 }

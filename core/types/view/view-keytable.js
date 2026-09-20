@@ -336,7 +336,8 @@ export const ctrlKeyTable = {
         .then(({raw}) => {
             
             // other cases do the standard paste operation
-            view.doEdit(tx,'pasteFromClipboard', {view,pos: view.hit.xyLocal, raw, asLink: false});
+            if (raw?.widgets?.length) view.doEdit(tx, 'pasteWidgetsFromClipboard', {view, raw})
+            else view.doEdit(tx,'pasteFromClipboard', {view,pos: view.hit.xyLocal, raw, asLink: false});
         })
         .catch((error) =>
             console.log('ctrl-v : clipboard get error -> ' + error)

@@ -6,6 +6,9 @@ import {assertRuntimeCompatibility, runtimeCompatibilityFamily} from '../shared/
 
 test('runtime accepts its compatibility family and rejects another family', () => {
     assert.equal(runtimeCompatibilityFamily(), '1.12')
+    for (const version of ['1.12.0', '1.12.1', '1.12.99']) {
+        assert.equal(runtimeCompatibilityFamily(version), '1.12')
+    }
     assert.equal(assertRuntimeCompatibility('1.12'), '1.12')
     assert.doesNotThrow(() => new Runtime([], {vmblu: {compatibilityFamily: '1.12'}}))
     assert.throws(

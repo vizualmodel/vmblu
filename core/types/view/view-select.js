@@ -139,6 +139,8 @@ export const selectionHandling = {
 
                 // the selection becomes the widgets that were copied
                 this.selection.pinAreaSelect(widgets)
+                if (content.raw.what === selex.ifArea) this.selection.what = selex.ifArea
+                where.node.look.checkDuplicatePins()
             }
             break
 

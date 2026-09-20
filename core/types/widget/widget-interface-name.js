@@ -83,7 +83,7 @@ InterfaceName.prototype = {
         [this.rect.y, next.rect.y] =[next.rect.y, this.rect.y]
 
         // if the next is a pin check what to do with the prefix (add it or remove it)
-        if (next.is.pin) next.ifNamePrefixCheck(); 
+        if (next.is.pin) next.moveToInterface();
 
         // reconnect the routes to the widgets that changed place
         if (next.is.pin) next.adjustRoutes()

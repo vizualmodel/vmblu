@@ -361,23 +361,39 @@ function createTx(runtime, source) {
 }
 __name(createTx, "createTx");
 
-// shared/release-version.js
-var RUNTIME_VERSION = "1.12.2";
-function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+// ../core/types/model/version-policy.js
+function parseVmbluVersion(version, label = "version") {
   const match = String(version ?? "").match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
-  if (!match) throw new Error(`Invalid vmblu runtime version: ${version}`);
-  return `${match[1]}.${match[2]}`;
+  if (!match) throw new Error(`Invalid vmblu ${label}: ${version}`);
+  return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]), family: `${match[1]}.${match[2]}` };
+}
+__name(parseVmbluVersion, "parseVmbluVersion");
+function compatibilityFamily(version) {
+  return parseVmbluVersion(version).family;
+}
+__name(compatibilityFamily, "compatibilityFamily");
+function versionsAreCompatible(left, right) {
+  return compatibilityFamily(left) === compatibilityFamily(right);
+}
+__name(versionsAreCompatible, "versionsAreCompatible");
+
+// shared/version-policy.js
+function runtimeCompatibilityFamily(version = RUNTIME_VERSION) {
+  return compatibilityFamily(version);
 }
 __name(runtimeCompatibilityFamily, "runtimeCompatibilityFamily");
 function assertRuntimeCompatibility(expectedFamily) {
-  if (!expectedFamily) return runtimeCompatibilityFamily();
   const actualFamily = runtimeCompatibilityFamily();
-  if (expectedFamily !== actualFamily) {
+  if (!expectedFamily) return actualFamily;
+  if (!versionsAreCompatible(RUNTIME_VERSION, expectedFamily + ".0")) {
     throw new Error(`Incompatible vmblu runtime ${RUNTIME_VERSION}; generated application requires compatibility family ${expectedFamily}`);
   }
   return actualFamily;
 }
 __name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
+
+// shared/release-version.js
+var RUNTIME_VERSION = "1.12.3";
 
 // shared/runtime.js
 var _Runtime = class _Runtime {
@@ -5714,8 +5730,8 @@ theme.subscribe(value => {
     localStorage.setItem('vmblu-theme', value);  // Update localStorage whenever the theme changes
 });
 
-var root_1$r = template(`<i class="material-icons-outlined open svelte-p9u4d2">description</i>`);
-var root_2$e = template(`<button class="add-reference svelte-p9u4d2" type="button" title="Add" aria-label="Add"><i class="material-icons-outlined open svelte-p9u4d2" aria-hidden="true">add_circle</i></button>`);
+var root_1$s = template(`<i class="material-icons-outlined open svelte-p9u4d2">description</i>`);
+var root_2$f = template(`<button class="add-reference svelte-p9u4d2" type="button" title="Add" aria-label="Add"><i class="material-icons-outlined open svelte-p9u4d2" aria-hidden="true">add_circle</i></button>`);
 var root_3$a = template(`<div class="right-icons svelte-p9u4d2"><i class="material-icons-outlined trash svelte-p9u4d2">delete</i></div>`);
 var root$t = template(`<div><div class="hdr svelte-p9u4d2"><div class="left-icons svelte-p9u4d2"><i class="material-icons-outlined cancel svelte-p9u4d2">cancel</i> <i class="material-icons-outlined check svelte-p9u4d2">check_circle</i> <!> <!></div> <h1 class="svelte-p9u4d2"> </h1> <!></div> <!></div>`);
 
@@ -5837,7 +5853,7 @@ function Popup_box($$anchor, $$props) {
 	var node = sibling(i_1, 2);
 
 	if_block(node, () => box().open, ($$anchor) => {
-		var i_2 = root_1$r();
+		var i_2 = root_1$s();
 
 		event("click", i_2, onOpen);
 		event("keydown", i_2, onKeydown);
@@ -5847,7 +5863,7 @@ function Popup_box($$anchor, $$props) {
 	var node_1 = sibling(node, 2);
 
 	if_block(node_1, () => box().add, ($$anchor) => {
-		var button = root_2$e();
+		var button = root_2$f();
 
 		event("mousedown", button, stopPropagation(function ($$arg) {
 			bubble_event.call(this, $$props, $$arg);
@@ -5890,11 +5906,11 @@ function Popup_box($$anchor, $$props) {
 	pop();
 }
 
-var root_2$d = template(`<p class="svelte-996tbb">No project references yet. Use + to add a reference.</p>`);
+var root_2$e = template(`<p class="svelte-996tbb">No project references yet. Use + to add a reference.</p>`);
 var root_4$6 = template(`<option> </option>`);
 var root_3$9 = template(`<div class="row svelte-996tbb"><button type="button" title="Open reference" aria-label="Open reference" class="svelte-996tbb"><span class="material-icons-outlined svelte-996tbb" aria-hidden="true">file_open</span></button> <input aria-label="Reference label" placeholder="Label" class="svelte-996tbb"> <select aria-label="Reference kind" class="svelte-996tbb"></select> <input class="path svelte-996tbb" aria-label="Relative path or URL" placeholder="../docs/document.md" spellcheck="false"> <button class="remove svelte-996tbb" type="button" title="Remove reference (keeps the file)" aria-label="Remove reference"><span class="material-icons-outlined svelte-996tbb" aria-hidden="true">delete</span></button></div>`);
 var root_5$5 = template(`<p class="error svelte-996tbb" role="alert"> </p>`);
-var root_1$q = template(`<div class="references svelte-996tbb"><p class="svelte-996tbb">Paths are relative to the active .sys.blu file. Web URLs are also supported.</p> <div class="rows svelte-996tbb"><!> <!></div> <!> <div class="actions svelte-996tbb"><button type="button" class="svelte-996tbb">Cancel</button><button type="button" class="svelte-996tbb">Save</button></div></div>`);
+var root_1$r = template(`<div class="references svelte-996tbb"><p class="svelte-996tbb">Paths are relative to the active .sys.blu file. Web URLs are also supported.</p> <div class="rows svelte-996tbb"><!> <!></div> <!> <div class="actions svelte-996tbb"><button type="button" class="svelte-996tbb">Cancel</button><button type="button" class="svelte-996tbb">Save</button></div></div>`);
 
 function Project_references($$anchor, $$props) {
 	push($$props, false);
@@ -5973,12 +5989,12 @@ function Project_references($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$q();
+			var div = root_1$r();
 			var div_1 = sibling(child(div), 2);
 			var node = child(div_1);
 
 			if_block(node, () => get(references).length === 0, ($$anchor) => {
-				var p = root_2$d();
+				var p = root_2$e();
 
 				append($$anchor, p);
 			});
@@ -6127,7 +6143,7 @@ function Menu_tabs_window($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$p = template(`<div class="content-status svelte-1hth0k3" role="status" aria-live="polite"><span class="spinner svelte-1hth0k3" aria-hidden="true"></span> <span class="svelte-1hth0k3"> </span></div>`);
+var root_1$q = template(`<div class="content-status svelte-1hth0k3" role="status" aria-live="polite"><span class="spinner svelte-1hth0k3" aria-hidden="true"></span> <span class="svelte-1hth0k3"> </span></div>`);
 var root_3$8 = template(`<div class="content-status error svelte-1hth0k3" role="alert"><span class="svelte-1hth0k3"> </span> <button type="button" aria-label="Dismiss error" title="Dismiss" class="svelte-1hth0k3">×</button></div>`);
 var root$r = template(`<div class="main svelte-1hth0k3"><div class="tabs svelte-1hth0k3"></div> <div class="content-shell svelte-1hth0k3"><div class="content svelte-1hth0k3"></div> <!></div></div>`);
 
@@ -6203,7 +6219,7 @@ function Vertical_menu_tabs_content($$anchor, $$props) {
 		node,
 		() => get(loadingName),
 		($$anchor) => {
-			var div_5 = root_1$p();
+			var div_5 = root_1$q();
 			var span = sibling(child(div_5), 2);
 			var text = child(span);
 			template_effect(() => set_text(text, `Loading ${get(loadingName) ?? ""}...`));
@@ -6788,7 +6804,7 @@ function Column_main($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$o = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
+var root_1$p = template(`<div class="menu-item svelte-15nacvn"><i class="material-icons-outlined icon svelte-15nacvn"> </i> <div class="tooltip svelte-15nacvn"> </div></div>`);
 var root$n = template(`<div class="menu svelte-15nacvn"></div>`);
 
 function Top_menu($$anchor, $$props) {
@@ -6827,7 +6843,7 @@ function Top_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$o();
+		var div_1 = root_1$p();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6852,7 +6868,7 @@ function Top_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$n = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
+var root_1$o = template(`<div class="menu-item svelte-1st5yi2"><i class="material-icons-outlined icon svelte-1st5yi2"> </i> <div class="tooltip svelte-1st5yi2"> </div></div>`);
 var root$m = template(`<div class="menu svelte-1st5yi2"></div>`);
 
 function Side_menu($$anchor, $$props) {
@@ -6891,7 +6907,7 @@ function Side_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(menuDiv, $$value), () => get(menuDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$n();
+		var div_1 = root_1$o();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -6917,7 +6933,7 @@ function Side_menu($$anchor, $$props) {
 }
 
 var root_3$7 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
-var root_2$c = template(`<div class="tab selected svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
+var root_2$d = template(`<div class="tab selected svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
 var root_5$4 = template(`<span class="material-icons-outlined read-only svelte-1ue9whs" title="Read-only" aria-label="Read-only">lock</span>`);
 var root_4$5 = template(`<div class="tab svelte-1ue9whs"> <!> <input class="button svelte-1ue9whs" type="button"> <div class="full-name svelte-1ue9whs"> </div></div>`);
 var root$l = template(`<div class="tab-ribbon svelte-1ue9whs"></div>`);
@@ -7038,7 +7054,7 @@ function Tab_ribbon($$anchor, $$props) {
 			node,
 			() => index == get(ribbon).selected,
 			($$anchor) => {
-				var div_1 = root_2$c();
+				var div_1 = root_2$d();
 
 				set_attribute(div_1, "data-index", index);
 
@@ -7104,7 +7120,7 @@ function Tab_ribbon($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$m = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
+var root_1$n = template(`<div class="menu-item svelte-oi2iq"><i class="material-icons-outlined icon svelte-oi2iq"> </i> <div class="tooltip svelte-oi2iq"> </div></div>`);
 var root$k = template(`<div class="menu svelte-oi2iq"></div>`);
 
 function Vscode_side_menu($$anchor, $$props) {
@@ -7142,7 +7158,7 @@ function Vscode_side_menu($$anchor, $$props) {
 	bind_this(div, ($$value) => set(floatingDiv, $$value), () => get(floatingDiv));
 
 	each(div, 5, () => get(symbols), index, ($$anchor, symbol, index) => {
-		var div_1 = root_1$m();
+		var div_1 = root_1$n();
 		var i = child(div_1);
 
 		set_attribute(i, "data-index", index);
@@ -7168,7 +7184,7 @@ function Vscode_side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$l = template(`<span class="team svelte-v6tgws"><span class="bullet svelte-v6tgws"></span> <span class="name svelte-v6tgws"> </span></span>`);
+var root_1$m = template(`<span class="team svelte-v6tgws"><span class="bullet svelte-v6tgws"></span> <span class="name svelte-v6tgws"> </span></span>`);
 var root$j = template(`<div class="team-legend svelte-v6tgws"></div>`);
 
 function Team_legend($$anchor, $$props) {
@@ -7195,7 +7211,7 @@ function Team_legend($$anchor, $$props) {
 	bind_this(div_1, ($$value) => set(div, $$value), () => get(div));
 
 	each(div_1, 5, () => get(teams), index, ($$anchor, team) => {
-		var span = root_1$l();
+		var span = root_1$m();
 		var span_1 = child(span);
 		var span_2 = sibling(span_1, 2);
 		var text = child(span_2);
@@ -7983,8 +7999,8 @@ function Runtime_settings($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_2$b = template(`<li role="option" class="svelte-8yzkox"> </li>`);
-var root_1$k = template(`<ul role="listbox" class="svelte-8yzkox"></ul>`);
+var root_2$c = template(`<li role="option" class="svelte-8yzkox"> </li>`);
+var root_1$l = template(`<ul role="listbox" class="svelte-8yzkox"></ul>`);
 var root$c = template(`<div class="select-field svelte-8yzkox"><label class="svelte-8yzkox"> </label> <div class="select-box svelte-8yzkox"><button type="button" aria-haspopup="listbox" class="svelte-8yzkox"> <span class="arrow svelte-8yzkox">▾</span></button> <!></div></div>`);
 
 function Label_select($$anchor, $$props) {
@@ -8075,12 +8091,12 @@ function Label_select($$anchor, $$props) {
 	var node = sibling(button, 2);
 
 	if_block(node, () => get(open), ($$anchor) => {
-		var ul = root_1$k();
+		var ul = root_1$l();
 
 		set_attribute(ul, "aria-labelledby", labelId);
 
 		each(ul, 5, options, index, ($$anchor, option) => {
-			var li = root_2$b();
+			var li = root_2$c();
 
 			template_effect(() => set_attribute(li, "aria-selected", optionValue(get(option)) === value()));
 
@@ -8155,9 +8171,9 @@ function Label_textarea($$anchor, $$props) {
 
 var root_3$6 = template(`<p class="hint svelte-14a81g6">This operation has no permitted targets.</p>`);
 var root_4$4 = template(`<!> <!>`, 1);
-var root_2$a = template(`<div class="operation svelte-14a81g6"><h4 class="svelte-14a81g6"> </h4> <!> <!></div>`);
+var root_2$b = template(`<div class="operation svelte-14a81g6"><h4 class="svelte-14a81g6"> </h4> <!> <!></div>`);
 var root_5$3 = template(`<p class="error svelte-14a81g6"> </p>`);
-var root_1$j = template(`<div class="security-details svelte-14a81g6"><!> <!></div>`);
+var root_1$k = template(`<div class="security-details svelte-14a81g6"><!> <!></div>`);
 
 function Security_detail_popup($$anchor, $$props) {
 	push($$props, false);
@@ -8273,11 +8289,11 @@ function Security_detail_popup($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var div = root_1$j();
+			var div = root_1$k();
 			var node = child(div);
 
 			each(node, 1, () => get(rows), index, ($$anchor, row) => {
-				var div_1 = root_2$a();
+				var div_1 = root_2$b();
 				var h4 = child(div_1);
 				var text_1 = child(h4);
 
@@ -8507,7 +8523,7 @@ function Button($$anchor, $$props) {
 	pop();
 }
 
-var root_1$i = template(`<div class="duplicate-note svelte-1cx4eej">Duplicate team name. The first one is kept when saving.</div>`);
+var root_1$j = template(`<div class="duplicate-note svelte-1cx4eej">Duplicate team name. The first one is kept when saving.</div>`);
 var root$8 = template(`<div class="team-field svelte-1cx4eej"><input type="text" spellcheck="false" class="svelte-1cx4eej"> <input type="color" class="svelte-1cx4eej"> <button type="button" class="remove-team svelte-1cx4eej" aria-label="Remove team">x</button> <!></div>`);
 
 function Team_field($$anchor, $$props) {
@@ -8537,7 +8553,7 @@ function Team_field($$anchor, $$props) {
 	var node = sibling(button, 2);
 
 	if_block(node, duplicate, ($$anchor) => {
-		var div_1 = root_1$i();
+		var div_1 = root_1$j();
 
 		append($$anchor, div_1);
 	});
@@ -8557,7 +8573,7 @@ function Team_field($$anchor, $$props) {
 	pop();
 }
 
-var root_1$h = template(`<div class="heading svelte-1evnkqo"><span class="svelte-1evnkqo">Teams</span> <!></div> <div class="team-list svelte-1evnkqo"></div>`, 1);
+var root_1$i = template(`<div class="heading svelte-1evnkqo"><span class="svelte-1evnkqo">Teams</span> <!></div> <div class="team-list svelte-1evnkqo"></div>`, 1);
 
 function Team_settings($$anchor, $$props) {
 	push($$props, false);
@@ -8693,7 +8709,7 @@ function Team_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$h();
+			var fragment_1 = root_1$i();
 			var div = first_child(fragment_1);
 			var node = sibling(child(div), 2);
 
@@ -8766,7 +8782,7 @@ function Confirm_box($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$g = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
+var root_1$h = template(`<li><i> </i> <span class="choice-text svelte-1wos05d"> </span> <span class="choice-char svelte-1wos05d"> </span></li>`);
 var root$7 = template(`<div class="svelte-1wos05d"><ul class="svelte-1wos05d"></ul></div>`);
 
 function Context_menu($$anchor, $$props) {
@@ -8856,7 +8872,7 @@ function Context_menu($$anchor, $$props) {
 	var ul = child(div);
 
 	each(ul, 5, () => get(context).menu, index, ($$anchor, choice, index) => {
-		var li = root_1$g();
+		var li = root_1$h();
 
 		set_attribute(li, "data-index", index);
 
@@ -9012,7 +9028,7 @@ function Json_area_input($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$f = template(`<button class="file-icon svelte-1cw356d" type="button" title="Open test specification" aria-label="Open test specification"><span class="material-icons-outlined svelte-1cw356d">description</span></button>`);
+var root_1$g = template(`<button class="file-icon svelte-1cw356d" type="button" title="Open test specification" aria-label="Open test specification"><span class="material-icons-outlined svelte-1cw356d">description</span></button>`);
 var root$5 = template(`<div class="text-input-field svelte-1cw356d"><label class="svelte-1cw356d"> </label> <!> <input spellcheck="false" class="svelte-1cw356d"></div>`);
 
 function Label_text_input($$anchor, $$props) {
@@ -9038,7 +9054,7 @@ function Label_text_input($$anchor, $$props) {
 	var node = sibling(label_1, 2);
 
 	if_block(node, openFile, ($$anchor) => {
-		var button = root_1$f();
+		var button = root_1$g();
 
 		event("click", button, function (...$$args) {
 			openFile()?.apply(this, $$args);
@@ -9063,7 +9079,7 @@ function Label_text_input($$anchor, $$props) {
 	pop();
 }
 
-var root_1$e = template(`<!> <!> <div class="sx-label svelte-1vtlocx">Startup settings</div> <!>`, 1);
+var root_1$f = template(`<!> <!> <div class="sx-label svelte-1vtlocx">Startup settings</div> <!>`, 1);
 
 function Node_settings($$anchor, $$props) {
 	push($$props, false);
@@ -9174,7 +9190,7 @@ function Node_settings($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			var fragment_1 = root_1$e();
+			var fragment_1 = root_1$f();
 			var node = first_child(fragment_1);
 
 			Label_select(node, {
@@ -17669,8 +17685,8 @@ MarkdownIt.prototype.renderInline = function (src, env) {
   return this.renderer.render(this.parseInline(src, env), this.options, env)
 };
 
-var root_1$d = template(`<div class="preview svelte-pk7clt" role="region" aria-label="Markdown preview" tabindex="0"><!></div>`);
-var root_2$9 = template(`<textarea name="txt-name" spellcheck="false" class="svelte-pk7clt"></textarea>`);
+var root_1$e = template(`<div class="preview svelte-pk7clt" role="region" aria-label="Markdown preview" tabindex="0"><!></div>`);
+var root_2$a = template(`<textarea name="txt-name" spellcheck="false" class="svelte-pk7clt"></textarea>`);
 var root$4 = template(`<div class="wrapper svelte-pk7clt"><div class="field svelte-pk7clt"><!></div></div>`);
 
 function Markdown_input$1($$anchor, $$props) {
@@ -17733,14 +17749,14 @@ function Markdown_input$1($$anchor, $$props) {
 		node,
 		showPreview,
 		($$anchor) => {
-			var div_2 = root_1$d();
+			var div_2 = root_1$e();
 			var node_1 = child(div_2);
 
 			html(node_1, () => get(previewHtml));
 			append($$anchor, div_2);
 		},
 		($$anchor) => {
-			var textarea = root_2$9();
+			var textarea = root_2$a();
 
 			template_effect(() => {
 				set_attribute(textarea, "rows", rows());
@@ -17756,6 +17772,9 @@ function Markdown_input$1($$anchor, $$props) {
 	append($$anchor, div);
 	pop();
 }
+
+var root_2$9 = template(`<p role="alert"> </p>`);
+var root_1$d = template(`<!> <!>`, 1);
 
 function Markdown_input($$anchor, $$props) {
 	push($$props, false);
@@ -17780,6 +17799,16 @@ function Markdown_input($$anchor, $$props) {
 	// the text
 	let newText = mutable_state('');
 	let showPreview = mutable_state(false);
+	let activePrompt = null;
+	let releaseDraft = null;
+	let opening = false;
+	let openError = mutable_state('');
+
+	function closeDraft() {
+		releaseDraft?.(null);
+		releaseDraft = null;
+		activePrompt = null;
+	}
 
 	const handlers = {
 		onMarkdown(
@@ -17787,17 +17816,35 @@ function Markdown_input($$anchor, $$props) {
 				header,
 				pos,
 				text = '',
+				promptKey = null,
+				draft = null,
 				open = null,
 				ok = null,
 				cancel = null
 			}
 		) {
+			if (promptKey && activePrompt === promptKey && get(box).div?.style.display !== 'none') {
+				get(box).div?.querySelector('textarea, [role="region"]')?.focus();
+				return;
+			}
+
+			closeDraft();
+			activePrompt = promptKey;
+			releaseDraft = draft;
+			draft?.(() => get(newText));
+			set(openError, '');
 			// set the box parameters
 			mutate(box, get(box).title = header);
 
 			// set the ok function
 			mutate(box, get(box).ok = () => {
 				ok?.(get(newText));
+				closeDraft();
+			});
+
+			mutate(box, get(box).cancel = () => {
+				cancel?.();
+				closeDraft();
 			});
 
 			// set the add function: when the add icon is pressed, the markdown is previewed
@@ -17805,7 +17852,21 @@ function Markdown_input($$anchor, $$props) {
 				set(showPreview, !get(showPreview));
 			});
 
-			mutate(box, get(box).open = sx()?.openPromptFile ? open : null);
+			mutate(box, get(box).open = sx()?.openPromptFile && open
+				? async () => {
+					if (opening) return;
+					opening = true;
+					set(openError, '');
+
+					try {
+						await open(get(newText));
+					} catch(error) {
+						set(openError, error?.message ?? String(error));
+					} finally {
+						opening = false;
+					}
+				}
+				: null);
 			// set the text field
 			set(newText, text);
 			set(showPreview, false);
@@ -17821,7 +17882,19 @@ function Markdown_input($$anchor, $$props) {
 			return get(box);
 		},
 		children: ($$anchor, $$slotProps) => {
-			Markdown_input$1($$anchor, {
+			var fragment_1 = root_1$d();
+			var node = first_child(fragment_1);
+
+			if_block(node, () => get(openError), ($$anchor) => {
+				var p = root_2$9();
+				var text_1 = child(p);
+				template_effect(() => set_text(text_1, get(openError)));
+				append($$anchor, p);
+			});
+
+			var node_1 = sibling(node, 2);
+
+			Markdown_input$1(node_1, {
 				get text() {
 					return get(newText);
 				},
@@ -17838,6 +17911,8 @@ function Markdown_input($$anchor, $$props) {
 				rows: "25",
 				$$legacy: true
 			});
+
+			append($$anchor, fragment_1);
 		},
 		$$slots: { default: true }
 	});
@@ -22923,7 +22998,7 @@ const NodeSelectorFactory = getFactory(Node_selector);
 
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.2","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.2"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:a2f32627afc8b282"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.3","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.3"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:28c94a814ca7d0dd"}}
 // ------------------------------------------------------------------
 
 
@@ -22934,7 +23009,7 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "OqSy",
+	uid: "bvcW",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
@@ -22946,7 +23021,7 @@ const nodeList = [
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "VMfR",
+	uid: "EBAW",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
@@ -22958,7 +23033,7 @@ const nodeList = [
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "ikNU",
+	uid: "Xugn",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
@@ -22970,7 +23045,7 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "sanD",
+	uid: "kbbH",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -22983,7 +23058,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "ciLs",
+	uid: "GzNg",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -22996,7 +23071,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "NYFu",
+	uid: "zmvJ",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -23008,7 +23083,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "yMPt",
+	uid: "Nxcu",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -23020,7 +23095,7 @@ const nodeList = [
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "snnD",
+	uid: "oCfn",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -23032,7 +23107,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input",
-	uid: "Tana",
+	uid: "ynmI",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -23044,7 +23119,7 @@ const nodeList = [
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "ZiUg",
+	uid: "vSOb",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23056,7 +23131,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block",
-	uid: "AbxP",
+	uid: "ZXEL",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -23068,7 +23143,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "HIxI",
+	uid: "buFq",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -23085,7 +23160,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "kMcO",
+	uid: "KKHp",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -23098,7 +23173,7 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings",
-	uid: "Bsjv",
+	uid: "Gman",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23113,7 +23188,7 @@ const nodeList = [
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "EvmY",
+	uid: "CyWo",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23125,7 +23200,7 @@ const nodeList = [
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "fCAD",
+	uid: "sNRt",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23137,7 +23212,7 @@ const nodeList = [
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "kjin",
+	uid: "uEJs",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23149,7 +23224,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "eSux",
+	uid: "OfPA",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -23161,7 +23236,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "mgHK",
+	uid: "UjIB",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23173,7 +23248,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "staQ",
+	uid: "xDLC",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -23186,7 +23261,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "Ajwa",
+	uid: "TJQU",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -23198,7 +23273,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "gHgZ",
+	uid: "KsmA",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -23210,7 +23285,7 @@ const nodeList = [
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "TYPO",
+	uid: "FIsI",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -23222,7 +23297,7 @@ const nodeList = [
 	//__________________________________________PROJECT REFERENCES
 	{
 	name: "project references",
-	uid: "fTib",
+	uid: "Dvxp",
 	factory: ProjectReferencesFactory,
 	inputs: [
 		"-> project references"
@@ -23234,7 +23309,7 @@ const nodeList = [
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout",
-	uid: "ddDB",
+	uid: "VMHE",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -23250,7 +23325,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window",
-	uid: "hQpK",
+	uid: "UhvR",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -23269,7 +23344,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout",
-	uid: "qDqo",
+	uid: "kJSF",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -23286,7 +23361,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "pbve",
+	uid: "ctGS",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -23299,7 +23374,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content",
-	uid: "tWbM",
+	uid: "bSzM",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> content.div",
@@ -23319,7 +23394,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "WmJB",
+	uid: "Gmfi",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -23336,7 +23411,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu",
-	uid: "HooT",
+	uid: "SjBR",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23360,7 +23435,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu",
-	uid: "tANA",
+	uid: "jwCB",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23384,7 +23459,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "cATG",
+	uid: "djbw",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23398,7 +23473,7 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "hiMz",
+	uid: "iuAn",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23419,7 +23494,7 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "nHbR",
+	uid: "sOBG",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -23432,7 +23507,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.2","schemaVersion":"1.12.2"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.3","schemaVersion":"1.12.3"}
 };
 
 // prepare the runtime

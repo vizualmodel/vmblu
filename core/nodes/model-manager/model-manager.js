@@ -422,10 +422,21 @@ ModelManager.prototype = {
     },
 
     // Th path parameter is optional
-    async onModelSave({path=null, preserveTarget=false}) {
+    async onModelSave({onSaved, onError, ...options}) {
+        try {
+            await this.saveModel(options)
+            onSaved?.()
+        }
+        catch (error) {
+            if (onError) onError(error)
+            else throw error
+        }
+    },
+
+    async saveModel({path=null, preserveTarget=false}) {
 
         // check
-        if (! this.model) return null
+        if (! this.model) throw new Error('There is no model to save.')
 
         if (!path && this.model.blu.arl?.canWrite?.() === false) {
             this.tx.send('info popup', {
@@ -433,7 +444,7 @@ ModelManager.prototype = {
                 message: 'This model comes from a read-only repository. Use Save As to copy it into a local workspace.',
                 duration: 4500
             })
-            return null
+            throw new Error('Read-only model. Use Save As to save a local copy.')
         }
 
         const originalBluArl = this.model.blu.arl
@@ -442,7 +453,7 @@ ModelManager.prototype = {
         // A real Save As changes the model target before encoding. A VS Code
         // hot-exit backup is encoded for the canonical location and only uses
         // its temporary target while the files are written.
-        if (path && !preserveTarget && !this.model.changeArl(path)) return;
+        if (path && !preserveTarget && !this.model.changeArl(path)) throw new Error('Invalid save target.')
 
         // reset the save compiler
         this.modcom.reset()
@@ -451,22 +462,22 @@ ModelManager.prototype = {
         const toSave = this.getNodeToSave()
 
         // check
-        if (!toSave) return
+        if (!toSave) throw new Error('There is no model root to save.')
 
         // encode the model as two parts
         const raw = this.modcom.encode(toSave, this.model)
 
         // check
-        if (!raw) return
+        if (!raw) throw new Error('The model could not be encoded for saving.')
 
         // set raw in the model again
         this.model.setRaw(raw)
 
-        if (path && preserveTarget && !this.model.changeArl(path)) return;
+        if (path && preserveTarget && !this.model.changeArl(path)) throw new Error('Invalid backup target.')
 
         // and save
         try {
-            await this.model.saveRaw()
+            await this.model.saveRaw({cleanupPrompts: !preserveTarget})
         }
         finally {
             if (path && preserveTarget) {

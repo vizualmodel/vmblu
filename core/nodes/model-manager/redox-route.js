@@ -47,6 +47,27 @@ function redoRouteToCable(conversion) {
 
 export const redoxRoute = {
 
+routeAutoConnect: {
+    doit({view, from, to}) {
+        if (!from?.is.pin || !to?.is.pin) return
+        if (!view.root.nodes.includes(from.node) || !view.root.nodes.includes(to.node)) return
+        if (view.root.cannotBeModified?.() || !from.canConnect(to)) {
+            view.blinkToWarn?.(to.node)
+            return
+        }
+        const route = view.root.createRoute(from, to)
+        if (!route) return
+        route.is.newConx = false
+        this.saveEdit('routeAutoConnect', {route})
+    },
+    undo({route}) {
+        route.disconnect()
+    },
+    redo({route}) {
+        route.reconnect()
+    },
+},
+
 routeDrag: {
 
     doit({route, oldWire, newWire}) {

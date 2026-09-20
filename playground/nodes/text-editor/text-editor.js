@@ -7,6 +7,7 @@ import {markdown} from '@codemirror/lang-markdown'
 import {css} from '@codemirror/lang-css'
 import {html} from '@codemirror/lang-html'
 import MarkdownIt from 'markdown-it'
+import {registerFileDraft} from '../../../core/types/arl/file-drafts.js'
 
 const markdownRenderer = new MarkdownIt({html: false, linkify: true})
 
@@ -184,6 +185,7 @@ class TextEditorController {
             state: null
         }
         session.state = this.makeState(session)
+        registerFileDraft(arl, () => session.dirty)
         return session
     }
 

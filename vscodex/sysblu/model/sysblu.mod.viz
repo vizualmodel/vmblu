@@ -1,9 +1,9 @@
 {
   "header": {
-    "version": "1.12.2",
+    "version": "1.12.3",
     "created": "2026-08-28T09:56:57.923Z",
-    "saved": "2026-08-28T09:56:57.923Z",
-    "utc": "2026-09-01T15:21:25.548Z",
+    "saved": "2026-09-01T15:21:25.546Z",
+    "utc": "2026-09-01T15:21:25.546Z",
     "style": "#0066ff"
   },
   "root": {
@@ -56,7 +56,7 @@
       {
         "kind": "dock",
         "name": "sysblu",
-        "rect": "x 258 y 12 w 150 h 326",
+        "rect": "x 258 y 12 w 150 h 341",
         "interfaces": [
           {
             "interface": "(30) sysblu",
@@ -80,11 +80,12 @@
               "(24 L)add application",
               "(25 R)application settings",
               "(26 R)endpoint settings",
-              "(27 R)connection settings"
+              "(27 R)connection settings",
+              "(36 R)project references"
             ]
           },
           {
-            "interface": "(36) files",
+            "interface": "(37) files",
             "pins": [
               "(20 R)open reference",
               "(29 R)execute command"
@@ -145,6 +146,20 @@
             "interface": "(0)",
             "pins": [
               "(3 L)connection settings",
+              "(4 R)modal div"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "source",
+        "name": "project references",
+        "rect": "x 90 y 530 w 180 h 56",
+        "interfaces": [
+          {
+            "interface": "(0)",
+            "pins": [
+              "(3 R)project references",
               "(4 R)modal div"
             ]
           }
@@ -218,14 +233,19 @@
         "wire": "x 58.0 y 139.0 x 78.0"
       },
       {
+        "from": "(pin 36) project references @ sysblu",
+        "to": "(pin 3) project references @ project references",
+        "wire": "x 55.0 y 263.0 x -193.0"
+      },
+      {
         "from": "(pin 20) open reference @ sysblu",
         "to": "(pin 35) open reference @ system message broker",
-        "wire": "x 38.0 y 179.0 x 371.0 y -209.0 x 38.0"
+        "wire": "x 38.0 y 179.0 x 371.0 y -224.0 x 38.0"
       },
       {
         "from": "(pin 29) execute command @ sysblu",
         "to": "(pin 36) execute command @ system message broker",
-        "wire": "x 18.0 y 175.0 x 411.0 y -205.0 x 18.0"
+        "wire": "x 18.0 y 175.0 x 409.0 y -220.0 x 20.0"
       },
       {
         "from": "(pin 5) div @ system menu",
@@ -261,6 +281,11 @@
         "from": "(pin 4) modal div @ connection inspector",
         "to": "(pin 31) modal div @ system message broker",
         "wire": "x 18.0 y -214.0 x 98.0"
+      },
+      {
+        "from": "(pin 4) modal div @ project references",
+        "to": "(pin 31) modal div @ system message broker",
+        "wire": "x 25.0 y 91.8 x 495.0 y -444.8 x 65.0"
       }
     ]
   }

@@ -13,7 +13,7 @@ test('verify accepts a protocol document and runs semantic reference checks', as
   const dir = await mkdtemp(path.join(tmpdir(), 'vmblu-protocol-'))
   try {
     const protocolPath = path.join(dir, 'chat.protocol.json')
-    await writeFile(protocolPath, JSON.stringify(chatProtocolFixture('1.12.2')))
+    await writeFile(protocolPath, JSON.stringify(chatProtocolFixture('1.12.1')))
 
     const report = await verifyProject(protocolPath)
 
