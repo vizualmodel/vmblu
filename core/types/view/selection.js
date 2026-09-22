@@ -1,3 +1,4 @@
+import {bundleRect, bundleRepresentative} from '../widget/pin-bundle.js'
 import { inside, shape, style, eject } from '../util/index.js';
 import { CTRL, zap } from './mouse.js';
 import { pinAreaHandling } from './selection-pin-area.js';
@@ -228,6 +229,7 @@ Selection.prototype = {
 
         let below = null;
         for (const widget of current.node.look.widgets) {
+            if (widget.bundle && bundleRepresentative(widget) !== widget) continue
             if ((widget.is.pin || widget.is.ifName) &&  widget.rect.y > current.rect.y && (!below || widget.rect.y < below.rect.y)) below = widget;
         }
 
@@ -239,6 +241,7 @@ Selection.prototype = {
 
         let above = null;
         for (const widget of current.node.look.widgets) {
+            if (widget.bundle && bundleRepresentative(widget) !== widget) continue
             if ((widget.is.pin || widget.is.ifName) && widget.rect.y < current.rect.y && (!above || widget.rect.y > above.rect.y)) above = widget;
         }
 
@@ -280,9 +283,11 @@ Selection.prototype = {
         if (!this.widgets?.length) return null;
 
         for (const widget of this.widgets) {
+            if (widget.bundle && bundleRepresentative(widget) !== widget) continue
+            const rect = bundleRect(widget)
             if (
-                xyLocal.y > widget.rect.y &&
-                xyLocal.y < widget.rect.y + widget.rect.h
+                xyLocal.y > rect.y &&
+                xyLocal.y < rect.y + rect.h
             )
                 return widget;
         }

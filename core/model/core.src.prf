@@ -1,17 +1,17 @@
 {
-  "version": "1.12.3",
+  "version": "1.12.4",
   "provenance": {
     "generated": true,
     "artifact": "source-profile",
     "compatibilityFamily": "1.12",
-    "schemaVersion": "1.12.3",
+    "schemaVersion": "1.12.4",
     "generator": {
       "name": "@vizualmodel/vmblu-cli",
-      "version": "1.12.3"
+      "version": "1.12.4"
     },
     "source": {
       "model": "core.mod.blu",
-      "hash": "fnv1a64:f3878bed558694dc"
+      "hash": "fnv1a64:9b73c2927c76aa7f"
     }
   },
   "entries": [
@@ -692,72 +692,72 @@
         {
           "pin": "redox.doit",
           "file": "../types/node/node-icon-click.js",
-          "line": 7
+          "line": 8
         },
         {
           "pin": "node prompt",
           "file": "../types/node/node-icon-click.js",
-          "line": 19
+          "line": 20
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 32
+          "line": 33
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 40
+          "line": 41
         },
         {
           "pin": "name and path",
           "file": "../types/node/node-icon-click.js",
-          "line": 51
+          "line": 52
         },
         {
           "pin": "name and path",
           "file": "../types/node/node-icon-click.js",
-          "line": 74
+          "line": 75
         },
         {
           "pin": "open model",
           "file": "../types/node/node-icon-click.js",
-          "line": 93
+          "line": 94
         },
         {
           "pin": "name and path",
           "file": "../types/node/node-icon-click.js",
-          "line": 124
+          "line": 125
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 144
+          "line": 145
         },
         {
           "pin": "node settings (sx)",
           "file": "../types/node/node-icon-click.js",
-          "line": 184
+          "line": 185
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 192
+          "line": 199
         },
         {
           "pin": "runtime settings (dx)",
           "file": "../types/node/node-icon-click.js",
-          "line": 204
+          "line": 212
         },
         {
           "pin": "open model",
           "file": "../types/node/node-icon-click.js",
-          "line": 231
+          "line": 239
         },
         {
           "pin": "open source file",
           "file": "../types/node/node-icon-click.js",
-          "line": 244
+          "line": 252
         }
       ]
     }

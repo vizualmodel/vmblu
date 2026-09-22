@@ -49,6 +49,7 @@ export const redoxRoute = {
 
 routeAutoConnect: {
     doit({view, from, to}) {
+        if (from?.bundle || to?.bundle) return this.connectBundle.doit.call(this, {view, from, to})
         if (!from?.is.pin || !to?.is.pin) return
         if (!view.root.nodes.includes(from.node) || !view.root.nodes.includes(to.node)) return
         if (view.root.cannotBeModified?.() || !from.canConnect(to)) {

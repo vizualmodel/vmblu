@@ -127,7 +127,7 @@ async saveRaw(options = {}) {
 
     // save both parts of the model
     const saves = []
-    if (blu) saves.push(saveFile(this.blu.arl, blu))
+    if (blu) saves.push(saveUnchangedBundleModel(this.blu.arl, blu))
     if (viz) saves.push(saveFile(this.viz.arl, viz))
 
     const results = await Promise.allSettled(saves)
@@ -331,8 +331,9 @@ joinInterfaces(bNode, vNode) {
         if (vInterface) {
             bInterface.pins = bInterface.pins.map( pin => {
                 const vpin = vInterface.pins.find( vpin => vpin.name == pin.name)
-                return vpin ? {...pin, wid:vpin.wid, left: vpin.left} : {...pin, wid:0, left: false};
+                return vpin ? {...pin, wid:vpin.wid, left: vpin.left, ...(vpin.bundleWids ? {bundleWids: vpin.bundleWids} : {})} : {...pin, wid:0, left: false};
             })
+            restoreMissingBundleRepresentative(bInterface, vInterface)
         }
         return bInterface
     })
@@ -477,6 +478,14 @@ analyzeJSLib(rawCode) {
 
 }
 
+function restoreMissingBundleRepresentative(iface, visual) {
+    for (const declaration of visual.pins.filter(pin => pin.bundleWids && !iface.pins.some(member => member.name === pin.name))) {
+        console.warn(`Missing pin bundle representative ${declaration.name}; reconciling surviving members.`)
+        const survivor = declaration.bundleWids.map(wid => iface.pins.find(pin => pin.wid === wid)).find(Boolean)
+        if (survivor && !survivor.bundleWids) survivor.bundleWids = declaration.bundleWids.slice()
+    }
+}
+
 function isEntrypointRaw(raw) {
     return raw?.kind === 'vmblu.entrypoint'
 }
@@ -500,4 +509,14 @@ async function saveFile(arl, body) {
         console.error(`Failed to save ${arl.getPath()}:`, error)
         throw error
     }
+}
+
+// Presentation changes must not rewrite the semantic file or its filesystem timestamp.
+async function saveUnchangedBundleModel(arl, body) {
+    let previous
+    try { previous = await arl.get('text') } catch { /* New files have no baseline. */ }
+    if (typeof previous === 'string') {
+        try { if (JSON.stringify(JSON.parse(previous)) === JSON.stringify(JSON.parse(body))) return } catch { /* Replace invalid contents normally. */ }
+    }
+    return saveFile(arl, body)
 }

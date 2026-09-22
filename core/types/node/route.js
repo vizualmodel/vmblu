@@ -1,3 +1,4 @@
+import {routeBundle} from './route-bundle.js'
 // the route used for a connection between an output and an input
 import {shape} from '../util/index.js'
 import {style} from '../util/index.js'
@@ -26,24 +27,27 @@ export function Route(from, to) {
 Route.prototype = {
 
     render(ctx) {
+        if (this.bundleRoutes()[0] !== this) return
 
         // check
         if (this.wire.length < 2) return
 
         // color
-        let color = this.is.hoverNok      ? style.cable.cBad
-                    : this.is.selected || this.is.hoverOk ? style.route.cSelected 
-                    : this.is.highLighted   ? style.route.cHighLighted
-                    : this.is.newConx       ? style.route.cAdded
-                    : this.is.noConx        ? style.route.cDeleted
-                    : this.is.notUsed       ? style.route.cNotUsed
+        const bundleState = {...this.is}
+        for (const flag of ['hoverNok', 'selected', 'hoverOk', 'highLighted', 'newConx', 'noConx', 'notUsed']) bundleState[flag] = this.bundleRoutes().some(route => route.is[flag])
+        let color = bundleState.hoverNok      ? style.cable.cBad
+                    : bundleState.selected || bundleState.hoverOk ? style.route.cSelected
+                    : bundleState.highLighted   ? style.route.cHighLighted
+                    : bundleState.newConx       ? style.route.cAdded
+                    : bundleState.noConx        ? style.route.cDeleted
+                    : bundleState.notUsed       ? style.route.cNotUsed
                     : style.route.cNormal
 
         //linewidth
-        const width = this.is.selected ? style.route.wSelected : style.route.wNormal
+        const width = bundleState.selected ? style.route.wSelected : style.route.wNormal
 
         // draw the line segments
-        shape.drawWire(ctx,color, width, this.wire)
+        shape.drawWire(ctx,color, width, this.bundleRouteWire())
     },
 
     // change the route direction
@@ -109,7 +113,9 @@ Route.prototype = {
     hitSegment(pos) {
 
         // notation
-        const last = this.wire.length-1
+        if (this.bundleRoutes()[0] !== this) return 0
+        const bundleWire = this.bundleRouteWire()
+        const last = bundleWire.length-1
         const x = pos.x, y = pos.y
 
         // the precision in pixels
@@ -118,8 +124,8 @@ Route.prototype = {
         // check if the point lies on the route
         for (let i=0; i<last; i++) {
 
-            const a = this.wire[i]
-            const b = this.wire[i+1]
+            const a = bundleWire[i]
+            const b = bundleWire[i+1]
             
             // horizontal segment
             if (a.y == b.y) {
@@ -184,4 +190,4 @@ Route.prototype = {
     }
 
 }
-Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling)
+Object.assign(Route.prototype, routeDrawing, routeMoving, connectHandling, rxtxHandling, routeBundle)

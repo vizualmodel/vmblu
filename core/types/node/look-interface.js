@@ -1,15 +1,22 @@
+import {bundleExpandedPosition} from '../widget/pin-bundle.js'
 import {convert} from '../util/index.js'
 
 export const interfaceHandling = {
 
     capturePinMove() {
-        return this.widgets.filter(widget => widget.is.pin || widget.is.ifName).map(widget => ({
+        const snapshot = this.widgets.filter(widget => widget.is.pin || widget.is.ifName).map(widget => ({
             widget, y: widget.rect.y, left: widget.is.left,
             name: widget.name, pxlen: widget.pxlen,
         }))
+        snapshot.bundleLookHeight = this.rect.h
+        snapshot.bundleBoxHeight = this.widgets.find(widget => widget.is.box)?.rect.h
+        return snapshot
     },
 
     restorePinMove(snapshot) {
+        if (snapshot.bundleLookHeight !== undefined) this.rect.h = snapshot.bundleLookHeight
+        const box = this.widgets.find(widget => widget.is.box)
+        if (box && snapshot.bundleBoxHeight !== undefined) box.rect.h = snapshot.bundleBoxHeight
         // Restore all positions and names before refreshing dependent state.
         for (const state of snapshot) {
             const {widget, y, left, name, pxlen} = state
@@ -84,6 +91,7 @@ export const interfaceHandling = {
     // move the widget up and down in the list with the mouse
     // the moving ifName (= first element of the pin array) will change place with the ifName above or below (the swap)
     swapInterface(pos, group) {
+        pos = bundleExpandedPosition(this, pos)
 
         // find the ifName to nextInterface with (moving up or down)
         const nextInterface = this.findNextWidget(group[0],pos, widget => widget.is.ifName)

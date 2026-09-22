@@ -1,3 +1,4 @@
+import {createBundleFromList, bundleRect} from './pin-bundle.js'
 import {convert, eject, style, shape} from '../util/index.js'
 
 //const SEPARATOR = ' '
@@ -26,13 +27,20 @@ export const pinNameHandling = {
 
     // returns the cursor position for a given index in the text
     cursorPos(ctx, i) {
-        const rc = this.rect
+        const rc = bundleRect(this)
         return this.is.left ? {x: rc.x + style.pin.wMargin + ctx.measureText(this.name.slice(0,i)).width, y: rc.y}
                             : {x: rc.x + rc.w - style.pin.wMargin - ctx.measureText(this.name).width + ctx.measureText(this.name.slice(0,i)).width, y: rc.y}
     },
 
     endEdit(saved) {
-        this.checkNewName() ? this.nameChanged(saved) : this.restoreSavedName(saved)      
+        if (!this.editOriginal?.name && this.name.includes(',')) {
+            try { createBundleFromList(this, this.name) }
+            catch (error) {
+                this.bundleError = error.message
+                this.restoreSavedName(saved)
+                if (!this.name) this.nameChanged(saved)
+            }
+        } else this.checkNewName() ? this.nameChanged(saved) : this.restoreSavedName(saved)
         this.is.editingName = false
         delete this.editOriginal
         this.node.look?.adjustPinWidth(this)

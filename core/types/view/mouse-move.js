@@ -1,3 +1,4 @@
+import {bundleLabel, matchBundleConnections} from '../widget/pin-bundle.js'
 import {Route} from '../node/index.js'
 import {inside} from '../util/index.js'
 import {doing} from './view-base.js'
@@ -20,6 +21,10 @@ export const mouseMoveHandling = {
 
             case doing.nothing:
                 this.idleMove(xyLocal)
+                this.mouseHit(xyLocal)
+                const bundleTarget = this.hit.what === zap.pin && this.hit.lookWidget?.bundle ? this.hit.lookWidget : this.hit.what === zap.route && this.hit.route.bundleRoutes().length > 1 ? this.hit.route : null
+                if (bundleTarget && bundleTarget !== this.bundleHoverTarget) tx.send("info popup", {title: bundleTarget.is.pin ? "Pin bundle" : "Bundled connections", message: bundleTarget.is.pin ? bundleLabel(bundleTarget) : bundleTarget.bundleRouteDetails(), duration: 3500})
+                this.bundleHoverTarget = bundleTarget
                 return false
 
             case doing.panning:
@@ -37,7 +42,7 @@ export const mouseMoveHandling = {
 
             case doing.routeDrag:
                 // move the route segment - the drag object is the route
-                state.route.moveSegment(state.routeSegment,dxdyLocal)
+                if (!state.route.moveBundleRouteDrag(dxdyLocal)) state.route.moveSegment(state.routeSegment,dxdyLocal)
                 return true
 
             case doing.selection:
@@ -257,7 +262,7 @@ export const mouseMoveHandling = {
                     : null
 
         // give visual feedback if we hover over a connectable object
-        this.hover( conx, conx ? route.checkConxType(route.from, conx) : false )
+        this.hover(conx, conx ? (route.from?.bundle || conx.bundle ? !matchBundleConnections(route.from, conx).error : route.checkConxType(route.from, conx)) : false)
 
         // draw the route
         if (conx && (conx.is.pin || conx.is.pad))

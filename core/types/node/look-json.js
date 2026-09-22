@@ -1,3 +1,5 @@
+import {restorePinBundles} from '../widget/pin-bundle.js'
+
 export const jsonHandling = {
 
 // collect the elements of the look that need to be saved in the vmblu file
@@ -147,6 +149,9 @@ cook( raw ) {
 
     // get the wid value for the generator and assign a wid to 0 values
     this.handleWid()
+    const pins = this.widgets.filter(widget => widget.is.pin)
+    restorePinBundles(pins, pins.filter(pin => pin.bundleWids).map(pin => ({pin, wids: pin.bundleWids})))
+    for (const pin of pins) delete pin.bundleWids
 },
 
 handleWid() {
@@ -157,6 +162,10 @@ handleWid() {
 
         // only pins and ifNames have wids
         if ( !(widget.is.pin || widget.is.ifName)) continue
+        // Do not reuse a missing member's ID for a newly discovered model pin.
+        for (const wid of widget.bundleWids ?? []) {
+            if (Number.isSafeInteger(wid) && wid > this.widGenerator) this.widGenerator = wid
+        }
         
         // check if zero
         if (!widget.wid) setWid.push(widget)
@@ -204,6 +213,7 @@ cookPin(raw) {
 
     // recover the wid
     newPin.wid = raw.wid ?? 0
+    if (raw.bundleWids) newPin.bundleWids = raw.bundleWids.slice()
 
     // check for an interface name prefix
     newPin.ifNamePrefixCheck()

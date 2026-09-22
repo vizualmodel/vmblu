@@ -37,7 +37,11 @@ export const mouseUpHandling = {
                             : null
 
                 // complete the route or cancel it...
-                if (conx?.is?.route && route.checkConxType(route.from, conx)) {
+                if (route.from?.bundle || conx?.bundle) {
+                    route.popFromRoute()
+                    this.doEdit(tx, 'connectBundle', {view: this, from: route.from, to: conx, drawnRoute: route})
+                }
+                else if (conx?.is?.route && route.checkConxType(route.from, conx)) {
                     this.doEdit(tx,'routeDrawToRoute',{view: this, route, targetRoute: conx, segment: this.hit.routeSegment, xyLocal})
                 }
                 else {
@@ -48,9 +52,13 @@ export const mouseUpHandling = {
 
             case doing.routeDrag:
                 // check if we should combine two segments
-                state.route.endDrag(state.routeSegment)
+                if (!state.route.endBundleRouteDrag()) state.route.endDrag(state.routeSegment)
                 state.route.unSelect()
-                this.doEdit(tx,'routeDrag', {route: this.hit.route, oldWire:state.modo.wire, newWire:state.route.copyWire()})
+                // Mouse-up can hit another route or empty space. Always commit
+                // the route captured on mouse-down, and don't undo-record clicks.
+                if (JSON.stringify(state.modo.wire) !== JSON.stringify(state.route.wire)) {
+                    this.doEdit(tx,'routeDrag', {route: state.route, oldWire:state.modo.wire, newWire:state.route.copyWire()})
+                }
                 break
 
             case doing.selection:

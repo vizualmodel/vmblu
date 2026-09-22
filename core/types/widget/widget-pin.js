@@ -1,4 +1,5 @@
 import { shape, style, eject } from '../util/index.js';
+import {bundleRect, bundleLabel, bundleMembers, bundleRepresentative, dragBundle, bundleExpandedPosition} from './pin-bundle.js';
 import { pinNameHandling } from './widget-pin-name.js';
 
 export function Pin(rect, node, name, is) {
@@ -16,6 +17,7 @@ export function Pin(rect, node, name, is) {
 
     // the widget identifier
     this.wid = 0;
+    this.bundle = null;
 
     // state
     this.is = {
@@ -56,12 +58,24 @@ Pin.prototype = {
     
     // arrows in and out
     render(ctx) {
+        if (bundleRepresentative(this) !== this) return;
         // notation
         const st = style.pin;
-        const rc = this.rect;
+        const rc = bundleRect(this);
 
-        // the name to display
-        const displayName = this.displayName(false)
+        // Truncate only the display; member names remain unchanged.
+        let displayName = bundleLabel(this)
+        if (this.bundle) {
+            const connected = this.bundle.filter(pin => pin.routes.some(route => route.to)).length
+            const suffix = '  ' + connected + '/' + this.bundle.length
+            displayName = this.bundle.map(pin => pin.displayName(false)).join(', ')
+            const available = Math.max(0, rc.w - st.wMargin - 8 - ctx.measureText(suffix).width)
+            if (ctx.measureText(displayName).width > available) {
+                while (displayName.length && ctx.measureText(displayName + '\u2026').width > available) displayName = displayName.slice(0, -1)
+                displayName += '\u2026'
+            }
+            displayName += suffix
+        }
 
         // select the color for the widget
         const { cArrow, cText } = this.setColor();
@@ -79,7 +93,7 @@ Pin.prototype = {
         // debug : draws a green rectangle around the pin
         // shape.rectRect(ctx,rc.x, rc.y, rc.w, rc.h,'#11aa77', null)
 
-        const icons = this.is.capability ? (this.is.input ? 'T' : 'E') : null
+        const icons = bundleMembers(this).some(pin => pin.is.capability) ? (this.is.input ? 'T' : 'E') : null
 
         // render the text and arrow : 4 cases : left in >-- out <-- right in --< out -->
         if (this.is.left) {
@@ -104,12 +118,20 @@ Pin.prototype = {
         }
 
         // show name clashes
-        if (this.is.duplicate) {
+        if (bundleMembers(this).some(pin => pin.is.duplicate || pin.is.zombie)) {
             shape.rectRect(ctx, rc.x, rc.y, rc.w, rc.h, st.cBad, null);
         }
     },
 
     setColor() {
+        if (this.bundle) {
+            const aggregate = Object.create(this)
+            aggregate.bundle = null
+            aggregate.is = {...this.is}
+            for (const flag of ['hoverNok', 'hoverOk', 'highLighted', 'selected', 'added', 'zombie', 'duplicate']) aggregate.is[flag] = this.bundle.some(pin => pin.is[flag])
+            aggregate.routes = this.bundle.flatMap(pin => pin.routes)
+            return aggregate.setColor()
+        }
         // color of the arrow ( unconnected connected selected)
         const cArrow = this.is.hoverNok ? style.pin.cBad 
                         : this.is.hoverOk ? style.pin.cSelected 
@@ -179,6 +201,8 @@ Pin.prototype = {
             left: this.is.left 
         };
 
+        if (this.bundle?.[0] === this) rawPin.bundleWids = this.bundle.map(pin => pin.wid)
+
         if (this.prompt) rawPin.prompt = this.prompt
         if (this.tool) rawPin.tool = this.tool
         if (this.event) rawPin.event = this.event
@@ -214,6 +238,8 @@ Pin.prototype = {
     },
 
     drag(pos) {
+        if (this.node.look.widgets.some(pin => pin.bundle)) return dragBundle(this, pos)
+        pos = bundleExpandedPosition(this.node.look, pos)
         // notation
         const rc = this.node.look.rect;
 
@@ -352,19 +378,19 @@ Pin.prototype = {
     },
 
     doSelect() {
-        this.is.selected = true;
+        for (const member of bundleMembers(this)) member.is.selected = true;
     },
 
     unSelect() {
-        this.is.selected = false;
+        for (const member of bundleMembers(this)) member.is.selected = false;
     },
 
     highLight() {
-        this.is.highLighted = true;
+        for (const member of bundleMembers(this)) member.is.highLighted = true;
     },
 
     unHighLight() {
-        this.is.highLighted = false;
+        for (const member of bundleMembers(this)) member.is.highLighted = false;
     },
 
     /** TO CHANGE : 
@@ -372,6 +398,9 @@ Pin.prototype = {
         [a,b,c,d] -> pad - proxy [a,b,c] -> pin [b,c,d]  only messages b,c get through.
     */
     highLightRoutes() {
+        if (this.bundle) {
+            for (const pin of this.bundle) for (const route of pin.routes) route.highLight()
+        }
         // highlight the connections of the pin
         for (const route of this.routes) {
             // check the other part of the route - note that it might be missing during a disconnect operation !
@@ -402,6 +431,9 @@ Pin.prototype = {
     },
 
     unHighLightRoutes() {
+        if (this.bundle) {
+            for (const pin of this.bundle) for (const route of pin.routes) route.unHighLight()
+        }
         // highlight the connections of the pin
         for (const route of this.routes) {
             // unhighlight

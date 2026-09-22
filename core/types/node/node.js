@@ -1,3 +1,4 @@
+import {bundleRect, bundleRepresentative} from '../widget/pin-bundle.js'
 import {convert, style} from '../util/index.js'
 import {rxtxHandling} from './node-rxtx-table.js'
 import {nodeClickHandling} from './node-icon-click.js'
@@ -144,7 +145,8 @@ Node.prototype = {
     hitTest(pos) {
 
         // notation
-        const {x,y,w,h} = this.look.rect
+        const {x,y,w} = this.look.rect
+        const h = this.look.rect.h - this.look.widgets.filter(pin => pin.bundle && pin.bundle[0] !== pin).reduce((sum, pin) => sum + pin.rect.h, 0)
         const dx = style.pin.wOutside
 
         // check if we have hit the look
@@ -154,7 +156,8 @@ Node.prototype = {
         for(const widget of this.look.widgets) {
 
             // notation
-            const rc = widget.rect
+            const rc = bundleRect(widget)
+            if (widget.bundle && bundleRepresentative(widget) !== widget) continue
 
             // skip the box
             if (widget.is.box) continue

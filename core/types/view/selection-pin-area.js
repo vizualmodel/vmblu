@@ -1,3 +1,4 @@
+import {bundleRect, bundleLastMember} from '../widget/pin-bundle.js'
 import {style} from '../util/index.js'
 import {selex} from './selection.js'
 
@@ -48,7 +49,7 @@ export const pinAreaHandling = {
 
                 if (widget.is.pin || widget.is.ifName) {
 
-                    if (widget.rect.y + dy > this.rect.y && widget.rect.y + dy < this.rect.y + this.rect.h) {
+                    if (bundleRect(widget).y + dy > this.rect.y && bundleRect(widget).y + dy < this.rect.y + this.rect.h) {
                         this.widgets.push(widget)
                         widget.is.selected = true
                     }
@@ -95,8 +96,9 @@ export const pinAreaHandling = {
 
         // get the first and last element from the array
         const look = this.widgets[0].node.look
-        const first = this.widgets[0].rect
-        const last = this.widgets.at(-1).rect
+        const rects = this.widgets.map(bundleRect).sort((a,b) => a.y - b.y)
+        const first = rects[0]
+        const last = rects.at(-1)
 
         // draw a rectangle - make the rectangle as wide as the look
         this.activate(  look.rect.x - style.pin.wOutside, first.y, 
@@ -214,10 +216,10 @@ export const pinAreaHandling = {
     behind() {
 
         // check
-        if (this.what !== selex.singleNode && this.what !== selex.ifArea) return null;
+        if (this.what !== selex.singleNode && this.what !== selex.ifArea && this.what !== selex.pinArea) return null;
 
         // we add new pins at the end
-        const last = this.widgets.at(-1)
+        const last = this.widgets.length ? bundleLastMember(this.widgets.at(-1)) : null
 
         // check 
         if (last) return  {x: last.rect.x, y: last.rect.y + last.rect.h};
@@ -241,7 +243,7 @@ export const pinAreaHandling = {
                     .sort((a, b) => a.rect.y - b.rect.y)[0]
                 y = next?.rect.y ?? look.rect.y + look.rect.h - style.look.hBottom
             } else {
-                y = widget ? widget.rect.y + widget.rect.h : look.rect.y + look.rect.h - style.look.hBottom
+                y = widget ? bundleLastMember(widget).rect.y + widget.rect.h : look.rect.y + look.rect.h - style.look.hBottom
             }
             return {node, pos: {x: look.rect.x, y}}
         }
@@ -267,7 +269,7 @@ export const pinAreaHandling = {
             case selex.pinArea: 
             case selex.ifArea: {
 
-                const node = this.getSelectedWidget()?.node
+                const node = this.getSelectedWidget()?.node ?? this.getPinAreaNode()
                 const pos = this.behind()
                 return {node, pos}
             }

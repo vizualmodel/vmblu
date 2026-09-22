@@ -142,12 +142,12 @@
     },
 
     "Pin": {
-      "description": "Visual metadata for a pin of a node, ncoded as a compact string.",
+      "description": "Visual metadata encoded as (wid L|R [bundle member wids])name. Only the first pin in a bundle writes the ordered member IDs; all member pins remain separate entries.",
       "type": "string"
     },
 
     "Pad": {
-      "description": "Visual metadata for a pin of a node, ncoded as a compact string.",
+      "description": "Visual metadata for a pad, encoded as a compact string.",
       "type": "string"
     }
   }

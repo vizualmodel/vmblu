@@ -1,4 +1,5 @@
 import {jsonDeepCopy, updateDerivedSettings} from '../util/index.js'
+import {reconcilePinBundles} from '../widget/pin-bundle.js'
 
 export const compareHandling = {
 
@@ -160,6 +161,7 @@ export const compareHandling = {
             // we consider the pin a new pin
             this.dockNewPin(lw, linkNode)
         }
+        reconcilePinBundles(dockLook)
     },
 
     dockNewPin(lw, linkNode) {

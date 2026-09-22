@@ -1,9 +1,10 @@
+import {bundleInsertionPosition} from '../../types/widget/pin-bundle.js'
 import { ARL } from '../../types/arl/index.js';
 export const redoxInterface = {
     newInterfaceName: {
         doit({ view, node, pos }) {
             // get the position behind the selection, if any
-            pos = view.selection.behind() ?? pos;
+            pos = view.selection.behind() ?? bundleInsertionPosition(node.look, pos);
 
             // make a new ifName and put it in edit mode
             let ifName = node.look.addIfName('', pos);

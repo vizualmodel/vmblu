@@ -153,6 +153,8 @@ Clipboard.prototype = {
             case selex.ifArea:
             case selex.pinArea:{
                 target.widgets = this.selection.widgets.slice().sort((a,b) => a.rect.y - b.rect.y)
+                    .flatMap(widget => widget.bundle ?? [widget])
+                    .filter((widget, index, widgets) => widgets.indexOf(widget) === index)
                     .map(widget => widget.is.pin ? {...widget.makeRaw(), pxlen: widget.pxlen} : widget.makeRaw())
             }
             break
