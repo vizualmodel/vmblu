@@ -1,6 +1,9 @@
+import {bundleEligibility} from '../widget/pin-bundle.js'
 const cm = {
 
 	choices: [
+        {text: "Collapse pins", icon: "unfold_less", state: "disabled", action: collapseBundle},
+        {text: "Expand pins", icon: "unfold_more", state: "disabled", action: expandBundle},
 		{text:"copy",                     icon:"content_copy",state:"enabled", action:selectionToClipboard},
 		{text:"paste",                    icon:"content_paste",state:"enabled", action:pasteWidgetsFromClipboard},
 		{text:"disconnect",				  icon:"power_off",state:"enabled", action:disconnectPinArea},
@@ -26,7 +29,9 @@ const cm = {
 		this.tx = tx
 		this.node = view.selection.getPinAreaNode()
 		this.widgets = view.selection.widgets
-		this.xyLocal = view.hit.xyLocal
+        this.choices.find(choice => choice.action === collapseBundle).state = bundleEligibility(this.widgets) ? "disabled" : "enabled"
+		this.choices.find(choice => choice.action === expandBundle).state = this.widgets.some(pin => pin.bundle) ? "enabled" : "disabled"
+        this.xyLocal = view.hit.xyLocal
 		this.xyScreen = view.hit.xyScreen
 	},
 
@@ -53,6 +58,8 @@ function disconnectPinArea() {
 	cm.doEdit('disconnectPinArea', {view: cm.view, node: cm.node, widgets: cm.widgets})
 }
 function deletePinArea() {
+    const bundle = cm.widgets[0]?.bundle
+    if (bundle && cm.widgets.every(pin => pin.bundle === bundle)) return cm.doEdit('expandBundle', {view: cm.view, pin: bundle[0]})
 	cm.doEdit('deletePinArea',{view: cm.view, node: cm.node, widgets: cm.widgets})
 }
 function pinsSwap()  {
@@ -67,3 +74,7 @@ function pinsRight() {
 function inOutSwitch() {
 	cm.doEdit('ioSwitchPinArea', {view: cm.view})
 }
+
+function collapseBundle() { cm.doEdit('collapseBundle', {view: cm.view, pins: cm.widgets}) }
+
+function expandBundle() { for (const bundle of new Set(cm.widgets.map(pin => pin.bundle).filter(Boolean))) cm.doEdit('expandBundle', {view: cm.view, pin: bundle[0]}) }

@@ -1,3 +1,4 @@
+import {redoxBundle} from './redox-bundle.js'
 import {RingStack} from '../../types/util/index.js'
 import {redoxNode} from './redox-node.js'
 import {redoxLink} from './redox-link.js'
@@ -34,4 +35,4 @@ Redox.prototype = {
         this.undoStack.push({verb, param})
     },
 }
-Object.assign(Redox.prototype, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxCable, redoxPad, redoxSelect, redoxPinArea, redoxView, redoxLayout)
+Object.assign(Redox.prototype, redoxBundle, redoxNode, redoxLink, redoxWidget, redoxInterface, redoxRoute, redoxCable, redoxPad, redoxSelect, redoxPinArea, redoxView, redoxLayout)

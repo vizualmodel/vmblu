@@ -1,3 +1,4 @@
+import {createBundle, expandBundle} from '../../types/widget/pin-bundle.js'
 import {selex} from '../../types/view/selection.js'
 
 export const redoxPinArea = {
@@ -36,7 +37,7 @@ deletePinArea: {
         const allRoutes = node.getAllRoutes(widgets)
 
         // save the edit
-        this.saveEdit('deletePinArea',{view, node, widgets: widgets.slice(), allRoutes})
+        this.saveEdit('deletePinArea',{view, node, widgets: widgets.slice(), allRoutes, bundles: [...new Set(widgets.map(pin => pin.bundle).filter(Boolean))].map(bundle => bundle.slice()), wids: widgets.map(widget => widget.wid)})
 
         // disconnect
         node.disconnectPinArea(widgets)
@@ -45,7 +46,7 @@ deletePinArea: {
         // the original positions of widgets still waiting to be removed.
         node.look.deletePinArea(widgets.slice().reverse())
     },
-    undo({view, node, widgets, allRoutes}) {
+    undo({view, node, widgets, allRoutes, bundles, wids}) {
 
         // the position
         const first = widgets[0]
@@ -53,6 +54,11 @@ deletePinArea: {
 
         // add the widgets back
         node.look.restoreWidgetsToPinArea(widgets, pos)
+        widgets.forEach((widget, index) => { widget.wid = wids[index] })
+        for (const bundle of bundles ?? []) {
+            for (const pin of bundle) expandBundle(pin)
+            createBundle(bundle)
+        }
 
         // add the pads or the adjust the rx/tx tables
         node.is.source ? node.rxtxAddPinArea(widgets) : node.addPads(widgets)
@@ -123,7 +129,7 @@ pasteWidgetsFromClipboard: {
         if (widgets.some(widget => widget.prompt)) where.node.prompts.markDirty()
         this.saveEdit('pasteWidgetsFromClipboard', {view, node: where.node, widgets, pos: where.pos,
             wids: widgets.map(widget => widget.wid), pads: widgets.filter(widget => widget.is.proxy).map(widget => widget.pad),
-            what: view.selection.what})
+            what: view.selection.what, bundles: [...new Set(widgets.map(pin => pin.bundle).filter(Boolean))].map(bundle => bundle.slice())})
     },
     undo({view,node, widgets, pos}) {
 
@@ -135,11 +141,12 @@ pasteWidgetsFromClipboard: {
         // reset the selection
         view.selection.reset()
     },
-    redo({view, node, widgets, pos, wids, pads, what}) {
+    redo({view, node, widgets, pos, wids, pads, what, bundles}) {
 
         // bring the widgets back
         node.look.restoreWidgetsToPinArea(widgets, pos)
         widgets.forEach((widget, index) => { widget.wid = wids[index] })
+        for (const bundle of bundles ?? []) createBundle(bundle)
 
         // add the pads or the adjust the rx/tx tables
         if (node.is.source) node.rxtxAddPinArea(widgets)
@@ -166,6 +173,7 @@ ioSwitchPinArea: {
         
         // note that a switch only happens when a pin is not connected !
         for (const pin of view.selection.widgets) {
+            if (pin.bundle?.some(member => member.routes.length || (member.is.proxy && member.pad.routes.length))) continue
             if (pin.is.pin && pin.ioSwitch()) switched.push(pin)
         }
 

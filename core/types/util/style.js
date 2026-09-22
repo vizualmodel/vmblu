@@ -81,7 +81,7 @@ function StyleFactory() {
     this.std = {
         font: "normal 12px tahoma", lineCap: "round",  lineJoin: "round", lineWidth: 1.0, 
         cBackground: color.black, cLine: color.white, cFill: color.blue,
-        wCursor: 2, hCursor: 15, blinkRate: 500, cBlinkOn: color.white, cBlinkOff: color.black
+        wCursor: 1, hCursor: 15, blinkRate: 400, cBlinkOn: color.white, cBlinkOff: color.grey3
     } 
     this.look = {
         wBox:150, hTop:20, hBottom:6, wExtra:15, wMax:600, dxCopy: 20, dyCopy:20,  smallMove: 5, 

@@ -48,7 +48,8 @@ const cm = {
         // linked nodes hve much less options
         if (this.node.link) {
             // The number of options is reduced
-            this.choices = withLink;
+            this.choices = withLink.map(choice => ({...choice}));
+            addBundleChoices(this);
 
             // only pins can be disconnected
             let entry = this.choices.find((c) => c.action == disconnectPin);
@@ -61,7 +62,8 @@ const cm = {
             return;
         }
 
-        this.choices = noLink;
+        this.choices = noLink.map(choice => ({...choice}));
+        addBundleChoices(this);
 
         // only pins can be disconnected
         let entry = this.choices.find((c) => c.action == disconnectPin);
@@ -69,7 +71,7 @@ const cm = {
 
         // swap input to output
         entry = this.choices.find((c) => c.action == inOutSwitch);
-        let enable = this.widget?.is.pin && this.widget.routes.length == 0;
+        let enable = this.widget?.is.pin && !this.widget.bundle && this.widget.routes.length == 0;
         entry.state = enable ? 'enabled' : 'disabled';
         entry.text =
             enable && this.widget.is.input
@@ -78,7 +80,7 @@ const cm = {
 
         // switch channel on or off
         entry = this.choices.find((c) => c.action == channelOnOff);
-        enable = this.widget?.is.pin; // && ! this.widget.is.proxy
+        enable = this.widget?.is.pin && !this.widget.bundle;
         entry.state = enable ? 'enabled' : 'disabled';
         entry.text =
             enable && this.widget.is.channel ? 'remove channel' : 'add channel';
@@ -179,16 +181,16 @@ function deleteInterfaceName() {
     });
 }
 function showProfile(e) {
-    cm.doEdit('showProfile', {
-        pin: cm.widget,
+    selectBundleMember(cm, e, pin => cm.doEdit('showProfile', {
+        pin,
         pos: { x: cm.xyScreen.x, y: cm.xyScreen.y + 10 },
-    });
+    }));
 }
 function showCapability(e) {
-    cm.doEdit('showCapability', {
-        pin: cm.widget,
+    selectBundleMember(cm, e, pin => cm.doEdit('showCapability', {
+        pin,
         pos: { x: cm.xyScreen.x, y: cm.xyScreen.y + 10 },
-    });
+    }));
 }
 function pinsSwap() {
     cm.doEdit('swapPins', {
@@ -225,4 +227,23 @@ function pasteWidgetsFromClipboard() {
 function selectionToClipboard() {
 	if (cm.widget?.is.pin) cm.view.selection.switchToWidget(cm.widget)
 	cm.view.selectionToClipboard(cm.tx)
+}
+
+function addBundleChoices(menu) {
+    if (!menu.widget?.bundle) return
+    menu.choices.unshift({text: 'Expand pins', icon: 'unfold_more', state: 'enabled', action: () => menu.doEdit('expandBundle', {view: menu.view, pin: menu.widget})})
+    menu.choices.push({text: 'Rename member', icon: 'edit', state: menu.node.link ? 'disabled' : 'enabled', action: e => selectBundleMember(menu, e, member => { menu.doEdit('expandBundle', {view: menu.view, pin: member}); menu.doEdit('widgetTextEdit', {view: menu.view, widget: member}) })})
+    menu.choices.push({text: 'Delete member', icon: 'delete', state: menu.node.link ? 'disabled' : 'enabled', action: e => selectBundleMember(menu, e, member => menu.doEdit('deletePin', {view: menu.view, pin: member, bundleMember: true}))})
+    menu.choices.push({text: 'Delete underlying pins', icon: 'delete', state: menu.node.link ? 'disabled' : 'enabled', action: () => menu.doEdit('deletePinArea', {view: menu.view, node: menu.node, widgets: menu.widget.bundle.slice()})})
+}
+
+function selectBundleMember(menu, event, action) {
+    if (!menu.widget.bundle) return action(menu.widget)
+    menu.tx.send('context menu', {
+        event: event ?? {clientX: menu.xyScreen.x, clientY: menu.xyScreen.y},
+        menu: menu.widget.bundle.map(member => ({
+            text: member.displayName(false), icon: 'arrow_right', state: 'enabled',
+            action: () => action(member),
+        })),
+    })
 }

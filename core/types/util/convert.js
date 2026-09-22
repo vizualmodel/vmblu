@@ -94,7 +94,8 @@ export const convert = {
     },
 
     pinToString: pin => {
-        return `(${pin.wid}` + (pin.left ? ' L)' : ' R)') + pin.name
+        const bundle = pin.bundleWids?.length ? ' ' + pin.bundleWids.join(' ') : ''
+        return `(${pin.wid} ${pin.left ? 'L' : 'R'}${bundle})${pin.name}`
     },
 
     stringToPin: str => {
@@ -105,11 +106,10 @@ export const convert = {
         // check
         if (opbr < 0 || clbr < 0) return {name: '-invalid-',id:0,left:true}
 
-        // ok
+        const [wid, side, ...bundle] = str.slice(opbr+1, clbr).trim().split(/\s+/)
         return {
-            name: str.slice(clbr+1).trim(),
-            wid: +str.slice(opbr+1,clbr-1),
-            left: str[clbr-1] === 'L'
+            name: str.slice(clbr+1).trim(), wid: +wid, left: side === 'L',
+            ...(bundle.length ? {bundleWids: bundle.map(Number)} : {}),
         }
     },
 

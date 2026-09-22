@@ -78,6 +78,7 @@ function goAway(e) {
 
 // when selecting in the ul
 function onClickLI(e) {
+	e.stopPropagation() // A choice may open another menu; don't hide it via the outer div.
 
 	// hide the list
 	context.div.style.display = "none"

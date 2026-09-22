@@ -1,6 +1,6 @@
 import { selex } from './selection.js';
 
-// a helper function
+// a helper function to check if a field can be edited
 function canProceed(view) {
 
     // get the node and the position where to add
@@ -20,6 +20,19 @@ function canProceed(view) {
 
     // ok
     return [true, where.node, where.pos];
+}
+
+function validWidget(view) {
+    
+    const widget = view.selection.getSelectedWidget();
+
+    // check
+    if (!widget || !widget.node ) return null;
+    if (widget.node.cannotBeModified()) {
+        view.blinkToWarn(widget.node)
+        return null
+    }
+    return widget
 }
 
 // The table with the <ctrl> + key combinations
@@ -144,27 +157,57 @@ export const justKeyTable = {
         view.doEdit(tx,'nodeHighLight', { node });
     },
 
-    '+': (view,tx) => {
-        const widget = view.selection.getSelectedWidget();
-
-        // check
-        if (!widget || !widget.node ) return;
-        if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
-
-        // ok
-        view.doEdit(tx,'widgetTextEdit', {view, widget});
+    End: (view,tx) => {
+        
+        const widget = validWidget(view);
+        if (widget) view.doEdit(tx,'widgetTextEdit', {view, widget});
     },
 
-    '-': (view,tx) => {
-        const widget = view.selection.getSelectedWidget();
-
-        // check
-        if (!widget || !widget.node ) return;
-        if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
-
-        // start
-        view.doEdit(tx,'widgetTextEdit', {view,widget,clear: true});
+    '/': (view,tx) => {
+        
+        const widget = validWidget(view);
+        if (widget) view.doEdit(tx,'widgetTextEdit', {view, widget, clear: true});
     },
+
+    Home: (view,tx) => {
+        
+        const widget = validWidget(view);
+        if (widget) view.doEdit(tx,'widgetTextEdit', {view, widget, click: {x:-1000, y:0}});
+    },
+
+//     '+': (view,tx) => {
+
+//         const widget = view.selection.getSelectedWidget();
+
+//         // check
+//         if (!widget || !widget.node ) return;
+//         if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
+
+//         // ok
+//         view.doEdit(tx,'widgetTextEdit', {view, widget});
+//     },
+
+//    '-': (view,tx) => {
+//         const widget = view.selection.getSelectedWidget();
+
+//         // check
+//         if (!widget || !widget.node ) return;
+//         if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
+
+//         // start
+//         view.doEdit(tx,'widgetTextEdit', {view,widget,clear: true});
+//     },
+
+//     '/': (view,tx) => {
+//         const widget = view.selection.getSelectedWidget();
+
+//         // check
+//         if (!widget || !widget.node ) return;
+//         if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node)
+
+//         // start
+//         view.doEdit(tx,'widgetTextEdit', {view,click: {x:-1000, y:0},widget});
+//     },
 
     // delete the selection or the single node
     Clear: (view,tx) => {
@@ -189,13 +232,16 @@ export const justKeyTable = {
                 break;
 
             case selex.pinArea:
-                //check if ok
+                const bundle = view.selection.widgets[0]?.bundle
+                if (bundle && view.selection.widgets.every(pin => pin.bundle === bundle)) {
+                    view.doEdit(tx, 'expandBundle', {view, pin: bundle[0]})
+                    break
+                }
                 const [ok, node, pos] = canProceed(view);
                 if (!ok) return;
-
                 view.doEdit(tx,'deletePinArea', {
                     view,
-                    node: view.selection.getSingleNode(),
+                    node,
                     widgets: view.selection.widgets,
                 });
                 break;
@@ -212,6 +258,8 @@ export const justKeyTable = {
                     return;
                 }
 
+                // Visual ungrouping is available even on a linked node.
+                if (widget.bundle) { view.doEdit(tx, "expandBundle", {view, pin: widget}); break }
                 // check
                 if (widget.node.cannotBeModified()) return view.blinkToWarn(widget.node);
 

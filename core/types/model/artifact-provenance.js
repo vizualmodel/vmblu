@@ -39,9 +39,25 @@ export function makeArtifactProvenance({
         },
         source: {
             model,
-            hash: sourceHash(source),
+            hash: sourceHash(sourceWithoutPinBundles(source)),
         },
     }
+}
+
+// Bundle membership is visualization data even in the combined in-memory raw model.
+function sourceWithoutPinBundles(source) {
+    if (!source?.root || typeof source !== 'object') return source
+    const withoutBundles = node => ({
+        ...node,
+        ...(node.interfaces ? {interfaces: node.interfaces.map(iface => ({...iface,
+            pins: iface.pins.map(pin => {
+                const {bundleWids, ...semanticPin} = pin
+                return semanticPin
+            }),
+        }))} : {}),
+        ...(node.nodes ? {nodes: node.nodes.map(withoutBundles)} : {}),
+    })
+    return {...source, root: withoutBundles(source.root)}
 }
 
 function normalize(value) {

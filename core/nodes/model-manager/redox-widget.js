@@ -1,10 +1,14 @@
+import {createBundle, expandBundle, bundleInsertionPosition} from '../../types/widget/pin-bundle.js'
 import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
+import {getNodePromptDocument, getPinPromptLine} from '../../types/node/node-prompt-document.js'
+import {ensureNodePromptFile} from '../../types/node/prompt-file.js'
+import {serializePromptMarkdown} from '../../types/model/blueprint-prompt.js'
 
 export const redoxWidget = {
     newPin: {
         doit({ view, node, pos, is }) {
             // we add new pins at the end of a selection if, or else we keep the pos value
-            pos = view.selection.behind() ?? pos;
+            pos = view.selection.behind() ?? bundleInsertionPosition(node.look, pos);
 
             // create the pin
             const pin = node.look.addPin('', pos, is);
@@ -22,6 +26,16 @@ export const redoxWidget = {
             this.saveEdit('newPin', { view, pin });
         },
         undo({ view, pin }) {
+            if (pin?.bundleCreation) {
+                const members = pin.bundleCreation
+                expandBundle(pin)
+                for (const member of members.slice().reverse()) {
+                    member.node.look.removePin(member)
+                    member.is.proxy ? member.node.removePad(member.pad) : member.node.rxtxRemovePin(member)
+                }
+                view.selection.reset()
+                return
+            }
             // if the pin was not created (no valid name) just return
             if (!pin || !pin.node.look.widgets.includes(pin)) return;
 
@@ -38,6 +52,17 @@ export const redoxWidget = {
             pin.is.proxy ? node.pads.pop() : node.rxtxPopPin(pin);
         },
         redo({ view, pin }) {
+            if (pin?.bundleCreation) {
+                for (const member of pin.bundleCreation) {
+                    const wid = member.wid
+                    member.node.look.restorePin(member)
+                    member.wid = wid
+                    member.is.proxy ? member.node.restorePad(member.pad) : member.node.rxtxAddPin(member)
+                }
+                createBundle(pin.bundleCreation)
+                view.selection.switchToWidget(pin)
+                return
+            }
             // if the pin was not created (no valid name) just return
             if (!pin || !pin.node.look.widgets.includes(pin)) return;
 
@@ -86,7 +111,10 @@ export const redoxWidget = {
     },
 
     deletePin: {
-        doit({ view, pin }) {
+        doit({ view, pin, bundleMember = false }) {
+            if (pin.bundle && !bundleMember) return this.expandBundle.doit.call(this, {view, pin})
+            const bundle = pin.bundle?.slice()
+            const wid = pin.wid
             // save the routes
             const pinRoutes = pin.routes.slice();
 
@@ -106,7 +134,7 @@ export const redoxWidget = {
             const collapses = collapseEndpointOnlyCables(affectedCables, pin.node);
 
             // save the edit after disconnect/collapse state is known, before the pin is removed.
-            this.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes, collapses });
+            this.saveEdit('deletePin', { view, pin, pinRoutes, padRoutes, collapses, bundle, wid });
 
             // delete the pin in the node
             pin.node.look.removePin(pin);
@@ -118,7 +146,7 @@ export const redoxWidget = {
             // if not remove from rx table
             else pin.node.rxtxRemovePin(pin);
         },
-        undo({ view, pin, pinRoutes, padRoutes, collapses }) {
+        undo({ view, pin, pinRoutes, padRoutes, collapses, bundle, wid }) {
             undoCableCollapses(collapses);
 
             // copy the routes (redo destroys the array - we want to keep it on the undo stack !)
@@ -126,6 +154,9 @@ export const redoxWidget = {
 
             // put the pin back
             pin.node.look.restorePin(pin);
+            pin.wid = wid
+            if (!pin.is.proxy) pin.node.rxtxAddPin(pin)
+            if (bundle) { for (const member of bundle) expandBundle(member); createBundle(bundle) }
 
             if (pin.is.proxy) pin.node.restorePad(pin.pad);
 
@@ -291,6 +322,28 @@ export const redoxWidget = {
                     manager.tx.send('open source file', { arl, line: loc.line });
                 },
 
+                openPrompt: async () => {
+                    const node = pin.node;
+                    const oldDocument = getNodePromptDocument(node);
+                    const oldRepository = node.prompts.repository;
+                    let arl = oldRepository?.arl;
+                    if (!arl || arl.createPromptFile) {
+                        const result = await ensureNodePromptFile(node,
+                            oldRepository ? oldDocument : serializePromptMarkdown(node));
+                        arl = result.arl;
+                        if (result.changed) {
+                            this.referencePromptFile.doit.call(this, {
+                                node, oldDocument, oldRepository,
+                                newDocument: getNodePromptDocument(node), repository: node.prompts.repository,
+                            });
+                            manager.tx.send('redox.done', {verb: 'referencePromptFile'});
+                        }
+                    }
+                    const text = arl.readPromptFile
+                        ? (await arl.readPromptFile()).text : await arl.get();
+                    manager.tx.send('open source file', {arl, line: getPinPromptLine(text, pin.name)});
+                },
+
                 editPrompt: ({pin, prompt, done}) => {
                     this.changePinPrompt.doit.call(this, {pin, prompt});
                     manager.tx.send('redox.done', {verb: 'changePinPrompt'});
@@ -416,6 +469,10 @@ export const redoxWidget = {
     widgetTextEdit: {
         doit({ view, widget, click, clear }) {
 
+            if (widget.bundle) {
+                this.manager?.tx?.send("info popup", {title: "Pin bundle", message: "Use member details or expand the bundle to rename individual pins.", duration: 4000})
+                return
+            }
             // keyboard handling etc is done here
             view.beginTextEdit(widget, click, clear ?? false);
 

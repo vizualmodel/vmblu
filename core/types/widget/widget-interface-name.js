@@ -1,3 +1,4 @@
+import {dragBundle} from './pin-bundle.js'
 import {shape, convert, style} from '../util/index.js'
 
 export function InterfaceName(rect, text, node) {
@@ -69,6 +70,7 @@ InterfaceName.prototype = {
     },
 
     drag(pos) {
+        if (this.node.look.widgets.some(pin => pin.bundle)) return dragBundle(this, pos)
 
         // notation
         const rc = this.node.look.rect

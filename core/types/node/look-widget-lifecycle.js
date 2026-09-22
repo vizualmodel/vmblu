@@ -1,3 +1,4 @@
+import {removeBundleMember, restorePinBundles} from '../widget/pin-bundle.js'
 import {Widget} from '../widget/index.js'
 import {style, eject} from '../util/index.js'
 
@@ -109,6 +110,7 @@ addPin(name, pos, is) {
 
 // removes a pin - disconnect first 
 removePin( pin ) {
+    removeBundleMember(pin)
 
     // remove the widget from the array + shift the other widgets up 
     if (pin.is.pin && eject(this.widgets,pin)) this.shiftUp(pin.rect.y, pin.rect.h)
@@ -247,6 +249,7 @@ rawWidgetsToPinArea(rawWidgets, pos) {
 
     // the array of the copies
     const widgets = []
+    const bundleCopies = new Map()
 
     // the state of the pin
     const is = {
@@ -270,6 +273,7 @@ rawWidgetsToPinArea(rawWidgets, pos) {
 
             // add the pin at the requested position
             const pin = this.addPin(raw.name,where, is)
+            if (raw.wid) bundleCopies.set(raw.wid, pin)
 
             // pxlen is clipboard-only metadata, never a new model property.
             if (typeof raw.pxlen === 'number') pin.pxlen = raw.pxlen
@@ -308,6 +312,10 @@ rawWidgetsToPinArea(rawWidgets, pos) {
             widgets.push(ifName)
         }
     }
+    const declarations = rawWidgets.filter(raw => raw.bundleWids && bundleCopies.has(raw.wid)).map(raw => ({
+        pin: bundleCopies.get(raw.wid), wids: raw.bundleWids.map(wid => bundleCopies.get(wid)?.wid).filter(Boolean),
+    }))
+    restorePinBundles(widgets.filter(widget => widget.is.pin), declarations)
     return widgets
 },
 

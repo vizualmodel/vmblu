@@ -9,6 +9,7 @@ import { pinAreaCxMenu } from './context-pin-area.js';
 import { cableCxMenu } from './context-cable.js';
 import { tackCxMenu } from './context-tack.js';
 import { padCxMenu } from './context-pad.js';
+import {bundleRouteCxMenu} from './context-bundle-route.js';
 
 export const contextHandling = {
 
@@ -25,6 +26,9 @@ export const contextHandling = {
         this.mouseHit(xyLocal);
 
         switch (this.hit.what) {
+            case zap.route:
+                if (this.hit.route.from?.bundle || this.hit.route.to?.bundle) cxMenu = bundleRouteCxMenu;
+            break;
             
             case zap.header:
             case zap.icon:

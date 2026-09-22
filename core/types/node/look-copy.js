@@ -1,3 +1,4 @@
+import {restorePinBundles} from '../widget/pin-bundle.js'
 import {convert, jsonDeepCopy} from '../util/index.js'
 import {Widget} from '../widget/index.js'
 import {Look} from './look.js'
@@ -25,6 +26,8 @@ export const copyHandling = {
                 nw = w.is.proxy ? new Widget.Proxy(w.rect, newNode, w.name, w.is) : new Widget.Pin(w.rect, newNode, w.name, w.is) 
                 //nw.profile = w.profile
                 nw.pxlen = w.pxlen
+                nw.contract = jsonDeepCopy(w.contract)
+                nw.prompt = w.prompt
                 nw.tool = w.tool ? jsonDeepCopy(w.tool) : null
                 nw.event = w.event ? jsonDeepCopy(w.event) : null
                 nw.is.capability = w.is.capability
@@ -48,10 +51,14 @@ export const copyHandling = {
 
             // if the widget has a wid, copy that also
             if (w.wid) nw.wid = w.wid
+            if (w.bundle?.[0] === w) nw.bundleWids = w.bundle.map(pin => pin.wid)
 
             // add the widget to the new look
             if (nw) newNode.look.widgets.push(nw)
         })
+        const pins = newNode.look.widgets.filter(widget => widget.is.pin)
+        restorePinBundles(pins, pins.filter(pin => pin.bundleWids).map(pin => ({pin, wids: pin.bundleWids})))
+        for (const pin of pins) delete pin.bundleWids
     },    
 
     // copy the look from a source node to a group node look and vice versa
@@ -75,6 +82,8 @@ export const copyHandling = {
                 nw = w.is.proxy ? new Widget.Pin(w.rect, newNode, w.name, w.is) : new Widget.Proxy(w.rect, newNode, w.name, w.is) 
                 //nw.profile = w.profile
                 nw.pxlen = w.pxlen
+                nw.contract = jsonDeepCopy(w.contract)
+                nw.prompt = w.prompt
                 nw.tool = w.tool ? jsonDeepCopy(w.tool) : null
                 nw.event = w.event ? jsonDeepCopy(w.event) : null
                 nw.is.capability = w.is.capability
@@ -104,10 +113,14 @@ export const copyHandling = {
 
             // if the widget has a wid, copy that also
             if (w.wid) nw.wid = w.wid
+            if (w.bundle?.[0] === w) nw.bundleWids = w.bundle.map(pin => pin.wid)
 
             // add the widget to the new look
             if (nw) newNode.look.widgets.push(nw)
         })
+        const pins = newNode.look.widgets.filter(widget => widget.is.pin)
+        restorePinBundles(pins, pins.filter(pin => pin.bundleWids).map(pin => ({pin, wids: pin.bundleWids})))
+        for (const pin of pins) delete pin.bundleWids
     },    
 
     // the look to copy from has the same widgets in the same order !

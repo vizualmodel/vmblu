@@ -1,3 +1,4 @@
+import {bundleRect} from '../widget/pin-bundle.js'
 import {style} from '../util/index.js'
 
 import {widgetHandling} from './look-widget.js'
@@ -53,7 +54,14 @@ Look.prototype = {
     render(ctx) {
 
         // draw the widgets
-        this.widgets?.forEach( widget => widget.render(ctx, this) )
+        this.widgets?.forEach(widget => {
+            if (widget.is.pin) widget.render(ctx, this)
+            else {
+                const display = Object.create(widget)
+                display.rect = bundleRect(widget)
+                display.render(ctx, this)
+            }
+        })
     },
 
     remove(){},

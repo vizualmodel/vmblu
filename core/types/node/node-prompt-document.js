@@ -1,6 +1,18 @@
 import {parsePromptMarkdown, serializePromptMarkdown} from '../model/blueprint-prompt.js'
 import {getPromptRepoRuntimeState} from './prompt-repo.js'
 
+// Source locations are one-based, like handler and transmit locations.
+export function getPinPromptLine(document, pinName) {
+    let section = null
+    const lines = String(document ?? '').split(/\r?\n/)
+    for (let index = 0; index < lines.length; index++) {
+        const heading = lines[index].match(/^##\s+(.+?)\s*$/)?.[1].toLowerCase()
+        if (heading === 'node' || heading === 'pins') section = heading
+        if (section === 'pins' && lines[index].match(/^###\s+(.+?)\s*$/)?.[1] === pinName) return index + 1
+    }
+    return 1
+}
+
 export function getNodePromptDocument(node) {
     const state = getPromptRepoRuntimeState(node?.prompts?.repository)
     if (state?.pendingText !== null && state?.pendingText !== undefined) return state.pendingText

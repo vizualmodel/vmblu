@@ -5,6 +5,8 @@ export let style = 'width: 9rem;'
 export let onInput
 export let disabled = false
 export let openFile = null
+export let fileIcon = 'description'
+export let fileTitle = 'Open test specification'
 
 let fid = 'f' + Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
 </script>
@@ -80,9 +82,9 @@ input.after-file-icon {
 <div class="text-input-field">
     <label for={fid} style={style}>{label}</label>
     {#if openFile}
-        <button class="file-icon" type="button" title="Open test specification" aria-label="Open test specification" on:click={openFile}>
-            <span class="material-icons-outlined">description</span>
+        <button class="file-icon" type="button" title={fileTitle} aria-label={fileTitle} on:click={openFile}>
+            <span class="material-icons-outlined" aria-hidden="true">{fileIcon}</span>
         </button>
     {/if}
-    <input id={fid} spellcheck="false" class:after-file-icon={openFile} bind:value={text} {disabled} on:input={() => onInput?.()} />
+    <input id={fid} spellcheck="false" class:after-file-icon={openFile} bind:value={text} {disabled} on:input={() => onInput?.()} on:keydown />
 </div>

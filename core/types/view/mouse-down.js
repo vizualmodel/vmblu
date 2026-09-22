@@ -301,6 +301,7 @@ export const mouseDownHandling = {
 
                         // save the wire
                         this.state.modo.wire = hit.route.copyWire()
+                        hit.route.beginBundleRouteDrag(hit.routeSegment)
 
                         // select the route
                         hit.route.select()
@@ -314,6 +315,11 @@ export const mouseDownHandling = {
 
                     case SHIFT:{
 
+                        const routes = hit.route.bundleRoutes()
+                        if (routes.length > 1) {
+                            this.doEdit(tx, 'deleteBundleRoute', {routes})
+                            break
+                        }
                         // Save the original route so undo can restore it after rerouting.
                         this.doEdit(tx,'deleteRoute',{view: this, route: hit.route, oldRoute: hit.route.clone()})
                     

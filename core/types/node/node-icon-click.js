@@ -2,6 +2,7 @@
 import {convert} from '../util/index.js'
 import {getNodePromptDocument} from './node-prompt-document.js'
 import {ensureNodePromptFile} from './prompt-file.js'
+import {defaultNodeTestPath, ensureNodeTestFile} from './test-file.js'
 
 const placePopup = (pos) => ({x: pos.x - 15, y: pos.y + 10})
 const doEdit = (tx, verb, param) => tx.send('redox.doit', {verb, param})
@@ -187,9 +188,16 @@ export const nodeClickHandling = {
                                         team: node.team,
                                         teams: view?.getManager?.()?.getModel?.()?.header?.teams,
                                         testRepo: testRepoPath,
+                                        defaultTestRepo: defaultNodeTestPath(node),
                                         testRepoReadOnly: !!node.testRepo?.readOnly || !!node.link,
-                                        openTestRepo: node.testRepo?.arl
-                                            ? () => tx.send('open source file', {arl: node.testRepo.arl})
+                                        openTestRepo: !node.link && !node.testRepo?.readOnly || node.testRepo?.arl
+                                            ? async (path) => {
+                                                const arl = await ensureNodeTestFile(node, path)
+                                                if (!node.link && !node.testRepo?.readOnly) {
+                                                    doEdit(tx, 'changeNodeSettings', {node, sx: node.sx, team: node.team, testRepo: path})
+                                                }
+                                                tx.send('open source file', {arl})
+                                            }
                                             : null,
                                         ok: ({sx, team, testRepo}) => doEdit(tx,"changeNodeSettings",{node, sx, team, testRepo})
                                     })                  

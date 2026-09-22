@@ -100,6 +100,10 @@ export const keyboardHandling = {
 
         // notify the object of the end of the edit
         text.obj.endEdit?.(text.saved)
+        if (text.obj.bundleError) {
+            this.getManager()?.tx?.send?.("info popup", {title: "Pin bundle", message: text.obj.bundleError, duration: 5000})
+            delete text.obj.bundleError
+        }
     },
 
     startBlinking(ctx) {
@@ -107,7 +111,7 @@ export const keyboardHandling = {
         let lastTime = 0;
         let on = true;
         let keepBlinking = true
-    
+
         // time is in ms
         const blinkFunction = (time) => {
 
@@ -148,7 +152,8 @@ export const keyboardHandling = {
         const cursor = field.obj.cursorPos?.(ctx, field.cursor) ?? {x:0, y:0}
 
         // get the color
-        const color = on ? style.std.cBlinkOn : style.std.cBlinkOff
+        //const color = on ? style.std.cBlinkOn : style.std.cBlinkOff
+        const color = on ? style.std.cBlinkOff : style.std.cBlinkOn
 
         // draw the cursor
         shape.cursorDraw(ctx, cursor.x, cursor.y, style.std.wCursor, style.std.hCursor, color )
