@@ -265,6 +265,7 @@ export const mouseMoveHandling = {
         this.hover(conx, conx ? (route.from?.bundle || conx.bundle ? !matchBundleConnections(route.from, conx).error : route.checkConxType(route.from, conx)) : false)
 
         // draw the route
+        route.setBundlePreviewTarget(conx)
         if (conx && (conx.is.pin || conx.is.pad))
             route.endpoint(conx)
         else 

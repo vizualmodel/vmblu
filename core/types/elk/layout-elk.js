@@ -4,6 +4,7 @@ import {defaultElkOptions} from './elk-options.js'
 import {toElkGraph} from './to-elk-graph.js'
 import {fromElkResult} from './from-elk-result.js'
 import {fail, ok} from './layout-types.js'
+import {cableLayoutRegion} from './preserve-cables.js'
 
 function portSide(node, port) {
     const x = Number(port?.x) || 0
@@ -21,7 +22,7 @@ function portY(pin, nodeGeometry) {
     const pinY = Number(pin?.rect?.y) || 0
     const pinH = Number(pin?.rect?.h) || 0
     const portH = 8
-    return Math.round(pinY - nodeY + pinH / 2 - portH / 2)
+    return pinY - nodeY + pinH / 2 - portH / 2
 }
 
 function fixedPortsFromResult(result, context) {
@@ -49,7 +50,8 @@ export async function layoutElk(root, options = {}) {
     if (!root?.nodes) return fail('No model root is available for auto-layout.')
 
     const layoutOptions = {...defaultElkOptions, ...options}
-    const {graph, context, diagnostics} = toElkGraph(root, layoutOptions)
+    const region = cableLayoutRegion(root)
+    const {graph, context, diagnostics} = toElkGraph(root, layoutOptions, {region})
 
     if (!graph.children?.length) return fail('No nodes are available for auto-layout.', diagnostics)
 
@@ -57,7 +59,7 @@ export async function layoutElk(root, options = {}) {
         const elk = new ELK()
         const initialResult = await elk.layout(graph)
         const fixedPorts = fixedPortsFromResult(initialResult, context)
-        const fixedProjection = toElkGraph(root, layoutOptions, {fixedPorts})
+        const fixedProjection = toElkGraph(root, layoutOptions, {fixedPorts, region})
         const result = await elk.layout(fixedProjection.graph)
         const patch = fromElkResult(result, fixedProjection.context)
         return ok(patch, [...diagnostics, ...patch.diagnostics])

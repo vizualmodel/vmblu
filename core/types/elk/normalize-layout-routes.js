@@ -132,7 +132,9 @@ export function restoreAutoLayoutState(root, state) {
         item.cable.node = item.node ?? root
         item.cable.wire = copyWire(item.wire)
         item.cable.tacks.length = 0
-        root.restoreCable(item.cable)
+        // Restore exact membership, including freshly created cables whose
+        // IDs have not yet been assigned (restoreCable deduplicates by ID).
+        root.cables.push(item.cable)
     }
 
     for (const item of state.routes ?? []) {
@@ -142,12 +144,14 @@ export function restoreAutoLayoutState(root, state) {
         attachRoute(item.route, item.from)
         attachRoute(item.route, item.to)
     }
-
+    // Attachment order determines the order of cable fan-out destinations.
+    for (const item of state.cables ?? []) item.cable.tacks.splice(0, item.cable.tacks.length, ...item.tacks)
 
     root.rxtxBuildTxTable?.()
 }
 
-export function normalizeLayoutRoutes(root) {
+export function normalizeLayoutRoutes(root, {convertCables = true} = {}) {
+    if (!convertCables) return collectRoutes(root)
     const connections = logicalConnections(root)
 
     disconnectAllRoutes(root)
@@ -162,13 +166,18 @@ export function normalizeLayoutRoutes(root) {
     return routes
 }
 
-// ELK only lays out routes between child nodes. Connections to group pads
-// still need to follow the child nodes after their positions have changed.
+// Routes crossing the preserved region need their real endpoints, rather
+// than the temporary ports on the region's bounding rectangle.
 export function rerouteLayoutBoundaryRoutes(root, routes, patch) {
     const elkRoutes = new Set((patch?.routes ?? []).map(item => item.route))
+    const movedNodes = new Set(patch.nodes.map(item => item.node))
+    const movedPads = new Set((patch.pads ?? []).map(item => item.pad))
+    const moved = endpoint => endpoint?.is.pin ? movedNodes.has(endpoint.node) : movedPads.has(endpoint)
 
     for (const route of routes ?? []) {
         if (elkRoutes.has(route)) continue
-        route.autoRoute(root?.nodes ?? [])
+        if (!moved(route.from) && !moved(route.to)) continue
+        // Do not let autoRoute's side selection modify preserved pins.
+        route.fourPointRoute(root.nodes) || route.sixPointRoute(root.nodes)
     }
 }

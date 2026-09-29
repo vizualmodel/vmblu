@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
 // Model: node-editor
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.4","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.4"},"source":{"model":"core.mod.blu","hash":"fnv1a64:9b73c2927c76aa7f"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.5","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.5"},"source":{"model":"core.mod.blu","hash":"fnv1a64:35145a6b1981a04e"}}
 // ------------------------------------------------------------------
 
 // import the runtime code
@@ -23,7 +23,7 @@ const nodeList = [
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager",
-	uid: "zoIS",
+	uid: "iTMu",
 	factory: LibraryManager,
 	inputs: [
 		"-> add file",
@@ -37,7 +37,7 @@ const nodeList = [
 	//____________________________________________DOCUMENT MANAGER
 	{
 	name: "document manager",
-	uid: "UpTZ",
+	uid: "cyoJ",
 	factory: DocumentManager,
 	inputs: [
 		"-> file.selected",
@@ -78,7 +78,7 @@ const nodeList = [
 	//___________________________________________________CLIPBOARD
 	{
 	name: "clipboard",
-	uid: "cnJC",
+	uid: "naNO",
 	factory: Clipboard,
 	inputs: [
 		"-> switched",
@@ -94,7 +94,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "ONKS",
+	uid: "hVbs",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> show",
@@ -102,16 +102,16 @@ const nodeList = [
 		],
 	outputs: [
 		"selected node -> ()",
-		"remove file -> remove file @ library manager (Lvgl)",
-		"add file -> add file @ library manager (Lvgl)",
-		"get path -> path @ path request (hLTq)",
+		"remove file -> remove file @ library manager (tpOi)",
+		"add file -> add file @ library manager (tpOi)",
+		"get path -> path @ path request (AtUd)",
 		"modal div -> ()"
 		]
 	},
 	//_____________________________________________LIBRARY MANAGER
 	{
 	name: "library manager",
-	uid: "Lvgl",
+	uid: "tpOi",
 	factory: LibraryManager,
 	inputs: [
 		"-> switch library",
@@ -119,13 +119,13 @@ const nodeList = [
 		"-> add file"
 		],
 	outputs: [
-		"build table -> build table @ node selector (ONKS)"
+		"build table -> build table @ node selector (hVbs)"
 		]
 	},
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "hLTq",
+	uid: "AtUd",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -138,7 +138,7 @@ const nodeList = [
 	//________________________________________________VIEW MANAGER
 	{
 	name: "view manager",
-	uid: "saQE",
+	uid: "xbFy",
 	factory: ViewManager,
 	inputs: [
 		"-> size change",
@@ -169,7 +169,7 @@ const nodeList = [
 	//_______________________________________________MODEL MANAGER
 	{
 	name: "model manager",
-	uid: "TYjW",
+	uid: "xiHq",
 	factory: ModelManager,
 	inputs: [
 		"-> accept changes",
@@ -208,7 +208,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.4","schemaVersion":"1.12.4"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.5","schemaVersion":"1.12.5"}
 }
 
 // prepare the runtime

@@ -63,6 +63,9 @@ export const keyboardHandling = {
         const ctx = manager?.getCanvasContext()
         if (!ctx) return
 
+        // Finish the old field before startEdit replaces its text and metadata.
+        if (this.state.action === doing.editTextField) this.stateSwitch(doing.nothing)
+
         // check if field is editable - must return the prop that will be edited
         const {prop, index} = object.startEdit?.(ctx, xyLocal)
 
@@ -96,7 +99,9 @@ export const keyboardHandling = {
         clearInterval( state.cursorInterval )
 
         // check
-        if (!text) return
+        if (!text?.active) return
+        // Consume the session before callbacks so it cannot be committed twice.
+        text.active = false
 
         // notify the object of the end of the edit
         text.obj.endEdit?.(text.saved)
@@ -108,12 +113,15 @@ export const keyboardHandling = {
 
     startBlinking(ctx) {
 
+        const session = this.textField.session
+
         let lastTime = 0;
         let on = true;
         let keepBlinking = true
 
         // time is in ms
         const blinkFunction = (time) => {
+            if (!this.textField.active || this.textField.session !== session) return
 
             // check the time
             if (time - lastTime >= style.std.blinkRate) {

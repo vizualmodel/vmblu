@@ -46,8 +46,8 @@ export const mouseDownHandling = {
 
  
 
-                    case NONE:
-                    case CTRL|SHIFT: {
+                    case NONE: {
+                    // case CTRL|SHIFT: {
 
                         // save the widget & node
                         state.lookWidget = hit.lookWidget
@@ -753,21 +753,21 @@ export const mouseDownHandling = {
 
                     case NONE:{
 
-                        // switch state
-                        this.stateSwitch(doing.panning)
-
-                        // save the current position
-                        this.doEdit(tx,'panning', {view:this})
-                    }
-                    break
-
-                    case SHIFT:{
-
                         // first switch the state - might end the previous selection !
                         this.stateSwitch(doing.selection)
 
                         // ..and only then start a new selection
                         this.selection.freeStart(xyLocal)
+                    }
+                    break
+
+                    case SHIFT:{
+
+                        // switch state
+                        this.stateSwitch(doing.panning)
+
+                        // save the current position
+                        this.doEdit(tx,'panning', {view:this})
                     }
                     break
 

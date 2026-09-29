@@ -33,6 +33,18 @@ export const pinNameHandling = {
     },
 
     endEdit(saved) {
+        const commitBundleList = this.commitBundleList
+        delete this.commitBundleList
+        if (this.editOriginal?.name && this.name.includes(',') && commitBundleList && this.name !== saved) {
+            const text = this.name
+            // Plan the conversion against the original pin, preserving its
+            // identity, metadata and connections when retained in the list.
+            this.restoreSavedName(saved)
+            this.is.editingName = false
+            delete this.editOriginal
+            commitBundleList(text)
+            return
+        }
         if (!this.editOriginal?.name && this.name.includes(',')) {
             try { createBundleFromList(this, this.name) }
             catch (error) {
@@ -328,11 +340,9 @@ export const pinNameHandling = {
                     // skip 
                     if (tack == other) continue
 
-                    // get the pin or pad at the other end 
-                    const busWidget = tack.route.to == tack ? tack.route.from : tack.route.to
-
-                    // it could be that the route was not used
-                    if (other.cable.areConnected(this, busWidget)) {
+                    // Cable matching belongs to the tacks, including aliases
+                    // and input selectivity.
+                    if (other.areConnected(tack)) {
                         tack.route.is.notUsed = false
                         found = true
                     }

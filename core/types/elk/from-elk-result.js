@@ -2,8 +2,8 @@ import {makeDiagnostic} from './layout-types.js'
 
 function clonePoint(point) {
     return {
-        x: Math.round(Number(point.x) || 0),
-        y: Math.round(Number(point.y) || 0)
+        x: Number(point.x) || 0,
+        y: Number(point.y) || 0
     }
 }
 
@@ -14,15 +14,15 @@ function portLeft(node, port) {
 
 function lookPosition(node, geometry) {
     return {
-        x: Math.round((Number(node?.x) || 0) - (Number(geometry?.offsetX) || 0)),
-        y: Math.round((Number(node?.y) || 0) - (Number(geometry?.offsetY) || 0))
+        x: (Number(node?.x) || 0) - (Number(geometry?.offsetX) || 0),
+        y: (Number(node?.y) || 0) - (Number(geometry?.offsetY) || 0)
     }
 }
 
 function preservedPinY(lookY, pin) {
     const oldNodeY = Number(pin?.node?.look?.rect?.y) || 0
     const oldPinY = Number(pin?.rect?.y) || 0
-    return Math.round(lookY + oldPinY - oldNodeY)
+    return lookY + oldPinY - oldNodeY
 }
 
 function sectionPoints(section) {
@@ -46,15 +46,13 @@ export function fromElkResult(result, context) {
 
     for (const child of result?.children ?? []) {
         const node = context.nodeById.get(child.id)
-        const pad = context.padById?.get(child.id)
-
-        if (pad) {
-            pads.push({
-                pad,
-                id: child.id,
-                x: Math.round(Number(child.x) || 0),
-                y: Math.round(Number(child.y) || 0),
-                leftText: !!pad.proxy?.is?.input
+        if (child.id === context.region?.id) continue
+        const column = context.columns?.get(child.id)
+        if (column) {
+            for (const row of column.rows) pads.push({
+                pad: row.pad, id: row.id,
+                x: child.x + row.x, y: child.y + row.y,
+                leftText: column.input
             })
             continue
         }
@@ -97,6 +95,7 @@ export function fromElkResult(result, context) {
             continue
         }
 
+        if (edgeRecord.boundary) continue // Reroute from the actual, preserved endpoint.
         const section = edge.sections?.[0]
         const wire = sectionPoints(section)
         if (wire.length < 2) {
@@ -105,6 +104,15 @@ export function fromElkResult(result, context) {
         }
 
         routes.push({route: edgeRecord.route, connectionId: edge.id, wire: routeWire(edgeRecord, wire)})
+    }
+
+    const fixed = context.region && result.children?.find(child => child.id === context.region.id)
+    if (fixed) {
+        const dx = context.region.x - fixed.x
+        const dy = context.region.y - fixed.y
+        for (const item of [...nodes, ...pads]) { item.x += dx; item.y += dy }
+        for (const item of pins) item.y += dy
+        for (const item of routes) for (const point of item.wire) { point.x += dx; point.y += dy }
     }
 
     return {

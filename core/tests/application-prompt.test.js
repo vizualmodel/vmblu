@@ -28,7 +28,7 @@ The project is in progress.
 
     assert.equal(sent[0].message, 'node prompt')
     assert.equal(sent[0].payload.header, 'Application prompt for Root')
-    assert.deepEqual(sent[0].payload.pos, {x: 85, y: 210})
+    assert.deepEqual(sent[0].payload.pos, {x: 125, y: 215})
     assert.equal(sent[0].payload.uid, 'root-id')
     assert.match(sent[0].payload.text, /# Application prompt/)
     assert.match(sent[0].payload.text, /Overall application prompt\./)

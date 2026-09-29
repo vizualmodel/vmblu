@@ -11,6 +11,8 @@ import {redoxWidget} from '../nodes/model-manager/redox-widget.js'
 import {Selection} from '../types/view/selection.js'
 import {redoxPinArea} from '../nodes/model-manager/redox-pin-area.js'
 import {dragBundle} from '../types/widget/pin-bundle.js'
+import {beginBundleTextEdit} from '../types/widget/bundle-text-edit.js'
+import {TextEdit} from '../types/util/text-edit.js'
 
 const model = {fullPath: () => 'bundle.mod.blu', getArl: () => null, header: {copyWithoutStyle: () => ({version: '1.12.3'})}}
 function fixture(names = ['new', 'add', 'remove'], input = true, iface = 'items') {
@@ -22,6 +24,212 @@ function fixture(names = ['new', 'add', 'remove'], input = true, iface = 'items'
 function harness() {
     return {...redoxBundle, saveEdit(verb, param) { this.edit = {verb, param} }, manager: {tx: {send() {}}}}
 }
+
+test('bundle list edits reuse renamed pins and preserve connections and layout through undo', () => {
+    const {node, pins} = fixture(['a', 'b', 'c'])
+    const output = fixture(['a', 'b', 'c'], false, 'out')
+    output.node.look.moveDelta(500, 0)
+    const root = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Root', nodes: []})
+    root.nodes = [node, output.node]
+    const routes = pins.map((pin, i) => root.createRoute(output.pins[i], pin))
+    const wires = routes.map(route => route.copyWire())
+    const positions = node.look.widgets.map(widget => [widget, {...widget.rect}])
+    pins[2].prompt = 'Keep this profile'
+    createBundle(pins)
+    const view = {selection: new Selection()}
+    const redox = harness()
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: 'c, a, d'})
+    const edit = redox.edit.param
+    const next = edit.next
+    assert.equal(next[0], pins[2])
+    assert.equal(next[1], pins[0])
+    assert.equal(next[2].name, 'items.d')
+    assert.equal(next[0].prompt, 'Keep this profile')
+    assert.equal(next[2], pins[1])
+    assert.equal(next[2].routes[0], routes[1])
+    assert.ok(node.look.widgets.includes(pins[1]))
+    assert.equal(output.pins[1].routes.length, 1)
+    assert.equal(next[0].routes[0], routes[2])
+    assert.equal(new Set(next.map(pin => pin.rect.y)).size, 3)
+    const wid = next[2].wid
+    for (let i = 0; i < 3; i++) {
+        redox.editBundle.undo(edit)
+        assert.deepEqual(pins[0].bundle, pins)
+        assert.deepEqual(routes.map(route => route.copyWire()), wires)
+        assert.deepEqual(node.look.widgets.map(widget => [widget, {...widget.rect}]), positions)
+        assert.equal(pins[1].routes[0], routes[1])
+        redox.editBundle.redo(edit)
+        assert.deepEqual(next[0].bundle, next)
+        assert.equal(next[2].wid, wid)
+        assert.equal(output.pins[1].routes.length, 1)
+    }
+})
+
+test('bundle list validation, no-op, singleton and empty edits are atomic', () => {
+    const {node, pins} = fixture(['a', 'b', 'c', 'other'])
+    createBundle(pins.slice(0, 3))
+    const view = {selection: new Selection()}
+    const redox = harness()
+    for (const text of ['a,b,c', 'a,,b', 'a,a', 'a,other']) {
+        redox.editBundle.doit.call(redox, {view, pin: pins[0], text})
+        assert.equal(redox.edit, undefined)
+        assert.equal(pins[0].bundle.length, 3)
+    }
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: 'b'})
+    assert.equal(pins[1].bundle, null)
+    assert.ok(node.look.widgets.includes(pins[1]))
+    redox.editBundle.undo(redox.edit.param)
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: ''})
+    assert.ok(pins.slice(0, 3).every(pin => !node.look.widgets.includes(pin)))
+    assert.ok(node.look.widgets.includes(pins[3]))
+    redox.editBundle.undo(redox.edit.param)
+    assert.equal(pins[0].bundle.length, 3)
+})
+
+test('inline bundle buffer never changes pin names and Escape discards it', () => {
+    const {pins} = fixture(['a', 'b'])
+    createBundle(pins)
+    const field = new TextEdit()
+    const view = {textField: field, beginTextEdit(session) {
+        const {prop, index} = session.startEdit({measureText: text => ({width: text.length * 8})})
+        field.newEdit(session, prop, index)
+    }}
+    const commits = []
+    beginBundleTextEdit(view, pins[0], null, false, text => commits.push(text))
+    field.obj.text = 'a, c'
+    assert.deepEqual(pins.map(pin => pin.name), ['items.a', 'items.b'])
+    field.handleSpecialKey({key: 'Escape'})
+    field.obj.endEdit(field.saved)
+    assert.deepEqual(commits, [])
+    assert.equal(pins[0].bundleEdit, undefined)
+    assert.equal(field.saved, null)
+    beginBundleTextEdit(view, pins[0], null, false, text => commits.push(text))
+    field.obj.text = 'b, d'
+    field.obj.endEdit(field.saved)
+    assert.deepEqual(commits, ['b, d'])
+    assert.equal(field.obj.text, '')
+})
+
+test('bundle editing preserves retained postfix names rather than reinterpreting their labels', () => {
+    const {node, pins} = fixture(['a', 'b'])
+    pins[0].name = 'a.items'
+    pins[0].pxlen = -5
+    pins[1].name = 'b.items'
+    pins[1].pxlen = -5
+    createBundle(pins)
+    const redox = harness(), view = {selection: new Selection()}
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: `${pins[1].displayName(false)},${pins[0].displayName(false)},c`})
+    assert.deepEqual(redox.edit.param.next.map(pin => pin.name), ['b.items', 'a.items', 'items.c'])
+    assert.equal(redox.edit.param.next[0], pins[1])
+    redox.editBundle.undo(redox.edit.param)
+    assert.deepEqual(node.look.widgets.filter(widget => widget.is.pin), pins)
+})
+
+test('proxy bundle renames reuse pads, metadata and both sets of connections', () => {
+    const node = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Group', nodes: [],
+        interfaces: [{interface: 'commands', pins: ['a', 'b', 'c'].map(name => ({name: 'commands.' + name, kind: 'input', left: true}))}]})
+    const pins = node.look.widgets.filter(widget => widget.is.pin)
+    createBundle(pins)
+    const pads = node.pads.slice()
+    const inside = fixture(['b'], true), outside = fixture(['b'], false)
+    node.nodes = [inside.node]
+    const internal = new Route(pads[1], null)
+    pads[1].routes.push(internal)
+    assert.ok(internal.connect(inside.pins[0]))
+    internal.wire = [pads[1].center(), inside.pins[0].center()]
+    const external = new Route(outside.pins[0], null)
+    outside.pins[0].routes.push(external)
+    assert.ok(external.connect(pins[1]))
+    external.wire = [outside.pins[0].center(), pins[1].center()]
+    pins[1].prompt = 'Preserve metadata'
+    const contact = pads[1].center(), padRects = pads.map(pad => ({...pad.rect}))
+    const wire = internal.copyWire(), outerWire = external.copyWire()
+    const ids = pins.map(pin => pin.wid)
+    const redox = harness(), view = {selection: new Selection()}
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: 'c,a,muchLongerName'})
+    const edit = redox.edit.param
+    assert.deepEqual(edit.next, [pins[2], pins[0], pins[1]])
+    assert.equal(edit.added.length, 0)
+    assert.equal(edit.deleted.length, 0)
+    for (let i = 0; i < 3; i++) {
+        assert.equal(pins[1].name, 'commands.muchLongerName')
+        assert.equal(pads[1].text, pins[1].name)
+        assert.equal(pins[1].pad, pads[1])
+        assert.deepEqual(pads[1].center(), contact)
+        assert.equal(pins[1].prompt, 'Preserve metadata')
+        assert.deepEqual(pins.map(pin => pin.wid), ids)
+        assert.deepEqual(node.pads, pads)
+        assert.equal(pads[1].routes[0], internal)
+        assert.equal(pins[1].routes[0], external)
+        assert.deepEqual(internal.wire, wire)
+        redox.editBundle.undo(edit)
+        assert.deepEqual(pins.map(pin => pin.name), ['commands.a', 'commands.b', 'commands.c'])
+        assert.deepEqual(pads.map(pad => pad.text), ['commands.a', 'commands.b', 'commands.c'])
+        assert.deepEqual(pads.map(pad => pad.rect), padRects)
+        assert.deepEqual(external.wire, outerWire)
+        redox.editBundle.redo(edit)
+    }
+    const root = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Root', nodes: []})
+    root.nodes = [node, outside.node]
+    const loaded = new ModelCompiler(new UIDGenerator()).compileRawNode(model, root.makeRaw(null))
+    const renamed = loaded.nodes[0].look.widgets.find(pin => pin.name === 'commands.muchLongerName')
+    assert.equal(renamed.pad.text, renamed.name)
+    assert.equal(renamed.routes.length, 1)
+    assert.equal(renamed.pad.routes.length, 1)
+})
+
+test('bundle lists reuse unmatched members in order and only add or delete excess members', () => {
+    const {pins} = fixture(['a', 'b', 'c'])
+    createBundle(pins)
+    const redox = harness(), view = {selection: new Selection()}
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: 'x,c,y,z'})
+    const growth = redox.edit.param
+    assert.deepEqual(growth.next.slice(0, 3), [pins[0], pins[2], pins[1]])
+    assert.equal(growth.added.length, 1)
+    assert.equal(growth.deleted.length, 0)
+    redox.editBundle.undo(growth)
+    assert.deepEqual(pins.map(pin => pin.name), ['items.a', 'items.b', 'items.c'])
+    redox.editBundle.doit.call(redox, {view, pin: pins[0], text: 'c,x'})
+    const shrink = redox.edit.param
+    assert.deepEqual(shrink.next, [pins[2], pins[0]])
+    assert.equal(shrink.added.length, 0)
+    assert.equal(shrink.deleted.length, 1)
+    redox.editBundle.undo(shrink)
+    assert.deepEqual(pins.map(pin => pin.name), ['items.a', 'items.b', 'items.c'])
+})
+
+test('editing proxy bundles restores both internal pad routes and external routes', () => {
+    const node = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Group', nodes: [], interfaces: [{interface: 'commands', pins: []}]})
+    const pin = node.look.addPin('', {x: 0, y: NaN}, {input: true, proxy: true, left: true})
+    node.addPad(pin)
+    createBundleFromList(pin, 'a,b,c')
+    const members = pin.bundle.slice(), pads = node.pads.slice()
+    const inside = fixture(['b'], true, 'in')
+    const outside = fixture(['b'], false, 'out')
+    const internal = new Route(members[1].pad, null)
+    members[1].pad.routes.push(internal)
+    assert.ok(internal.connect(inside.pins[0]))
+    internal.wire = [members[1].pad.center(), inside.pins[0].center()]
+    const external = new Route(outside.pins[0], null)
+    outside.pins[0].routes.push(external)
+    assert.ok(external.connect(members[1]))
+    external.wire = [outside.pins[0].center(), members[1].center()]
+    const view = {selection: new Selection()}, redox = harness()
+    redox.editBundle.doit.call(redox, {view, pin, text: 'c,d'})
+    const edit = redox.edit.param
+    assert.equal(inside.pins[0].routes.length, 0)
+    assert.equal(outside.pins[0].routes.length, 0)
+    assert.equal(edit.next[1].pad.text, 'commands.d')
+    for (let i = 0; i < 2; i++) {
+        redox.editBundle.undo(edit)
+        assert.deepEqual(node.pads, pads)
+        assert.equal(inside.pins[0].routes[0], internal)
+        assert.equal(outside.pins[0].routes[0], external)
+        redox.editBundle.redo(edit)
+        assert.equal(inside.pins[0].routes.length, 0)
+        assert.equal(outside.pins[0].routes.length, 0)
+    }
+})
 
 for (const reverse of [false, true]) for (const targetBundle of [false, true]) {
     test(`drawn bundle connections preserve bends and pin sides (reverse=${reverse}, targetBundle=${targetBundle})`, () => {
@@ -305,6 +513,86 @@ test('comma-list proxy creation updates every pad and preserves existing pad con
     const pads = pin.bundle.map(member => member.pad)
     expandBundle(pin)
     assert.deepEqual(node.pads, pads)
+})
+
+test('editing an existing proxy into a list preserves its pad and routes and undoes as one edit', () => {
+    const node = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Group', nodes: [],
+        interfaces: [{interface: 'commands', pins: [{name: 'commands.a', kind: 'input', left: true}]}]})
+    const pin = node.look.widgets.find(widget => widget.is.pin), pad = pin.pad
+    const inside = fixture(['a'], true), outside = fixture(['a'], false)
+    node.nodes = [inside.node]
+    const internal = node.createRoute(pad, inside.pins[0])
+    const external = node.createRoute(outside.pins[0], pin)
+    const wire = internal.copyWire(), outerWire = external.copyWire()
+    const view = {selection: new Selection(), textField: new TextEdit(), beginTextEdit(widget) {
+        const {prop, index} = widget.startEdit(null)
+        this.textField.newEdit(widget, prop, index)
+    }}
+    const redox = harness()
+    redoxWidget.widgetTextEdit.doit.call(redox, {view, widget: pin})
+    const edit = redox.edit
+    pin.name = 'a,b,c'
+    pin.endEdit(view.textField.saved)
+    assert.equal(redox.edit, edit)
+    assert.ok(edit.param.bundleChange)
+    const members = pin.bundle.slice(), pads = node.pads.slice()
+    assert.deepEqual(members.map(member => member.name), ['commands.a', 'commands.b', 'commands.c'])
+    assert.deepEqual(pads.map(member => member.text), ['commands.a', 'commands.b', 'commands.c'])
+    assert.equal(members[0], pin)
+    assert.equal(pads[0], pad)
+    assert.equal(pin.routes[0], external)
+    assert.equal(pad.routes[0], internal)
+    assert.equal(members[1].routes.length, 0)
+    assert.equal(pads[1].routes.length, 0)
+    for (let i = 0; i < 3; i++) {
+        redoxWidget.widgetTextEdit.undo.call(redox, edit.param)
+        assert.equal(pin.bundle, null)
+        assert.deepEqual(node.pads, [pad])
+        assert.deepEqual(node.look.widgets.filter(widget => widget.is.pin), [pin])
+        assert.deepEqual(internal.wire, wire)
+        assert.deepEqual(external.wire, outerWire)
+        redoxWidget.widgetTextEdit.redo.call(redox, edit.param)
+        assert.deepEqual(pin.bundle, members)
+        assert.deepEqual(node.pads, pads)
+        assert.equal(pin.routes[0], external)
+        assert.equal(pad.routes[0], internal)
+    }
+    const root = new ModelCompiler(new UIDGenerator()).compileRawNode(model, {kind: 'group', name: 'Root', nodes: []})
+    root.nodes = [node, outside.node]
+    const restored = new ModelCompiler(new UIDGenerator()).compileRawNode(model, root.makeRaw(null))
+    const group = restored.nodes[0]
+    const restoredPin = group.look.widgets.find(widget => widget.is.pin && widget.name === 'commands.a')
+    assert.equal(restoredPin.bundle.length, 3)
+    assert.equal(group.pads.length, 3)
+    assert.equal(restoredPin.routes.length, 1)
+    assert.equal(restoredPin.pad.routes.length, 1)
+})
+
+test('existing-pin list edits preserve absolute names and reject invalid lists without extra members', () => {
+    for (const text of ["'a,b,c", "'a,b,b", "'a,,b", 'a']) {
+        const {node, pins: [pin]} = fixture(['a'])
+        pin.name = 'a'
+        pin.pxlen = 0
+        const view = {selection: new Selection(), textField: new TextEdit(), beginTextEdit(widget) {
+            const {prop, index} = widget.startEdit(null)
+            this.textField.newEdit(widget, prop, index)
+        }}
+        const redox = harness()
+        redoxWidget.widgetTextEdit.doit.call(redox, {view, widget: pin})
+        pin.name = text
+        if (text === 'a') view.textField.handleSpecialKey({key: 'Escape'})
+        pin.endEdit(view.textField.saved)
+        if (text === "'a,b,c") {
+            assert.equal(pin.bundle[0], pin)
+            assert.equal(pin.name, 'a')
+            assert.equal(pin.pxlen, 0)
+            assert.deepEqual(pin.bundle.map(member => member.name), ['a', 'items.b', 'items.c'])
+        } else {
+            assert.equal(pin.name, 'a')
+            assert.equal(pin.pxlen, 0)
+            assert.deepEqual(node.look.widgets.filter(widget => widget.is.pin), [pin])
+        }
+    }
 })
 
 test('generated application and differently named fan-out connections are unchanged by bundle save/reload', () => {

@@ -1,5 +1,6 @@
 import {bundleRect, bundleRepresentative, bundleMembers} from '../widget/pin-bundle.js'
 import {style} from '../util/style.js'
+import {routeMoving} from './route-moving.js'
 
 function bundleEndpoint(widget) {
     if (!widget?.is.pin) return widget
@@ -14,6 +15,13 @@ function bundleCenter(widget) {
     if (!widget?.is.pin) return widget?.center?.()
     const rect = bundleRect(widget)
     return {x: widget.is.left ? rect.x + style.pin.wOutside : rect.x + rect.w - style.pin.wOutside, y: rect.y + rect.h / 2}
+}
+
+function bundleSegmentIsHorizontal(a, b) {
+    const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y)
+    // ELK rounds bends to whole pixels while pin centers can be half-pixels.
+    // Prefer the dominant axis so short vertical segments stay vertical.
+    return dy === 0 || (dy <= 1 && dx > dy)
 }
 
 export function projectBundleRouteWire(representative) {
@@ -33,7 +41,7 @@ export function projectBundleRouteWire(representative) {
         const index = start ? 0 : wire.length - 1
         const adjacent = start ? 1 : wire.length - 2
         const old = wire[index]
-        if (wire[adjacent].y === old.y) wire[adjacent].y = center.y
+        if (bundleSegmentIsHorizontal(wire[adjacent], old)) wire[adjacent].y = center.y
         else wire[adjacent].x = center.x
         wire[index] = center
     }
@@ -57,14 +65,25 @@ export const routeBundle = {
     bundleRouteWire() {
         const representative = this.bundleRoutes()[0] ?? this
         if (representative.bundleDrag) return representative.bundleDrag.wire
+        if (!representative.to && representative.bundlePreviewTarget)
+            return projectBundleRouteWire({...representative, to: representative.bundlePreviewTarget})
         return projectBundleRouteWire(representative)
+    },
+
+    setBundlePreviewTarget(widget) {
+        if (widget?.is.pin) this.bundlePreviewTarget = widget
+        else delete this.bundlePreviewTarget
     },
 
     // Keep logical geometry intact until release; a click alone never edits it.
     beginBundleRouteDrag(segment) {
         if (![this.from, this.to].some(widget => widget?.is.pin && widget.node.look.widgets.some(pin => pin.bundle))) return false
+        // Movable pads and tacks still use their ordinary slide handling.
+        const wire = this.bundleRouteWire()
+        if ((segment === 1 && !this.from.is.pin) ||
+            (segment === wire.length - 1 && !this.to.is.pin)) return false
         this.bundleDrag = {
-            wire: this.bundleRouteWire().map(point => ({...point})),
+            wire: wire.map(point => ({...point})),
             segment,
             moved: false,
         }
@@ -74,7 +93,7 @@ export const routeBundle = {
     moveBundleRouteDrag(delta) {
         const drag = this.bundleDrag
         if (!drag) return false
-        let s = drag.segment
+        const s = drag.segment
         const wire = drag.wire
         const a = wire[s - 1], b = wire[s]
         if (!a || !b) return true
@@ -82,14 +101,8 @@ export const routeBundle = {
         const distance = horizontal ? delta.y : delta.x
         if (!distance) return true
 
-        // End segments must keep their anchors. Add two bends so a straight shared
-        // line (or its first/last leg) can be dragged without moving any pin or pad.
-        if (s === 1 || s === wire.length - 1) {
-            const first = {x: a.x + (b.x - a.x) / 3, y: a.y + (b.y - a.y) / 3}
-            const last = {x: a.x + 2 * (b.x - a.x) / 3, y: a.y + 2 * (b.y - a.y) / 3}
-            wire.splice(s, 0, first, {...first}, last, {...last})
-            s = drag.segment = s + 2
-        }
+        // Pin-anchored end segments stay fixed, just like ordinary routes.
+        if (s === 1 || s === wire.length - 1) return true
         const axis = horizontal ? 'y' : 'x'
         wire[s - 1][axis] += distance
         wire[s][axis] += distance
@@ -102,12 +115,26 @@ export const routeBundle = {
         if (!drag) return false
         delete this.bundleDrag
         if (!drag.moved) return true
+        // Fuse in displayed coordinates before restoring the logical endpoints.
+        // Collapsed rows can put displayed segments close together even when
+        // their expanded coordinates are far apart.
+        routeMoving.endDrag.call({...routeMoving, wire: drag.wire, from: this.from, to: this.to}, drag.segment)
         this.restoreBundleRouteWire(drag.wire)
         return true
     },
 
     restoreBundleRouteWire(displayedWire) {
         const wire = displayedWire.map(point => ({...point}))
+        // A visually straight pin-to-pad line may have different expanded
+        // endpoint heights. Keep both anchors when restoring that geometry.
+        if (wire.length === 2) {
+            const from = this.from?.is.pin ? this.from.center() : wire[0]
+            const to = this.to?.is.pin ? this.to.center() : wire[1]
+            if (from.y !== to.y && wire[0].y === wire[1].y) {
+                const x = (wire[0].x + wire[1].x) / 2
+                wire.splice(1, 0, {x, y: wire[0].y}, {x, y: wire[1].y})
+            }
+        }
         // Undo the endpoint projection only. Interior bends stay where the user
         // placed them; expansion exposes this edit on the representative alone.
         for (const [widget, start] of [[this.from, true], [this.to, false]]) {
@@ -115,7 +142,7 @@ export const routeBundle = {
             const index = start ? 0 : wire.length - 1
             const adjacent = start ? 1 : wire.length - 2
             const center = widget.center()
-            const horizontal = wire[adjacent].y === wire[index].y
+            const horizontal = bundleSegmentIsHorizontal(wire[adjacent], wire[index])
             if (horizontal) wire[adjacent].y = center.y
             else wire[adjacent].x = center.x
             wire[index] = {...center}

@@ -112,8 +112,8 @@ export function bundleLocalName(pin) {
 
 export function matchBundleConnections(from, to) {
     const result = {pairs: [], unmatched: [], error: null}
-    if (!from?.is.pin || !to?.is.pin || from.is.proxy || to.is.proxy) {
-        result.error = 'Expand bundles to connect to buses, pads, or proxies.'
+    if (!from?.is.pin || !to?.is.pin) {
+        result.error = 'Expand bundles to connect to buses or pads.'
         return result
     }
     const source = bundleMembers(from), target = bundleMembers(to)
@@ -147,7 +147,7 @@ export function bundleConnectionPreview(match) {
 
 // Validate using the normal naming implementation on detached drafts, without
 // changing the existing pin, duplicate flags, routes, or widget-ID generator.
-export function createBundleFromList(pin, text) {
+export function parseBundleNames(pin, text, excluded = [pin]) {
     const look = pin.node.look
     const parts = text.split(',').map(name => name.trim())
     const drafts = []
@@ -163,13 +163,23 @@ export function createBundleFromList(pin, text) {
         draftLook.adjustPinWidth = () => {}
         draftLook.setDuplicatePin = () => {}
         draft.node = {...pin.node, look: draftLook}
-        if (!draft.checkNewName() || !draft.name) throw new Error(`Invalid bundle member: ${name}`)
-        const others = [...look.widgets.filter(other => other.is.pin && other !== pin), ...drafts]
+        const retained = (pin.bundle ?? [pin]).find(member => excluded.includes(member) && member.displayName(false) === name)
+        if (retained) {
+            draft.name = retained.name
+            draft.pxlen = retained.pxlen
+        } else if (!draft.checkNewName() || !draft.name) throw new Error(`Invalid bundle member: ${name}`)
+        const others = [...look.widgets.filter(other => other.is.pin && !excluded.includes(other)), ...drafts]
         if (others.some(other => draft.nameClash(other) || draft.hasFullNameMatch(other))) {
             throw new Error(`Duplicate pin or handler name: ${name}`)
         }
         drafts.push(draft)
     }
+    return drafts
+}
+
+export function createBundleFromList(pin, text) {
+    const look = pin.node.look
+    const drafts = parseBundleNames(pin, text)
     if (drafts.length < 2) throw new Error('A bundle needs at least two pins.')
     const members = [pin]
     pin.name = drafts[0].name

@@ -141,8 +141,10 @@ export const moveHandling = {
             // check all the short routes
             for (const route of pin.routes) {
 
-                // notation
-                const p = route.wire
+                // Snap the visible connection once, using the same collapsed
+                // geometry as rendering rather than hidden member positions.
+                if (route.bundleRoutes()[0] !== route) continue
+                const p = route.bundleRouteWire()
 
                 // routes should have at least three points
                 if (p.length < 3) continue

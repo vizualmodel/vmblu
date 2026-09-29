@@ -74,7 +74,7 @@ function assertPositions(actualRoot, expected) {
     assert.equal(actualRoot.nodes.length, expected.length)
 }
 
-test('nested-group auto-layout preserves pad connections and targets undo/redo to that group', async () => {
+test('nested-group full auto-layout preserves pad connections and targets undo/redo to that group', async () => {
     const {root, group} = compileNestedFixture()
     const outerPosition = {...root.nodes.find(node => node.name === 'Outside').look.rect}
     const beforePositions = nodePositions(group)
@@ -95,7 +95,7 @@ test('nested-group auto-layout preserves pad connections and targets undo/redo t
         }
     }
 
-    await redoxLayout.autoLayout.doit.call(history, {root: group})
+    await redoxLayout.autoLayout.doit.call(history, {root: group, convertCables: true})
 
     assert.equal(history.verb, 'autoLayout')
     assert.equal(history.param.root, group)
@@ -136,7 +136,7 @@ test('nested-group auto-layout preserves pad connections and targets undo/redo t
     assert.equal(group.cables.length, 1)
     assert.equal(root.cables.length, 0)
 
-    await redoxLayout.autoLayout.doit.call(history, {root: group})
+    await redoxLayout.autoLayout.doit.call(history, {root: group, convertCables: true})
     assert.equal(group.getRoutesAndConnections()[1].length, beforeConnectionCount)
     assert.equal(group.cables.length, 0)
     assert.equal(root.cables.length, 0)

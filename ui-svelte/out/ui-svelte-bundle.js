@@ -393,7 +393,7 @@ function assertRuntimeCompatibility(expectedFamily) {
 __name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.12.4";
+var RUNTIME_VERSION = "1.12.5";
 
 // shared/runtime.js
 var _Runtime = class _Runtime {
@@ -7184,8 +7184,8 @@ function Vscode_side_menu($$anchor, $$props) {
 	return pop({ handlers });
 }
 
-var root_1$m = template(`<span class="team svelte-v6tgws"><span class="bullet svelte-v6tgws"></span> <span class="name svelte-v6tgws"> </span></span>`);
-var root$j = template(`<div class="team-legend svelte-v6tgws"></div>`);
+var root_1$m = template(`<span class="team svelte-vujdsy"><span class="bullet svelte-vujdsy"></span> <span class="name svelte-vujdsy"> </span></span>`);
+var root$j = template(`<div class="team-legend svelte-vujdsy"></div>`);
 
 function Team_legend($$anchor, $$props) {
 	push($$props, false);
@@ -22866,7 +22866,7 @@ const NodeSelectorFactory = getFactory(Node_selector);
 
 // ------------------------------------------------------------------
 // Model: 
-// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.4","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.4"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:4dc9b74a6ad6b69c"}}
+// @vmblu-generated {"generated":true,"artifact":"application","compatibilityFamily":"1.12","schemaVersion":"1.12.5","generator":{"name":"@vizualmodel/vmblu-core","version":"1.12.5"},"source":{"model":"ui-svelte.mod.blu","hash":"fnv1a64:84f5acc69a459423"}}
 // ------------------------------------------------------------------
 
 
@@ -22877,7 +22877,7 @@ const nodeList = [
 	//_______________________________________APPLICATION INSPECTOR
 	{
 	name: "application inspector",
-	uid: "lOjV",
+	uid: "rguH",
 	factory: ApplicationInspectorFactory,
 	inputs: [
 		"-> application settings"
@@ -22889,7 +22889,7 @@ const nodeList = [
 	//__________________________________________ENDPOINT INSPECTOR
 	{
 	name: "endpoint inspector",
-	uid: "aAIP",
+	uid: "aceA",
 	factory: EndpointInspectorFactory,
 	inputs: [
 		"-> endpoint settings"
@@ -22901,7 +22901,7 @@ const nodeList = [
 	//________________________________________CONNECTION INSPECTOR
 	{
 	name: "connection inspector",
-	uid: "DdAi",
+	uid: "ixXd",
 	factory: ConnectionInspectorFactory,
 	inputs: [
 		"-> connection settings"
@@ -22913,7 +22913,7 @@ const nodeList = [
 	//________________________________________________CONTEXT MENU
 	{
 	name: "context menu",
-	uid: "Mujn",
+	uid: "VVPN",
 	factory: ContextMenuFactory,
 	inputs: [
 		"-> context menu"
@@ -22926,7 +22926,7 @@ const nodeList = [
 	//________________________________________________PATH REQUEST
 	{
 	name: "path request",
-	uid: "oNXL",
+	uid: "TsTG",
 	factory: PathRequestFactory,
 	inputs: [
 		"-> path"
@@ -22939,7 +22939,7 @@ const nodeList = [
 	//___________________________________________SINGLE TEXT FIELD
 	{
 	name: "single text field",
-	uid: "IxHl",
+	uid: "JfEY",
 	factory: SingleTextFieldFactory,
 	inputs: [
 		"-> show"
@@ -22951,7 +22951,7 @@ const nodeList = [
 	//_________________________________________________MESSAGE BOX
 	{
 	name: "message box",
-	uid: "tWjI",
+	uid: "mRzZ",
 	factory: MessageBoxFactory,
 	inputs: [
 		"-> show"
@@ -22963,7 +22963,7 @@ const nodeList = [
 	//___________________________________________________TOAST BOX
 	{
 	name: "toast box",
-	uid: "IBED",
+	uid: "bXPw",
 	factory: ToastBoxFactory,
 	inputs: [
 		"-> show"
@@ -22975,7 +22975,7 @@ const nodeList = [
 	//__________________________________________________JSON INPUT
 	{
 	name: "json input",
-	uid: "IVde",
+	uid: "Ydnk",
 	factory: JsonInputFactory,
 	inputs: [
 		"-> json"
@@ -22987,7 +22987,7 @@ const nodeList = [
 	//_______________________________________________NODE SETTINGS
 	{
 	name: "node settings",
-	uid: "WKOS",
+	uid: "eutA",
 	factory: NodeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -22999,7 +22999,7 @@ const nodeList = [
 	//__________________________________________________TEXT BLOCK
 	{
 	name: "text block",
-	uid: "PcVp",
+	uid: "zSyB",
 	factory: TextBlockFactory,
 	inputs: [
 		"-> text"
@@ -23011,7 +23011,7 @@ const nodeList = [
 	//_______________________________________________NODE SELECTOR
 	{
 	name: "node selector",
-	uid: "IioA",
+	uid: "bUfR",
 	factory: NodeSelectorFactory,
 	inputs: [
 		"-> build table",
@@ -23028,7 +23028,7 @@ const nodeList = [
 	//_______________________________________________NAME AND PATH
 	{
 	name: "name and path",
-	uid: "jlab",
+	uid: "kAMK",
 	factory: NameAndPathFactory,
 	inputs: [
 		"-> name and path"
@@ -23041,7 +23041,7 @@ const nodeList = [
 	//___________________________________________DOCUMENT SETTINGS
 	{
 	name: "document settings",
-	uid: "NqmI",
+	uid: "dskM",
 	factory: DocumentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23056,7 +23056,7 @@ const nodeList = [
 	//_______________________________________________TEAM SETTINGS
 	{
 	name: "team settings",
-	uid: "PeRm",
+	uid: "lpcp",
 	factory: TeamSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23068,7 +23068,7 @@ const nodeList = [
 	//______________________________________MODEL RUNTIME SETTINGS
 	{
 	name: "model runtime settings",
-	uid: "ZahU",
+	uid: "uobK",
 	factory: ModelRuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23080,7 +23080,7 @@ const nodeList = [
 	//______________________________________________AGENT SETTINGS
 	{
 	name: "agent settings",
-	uid: "PIrI",
+	uid: "lEHW",
 	factory: AgentSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23092,7 +23092,7 @@ const nodeList = [
 	//_________________________________________________CONFIRM BOX
 	{
 	name: "confirm box",
-	uid: "bDcN",
+	uid: "GhWB",
 	factory: ConfirmBox,
 	inputs: [
 		"-> show"
@@ -23104,7 +23104,7 @@ const nodeList = [
 	//____________________________________________RUNTIME SETTINGS
 	{
 	name: "runtime settings",
-	uid: "rhVA",
+	uid: "izbg",
 	factory: RuntimeSettingsFactory,
 	inputs: [
 		"-> show"
@@ -23116,7 +23116,7 @@ const nodeList = [
 	//_________________________________________________PIN PROFILE
 	{
 	name: "pin profile",
-	uid: "NZZR",
+	uid: "dbFG",
 	factory: PinProfileFactory,
 	inputs: [
 		"-> show"
@@ -23129,7 +23129,7 @@ const nodeList = [
 	//_______________________________________________TOOL SETTINGS
 	{
 	name: "tool settings",
-	uid: "EgWG",
+	uid: "joGK",
 	factory: PinToolFactory,
 	inputs: [
 		"-> show"
@@ -23141,7 +23141,7 @@ const nodeList = [
 	//______________________________________________EVENT SETTINGS
 	{
 	name: "event settings",
-	uid: "WmyU",
+	uid: "TtMJ",
 	factory: PinEventFactory,
 	inputs: [
 		"-> show"
@@ -23153,7 +23153,7 @@ const nodeList = [
 	//______________________________________________MARKDOWN INPUT
 	{
 	name: "markdown input",
-	uid: "sWMV",
+	uid: "QAFz",
 	factory: MarkdownInputFactory,
 	inputs: [
 		"-> markdown"
@@ -23165,7 +23165,7 @@ const nodeList = [
 	//__________________________________________PROJECT REFERENCES
 	{
 	name: "project references",
-	uid: "DIjI",
+	uid: "dbPG",
 	factory: ProjectReferencesFactory,
 	inputs: [
 		"-> project references"
@@ -23177,7 +23177,7 @@ const nodeList = [
 	//_______________________________________________CANVAS LAYOUT
 	{
 	name: "canvas layout",
-	uid: "ZtZX",
+	uid: "EjdB",
 	factory: CanvasLayoutFactory,
 	inputs: [
 		"-> menu",
@@ -23193,7 +23193,7 @@ const nodeList = [
 	//____________________________________________MENU TABS WINDOW
 	{
 	name: "menu tabs window",
-	uid: "joQH",
+	uid: "gFjC",
 	factory: MenuTabsWindow,
 	inputs: [
 		"-> menu div",
@@ -23212,7 +23212,7 @@ const nodeList = [
 	//____________________________________________LEFT MENU LAYOUT
 	{
 	name: "left menu layout",
-	uid: "oXTV",
+	uid: "XNge",
 	factory: LeftMenuLayoutFactory,
 	inputs: [
 		"-> left menu",
@@ -23229,7 +23229,7 @@ const nodeList = [
 	//__________________________________________COLUMN-MAIN LAYOUT
 	{
 	name: "column-main layout",
-	uid: "qHiK",
+	uid: "RVEP",
 	factory: ColumnMainFactory,
 	inputs: [
 		"-> left column",
@@ -23242,7 +23242,7 @@ const nodeList = [
 	//__________________________________VERTICAL MENU TABS CONTENT
 	{
 	name: "vertical menu tabs content",
-	uid: "sjlh",
+	uid: "RZcY",
 	factory: VerticalMenuTabsContent,
 	inputs: [
 		"-> content.div",
@@ -23262,7 +23262,7 @@ const nodeList = [
 	//__________________________________________________TAB RIBBON
 	{
 	name: "tab ribbon",
-	uid: "ZwEl",
+	uid: "UEQC",
 	factory: TabRibbonFactory,
 	inputs: [
 		"-> tab.new",
@@ -23279,7 +23279,7 @@ const nodeList = [
 	//________________________________________________OLD TOP MENU
 	{
 	name: "old top menu",
-	uid: "xbBd",
+	uid: "mPsj",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23303,7 +23303,7 @@ const nodeList = [
 	//____________________________________________________TOP MENU
 	{
 	name: "top menu",
-	uid: "HAMF",
+	uid: "YsqB",
 	factory: TopMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23327,7 +23327,7 @@ const nodeList = [
 	//___________________________________________________SIDE MENU
 	{
 	name: "side menu",
-	uid: "OmTf",
+	uid: "NgTr",
 	factory: SideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23341,7 +23341,7 @@ const nodeList = [
 	//____________________________________________VSCODE SIDE MENU
 	{
 	name: "vscode side menu",
-	uid: "JBbF",
+	uid: "HWzf",
 	factory: VscodeSideMenuFactory,
 	inputs: [],
 	outputs: [
@@ -23362,7 +23362,7 @@ const nodeList = [
 	//_________________________________________________TEAM LEGEND
 	{
 	name: "team legend",
-	uid: "WfbW",
+	uid: "zacm",
 	factory: TeamLegendFactory,
 	inputs: [
 		"-> teams"
@@ -23375,7 +23375,7 @@ const nodeList = [
 
 // Runtime options
 const runtimeOptions = {
-    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.4","schemaVersion":"1.12.4"}
+    vmblu: {"compatibilityFamily":"1.12","generatorVersion":"1.12.5","schemaVersion":"1.12.5"}
 };
 
 // prepare the runtime

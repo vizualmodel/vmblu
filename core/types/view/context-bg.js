@@ -11,6 +11,7 @@ const cm = {
 		{text:'new input pad',	icon:'new_label',	char:'ctrl i', 	state:"enabled",	action:newInputPad},
 		{text:'new output pad',	icon:'new_label',	char:'ctrl o', 	state:"enabled",	action:newOutputPad},
 		{text:'auto layout',	icon:'account_tree',					state:"enabled",	action:autoLayout},
+		{text:'auto layout everything…', icon:'account_tree', state:"enabled", action:autoLayoutEverything},
 		{text:'select node',	icon:'play_arrow',	char:'ctrl n', 	state:"enabled",	action:selectNode},
 		{text:"paste as link",	icon:"link",		char:'ctrl l',	state:"enabled", 	action:linkFromClipboard},
 		{text:"paste",			icon:"content_copy",char:'ctrl v',	state:"enabled", 	action:pasteFromClipboard},
@@ -64,9 +65,21 @@ function autoLayout(e, contextMenuTx) {
 
 	contextMenuTx.send('confirm', {
 		title: 'Confirm auto layout',
-		message: 'Auto layout this group? Its nodes and pads will be repositioned.',
+		message: 'Auto layout this group? Cables and their attached nodes and pads will stay in place. Other nodes and pads will be repositioned.',
 		pos: {x: e.clientX, y: e.clientY},
 		ok: () => editTx.send('redox.doit', {verb: 'autoLayout', param: {root}}),
+		cancel: () => {}
+	})
+}
+
+function autoLayoutEverything(e, contextMenuTx) {
+	const editTx = cm.tx
+	const root = cm.view.root
+	contextMenuTx.send('confirm', {
+		title: 'Auto layout everything',
+		message: 'Replace cables with direct connections and reposition all nodes and pads in this group? This can be undone.',
+		pos: {x: e.clientX, y: e.clientY},
+		ok: () => editTx.send('redox.doit', {verb: 'autoLayout', param: {root, convertCables: true}}),
 		cancel: () => {}
 	})
 }

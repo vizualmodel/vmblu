@@ -446,7 +446,7 @@ Cable.prototype = {
         this.tacks.forEach(tack => tack.reverseAttachment(L))
     },
 
-    move(dx, dy) {
+    move(dx, dy, {syncRouteContacts = true} = {}) {
         for(const point of this.wire) {
             point.x += dx
             point.y += dy
@@ -457,7 +457,7 @@ Cable.prototype = {
                 tack.attachment.point.x += dx
                 tack.attachment.point.y += dy
             }
-            tack.syncRouteContact()
+            if (syncRouteContacts) tack.syncRouteContact()
             tack.placeAttachment()
         }
     },

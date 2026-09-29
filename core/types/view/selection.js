@@ -48,11 +48,16 @@ Selection.prototype = {
     render(ctx) {
         // we only use width as a check
         if (this.what === selex.freeRect ||this.what === selex.pinArea ||this.what === selex.ifArea) {
+
             // notation
             const rc = this.rect;
 
+            // do not draw zero rectangles
+            if (rc.w == 0 && rc.h == 0) return
+
             // draw the rectangle
-            shape.roundedRect( ctx,rc.x,rc.y,rc.w,rc.h,style.selection.rCorner,1,this.color.slice(0, 7),this.color);
+            //shape.roundedRect( ctx,rc.x,rc.y,rc.w,rc.h,style.selection.rCorner,1,this.color.slice(0, 7),this.color);
+            shape.selectionRect( ctx,rc.x,rc.y,rc.w,rc.h,style.selection.rCorner,1,this.color.slice(0, 7),this.color);
         }
     },
 
@@ -303,6 +308,20 @@ Selection.prototype = {
         this.rect.h += dh;
     },
 
+    // a resized rectangle can have negative width and height !
+    normalizeRect() {
+        const rc = this.rect;
+
+        if (rc.w < 0) {
+            rc.x += rc.w
+            rc.w = -rc.w
+        }
+        if (rc.h < 0) {
+            rc.y += rc.h
+            rc.h = -rc.h
+        }
+    },
+
     move(delta) {
         // move the selection rectangle
         this.rect.x += delta.x;
@@ -320,7 +339,9 @@ Selection.prototype = {
 
         // move the cables if there are nodes in the selection
         if (this.nodes.length > 0) {
-            for (const cable of this.cables) cable.move(delta.x, delta.y);
+            // Keep the old route endpoints until all selected objects have moved,
+            // so adjust() can detect the shared delta and translate every bend.
+            for (const cable of this.cables) cable.move(delta.x, delta.y, {syncRouteContacts: false});
         }
         // or otherwise just the bus tacks
         else for (const tack of this.tacks) tack.slide(delta);

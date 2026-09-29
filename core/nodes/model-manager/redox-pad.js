@@ -138,6 +138,27 @@ disconnectPad: {
     }
 },
 
+switchPadDirection: {
+
+    doit({pad}) {
+
+        //const routes = pad.routes.slice()
+
+        pad.switchDirection()
+
+        // save the edit
+        this.saveEdit('switchPadDirection',{pad})
+    },
+    undo({pad}) {
+
+        pad.switchDirection()
+    },
+    redo({pad}) {
+
+        pad.switchDirection()
+    }
+},
+
 deletePad: {
 
     doit({view, pad}) {

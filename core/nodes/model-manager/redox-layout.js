@@ -4,12 +4,12 @@ export const redoxLayout = {
 
 autoLayout: {
 
-    async doit({root = null} = {}) {
+    async doit({root = null, convertCables = false} = {}) {
         root ??= this.manager?.model?.root
         if (!root) return
 
         const before = captureAutoLayoutState(root)
-        const routes = normalizeLayoutRoutes(root)
+        const routes = normalizeLayoutRoutes(root, {convertCables})
 
         const result = await layoutElk(root)
 

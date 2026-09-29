@@ -3,6 +3,7 @@
 export const inside =  (p,R) => ((p.x >= R.x) && (p.x <= R.x + R.w) && (p.y >= R.y) && (p.y <= R.y + R.h)) 
 export const outside = (p,R) => ((p.x < R.x) || (p.x > R.x + R.w) || (p.y < R.y) || (p.y > R.y + R.h))
 
+
 //export const onBorder = (p,R,d) => ((p.x <= R.x + d) || (p.x >= R.x - R.w - d) || (p.y <= R.y + d) || (p.y <= R.y + R.h - d))
 // const dx = 2
 // const dy = 2
