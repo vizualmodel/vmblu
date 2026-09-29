@@ -78,8 +78,8 @@ export const messageHandling = {
         if (!root) return
 
         root.showPrompt(this.tx, {
-            x: (event?.clientX ?? 0) - 15,
-            y: (event?.clientY ?? 0) + 10,
+            x: (event?.clientX ?? 0) + 25,
+            y: (event?.clientY ?? 0) + 15,
         }, `Application prompt for ${root.name}`)
     },
 

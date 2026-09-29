@@ -4,6 +4,26 @@ function copyWire(wire = []) {
     return wire.map(point => ({x: point.x, y: point.y}))
 }
 
+function attachEndpoints(wire, route) {
+    const from = route.from.center()
+    const to = route.to.center()
+    if (wire.length === 2) {
+        if (from.y === to.y || from.x === to.x) return [from, to]
+        const x = (from.x + to.x) / 2
+        return [from, {x, y: from.y}, {x, y: to.y}, to]
+    }
+    const last = wire.length - 1
+    // ELK rounds port coordinates; vmblu's 15-unit rows have half-unit
+    // centres. Move the neighbouring bend too, retaining orthogonal legs.
+    if (wire[0].y === wire[1].y) wire[1].y = from.y
+    else wire[1].x = from.x
+    if (wire[last].y === wire[last - 1].y) wire[last - 1].y = to.y
+    else wire[last - 1].x = to.x
+    wire[0] = from
+    wire[last] = to
+    return wire
+}
+
 function setPinGeometry(pin, left, y) {
     const rc = pin.node.look.rect
     pin.is.left = !!left
@@ -48,11 +68,7 @@ export function applyLayoutPatch(patch) {
     for (const item of patch.pins) setPinGeometry(item.pin, item.left, item.y)
     for (const item of patch.routes) {
         const wire = copyWire(item.wire)
-        if (wire.length >= 2) {
-            wire[0] = item.route.from.center()
-            wire[wire.length - 1] = item.route.to.center()
-        }
-        item.route.restoreWire(wire)
+        item.route.restoreWire(wire.length >= 2 ? attachEndpoints(wire, item.route) : wire)
     }
 }
 

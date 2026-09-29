@@ -1,6 +1,6 @@
 {
   "header": {
-    "version": "1.12.4",
+    "version": "1.12.5",
     "created": "4/2/2024, 12:51:45 PM",
     "saved": "2026-09-01T07:07:03.332Z",
     "utc": "2026-09-01T07:07:03.332Z",
@@ -943,6 +943,10 @@
           {
             "kind": "source",
             "name": "project references",
+            "promptRepo": {
+              "arl": "./prompts/modal-boxes/project-references.md",
+              "pathKind": 2
+            },
             "factory": {
               "path": "../index.js",
               "function": "ProjectReferencesFactory"
@@ -969,8 +973,7 @@
                   }
                 ]
               }
-            ],
-            "prompt": "Edit top-level project references in a popup with open, add, remove, Save and Cancel actions. Keep edits local until Save and preserve all reference metadata."
+            ]
           }
         ]
       },

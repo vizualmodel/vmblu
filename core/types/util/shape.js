@@ -125,6 +125,41 @@ roundedRect(ctx, x, y, w, h, r, wLine, cLine, cFill) {
     }
 },
 
+// a rectangle with rounded corners
+selectionRect(ctx, x, y, w, h, r, wLine, cLine, cFill) {
+
+    const pi = Math.PI
+
+    if (w < 0) {
+        x += w
+        w = -w
+    }
+    if (h < 0) {
+        y += h
+        h = -h
+    }
+
+    ctx.beginPath();
+    ctx.lineWidth = wLine
+    ctx.moveTo(x, y+r);
+    ctx.arc(x+r, y+r,r,pi,-pi/2)
+    ctx.lineTo(x+w-r, y)
+    ctx.arc(x+w-r,y+r,r,-pi/2,0)
+    ctx.lineTo(x+w, y+h-r)
+    ctx.arc(x+w-r, y+h-r,r,0,pi/2)
+    ctx.lineTo(x+r, y+h)
+    ctx.arc(x+r,y+h-r,r,pi/2,pi)
+    ctx.lineTo(x,y+r)
+    if (cFill) {
+        ctx.fillStyle = cFill
+        ctx.fill()
+    }
+    if (cLine) {
+        ctx.strokeStyle = cLine
+        ctx.stroke()
+    }
+},
+
 roundedHeader(ctx, x, y, w, h, r, wLine, cLine, cFill) {
 
     const pi = Math.PI

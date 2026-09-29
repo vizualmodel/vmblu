@@ -3,7 +3,7 @@
     "name": "vmblu",
     "displayName": "vmblu",
     "description": "AI-native visual architecture modeling.",
-    "version": "1.12.4",
+    "version": "1.12.5",
     "private": true,
     "license": "Apache-2.0",
     "icon": "./assets/vmblu-logo-vscode.png",
@@ -111,7 +111,7 @@
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-terser": "^1.0.0",
         "@types/node": "^16.18.34",
         "@types/vscode": "^1.73.0",
         "@typescript-eslint/eslint-plugin": "^6.7.0",
@@ -123,7 +123,7 @@
         "svelte": "^5.0.0"
     },
     "dependencies": {
-        "@vscode/vsce": "^3.9.2",
+        "@vscode/vsce": "^4.0.0",
         "ts-morph": "^26.0.0",
         "typescript": "^5.8.3"
     },

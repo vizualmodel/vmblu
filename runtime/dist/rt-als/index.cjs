@@ -430,7 +430,7 @@ function assertRuntimeCompatibility(expectedFamily) {
 __name(assertRuntimeCompatibility, "assertRuntimeCompatibility");
 
 // shared/release-version.js
-var RUNTIME_VERSION = "1.12.4";
+var RUNTIME_VERSION = "1.12.5";
 
 // shared/runtime.js
 var _Runtime = class _Runtime {

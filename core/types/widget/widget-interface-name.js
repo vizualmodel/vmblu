@@ -1,4 +1,4 @@
-import {dragBundle} from './pin-bundle.js'
+import {bundleRect, dragBundle} from './pin-bundle.js'
 import {shape, convert, style} from '../util/index.js'
 
 export function InterfaceName(rect, text, node) {
@@ -35,8 +35,9 @@ InterfaceName.prototype = {
     },
 
     cursorPos(ctx, i) {
-        const xText = this.rect.x + (this.rect.w - ctx.measureText(this.text).width) / 2
-        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: this.rect.y }
+        const rect = bundleRect(this)
+        const xText = rect.x + (rect.w - ctx.measureText(this.text).width) / 2
+        return { x: xText + ctx.measureText(this.text.slice(0, i)).width, y: rect.y }
     },
 
     endEdit(saved) {

@@ -111,6 +111,8 @@ export const conxHandling = {
         // check the connections to the bus/cable
         for(const tack of dst.cable.tacks) {
 
+            if (!tack.route?.from || !tack.route?.to) continue
+
             // skip the to tack
             if (tack == dst) continue
 
@@ -143,6 +145,10 @@ export const conxHandling = {
                 // look at all routes
                 for(const route of pin.routes) {
 
+                    // Drawing routes are already attached to their starting
+                    // widget, but do not belong in a saved model yet.
+                    if (!route.from || !route.to) continue
+
                     // store the route for that pin
                     routes.push(convert.routeToRaw(route))
 
@@ -164,6 +170,8 @@ export const conxHandling = {
             // convert each route.. 
             for(const route of pad.routes) {
 
+                if (!route.from || !route.to) continue
+
                 // push the route string
                 routes.push(convert.routeToRaw(route))
 
@@ -180,6 +188,8 @@ export const conxHandling = {
         for(const cable of this.cables) {
 
             for(const tack of cable.tacks) {
+
+                if (!tack.route?.from || !tack.route?.to) continue
 
                 const other = tack.getOther()
                 if (other.is.pin && other.is.input) routes.push(convert.routeToRaw(tack.route))

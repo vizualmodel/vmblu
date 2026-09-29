@@ -65,7 +65,8 @@ Pin.prototype = {
 
         // Truncate only the display; member names remain unchanged.
         let displayName = bundleLabel(this)
-        if (this.bundle) {
+        if (this.bundleEdit) displayName = this.bundleEdit.text
+        else if (this.bundle) {
             const connected = this.bundle.filter(pin => pin.routes.some(route => route.to)).length
             const suffix = '  ' + connected + '/' + this.bundle.length
             displayName = this.bundle.map(pin => pin.displayName(false)).join(', ')

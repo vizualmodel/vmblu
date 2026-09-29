@@ -19,6 +19,7 @@ export const mouseUpHandling = {
             case doing.routeDraw: 
                 // notation
                 const route = state.route
+                route.setBundlePreviewTarget(null)
 
                 // deselect the route
                 route.unSelect()
@@ -62,7 +63,10 @@ export const mouseUpHandling = {
                 break
 
             case doing.selection:
-                if (this.selection.rect) this.getSelected(this.selection.rect)
+                if (this.selection.rect) {
+                    this.selection.normalizeRect()
+                    this.getSelected(this.selection.rect)
+                }
                 break
 
             case doing.selectionDrag:

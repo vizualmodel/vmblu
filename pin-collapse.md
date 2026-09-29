@@ -37,6 +37,8 @@ New bundles use the first selected member's position. Preserve individual expand
 
 Bundle selection highlights all members and their routes. Deleting a visual bundle means ungrouping; deleting its underlying pins is a separate, explicitly named action following the editor's normal deletion behavior.
 
+The collapsed list can be edited inline using a temporary text buffer. No pin name changes while typing, and Escape discards the buffer. On commit, unchanged names are matched first regardless of list position. Remaining old and new members are paired in list order as renames, preserving pin and proxy-pad identities, metadata, connections, and pad attachment positions. Only excess new members create unconnected pins and pads; excess old members are deleted with their connections. List order controls member order. To replace a member without retaining its connections, explicitly delete it before adding the replacement. Explicit member rename also preserves identity. One remaining member becomes an ordinary pin; an empty list deletes all members. Validate the entire list before changing the model. Each changed list is one undo step restoring original pins, routes, and layout; unchanged or invalid lists add no undo entry. The temporary string is never serialized.
+
 ## Connecting
 
 Use exact local member names for automatic matching, after applying the project's standard name validation. Do not introduce fuzzy matching or an independent case-normalization rule. Interface names may differ: `toolbar.add` can connect to `items.add`.
@@ -71,7 +73,7 @@ To reduce line density as well as row count, connections between the same pair o
 - Deleting a bundled route explicitly removes all connections represented by that route as one undoable action. Individual connection deletion is available through member details or expansion.
 - For long lists, truncate the label to available space and expose the complete ordered list on hover and in member details.
 
-Initial bulk matching covers direct pin connections. Existing bus, pad, and proxy connections must survive bundling and expansion. Creating new bundled connections to buses, pads, or proxies is out of scope for the first version; require expansion for those gestures.
+Bulk matching covers direct pin connections, including proxy pins on either or both endpoints. Matching proxy members uses the ordinary pin-to-pin connection logic to resolve their internal pad connections. Existing bus, pad, and proxy connections must survive bundling and expansion. Creating new bundled connections to buses or pads still requires expansion.
 
 ## Visualization persistence
 

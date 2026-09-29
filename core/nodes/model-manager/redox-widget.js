@@ -1,4 +1,5 @@
 import {createBundle, expandBundle, bundleInsertionPosition} from '../../types/widget/pin-bundle.js'
+import {beginBundleTextEdit} from '../../types/widget/bundle-text-edit.js'
 import {collapseEndpointOnlyCables, redoCableCollapses, undoCableCollapses} from '../../types/node/index.js'
 import {getNodePromptDocument, getPinPromptLine} from '../../types/node/node-prompt-document.js'
 import {ensureNodePromptFile} from '../../types/node/prompt-file.js'
@@ -470,16 +471,28 @@ export const redoxWidget = {
         doit({ view, widget, click, clear }) {
 
             if (widget.bundle) {
-                this.manager?.tx?.send("info popup", {title: "Pin bundle", message: "Use member details or expand the bundle to rename individual pins.", duration: 4000})
+                if (widget.node.cannotBeModified?.()) return
+                beginBundleTextEdit(view, widget, click, clear ?? false,
+                    text => this.editBundle.doit.call(this, {view, pin: widget, text}))
                 return
             }
             // keyboard handling etc is done here
             view.beginTextEdit(widget, click, clear ?? false);
 
             // save the old value
-            this.saveEdit('widgetTextEdit', {widget, prop: view.textField.prop, oldText: view.textField.saved ,newText: '', oldPin: widget.is.pin ? {...widget.editOriginal} : null});
+            const edit = {widget, prop: view.textField.prop, oldText: view.textField.saved ,newText: '', oldPin: widget.is.pin ? {...widget.editOriginal} : null}
+            if (edit.oldPin?.name) {
+                widget.commitBundleList = text => {
+                    // Keep the conversion in this edit's existing undo slot.
+                    const transaction = Object.create(this)
+                    transaction.saveEdit = (verb, param) => { edit.bundleChange = param }
+                    this.editBundle.doit.call(transaction, {view, pin: widget, text})
+                }
+            }
+            this.saveEdit('widgetTextEdit', edit);
         },
-        undo({ widget, prop, oldText, newText, oldPin }) {
+        undo({ widget, prop, oldText, newText, oldPin, bundleChange }) {
+            if (bundleChange) return this.editBundle.undo(bundleChange)
 
             if (oldPin) {
                 this.saveEdit().newPin = {name: widget.name, pxlen: widget.pxlen}
@@ -495,7 +508,8 @@ export const redoxWidget = {
             // signal the widget that the value has changed
             widget.endEdit(newText);
         },
-        redo({ widget, prop, oldText, newText, newPin }) {
+        redo({ widget, prop, oldText, newText, newPin, bundleChange }) {
+            if (bundleChange) return this.editBundle.redo(bundleChange)
             if (newPin) {
                 restorePinName(widget, newPin)
                 return

@@ -3,7 +3,8 @@ const cm = {
 	choices: [
 		{icon:"sell",text:"change name",state:"enabled", action:changeName},
 		{icon:"power_off",text:"disconnect",state:"enabled",action:disconnect},
-		{icon:"delete",text:"delete",state:"enabled", action:deletePad}
+		{icon:"delete",text:"delete",state:"enabled", action:deletePad},
+		{icon:"sync_alt",text:"switch direction",state:"enabled", action:switchDirection}
 	],
 
 	// to set the position where the context menu has to appear
@@ -33,4 +34,8 @@ function disconnect() {
 
 function deletePad() {
 	cm.doEdit('deletePad',{view: cm.view, pad: cm.pad})
+}
+
+function switchDirection() {
+	cm.doEdit('switchPadDirection',{pad: cm.pad})
 }

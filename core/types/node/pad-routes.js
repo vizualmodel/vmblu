@@ -1,5 +1,6 @@
 import {style, eject} from '../util/index.js'
 import {Route} from './index.js'
+import {projectBundleRouteWire} from './route-bundle.js'
 
 export const padRouteFunctions = {
 
@@ -103,7 +104,30 @@ export const padRouteFunctions = {
         this.routes.forEach( route => { if (route.from == this) route.reverse() })
     },
 
+    // swithc the position of the arrow and the text on a pad
+    switchDirection() {
+
+        this.is.leftText = !this.is.leftText
+        for(const route of this.routes) route.adjust()
+    },
+
     drag(next, delta) {
+        return this.withBundleRouteGeometry(() => this.dragRoutes(next, delta))
+    },
+
+    // Pad movement and snapping operate on the geometry the user sees.
+    // Restore expanded pin anchors afterwards for persistence and undo.
+    withBundleRouteGeometry(action) {
+        const projected = this.routes.filter(route => [route.from, route.to].some(widget =>
+            widget?.is.pin && widget.node.look.widgets.some(pin => pin.bundle)))
+        for (const route of projected) route.wire = projectBundleRouteWire(route)
+        try { return action() }
+        finally {
+            for (const route of projected) route.restoreBundleRouteWire(route.wire)
+        }
+    },
+
+    dragRoutes(next, delta) {
 
         // if there are routes ...
         if (this.routes.length > 0) {
@@ -171,7 +195,7 @@ export const padRouteFunctions = {
 
     endDrag() {
         //if (this.routes.length == 1) this.routes[0].endpoint(this)
-        this.routes.forEach( route => route.endpoint(this))
+        this.withBundleRouteGeometry(() => this.routes.forEach(route => route.endpoint(this)))
     },
 
     slide(delta) {

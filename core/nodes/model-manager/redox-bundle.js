@@ -1,6 +1,7 @@
 import {bundleEligibility, createBundle, expandBundle, matchBundleConnections} from '../../types/widget/pin-bundle.js'
 import {Route} from '../../types/node/route.js'
 import {projectBundleRouteWire} from '../../types/node/route-bundle.js'
+import {bundleEditAction} from './bundle-edit.js'
 
 function createBundleDrawnRoute(from, to, wire) {
     const route = new Route(from, null)
@@ -31,6 +32,7 @@ function restoreBundleSelection(view, snapshot, pin) {
 }
 
 export const redoxBundle = {
+    editBundle: bundleEditAction,
     collapseBundle: {
         doit({view, pins}) {
             const error = bundleEligibility(pins)

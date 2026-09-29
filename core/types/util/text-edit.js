@@ -10,12 +10,16 @@ export function TextEdit() {
     this.obj= null              // the object where there is an editable prop
     this.prop= null             // the prop that needs editing
     this.keyPressed = null      // the last key pressed - for clients use
+    this.active = false
+    this.session = 0
 }
 
 TextEdit.prototype = {
 
     // new edit
     newEdit(obj, prop, cursor=-1) {
+        this.active = true
+        this.session++
         
         this.cursor = cursor < 0 ? obj[prop].length : cursor
         this.saved = obj[prop]          // save the current value

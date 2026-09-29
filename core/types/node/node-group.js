@@ -46,6 +46,9 @@ const groupFunctions = {
     // },
 
     addNode(newNode) {
+        // New and pasted nodes use the destination model's team palette.
+        // Temporary groups without an owner must preserve existing ownership.
+        if (this.model) newNode.setModelRecursive(this.model)
         this.nodes.push(newNode)
     },
 
@@ -57,7 +60,7 @@ const groupFunctions = {
 
     // restore node is the same as addNode (for now ?)
     restoreNode(node) {
-        this.nodes.push(node)
+        this.addNode(node)
     },
 
     findNode(lName) {

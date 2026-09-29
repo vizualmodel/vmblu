@@ -783,7 +783,7 @@ i.icon.svelte-oi2iq:active {
 }
 
 
-.team-legend.svelte-v6tgws {
+.team-legend.svelte-vujdsy {
     position: absolute;
     z-index: 1;
     top: 0;
@@ -792,6 +792,7 @@ i.icon.svelte-oi2iq:active {
     height: 20px;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 1rem;
     padding: 0 0.5rem;
     box-sizing: border-box;
@@ -804,21 +805,21 @@ i.icon.svelte-oi2iq:active {
     pointer-events: none;
 }
 
-.team.svelte-v6tgws {
+.team.svelte-vujdsy {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
 }
 
-.bullet.svelte-v6tgws {
+.bullet.svelte-vujdsy {
     width: 0.6rem;
     height: 0.6rem;
     flex: 0 0 auto;
     border-radius: 50%;
 }
 
-.name.svelte-v6tgws {
+.name.svelte-vujdsy {
     overflow: hidden;
     text-overflow: ellipsis;
 }
